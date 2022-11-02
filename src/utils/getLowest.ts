@@ -1,27 +1,35 @@
 import { Label } from "../interfaces/Label";
 import { RecognizedProfits, RecognizedTimes } from "../interfaces/Recognized";
-
+type RecognizedKeys = typeof RecognizedProfits | typeof RecognizedTimes;
 export type LowestLabel = {
   label: Label;
-  minimum: {
-    key: keyof Label[];
-    value: number;
-  };
+  key: RecognizedKeys;
+  value: number;
 };
 
-export default function getLowestMatchFromLibrary(search: Label[], library: typeof RecognizedProfits | typeof RecognizedTimes): LowestLabel {
+export default function getLowestMatchFromLibrary(search: Label[], library: RecognizedKeys): LowestLabel {
   const matches = search.map((label) => {
-    const key = label.name as keyof typeof RecognizedProfits | keyof typeof RecognizedTimes;
-    const value = library[key] as number;
-    if (!value) {
-      throw new Error(`Could not find value for ${key} in ${library}`);
+    // @ts-ignore-error
+    const keyName = label.name as RecognizedKeys;
+    // @ts-ignore-error
+    const labelNumericalValue = library[keyName];
+    if (!labelNumericalValue) {
+      throw new Error(`Could not find value for ${keyName} in ${library}`);
     }
-    return { label, key, value };
+    return {
+      label,
+      key: keyName,
+      value: labelNumericalValue,
+    };
   });
 
-  const minimum = matches.reduce((a, b) => (a.value < b.value ? a : b));
+  if (!matches.length) {
+    throw new Error(`No matches found for ${JSON.stringify(search)} in ${JSON.stringify(library)}`);
+  }
 
-  return { label: minimum.label, minimum };
+  const minimum = matches.reduce((a, b) => (a.value < b.value ? a : b));
+  // @ts-ignore-error
+  return minimum;
 }
 
 // export function getLowestLabel(search: Label[], library: typeof RecognizedProfits | typeof RecognizedTimes): LowestLabel {

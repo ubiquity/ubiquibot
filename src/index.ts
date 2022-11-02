@@ -18,8 +18,12 @@ module.exports = function main(app: Probot) {
     const issueTimes = labels.filter((label) => label.name.startsWith("Time:"));
     const issueProfits = labels.filter((label) => label.name.startsWith("Profit:"));
 
-    // console.log({ issueTimes, issueProfits });
-    // console.log({ issueProfits, RecognizedProfits });
+    if (!issueTimes.length) {
+      throw new Error(`No times found in issue labels ${JSON.stringify(labels.map((label) => label.name))}`);
+    }
+    if (!issueProfits.length) {
+      throw new Error(`No profits found in issue labels ${JSON.stringify(labels.map((label) => label.name))}`);
+    }
 
     const lowestTime = getLowestLabel(issueTimes, RecognizedTimes);
     const lowestProfit = getLowestLabel(issueProfits, RecognizedProfits);
