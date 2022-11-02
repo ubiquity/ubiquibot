@@ -1,9 +1,9 @@
 import { Probot } from "probot";
-import { getLowest } from "./utils/getLowest";
+import getLowestLabel from "./utils/getLowest";
 import { Label } from "./interfaces/Label";
 import { Payload } from "./interfaces/Payload";
-import { RecognizedProfits, RecognizedTimes } from "./interfaces/Recognized";
 import { calculateBountyPrice } from "./utils/calculateBountyPrice";
+import { RecognizedProfits, RecognizedTimes } from "./interfaces/Recognized";
 
 module.exports = function main(app: Probot) {
   app.onAny(async function callbackOnAny(event: any) {
@@ -15,11 +15,16 @@ module.exports = function main(app: Probot) {
 
     const labels = payload.issue.labels;
 
-    const times = labels.filter((label) => label.name.startsWith("Time:"));
-    const profits = labels.filter((label) => label.name.startsWith("Profit:"));
+    const issueTimes = labels.filter((label) => label.name.startsWith("Time:"));
+    const issueProfits = labels.filter((label) => label.name.startsWith("Profit:"));
 
-    const lowestTime = getLowest(times, RecognizedTimes);
-    const lowestProfit = getLowest(profits, RecognizedProfits);
+    // console.log({ issueTimes, issueProfits });
+    // console.log({ issueProfits, RecognizedProfits });
+
+    const lowestTime = getLowestLabel(issueTimes, RecognizedTimes);
+    const lowestProfit = getLowestLabel(issueProfits, RecognizedProfits);
+
+    console.log({ lowestTime, lowestProfit });
 
     const bountyPrice = calculateBountyPrice(lowestTime, lowestProfit);
 
