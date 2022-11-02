@@ -207,7 +207,7 @@ export interface Payload {
     repos_url: "https://api.github.com/users/pavlovcik/repos";
     events_url: "https://api.github.com/users/pavlovcik/events{/privacy}";
     received_events_url: "https://api.github.com/users/pavlovcik/received_events";
-    type: "User";
+    type: "User" | "Bot" | "Organization";
     site_admin: false;
   };
   installation: {
