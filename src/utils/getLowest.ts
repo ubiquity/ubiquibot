@@ -7,7 +7,7 @@ export type LowestLabel = {
   value: number;
 };
 
-export default function getLowestMatchFromLibrary(search: Label[], library: RecognizedKeys): LowestLabel {
+export default function getLowestMatchFromLibrary(search: Label[], library: RecognizedKeys): LowestLabel | null {
   const matches = search.map((label) => {
     // @ts-ignore-error
     const keyName = label.name as RecognizedKeys;
@@ -24,7 +24,8 @@ export default function getLowestMatchFromLibrary(search: Label[], library: Reco
   });
 
   if (!matches.length) {
-    throw new Error(`No matches found for ${JSON.stringify(search)} in ${JSON.stringify(library)}`);
+    console.warn(`No matches found for ${JSON.stringify(search)} in ${JSON.stringify(library)}`);
+    return null;
   }
 
   const minimum = matches.reduce((a, b) => (a.value < b.value ? a : b));
