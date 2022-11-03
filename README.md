@@ -1,33 +1,9 @@
-# ubiquibot
+# `@ubiquity/bounty-bot` the "UbiquiBot"
 
-> A GitHub App built with [Probot](https://github.com/probot/probot) that A Probot app
+> This bot facilitates the Ubiquity Bounty System.
 
-## Setup
+## Overview
 
-```sh
-# Install dependencies
-npm install
-
-# Run the bot
-npm start
-```
-
-## Docker
-
-```sh
-# 1. Build container
-docker build -t ubiquibot .
-
-# 2. Start container
-docker run -e APP_ID=<app-id> -e PRIVATE_KEY=<pem-value> ubiquibot
-```
-
-## Contributing
-
-If you have suggestions for how ubiquibot could be improved, or want to report a bug, open an issue! We'd love all and any contributions.
-
-For more, check out the [Contributing Guide](CONTRIBUTING.md).
-
-## License
-
-[ISC](LICENSE) © 2022 Ubiquity DAO
+- This bot is designed to exist as a GitHub Action.
+- Because of this, the code must be compiled and commited to the repository for the GitHub Action to run the JavaScript.
+- The code must be compiled using `@vercel/ncc` because all the dependencies (e.g. `node_modules`) must be included.
