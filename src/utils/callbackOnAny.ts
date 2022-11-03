@@ -36,7 +36,6 @@ export async function callbackOnAny(context: Context) {
     await clearAllPriceLabelsOnIssue(context);
     await addLabelToIssue(context, range);
     return;
-    // throw new Error(`No times found in issue labels ${JSON.stringify(labels.map((label) => label.name))}`);
   }
   // no business impact estimate
   if (!lowestProfit) {
@@ -53,7 +52,6 @@ export async function callbackOnAny(context: Context) {
     await clearAllPriceLabelsOnIssue(context);
     await addLabelToIssue(context, range);
     return;
-    // throw new Error(`No profits found in issue labels ${JSON.stringify(labels.map((label) => label.name))}`);
   }
 
   const bountyPrice = calculateBountyPrice(lowestTime, lowestProfit);
