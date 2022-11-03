@@ -16,7 +16,8 @@
     "start": "probot run ./lib/index.js",
     "test": "jest",
     "prettier": "prettier --write src",
-    "ncc": "npx ncc build index.js -o dist"
+    "ncc": "npx ncc build index.js -o dist",
+    "watch": "nodemon --exec 'git add . && git commit -am \"update(ci)\" && git push'"
   },
   "dependencies": {
     "@probot/adapter-github-actions": "^3.1.3",
