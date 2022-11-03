@@ -4,6 +4,11 @@ import { pricingLabelLogic } from "./pricing-label-logic";
 
 export async function callbackOnAny(context: Context) {
   const payload = context.payload as Payload;
+
+  console.log(payload.action)
+  const timelineEvents = await listTimelineEventsForIssue(context);
+  console.log(timelineEvents);
+
   if (payload.sender.type == "Bot") return;
   if (context.name != "issues") return;
   // if (payload.issue.number != 9) return;
@@ -11,9 +16,7 @@ export async function callbackOnAny(context: Context) {
     await pricingLabelLogic(payload, context);
     return;
   }
-  const timelineEvents = await listTimelineEventsForIssue(context);
-  console.log(timelineEvents);
-  // console.log(payload.action);
+
 }
 
 async function listTimelineEventsForIssue(context: Context) {
