@@ -1,0 +1,19 @@
+name: Say Hello World
+on:
+  issues:
+    types:
+      # - opened
+      - labeled
+      - unlabeled
+
+jobs:
+  sayHelloWorld:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: probot/example-github-action@v1
+        # with:
+          # token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # or
+          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
