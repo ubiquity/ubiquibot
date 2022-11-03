@@ -4,19 +4,52 @@ import { pricingLabelLogic } from "./pricing-label-logic";
 
 export async function callbackOnAny(context: Context) {
   const payload = context.payload as Payload;
+  if (payload.sender.type == "Bot") return; // ignore bot invoked events
+  if (context.name != "issues" && context.name != "issue_comment") return; // ignore non-issue related events
 
-  console.log(payload.action)
+  const ACTION = payload.action;
+  console.log(ACTION);
+
   const timelineEvents = await listTimelineEventsForIssue(context);
   console.log(timelineEvents);
 
-  if (payload.sender.type == "Bot") return;
-  if (context.name != "issues") return;
-  // if (payload.issue.number != 9) return;
-  if (payload.action == "labeled" || payload.action == "unlabeled") {
-    await pricingLabelLogic(payload, context);
-    return;
+  switch (ACTION) {
+    // comments
+    case "created":
+    case "deleted":
+    case "edited":
+      break;
+
+    // issue general
+    case "labeled":
+    case "unlabeled":
+      await pricingLabelLogic(payload, context);
+      break;
+    case "assigned":
+    case "unassigned":
+    case "opened":
+    case "edited":
+    case "closed":
+    case "reopened":
+    case "locked":
+    case "unlocked":
+    case "transferred":
+    // case "milestoned":
+    // case "demilestoned":
+    // case "locked":
+    // case "unlocked":
+    // case "transferred":
+    // case "pinned":
+    // case "unpinned":
+
+    default:
+      break;
   }
 
+  // if (ACTION == "labeled" || ACTION == "unlabeled") {
+  //   await pricingLabelLogic(payload, context);
+  //   return;
+  // }
 }
 
 async function listTimelineEventsForIssue(context: Context) {
