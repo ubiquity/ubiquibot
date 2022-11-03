@@ -1,7 +1,7 @@
-import { Probot } from "probot";
-import { callbackOnAny } from "./utils/callbackOnAny";
+import probot from "@probot/adapter-github-actions";
+import main from "./main";
 
-module.exports = function main(app: Probot) {
-  // @ts-ignore-error
-  app.onAny(callbackOnAny);
-};
+probot.run(main).catch((error: Error) => {
+  console.error(error);
+  process.exit(1);
+});
