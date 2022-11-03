@@ -52,8 +52,8 @@ jobs:
         uses: ./dist # Uses an action in the root directory
         id: hello
         with:
-          github-token: ${{ steps.get_installation_token.outputs.token }}
-          token: steps.get_installation_token.outputs.token
+          # github-token: ${{ steps.get_installation_token.outputs.token }}
+          token: ${{ steps.get_installation_token.outputs.token }}
           # token: ${{ secrets.GITHUB_TOKEN }}
           # who-to-greet: 'Mona the Octocat'
       # Use the output from the `hello` step
