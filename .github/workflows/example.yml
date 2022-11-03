@@ -2,7 +2,9 @@ name: Say Hello World
 on:
   issues:
     types:
-      - opened
+      # - opened
+      - labeled
+      - unlabeled
 
 jobs:
   sayHelloWorld:
