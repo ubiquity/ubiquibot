@@ -46,10 +46,6 @@ export async function callbackOnAny(context: Context) {
       break;
   }
 
-  // if (ACTION == "labeled" || ACTION == "unlabeled") {
-  //   await pricingLabelLogic(payload, context);
-  //   return;
-  // }
 }
 
 async function listTimelineEventsForIssue(context: Context) {

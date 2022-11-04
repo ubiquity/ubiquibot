@@ -15,9 +15,10 @@
     "build": "tsc",
     "start": "probot run ./lib/index.js",
     "start:local": "probot run ./lib/main.js",
+    "watch:local": "nodemon --exec 'yarn start:local'",
     "test": "jest",
     "prettier": "prettier --write src",
-    "ncc": "npx ncc build index.js -o dist",
+    "ncc": "ncc build src/index.ts -o dist",
     "watch": "nodemon --exec 'git add . && git commit -am \"update(ci)\" && git push'"
   },
   "dependencies": {
