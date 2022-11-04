@@ -19,7 +19,7 @@
     "start:local:watch": "nodemon --exec 'yarn start:local'",
     "test": "jest",
     "prettier": "prettier --write src",
-    "_autocommit": "nodemon --exec 'git add . && git commit -am \"update(ci)\" && git push'"
+    "_commit:watch": "nodemon --exec 'git add . && git commit -am \"update(ci)\" && git push'"
   },
   "dependencies": {
     "@probot/adapter-github-actions": "^3.1.3",

@@ -45,7 +45,6 @@ export async function callbackOnAny(context: Context) {
     default:
       break;
   }
-
 }
 
 async function listTimelineEventsForIssue(context: Context) {

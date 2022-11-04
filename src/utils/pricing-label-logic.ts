@@ -11,8 +11,7 @@ export async function pricingLabelLogic(payload: Payload, context: Context) {
   const issueTimes = labels.filter((label) => label.name.startsWith("Time:"));
   const issueProfits = labels.filter((label) => label.name.startsWith("Profit:"));
 
-  if (!issueTimes.length && !issueProfits.length)
-    return; // no labels
+  if (!issueTimes.length && !issueProfits.length) return; // no labels
 
   const lowestTime = getLowestLabel(issueTimes, RecognizedTimes);
   const lowestProfit = getLowestLabel(issueProfits, RecognizedProfits);

@@ -7,8 +7,7 @@ export async function clearAllPriceLabelsOnIssue(context: Context) {
   const labels = payload.issue.labels;
   const issuePrices = labels.filter((label) => label.name.startsWith("Price:"));
 
-  if (!issuePrices.length)
-    return;
+  if (!issuePrices.length) return;
 
   await context.octokit.issues.removeLabel({
     owner: payload.repository.owner.login,
