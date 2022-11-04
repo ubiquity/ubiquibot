@@ -12,14 +12,14 @@
     "probot-app"
   ],
   "scripts": {
-    "build": "tsc",
-    "start": "probot run ./lib/index.js",
+    "build:local": "tsc",
+    "build:serverless": "ncc build src/index.ts -o dist",
+    "start:serverless": "probot run ./lib/index.js",
     "start:local": "probot run ./lib/main.js",
-    "watch:local": "nodemon --exec 'yarn start:local'",
+    "start:local:watch": "nodemon --exec 'yarn start:local'",
     "test": "jest",
     "prettier": "prettier --write src",
-    "ncc": "ncc build src/index.ts -o dist",
-    "watch": "nodemon --exec 'git add . && git commit -am \"update(ci)\" && git push'"
+    "_autocommit": "nodemon --exec 'git add . && git commit -am \"update(ci)\" && git push'"
   },
   "dependencies": {
     "@probot/adapter-github-actions": "^3.1.3",
