@@ -4,21 +4,26 @@ import { pricingLabelLogic } from "./pricing-label-logic";
 
 export async function callbackOnAny(context: Context) {
   const payload = context.payload as Payload;
-  if (payload.sender.type == "Bot") return; // ignore bot invoked events
-  if (context.name != "issues" && context.name != "issue_comment") return; // ignore non-issue related events
-
   const ACTION = payload.action;
   console.log(ACTION);
 
-  const timelineEvents = await listTimelineEventsForIssue(context);
-  console.log(timelineEvents);
+  if (payload.sender.type == "Bot") return; // ignore bot invoked events
+  if (context.name != "issues" && context.name != "issue_comment") return; // ignore non-issue related events
 
   switch (ACTION) {
     // comments
-    case "created":
+
     case "deleted":
     case "edited":
-      break;
+    case "created":
+      // // @ts-ignore-error
+      // const body = payload.comment.body as string;
+      // console.log(body);
+      // if (body.includes("timeline")) {
+      //   const timelineEvents = await listTimelineEventsForIssue(context);
+      //   console.log(timelineEvents);
+      // }
+      // break;
 
     // issue general
     case "labeled":
@@ -31,9 +36,6 @@ export async function callbackOnAny(context: Context) {
     case "edited":
     case "closed":
     case "reopened":
-    case "locked":
-    case "unlocked":
-    case "transferred":
     // case "milestoned":
     // case "demilestoned":
     // case "locked":
@@ -54,7 +56,7 @@ async function listTimelineEventsForIssue(context: Context) {
     owner,
     repo,
     issue_number: payload.issue.number,
-    per_page: 100,
+    per_page: 10,
   });
   return timelineEvents;
 }
