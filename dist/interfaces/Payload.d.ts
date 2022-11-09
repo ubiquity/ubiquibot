@@ -1,8 +1,9 @@
 import { Label } from "./Label";
+declare type IssueOthers = "requested" | "review_requested" | "review_request_removed" | "completed" | "rerequested";
 declare type IssueComments = "created" | "deleted" | "edited";
 declare type IssueActions = "assigned" | "closed" | "deleted" | "demilestoned" | "edited" | "labeled" | "locked" | "milestoned" | "opened" | "pinned" | "reopened" | "transferred" | "unassigned" | "unlabeled" | "unlocked" | "unpinned";
 export interface Payload {
-    action: IssueActions | IssueComments;
+    action: IssueActions | IssueComments | IssueOthers;
     issue: {
         url: "https://api.github.com/repos/ubiquity/bounty-bot/issues/9";
         repository_url: "https://api.github.com/repos/ubiquity/bounty-bot";

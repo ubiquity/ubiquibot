@@ -1,4 +1,4 @@
-name: Say Hello World
+name: Calculate Bounty Based on Issue Labels
 on:
   issues:
     types:

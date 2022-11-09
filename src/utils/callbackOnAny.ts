@@ -16,14 +16,14 @@ export async function callbackOnAny(context: Context) {
     case "deleted":
     case "edited":
     case "created":
-      // // @ts-ignore-error
-      // const body = payload.comment.body as string;
-      // console.log(body);
-      // if (body.includes("timeline")) {
-      //   const timelineEvents = await listTimelineEventsForIssue(context);
-      //   console.log(timelineEvents);
-      // }
-      // break;
+    // // @ts-ignore-error
+    // const body = payload.comment.body as string;
+    // console.log(body);
+    // if (body.includes("timeline")) {
+    //   const timelineEvents = await listTimelineEventsForIssue(context);
+    //   console.log(timelineEvents);
+    // }
+    // break;
 
     // issue general
     case "labeled":
@@ -49,14 +49,14 @@ export async function callbackOnAny(context: Context) {
   }
 }
 
-async function listTimelineEventsForIssue(context: Context) {
-  const payload = context.payload as Payload;
-  const { owner, repo } = context.repo();
-  const { data: timelineEvents } = await context.octokit.issues.listEventsForTimeline({
-    owner,
-    repo,
-    issue_number: payload.issue.number,
-    per_page: 10,
-  });
-  return timelineEvents;
-}
+// async function listTimelineEventsForIssue(context: Context) {
+//   const payload = context.payload as Payload;
+//   const { owner, repo } = context.repo();
+//   const { data: timelineEvents } = await context.octokit.issues.listEventsForTimeline({
+//     owner,
+//     repo,
+//     issue_number: payload.issue.number,
+//     per_page: 10,
+//   });
+//   return timelineEvents;
+// }
