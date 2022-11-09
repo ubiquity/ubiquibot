@@ -18,9 +18,12 @@ jobs:
           # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # or
           # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  hello_world_job:
+  calculate_bounty_job:
+  # ignore events invoked by bots
+    if: >-
+      github.event.pull_request.payload.sender.type != 'Bot'
     runs-on: ubuntu-latest
-    name: A job to say hello
+    name: Calculate Bounty with UbiquiBot
     steps:
       # To use this repository's private action,
       # you must check out the repository
@@ -48,9 +51,9 @@ jobs:
       #       const print_deployments_log = require('${{ github.workspace }}/utils/print_deployments_logs.js');
       #       await print_deployments_log({github, context, fs});
 
-      - name: Hello world action step
+      - name: Invoke the UbiquiBot
         uses: ./dist # Uses an action in the root directory
-        id: hello
+        id: ubiquibot
         with:
           # github-token: ${{ steps.get_installation_token.outputs.token }}
           token: ${{ steps.get_installation_token.outputs.token }}
