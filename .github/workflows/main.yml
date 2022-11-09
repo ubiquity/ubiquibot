@@ -54,9 +54,9 @@ jobs:
       - name: Invoke the UbiquiBot
         uses: ./dist # Uses an action in the root directory
         id: ubiquibot
-        with:
+        # with:
           # github-token: ${{ steps.get_installation_token.outputs.token }}
-          TOKEN: ${{ steps.get_installation_token.outputs.token }}
+          # TOKEN: ${{ steps.get_installation_token.outputs.token }}
           # token: ${{ secrets.GITHUB_TOKEN }}
           # who-to-greet: 'Mona the Octocat'
       # Use the output from the `hello` step
