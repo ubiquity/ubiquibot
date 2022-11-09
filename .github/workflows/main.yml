@@ -54,9 +54,10 @@ jobs:
       - name: Invoke the UbiquiBot
         uses: ./dist # Uses an action in the root directory
         id: ubiquibot
-        # with:
+        # [probot/adapter-github-actions] a token must be passed as `env.GITHUB_TOKEN` or `with.GITHUB_TOKEN` or `with.token`, see https://github.com/probot/adapter-github-actions#usage
+        with:
           # github-token: ${{ steps.get_installation_token.outputs.token }}
-          # TOKEN: ${{ steps.get_installation_token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.get_installation_token.outputs.token }}
           # token: ${{ secrets.GITHUB_TOKEN }}
           # who-to-greet: 'Mona the Octocat'
       # Use the output from the `hello` step
