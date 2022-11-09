@@ -1,5 +1,7 @@
 import { Label } from "./Label";
 
+type IssueOthers = "requested" | "review_requested" | "review_request_removed" | "completed" | "rerequested";
+
 type IssueComments = "created" | "deleted" | "edited";
 
 type IssueActions =
@@ -20,7 +22,7 @@ type IssueActions =
   | "unlocked"
   | "unpinned";
 export interface Payload {
-  action: IssueActions | IssueComments;
+  action: IssueActions | IssueComments | IssueOthers;
   issue: {
     url: "https://api.github.com/repos/ubiquity/bounty-bot/issues/9";
     repository_url: "https://api.github.com/repos/ubiquity/bounty-bot";
