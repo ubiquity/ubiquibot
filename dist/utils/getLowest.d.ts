@@ -1,7 +1,7 @@
 import { Label } from "../interfaces/Label";
 import { RecognizedProfits, RecognizedTimes } from "../interfaces/Recognized";
-declare type RecognizedKeys = typeof RecognizedProfits | typeof RecognizedTimes;
-export declare type LowestLabel = {
+type RecognizedKeys = typeof RecognizedProfits | typeof RecognizedTimes;
+export type LowestLabel = {
     label: Label;
     key: RecognizedKeys;
     value: number;

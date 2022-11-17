@@ -1,7 +1,7 @@
 import { Label } from "./Label";
-declare type IssueOthers = "requested" | "review_requested" | "review_request_removed" | "completed" | "rerequested";
-declare type IssueComments = "created" | "deleted" | "edited";
-declare type IssueActions = "assigned" | "closed" | "deleted" | "demilestoned" | "edited" | "labeled" | "locked" | "milestoned" | "opened" | "pinned" | "reopened" | "transferred" | "unassigned" | "unlabeled" | "unlocked" | "unpinned";
+type IssueOthers = "requested" | "review_requested" | "review_request_removed" | "completed" | "rerequested";
+type IssueComments = "created" | "deleted" | "edited";
+type IssueActions = "assigned" | "closed" | "deleted" | "demilestoned" | "edited" | "labeled" | "locked" | "milestoned" | "opened" | "pinned" | "reopened" | "transferred" | "unassigned" | "unlabeled" | "unlocked" | "unpinned";
 export interface Payload {
     action: IssueActions | IssueComments | IssueOthers;
     issue: {
