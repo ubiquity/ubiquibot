@@ -1,57 +1,25 @@
 name: Calculate Bounty Based on Issue Labels
 on:
-  issues:
-    types:
-      # - opened
-      - labeled
-      - unlabeled
+  pull_request:
+  push:
 
 jobs:
-  # sayHelloWorld:
-  # runs-on: ubuntu-latest
-  # name: A job to say hello world
-  # steps:
-  # - uses: probot/example-github-action@v1
-  # with:
-  # token: ${{ secrets.GITHUB_TOKEN }}
-  # env:
-  # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  # or
-  # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  calculate_bounty_job:
-    # ignore events invoked by bots
-    if: >-
-      github.event.pull_request.payload.sender.type != 'Bot'
+  install-and-build:
     runs-on: ubuntu-latest
-    name: Calculate Bounty with UbiquiBot
+    permissions:
+      contents: read
+    
     steps:
-      # To use this repository's private action,
-      # you must check out the repository
-      - name: Checkout
-        uses: actions/checkout@v3
-      # This will authenticate the UbiquiBot with the UbiquiBot GitHub App
-      - name: GitHub App token
-        uses: tibdex/github-app-token@v1.7.0
-        id: get_installation_token
-        with:
-        # This should be changed to remove _DEV from the end when the UbiquiBot is ready for production
-          app_id: ${{ secrets.UBIQUITY_BOUNTY_BOT_APP_ID_DEV }}
-          private_key: ${{ secrets.UBIQUITY_BOUNTY_BOT_PRIVATE_KEY_DEV }}
-      # - name: Use token
-      #   env:
-      #     TOKEN: ${{ steps.generate_token.outputs.token }}
-      #   run: |
-      #     echo "The generated token is masked: ${TOKEN}"
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-      - name: Invoke the UbiquiBot
-        uses: ./dist # Uses an action in the root directory
-        id: ubiquibot
-        # [probot/adapter-github-actions] a token must be passed as `env.GITHUB_TOKEN` or `with.GITHUB_TOKEN` or `with.token`, see https://github.com/probot/adapter-github-actions#usage
+      - name: Setup Node
+        uses: actions/setup-node@v2
         with:
-          # github-token: ${{ steps.get_installation_token.outputs.token }}
-          GITHUB_TOKEN: ${{ steps.get_installation_token.outputs.token }}
-          # token: ${{ secrets.GITHUB_TOKEN }}
-          # who-to-greet: 'Mona the Octocat'
-      # Use the output from the `hello` step
-      # - name: Get the output time
-      # run: echo "The time was ${{ steps.hello.outputs.time }}"
+          node-version: "18"
+
+      - name: Install
+        run: yarn install
+
+      - name: Build
+        run: yarn build:local && yarn build:serverless
