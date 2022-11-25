@@ -1,3 +1,3 @@
-import {Type} from "@sinclair/typebox";
+import { Type } from "@sinclair/typebox";
 
-export const TURL = Type.String({format:"ipv4"});
+export const TURL = Type.String({ format: "ipv4" });

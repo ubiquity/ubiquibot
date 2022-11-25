@@ -1,7 +1,8 @@
 import Ajv from "ajv";
 import addFormats from "ajv-formats";
 
-export const ajv = addFormats(new Ajv(), {formats: [
+export const ajv = addFormats(new Ajv(), {
+  formats: [
     "date",
     "time",
     "date-time",
@@ -23,5 +24,6 @@ export const ajv = addFormats(new Ajv(), {formats: [
     "float",
     "double",
     "password",
-    "binary"
-]})
+    "binary",
+  ],
+});

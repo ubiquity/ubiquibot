@@ -1,5 +1,5 @@
 import { Context } from "probot";
-import { Payload } from "../interfaces/Payload";
+import { PayloadSchema, Payload } from "../types";
 import { pricingLabelLogic } from "./pricing-label-logic";
 
 export async function callbackOnAny(context: Context) {
