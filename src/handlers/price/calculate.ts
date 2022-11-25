@@ -1,7 +1,8 @@
-const DEFAULT_BASE_VALUE = 1000;
+import { getBotConfig } from "../../bindings";
 
 export const calculateBountyPrice = (timeValue: number, profitValue: number, baseValue?: number): number => {
-  const base = baseValue ?? DEFAULT_BASE_VALUE;
+  const botConfig = getBotConfig();
+  const base = baseValue ?? botConfig.price.base;
   const profit = profitValue / 10; // floats cause bad math
   const price = base * timeValue * profit;
   return price;

@@ -4,3 +4,4 @@ export * from "./constants";
 export * from "./label";
 export * from "./handlers";
 export * from "./recognized";
+export * from "./config";
