@@ -34,18 +34,18 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   const { pre, action, post } = handlers;
   // Run pre-handlers
-  log.info(`Running pre handlers: ${pre.map((fn) => fn.name)}`);
+  log.info(`Running pre handlers: ${pre.map((fn) => fn.name)}, action: ${payload.action}`);
   for (const preAction of pre) {
     await preAction();
   }
   // Run main handlers
-  log.info(`Running main handlers: ${action.map((fn) => fn.name)}`);
+  log.info(`Running main handlers: ${action.map((fn) => fn.name)}, action: ${payload.action}`);
   for (const mainAction of action) {
     await mainAction();
   }
 
   // Run post-handlers
-  log.info(`Running post handlers: ${post.map((fn) => fn.name)}`);
+  log.info(`Running post handlers: ${post.map((fn) => fn.name)}, action: ${payload.action}`);
   for (const postAction of post) {
     await postAction();
   }
