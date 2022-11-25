@@ -23,13 +23,36 @@ const SenderSchema = Type.Object({
     type: Type.Union([Type.Literal("User"), Type.Literal("Bot"), Type.Literal("Organization")]),
     site_admin: Type.Boolean(),
 });
-export type Sender = Static<typeof SenderSchema>;
 
 const RepositorySchema = Type.Object({});
-export type Repository = Static<typeof RepositorySchema>
 
-const OrganizationSchema = Type.Object({});
-export type Organization = Static<typeof OrganizationSchema>;
+const OrganizationSchema = Type.Object({
+    login: Type.String(),
+    id: Type.Number(),
+    node_id: Type.String(),
+    url: TURL,
+    repos_url: TURL,
+    events_url: TURL,
+    hooks_url: TURL,
+    issues_url: TURL,
+    members_url: TURL,
+    public_members_url: TURL,
+    avatar_url: TURL,
+    description: Type.String()
+});
 
-const InstallationSchema = Type.Object({});
-export type Installation = Static<typeof InstallationSchema>;
+
+const InstallationSchema = Type.Object({
+    id: Type.Number(),
+    node_id: Type.String()
+});
+
+export const PayloadSchema = Type.Object({
+    action: Type.String(),
+    sender: SenderSchema,
+    repository: RepositorySchema,
+    organization: OrganizationSchema,
+    installation: InstallationSchema,
+})
+
+export type Payload = Static<typeof PayloadSchema>;
