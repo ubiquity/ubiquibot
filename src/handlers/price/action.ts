@@ -18,7 +18,6 @@ const getTargetPriceLabel = (timeLabel: string | undefined, profitLabel: string 
   return targetPriceLabel;
 };
 
-
 export const pricingLabelLogic = async (): Promise<void> => {
   const { payload: _payload, log } = getBotContext();
   const payload = _payload as Payload;
@@ -40,10 +39,10 @@ export const pricingLabelLogic = async (): Promise<void> => {
 
   const targetPriceLabel = getTargetPriceLabel(minTimeLabel.name, minProfitLabel.name);
   if (targetPriceLabel) {
-    log.info( {labels, timeLabels, profitLabels, targetPriceLabel}, `Adding price label to issue`);
+    log.info({ labels, timeLabels, profitLabels, targetPriceLabel }, `Adding price label to issue`);
     await clearAllPriceLabelsOnIssue();
     await addLabelToIssue(targetPriceLabel);
   } else {
-    log.info({labels, timeLabels, profitLabels, targetPriceLabel}, `Skipping action...`)
+    log.info({ labels, timeLabels, profitLabels, targetPriceLabel }, `Skipping action...`);
   }
 };
