@@ -14,8 +14,8 @@
   "scripts": {
     "build:local": "tsc",
     "build:serverless": "ncc build src/index.ts -o dist",
-    "clean": "rimraf ./dist ./node_modules",
-    "start:serverless": "probot run ./lib/index.js",
+    "clean": "rimraf ./dist ./lib ./node_modules",
+    "start:serverless": "probot run ./dist/index.js",
     "start:local": "probot run ./lib/main.js",
     "start:local:watch": "nodemon --exec 'yarn start:local'",
     "prettier": "prettier --write src",
