@@ -1,5 +1,5 @@
 import { Context } from "probot";
-import { processors } from "../handlers/event";
+import { processors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
 import { PayloadSchema } from "../types";
 import { ajv } from "../utils";

@@ -1,4 +1,4 @@
-name: Calculate Bounty Based on Issue Labels
+name: Build and Test
 on:
   pull_request:
   push:
@@ -11,10 +11,10 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3.1.0
 
       - name: Setup Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: "18"
 

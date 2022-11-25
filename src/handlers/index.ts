@@ -1,3 +1,3 @@
-export * from "./event";
+export * from "./processors";
 export * from "./price";
 export * from "./shared";
