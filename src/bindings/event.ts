@@ -20,9 +20,9 @@ export const bindEvents = async (context: Context): Promise<void> => {
   botConfig = {
     price: {
       base: process.env.BASE_VALUE ? Number(process.env.BASE_VALUE) : DEFAULT_BASE_VALUE,
-    }
-  }
-  
+    },
+  };
+
   log.info(`Started binding events... id: ${id}, name: ${name}`);
 
   const validate = ajv.compile(PayloadSchema);
