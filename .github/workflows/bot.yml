@@ -27,7 +27,7 @@ jobs:
           private_key: ${{ secrets.UBIQUITY_BOUNTY_BOT_PRIVATE_KEY_DEV }}
 
       - name: Invoke the UbiquiBot
-        uses: ./dist # Uses an action in the root directory
+        uses: ./bin # Uses an action in the bin directory
         id: ubiquibot
         # [probot/adapter-github-actions] a token must be passed as `env.GITHUB_TOKEN` or `with.GITHUB_TOKEN` or `with.token`, see https://github.com/probot/adapter-github-actions#usage
         with:
