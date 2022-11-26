@@ -1,7 +1,22 @@
 import { Probot } from "probot";
+import { bindEvents } from "./bindings";
 import "source-map-support/register";
-import { callbackOnAny } from "./utils/callbackOnAny";
+// import { callbackOnAny } from "./utils/callbackOnAny";
+
 export default function main(app: Probot) {
+  console.log(`
+          ___                                                   ___                                         
+        /__/\         _____        ___           ___          /__/\        ___           ___         ___   
+        \  \:\       /  /::\      /  /\         /  /\         \  \:\      /  /\         /  /\       /__/|  
+          \  \:\     /  /:/\:\    /  /:/        /  /::\         \  \:\    /  /:/        /  /:/      |  |:|  
+      ___  \  \:\   /  /:/~/::\  /__/::\       /  /:/\:\    ___  \  \:\  /__/::\       /  /:/       |  |:|  
+    /__/\  \__\:\ /__/:/ /:/\:| \__\/\:\__   /  /:/~/::\  /__/\  \__\:\ \__\/\:\__   /  /::\     __|__|:|  
+    \  \:\ /  /:/ \  \:\/:/~/:/    \  \:\/\ /__/:/ /:/\:\ \  \:\ /  /:/    \  \:\/\ /__/:/\:\   /__/::::\  
+      \  \:\  /:/   \  \::/ /:/      \__\::/ \  \:\/:/__\/  \  \:\  /:/      \__\::/ \__\/  \:\     ~\~~\:\ 
+      \  \:\/:/     \  \:\/:/       /__/:/   \  \::/        \  \:\/:/       /__/:/       \  \:\      \  \:\
+        \  \::/       \  \::/        \__\/     \__\/          \  \::/        \__\/         \__\/       \__\/
+        \__\/         \__\/                                   \__\/                                        
+    `);
   // @ts-ignore-error
-  app.onAny(callbackOnAny);
+  app.onAny(bindEvents);
 }

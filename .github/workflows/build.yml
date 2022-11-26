@@ -1,0 +1,25 @@
+name: Build and Test
+on:
+  pull_request:
+  push:
+
+jobs:
+  install-and-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install
+        run: yarn install
+
+      - name: Build
+        run: yarn build:local && yarn build:serverless
