@@ -1,7 +1,7 @@
 import { Context } from "probot";
 import { processors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
-import { BotConfig, PayloadSchema } from "../types";
+import { BotConfig, Payload, PayloadSchema } from "../types";
 import { ajv } from "../utils";
 
 let BotContext: Context = {} as Context;
@@ -13,11 +13,10 @@ export const getBotConfig = () => botConfig;
 const DEFAULT_BASE_VALUE = 1000;
 
 export const bindEvents = async (context: Context): Promise<void> => {
-  const { payload, log, id, name } = context;
+  const { log, id, name } = context;
   BotContext = context;
-
+  const payload = context.payload as Payload;
   log.info("Loading config from .env...");
-  log.info(context);
   botConfig = {
     price: {
       base: process.env.BASE_VALUE ? Number(process.env.BASE_VALUE) : DEFAULT_BASE_VALUE,

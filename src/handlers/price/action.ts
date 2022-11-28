@@ -19,8 +19,9 @@ const getTargetPriceLabel = (timeLabel: string | undefined, profitLabel: string 
 };
 
 export const pricingLabelLogic = async (): Promise<void> => {
-  const { payload: _payload, log } = getBotContext();
-  const payload = _payload as Payload;
+  const context = getBotContext();
+  const { log } = context;
+  const payload = context.payload as Payload;
   const labels = payload.issue.labels;
 
   const timeLabels = labels
