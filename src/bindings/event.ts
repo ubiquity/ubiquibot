@@ -17,7 +17,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
   BotContext = context;
 
   log.info("Loading config from .env...");
-  log.info(context)
+  log.info(context);
   botConfig = {
     price: {
       base: process.env.BASE_VALUE ? Number(process.env.BASE_VALUE) : DEFAULT_BASE_VALUE,
