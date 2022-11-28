@@ -22,6 +22,7 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const context = getBotContext();
   const { log } = context;
   const payload = context.payload as Payload;
+  if (!payload.issue) return;
   const labels = payload.issue.labels;
 
   const timeLabels = labels

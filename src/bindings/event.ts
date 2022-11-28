@@ -29,7 +29,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
   const valid = validate(payload);
   if (!valid) {
     log.info("Payload schema validation failed!!!", payload);
-    log.error(validate.errors!);
+    log.warn(validate.errors!);
     return;
   }
   const { skip, reason } = shouldSkip();
@@ -40,7 +40,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   const handlers = processors[payload.action];
   if (!handlers) {
-    log.error(`No handler configured for action: ${payload.action}`);
+    log.warn(`No handler configured for action: ${payload.action}`);
     return;
   }
 
