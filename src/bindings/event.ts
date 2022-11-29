@@ -1,7 +1,7 @@
 import { Context } from "probot";
 import { processors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
-import { BotConfig, Payload, PayloadSchema} from "../types";
+import { BotConfig, Payload, PayloadSchema } from "../types";
 import { ajv } from "../utils";
 
 let BotContext: Context = {} as Context;

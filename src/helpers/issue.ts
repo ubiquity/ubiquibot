@@ -23,7 +23,7 @@ export async function addLabelToIssue(labelName: string) {
   const payload = context.payload as Payload;
 
   if (!payload.issue?.number) {
-    console.log({payload, issue: payload.issue});
+    console.log({ payload, issue: payload.issue });
   }
 
   await context.octokit.issues.addLabels({
