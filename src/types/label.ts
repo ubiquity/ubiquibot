@@ -7,7 +7,7 @@ export const LabelSchema = Type.Object({
   name: Type.String(),
   color: Type.String(),
   default: Type.Boolean(),
-  description: Type.String(),
+  description: Type.Any(),
 });
 
 export type Label = Static<typeof LabelSchema>;

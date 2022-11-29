@@ -1,7 +1,7 @@
 import { getBotContext } from "../bindings";
 import { Payload, UserType } from "../types";
 
-const contextNamesToSkip = ["issues", "issue_comment"];
+const contextNamesToSkip = ["workflow_run"];
 
 export const shouldSkip = (): { skip: boolean; reason: string } => {
   const context = getBotContext();

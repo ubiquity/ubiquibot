@@ -22,6 +22,10 @@ export async function addLabelToIssue(labelName: string) {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
+  if (!payload.issue?.number) {
+    console.log({payload, issue: payload.issue});
+  }
+
   await context.octokit.issues.addLabels({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,

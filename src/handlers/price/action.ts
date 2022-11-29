@@ -7,9 +7,9 @@ const getTargetPriceLabel = (timeLabel: string | undefined, profitLabel: string 
   let targetPriceLabel: string | undefined = undefined;
   if (!timeLabel && !profitLabel) return targetPriceLabel;
   if (!timeLabel) {
-    targetPriceLabel = TimeTargetLabels[profitLabel!];
+    targetPriceLabel = ProfitTargetLabels[profitLabel!];
   } else if (!profitLabel) {
-    targetPriceLabel = ProfitTargetLabels[timeLabel!];
+    targetPriceLabel = TimeTargetLabels[timeLabel!];
   } else {
     const bountyPrice = calculateBountyPrice(TimeLabelWeights[timeLabel], ProfitLabelWeights[profitLabel]);
     targetPriceLabel = `Price: ${bountyPrice} USDC`;
@@ -35,16 +35,18 @@ export const pricingLabelLogic = async (): Promise<void> => {
     .map((label) => {
       return { name: label.name, value: ProfitLabelWeights[label.name] };
     });
+  const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (a.value < b.value ? a : b)).name : undefined;
+  const minProfitLabel = profitLabels.length > 0 ? profitLabels.reduce((a, b) => (a.value < b.value ? a : b)).name : undefined;
+  console.log("> minTimeLabel: ", minTimeLabel);
+  console.log("> minProfitLabel: ", minProfitLabel);
 
-  const minTimeLabel = timeLabels.reduce((a, b) => (a.value < b.value ? a : b));
-  const minProfitLabel = profitLabels.reduce((a, b) => (a.value < b.value ? a : b));
-
-  const targetPriceLabel = getTargetPriceLabel(minTimeLabel.name, minProfitLabel.name);
+  const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minProfitLabel);
   if (targetPriceLabel) {
     log.info({ labels, timeLabels, profitLabels, targetPriceLabel }, `Adding price label to issue`);
     await clearAllPriceLabelsOnIssue();
     await addLabelToIssue(targetPriceLabel);
   } else {
+    await clearAllPriceLabelsOnIssue();
     log.info({ labels, timeLabels, profitLabels, targetPriceLabel }, `Skipping action...`);
   }
 };
