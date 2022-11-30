@@ -1,4 +1,5 @@
 import { getBotContext } from "../bindings";
+import { COLORS } from "../configs";
 import { Payload } from "../types";
 
 export const listLabelsForRepo = async (): Promise<string[]> => {
@@ -25,5 +26,6 @@ export const createLabel = async (name: string): Promise<void> => {
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     name,
+    color: COLORS.price
   });
 };

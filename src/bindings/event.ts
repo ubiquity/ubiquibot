@@ -20,7 +20,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   log.info(`Started binding events... id: ${id}, name: ${name}, action: ${payload.action}}`);
   if (!allowedActions.includes(payload.action)) {
-    log.info(`Skipping the event. reason: not configured`);
+    log.debug(`Skipping the event. reason: not configured`);
     return;
   }
 
