@@ -26,6 +26,6 @@ export const createLabel = async (name: string): Promise<void> => {
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     name,
-    color: COLORS.price
+    color: COLORS.price,
   });
 };

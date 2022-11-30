@@ -1,3 +1,3 @@
 export const COLORS = {
-    price: "#ededed"
-}
+  price: "ededed",
+};

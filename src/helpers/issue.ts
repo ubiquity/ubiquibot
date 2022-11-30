@@ -27,6 +27,5 @@ export const addLabelToIssue = async (labelName: string) => {
     repo: payload.repository.name,
     issue_number: payload.issue!.number,
     labels: [labelName],
-    // color: "00ff00",
   });
 };
