@@ -1,17 +1,20 @@
-import { getBotContext } from "../../bindings";
+import { getBotConfig, getBotContext } from "../../bindings";
 import { addLabelToIssue, clearAllPriceLabelsOnIssue } from "../../helpers";
-import { Payload, TimeLabelWeights, ProfitLabelWeights, TimeTargetLabels, ProfitTargetLabels } from "../../types";
+import { Payload } from "../../types";
 import { calculateBountyPrice } from "./calculate";
 
 const getTargetPriceLabel = (timeLabel: string | undefined, profitLabel: string | undefined): string | undefined => {
+  const botConfig = getBotConfig();
   let targetPriceLabel: string | undefined = undefined;
   if (!timeLabel && !profitLabel) return targetPriceLabel;
   if (!timeLabel) {
-    targetPriceLabel = ProfitTargetLabels[profitLabel!];
+    targetPriceLabel = botConfig.price.profitLabels.find((item) => item.name === profitLabel)?.target;
   } else if (!profitLabel) {
-    targetPriceLabel = TimeTargetLabels[timeLabel!];
+    targetPriceLabel = botConfig.price.timeLabels.find((item) => item.name === timeLabel)?.target;
   } else {
-    const bountyPrice = calculateBountyPrice(TimeLabelWeights[timeLabel], ProfitLabelWeights[profitLabel]);
+    const timeWeight = botConfig.price.timeLabels.find((item) => item.name === timeLabel)!.weight;
+    const profitWeight = botConfig.price.profitLabels.find((item) => item.name === profitLabel)!.weight;
+    const bountyPrice = calculateBountyPrice(timeWeight, profitWeight);
     targetPriceLabel = `Price: ${bountyPrice} USDC`;
   }
 
@@ -20,31 +23,28 @@ const getTargetPriceLabel = (timeLabel: string | undefined, profitLabel: string 
 
 export const pricingLabelLogic = async (): Promise<void> => {
   const context = getBotContext();
+  const config = getBotConfig();
   const { log } = context;
   const payload = context.payload as Payload;
   if (!payload.issue) return;
   const labels = payload.issue.labels;
 
-  const timeLabels = labels
-    .filter((label) => Object.keys(TimeLabelWeights).includes(label.name.toString()))
-    .map((label) => {
-      return { name: label.name, value: TimeLabelWeights[label.name] };
-    });
-  const profitLabels = labels
-    .filter((label) => Object.keys(ProfitLabelWeights).includes(label.name.toString()))
-    .map((label) => {
-      return { name: label.name, value: ProfitLabelWeights[label.name] };
-    });
-  const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (a.value < b.value ? a : b)).name : undefined;
-  const minProfitLabel = profitLabels.length > 0 ? profitLabels.reduce((a, b) => (a.value < b.value ? a : b)).name : undefined;
-  console.log("> minTimeLabel: ", minTimeLabel);
-  console.log("> minProfitLabel: ", minProfitLabel);
+  const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
+  const profitLabels = config.price.profitLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
+
+  const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : undefined;
+  const minProfitLabel = profitLabels.length > 0 ? profitLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : undefined;
 
   const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minProfitLabel);
   if (targetPriceLabel) {
-    log.info({ labels, timeLabels, profitLabels, targetPriceLabel }, `Adding price label to issue`);
-    await clearAllPriceLabelsOnIssue();
-    await addLabelToIssue(targetPriceLabel);
+    if (labels.map(i => i.name).includes(targetPriceLabel)) {
+      log.info({ labels, timeLabels, profitLabels, targetPriceLabel }, `Skipping... already exists`);
+
+    } else {
+      log.info({ labels, timeLabels, profitLabels, targetPriceLabel }, `Adding price label to issue`);
+      await clearAllPriceLabelsOnIssue();
+      await addLabelToIssue(targetPriceLabel);
+    }
   } else {
     await clearAllPriceLabelsOnIssue();
     log.info({ labels, timeLabels, profitLabels, targetPriceLabel }, `Skipping action...`);

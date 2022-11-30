@@ -1,15 +1,16 @@
 import { Action, Handler } from "../types";
 import { pricingLabelLogic } from "./price";
+import { validatePriceLabels } from "./price/pre";
 import { nullHandler } from "./shared";
 
 export const processors: Record<string, Handler> = {
   [Action.LABELED]: {
-    pre: [nullHandler],
+    pre: [validatePriceLabels],
     action: [pricingLabelLogic],
     post: [nullHandler],
   },
   [Action.UNLABELED]: {
-    pre: [nullHandler],
+    pre: [validatePriceLabels],
     action: [pricingLabelLogic],
     post: [nullHandler],
   },
