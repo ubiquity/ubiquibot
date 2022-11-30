@@ -23,3 +23,6 @@ jobs:
 
       - name: Build
         run: yarn build:local && yarn build:serverless
+
+      - name: Prettier
+        run: yarn prettier:check
