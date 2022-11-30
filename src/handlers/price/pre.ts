@@ -35,5 +35,6 @@ export const validatePriceLabels = async (): Promise<void> => {
   if (missingLabels.length > 0) {
     log.info(`Creating missing labels: ${missingLabels}`);
     await Promise.all(missingLabels.map((label) => createLabel(label)));
+    log.info(`Creating missing labels done`);
   }
 };
