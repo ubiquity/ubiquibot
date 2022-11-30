@@ -1,9 +1,20 @@
 import { Static, Type } from "@sinclair/typebox";
 
-export const ConfigSchema = Type.Object({
-  price: Type.Object({
-    base: Type.Number(),
-  }),
+const LabelItemSchema = Type.Object({
+  name: Type.String(),
+  weight: Type.Number(),
+  target: Type.String(),
 });
 
-export type BotConfig = Static<typeof ConfigSchema>;
+export const PriceConfigSchema = Type.Object({
+  baseMultiplier: Type.Number(),
+  timeLabels: Type.Array(LabelItemSchema),
+  profitLabels: Type.Array(LabelItemSchema),
+});
+export type PriceConfig = Static<typeof PriceConfigSchema>;
+
+export const BotConfigSchema = Type.Object({
+  price: PriceConfigSchema,
+});
+
+export type BotConfig = Static<typeof BotConfigSchema>;
