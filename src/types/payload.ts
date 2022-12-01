@@ -72,7 +72,7 @@ const IssueSchema = Type.Object({
   state: Type.String(),
   locked: Type.Boolean(),
   assignee: Type.Any(),
-  assignees: Type.Array(Type.String()),
+  assignees: Type.Array(Type.Any()),
   comments: Type.Number(),
   created_at: Type.String({ format: "date-time" }),
   updated_at: Type.String({ format: "date-time" }),
