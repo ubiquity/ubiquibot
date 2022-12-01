@@ -11,7 +11,6 @@ export type PayoutParams = {
 	token: string; // pass 0x00 to send ether
 	to: string;
   execute?: boolean;
-  account?: number;
   gwei?: number;
 }
 
@@ -25,9 +24,12 @@ export const payout = async (args: PayoutParams) => {
   const tokenAddress = ethers.utils.getAddress(args.token)
   const isEth = tokenAddress === ethers.constants.AddressZero
   const destinationAddress = ethers.utils.getAddress(args.to)
-  const mnemonic = process.env.MNEMONIC as string
+  const privateKey = process.env.PRIVATE_KEY as string
   const network = args.network || 1
-  const providerKey = providerKeyByChainId.get(network) as string
+  const providerKey = providerKeyByChainId.get(network)
+  if (!providerKey) {
+    throw new Error(`chainId not supported: ${network}`)
+  }
   const provider = new ethers.providers.AlchemyProvider(network, providerKey)
   const erc20 = new ethers.Contract(tokenAddress, ERC20, provider)
   const decimals = isEth ? 18 : await erc20.decimals()
@@ -36,9 +38,13 @@ export const payout = async (args: PayoutParams) => {
     ? ethers.BigNumber.from(args.amount)
     : ethers.utils.parseUnits(args.amount, decimals)
   const safeAddress = args.from
+  const currentBalance = await erc20.balanceOf(safeAddress) as ethers.BigNumber
+  if (!currentBalance.gt(0)) {
+    throw new Error(`safe balance of token too low: ERC20(${tokenAddress}).balanceOf(${safeAddress}) -> ${currentBalance.toString()}`)
+  }
 
   // create safe if it does not exist
-  const wallet = ethers.Wallet.fromMnemonic(mnemonic, `m/44'/60'/0'/0/${args.account || 0}`)
+  const wallet = new ethers.Wallet(privateKey)
   const signer = wallet.connect(provider)
   const ethAdapter = new EthersAdapter({ ethers, signer, })
   const safe = await Safe.create({ ethAdapter, safeAddress })
