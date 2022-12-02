@@ -37,9 +37,8 @@ export const pricingLabelLogic = async (): Promise<void> => {
 
   const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minProfitLabel);
   if (targetPriceLabel) {
-    if (labels.map(i => i.name).includes(targetPriceLabel)) {
+    if (labels.map((i) => i.name).includes(targetPriceLabel)) {
       log.info({ labels, timeLabels, profitLabels, targetPriceLabel }, `Skipping... already exists`);
-
     } else {
       log.info({ labels, timeLabels, profitLabels, targetPriceLabel }, `Adding price label to issue`);
       await clearAllPriceLabelsOnIssue();
