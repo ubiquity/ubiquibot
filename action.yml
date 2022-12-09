@@ -1,0 +1,5 @@
+name: 'Bounty Bot'
+description: 'This bot facilitates the Ubiquity Bounty System.'
+runs:
+  using: 'node18'
+  main: 'bin/index.js'
