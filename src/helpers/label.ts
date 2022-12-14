@@ -1,4 +1,4 @@
-import {  getBotContext } from "../bindings";
+import { getBotContext } from "../bindings";
 import { COLORS } from "../configs";
 import { Payload } from "../types";
 
@@ -28,9 +28,7 @@ export const createLabel = async (name: string): Promise<void> => {
       name,
       color: COLORS.price,
     });
-  
   } catch (err: unknown) {
     context.log.debug(`Error creating a label: ${name}. Is it already there?`);
   }
-
 };
