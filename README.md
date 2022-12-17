@@ -10,6 +10,7 @@ This bot facilitates the Ubiquity Bounty System.
 ## Development
 
 The best way to start is by opening two terminal instances.
+
 - In one instance, run `tsc --watch`
 - In the other instance, run `yarn start:local:watch`
 - This will compile the TypeScript code and run the bot locally.

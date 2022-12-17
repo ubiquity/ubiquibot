@@ -1,6 +1,11 @@
 {
-    "cSpell.words": [
-        "Probot",
-        "ubiquibotted"
-    ]
+  "files.exclude": {
+    ".DS_Store": true,
+    ".husky": true,
+    "**/.git/": true,
+    "dist": true,
+    "node_modules": true
+  },
+  "explorer.excludeGitIgnore": true,
+  "cSpell.words": ["Probot", "Ubiqui"]
 }
