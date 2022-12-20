@@ -15,7 +15,7 @@ const getTargetPriceLabel = (timeLabel: string | undefined, profitLabel: string 
     const timeWeight = botConfig.price.timeLabels.find((item) => item.name === timeLabel)!.weight;
     const profitWeight = botConfig.price.profitLabels.find((item) => item.name === profitLabel)!.weight;
     const bountyPrice = calculateBountyPrice(timeWeight, profitWeight);
-    targetPriceLabel = `Price: ${bountyPrice} USDC`;
+    targetPriceLabel = `Price: ${bountyPrice} USD`;
   }
 
   return targetPriceLabel;

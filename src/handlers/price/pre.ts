@@ -17,7 +17,7 @@ export const validatePriceLabels = async (): Promise<void> => {
   for (const timeLabel of config.price.timeLabels) {
     for (const profitLabel of config.price.profitLabels) {
       const targetPrice = calculateBountyPrice(timeLabel.weight, profitLabel.weight, config.price.baseMultiplier);
-      const targetPriceLabel = `Price: ${targetPrice} USDC`;
+      const targetPriceLabel = `Price: ${targetPrice} USD`;
       aiLabels.push(targetPriceLabel);
     }
   }

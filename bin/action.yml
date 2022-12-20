@@ -1,8 +1,5 @@
 name: Bounty Bot
 description: "Ubiquity bot built with Probot"
-branding:
-  icon: "gift"
-  color: orange
 runs:
   using: "node16"
   main: "index.js"
