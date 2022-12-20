@@ -1,8 +1,7 @@
 {
   "name": "ubiquibot",
   "version": "0.0.2",
-  "private": true,
-  "description": "A Probot app",
+  "description": "Enables Ubiquity DevPool support in your repo.",
   "author": "Ubiquity DAO",
   "license": "ISC",
   "homepage": "https://github.com/ubiquity/bounty-bot.git",
