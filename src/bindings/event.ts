@@ -24,9 +24,11 @@ export const bindEvents = async (context: Context): Promise<void> => {
     return;
   }
 
+  // Load config
   log.info("Loading config from .env...");
   botConfig = await loadConfig();
 
+  // Validate payload
   const validate = ajv.compile(PayloadSchema);
   const valid = validate(payload);
   if (!valid) {
@@ -35,12 +37,14 @@ export const bindEvents = async (context: Context): Promise<void> => {
     return;
   }
 
+  // Check if we should skip the event
   const { skip, reason } = shouldSkip();
   if (skip) {
     log.info(`Skipping the event. reason: ${reason}`);
     return;
   }
 
+  // Get the handlers for the action
   const handlers = processors[payload.action];
   if (!handlers) {
     log.warn(`No handler configured for action: ${payload.action}`);
