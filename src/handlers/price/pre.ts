@@ -9,7 +9,7 @@ import { calculateBountyPrice } from "./calculate";
 export const validatePriceLabels = async (): Promise<void> => {
   const config = getBotConfig();
   const { log } = getBotContext();
-  const timelabels = config.price.timeLabels.map((i) => i.name);
+  const timeLabels = config.price.timeLabels.map((i) => i.name);
   const profitLabels = config.price.profitLabels.map((i) => i.name);
   const targetLabels1 = config.price.timeLabels.map((i) => i.target);
   const targetLabels2 = config.price.profitLabels.map((i) => i.target);
@@ -22,7 +22,7 @@ export const validatePriceLabels = async (): Promise<void> => {
     }
   }
 
-  const neededLabels: string[] = [...timelabels, ...profitLabels, ...targetLabels1, ...targetLabels2, ...aiLabels];
+  const neededLabels: string[] = [...timeLabels, ...profitLabels, ...targetLabels1, ...targetLabels2, ...aiLabels];
   log.debug("Got needed labels for setting up price", neededLabels);
 
   // List all the labels for a repository

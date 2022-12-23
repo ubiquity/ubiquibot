@@ -4,9 +4,6 @@ on:
     types:
       - labeled
       - unlabeled
-  schedule:
-    - cron: "*/1 * * * *"
-
 
 jobs:
   calculate_bounty_job:
@@ -25,6 +22,6 @@ jobs:
           private_key: ${{ secrets.UBIQUITY_BOUNTY_BOT_PRIVATE_KEY }}
 
       - name: Ubiquity Bounty Bot
-        uses: ubiquity/bounty-bot@v0.0.1-beta3
+        uses: ubiquity/bounty-bot@v0.0.2
         with:
           GITHUB_TOKEN: ${{ steps.get_installation_token.outputs.token }}

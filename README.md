@@ -16,3 +16,5 @@ The best way to start is by opening two terminal instances.
 - This will compile the TypeScript code and run the bot locally.
 
 At this point you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react.
+
+![ubiquibot-pfp-1](https://user-images.githubusercontent.com/4975670/208798502-0ac27adc-ab19-4148-82b8-8538040cf3b6.png)

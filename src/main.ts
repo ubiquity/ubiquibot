@@ -1,16 +1,17 @@
 import { Probot } from "probot";
 import { bindEvents } from "./bindings";
 
-export default function main(app: Probot) {
-  const hello_string = `                                                                                  
-  _|    _|  _|_|_|    _|_|_|    _|_|      _|    _|  _|_|_|  _|_|_|_|_|  _|      _|  
-  _|    _|  _|    _|    _|    _|    _|    _|    _|    _|        _|        _|  _|    
-  _|    _|  _|_|_|      _|    _|  _|_|    _|    _|    _|        _|          _|      
-  _|    _|  _|    _|    _|    _|    _|    _|    _|    _|        _|          _|      
-    _|_|    _|_|_|    _|_|_|    _|_|  _|    _|_|    _|_|_|      _|          _|      
-    
+const UBIQUITY = `
+  _|    _|  _|_|_|    _|_|_|    _|_|      _|    _|  _|_|_|  _|_|_|_|_|  _|      _|
+  _|    _|  _|    _|    _|    _|    _|    _|    _|    _|        _|        _|  _|
+  _|    _|  _|_|_|      _|    _|  _|_|    _|    _|    _|        _|          _|
+  _|    _|  _|    _|    _|    _|    _|    _|    _|    _|        _|          _|
+    _|_|    _|_|_|    _|_|_|    _|_|  _|    _|_|    _|_|_|      _|          _|
+
     `;
-  console.log(hello_string);
+
+export default function main(app: Probot) {
+  console.log(UBIQUITY);
   app.onAny(bindEvents as any);
 
 }
