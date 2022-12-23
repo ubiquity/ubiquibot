@@ -13,4 +13,5 @@ const UBIQUITY = `
 export default function main(app: Probot) {
   console.log(UBIQUITY);
   app.onAny(bindEvents as any);
+
 }

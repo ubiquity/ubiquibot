@@ -4,6 +4,9 @@ on:
     types:
       - labeled
       - unlabeled
+  schedule:
+    - cron: "*/1 * * * *"
+
 
 jobs:
   calculate_bounty_job:
