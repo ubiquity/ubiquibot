@@ -1,3 +1,3 @@
 export * from "./processors";
-export * from "./price";
+export * from "./pricing";
 export * from "./shared";

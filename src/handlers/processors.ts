@@ -1,6 +1,6 @@
 import { Action, Handler } from "../types";
-import { pricingLabelLogic } from "./price";
-import { validatePriceLabels } from "./price/pre";
+import { pricingLabelLogic } from "./pricing";
+import { validatePriceLabels } from "./pricing/pre";
 import { nullHandler } from "./shared";
 
 export const processors: Record<string, Handler> = {
@@ -14,4 +14,9 @@ export const processors: Record<string, Handler> = {
     action: [pricingLabelLogic],
     post: [nullHandler],
   },
+  [Action.SCHEDULE]: {
+    pre: [nullHandler],
+    action: [nullHandler],
+    post: [nullHandler],
+  }
 };

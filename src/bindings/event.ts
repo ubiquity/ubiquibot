@@ -44,27 +44,29 @@ export const bindEvents = async (context: Context): Promise<void> => {
     return;
   }
 
+  const actionName = payload.action ?? name;
+
   // Get the handlers for the action
-  const handlers = processors[payload.action];
+  const handlers = processors[actionName];
   if (!handlers) {
-    log.warn(`No handler configured for action: ${payload.action}`);
+    log.warn(`No handler configured for action: ${actionName}`);
     return;
   }
 
   const { pre, action, post } = handlers;
   // Run pre-handlers
-  log.info(`Running pre handlers: ${pre.map((fn) => fn.name)}, action: ${payload.action}`);
+  log.info(`Running pre handlers: ${pre.map((fn) => fn.name)}, action: ${actionName}`);
   for (const preAction of pre) {
     await preAction();
   }
   // Run main handlers
-  log.info(`Running main handlers: ${action.map((fn) => fn.name)}, action: ${payload.action}`);
+  log.info(`Running main handlers: ${action.map((fn) => fn.name)}, action: ${actionName}`);
   for (const mainAction of action) {
     await mainAction();
   }
 
   // Run post-handlers
-  log.info(`Running post handlers: ${post.map((fn) => fn.name)}, action: ${payload.action}`);
+  log.info(`Running post handlers: ${post.map((fn) => fn.name)}, action: ${actionName}`);
   for (const postAction of post) {
     await postAction();
   }
