@@ -12,4 +12,5 @@ export default function main(app: Probot) {
     `;
   console.log(hello_string);
   app.onAny(bindEvents as any);
+
 }
