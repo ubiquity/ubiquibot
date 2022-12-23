@@ -18,5 +18,5 @@ export const processors: Record<string, Handler> = {
     pre: [nullHandler],
     action: [nullHandler],
     post: [nullHandler],
-  }
+  },
 };
