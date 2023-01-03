@@ -32,7 +32,7 @@
     "nodemon": "^2.0.19",
     "prettier": "^2.7.1",
     "probot": "^12.2.4",
-    "telegraf": "^4.11.2"
+    "telegraf": "^4.11.2",
     "twit": "^2.2.11"
   },
   "devDependencies": {
