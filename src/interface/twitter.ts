@@ -1,11 +1,11 @@
 import Twit from "twit";
-import { TW_API_KEY, TW_API_KET_SECRET, TW_ACCESS_TOKEN, TW_ACCESS_TOKEN_SECRET } from "../configs/twitterauth";
+import { TWITTER_API_KEY, TWITTER_API_KET_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET } from "../configs/twitterauth";
 
 const T = new Twit({
-  consumer_key: TW_API_KEY,
-  consumer_secret: TW_API_KET_SECRET,
-  access_token: TW_ACCESS_TOKEN,
-  access_token_secret: TW_ACCESS_TOKEN_SECRET,
+  consumer_key: TWITTER_API_KEY,
+  consumer_secret: TWITTER_API_KET_SECRET,
+  access_token: TWITTER_ACCESS_TOKEN,
+  access_token_secret: TWITTER_ACCESS_TOKEN_SECRET,
   timeout_ms: 60 * 1000,
   strictSSL: true,
 });
