@@ -42,8 +42,18 @@ export const DefaultPriceConfig: PriceConfig = {
     },
     {
       name: "Priority: 3 (High)",
+      weight: 15,
+      target: "Price: 1500-6000 USD",
+    },
+    {
+      name: "Priority: 4 (Urgent)",
       weight: 20,
       target: "Price: 2000-8000 USD",
+    },
+    {
+      name: "Priority: 5 (Emergency)",
+      weight: 25,
+      target: "Price: 2500-10000 USD",
     },
   ],
 };
