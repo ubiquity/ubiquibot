@@ -10,19 +10,19 @@ export const validatePriceLabels = async (): Promise<void> => {
   const config = getBotConfig();
   const { log } = getBotContext();
   const timeLabels = config.price.timeLabels.map((i) => i.name);
-  const profitLabels = config.price.profitLabels.map((i) => i.name);
+  const priorityLabels = config.price.priorityLabels.map((i) => i.name);
   const targetLabels1 = config.price.timeLabels.map((i) => i.target);
-  const targetLabels2 = config.price.profitLabels.map((i) => i.target);
+  const targetLabels2 = config.price.priorityLabels.map((i) => i.target);
   const aiLabels: string[] = [];
   for (const timeLabel of config.price.timeLabels) {
-    for (const profitLabel of config.price.profitLabels) {
-      const targetPrice = calculateBountyPrice(timeLabel.weight, profitLabel.weight, config.price.baseMultiplier);
+    for (const priorityLabel of config.price.priorityLabels) {
+      const targetPrice = calculateBountyPrice(timeLabel.weight, priorityLabel.weight, config.price.baseMultiplier);
       const targetPriceLabel = `Price: ${targetPrice} USD`;
       aiLabels.push(targetPriceLabel);
     }
   }
 
-  const neededLabels: string[] = [...timeLabels, ...profitLabels, ...targetLabels1, ...targetLabels2, ...aiLabels];
+  const neededLabels: string[] = [...timeLabels, ...priorityLabels, ...targetLabels1, ...targetLabels2, ...aiLabels];
   log.debug("Got needed labels for setting up price", neededLabels);
 
   // List all the labels for a repository
