@@ -9,7 +9,7 @@ const LabelItemSchema = Type.Object({
 export const PriceConfigSchema = Type.Object({
   baseMultiplier: Type.Number(),
   timeLabels: Type.Array(LabelItemSchema),
-  profitLabels: Type.Array(LabelItemSchema),
+  priorityLabels: Type.Array(LabelItemSchema),
 });
 export type PriceConfig = Static<typeof PriceConfigSchema>;
 
