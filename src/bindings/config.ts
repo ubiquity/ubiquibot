@@ -15,7 +15,7 @@ export const loadConfig = async (): Promise<BotConfig> => {
     price: {
       baseMultiplier: process.env.BASE_MULTIPLIER ? Number(process.env.BASE_MULTIPLIER) : configFile.baseMultiplier ?? DefaultPriceConfig.baseMultiplier,
       timeLabels: configFile.timeLabels ?? DefaultPriceConfig.timeLabels,
-      profitLabels: configFile.profitLabels ?? DefaultPriceConfig.profitLabels,
+      priorityLabels: configFile.priorityLabels ?? DefaultPriceConfig.priorityLabels,
     },
   };
 
