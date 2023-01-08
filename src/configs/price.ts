@@ -6,21 +6,25 @@ export const DefaultPriceConfig: PriceConfig = {
     {
       name: "Time: <1 Day",
       weight: 1,
+      value: 3600 * 24,
       target: "Price: 100-1000 USD",
     },
     {
       name: "Time: <1 Week",
       weight: 2,
+      value: 3600 * 24 * 7,
       target: "Price: 200-2000 USD",
     },
     {
       name: "Time: <2 Weeks",
       weight: 3,
+      value: 3600 * 24 * 14,
       target: "Price: 300-3000 USD",
     },
     {
       name: "Time: <1 Month",
       weight: 4,
+      value: 3600 * 24 * 30,
       target: "Price: 400-4000 USD",
     },
   ],

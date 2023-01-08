@@ -1,13 +1,14 @@
 import { Action, Handler } from "../types";
-import { pricingLabelLogic } from "./pricing";
-import { validatePriceLabels } from "./pricing/pre";
+import { commentWithAssignMessage } from "./assign";
+import { pricingLabelLogic, validatePriceLabels } from "./pricing";
+import { checkBountiesToUnassign } from "./schedule";
 import { nullHandler } from "./shared";
 
 export const processors: Record<string, Handler> = {
   [Action.LABELED]: {
     pre: [validatePriceLabels],
     action: [pricingLabelLogic],
-    post: [nullHandler],
+    post: [checkBountiesToUnassign],
   },
   [Action.UNLABELED]: {
     pre: [validatePriceLabels],
@@ -19,4 +20,9 @@ export const processors: Record<string, Handler> = {
     action: [nullHandler],
     post: [nullHandler],
   },
+  [Action.ASSIGNED]: {
+    pre: [nullHandler],
+    action: [commentWithAssignMessage],
+    post: [nullHandler],
+  },  
 };

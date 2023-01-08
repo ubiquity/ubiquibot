@@ -29,3 +29,36 @@ export const addLabelToIssue = async (labelName: string) => {
     labels: [labelName],
   });
 };
+
+export const listIssuesForRepo = async () => {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
+
+  const response = await context.octokit.issues.listForRepo({
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+  });
+
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return [];
+  }
+};
+
+export const addCommentToIssue = async (msg: string) => {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
+
+  
+  try {
+    await context.octokit.issues.createComment({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: payload.issue!.number,
+      body: msg,
+    });
+  } catch (e: unknown) {
+    context.log.debug(`Adding a comment failed!, reason: ${e}`);
+  }
+};

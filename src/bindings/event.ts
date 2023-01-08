@@ -11,7 +11,7 @@ export const getBotContext = () => botContext;
 let botConfig: BotConfig = {} as BotConfig;
 export const getBotConfig = () => botConfig;
 
-const allowedActions = ["labeled", "unlabeled"];
+const allowedActions = ["labeled", "unlabeled", "assigned"];
 
 export const bindEvents = async (context: Context): Promise<void> => {
   const { log, id, name } = context;
