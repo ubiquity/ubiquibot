@@ -8,7 +8,7 @@ export const processors: Record<string, Handler> = {
   [Action.LABELED]: {
     pre: [validatePriceLabels],
     action: [pricingLabelLogic],
-    post: [checkBountiesToUnassign],
+    post: [nullHandler],
   },
   [Action.UNLABELED]: {
     pre: [validatePriceLabels],
@@ -17,12 +17,12 @@ export const processors: Record<string, Handler> = {
   },
   [Action.SCHEDULE]: {
     pre: [nullHandler],
-    action: [nullHandler],
+    action: [checkBountiesToUnassign],
     post: [nullHandler],
   },
   [Action.ASSIGNED]: {
     pre: [nullHandler],
     action: [commentWithAssignMessage],
     post: [nullHandler],
-  },  
+  },
 };

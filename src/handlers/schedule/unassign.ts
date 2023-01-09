@@ -1,6 +1,7 @@
 import { getBotContext } from "../../bindings";
-import { listIssuesForRepo } from "../../helpers";
-// import { LabelItem } from "../../types";
+import { BountyAccount } from "../../configs";
+import { addAssignees, addCommentToIssue, getCommentsOfIssue, listIssuesForRepo, removeAssignees } from "../../helpers";
+import { deadLinePrefix } from "../shared";
 
 /**
  * @dev Check out the bounties which haven't been completed within the initial timeline
@@ -8,50 +9,59 @@ import { listIssuesForRepo } from "../../helpers";
  */
 export const checkBountiesToUnassign = async () => {
   const context = getBotContext();
-  // const botConfig = getBotConfig();
   const { log } = context;
   log.info(`Getting all the issues...`);
-  // const timeLabelsDefined = botConfig.price.timeLabels;
 
   // List all the issues in the repository. It may include `pull_request`
   // because GitHub's REST API v3 considers every pull request an issue
   const issues_opened = await listIssuesForRepo();
 
-  const assigned_issues = issues_opened.filter((issue) => issue.assignee).filter((issue) => issue.title === "Test issue");
-  // for (const active_issue of assigned_issues) {
-  //     const labels = active_issue.labels;
+  console.log("Getting issues done!");
+  const assigned_issues = issues_opened.filter((issue) => issue.assignee);
+  console.log("Getting assigned issues done!");
 
-  //     // get the time label from the `labels`
-  //     const timeLabelsAssigned: LabelItem[] = [];
-  //     for (const _label of labels) {
-  //         const _label_type = typeof _label;
-  //         const _label_name = _label_type === "string" ? _label.toString() : _label_type === "object" ? JSON.parse(_label.toString()).name : "unknown";
+  // Checking the bounties in parallel
+  const res = await Promise.all(assigned_issues.map((issue) => checkBountyToUnassign(issue)));
+  log.info("Checking expired bounties done!", { total: res.length, unassigned: res.filter((i) => i).length });
+};
 
-  //         const timeLabel = timeLabelsDefined.find((item) => item.name === _label_name);
-  //         if (timeLabel) {
-  //             timeLabelsAssigned.push(timeLabel);
-  //         }
-  //     }
+const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
+  const context = getBotContext();
+  const { log } = context;
+  const comments = await getCommentsOfIssue(issue.number);
+  if (!comments) return false;
+  const timeline_comments = comments.filter((comment: any) => comment.body.includes(deadLinePrefix));
 
-  //     if (timeLabelsAssigned.length == 0) continue;
+  const timelines = timeline_comments.map((timeline_comment: any) => getEndTimeFromComment(timeline_comment.body as string)).filter((i: number) => i > 0);
+  if (timelines.length === 0) return false;
 
-  //     const sorted = timeLabelsAssigned.sort((a, b) => a.weight - b.weight);
-  //     const targetTimeLabel = sorted[0];
-  //     const timeLineOfIssue = targetTimeLabel.value;
-  //     if (timeLineOfIssue) {
-  //         const created_at = new Date(active_issue.created_at);
-  //         const curTime = new Date();
-  //         if (curTime.getTime() > created_at.getTime() + timeLineOfIssue * 1000) {
-  //             log.info(`Unassigning the issue due to the assigned duration ends`, {issue: active_issue.title, created_at: active_issue.created_at})
-  //         }
+  const sorted = timelines.sort((a: number, b: number) => b - a);
+  const deadLineOfIssue = sorted[0];
+  const curTimestamp = new Date().getTime();
 
-  //     } else {
-  //         log.info(`Time value is missing for ${targetTimeLabel.name}. Please check it out to make ${checkBountiesToUnassign.name} feature working`);
-  //     }
+  if (curTimestamp > deadLineOfIssue) {
+    log.debug(`Releasing the bounty back to dev pool because the allocated duration already ended`, { deadLineOfIssue, curTimestamp });
+    await addCommentToIssue(`Releasing the bounty back to dev pool because the allocated duration already ended`);
 
-  // }
-  console.log("> issues_opened...");
-  // console.log(assigned_issues.map(i => i.assignee));
-  console.log(assigned_issues);
-  console.log("> issues_opened... end");
+    // remove assignees from the issue
+    const assignees = issue.assignees.map((i: any) => i.login);
+    await removeAssignees(issue.number, assignees);
+
+    // assign default bounty account to the issue
+    await addAssignees(issue.number, [BountyAccount]);
+
+    return true;
+  }
+
+  return false;
+};
+
+const getEndTimeFromComment = (body: string): number => {
+  const expression = new RegExp(`${deadLinePrefix} (.+)`, "gm");
+  const regRes = body.match(expression);
+  if (!regRes) return 0;
+
+  const datetime_string = regRes[0].split(`${deadLinePrefix} `)[1];
+  const endDate = new Date(datetime_string);
+  return endDate.getTime();
 };

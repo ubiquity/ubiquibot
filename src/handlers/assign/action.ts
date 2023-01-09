@@ -1,25 +1,27 @@
 import { getBotConfig, getBotContext } from "../../bindings";
+import { BountyAccount } from "../../configs";
 import { addCommentToIssue } from "../../helpers";
 import { Payload, LabelItem } from "../../types";
+import { deadLinePrefix } from "../shared";
 
-const exclude_accounts = ["ubiquity-bounties"];
+const exclude_accounts = [BountyAccount];
 export const commentWithAssignMessage = async (): Promise<void> => {
   const context = getBotContext();
   const config = getBotConfig();
   const { log } = context;
   const payload = context.payload as Payload;
-  
+
   log.info(`Commenting timeline message for issue: ${payload.issue?.number}`);
-  
+
   const _assignees = payload.issue?.assignees;
-  const assignees = _assignees ? _assignees?.filter(i => !exclude_accounts.includes(i.login)) : [];
+  const assignees = _assignees ? _assignees?.filter((i) => !exclude_accounts.includes(i.login)) : [];
   const existAssignees = assignees && assignees.length > 0;
   if (!existAssignees) {
     log.debug(`No assignees for comment`);
     return;
   }
 
-  const flattened_assignees = assignees.reduce((acc, cur) => `${acc} @${cur.login}`, "");
+  const flattened_assignees = assignees.reduce((acc, cur) => `${acc}@${cur.login}`, "");
 
   // get the time label from the `labels`
   const labels = payload.issue?.labels;
@@ -55,9 +57,8 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   const curDate = new Date();
   const curDateInMillisecs = curDate.getTime();
   const endDate = new Date(curDateInMillisecs + duration * 1000);
-  const commit_msg = `${flattened_assignees} You have until ${endDate.toDateString()} to complete this bounty`;
-  log.debug(`Creating an issue comment`, { commit_msg});
+  const commit_msg = `${flattened_assignees} ${deadLinePrefix} ${endDate.toLocaleDateString("en-us")}`;
+  log.debug(`Creating an issue comment`, { commit_msg });
 
   await addCommentToIssue(commit_msg);
-
 };
