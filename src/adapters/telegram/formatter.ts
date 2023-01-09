@@ -1,6 +1,6 @@
 import { Telegraf } from "telegraf";
-import { TL_BOT_TOKEN, TL_BOT_DELAY } from "../configs/blob";
-import { TLMessageFormattedPayload, TLMessagePayload } from "../types/static";
+import { TL_BOT_TOKEN, TL_BOT_DELAY } from "../../configs/blob";
+import { TLMessageFormattedPayload, TLMessagePayload } from "../../types/static";
 
 const bot = new Telegraf(TL_BOT_TOKEN);
 

@@ -1,5 +1,5 @@
-import { TL_DEF_CHAT_IDS } from "../configs/blob";
-import { telegramFormattedNotifier, telegramNotifier } from "../interface/telegram";
+import { TL_DEF_CHAT_IDS } from "../../configs/blob";
+import { telegramFormattedNotifier, telegramNotifier } from "./formatter";
 
 /**@method telegramNotifier - call unformatted issue */
 telegramNotifier({
