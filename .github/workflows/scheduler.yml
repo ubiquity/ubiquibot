@@ -1,7 +1,7 @@
 name: Run a bot at a regular interval
 on:
   schedule:
-    - cron: '*/1 * * * *'
+    - cron: '* * */1 * *'
 
 jobs:
   regular_actions:
