@@ -31,7 +31,8 @@
     "husky": "^8.0.2",
     "nodemon": "^2.0.19",
     "prettier": "^2.7.1",
-    "probot": "^12.2.4"
+    "probot": "^12.2.4",
+    "telegraf": "^4.11.2"
   },
   "devDependencies": {
     "@types/jest": "^28.1.0",
