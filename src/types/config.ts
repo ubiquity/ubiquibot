@@ -3,8 +3,10 @@ import { Static, Type } from "@sinclair/typebox";
 const LabelItemSchema = Type.Object({
   name: Type.String(),
   weight: Type.Number(),
+  value: Type.Optional(Type.Number()),
   target: Type.String(),
 });
+export type LabelItem = Static<typeof LabelItemSchema>;
 
 export const PriceConfigSchema = Type.Object({
   baseMultiplier: Type.Number(),

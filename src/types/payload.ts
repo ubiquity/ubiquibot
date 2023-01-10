@@ -27,6 +27,8 @@ export enum Action {
   UNLABELED = "unlabeled",
   UNLOCKED = "unlocked",
   UNPINNED = "unpinned",
+
+  SCHEDULE = "schedule",
 }
 
 export enum UserType {
