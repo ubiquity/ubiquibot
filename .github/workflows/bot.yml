@@ -4,6 +4,7 @@ on:
     types:
       - labeled
       - unlabeled
+      - assigned
 
 jobs:
   calculate_bounty_job:
