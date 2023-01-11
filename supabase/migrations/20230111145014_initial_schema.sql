@@ -40,6 +40,9 @@ CREATE TABLE issues (
     price integer,
     txhash text[],
     recipient character(42),
+    started_at integer,
+    completed_at integer,
+    closed_at integer,
     created_at integer,
-    updated_at integer,
+    updated_at integer
 );
