@@ -32,12 +32,14 @@
     "nodemon": "^2.0.19",
     "prettier": "^2.7.1",
     "probot": "^12.2.4",
-    "telegraf": "^4.11.2"
+    "telegraf": "^4.11.2",
+    "twit": "^2.2.11"
   },
   "devDependencies": {
     "@types/jest": "^28.1.0",
     "@types/node": "^18.0.0",
     "@types/source-map-support": "^0.5.6",
+    "@types/twit": "^2.2.31",
     "jest": "^26.6.3",
     "nock": "^13.0.5",
     "rimraf": "3.0.2",
