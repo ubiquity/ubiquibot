@@ -13,10 +13,17 @@ export const PriceConfigSchema = Type.Object({
   timeLabels: Type.Array(LabelItemSchema),
   priorityLabels: Type.Array(LabelItemSchema),
 });
+
+export const SupabaseConfigSchema = Type.Object({
+  url: Type.String(),
+  key: Type.String(),
+});
+
 export type PriceConfig = Static<typeof PriceConfigSchema>;
 
 export const BotConfigSchema = Type.Object({
   price: PriceConfigSchema,
+  supabase: SupabaseConfigSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;

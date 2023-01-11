@@ -17,6 +17,10 @@ export const loadConfig = async (): Promise<BotConfig> => {
       timeLabels: configFile.timeLabels ?? DefaultPriceConfig.timeLabels,
       priorityLabels: configFile.priorityLabels ?? DefaultPriceConfig.priorityLabels,
     },
+    supabase: {
+      url: process.env.SUPABASE_PROJECT_URL ?? "",
+      key: process.env.SUPABASE_PROJECT_KEY ?? "",
+    }
   };
 
   const validate = ajv.compile(BotConfigSchema);
