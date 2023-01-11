@@ -4,7 +4,7 @@ import { supabase } from "./supabase/client";
 export * from "./telegram";
 
 export const createAdapters = (config: BotConfig): Adapters => {
-    return {
-        supabase : supabase(config.supabase.url, config.supabase.key),
-    }
-}
+  return {
+    supabase: supabase(config.supabase.url, config.supabase.key),
+  };
+};

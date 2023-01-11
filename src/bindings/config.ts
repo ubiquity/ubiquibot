@@ -20,7 +20,7 @@ export const loadConfig = async (): Promise<BotConfig> => {
     supabase: {
       url: process.env.SUPABASE_PROJECT_URL ?? "",
       key: process.env.SUPABASE_PROJECT_KEY ?? "",
-    }
+    },
   };
 
   const validate = ajv.compile(BotConfigSchema);
