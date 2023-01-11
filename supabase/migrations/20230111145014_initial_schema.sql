@@ -30,8 +30,8 @@ CREATE TABLE users (
 CREATE TABLE issues (
     issue_number integer NOT NULL,
     issue_url text NOT NULL,
-    comments_url integer NOT NULL,
-    events_url integer NOT NULL,
+    comments_url text NOT NULL,
+    events_url text NOT NULL,
     labels text[],
     assignees text[],
     status issue_status DEFAULT 'READY_TO_START'::issue_status NOT NULL,
@@ -42,4 +42,4 @@ CREATE TABLE issues (
     recipient character(42),
     created_at integer,
     updated_at integer,
-)
+);
