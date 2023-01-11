@@ -1,7 +1,7 @@
 import { Action, Handler } from "../types";
 import { commentWithAssignMessage } from "./assign";
 import { pricingLabelLogic, validatePriceLabels } from "./pricing";
-import { checkBountiesToUnassign } from "./schedule";
+import { checkBountiesToUnassign, collectHunters, collectIssues } from "./schedule";
 import { nullHandler } from "./shared";
 
 export const processors: Record<string, Handler> = {
@@ -17,7 +17,7 @@ export const processors: Record<string, Handler> = {
   },
   [Action.SCHEDULE]: {
     pre: [nullHandler],
-    action: [checkBountiesToUnassign],
+    action: [checkBountiesToUnassign, collectHunters, collectIssues],
     post: [nullHandler],
   },
   [Action.ASSIGNED]: {

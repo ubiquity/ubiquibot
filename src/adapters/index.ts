@@ -1,6 +1,6 @@
 import { BotConfig } from "../types";
 import { Adapters } from "../types/adapters";
-import { supabase } from "./supabase/client";
+import { supabase } from "./supabase";
 export * from "./telegram";
 
 export const createAdapters = (config: BotConfig): Adapters => {
