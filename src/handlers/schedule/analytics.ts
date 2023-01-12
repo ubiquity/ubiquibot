@@ -1,13 +1,7 @@
 /**
- * Gets the new bounty hunters and store them to database
+ * Collects all the analytics information by scanning the issues opened | closed
+ * 
  */
-export const collectHunters = async (): Promise<void> => {
-  // TODO
-};
+export const collectAnalytics = async (): Promise<void> => {
 
-/**
- * Gets the new issues created and store them to database
- */
-export const collectIssues = async (): Promise<void> => {
-  // TODO
-};
+}
