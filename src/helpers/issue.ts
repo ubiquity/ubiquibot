@@ -30,13 +30,16 @@ export const addLabelToIssue = async (labelName: string) => {
   });
 };
 
-export const listIssuesForRepo = async () => {
+export const listIssuesForRepo = async (state: 'open' | 'closed' | 'all' = 'open', per_page: number = 100, page: number = 1 ) => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
   const response = await context.octokit.issues.listForRepo({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
+    state,
+    per_page,
+    page
   });
 
   if (response.status === 200) {
@@ -113,3 +116,4 @@ export const addAssignees = async (issue_number: number, assignees: string[]): P
     context.log.debug(`Adding assignees failed!, reason: ${e}`);
   }
 };
+

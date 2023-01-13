@@ -37,6 +37,12 @@ export enum UserType {
   Organization = "Organization",
 }
 
+export enum IssueType {
+  OPEN = "open",
+  CLOSED = "closed",
+  ALL = "all"
+}
+
 const UserSchema = Type.Object({
   login: Type.String(),
   id: Type.Number(),
@@ -71,7 +77,7 @@ const IssueSchema = Type.Object({
   title: Type.String(),
   user: UserSchema,
   labels: Type.Array(LabelSchema),
-  state: Type.String(),
+  state: Type.Enum(IssueType),
   locked: Type.Boolean(),
   assignee: Type.Any(),
   assignees: Type.Array(Type.Any()),
@@ -80,20 +86,8 @@ const IssueSchema = Type.Object({
   updated_at: Type.String({ format: "date-time" }),
   closed_at: Type.Any(),
   author_association: Type.String(),
-  reactions: Type.Object({
-    url: Type.String(),
-    total_count: Type.Number(),
-    "+1": Type.Number(),
-    "-1": Type.Number(),
-    laugh: Type.Number(),
-    hooray: Type.Number(),
-    confused: Type.Number(),
-    heart: Type.Number(),
-    rocket: Type.Number(),
-    eyes: Type.Number(),
-  }),
-  timeline_url: Type.String(),
 });
+export type Issue = Static<typeof IssueSchema>;
 
 const RepositorySchema = Type.Object({
   id: Type.Number(),

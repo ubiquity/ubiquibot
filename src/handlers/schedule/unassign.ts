@@ -1,6 +1,7 @@
 import { getBotContext } from "../../bindings";
 import { BountyAccount } from "../../configs";
 import { addAssignees, addCommentToIssue, getCommentsOfIssue, listIssuesForRepo, removeAssignees } from "../../helpers";
+import { IssueType } from "../../types";
 import { deadLinePrefix } from "../shared";
 
 /**
@@ -14,7 +15,7 @@ export const checkBountiesToUnassign = async () => {
 
   // List all the issues in the repository. It may include `pull_request`
   // because GitHub's REST API v3 considers every pull request an issue
-  const issues_opened = await listIssuesForRepo();
+  const issues_opened = await listIssuesForRepo(IssueType.OPEN);
 
   console.log("Getting issues done!");
   const assigned_issues = issues_opened.filter((issue) => issue.assignee);
