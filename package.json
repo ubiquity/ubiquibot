@@ -29,6 +29,7 @@
     "ajv": "^8.11.2",
     "ajv-formats": "^2.1.1",
     "husky": "^8.0.2",
+    "lint-staged": "^13.1.0",
     "nodemon": "^2.0.19",
     "prettier": "^2.7.1",
     "probot": "^12.2.4",
@@ -48,5 +49,10 @@
   },
   "engines": {
     "node": ">= 10.13.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json}": [
+      "prettier --write"
+    ]
   }
 }
