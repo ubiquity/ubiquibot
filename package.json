@@ -51,7 +51,7 @@
     "node": ">= 10.13.0"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,json}": [
+    "*.{ts,json}": [
       "prettier --write"
     ]
   }
