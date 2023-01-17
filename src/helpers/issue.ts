@@ -61,7 +61,7 @@ export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open
   }
 };
 
-export const addCommentToIssue = async (msg: string) => {
+export const addCommentToIssue = async (msg: string, issue_number: number) => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -69,7 +69,7 @@ export const addCommentToIssue = async (msg: string) => {
     await context.octokit.issues.createComment({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number: payload.issue!.number,
+      issue_number,
       body: msg,
     });
   } catch (e: unknown) {

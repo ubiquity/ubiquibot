@@ -21,6 +21,7 @@ export const checkBountiesToUnassign = async () => {
 
   // Checking the bounties in parallel
   const res = await Promise.all(assigned_issues.map(async (issue) => checkBountyToUnassign(issue)));
+  console.log({res});
   log.info(`Checking expired bounties done! total: ${res.length}, unassigned: ${res.filter((i) => i).length}`);
 };
 
@@ -40,7 +41,7 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
 
   if (curTimestamp > deadLineOfIssue) {
     log.debug(`Releasing the bounty back to dev pool because the allocated duration already ended! deadLineOfIssue: ${deadLineOfIssue}, curTimestamp: ${curTimestamp}`);
-    await addCommentToIssue(`Releasing the bounty back to dev pool because the allocated duration already ended`);
+    await addCommentToIssue(`Releasing the bounty back to dev pool because the allocated duration already ended`, issue.number);
 
     // remove assignees from the issue
     const assignees = issue.assignees.map((i: any) => i.login);
