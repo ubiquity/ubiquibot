@@ -30,7 +30,7 @@ export const addLabelToIssue = async (labelName: string) => {
   });
 };
 
-export const listIssuesForRepo = async (state: 'open' | 'closed' | 'all' = 'open', per_page: number = 100, page: number = 1 ) => {
+export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open", per_page: number = 100, page: number = 1) => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -39,7 +39,7 @@ export const listIssuesForRepo = async (state: 'open' | 'closed' | 'all' = 'open
     repo: payload.repository.name,
     state,
     per_page,
-    page
+    page,
   });
 
   if (response.status === 200) {
@@ -116,4 +116,3 @@ export const addAssignees = async (issue_number: number, assignees: string[]): P
     context.log.debug(`Adding assignees failed!, reason: ${e}`);
   }
 };
-

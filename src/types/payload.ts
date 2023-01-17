@@ -40,7 +40,7 @@ export enum UserType {
 export enum IssueType {
   OPEN = "open",
   CLOSED = "closed",
-  ALL = "all"
+  ALL = "all",
 }
 
 const UserSchema = Type.Object({
@@ -63,6 +63,29 @@ const UserSchema = Type.Object({
   type: Type.Enum(UserType),
   site_admin: Type.Boolean(),
 });
+
+const UserProfileSchema = Type.Intersect([
+  UserSchema,
+  Type.Object({
+    name: Type.String(),
+    company: Type.String(),
+    blog: Type.String(),
+    location: Type.String(),
+    email: Type.String(),
+    hireable: Type.Boolean(),
+    bio: Type.String(),
+    twitter_username: Type.String(),
+    public_repos: Type.Number(),
+    public_gists: Type.Number(),
+    followers: Type.Number(),
+    following: Type.Number(),
+    created_at: Type.String(),
+    updated_at: Type.String(),
+  }),
+]);
+
+export type User = Static<typeof UserSchema>;
+export type UserProfile = Static<typeof UserProfileSchema>;
 
 const IssueSchema = Type.Object({
   url: Type.String(),

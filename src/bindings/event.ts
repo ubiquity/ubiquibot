@@ -1,6 +1,6 @@
 import { Context } from "probot";
 import { createAdapters } from "../adapters";
-import { processors } from "../handlers/processors";
+import { processors, wildcardProcessors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
 import { BotConfig, Payload, PayloadSchema } from "../types";
 import { Adapters } from "../types/adapters";
@@ -78,5 +78,11 @@ export const bindEvents = async (context: Context): Promise<void> => {
   log.info(`Running post handlers: ${post.map((fn) => fn.name)}, action: ${actionName}`);
   for (const postAction of post) {
     await postAction();
+  }
+
+  // Run wildcard handlers
+  log.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
+  for (const wildcardProcessor of wildcardProcessors) {
+    await wildcardProcessor();
   }
 };
