@@ -64,12 +64,13 @@ export const collectAnalytics = async (): Promise<void> => {
       })
     );
 
-    log.info("Upserting users", { users: userProfilesToUpsert });
+    log.info({ users: userProfilesToUpsert }, "Upserting users");
+
     await Promise.all(userProfilesToUpsert.map(async (i) => upsertUser(i)));
 
     // No need to update the record for the bounties already closed
     const bountiesToUpsert = bounties.filter((bounty) => (bounty.state === IssueType.CLOSED ? bounty.number > maximumIssueNumber : true));
-    log.info("Upserting bounties", { bounties: bountiesToUpsert });
+    log.info({ bounties: bountiesToUpsert.map((i) => i.title) }, "Upserting bounties");
     await Promise.all(
       bountiesToUpsert.map(async (i) => {
         const additions = bountyInfo(i as Issue);

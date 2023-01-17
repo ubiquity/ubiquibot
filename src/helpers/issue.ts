@@ -10,7 +10,6 @@ export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
 
   if (!issuePrices.length) return;
 
-
   try {
     await context.octokit.issues.removeLabel({
       owner: payload.repository.owner.login,
@@ -18,12 +17,9 @@ export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
       issue_number: payload.issue!.number,
       name: issuePrices[0].name.toString(),
     });
-    
   } catch (e: unknown) {
     context.log.debug(`Clearing all price labels failed!, reason: ${(e as any)?.message}`);
   }
-
-
 };
 
 export const addLabelToIssue = async (labelName: string) => {
