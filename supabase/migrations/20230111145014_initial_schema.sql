@@ -6,6 +6,7 @@ CREATE TYPE issue_status AS ENUM (
 );
 
 CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
     user_login character varying(255) NOT NULL,
     user_type character varying(255),
     user_name character varying(255) NOT NULL,
@@ -15,19 +16,21 @@ CREATE TABLE users (
     email text,
     bio text,
     twitter_username text,
-    public_repos text,
-    followers text,
+    public_repos integer,
+    followers integer,
+    following integer,
     contributions text,
     percent_commits integer,
     percent_pull_requests integer,
     percent_issues integer,
     percent_code_reviews integer,
     wallet_address character(42),
-    created_at integer,
-    updated_at integer
+    created_at text,
+    updated_at text
 );
 
 CREATE TABLE issues (
+    id SERIAL PRIMARY KEY,
     issue_number integer NOT NULL,
     issue_url text NOT NULL,
     comments_url text NOT NULL,
@@ -37,12 +40,12 @@ CREATE TABLE issues (
     status issue_status DEFAULT 'READY_TO_START'::issue_status NOT NULL,
     timeline text,
     priority text,
-    price integer,
+    price text,
     txhash text[],
     recipient character(42),
-    started_at integer,
-    completed_at integer,
-    closed_at integer,
-    created_at integer,
-    updated_at integer
+    started_at text,
+    completed_at text,
+    closed_at text,
+    created_at text,
+    updated_at text
 );
