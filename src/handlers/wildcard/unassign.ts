@@ -17,13 +17,11 @@ export const checkBountiesToUnassign = async () => {
   // because GitHub's REST API v3 considers every pull request an issue
   const issues_opened = await listIssuesForRepo(IssueType.OPEN);
 
-  console.log("Getting issues done!");
   const assigned_issues = issues_opened.filter((issue) => issue.assignee);
-  console.log("Getting assigned issues done!");
 
   // Checking the bounties in parallel
-  const res = await Promise.all(assigned_issues.map((issue) => checkBountyToUnassign(issue)));
-  log.info("Checking expired bounties done!", { total: res.length, unassigned: res.filter((i) => i).length });
+  const res = await Promise.all(assigned_issues.map(async (issue) => checkBountyToUnassign(issue)));
+  log.info(`Checking expired bounties done! total: ${res.length}, unassigned: ${res.filter((i) => i).length}`);
 };
 
 const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
@@ -41,7 +39,7 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
   const curTimestamp = new Date().getTime();
 
   if (curTimestamp > deadLineOfIssue) {
-    log.debug(`Releasing the bounty back to dev pool because the allocated duration already ended`, { deadLineOfIssue, curTimestamp });
+    log.debug(`Releasing the bounty back to dev pool because the allocated duration already ended! deadLineOfIssue: ${deadLineOfIssue}, curTimestamp: ${curTimestamp}`);
     await addCommentToIssue(`Releasing the bounty back to dev pool because the allocated duration already ended`);
 
     // remove assignees from the issue
