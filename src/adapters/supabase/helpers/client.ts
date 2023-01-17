@@ -1,7 +1,7 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { getAdapters, getBotContext } from "../../../bindings";
 import { Issue, UserProfile } from "../../../types";
-import { Database } from "./database.types";
+import { Database } from "../types";
 
 /**
  * @dev Creates a typescript client which will be used to interact with supabase platform
