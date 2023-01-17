@@ -1,20 +1,35 @@
-import { getMaxIssueNumber } from "../../adapters/supabase";
+import { getMaxIssueNumber, upsertIssue, upsertUser } from "../../adapters/supabase";
 import { getBotConfig, getBotContext } from "../../bindings";
-import { listIssuesForRepo } from "../../helpers";
-import { Issue, IssueType, User } from "../../types";
+import { listIssuesForRepo, getUser } from "../../helpers";
+import { Issue, IssueType, User, UserProfile } from "../../types";
+import { getTargetPriceLabel } from "../shared";
 
 /**
  * Checks the issue whether it's a bounty for hunters or an issue for not
  * @param issue - The issue object
  * @returns If bounty - true, If issue - false
  */
-export const isBounty = (issue: Issue): boolean => {
+export const bountyInfo = (
+  issue: Issue
+): { isBounty: boolean; timelabel: string | undefined; priorityLabel: string | undefined; priceLabel: string | undefined } => {
   const config = getBotConfig();
   const labels = issue.labels;
   const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
   const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
-  return timeLabels.length > 0 && priorityLabels.length > 0;
+  const isBounty = timeLabels.length > 0 && priorityLabels.length > 0;
+
+  const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : undefined;
+  const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : undefined;
+
+  const priceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
+
+  return {
+    isBounty,
+    timelabel: minTimeLabel,
+    priorityLabel: minPriorityLabel,
+    priceLabel,
+  };
 };
 
 /**
@@ -34,7 +49,7 @@ export const collectAnalytics = async (): Promise<void> => {
     // need to skip checking the closed issues already stored in the db and filter them by doing a sanitation checks.
     // sanitation checks would be basically checking labels of the issue
     // whether the issue has both `priority` label and `timeline` label
-    const bounties = issues.filter((issue) => isBounty(issue as Issue));
+    const bounties = issues.filter((issue) => bountyInfo(issue as Issue).isBounty);
 
     // collect assignees from both type of issues (opened/closed)
     const assignees = bounties.filter((bounty) => bounty.assignee).map((bounty) => bounty.assignee as User);
@@ -42,11 +57,25 @@ export const collectAnalytics = async (): Promise<void> => {
     // remove duplication by assignee
     const tmp = assignees.map((i) => i.login);
     const assigneesToUpsert = assignees.filter((assignee, pos) => tmp.indexOf(assignee.login) == pos);
+    const userProfilesToUpsert = await Promise.all(
+      assigneesToUpsert.map(async (assignee) => {
+        const res = await getUser(assignee.login);
+        return res as UserProfile;
+      })
+    );
+
+    log.info("Upserting users", { users: userProfilesToUpsert });
+    await Promise.all(userProfilesToUpsert.map(async (i) => upsertUser(i)));
 
     // No need to update the record for the bounties already closed
     const bountiesToUpsert = bounties.filter((bounty) => (bounty.state === IssueType.CLOSED ? bounty.number > maximumIssueNumber : true));
-
-    console.log({assigneesToUpsert, bountiesToUpsert});
+    log.info("Upserting bounties", { bounties: bountiesToUpsert });
+    await Promise.all(
+      bountiesToUpsert.map(async (i) => {
+        const additions = bountyInfo(i as Issue);
+        await upsertIssue(i as Issue, { labels: { timeline: additions.timelabel!, priority: additions.priorityLabel!, price: additions.priceLabel! } });
+      })
+    );
 
     if (issues.length < perPage) fetchDone = true;
     else curPage++;

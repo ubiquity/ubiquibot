@@ -37,7 +37,7 @@ export interface Database {
           issue_number: number;
           issue_url: string;
           labels: string[] | null;
-          price: number | null;
+          price: string | null;
           priority: string | null;
           recipient: string | null;
           started_at: string | null;
@@ -57,7 +57,7 @@ export interface Database {
           issue_number: number;
           issue_url: string;
           labels?: string[] | null;
-          price?: number | null;
+          price?: string | null;
           priority?: string | null;
           recipient?: string | null;
           started_at?: string | null;
@@ -77,7 +77,7 @@ export interface Database {
           issue_number?: number;
           issue_url?: string;
           labels?: string[] | null;
-          price?: number | null;
+          price?: string | null;
           priority?: string | null;
           recipient?: string | null;
           started_at?: string | null;

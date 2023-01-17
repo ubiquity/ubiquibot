@@ -29,9 +29,12 @@ export const getMaxIssueNumber = async (): Promise<number> => {
 };
 
 export type IssueAdditions = {
-  timeline: string;
-  priority: string;
-  price: number;
+  labels: {
+    timeline: string;
+    priority: string;
+    price: string;
+  };
+
   started_at?: number;
   completed_at?: number;
 };
@@ -44,9 +47,9 @@ const getDbDataFromIssue = (issue: Issue, additions: IssueAdditions): any => {
     events_url: issue.events_url,
     labels: issue.labels.map((issue) => issue.name),
     assignees: issue.assignees ? issue.assignees.map((assignee) => assignee.login) : [],
-    timeline: additions.timeline,
-    priority: additions.priority,
-    price: additions.price,
+    timeline: additions.labels.timeline,
+    priority: additions.labels.priority,
+    price: additions.labels.price,
     started_at: additions.started_at,
     completed_at: additions.completed_at,
     closed_at: issue.closed_at,
@@ -57,7 +60,7 @@ const getDbDataFromIssue = (issue: Issue, additions: IssueAdditions): any => {
 
 export type UserProfileAdditions = {
   wallet_address?: string;
-}
+};
 const getDbDataFromUserProfile = (userProfile: UserProfile, additions?: UserProfileAdditions): any => {
   return {
     user_login: userProfile.login,
