@@ -1,12 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import { Telegraf } from "telegraf";
 
 export type Adapters = {
   supabase: SupabaseClient;
-  /**
-   * TODO: need to setup proper types for telegram, twitter, discord bots
-   *
-   * telegram: TelegramClient,
-   * discord: DiscordClient,
-   * twitter: TwitterClient,
-   */
+  telegram: Telegraf;
 };

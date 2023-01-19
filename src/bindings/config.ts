@@ -1,7 +1,7 @@
 import { BotConfig, BotConfigSchema } from "../types";
 import fs from "fs";
 import path from "path";
-import { DefaultPriceConfig } from "../configs";
+import { DefaultPriceConfig, DEFAULT_BOT_DELAY } from "../configs";
 import { ajv } from "../utils";
 
 export const loadConfig = async (): Promise<BotConfig> => {
@@ -20,6 +20,10 @@ export const loadConfig = async (): Promise<BotConfig> => {
     supabase: {
       url: process.env.SUPABASE_PROJECT_URL ?? "",
       key: process.env.SUPABASE_PROJECT_KEY ?? "",
+    },
+    telegram: {
+      token: process.env.TELEGRAM_BOT_TOKEN ?? "",
+      delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
   };
 

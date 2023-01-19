@@ -1,8 +1,5 @@
-import { Telegraf } from "telegraf";
-import { TL_BOT_TOKEN, TL_BOT_DELAY } from "../../configs/blob";
-import { TLMessageFormattedPayload, TLMessagePayload } from "../../types/static";
-
-const bot = new Telegraf(TL_BOT_TOKEN);
+import { getAdapters, getBotConfig } from "../../../bindings";
+import { TLMessageFormattedPayload, TLMessagePayload } from "../types/payload";
 
 export const messageFormatter = (messagePayload: TLMessagePayload) => {
   const { action, title, description, id, ref, user } = messagePayload;
@@ -17,6 +14,10 @@ export const messageFormatter = (messagePayload: TLMessagePayload) => {
 };
 
 export const telegramFormattedNotifier = (messagePayload: TLMessageFormattedPayload) => {
+  const {
+    telegram: { delay },
+  } = getBotConfig();
+  const { telegram } = getAdapters();
   const { chatIds, text, parseMode } = messagePayload;
 
   let currentElem = 0;
@@ -28,10 +29,10 @@ export const telegramFormattedNotifier = (messagePayload: TLMessageFormattedPayl
 
     const sendInterval = setInterval(async () => {
       clearInterval(sendInterval);
-      await bot.telegram.sendMessage(chatIds[currentElem], text, { parse_mode: parseMode });
+      await telegram.telegram.sendMessage(chatIds[currentElem], text, { parse_mode: parseMode });
       currentElem++;
       sendHandler();
-    }, TL_BOT_DELAY);
+    }, delay);
   };
   sendHandler();
 };
