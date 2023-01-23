@@ -1,6 +1,6 @@
 import { getBotConfig, getBotContext } from "../../bindings";
 import { createLabel, listLabelsForRepo } from "../../helpers";
-import { calculateBountyPrice } from "./calculate";
+import { calculateBountyPrice } from "../shared";
 
 /**
  * @dev This just checks all the labels in the config have been set in gh issue

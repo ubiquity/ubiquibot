@@ -1,7 +1,9 @@
 import { Context } from "probot";
-import { processors } from "../handlers/processors";
+import { createAdapters } from "../adapters";
+import { processors, wildcardProcessors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
 import { BotConfig, Payload, PayloadSchema } from "../types";
+import { Adapters } from "../types/adapters";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
 
@@ -10,6 +12,9 @@ export const getBotContext = () => botContext;
 
 let botConfig: BotConfig = {} as BotConfig;
 export const getBotConfig = () => botConfig;
+
+let adapters: Adapters = {} as Adapters;
+export const getAdapters = () => adapters;
 
 const allowedActions = ["labeled", "unlabeled", "assigned"];
 
@@ -27,6 +32,10 @@ export const bindEvents = async (context: Context): Promise<void> => {
   // Load config
   log.info("Loading config from .env...");
   botConfig = await loadConfig();
+
+  // Create adapters for telegram, supabase, twitter, discord, etc
+  log.info("Creating adapters for supabase, telegram, twitter, etc...");
+  adapters = createAdapters(botConfig);
 
   // Validate payload
   const validate = ajv.compile(PayloadSchema);
@@ -69,5 +78,11 @@ export const bindEvents = async (context: Context): Promise<void> => {
   log.info(`Running post handlers: ${post.map((fn) => fn.name)}, action: ${actionName}`);
   for (const postAction of post) {
     await postAction();
+  }
+
+  // Run wildcard handlers
+  log.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
+  for (const wildcardProcessor of wildcardProcessors) {
+    await wildcardProcessor();
   }
 };

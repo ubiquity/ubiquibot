@@ -37,6 +37,12 @@ export enum UserType {
   Organization = "Organization",
 }
 
+export enum IssueType {
+  OPEN = "open",
+  CLOSED = "closed",
+  ALL = "all",
+}
+
 const UserSchema = Type.Object({
   login: Type.String(),
   id: Type.Number(),
@@ -58,6 +64,29 @@ const UserSchema = Type.Object({
   site_admin: Type.Boolean(),
 });
 
+const UserProfileSchema = Type.Intersect([
+  UserSchema,
+  Type.Object({
+    name: Type.String(),
+    company: Type.String(),
+    blog: Type.String(),
+    location: Type.String(),
+    email: Type.String(),
+    hireable: Type.Boolean(),
+    bio: Type.String(),
+    twitter_username: Type.String(),
+    public_repos: Type.Number(),
+    public_gists: Type.Number(),
+    followers: Type.Number(),
+    following: Type.Number(),
+    created_at: Type.String(),
+    updated_at: Type.String(),
+  }),
+]);
+
+export type User = Static<typeof UserSchema>;
+export type UserProfile = Static<typeof UserProfileSchema>;
+
 const IssueSchema = Type.Object({
   url: Type.String(),
   repository_url: Type.String(),
@@ -71,7 +100,7 @@ const IssueSchema = Type.Object({
   title: Type.String(),
   user: UserSchema,
   labels: Type.Array(LabelSchema),
-  state: Type.String(),
+  state: Type.Enum(IssueType),
   locked: Type.Boolean(),
   assignee: Type.Any(),
   assignees: Type.Array(Type.Any()),
@@ -80,20 +109,8 @@ const IssueSchema = Type.Object({
   updated_at: Type.String({ format: "date-time" }),
   closed_at: Type.Any(),
   author_association: Type.String(),
-  reactions: Type.Object({
-    url: Type.String(),
-    total_count: Type.Number(),
-    "+1": Type.Number(),
-    "-1": Type.Number(),
-    laugh: Type.Number(),
-    hooray: Type.Number(),
-    confused: Type.Number(),
-    heart: Type.Number(),
-    rocket: Type.Number(),
-    eyes: Type.Number(),
-  }),
-  timeline_url: Type.String(),
 });
+export type Issue = Static<typeof IssueSchema>;
 
 const RepositorySchema = Type.Object({
   id: Type.Number(),

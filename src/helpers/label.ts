@@ -2,13 +2,15 @@ import { getBotContext } from "../bindings";
 import { COLORS } from "../configs";
 import { Payload } from "../types";
 
-export const listLabelsForRepo = async (): Promise<string[]> => {
+export const listLabelsForRepo = async (per_page?: number, page?: number): Promise<string[]> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
   const res = await context.octokit.rest.issues.listLabelsForRepo({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
+    per_page: per_page ?? 100,
+    page: page ?? 1,
   });
 
   if (res.status === 200) {
