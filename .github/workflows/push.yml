@@ -47,7 +47,7 @@ jobs:
           git config --local user.name "UbiquiBot[dev]"
           yarn build:serverless
           git add -A
-          git diff-index --quiet HEAD || git commit -am "Build: Update dist/index.js" --no-verify
+          git diff-index --quiet HEAD || git commit -am "build: update executable" --no-verify
           git push git@github.com:${{github.repository}}.git ${{github.ref}}
         env:
           GITHUB_TOKEN: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }}
