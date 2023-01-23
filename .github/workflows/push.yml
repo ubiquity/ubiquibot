@@ -23,9 +23,6 @@ jobs:
       - name: Prettier
         run: yarn prettier:check
 
-      # - name: Build Serverless Functions
-        # run: yarn build:serverless
-
       - name: Commit and Push Changes
         run: |
           git config --local user.email "action@github.com"
@@ -34,4 +31,4 @@ jobs:
           git commit -am "Build: Update dist/index.js" --no-verify
           git push origin ${{github.ref}}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY }}
