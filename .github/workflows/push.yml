@@ -23,10 +23,15 @@ jobs:
       - name: Prettier
         run: yarn prettier:check
 
+      - name: Authenticate SSH
+        uses: webfactory/ssh-agent@v0.4.0
+        with:
+          ssh-private-key: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY }}
+
       - name: Commit and Push Changes
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --local user.email "UbiquiBot[dev]@github.com"
+          git config --local user.name "UbiquiBot[dev]"
           yarn build:serverless
           git commit -am "Build: Update dist/index.js" --no-verify
           git push origin ${{github.ref}}
