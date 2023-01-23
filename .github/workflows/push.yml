@@ -50,8 +50,8 @@ jobs:
 
       - name: Commit and Push Changes
         run: |
-          git config --local user.email "UbiquiBot[dev]@github.com"
-          git config --local user.name "UbiquiBot[dev]"
+          # git config --local user.email "UbiquiBot[dev]@github.com"
+          # git config --local user.name "UbiquiBot[dev]"
           yarn build:serverless
           git add -A
           git diff-index --quiet HEAD || git commit -am "Build: Update dist/index.js" --no-verify
