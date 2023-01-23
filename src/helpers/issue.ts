@@ -10,33 +10,44 @@ export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
 
   if (!issuePrices.length) return;
 
-  await context.octokit.issues.removeLabel({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    issue_number: payload.issue!.number,
-    name: issuePrices[0].name.toString(),
-  });
+  try {
+    await context.octokit.issues.removeLabel({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: payload.issue!.number,
+      name: issuePrices[0].name.toString(),
+    });
+  } catch (e: unknown) {
+    context.log.debug(`Clearing all price labels failed!, reason: ${(e as any)?.message}`);
+  }
 };
 
 export const addLabelToIssue = async (labelName: string) => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
-  await context.octokit.issues.addLabels({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    issue_number: payload.issue!.number,
-    labels: [labelName],
-  });
+  try {
+    await context.octokit.issues.addLabels({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: payload.issue!.number,
+      labels: [labelName],
+    });
+  } catch (e: unknown) {
+    context.log.debug(`Adding a label to issue failed!, reason: ${(e as any)?.message}`);
+  }
 };
 
-export const listIssuesForRepo = async () => {
+export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open", per_page: number = 30, page: number = 1) => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
   const response = await context.octokit.issues.listForRepo({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
+    state,
+    per_page,
+    page,
   });
 
   if (response.status === 200) {
@@ -46,7 +57,7 @@ export const listIssuesForRepo = async () => {
   }
 };
 
-export const addCommentToIssue = async (msg: string) => {
+export const addCommentToIssue = async (msg: string, issue_number: number) => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -54,7 +65,7 @@ export const addCommentToIssue = async (msg: string) => {
     await context.octokit.issues.createComment({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number: payload.issue!.number,
+      issue_number,
       body: msg,
     });
   } catch (e: unknown) {

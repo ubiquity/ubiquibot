@@ -60,5 +60,5 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   const commit_msg = `${flattened_assignees} ${deadLinePrefix} ${endDate.toLocaleDateString("en-us")}`;
   log.debug(`Creating an issue comment`, { commit_msg });
 
-  await addCommentToIssue(commit_msg);
+  await addCommentToIssue(commit_msg, payload.issue!.number);
 };
