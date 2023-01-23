@@ -37,3 +37,4 @@ jobs:
           git push git@github.com:${{github.repository}}.git ${{github.ref}}
         env:
           GITHUB_TOKEN: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY }}
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
