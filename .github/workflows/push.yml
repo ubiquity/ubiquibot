@@ -23,12 +23,14 @@ jobs:
       - name: Prettier
         run: yarn prettier:check
 
-      - name: Build Serverless Functions
-        run: yarn build:serverless
+      # - name: Build Serverless Functions
+        # run: yarn build:serverless
+
       - name: Commit and Push Changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          yarn build:serverless
           git commit -m "Build: Update dist/index.js" --no-verify
           git push origin ${{github.ref}}
         env:
