@@ -29,7 +29,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git commit -m "Build: Update dist/index.js"
+          git commit -m "Build: Update dist/index.js" --no-verify
           git push origin ${{github.ref}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
