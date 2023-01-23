@@ -19,11 +19,17 @@ export const SupabaseConfigSchema = Type.Object({
   key: Type.String(),
 });
 
+export const TelegramBotConfigSchema = Type.Object({
+  token: Type.String(),
+  delay: Type.Number(),
+});
+
 export type PriceConfig = Static<typeof PriceConfigSchema>;
 
 export const BotConfigSchema = Type.Object({
   price: PriceConfigSchema,
   supabase: SupabaseConfigSchema,
+  telegram: TelegramBotConfigSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;
