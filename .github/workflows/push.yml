@@ -16,7 +16,7 @@ jobs:
         author=$(git log -1 --pretty=%an)
         if [ "$author" == "UbiquiBot[dev]" ]; then
           echo "Error: Commit author is UbiquiBot[dev]"
-          exit 1
+          exit 0
         else
           echo "Commit author is not UbiquiBot[dev], proceeding with action"
         fi
