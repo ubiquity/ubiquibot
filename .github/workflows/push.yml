@@ -3,7 +3,7 @@ on:
   push:
 
 jobs:
-  check:
+  check-commit-author:
     runs-on: ubuntu-latest
 
     steps:
