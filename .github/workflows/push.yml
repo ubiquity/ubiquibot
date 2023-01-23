@@ -3,6 +3,22 @@ on:
   push:
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check Commit Author
+      id: check_author
+      run: |
+        author=$(git log -1 --pretty=%an)
+        if [ "$author" == "UbiquiBot[dev]" ]; then
+          echo "Error: Commit author is UbiquiBot[dev]"
+          exit 1
+        else
+          echo "Commit author is not UbiquiBot[dev], proceeding with action"
+        fi
+
+# jobs:
   install-and-build:
     runs-on: ubuntu-latest
     permissions:
