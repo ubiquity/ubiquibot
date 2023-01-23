@@ -27,6 +27,8 @@ jobs:
         uses: webfactory/ssh-agent@v0.4.0
         with:
           ssh-private-key: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY }}
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
       - name: Commit and Push Changes
         run: |
@@ -37,4 +39,3 @@ jobs:
           git push git@github.com:${{github.repository}}.git ${{github.ref}}
         env:
           GITHUB_TOKEN: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY }}
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
