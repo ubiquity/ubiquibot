@@ -1,6 +1,5 @@
 name: Build and Test
 on:
-  pull_request:
   push:
 
 jobs:
@@ -21,8 +20,16 @@ jobs:
       - name: Install
         run: yarn install
 
-      - name: Build
-        run: yarn build:local && yarn build:serverless
-
       - name: Prettier
         run: yarn prettier:check
+
+      - name: Build Serverless Functions
+        run: yarn build:serverless
+      - name: Commit and Push Changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m "Build: Update dist/index.js"
+          git push origin ${{github.ref}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
