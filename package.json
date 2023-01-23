@@ -1,7 +1,7 @@
 {
   "name": "ubiquibot",
   "version": "0.0.2",
-  "description": "Enables Ubiquity DevPool support in your repo.",
+  "description": "Enables Ubiquity DevPool automation in your repository.",
   "author": "Ubiquity DAO",
   "license": "ISC",
   "homepage": "https://github.com/ubiquity/bounty-bot.git",
