@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "build:local": "tsc",
-    "build:serverless": "ncc build src/index.ts -o dist && rm ./bin/index.js && ln -s ./dist/index.js ./bin",
+    "build:serverless": "ncc build src/index.ts -o dist && mv ./dist/index.js ./bin",
     "clean": "rimraf ./dist ./lib ./node_modules",
     "start:serverless": "probot run ./dist/index.js",
     "start:local": "probot run ./lib/main.js",
