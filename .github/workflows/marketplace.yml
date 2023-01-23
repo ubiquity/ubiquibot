@@ -1,4 +1,4 @@
-name: Calculate Bounty using Marketplace App
+name: Calculate Bounty Via Marketplace App
 on:
   issues:
     types:
