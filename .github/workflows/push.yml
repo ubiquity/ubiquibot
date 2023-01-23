@@ -4,9 +4,7 @@ on:
 
 jobs:
   build-on-push:
-    if: |
-      github.actor != "UbiquiBot[dev]" &&
-      github.event.pull_request.payload.sender.type != 'Bot'
+    if: github.actor != "UbiquiBot[dev]" && github.event.pull_request.payload.sender.type != 'Bot'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
