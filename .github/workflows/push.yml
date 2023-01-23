@@ -12,17 +12,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # - name: Check Commit Author
-      #   id: check_author
-      #   run: |
-      #     author=$(git log -1 --pretty=%an)
-      #     if [ "$author" == "UbiquiBot[dev]" ]; then
-      #       echo "Error: Commit author is UbiquiBot[dev]"
-      #       exit 0
-      #     else
-      #       echo "Commit author is not UbiquiBot[dev], proceeding with action"
-      #     fi
-
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
