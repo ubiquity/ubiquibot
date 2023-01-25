@@ -29,7 +29,7 @@ export const telegramFormattedNotifier = (messagePayload: TLMessageFormattedPayl
 
     const sendInterval = setInterval(async () => {
       clearInterval(sendInterval);
-      await telegram.telegram.sendMessage(chatIds[currentElem], text, { parse_mode: parseMode });
+      await telegram.sendMessage(chatIds[currentElem], text, { parse_mode: parseMode });
       currentElem++;
       sendHandler();
     }, delay);

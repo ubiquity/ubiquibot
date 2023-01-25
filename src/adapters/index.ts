@@ -7,6 +7,6 @@ export * from "./telegram";
 export const createAdapters = (config: BotConfig): Adapters => {
   return {
     supabase: supabase(config.supabase.url, config.supabase.key),
-    telegram: new Telegraf(config.telegram.token),
+    telegram: new Telegraf(config.telegram.token).telegram,
   };
 };
