@@ -22,8 +22,10 @@ jobs:
 
       - name: Prettier
         run: yarn prettier:check
-- name: Local Build
-  run: yarn build:local
+
+      - name: Local Build
+        run: yarn build:local
+        
       - name: Authenticate SSH
         uses: webfactory/ssh-agent@v0.4.0
         with:
