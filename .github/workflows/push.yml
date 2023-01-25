@@ -1,0 +1,45 @@
+name: Build and Test
+on:
+  push:
+
+jobs:
+  build-on-push:
+    if: >-
+      github.actor != 'UbiquiBot[dev]' &&
+      github.event.pull_request.payload.sender.type != 'Bot'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Install
+        run: yarn install
+
+      - name: Prettier
+        run: yarn prettier:check
+
+      - name: Local Build
+        run: yarn build:local
+        
+      - name: Authenticate SSH
+        uses: webfactory/ssh-agent@v0.4.0
+        with:
+          ssh-private-key: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }}
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+
+      - name: Commit and Push Changes
+        run: |
+          git config --local user.email "UbiquiBot[dev]@github.com"
+          git config --local user.name "UbiquiBot[dev]"
+          yarn build:serverless
+          git add -A
+          git diff-index --quiet HEAD || git commit -am "build: update executable" --no-verify
+          git push git@github.com:${{github.repository}}.git ${{github.ref}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }}
