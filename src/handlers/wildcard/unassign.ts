@@ -1,5 +1,6 @@
 import { getBotContext } from "../../bindings";
 import { BountyAccount } from "../../configs";
+import { GLOBAL_STRINGS } from "../../configs/strings";
 import { addAssignees, addCommentToIssue, getCommentsOfIssue, listIssuesForRepo, removeAssignees } from "../../helpers";
 import { IssueType } from "../../types";
 import { deadLinePrefix } from "../shared";
@@ -39,10 +40,9 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
   const curTimestamp = new Date().getTime();
 
   if (curTimestamp > deadLineOfIssue) {
-    log.debug(
-      `Releasing the bounty back to dev pool because the allocated duration already ended! deadLineOfIssue: ${deadLineOfIssue}, curTimestamp: ${curTimestamp}`
-    );
-    await addCommentToIssue(`Releasing the bounty back to dev pool because the allocated duration already ended`, issue.number);
+    const { unassign_comment } = GLOBAL_STRINGS;
+    log.debug(`${unassign_comment} deadLineOfIssue: ${deadLineOfIssue}, curTimestamp: ${curTimestamp}`);
+    await addCommentToIssue(`${unassign_comment}`, issue.number);
 
     // remove assignees from the issue
     const assignees = issue.assignees.map((i: any) => i.login);
