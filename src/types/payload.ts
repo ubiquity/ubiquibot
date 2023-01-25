@@ -223,7 +223,7 @@ export const PayloadSchema = Type.Object({
   label: Type.Optional(LabelSchema),
   sender: UserSchema,
   repository: RepositorySchema,
-  organization: OrganizationSchema,
+  organization: Type.Optional(OrganizationSchema),
   installation: Type.Optional(InstallationSchema),
 });
 
