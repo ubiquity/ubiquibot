@@ -73,4 +73,12 @@ Using the bounty bot as a github app is mostly useful for development. Github ap
 4. Event details are sent to your deployed bot instance (to a webhook URL that was set in github app's settings)
 5. The bot handles the event
 
+## How to create a new release
+
+1. Update the version in package.json: `yarn version --new-version x.x.x`
+2. Commit and create a new tag: `git commit -am x.x.x && git tag -am x.x.x`
+3. Push tags: `git push --following-tags`
+4. The Github action will create a release by recognizing the version tag
+
+
 ![ubiquibot-pfp-1](https://user-images.githubusercontent.com/4975670/208798502-0ac27adc-ab19-4148-82b8-8538040cf3b6.png)
