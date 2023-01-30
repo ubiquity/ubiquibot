@@ -26,12 +26,12 @@ jobs:
       - name: Local Build
         run: yarn build:local
         
-      # - name: Authenticate SSH
-      #   uses: webfactory/ssh-agent@v0.4.0
-      #   with:
-      #     ssh-private-key: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }}
-      #   env:
-      #     ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      - name: Authenticate SSH
+        uses: webfactory/ssh-agent@v0.4.0
+        with:
+          ssh-private-key: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }}
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
       - name: Commit and Push Changes
         run: |
