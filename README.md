@@ -75,7 +75,7 @@ Using the bounty bot as a github app is mostly useful for development. Github ap
 
 ## How to create a new release
 
-1. Update the version in package.json: `yarn version x.x.x`
+1. Update the version in package.json: `yarn version --new-version x.x.x`
 2. Commit and create a new tag: `git commit -am x.x.x && git tag -am x.x.x`
 3. Push tags: `git push --following-tags`
 4. The Github action will create a release by recognizing the version tag
