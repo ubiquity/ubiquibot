@@ -1,6 +1,9 @@
 name: Build and Test
 on:
   push:
+  create:
+    tag: 
+      - "v*"
 
 jobs:
   build-on-push:
@@ -43,3 +46,7 @@ jobs:
           git push git@github.com:${{github.repository}}.git ${{github.ref}}
         env:
           GITHUB_TOKEN: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }}
+
+      - name: Release to Github Marketplace
+        uses: softprops/action-gh-release@v0.1.15
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
