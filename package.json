@@ -1,6 +1,6 @@
 {
   "name": "ubiquibot",
-  "version": "0.0.3-rc2",
+  "version": "0.0.3-rc3",
   "description": "Enables Ubiquity DevPool automation in your repository.",
   "author": "Ubiquity DAO",
   "license": "ISC",
