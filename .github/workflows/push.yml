@@ -1,13 +1,18 @@
-name: Build on Push
+name: Build and Release
 on:
   push:
+  create:
+    tag:
+      - "v*"
 
 jobs:
-  build-on-push:
+  build-and-release:
     if: >-
       github.actor != 'UbiquiBot[dev]' &&
       github.event.pull_request.payload.sender.type != 'Bot'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -44,3 +49,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }}
         
+      - name: Create Release
+        uses: ncipollo/release-action@v1.12.0
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
