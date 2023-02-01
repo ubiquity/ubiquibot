@@ -15,9 +15,9 @@ jobs:
     name: Calculate Bounty with UbiquiBot
     steps:
       - name: Ubiquity Bounty Bot
-        uses: ubiquity/bounty-bot@@v0.1.0-rc5
+        uses: ubiquity/bounty-bot@v0.1.0-rc5
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         env:
           SUPABASE_PROJECT_URL: ${{ secrets.SUPABASE_PROJECT_URL }}
-          SUPABASE_PROJECT_KEY: ${{ secrets.SUPABASE_PROJECT_KEY }}  
+          SUPABASE_PROJECT_KEY: ${{ secrets.SUPABASE_PROJECT_KEY }}
