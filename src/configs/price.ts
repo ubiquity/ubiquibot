@@ -4,6 +4,12 @@ export const DefaultPriceConfig: PriceConfig = {
   baseMultiplier: 1000,
   timeLabels: [
     {
+      name: "Time: <1 Hour",
+      weight: 0.125,
+      value: 3600,
+      target: "Price: 100+ USD",
+    },
+    {
       name: "Time: <1 Day",
       weight: 1,
       value: 3600 * 24,
