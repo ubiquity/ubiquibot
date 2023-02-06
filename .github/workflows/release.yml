@@ -1,5 +1,5 @@
 name: Releases
-on: 
+on:
   create:
     tag:
       - "v*"
@@ -10,8 +10,12 @@ jobs:
     permissions:
       contents: write
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Create Release
-      uses: ncipollo/release-action@v1.12.0
+      - name: Create Release
+        uses: ncipollo/release-action@v1.12.0
+
+      - name: Clear Unused Labels
+        run: |
+            npx tsx -e "import { clearUnusedLabels } from '.github/workflows/clear-unused-labels/clear-unused-labels.ts'; clearUnusedLabels(${{github.repository}}, ${{github.token}});"
