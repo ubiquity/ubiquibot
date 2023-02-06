@@ -7,7 +7,7 @@ export const DefaultPriceConfig: PriceConfig = {
       name: "Time: <1 Hour",
       weight: 0.125,
       value: 3600,
-      target: "Price: 100+ USD",
+      target: "Price: 12.5+ USD",
     },
     {
       name: "Time: <1 Day",
