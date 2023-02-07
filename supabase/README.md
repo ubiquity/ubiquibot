@@ -26,7 +26,7 @@ supabase start
 - Manager database migrations
 
 ```sh
-supabase migratio
+supabase migration
 ```
 
 - CI/CD for releasing to production
