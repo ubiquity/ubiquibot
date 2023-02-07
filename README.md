@@ -48,10 +48,10 @@ jobs:
 SUPABASE_PROJECT_URL=XXX
 SUPABASE_PROJECT_KEY=XXX
 ```
-5. Add `FOLLOW_UP_TIME` and `DISQUALIFY_TIME` to the `.env` file if you don't want to use default ones
+5. Add `FOLLOW_UP_TIME` and `DISQUALIFY_TIME` to the `.env` file if you don't want to use default ones. Please refer [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) how to set the value
 ```
-FOLLOWUP_TIME="4 days"
-DISQUALIFY_TIME="7 days"
+FOLLOWUP_TIME="P4D" // 4 days
+DISQUALIFY_TIME="P7D" // 7 days
 ```
 
 At this point you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react. You can, for example:
