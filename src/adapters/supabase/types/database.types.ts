@@ -155,6 +155,26 @@ export interface Database {
           wallet_address?: string | null;
         };
       };
+      wallets: {
+        Row: {
+          created_at: string | null;
+          updated_at: string | null;
+          user_name: string;
+          wallet_address: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          updated_at?: string | null;
+          user_name: string;
+          wallet_address?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          updated_at?: string | null;
+          user_name?: string;
+          wallet_address?: string | null;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
