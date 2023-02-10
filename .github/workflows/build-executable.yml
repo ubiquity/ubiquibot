@@ -22,7 +22,7 @@ jobs:
         run: yarn install
 
       - name: Prettier
-        run: yarn prettier:check
+        run: yarn format:check
 
       - name: Local Build
         run: yarn build:local
