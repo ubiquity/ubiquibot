@@ -11,7 +11,7 @@ git clone https://github.com/ubiquity/bounty-bot.git
 cd bounty-bot
 yarn
 yarn tsc
-yarn start:local:watch
+yarn start:watch
 ```
 
 ## Overview
@@ -52,7 +52,7 @@ jobs:
 1. `yarn install`
 2. Open 2 terminal instances:
     - in one instance run `yarn tsc --watch` (compiles the Typescript code)
-    - in another instance run `yarn start:local:watch` (runs the bot locally)
+    - in another instance run `yarn start:watch` (runs the bot locally)
 3. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
 4. Create a new project at [Supabase](https://supabase.com/). Add `Project URL` and `API key` to the `.env` file:
 ```
