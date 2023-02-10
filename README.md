@@ -14,6 +14,10 @@ yarn tsc
 yarn start:watch
 ```
 
+## .env file
+- An `APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for internal developers to use.
+- If you are an external developer, you will need to create your own app and private key. See [here](https://docs.github.com/en/developers/apps/building-github-apps/creating-a-github-app) for more information.
+
 ## Overview
 
 - This bot is designed to exist as a GitHub Action.
