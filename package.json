@@ -11,9 +11,9 @@
     "probot-app"
   ],
   "scripts": {
+    "prebuild": "rimraf dist/ lib/",
     "build": "tsc",
     "build:ci": "ncc build src/index.ts -o dist && mv ./dist/index.js ./bin",
-    "prestart": "rimraf dist/ lib/",
     "start": "probot run ./lib/main.js",
     "start:watch": "nodemon --exec 'yarn start'",
     "format": "prettier --write src",
