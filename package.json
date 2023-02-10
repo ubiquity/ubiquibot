@@ -11,16 +11,14 @@
     "probot-app"
   ],
   "scripts": {
-    "build:local": "tsc",
-    "build:serverless": "ncc build src/index.ts -o dist && mv ./dist/index.js ./bin",
+    "build": "tsc",
+    "build:ci": "ncc build src/index.ts -o dist && mv ./dist/index.js ./bin",
+    "prestart": "rimraf dist/ lib/",
+    "start": "probot run ./lib/main.js",
+    "start:watch": "nodemon --exec 'yarn start'",
+    "format": "prettier --write src",
+    "format:check": "prettier -c src/**/*.ts",
     "clean": "rimraf ./dist ./lib ./node_modules",
-    "start:serverless": "probot run ./dist/index.js",
-    "prestart:local": "rimraf dist/ lib/",
-    "start:local": "probot run ./lib/main.js",
-    "start:local:watch": "nodemon --exec 'yarn start:local'",
-    "prettier": "prettier --write src",
-    "prettier:check": "prettier -c src/**/*.ts",
-    "_commit:watch": "nodemon --exec 'git add . && git commit -am \"update(ci)\" && git push'",
     "prepare": "husky install"
   },
   "dependencies": {
