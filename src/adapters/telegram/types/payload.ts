@@ -31,3 +31,15 @@ export type TLMessageFormattedPayload = {
   text: string;
   parseMode: ParseMode;
 };
+
+/**
+ * @type {Object} PhotoPayload
+ * @property {chatId} - chatId  (`10001`)
+ * @property {file} - relative file path (`./assets/file.png`)
+ * @property {caption} - text caption (`opened issues: 10`)
+ */
+export type TLPhotoPayload = {
+  chatId: string;
+  file: string;
+  caption: string;
+};
