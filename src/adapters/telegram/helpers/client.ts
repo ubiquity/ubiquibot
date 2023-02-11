@@ -1,5 +1,6 @@
-import { getAdapters, getBotConfig } from "../../../bindings";
-import { TLMessageFormattedPayload, TLMessagePayload } from "../types/payload";
+import { Input } from "telegraf";
+import { getNextAdapters, getNextBotConfig } from "../../../bindings";
+import { TLMessageFormattedPayload, TLMessagePayload, TLPhotoPayload } from "../types/payload";
 
 export const messageFormatter = (messagePayload: TLMessagePayload) => {
   const { action, title, description, id, ref, user } = messagePayload;
@@ -13,11 +14,11 @@ export const messageFormatter = (messagePayload: TLMessagePayload) => {
   return msgObj;
 };
 
-export const telegramFormattedNotifier = (messagePayload: TLMessageFormattedPayload) => {
+export const telegramFormattedNotifier = async (messagePayload: TLMessageFormattedPayload) => {
   const {
     telegram: { delay },
-  } = getBotConfig();
-  const { telegram } = getAdapters();
+  } = await getNextBotConfig();
+  const { telegram } = await getNextAdapters();
   const { chatIds, text, parseMode } = messagePayload;
 
   let currentElem = 0;
@@ -45,4 +46,10 @@ export const telegramNotifier = (messagePayload: TLMessagePayload) => {
     parseMode: "HTML",
   };
   telegramFormattedNotifier(messageObj);
+};
+
+export const telegramPhotoNotifier = async (messagePayload: TLPhotoPayload) => {
+  const { chatId, file, caption } = messagePayload;
+  const { telegram } = await getNextAdapters();
+  await telegram.sendPhoto(chatId, Input.fromLocalFile(file), { caption: caption, parse_mode: "HTML" });
 };

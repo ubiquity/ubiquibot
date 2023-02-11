@@ -28,6 +28,31 @@ export const getMaxIssueNumber = async (): Promise<number> => {
   }
 };
 
+/**
+ * @dev Gets the last weekly update timestamp
+ */
+export const getLastWeeklyTime = async (): Promise<number> => {
+  const { supabase } = getAdapters();
+
+  const { data } = await supabase.from("weekly").select("last_time").limit(1).single();
+  if (data) {
+    return Number(data.last_time);
+  } else {
+    return 0;
+  }
+};
+
+/**
+ * @dev Updates the last weekly update timestamp
+ */
+export const updateLastWeeklyTime = async (time: number): Promise<void> => {
+  const { log } = getBotContext();
+  const { supabase } = getAdapters();
+  const { data, error } = await supabase.from("weekly").update({ last_time: time });
+  log.info("Updating last time is done", { data, error });
+  return;
+};
+
 export type IssueAdditions = {
   labels: {
     timeline: string;
