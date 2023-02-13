@@ -29,6 +29,7 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
   const context = getBotContext();
   const { log } = context;
   const comments = await getCommentsOfIssue(issue.number);
+  console.log(">>> Comments: ", comments);
   if (!comments) return false;
   const timeline_comments = comments.filter((comment: any) => comment.body.includes(deadLinePrefix));
 
@@ -40,9 +41,9 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
   const curTimestamp = new Date().getTime();
 
   if (curTimestamp > deadLineOfIssue) {
-    const { unassign_comment } = GLOBAL_STRINGS;
-    log.debug(`${unassign_comment} deadLineOfIssue: ${deadLineOfIssue}, curTimestamp: ${curTimestamp}`);
-    await addCommentToIssue(`${unassign_comment}`, issue.number);
+    const { UnassignComment } = GLOBAL_STRINGS;
+    log.debug(`${UnassignComment} deadLineOfIssue: ${deadLineOfIssue}, curTimestamp: ${curTimestamp}`);
+    await addCommentToIssue(`${UnassignComment}`, issue.number);
 
     // remove assignees from the issue
     const assignees = issue.assignees.map((i: any) => i.login);
