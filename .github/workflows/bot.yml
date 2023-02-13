@@ -24,6 +24,9 @@ jobs:
         with:
           node-version: "18.14.0"
 
+      - name: Debug Sharp 00
+        run: sudo apt install glibc-source musl -y
+
       - name: Debug Sharp 01
         run: npm install --ignore-scripts=false --foreground-scripts --verbose sharp
 
