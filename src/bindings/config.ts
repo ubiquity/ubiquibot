@@ -4,6 +4,11 @@ import path from "path";
 import { DefaultPriceConfig, DEFAULT_BOT_DELAY } from "../configs";
 import { ajv } from "../utils";
 
+const getFallback = (value: string, target: string) => {
+  console.warn(`using fallback value ${value} for ${target}`);
+  return value;
+};
+
 export const loadConfig = async (): Promise<BotConfig> => {
   let configFile: any = {};
   const configFilePath = path.join(__dirname, "./config.json");
@@ -24,6 +29,10 @@ export const loadConfig = async (): Promise<BotConfig> => {
     telegram: {
       token: process.env.TELEGRAM_BOT_TOKEN ?? "",
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
+    },
+    git: {
+      org: process.env.ORG_NAME ?? getFallback("ubiquity", "Org"),
+      repo: process.env.REPO_NAME ?? getFallback("ubiquity-dollar", "Repo"),
     },
   };
 
