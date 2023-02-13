@@ -25,13 +25,14 @@ jobs:
           node-version: "18.14.0"
 
       - name: Debug Sharp 00
-        run: sudo apt install glibc-source musl -y
+        run: sudo apt-get update && sudo apt-get install -y libvips-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+        # sudo apt install glibc-source musl -y
 
-      - name: Debug Sharp 01
-        run: npm install --ignore-scripts=false --foreground-scripts --verbose sharp
+      # - name: Debug Sharp 01
+        # run: npm install --ignore-scripts=false --foreground-scripts --verbose sharp
 
-      - name: Debug Sharp 02
-        run: npm install --platform=linux --arch=x64 sharp
+      # - name: Debug Sharp 02
+        # run: npm install --platform=linux --arch=x64 sharp
 
       # This will authenticate the UbiquiBot with the UbiquiBot GitHub App
       - name: Get GitHub App token
