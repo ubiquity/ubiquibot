@@ -1,5 +1,5 @@
 import axios from "axios";
-import sharp from "sharp";
+import Jimp from "jimp";
 import nodeHtmlToImage from "node-html-to-image";
 import { getNextBotConfig, getOctokit } from "../../bindings";
 import { telegramPhotoNotifier } from "../telegram";
@@ -164,16 +164,10 @@ const htmlImage = async () => {
 };
 
 const compositeImage = async () => {
-  await sharp("./assets/flat.png")
-    .ensureAlpha()
-    .composite([
-      {
-        input: "./assets/hmg.png",
-        top: 440,
-        left: 100,
-      },
-    ])
-    .toFile("./assets/fmg.png");
+  const hImage = await Jimp.read("./assets/hmg.png");
+  const image = await Jimp.read("./assets/flat.png");
+  image.composite(hImage, 200, 440);
+  await image.writeAsync("./assets/fmg.png");
 };
 
 const processTelegram = async () => {
