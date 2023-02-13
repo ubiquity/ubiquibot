@@ -15,7 +15,6 @@
     "build:serverless": "ncc build src/index.ts -o dist && mv ./dist/index.js ./bin",
     "clean": "rimraf ./dist ./lib ./node_modules",
     "start:serverless": "probot run ./dist/index.js",
-    "prestart:local": "rimraf dist/ lib/",
     "start:local": "probot run ./lib/main.js",
     "start:local:watch": "nodemon --exec 'yarn start:local'",
     "prettier": "prettier --write src",
