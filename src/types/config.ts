@@ -24,12 +24,18 @@ export const TelegramBotConfigSchema = Type.Object({
   delay: Type.Number(),
 });
 
+export const GitConfigSchema = Type.Object({
+  org: Type.String(),
+  repo: Type.String(),
+});
+
 export type PriceConfig = Static<typeof PriceConfigSchema>;
 
 export const BotConfigSchema = Type.Object({
   price: PriceConfigSchema,
   supabase: SupabaseConfigSchema,
   telegram: TelegramBotConfigSchema,
+  git: GitConfigSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;
