@@ -41,9 +41,9 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
   const curTimestamp = new Date().getTime();
 
   if (curTimestamp > deadLineOfIssue) {
-    const { UnassignComment } = GLOBAL_STRINGS;
-    log.debug(`${UnassignComment} deadLineOfIssue: ${deadLineOfIssue}, curTimestamp: ${curTimestamp}`);
-    await addCommentToIssue(`${UnassignComment}`, issue.number);
+    const { unassignComment } = GLOBAL_STRINGS;
+    log.debug(`${unassignComment} deadLineOfIssue: ${deadLineOfIssue}, curTimestamp: ${curTimestamp}`);
+    await addCommentToIssue(`${unassignComment}`, issue.number);
 
     // remove assignees from the issue
     const assignees = issue.assignees.map((i: any) => i.login);
