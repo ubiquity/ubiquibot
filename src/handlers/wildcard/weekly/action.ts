@@ -1,18 +1,13 @@
 import axios from "axios";
 import Jimp from "jimp";
 import nodeHtmlToImage from "node-html-to-image";
-import { telegramPhotoNotifier } from "../telegram";
-import { BotConfig } from "../../types";
-
-let JSONList: any[] = [];
-let botConfig: BotConfig;
-let dataPadded: string = "";
-let summaryInfo: string = "";
+import { getBotContext, getBotConfig } from "../../../bindings";
+import { telegramPhotoNotifier } from "../../../adapters";
+import { Context } from "probot";
+import { BotConfig } from "../../../types";
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-const fetchEvents = async () => {
-  const octokit = getOctokit();
+const fetchEvents = async (context: Context, config: BotConfig): Promise<any[]> => {
   const dateNow = Date.now(); //mills
   const currentDate = new Date(dateNow);
   const startTime = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1 < 10 ? `0${currentDate.getMonth() + 1}` : `${currentDate.getMonth() + 1}`}-${
@@ -27,8 +22,8 @@ const fetchEvents = async () => {
   while (shouldFetch) {
     try {
       await wait(1000);
-      const { data: pubOrgEvents } = await octokit.activity.listPublicOrgEvents({
-        org: botConfig.git.org,
+      const { data: pubOrgEvents } = await context.octokit.activity.listPublicOrgEvents({
+        org: config.git.org,
         per_page: perPage,
         page: currentPage,
       });
@@ -51,10 +46,10 @@ const fetchEvents = async () => {
       shouldFetch = false;
     }
   }
-  JSONList = elemList;
+  return elemList;
 };
 
-const processEvents = () => {
+const processEvents = (JSONList: any[]): string => {
   let openedIssues: number = 0;
   let closedIssues: number = 0;
   let comments: number = 0;
@@ -122,7 +117,7 @@ const processEvents = () => {
         break;
     }
   });
-  summaryInfo =
+  const summaryInfo =
     `<code>new issues: ${openedIssues}</code>\n` +
     `<code>issues resolved: ${closedIssues}</code>\n` +
     `<code>total user interactions count: ${comments}</code>\n` +
@@ -131,18 +126,19 @@ const processEvents = () => {
     `<code>closed pulls: ${closedPRs}</code>\n` +
     `<code>merged pulls: ${mergedPRs}</code>\n` +
     `<code>total commits: ${commits}</code>\n`;
-  console.log(summaryInfo);
+
+  return summaryInfo;
 };
 
-const fetchSummary = async () => {
+const fetchSummary = async (org: string, repo: string): Promise<string> => {
   const { data } = await axios.post("https://app.whatthediff.ai/api/analyze", {
-    repository: `${botConfig.git.org}/${botConfig.git.repo}`,
+    repository: `${org}/${repo}`,
   });
-  dataPadded = data.review.replaceAll("\n", "");
-  console.log(dataPadded);
+  const dataPadded = data.review.replaceAll("\n", "");
+  return dataPadded;
 };
 
-const htmlImage = async () => {
+const htmlImage = async (dataPadded: string) => {
   const wrapNode = (node: string) => {
     return `<div style='font-family: sans-serif; color: white;font-size: 70px;display:flex;flex-direction:column;align-items:center;'><div>${node}</div></div>`;
   };
@@ -165,22 +161,21 @@ const compositeImage = async () => {
   await image.writeAsync("./assets/fmg.png");
 };
 
-const processTelegram = async () => {
+const processTelegram = async (caption: string) => {
   await telegramPhotoNotifier({
     chatId: "-1000000", //should update with a valid one
     file: "./assets/fmg.png",
-    caption: summaryInfo,
+    caption,
   });
 };
 
-export const init = async () => {
-  await fetchBotConfig();
-  await fetchEvents();
-  await processEvents();
-  await fetchSummary();
-  await htmlImage();
+export const run = async () => {
+  const context = getBotContext();
+  const config = getBotConfig();
+  const eventsList = await fetchEvents(context, config);
+  const summaryInfo = processEvents(eventsList);
+  const dataPadded = await fetchSummary(config.git.org, config.git.repo);
+  await htmlImage(dataPadded);
   await compositeImage();
-  await processTelegram();
+  await processTelegram(summaryInfo);
 };
-
-export default init;
