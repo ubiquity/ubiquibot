@@ -18,7 +18,7 @@ export const checkBountiesToUnassign = async () => {
   // because GitHub's REST API v3 considers every pull request an issue
   const issues_opened = await listIssuesForRepo(IssueType.OPEN);
 
-  const assigned_issues = issues_opened.filter((issue) => issue.assignee && issue.assignee.login != BountyAccount);
+  const assigned_issues = issues_opened.filter((issue) => issue.assignee && issue.assignee.login != BountyAccount && issue.title == "Test issue");
 
   // Checking the bounties in parallel
   const res = await Promise.all(assigned_issues.map(async (issue) => checkBountyToUnassign(issue)));
@@ -31,6 +31,7 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
   const {
     unassign: { followUpTime, disqualifyTime },
   } = getBotConfig();
+  log.info(`Checking the bounty to unassign`, { issue_number: issue.number });
   const { unassignComment, askUpdate } = GLOBAL_STRINGS;
   const assignees = issue.assignees.map((i: any) => i.login);
   const comments = await getCommentsOfIssue(issue.number);

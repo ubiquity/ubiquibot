@@ -37,7 +37,6 @@ const fetchEvents = async () => {
         per_page: perPage,
         page: currentPage,
       });
-      console.log(pubOrgEvents);
       pubOrgEvents.forEach((elem: any) => {
         const elemTimestamp = new Date(elem.created_at as string).getTime();
         if (elemTimestamp <= startTimestamp && elemTimestamp >= endTimestamp) {
@@ -136,7 +135,6 @@ const processEvents = () => {
     `<code>closed pulls: ${closedPRs}</code>\n` +
     `<code>merged pulls: ${mergedPRs}</code>\n` +
     `<code>total commits: ${commits}</code>\n`;
-  console.log(summaryInfo);
 };
 
 const fetchSummary = async () => {
@@ -144,7 +142,6 @@ const fetchSummary = async () => {
     repository: `${botConfig.git.org}/${botConfig.git.repo}`,
   });
   dataPadded = data.review.replaceAll("\n", "");
-  console.log(dataPadded);
 };
 
 const htmlImage = async () => {
