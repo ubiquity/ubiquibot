@@ -5,8 +5,13 @@ import { getBotContext, getBotConfig } from "../../../bindings";
 import { telegramPhotoNotifier } from "../../../adapters";
 import { Context } from "probot";
 import { BotConfig } from "../../../types";
+import { getFallback } from "../../../utils/fallback";
+import { fetchImage } from "../../../utils/webAssets";
+import { weeklyConfig } from "../../../configs/weekly";
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const IMG_PATH = "../../../assets/images";
+
 const fetchEvents = async (context: Context, config: BotConfig): Promise<any[]> => {
   const dateNow = Date.now(); //mills
   const currentDate = new Date(dateNow);
@@ -144,7 +149,7 @@ const htmlImage = async (dataPadded: string) => {
   };
 
   await nodeHtmlToImage({
-    output: "./assets/hmg.png",
+    output: `${IMG_PATH}/hmg.png`,
     html: await wrapNode(dataPadded),
     transparent: true,
     puppeteerArgs: {
@@ -154,17 +159,35 @@ const htmlImage = async (dataPadded: string) => {
   });
 };
 
+const getFlatImage = async (): Promise<string> => {
+  const {
+    remoteAsset: { remoteUrl, isUsing },
+  } = weeklyConfig;
+  let fileName = `${IMG_PATH}/flat.png`;
+
+  if (isUsing) {
+    try {
+      await fetchImage(remoteUrl);
+      fileName = `${IMG_PATH}/webFlat.png`;
+    } catch (error) {
+      fileName = await getFallback(fileName, "background");
+    }
+  }
+  return fileName;
+};
+
 const compositeImage = async () => {
-  const hImage = await Jimp.read("./assets/hmg.png");
-  const image = await Jimp.read("./assets/flat.png");
+  const hImage = await Jimp.read(`${IMG_PATH}/hmg.png`);
+  const fImage = await getFlatImage();
+  const image = await Jimp.read(fImage);
   image.composite(hImage, 200, 440);
-  await image.writeAsync("./assets/fmg.png");
+  await image.writeAsync(`${IMG_PATH}/fmg.png`);
 };
 
 const processTelegram = async (caption: string) => {
   await telegramPhotoNotifier({
     chatId: "-1000000", //should update with a valid one
-    file: "./assets/fmg.png",
+    file: `${IMG_PATH}/fmg.png`,
     caption,
   });
 };
