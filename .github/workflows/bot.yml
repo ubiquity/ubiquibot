@@ -18,6 +18,12 @@ jobs:
       # you must check out the repository
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.14.0"
+
       # This will authenticate the UbiquiBot with the UbiquiBot GitHub App
       - name: Get GitHub App token
         uses: tibdex/github-app-token@v1.7.0

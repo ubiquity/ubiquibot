@@ -1,5 +1,6 @@
 import { Context, ProbotOctokit } from "probot";
 import { createAdapters } from "../adapters";
+import { fetchGlobalStorage } from "../global/globalStorage";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
 import { BotConfig, Payload, PayloadSchema } from "../types";
@@ -90,4 +91,6 @@ export const bindEvents = async (context: Context): Promise<void> => {
   for (const wildcardProcessor of wildcardProcessors) {
     await wildcardProcessor();
   }
+
+  fetchGlobalStorage();
 };
