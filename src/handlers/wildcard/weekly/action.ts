@@ -5,6 +5,9 @@ import { getBotContext, getBotConfig } from "../../../bindings";
 import { telegramPhotoNotifier } from "../../../adapters";
 import { Context } from "probot";
 import { BotConfig } from "../../../types";
+import { getFallback } from "../../../utils/fallback";
+import { fetchImage } from "../../../utils/webAssets";
+import { weeklyConfig } from "../../../configs/weekly";
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const IMG_PATH = "../../../assets/images";
@@ -156,9 +159,27 @@ const htmlImage = async (dataPadded: string) => {
   });
 };
 
+const getFlatImage = async (): Promise<string> => {
+  const {
+    remoteAsset: { remoteUrl, isUsing },
+  } = weeklyConfig;
+  let fileName = `${IMG_PATH}/flat.png`;
+
+  if (isUsing) {
+    try {
+      await fetchImage(remoteUrl);
+      fileName = `${IMG_PATH}/webFlat.png`;
+    } catch (error) {
+      fileName = await getFallback(fileName, "background");
+    }
+  }
+  return fileName;
+};
+
 const compositeImage = async () => {
   const hImage = await Jimp.read(`${IMG_PATH}/hmg.png`);
-  const image = await Jimp.read(`${IMG_PATH}/flat.png`);
+  const fImage = await getFlatImage();
+  const image = await Jimp.read(fImage);
   image.composite(hImage, 200, 440);
   await image.writeAsync(`${IMG_PATH}/fmg.png`);
 };
