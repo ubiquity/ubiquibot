@@ -66,7 +66,7 @@ SUPABASE_PROJECT_KEY=XXX
 ```
 5. Add `FOLLOW_UP_TIME` and `DISQUALIFY_TIME` to the `.env` file if you don't want to use default ones. Please refer [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) how to set the value
 ```
-FOLLOWUP_TIME="P4D" // 4 days
+FOLLOW_UP_TIME="P4D" // 4 days
 DISQUALIFY_TIME="P7D" // 7 days
 ```
 

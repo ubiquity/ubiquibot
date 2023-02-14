@@ -12,5 +12,8 @@ const UBIQUITY = `
 
 export default function main(app: Probot) {
   console.log(UBIQUITY);
-  app.onAny(bindEvents as any);
+  // app.onAny(bindEvents as any);
+  app.on("issues.assigned", bindEvents);
+  app.on("issues.labeled", bindEvents);
+  app.on("issues.unlabeled", bindEvents);
 }
