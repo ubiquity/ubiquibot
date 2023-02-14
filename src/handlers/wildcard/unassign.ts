@@ -18,7 +18,7 @@ export const checkBountiesToUnassign = async () => {
   // because GitHub's REST API v3 considers every pull request an issue
   const issues_opened = await listIssuesForRepo(IssueType.OPEN);
 
-  const assigned_issues = issues_opened.filter((issue) => issue.assignee);
+  const assigned_issues = issues_opened.filter((issue) => issue.assignee && issue.assignee.login != BountyAccount);
 
   // Checking the bounties in parallel
   const res = await Promise.all(assigned_issues.map(async (issue) => checkBountyToUnassign(issue)));
@@ -53,7 +53,7 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
   const passedDuration = curTimestamp - lastAnswerTime;
 
   if (passedDuration >= disqualifyTime) {
-    log.debug("Asking any updates", { askUpdate, bountyStartTime, lastAnswerTime, curTimestamp, passedDuration, disqualifyTime });
+    log.debug("Unassigning", { askUpdate, bountyStartTime, lastAnswerTime, curTimestamp, passedDuration, disqualifyTime });
     await addCommentToIssue(`${unassignComment}`, issue.number);
     // remove assignees from the issue
     await removeAssignees(issue.number, assignees);
@@ -62,7 +62,7 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
     await addAssignees(issue.number, [BountyAccount]);
     return true;
   } else if (passedDuration >= followUpTime) {
-    log.debug("Unassigning...", { unassignComment, bountyStartTime, lastAnswerTime, curTimestamp, passedDuration, followUpTime });
+    log.debug("Ask for updates", { unassignComment, bountyStartTime, lastAnswerTime, curTimestamp, passedDuration, followUpTime });
     await addCommentToIssue(`${askUpdate}`, issue.number);
   }
 
