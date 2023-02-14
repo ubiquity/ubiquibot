@@ -1,5 +1,5 @@
 import { getBotContext } from "../bindings";
-import { Payload } from "../types";
+import { Comment, Payload } from "../types";
 
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   const context = getBotContext();
@@ -73,11 +73,11 @@ export const addCommentToIssue = async (msg: string, issue_number: number) => {
   }
 };
 
-export const getCommentsOfIssue = async (issue_number: number): Promise<any> => {
+export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[]> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
-  let result;
+  let result: Comment[] = [];
   try {
     const response = await context.octokit.rest.issues.listComments({
       owner: payload.repository.owner.login,
@@ -85,7 +85,7 @@ export const getCommentsOfIssue = async (issue_number: number): Promise<any> => 
       issue_number,
     });
 
-    if (response.data) result = response.data;
+    if (response.data) result = response.data as Comment[];
   } catch (e: unknown) {
     context.log.debug(`Listing issue comments failed!, reason: ${e}`);
   }

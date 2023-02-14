@@ -228,3 +228,18 @@ export const PayloadSchema = Type.Object({
 });
 
 export type Payload = Static<typeof PayloadSchema>;
+
+export const CommentSchema = Type.Object({
+  url: Type.String(),
+  html_url: Type.String(),
+  issue_url: Type.String(),
+  id: Type.Number(),
+  node_id: Type.String(),
+  user: UserSchema,
+  created_at: Type.String({ format: "date-time" }),
+  updated_at: Type.String({ format: "date-time" }),
+  author_association: Type.String(),
+  body: Type.String(),
+});
+
+export type Comment = Static<typeof CommentSchema>;

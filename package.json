@@ -11,7 +11,6 @@
     "probot-app"
   ],
   "scripts": {
-    "prebuild": "rimraf dist/ lib/",
     "build": "tsc",
     "build:ci": "ncc build src/index.ts -o dist && mv ./dist/index.js ./bin",
     "start": "probot run ./lib/main.js",
@@ -32,6 +31,7 @@
     "axios": "^1.3.2",
     "husky": "^8.0.2",
     "lint-staged": "^13.1.0",
+    "moment": "^2.29.4",
     "node-html-to-image": "^3.3.0",
     "nodemon": "^2.0.19",
     "prettier": "^2.7.1",

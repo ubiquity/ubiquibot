@@ -1,7 +1,9 @@
 import { BotConfig, BotConfigSchema } from "../types";
 import fs from "fs";
 import path from "path";
-import { DefaultPriceConfig, DEFAULT_BOT_DELAY } from "../configs";
+import moment from "moment";
+
+import { DefaultPriceConfig, DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME } from "../configs";
 import { ajv } from "../utils";
 
 const getFallback = (value: string, target: string) => {
@@ -21,6 +23,10 @@ export const loadConfig = async (): Promise<BotConfig> => {
       baseMultiplier: process.env.BASE_MULTIPLIER ? Number(process.env.BASE_MULTIPLIER) : configFile.baseMultiplier ?? DefaultPriceConfig.baseMultiplier,
       timeLabels: configFile.timeLabels ?? DefaultPriceConfig.timeLabels,
       priorityLabels: configFile.priorityLabels ?? DefaultPriceConfig.priorityLabels,
+    },
+    unassign: {
+      followUpTime: moment.duration(process.env.FOLLOW_UP_TIME || DEFAULT_FOLLOWUP_TIME).milliseconds(),
+      disqualifyTime: moment.duration(process.env.DISQUALIFY_TIME || DEFAULT_DISQUALIFY_TIME).milliseconds(),
     },
     supabase: {
       url: process.env.SUPABASE_PROJECT_URL ?? "",

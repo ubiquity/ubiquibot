@@ -1,8 +1,8 @@
-import { getBotContext } from "../../bindings";
+import { getBotConfig, getBotContext } from "../../bindings";
 import { BountyAccount } from "../../configs";
 import { GLOBAL_STRINGS } from "../../configs/strings";
 import { addAssignees, addCommentToIssue, getCommentsOfIssue, listIssuesForRepo, removeAssignees } from "../../helpers";
-import { IssueType } from "../../types";
+import { Comment, IssueType } from "../../types";
 import { deadLinePrefix } from "../shared";
 
 /**
@@ -28,42 +28,43 @@ export const checkBountiesToUnassign = async () => {
 const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
   const context = getBotContext();
   const { log } = context;
+  const {
+    unassign: { followUpTime, disqualifyTime },
+  } = getBotConfig();
+  const { unassignComment, askUpdate } = GLOBAL_STRINGS;
+  const assignees = issue.assignees.map((i: any) => i.login);
   const comments = await getCommentsOfIssue(issue.number);
-  console.log(">>> Comments: ", comments);
-  if (!comments) return false;
-  const timeline_comments = comments.filter((comment: any) => comment.body.includes(deadLinePrefix));
+  if (!comments || comments.length == 0) return false;
 
-  const timelines = timeline_comments.map((timeline_comment: any) => getEndTimeFromComment(timeline_comment.body as string)).filter((i: number) => i > 0);
+  const timeline_comments = comments.filter((comment: Comment) => comment.body.includes(deadLinePrefix));
+  const timelines = timeline_comments.map((comment: Comment) => new Date(comment.created_at).getTime()).filter((i: number) => i > 0);
   if (timelines.length === 0) return false;
-
   const sorted = timelines.sort((a: number, b: number) => b - a);
-  const deadLineOfIssue = sorted[0];
+  const bountyStartTime = sorted[0];
+
+  // const askUpdateComments = comments.filter((comment: Comment) => comment.body.includes(askUpdate)).sort((a: Comment, b: Comment) => ((new Date(b.created_at)).getTime() - (new Date(a.created_at)).getTime()));
+  // const lastAskTime = askUpdateComments.length > 0 ? (new Date(askUpdateComments[0].created_at)).getTime() : bountyStartTime;
+  const answerCommentsForLastQuestion = comments
+    .filter((comment: Comment) => new Date(comment.created_at).getTime() > bountyStartTime && assignees.includes(comment.user.login))
+    .map((a: Comment) => new Date(a.created_at).getTime())
+    .sort((a: number, b: number) => b - a);
+  const lastAnswerTime = answerCommentsForLastQuestion.length > 0 ? answerCommentsForLastQuestion[0] : bountyStartTime;
   const curTimestamp = new Date().getTime();
+  const passedDuration = curTimestamp - lastAnswerTime;
 
-  if (curTimestamp > deadLineOfIssue) {
-    const { unassignComment } = GLOBAL_STRINGS;
-    log.debug(`${unassignComment} deadLineOfIssue: ${deadLineOfIssue}, curTimestamp: ${curTimestamp}`);
+  if (passedDuration >= disqualifyTime) {
+    log.debug("Asking any updates", { askUpdate, bountyStartTime, lastAnswerTime, curTimestamp, passedDuration, disqualifyTime });
     await addCommentToIssue(`${unassignComment}`, issue.number);
-
     // remove assignees from the issue
-    const assignees = issue.assignees.map((i: any) => i.login);
     await removeAssignees(issue.number, assignees);
 
     // assign default bounty account to the issue
     await addAssignees(issue.number, [BountyAccount]);
-
     return true;
+  } else if (passedDuration >= followUpTime) {
+    log.debug("Unassigning...", { unassignComment, bountyStartTime, lastAnswerTime, curTimestamp, passedDuration, followUpTime });
+    await addCommentToIssue(`${askUpdate}`, issue.number);
   }
 
   return false;
-};
-
-const getEndTimeFromComment = (body: string): number => {
-  const expression = new RegExp(`${deadLinePrefix} (.+)`, "gm");
-  const regRes = body.match(expression);
-  if (!regRes) return 0;
-
-  const datetime_string = regRes[0].split(`${deadLinePrefix} `)[1];
-  const endDate = new Date(datetime_string);
-  return endDate.getTime();
 };
