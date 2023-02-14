@@ -3,11 +3,7 @@ import fs from "fs";
 import path from "path";
 import { DefaultPriceConfig, DEFAULT_BOT_DELAY } from "../configs";
 import { ajv } from "../utils";
-
-const getFallback = (value: string, target: string) => {
-  console.warn(`using fallback value ${value} for ${target}`);
-  return value;
-};
+import { getFallback } from "../utils/fallback";
 
 export const loadConfig = async (): Promise<BotConfig> => {
   let configFile: any = {};
