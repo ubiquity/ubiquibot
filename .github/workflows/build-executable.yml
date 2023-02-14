@@ -7,8 +7,7 @@ jobs:
   build-on-push:
     if: >-
       github.actor != 'UbiquiBot[dev]' &&
-      github.event.pull_request.payload.sender.type != 'Bot' &&
-      github.ref == 'refs/heads/development'
+      github.event.pull_request.payload.sender.type != 'Bot'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -29,6 +28,7 @@ jobs:
         run: yarn build
 
       - name: Authenticate SSH
+        if: github.ref == 'refs/heads/development'
         uses: webfactory/ssh-agent@v0.4.0
         with:
           ssh-private-key: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }}
@@ -36,6 +36,7 @@ jobs:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
       - name: Commit and Push Changes
+        if: github.ref == 'refs/heads/development'
         run: |
           git config --local user.email "UbiquiBot[dev]@github.com"
           git config --local user.name "UbiquiBot[dev]"
