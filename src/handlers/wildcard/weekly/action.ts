@@ -7,6 +7,8 @@ import { Context } from "probot";
 import { BotConfig } from "../../../types";
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const IMG_PATH = "../../../assets/images";
+
 const fetchEvents = async (context: Context, config: BotConfig): Promise<any[]> => {
   const dateNow = Date.now(); //mills
   const currentDate = new Date(dateNow);
@@ -144,7 +146,7 @@ const htmlImage = async (dataPadded: string) => {
   };
 
   await nodeHtmlToImage({
-    output: "./assets/hmg.png",
+    output: `${IMG_PATH}/hmg.png`,
     html: await wrapNode(dataPadded),
     transparent: true,
     puppeteerArgs: {
@@ -155,16 +157,16 @@ const htmlImage = async (dataPadded: string) => {
 };
 
 const compositeImage = async () => {
-  const hImage = await Jimp.read("./assets/hmg.png");
-  const image = await Jimp.read("./assets/flat.png");
+  const hImage = await Jimp.read(`${IMG_PATH}/hmg.png`);
+  const image = await Jimp.read(`${IMG_PATH}/flat.png`);
   image.composite(hImage, 200, 440);
-  await image.writeAsync("./assets/fmg.png");
+  await image.writeAsync(`${IMG_PATH}/fmg.png`);
 };
 
 const processTelegram = async (caption: string) => {
   await telegramPhotoNotifier({
     chatId: "-1000000", //should update with a valid one
-    file: "./assets/fmg.png",
+    file: `${IMG_PATH}/fmg.png`,
     caption,
   });
 };
