@@ -43,8 +43,10 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
   const sorted = timelines.sort((a: number, b: number) => b - a);
   const bountyStartTime = sorted[0];
 
-  // const askUpdateComments = comments.filter((comment: Comment) => comment.body.includes(askUpdate)).sort((a: Comment, b: Comment) => ((new Date(b.created_at)).getTime() - (new Date(a.created_at)).getTime()));
-  // const lastAskTime = askUpdateComments.length > 0 ? (new Date(askUpdateComments[0].created_at)).getTime() : bountyStartTime;
+  const askUpdateComments = comments
+    .filter((comment: Comment) => comment.body.includes(askUpdate))
+    .sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const lastAskTime = askUpdateComments.length > 0 ? new Date(askUpdateComments[0].created_at).getTime() : bountyStartTime;
   const answerCommentsForLastQuestion = comments
     .filter((comment: Comment) => new Date(comment.created_at).getTime() > bountyStartTime && assignees.includes(comment.user.login))
     .map((a: Comment) => new Date(a.created_at).getTime())
@@ -54,17 +56,26 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
   const passedDuration = curTimestamp - lastAnswerTime;
 
   if (passedDuration >= disqualifyTime) {
-    log.debug("Unassigning", { askUpdate, bountyStartTime, lastAnswerTime, curTimestamp, passedDuration, disqualifyTime });
-    await addCommentToIssue(`${unassignComment}`, issue.number);
+    log.info(
+      `Unassigning... lastAnswerTime: ${lastAnswerTime}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
+    );
     // remove assignees from the issue
     await removeAssignees(issue.number, assignees);
 
     // assign default bounty account to the issue
     await addAssignees(issue.number, [BountyAccount]);
+
+    await addCommentToIssue(`${unassignComment}`, issue.number);
+
     return true;
   } else if (passedDuration >= followUpTime) {
-    log.debug("Ask for updates", { unassignComment, bountyStartTime, lastAnswerTime, curTimestamp, passedDuration, followUpTime });
-    await addCommentToIssue(`${askUpdate}`, issue.number);
+    log.info(
+      `Asking for updates... lastAnswerTime: ${lastAnswerTime}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
+    );
+
+    if (lastAskTime > lastAnswerTime) {
+      log.info(`Skipping posting an update message cause its been already asked, lastAskTime: ${lastAskTime}, lastAnswerTime: ${lastAnswerTime}`);
+    } else await addCommentToIssue(`${askUpdate} @${assignees[0]}`, issue.number);
   }
 
   return false;
