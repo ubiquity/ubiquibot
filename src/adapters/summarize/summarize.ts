@@ -1,7 +1,6 @@
 import axios from "axios";
 import Jimp from "jimp";
 import nodeHtmlToImage from "node-html-to-image";
-import { getNextBotConfig, getOctokit } from "../../bindings";
 import { telegramPhotoNotifier } from "../telegram";
 import { BotConfig } from "../../types";
 
@@ -9,10 +8,6 @@ let JSONList: any[] = [];
 let botConfig: BotConfig;
 let dataPadded: string = "";
 let summaryInfo: string = "";
-
-const fetchBotConfig = async () => {
-  botConfig = await getNextBotConfig();
-};
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
