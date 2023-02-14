@@ -1,9 +1,0 @@
-{
-  "files.exclude": {
-    "dist": true,
-    "node_modules": true,
-    "lib": true
-  },
-  "explorer.excludeGitIgnore": false,
-  "cSpell.words": ["Probot", "Ubiqui"]
-}
