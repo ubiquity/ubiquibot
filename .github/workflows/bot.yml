@@ -42,4 +42,4 @@ jobs:
           SUPABASE_PROJECT_URL: ${{ secrets.SUPABASE_PROJECT_URL }}
           SUPABASE_PROJECT_KEY: ${{ secrets.SUPABASE_PROJECT_KEY }}
           FOLLOW_UP_TIME: '1m'
-          DISQUALIFY_TIME: '3m'
+          DISQUALIFY_TIME: '10m'
