@@ -123,18 +123,18 @@ const processEvents = (JSONList: any[]): string => {
     }
   });
 
-  // const summaryInfo =
-  //   `<code>new issues: ${openedIssues}</code>\n` +
-  //   `<code>issues resolved: ${closedIssues}</code>\n` +
-  //   `<code>total user interactions count: ${comments}</code>\n` +
-  //   `<code>bounties given: ${bountiesUSD} USD</code>\n` +
-  //   `<code>new pulls: ${openedPRs}</code>\n` +
-  //   `<code>closed pulls: ${closedPRs}</code>\n` +
-  //   `<code>merged pulls: ${mergedPRs}</code>\n` +
-  //   `<code>total commits: ${commits}</code>\n`;
-  // @note commenting it out for further reference
+  let summaryInfo =
+    `<code>new issues: ${openedIssues}</code>\n` +
+    `<code>issues resolved: ${closedIssues}</code>\n` +
+    `<code>total user interactions count: ${comments}</code>\n` +
+    `<code>bounties given: ${bountiesUSD} USD</code>\n` +
+    `<code>new pulls: ${openedPRs}</code>\n` +
+    `<code>closed pulls: ${closedPRs}</code>\n` +
+    `<code>merged pulls: ${mergedPRs}</code>\n` +
+    `<code>total commits: ${commits}</code>\n`;
+  // @note using it for future reference
 
-  const summaryInfo =
+  summaryInfo =
     `📝 commits: ${commits}\n` +
     `📂 issues opened: ${openedIssues}\n` +
     `📁 issues closed: ${closedIssues}\n` +
