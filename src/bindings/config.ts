@@ -42,12 +42,14 @@ export const loadConfig = async (): Promise<BotConfig> => {
     },
   };
 
-  console.log(botConfig.unassign);
-
   const validate = ajv.compile(BotConfigSchema);
   const valid = validate(botConfig);
   if (!valid) {
     throw new Error(`Config schema validation failed!!!, config: ${botConfig}`);
+  }
+
+  if (botConfig.unassign.followUpTime < 0 || botConfig.unassign.disqualifyTime < 0) {
+    throw new Error(`Invalid time interval, followUpTime: ${botConfig.unassign.followUpTime}, disqualifyTime: ${botConfig.unassign.disqualifyTime}`);
   }
 
   return botConfig;
