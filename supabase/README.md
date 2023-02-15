@@ -13,44 +13,44 @@ Once you create a project, please put both variables into `.env` file.
 SUPABASE_PROJECT_URL=XXX
 SUPABASE_PROJECT_KEY=XXX
 ```
-2. [Install the Supabase CLI](https://supabase.com/docs/guides/resources/supabase-cli)
-The Supabase CLI provides tools to develop your project locally and deploy to the Supabase Platform.
+2. 
+[The Supabase CLI](https://supabase.com/docs/guides/resources/supabase-cli) available as a node package through the dev dependencies provides tools to develop your project locally and deploy to the Supabase Platform.
 Most common useful commands are 
 
 - Run Supabase locally
 
 ```sh
-supabase start
+yarn supabase start
 ```
 
 - Manager database migrations
 
 ```sh
-supabase migration
+yarn supabase migration
 ```
 
 - CI/CD for releasing to production
 
 ```sh
-supabase db push
+yarn supabase db push
 ```
 
 - Manager your supabase projects
 
 ```sh
-supabase projects
+yarn supabase projects
 ```
 
 - Generate types directly from your database schemas
 
 ```sh
-supabase gen types
+yarn supabase gen types
 ```
 
 3. Link the local project to the supabase project you created.
 
 ```sh
-supabase link -p PASSWORD --project-ref PROJECT_REF
+yarn supabase link -p PASSWORD --project-ref PROJECT_REF
 ``` 
 
 For more information about arguments, please go through [here](https://supabase.com/docs/reference/cli/supabase-link)

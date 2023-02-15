@@ -1,4 +1,4 @@
-import { Context, ProbotOctokit } from "probot";
+import { Context } from "probot";
 import { createAdapters } from "../adapters";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
@@ -12,14 +12,9 @@ export const getBotContext = () => botContext;
 
 let botConfig: BotConfig = {} as BotConfig;
 export const getBotConfig = () => botConfig;
-export const getNextBotConfig = async (): Promise<BotConfig> => await loadConfig();
 
 let adapters: Adapters = {} as Adapters;
 export const getAdapters = () => adapters;
-export const getNextAdapters = async (): Promise<Adapters> => await createAdapters(await getNextBotConfig());
-
-const proOctokit = new ProbotOctokit();
-export const getOctokit = () => proOctokit;
 
 const allowedActions = ["labeled", "unlabeled", "assigned"];
 
