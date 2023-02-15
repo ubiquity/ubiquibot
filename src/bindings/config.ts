@@ -3,13 +3,8 @@ import fs from "fs";
 import path from "path";
 import ms from "ms";
 
-import { DefaultPriceConfig, DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME } from "../configs";
+import { DefaultPriceConfig, DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFAULT_ORG, DEFAULT_REPO } from "../configs";
 import { ajv } from "../utils";
-
-const getFallback = (value: string, target: string) => {
-  console.warn(`using fallback value ${value} for ${target}`);
-  return value;
-};
 
 export const loadConfig = async (): Promise<BotConfig> => {
   let configFile: any = {};
@@ -37,8 +32,8 @@ export const loadConfig = async (): Promise<BotConfig> => {
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
     git: {
-      org: process.env.ORG_NAME ?? getFallback("ubiquity", "Org"),
-      repo: process.env.REPO_NAME ?? getFallback("ubiquity-dollar", "Repo"),
+      org: process.env.ORG_NAME || DEFAULT_ORG,
+      repo: process.env.REPO_NAME || DEFAULT_REPO,
     },
   };
 
