@@ -8,6 +8,7 @@ import { BotConfig } from "../../../types";
 import { getFallback } from "../../../utils/fallback";
 import { fetchImage } from "../../../utils/webAssets";
 import { weeklyConfig } from "../../../configs/weekly";
+import { ProximaNovaRegularBase64 } from "../../../assets/fonts/ProximaNovaRegularB64";
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const IMG_PATH = "../../../assets/images";
@@ -142,9 +143,36 @@ const fetchSummary = async (org: string, repo: string): Promise<string> => {
   return dataPadded;
 };
 
+const embedFont = `
+<style>
+  @font-face { 
+    font-family: "ProximaNovaRegular";
+    font-weight: 100 900;
+    font-style: normal italic;
+    src: url(data:application/font-woff;base64,${ProximaNovaRegularBase64});
+  }
+</style>
+`;
+
+const embedStyle = `
+<style>
+  body {
+    font-family: 'ProximaNovaRegular', sans-serif;
+    color: white;
+    font-size: 70px;
+  }
+</style>
+`;
+
+const inlineStyle = `
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+`;
+
 const htmlImage = async (dataPadded: string) => {
   const wrapNode = (node: string) => {
-    return `<div style='font-family: sans-serif; color: white;font-size: 70px;display:flex;flex-direction:column;align-items:center;'><div>${node}</div></div>`;
+    return `${embedFont}${embedStyle}<div style='${inlineStyle}'><div>${node}</div></div>`;
   };
 
   await nodeHtmlToImage({
@@ -152,6 +180,7 @@ const htmlImage = async (dataPadded: string) => {
     html: await wrapNode(dataPadded),
     transparent: true,
     puppeteerArgs: {
+      args: ["--font-render-hinting=none"],
       waitForInitialPage: true,
       defaultViewport: { width: 2080, height: 1024 },
     },
