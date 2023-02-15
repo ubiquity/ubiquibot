@@ -31,8 +31,13 @@ export const GitConfigSchema = Type.Object({
 
 export type PriceConfig = Static<typeof PriceConfigSchema>;
 
+export const UnassignConfigSchema = Type.Object({
+  followUpTime: Type.Number(),
+  disqualifyTime: Type.Number(),
+});
 export const BotConfigSchema = Type.Object({
   price: PriceConfigSchema,
+  unassign: UnassignConfigSchema,
   supabase: SupabaseConfigSchema,
   telegram: TelegramBotConfigSchema,
   git: GitConfigSchema,

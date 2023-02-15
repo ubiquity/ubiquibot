@@ -64,7 +64,7 @@ export const collectAnalytics = async (): Promise<void> => {
       })
     );
 
-    log.info({ users: userProfilesToUpsert.map((i) => i.login) }, "Upserting users");
+    log.info({ users: userProfilesToUpsert.filter((i) => i.login).map((i) => i.login) }, "Upserting users");
 
     await Promise.all(userProfilesToUpsert.map(async (i) => upsertUser(i)));
 

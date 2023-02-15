@@ -32,7 +32,6 @@ const fetchEvents = async (context: Context, config: BotConfig): Promise<any[]> 
         per_page: perPage,
         page: currentPage,
       });
-      console.log(pubOrgEvents);
       pubOrgEvents.forEach((elem: any) => {
         const elemTimestamp = new Date(elem.created_at as string).getTime();
         if (elemTimestamp <= startTimestamp && elemTimestamp >= endTimestamp) {

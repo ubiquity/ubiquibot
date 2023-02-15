@@ -46,9 +46,10 @@ jobs:
       - name: Ubiquity Bounty Bot
         uses: ubiquity/bounty-bot@c1c6c99336f34ac5e94efaed49c9f218fb7a2d76
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SUPABASE_PROJECT_URL: ${{ secrets.SUPABASE_PROJECT_URL }}
           SUPABASE_PROJECT_KEY: ${{ secrets.SUPABASE_PROJECT_KEY }}
+          FOLLOWUP_TIME: '4 days'
+          DISQUALIFY_TIME: '7 days'
 
 ```
 
@@ -62,6 +63,11 @@ jobs:
 ```
 SUPABASE_PROJECT_URL=XXX
 SUPABASE_PROJECT_KEY=XXX
+```
+5. Add `FOLLOW_UP_TIME` and `DISQUALIFY_TIME` to the `.env` file if you don't want to use default ones. 
+```
+FOLLOW_UP_TIME="4 days" // 4 days
+DISQUALIFY_TIME="7 days" // 7 days
 ```
 
 At this point you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react. You can, for example:

@@ -1,9 +1,10 @@
 import { BotConfig, BotConfigSchema } from "../types";
 import fs from "fs";
 import path from "path";
-import { DefaultPriceConfig, DEFAULT_BOT_DELAY } from "../configs";
+import ms from "ms";
+
+import { DefaultPriceConfig, DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFAULT_ORG, DEFAULT_REPO } from "../configs";
 import { ajv } from "../utils";
-import { getFallback } from "../utils/fallback";
 
 export const loadConfig = async (): Promise<BotConfig> => {
   let configFile: any = {};
@@ -18,6 +19,10 @@ export const loadConfig = async (): Promise<BotConfig> => {
       timeLabels: configFile.timeLabels ?? DefaultPriceConfig.timeLabels,
       priorityLabels: configFile.priorityLabels ?? DefaultPriceConfig.priorityLabels,
     },
+    unassign: {
+      followUpTime: ms(process.env.FOLLOW_UP_TIME || DEFAULT_FOLLOWUP_TIME),
+      disqualifyTime: ms(process.env.DISQUALIFY_TIME || DEFAULT_DISQUALIFY_TIME),
+    },
     supabase: {
       url: process.env.SUPABASE_PROJECT_URL ?? "",
       key: process.env.SUPABASE_PROJECT_KEY ?? "",
@@ -27,8 +32,8 @@ export const loadConfig = async (): Promise<BotConfig> => {
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
     git: {
-      org: process.env.ORG_NAME ?? getFallback("ubiquity", "Org"),
-      repo: process.env.REPO_NAME ?? getFallback("ubiquity-dollar", "Repo"),
+      org: process.env.ORG_NAME || DEFAULT_ORG,
+      repo: process.env.REPO_NAME || DEFAULT_REPO,
     },
   };
 
@@ -36,6 +41,10 @@ export const loadConfig = async (): Promise<BotConfig> => {
   const valid = validate(botConfig);
   if (!valid) {
     throw new Error(`Config schema validation failed!!!, config: ${botConfig}`);
+  }
+
+  if (botConfig.unassign.followUpTime < 0 || botConfig.unassign.disqualifyTime < 0) {
+    throw new Error(`Invalid time interval, followUpTime: ${botConfig.unassign.followUpTime}, disqualifyTime: ${botConfig.unassign.disqualifyTime}`);
   }
 
   return botConfig;
