@@ -189,7 +189,6 @@ const htmlImage = async (dataPadded: string) => {
     html: await wrapNode(dataPadded),
     transparent: true,
     puppeteerArgs: {
-      args: ["--font-render-hinting=none"],
       waitForInitialPage: true,
       defaultViewport: { width: 2080, height: 1024 },
     },
