@@ -16,7 +16,16 @@ export const getBotConfig = () => botConfig;
 let adapters: Adapters = {} as Adapters;
 export const getAdapters = () => adapters;
 
-const allowedActions = ["labeled", "unlabeled", "assigned"];
+const allowedEvents = [
+  // issues events
+  "issues.labeled",
+  "issues.unlabeled",
+  "issues.assigned",
+
+  // issue_comment
+  "issue_comment.created",
+  "issue_comment.edited",
+];
 
 export const bindEvents = async (context: Context): Promise<void> => {
   const { log, id, name } = context;
@@ -24,7 +33,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
   const payload = context.payload as Payload;
 
   log.info(`Started binding events... id: ${id}, name: ${name}, action: ${payload.action}}`);
-  if (payload.action && !allowedActions.includes(payload.action)) {
+  if (payload.action && !allowedEvents.includes(`${name}.${payload.action}`)) {
     log.debug(`Skipping the event. reason: not configured`);
     return;
   }
