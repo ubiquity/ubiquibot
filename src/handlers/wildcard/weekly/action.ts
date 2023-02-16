@@ -9,6 +9,7 @@ import { getFallback } from "../../../utils/fallback";
 import { fetchImage } from "../../../utils/webAssets";
 import { weeklyConfig } from "../../../configs/weekly";
 import { ProximaNovaRegularBase64 } from "../../../assets/fonts/ProximaNovaRegularB64";
+import { ClosedIssueIcon, CommitIcon, MergedPullIcon, OpenedIssueIcon, OpenedPullIcon } from "../../../assets/svgs";
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const IMG_PATH = "../../../assets/images";
@@ -54,7 +55,15 @@ const fetchEvents = async (context: Context, config: BotConfig): Promise<any[]> 
   return elemList;
 };
 
-const processEvents = (JSONList: any[]): string => {
+type SummaryType = {
+  commits: number;
+  openedIssues: number;
+  closedIssues: number;
+  openedPRs: number;
+  mergedPRs: number;
+};
+
+const processEvents = (JSONList: any[]): SummaryType => {
   let openedIssues: number = 0;
   let closedIssues: number = 0;
   let comments: number = 0;
@@ -123,7 +132,7 @@ const processEvents = (JSONList: any[]): string => {
     }
   });
 
-  let summaryInfo =
+  let summaryInfo: string | SummaryType =
     `<code>new issues: ${openedIssues}</code>\n` +
     `<code>issues resolved: ${closedIssues}</code>\n` +
     `<code>total user interactions count: ${comments}</code>\n` +
@@ -134,12 +143,20 @@ const processEvents = (JSONList: any[]): string => {
     `<code>total commits: ${commits}</code>\n`;
   // @note using it for future reference
 
-  summaryInfo =
-    `📝 commits: ${commits}\n` +
-    `📂 issues opened: ${openedIssues}\n` +
-    `📁 issues closed: ${closedIssues}\n` +
-    `📄 pull requests: ${openedPRs}\n` +
-    `📑 pull requests merged: ${mergedPRs}\n`;
+  // summaryInfo =
+  //   `📝 commits: ${commits}\n` +
+  //   `📂 issues opened: ${openedIssues}\n` +
+  //   `📁 issues closed: ${closedIssues}\n` +
+  //   `📄 pull requests: ${openedPRs}\n` +
+  //   `📑 pull requests merged: ${mergedPRs}\n`;
+
+  summaryInfo = {
+    commits,
+    openedIssues,
+    closedIssues,
+    openedPRs,
+    mergedPRs,
+  };
 
   return summaryInfo;
 };
@@ -179,14 +196,74 @@ const inlineStyle = `
   align-items:center;
 `;
 
-const htmlImage = async (dataPadded: string) => {
+const elemStyle = `
+  <style>
+    .elem-column {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 16px;
+      width: 100%;
+    }
+
+    .elem-row {
+      display: flex;
+      flex-direction: row;
+      gap: 32px;
+      width: 100%;
+    }
+  </style>
+`;
+
+const htmlImage = async (dataPadded: string, summaryInfo: SummaryType) => {
   const wrapNode = (node: string) => {
     return `${embedFont}${embedStyle}<div style='${inlineStyle}'><div>${node}</div></div>`;
+  };
+
+  const wrapElement = (nodeElem: SummaryType) => {
+    return `${embedFont}${embedStyle}${elemStyle}
+    <div class="elem-column">
+      <div class="elem-row">
+        <div class="elem-item">${nodeElem.commits}</div>
+        <div class="elem-item">${CommitIcon}</div>
+        <div class="elem-item">Commits</div>
+      </div>
+      <div class="elem-row">
+        <div class="elem-item">${nodeElem.openedIssues}</div>
+        <div class="elem-item">${OpenedIssueIcon}</div>
+        <div class="elem-item">Issues Opened</div>
+      </div>
+      <div class="elem-row">
+        <div class="elem-item">${nodeElem.closedIssues}</div>
+        <div class="elem-item">${ClosedIssueIcon}</div>
+        <div class="elem-item">Issues Closed</div>
+      </div>
+      <div class="elem-row">
+        <div class="elem-item">${nodeElem.openedPRs}</div>
+        <div class="elem-item">${OpenedPullIcon}</div>
+        <div class="elem-item">Pull Requests Opened</div>
+      </div>
+      <div class="elem-row">
+        <div class="elem-item">${nodeElem.mergedPRs}</div>
+        <div class="elem-item">${MergedPullIcon}</div>
+        <div class="elem-item">Pull Requests Merged</div>
+      </div>
+    </div>`;
   };
 
   await nodeHtmlToImage({
     output: `${IMG_PATH}/hmg.png`,
     html: await wrapNode(dataPadded),
+    transparent: true,
+    puppeteerArgs: {
+      waitForInitialPage: true,
+      defaultViewport: { width: 2080, height: 1024 },
+    },
+  });
+
+  await nodeHtmlToImage({
+    output: `${IMG_PATH}/pmg.png`,
+    html: await wrapElement(summaryInfo),
     transparent: true,
     puppeteerArgs: {
       waitForInitialPage: true,
@@ -213,10 +290,17 @@ const getFlatImage = async (): Promise<string> => {
 };
 
 const compositeImage = async () => {
+  const {
+    coordinates: { b, h, p },
+  } = weeklyConfig;
+  const bImage = await Jimp.read(`${IMG_PATH}/brand.png`);
   const hImage = await Jimp.read(`${IMG_PATH}/hmg.png`);
+  const pImage = await Jimp.read(`${IMG_PATH}/pmg.png`);
   const fImage = await getFlatImage();
   const image = await Jimp.read(fImage);
-  image.composite(hImage, 200, 440);
+  image.composite(bImage, ...b);
+  image.composite(hImage, ...h);
+  image.composite(pImage, ...p);
   await image.writeAsync(`${IMG_PATH}/fmg.png`);
 };
 
@@ -234,7 +318,7 @@ export const run = async () => {
   const eventsList = await fetchEvents(context, config);
   const summaryInfo = processEvents(eventsList);
   const dataPadded = await fetchSummary(config.git.org, config.git.repo);
-  await htmlImage(dataPadded);
+  await htmlImage(dataPadded, summaryInfo);
   await compositeImage();
-  await processTelegram(summaryInfo);
+  await processTelegram("");
 };
