@@ -3,32 +3,15 @@
 import { Static, Type } from "@sinclair/typebox";
 import { LabelSchema } from "./label";
 
-export enum Action {
-  REQUESTED = "requested",
-  REVIEW_REQUESTED = "review_requested",
-  REVIEW_REQUEST_REMOVED = "review_request_removed",
-  COMPLETED = "completed",
-  REREQUESTED = "rerequested",
+export enum GithubEvent {
+  // issues events
+  ISSUES_LABELED = "issues.labeled",
+  ISSUES_UNLABELED = "issues.unlabeled",
+  ISSUES_ASSIGNED = "issues.assigned",
 
-  ASSIGNED = "assigned",
-  CLOSED = "closed",
-  CREATED = "created",
-  DELETED = "deleted",
-  MILESTONED = "milestoned",
-  DEMILESTONED = "demilestoned",
-  EDITED = "edited",
-  LABELED = "labeled",
-  LOCKED = "locked",
-  OPENED = "opened",
-  PINNED = "pinned",
-  REOPENED = "reopened",
-  TRANSFERRED = "transferred",
-  UNASSIGNED = "unassigned",
-  UNLABELED = "unlabeled",
-  UNLOCKED = "unlocked",
-  UNPINNED = "unpinned",
-
-  SCHEDULE = "schedule",
+  // issue_comment
+  ISSUE_COMMENT_CREATED = "issue_comment.created",
+  ISSUE_COMMENT_EDITED = "issue_comment.edited",
 }
 
 export enum UserType {
@@ -220,18 +203,6 @@ const InstallationSchema = Type.Object({
   node_id: Type.String(),
 });
 
-export const PayloadSchema = Type.Object({
-  action: Type.String(),
-  issue: Type.Optional(IssueSchema),
-  label: Type.Optional(LabelSchema),
-  sender: UserSchema,
-  repository: RepositorySchema,
-  organization: Type.Optional(OrganizationSchema),
-  installation: Type.Optional(InstallationSchema),
-});
-
-export type Payload = Static<typeof PayloadSchema>;
-
 export const CommentSchema = Type.Object({
   url: Type.String(),
   html_url: Type.String(),
@@ -246,3 +217,16 @@ export const CommentSchema = Type.Object({
 });
 
 export type Comment = Static<typeof CommentSchema>;
+
+export const PayloadSchema = Type.Object({
+  action: Type.String(),
+  issue: Type.Optional(IssueSchema),
+  label: Type.Optional(LabelSchema),
+  comment: Type.Optional(CommentSchema),
+  sender: UserSchema,
+  repository: RepositorySchema,
+  organization: Type.Optional(OrganizationSchema),
+  installation: Type.Optional(InstallationSchema),
+});
+
+export type Payload = Static<typeof PayloadSchema>;
