@@ -1,6 +1,5 @@
 import { getBotContext } from "../../bindings";
 import { Payload } from "../../types";
-import { nullHandler } from "../shared";
 import { commandHandlers, commentPaser } from "./handlers";
 
 export const handleComment = async (): Promise<void> => {
@@ -18,6 +17,13 @@ export const handleComment = async (): Promise<void> => {
   const body = comment.body;
   const commands = commentPaser(body);
 
-  // Run the command handlers in parallel
-  await Promise.all(commands.map((command) => commandHandlers[command] ?? nullHandler));
+  for (const command of commands) {
+    if (commandHandlers[command]) {
+      const handler = commandHandlers[command];
+      log.info(`Running a comment handler: ${handler.name}`);
+      await handler();
+    } else {
+      log.info(`Skipping for a command: ${command}`);
+    }
+  }
 };
