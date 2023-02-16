@@ -1,23 +1,34 @@
-import { Action, Handler, ActionHandler } from "../types";
+import { GithubEvent, Handler, ActionHandler } from "../types";
 import { commentWithAssignMessage } from "./assign";
 import { pricingLabelLogic, validatePriceLabels } from "./pricing";
 import { checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate } from "./wildcard";
 import { nullHandler } from "./shared";
+import { handleComment } from "./comment";
 
 export const processors: Record<string, Handler> = {
-  [Action.LABELED]: {
+  [GithubEvent.ISSUES_LABELED]: {
     pre: [validatePriceLabels],
     action: [pricingLabelLogic],
     post: [nullHandler],
   },
-  [Action.UNLABELED]: {
+  [GithubEvent.ISSUES_UNLABELED]: {
     pre: [validatePriceLabels],
     action: [pricingLabelLogic],
     post: [nullHandler],
   },
-  [Action.ASSIGNED]: {
+  [GithubEvent.ISSUES_ASSIGNED]: {
     pre: [nullHandler],
     action: [commentWithAssignMessage],
+    post: [nullHandler],
+  },
+  [GithubEvent.ISSUE_COMMENT_CREATED]: {
+    pre: [nullHandler],
+    action: [handleComment],
+    post: [nullHandler],
+  },
+  [GithubEvent.ISSUE_COMMENT_EDITED]: {
+    pre: [nullHandler],
+    action: [handleComment],
     post: [nullHandler],
   },
 };
