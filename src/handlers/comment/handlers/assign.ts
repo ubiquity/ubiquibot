@@ -1,12 +1,18 @@
 import { getBotConfig, getBotContext } from "../../../bindings";
 import { BountyAccount } from "../../../configs";
-import { addAssignees, addCommentToIssue, removeAssignees } from "../../../helpers";
-import { Payload, LabelItem } from "../../../types";
+import { addAssignees, addCommentToIssue, getCommentsOfIssue, removeAssignees } from "../../../helpers";
+import { Payload, LabelItem, Comment } from "../../../types";
 import { deadLinePrefix } from "../../shared";
+import { IssueCommentCommands } from "../commands";
 
-export const assign = async () => {
+export const assign = async (body: string) => {
   const { log, payload: _payload } = getBotContext();
   const config = getBotConfig();
+  if (body != IssueCommentCommands.ASSIGN && body.replace(/`/g, "") != IssueCommentCommands.ASSIGN) {
+    log.info(`Skipping to assign. body: ${body}`);
+    return;
+  }
+
   const payload = _payload as Payload;
   log.info(`Received '/assign' command from user: ${payload.sender.login}`);
   const issue_number = (_payload as Payload).issue?.number;
@@ -48,15 +54,27 @@ export const assign = async () => {
   const curDateInMillisecs = curDate.getTime();
   const endDate = new Date(curDateInMillisecs + duration * 1000);
   const commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toLocaleDateString("en-us")}`;
-  log.debug(`Creating an issue comment`, { commit_msg });
 
-  if (assignees) {
-    // remove assignees from the issue
-    await removeAssignees(issue_number!, assignees);
+  log.info(`Creating an issue comment`, { commit_msg });
+
+  if (assignees.length > 0) {
+    const filteredAssignees = assignees.filter((i) => i != payload.sender.login);
+    if (filteredAssignees.length > 0) {
+      // remove assignees from the issue
+      await removeAssignees(issue_number!, assignees);
+    }
   }
 
-  // assign default bounty account to the issue
-  await addAssignees(issue_number!, [payload.sender.login]);
+  if (!assignees.includes(payload.sender.login)) {
+    // assign default bounty account to the issue
+    await addAssignees(issue_number!, [payload.sender.login]);
+  }
 
-  await addCommentToIssue(commit_msg, issue_number!);
+  // double check whether the assign message has been already posted or not
+  const issue_comments = await getCommentsOfIssue(issue_number!);
+  const comments = issue_comments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const latest_comment = comments[0].body;
+  if (commit_msg != latest_comment) {
+    await addCommentToIssue(commit_msg, issue_number!);
+  }
 };

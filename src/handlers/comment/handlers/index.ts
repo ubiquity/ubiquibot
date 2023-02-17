@@ -1,7 +1,7 @@
 import { ActionHandler } from "../../../types";
-import { nullHandler } from "../../shared";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
+import { registerWallet } from "./wallet";
 
 export * from "./assign";
 export * from "./wallet";
@@ -23,5 +23,5 @@ export const commentPaser = (body: string): IssueCommentCommands[] => {
 
 export const commandHandlers: Record<string, ActionHandler> = {
   [IssueCommentCommands.ASSIGN]: assign,
-  [IssueCommentCommands.WALLET]: nullHandler,
+  [IssueCommentCommands.WALLET]: registerWallet,
 };
