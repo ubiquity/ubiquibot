@@ -8,8 +8,8 @@ import { BotConfig } from "../../../types";
 import { getFallback } from "../../../utils/fallback";
 import { fetchImage } from "../../../utils/webAssets";
 import { weeklyConfig } from "../../../configs/weekly";
+import { wait } from "../../../helpers";
 
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const IMG_PATH = "../../../assets/images";
 
 const fetchEvents = async (context: Context, config: BotConfig): Promise<any[]> => {

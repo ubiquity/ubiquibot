@@ -21,7 +21,7 @@ export const handleComment = async (): Promise<void> => {
     if (commandHandlers[command]) {
       const handler = commandHandlers[command];
       log.info(`Running a comment handler: ${handler.name}`);
-      await handler();
+      await handler(body);
     } else {
       log.info(`Skipping for a command: ${command}`);
     }
