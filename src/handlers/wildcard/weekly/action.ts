@@ -274,7 +274,9 @@ const htmlImage = async (dataPadded: string, summaryInfo: SummaryType) => {
 
 const getFlatImage = async (): Promise<string> => {
   const {
-    remoteAsset: { remoteUrl, isUsing },
+    remoteAsset: {
+      flat: { remoteUrl, isUsing },
+    },
   } = weeklyConfig;
   let fileName = `${IMG_PATH}/flat.png`;
 
@@ -289,11 +291,31 @@ const getFlatImage = async (): Promise<string> => {
   return fileName;
 };
 
+const getBrandImage = async (): Promise<string> => {
+  const {
+    remoteAsset: {
+      brand: { remoteUrl, isUsing },
+    },
+  } = weeklyConfig;
+  let fileName = `${IMG_PATH}/brand.png`;
+
+  if (isUsing) {
+    try {
+      await fetchImage(remoteUrl);
+      fileName = `${IMG_PATH}/webBrand.png`;
+    } catch (error) {
+      fileName = await getFallback(fileName, "background");
+    }
+  }
+  return fileName;
+};
+
 const compositeImage = async () => {
   const {
     coordinates: { b, h, p },
   } = weeklyConfig;
-  const bImage = await Jimp.read(`${IMG_PATH}/brand.png`);
+  let bImage: string | Jimp = await getBrandImage();
+  bImage = await Jimp.read(bImage);
   const hImage = await Jimp.read(`${IMG_PATH}/hmg.png`);
   const pImage = await Jimp.read(`${IMG_PATH}/pmg.png`);
   const fImage = await getFlatImage();
