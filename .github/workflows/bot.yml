@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: "18.14.0"
+          node-version: "18.14.1"
 
       # This will authenticate the UbiquiBot with the UbiquiBot GitHub App
       - name: Get GitHub App token
@@ -41,5 +41,5 @@ jobs:
         env:
           SUPABASE_PROJECT_URL: ${{ secrets.SUPABASE_PROJECT_URL }}
           SUPABASE_PROJECT_KEY: ${{ secrets.SUPABASE_PROJECT_KEY }}
-          FOLLOW_UP_TIME: '1m'
-          DISQUALIFY_TIME: '10m'
+          FOLLOW_UP_TIME: "1m"
+          DISQUALIFY_TIME: "10m"
