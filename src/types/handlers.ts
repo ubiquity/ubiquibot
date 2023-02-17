@@ -1,4 +1,4 @@
-export type ActionHandler = () => Promise<void>;
+export type ActionHandler = (args?: any) => Promise<void>;
 export type PreActionHandler = ActionHandler;
 export type PostActionHandler = ActionHandler;
 
