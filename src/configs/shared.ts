@@ -20,8 +20,3 @@ export const DEFAULT_BOT_DELAY = 100; // 100ms
  */
 export const DEFAULT_FOLLOWUP_TIME = "4 days"; // 4 days
 export const DEFAULT_DISQUALIFY_TIME = "7 days"; // 7 days
-
-// This could be removed from constants setup because we should be able to get them from probot context
-// but keeping it for a while not to affect weekly setup
-export const DEFAULT_ORG = "ubiquity";
-export const DEFAULT_REPO = "bounty-bot";
