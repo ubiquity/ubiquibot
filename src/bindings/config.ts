@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import ms from "ms";
 
-import { DefaultPriceConfig, DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFAULT_ORG, DEFAULT_REPO } from "../configs";
+import { DefaultPriceConfig, DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME } from "../configs";
 import { ajv } from "../utils";
 
 export const loadConfig = async (): Promise<BotConfig> => {
@@ -30,10 +30,6 @@ export const loadConfig = async (): Promise<BotConfig> => {
     telegram: {
       token: process.env.TELEGRAM_BOT_TOKEN ?? "",
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
-    },
-    git: {
-      org: process.env.ORG_NAME || DEFAULT_ORG,
-      repo: process.env.REPO_NAME || DEFAULT_REPO,
     },
   };
 
