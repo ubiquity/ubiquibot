@@ -40,7 +40,6 @@ export const BotConfigSchema = Type.Object({
   unassign: UnassignConfigSchema,
   supabase: SupabaseConfigSchema,
   telegram: TelegramBotConfigSchema,
-  git: GitConfigSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;

@@ -1,10 +1,10 @@
 import axios from "axios";
 import Jimp from "jimp";
 import nodeHtmlToImage from "node-html-to-image";
-import { getBotContext, getBotConfig } from "../../../bindings";
+import { getBotContext } from "../../../bindings";
 import { telegramPhotoNotifier } from "../../../adapters";
 import { Context } from "probot";
-import { BotConfig } from "../../../types";
+import { Payload } from "../../../types";
 import { getFallback } from "../../../utils/fallback";
 import { fetchImage } from "../../../utils/webAssets";
 import { weeklyConfig } from "../../../configs/weekly";
@@ -14,7 +14,8 @@ import { ClosedIssueIcon, CommitIcon, MergedPullIcon, OpenedIssueIcon, OpenedPul
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const IMG_PATH = "../../../assets/images";
 
-const fetchEvents = async (context: Context, config: BotConfig): Promise<any[]> => {
+const fetchEvents = async (context: Context): Promise<any[]> => {
+  const payload = context.payload as Payload;
   const dateNow = Date.now(); //mills
   const currentDate = new Date(dateNow);
   const startTime = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1 < 10 ? `0${currentDate.getMonth() + 1}` : `${currentDate.getMonth() + 1}`}-${
@@ -30,7 +31,7 @@ const fetchEvents = async (context: Context, config: BotConfig): Promise<any[]> 
     try {
       await wait(1000);
       const { data: pubOrgEvents } = await context.octokit.activity.listPublicOrgEvents({
-        org: config.git.org,
+        org: payload.organization!.login,
         per_page: perPage,
         page: currentPage,
       });
@@ -161,9 +162,9 @@ const processEvents = (JSONList: any[]): SummaryType => {
   return summaryInfo;
 };
 
-const fetchSummary = async (org: string, repo: string): Promise<string> => {
+const fetchSummary = async (repository: string): Promise<string> => {
   const { data } = await axios.post("https://app.whatthediff.ai/api/analyze", {
-    repository: `${org}/${repo}`,
+    repository,
   });
   const dataPadded = data.review.replaceAll("\n", "");
   return dataPadded;
@@ -336,11 +337,12 @@ const processTelegram = async (caption: string) => {
 
 export const run = async () => {
   const context = getBotContext();
-  const config = getBotConfig();
-  const eventsList = await fetchEvents(context, config);
+  const payload = context.payload as Payload;
+  const repository = payload.repository.full_name;
+  const eventsList = await fetchEvents(context);
   const summaryInfo = processEvents(eventsList);
-  const dataPadded = await fetchSummary(config.git.org, config.git.repo);
-  await htmlImage(dataPadded, summaryInfo);
+  const dataPadded = await fetchSummary(repository);
+  await htmlImage(dataPadded);
   await compositeImage();
   await processTelegram("");
 };

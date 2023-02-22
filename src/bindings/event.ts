@@ -32,7 +32,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
   // Load config
   log.info("Loading config from .env...");
   botConfig = await loadConfig();
-  log.info(`Config loaded! config: ${JSON.stringify({ price: botConfig.price, unassign: botConfig.unassign, git: botConfig.git })}`);
+  log.info(`Config loaded! config: ${JSON.stringify({ price: botConfig.price, unassign: botConfig.unassign })}`);
 
   // Create adapters for telegram, supabase, twitter, discord, etc
   log.info("Creating adapters for supabase, telegram, twitter, etc...");
