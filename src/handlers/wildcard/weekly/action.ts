@@ -342,7 +342,7 @@ export const run = async () => {
   const eventsList = await fetchEvents(context);
   const summaryInfo = processEvents(eventsList);
   const dataPadded = await fetchSummary(repository);
-  await htmlImage(dataPadded);
+  await htmlImage(dataPadded, summaryInfo);
   await compositeImage();
   await processTelegram("");
 };
