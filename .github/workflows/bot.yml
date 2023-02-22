@@ -41,5 +41,5 @@ jobs:
         env:
           SUPABASE_PROJECT_URL: ${{ secrets.SUPABASE_PROJECT_URL }}
           SUPABASE_PROJECT_KEY: ${{ secrets.SUPABASE_PROJECT_KEY }}
-          FOLLOW_UP_TIME: "1m"
-          DISQUALIFY_TIME: "10m"
+          FOLLOW_UP_TIME: '4 days'
+          DISQUALIFY_TIME: '7 days'
