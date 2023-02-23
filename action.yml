@@ -1,5 +1,5 @@
 name: "Ubiquity Bounty Bot"
 description: "This bot facilitates the Bounty System."
 runs:
-  using: "node16"
+  using: "node18"
   main: "bin/index.js"
