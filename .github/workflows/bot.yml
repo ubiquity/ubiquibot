@@ -5,6 +5,10 @@ on:
       - labeled
       - unlabeled
       - assigned
+  issue_comment:
+    types:
+      - created
+      - edited
 
 jobs:
   calculate_bounty_job:
