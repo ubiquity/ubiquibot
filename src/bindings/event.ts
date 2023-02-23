@@ -2,7 +2,7 @@ import { Context } from "probot";
 import { createAdapters } from "../adapters";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
-import { BotConfig, Payload, PayloadSchema } from "../types";
+import { BotConfig, GithubEvent, Payload, PayloadSchema } from "../types";
 import { Adapters } from "../types/adapters";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
@@ -16,15 +16,15 @@ export const getBotConfig = () => botConfig;
 let adapters: Adapters = {} as Adapters;
 export const getAdapters = () => adapters;
 
-const allowedActions = ["labeled", "unlabeled", "assigned"];
-
 export const bindEvents = async (context: Context): Promise<void> => {
   const { log, id, name } = context;
   botContext = context;
   const payload = context.payload as Payload;
 
-  log.info(`Started binding events... id: ${id}, name: ${name}, action: ${payload.action}}`);
-  if (payload.action && !allowedActions.includes(payload.action)) {
+  const allowedEvents = Object.values(GithubEvent) as string[];
+  const eventName = `${name}.${payload.action}`;
+  log.info(`Started binding events... id: ${id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
+  if (payload.action && !allowedEvents.includes(eventName)) {
     log.debug(`Skipping the event. reason: not configured`);
     return;
   }
@@ -54,29 +54,27 @@ export const bindEvents = async (context: Context): Promise<void> => {
     return;
   }
 
-  const actionName = payload.action ?? name;
-
   // Get the handlers for the action
-  const handlers = processors[actionName];
+  const handlers = processors[eventName];
   if (!handlers) {
-    log.warn(`No handler configured for action: ${actionName}`);
+    log.warn(`No handler configured for event: ${eventName}`);
     return;
   }
 
   const { pre, action, post } = handlers;
   // Run pre-handlers
-  log.info(`Running pre handlers: ${pre.map((fn) => fn.name)}, action: ${actionName}`);
+  log.info(`Running pre handlers: ${pre.map((fn) => fn.name)}, event: ${eventName}`);
   for (const preAction of pre) {
     await preAction();
   }
   // Run main handlers
-  log.info(`Running main handlers: ${action.map((fn) => fn.name)}, action: ${actionName}`);
+  log.info(`Running main handlers: ${action.map((fn) => fn.name)}, event: ${eventName}`);
   for (const mainAction of action) {
     await mainAction();
   }
 
   // Run post-handlers
-  log.info(`Running post handlers: ${post.map((fn) => fn.name)}, action: ${actionName}`);
+  log.info(`Running post handlers: ${post.map((fn) => fn.name)}, event: ${eventName}`);
   for (const postAction of post) {
     await postAction();
   }
