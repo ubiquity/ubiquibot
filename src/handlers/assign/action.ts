@@ -21,7 +21,7 @@ export const commentWithAssignMessage = async (): Promise<void> => {
     return;
   }
 
-  const flattened_assignees = assignees.reduce((acc, cur) => `${acc}@${cur.login}`, "");
+  const flattened_assignees = assignees.reduce((acc, cur) => `${acc} @${cur.login}`, "");
 
   // get the time label from the `labels`
   const labels = payload.issue?.labels;

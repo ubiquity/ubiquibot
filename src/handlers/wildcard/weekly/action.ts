@@ -10,8 +10,8 @@ import { fetchImage } from "../../../utils/webAssets";
 import { weeklyConfig } from "../../../configs/weekly";
 import { ProximaNovaRegularBase64 } from "../../../assets/fonts/ProximaNovaRegularB64";
 import { ClosedIssueIcon, CommitIcon, MergedPullIcon, OpenedIssueIcon, OpenedPullIcon } from "../../../assets/svgs";
+import { wait } from "../../../helpers";
 
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const IMG_PATH = "../../../assets/images";
 
 const fetchEvents = async (context: Context): Promise<any[]> => {
