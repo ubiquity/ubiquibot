@@ -166,101 +166,114 @@ const fetchSummary = async (repository: string): Promise<string> => {
   const { data } = await axios.post("https://app.whatthediff.ai/api/analyze", {
     repository,
   });
-  const dataPadded = data.review.replaceAll("\n", "");
+  const dataPadded = data.review.replaceAll("\n", "").replaceAll("<p>", "").replaceAll("</p>", "\n");
   return dataPadded;
 };
 
-const embedFont = `
-<style>
-  @font-face { 
-    font-family: "ProximaNovaRegular";
-    font-weight: 100 900;
-    font-style: normal italic;
-    src: url(data:application/font-woff;base64,${ProximaNovaRegularBase64});
-  }
-</style>
-`;
-
-const embedStyle = `
-<style>
-  body {
-    font-family: 'ProximaNovaRegular', sans-serif;
-    color: white;
-    font-size: 70px;
-  }
-</style>
-`;
-
-const inlineStyle = `
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-`;
-
-const elemStyle = `
-  <style>
-    .elem-column {
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap: 16px;
-      width: 100%;
-    }
-
-    .elem-row {
-      display: flex;
-      flex-direction: row;
-      gap: 32px;
-      width: 100%;
-    }
-  </style>
-`;
-
-const htmlImage = async (dataPadded: string, summaryInfo: SummaryType) => {
-  const wrapNode = (node: string) => {
-    return `${embedFont}${embedStyle}<div style='${inlineStyle}'><div>${node}</div></div>`;
-  };
-
+const htmlImage = async (summaryInfo: SummaryType) => {
   const wrapElement = (nodeElem: SummaryType) => {
-    return `${embedFont}${embedStyle}${elemStyle}
-    <div class="elem-column">
-      <div class="elem-row">
-        <div class="elem-item">${nodeElem.commits}</div>
-        <div class="elem-item">${CommitIcon}</div>
-        <div class="elem-item">Commits</div>
-      </div>
-      <div class="elem-row">
-        <div class="elem-item">${nodeElem.openedIssues}</div>
-        <div class="elem-item">${OpenedIssueIcon}</div>
-        <div class="elem-item">Issues Opened</div>
-      </div>
-      <div class="elem-row">
-        <div class="elem-item">${nodeElem.closedIssues}</div>
-        <div class="elem-item">${ClosedIssueIcon}</div>
-        <div class="elem-item">Issues Closed</div>
-      </div>
-      <div class="elem-row">
-        <div class="elem-item">${nodeElem.openedPRs}</div>
-        <div class="elem-item">${OpenedPullIcon}</div>
-        <div class="elem-item">Pull Requests Opened</div>
-      </div>
-      <div class="elem-row">
-        <div class="elem-item">${nodeElem.mergedPRs}</div>
-        <div class="elem-item">${MergedPullIcon}</div>
-        <div class="elem-item">Pull Requests Merged</div>
-      </div>
-    </div>`;
-  };
+    return `
+      <html>
+      <body>
+          <style>
+              @font-face { 
+                font-family: "ProximaNovaRegular";
+                font-weight: 100 900;
+                font-style: normal italic;
+                src: url(data:application/font-woff;base64,${ProximaNovaRegularBase64});
+              }
+              
+              html {
+                  width: 100%;
+                  height: 100%;
+              }
 
-  await nodeHtmlToImage({
-    output: `${IMG_PATH}/hmg.png`,
-    html: await wrapNode(dataPadded),
-    transparent: true,
-    puppeteerArgs: {
-      waitForInitialPage: true,
-      defaultViewport: { width: 2080, height: 1024 },
-    },
-  });
+              body {
+                  font-family: 'ProximaNovaRegular', sans-serif;
+                  font-size: 70px;
+                  color: white;
+                  width: 100%;
+                  height: 100%;
+                  margin: 0;
+                  padding: 0;
+              }
+
+              .container {
+                  display: flex;
+                  flex-direction: column;
+                  justify-content: center;
+                  align-items: center;
+                  width: 100%;
+                  height: 100%;
+              }
+
+              .items {
+                  display: flex;
+                  flex-direction: column;
+                  gap: 32px;
+              }
+
+              .item {
+                  display: flex;
+                  flex-direction: row;
+                  align-items: center;
+                  gap: 40px;
+              }
+
+              .title {
+                  width: 700px;
+                  white-space: nowrap;
+              }
+
+              .value-wrapper {
+                  width: 240px;
+                  text-align: end;
+              }
+          </style>
+          <div class="container">
+              <div class="items">
+                  <div class="item">
+                      <div class="icon">${CommitIcon}</div>
+                      <div class="title">Commits</div>
+                      <div class="value-wrapper">
+                          <span class="value">${nodeElem.commits}</span>
+                      </div>
+                  </div>
+                  <div class="item">
+                      <div class="icon">${OpenedIssueIcon}</div>
+                      <div class="title">Issues Opened</div>
+                      <div class="value-wrapper">
+                          <span class="value">${nodeElem.openedIssues}</span>
+                      </div>
+                  </div>
+                  <div class="item">
+                      <div class="icon">${ClosedIssueIcon}</div>
+                      <div class="title">Issues Closed</div>
+                      <div class="value-wrapper">
+                          <span class="value">${nodeElem.closedIssues}</span>
+                      </div>
+                  </div>
+                  <div class="item">
+                      <div class="icon">${OpenedPullIcon}</div>
+                      <div class="title">Pull Requests Opened</div>
+                      <div class="value-wrapper">
+                          <span class="value">${nodeElem.openedPRs}</span>
+                      </div>
+                  </div>
+                  <div class="item">
+                      <div class="icon">${MergedPullIcon}</div>
+                      <div class="title">Pull Requests Merged</div>
+                      <div class="value-wrapper">
+                          <span class="value">${nodeElem.mergedPRs}</span>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </body>
+
+      </html>
+    `;
+  };
 
   await nodeHtmlToImage({
     output: `${IMG_PATH}/pmg.png`,
@@ -268,7 +281,7 @@ const htmlImage = async (dataPadded: string, summaryInfo: SummaryType) => {
     transparent: true,
     puppeteerArgs: {
       waitForInitialPage: true,
-      defaultViewport: { width: 2080, height: 1024 },
+      defaultViewport: { width: 2048, height: 1024 },
     },
   });
 };
@@ -292,38 +305,11 @@ const getFlatImage = async (): Promise<string> => {
   return fileName;
 };
 
-const getBrandImage = async (): Promise<string> => {
-  const {
-    remoteAsset: {
-      brand: { remoteUrl, isUsing },
-    },
-  } = weeklyConfig;
-  let fileName = `${IMG_PATH}/brand.png`;
-
-  if (isUsing) {
-    try {
-      await fetchImage(remoteUrl);
-      fileName = `${IMG_PATH}/webBrand.png`;
-    } catch (error) {
-      fileName = await getFallback(fileName, "background");
-    }
-  }
-  return fileName;
-};
-
 const compositeImage = async () => {
-  const {
-    coordinates: { b, h, p },
-  } = weeklyConfig;
-  let bImage: string | Jimp = await getBrandImage();
-  bImage = await Jimp.read(bImage);
-  const hImage = await Jimp.read(`${IMG_PATH}/hmg.png`);
   const pImage = await Jimp.read(`${IMG_PATH}/pmg.png`);
   const fImage = await getFlatImage();
   const image = await Jimp.read(fImage);
-  image.composite(bImage, ...b);
-  image.composite(hImage, ...h);
-  image.composite(pImage, ...p);
+  image.composite(pImage, 0, 0);
   await image.writeAsync(`${IMG_PATH}/fmg.png`);
 };
 
@@ -342,7 +328,7 @@ export const run = async () => {
   const eventsList = await fetchEvents(context);
   const summaryInfo = processEvents(eventsList);
   const dataPadded = await fetchSummary(repository);
-  await htmlImage(dataPadded, summaryInfo);
+  await htmlImage(summaryInfo);
   await compositeImage();
-  await processTelegram("");
+  await processTelegram(dataPadded);
 };
