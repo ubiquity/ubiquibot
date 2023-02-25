@@ -1,6 +1,12 @@
 export const weeklyConfig = {
   remoteAsset: {
-    remoteUrl: "https://unsplash.com/photos/AaEQmoufHLk/download?force=true",
-    isUsing: false,
+    flat: {
+      remoteUrl: "https://example.org/flat.png",
+      isUsing: false,
+    },
+    brand: {
+      remoteUrl: "https://example.org/brand.png",
+      isUsing: false,
+    },
   },
 };
