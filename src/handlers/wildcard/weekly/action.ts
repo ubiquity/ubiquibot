@@ -166,7 +166,7 @@ const fetchSummary = async (repository: string): Promise<string> => {
   const { data } = await axios.post("https://app.whatthediff.ai/api/analyze", {
     repository,
   });
-  const dataPadded = data.review.replaceAll("\n", "").replaceAll("<p>", "").replaceAll("</p>", "\n");
+  const dataPadded = data.review.replace(/<.*?>/gm, "");
   return dataPadded;
 };
 
