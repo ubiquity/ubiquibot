@@ -1,5 +1,5 @@
 import { getBotConfig, getBotContext } from "../../bindings";
-import { addLabelToIssue, clearAllPriceLabelsOnIssue } from "../../helpers";
+import { addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel } from "../../helpers";
 import { Payload } from "../../types";
 import { getTargetPriceLabel } from "../shared";
 
@@ -24,6 +24,12 @@ export const pricingLabelLogic = async (): Promise<void> => {
     } else {
       log.info({ labels, timeLabels, priorityLabels, targetPriceLabel }, `Adding price label to issue`);
       await clearAllPriceLabelsOnIssue();
+
+      const exist = await getLabel(targetPriceLabel);
+      if (!exist) {
+        log.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
+        await createLabel(targetPriceLabel);
+      }
       await addLabelToIssue(targetPriceLabel);
     }
   } else {
