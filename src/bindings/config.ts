@@ -9,6 +9,7 @@ import {
   DEFAULT_CHAIN_ID,
   DEFAULT_DISQUALIFY_TIME,
   DEFAULT_FOLLOWUP_TIME,
+  DEFAULT_PAYMENT_TOKEN,
   DEFAULT_PERMIT_BASE_URL,
   DEFAULT_RPC_ENDPOINT,
 } from "../configs";
@@ -31,7 +32,7 @@ export const loadConfig = async (): Promise<BotConfig> => {
       chainId: process.env.CHAIN_ID ? Number(process.env.CHAIN_ID) : DEFAULT_CHAIN_ID,
       rpc: process.env.RPC_PROVIDER_URL || DEFAULT_RPC_ENDPOINT,
       privateKey: process.env.UBIQUIBOT_PRIVATE_KEY || "",
-      paymentToken: process.env.PAYMENT_TOKEN || "",
+      paymentToken: process.env.PAYMENT_TOKEN || DEFAULT_PAYMENT_TOKEN,
       permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
     },
     unassign: {
