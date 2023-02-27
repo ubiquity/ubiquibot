@@ -30,7 +30,6 @@
     "@types/ms": "^0.7.31",
     "@vercel/ncc": "^0.34.0",
     "@uniswap/permit2-sdk": "^1.2.0",
-    "dotenv": "^16.0.3",
     "ethers": "^5.7.2",
     "ajv": "^8.11.2",
     "ajv-formats": "^2.1.1",

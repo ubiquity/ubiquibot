@@ -19,6 +19,9 @@ export const loadConfig = async (): Promise<BotConfig> => {
       timeLabels: configFile.timeLabels ?? DefaultPriceConfig.timeLabels,
       priorityLabels: configFile.priorityLabels ?? DefaultPriceConfig.priorityLabels,
     },
+    payout: {
+      rpc,
+    },
     unassign: {
       followUpTime: ms(process.env.FOLLOW_UP_TIME || DEFAULT_FOLLOWUP_TIME),
       disqualifyTime: ms(process.env.DISQUALIFY_TIME || DEFAULT_DISQUALIFY_TIME),
