@@ -1,39 +1,43 @@
 import { MaxUint256, PermitTransferFrom, SignatureTransfer } from "@uniswap/permit2-sdk";
 import { randomBytes } from "crypto";
 import { BigNumber, ethers } from "ethers";
+import { getBotConfig, getBotContext } from "../bindings";
 
 const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on all chains
 
-// generate().catch(error => {
-//   console.error(error);
-//   verifyEnvironmentVariables();
-//   process.exitCode = 1;
-// });
-
-async function generate() {
-  const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_PROVIDER_URL);
-  const myWallet = new ethers.Wallet(process.env.UBIQUIBOT_PRIVATE_KEY || "", provider);
+/**
+ * Generates permit2 signature data with `spender` and `amountInETH`
+ *
+ * @param spender The recipient address we're going to send tokens
+ * @param amountInETH The token amount in ETH
+ *
+ * @returns Permit2 url including base64 encocded data
+ */
+export const generatePermit2Signature = async (spender: string, amountInETH: string): Promise<string> => {
+  const {
+    payout: { chainId, privateKey, permitBaseUrl, rpc, paymentToken },
+  } = getBotConfig();
+  const { log } = getBotContext();
+  const provider = new ethers.providers.JsonRpcProvider(rpc);
+  const adminWallet = new ethers.Wallet(privateKey, provider);
 
   const permitTransferFromData: PermitTransferFrom = {
     permitted: {
       // token we are permitting to be transferred
-      token: process.env.PAYMENT_TOKEN_ADDRESS || "",
+      token: paymentToken,
       // amount we are permitting to be transferred
-      amount: ethers.utils.parseUnits(process.env.AMOUNT_IN_ETH || "", 18),
+      amount: ethers.utils.parseUnits(amountInETH, 18),
     },
     // who can transfer the tokens
-    spender: process.env.BENEFICIARY_ADDRESS || "",
+    spender: spender,
     nonce: BigNumber.from(`0x${randomBytes(32).toString("hex")}`),
     // signature deadline
     deadline: MaxUint256,
   };
 
-  const { domain, types, values } = SignatureTransfer.getPermitData(
-    permitTransferFromData,
-    PERMIT2_ADDRESS,
-    process.env.CHAIN_ID ? Number(process.env.CHAIN_ID) : 1
-  );
-  const signature = await myWallet._signTypedData(domain, types, values);
+  const { domain, types, values } = SignatureTransfer.getPermitData(permitTransferFromData, PERMIT2_ADDRESS, chainId);
+
+  const signature = await adminWallet._signTypedData(domain, types, values);
   const txData = {
     permit: {
       permitted: {
@@ -47,14 +51,12 @@ async function generate() {
       to: permitTransferFromData.spender,
       requestedAmount: permitTransferFromData.permitted.amount.toString(),
     },
-    owner: myWallet.address,
+    owner: adminWallet.address,
     signature: signature,
   };
 
   const base64encodedTxData = Buffer.from(JSON.stringify(txData)).toString("base64");
-  log.ok("Testing URL:");
-  console.log(`${process.env.FRONTEND_URL}?claim=${base64encodedTxData}`);
-  log.ok("Public URL:");
-  console.log(`https://pay.ubq.fi?claim=${base64encodedTxData}`);
-  console.log();
-}
+  const result = `${permitBaseUrl}?claim=${base64encodedTxData}`;
+  log.info(`Generated permit2 url: ${result}`);
+  return result;
+};
