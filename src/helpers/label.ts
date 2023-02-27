@@ -34,3 +34,20 @@ export const createLabel = async (name: string): Promise<void> => {
     context.log.debug(`Error creating a label: ${name}. Is it already there?`);
   }
 };
+
+export const getLabel = async (name: string): Promise<boolean> => {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
+  try {
+    const res = await context.octokit.rest.issues.getLabel({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      name,
+    });
+    return res.status === 200 ? true : false;
+  } catch (err: unknown) {
+    context.log.debug(`Error creating a label: ${name}. Is it already there?`);
+  }
+
+  return false;
+};
