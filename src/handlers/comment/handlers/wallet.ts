@@ -1,10 +1,12 @@
 import { upsertWalletAddress } from "../../../adapters/supabase";
 import { getBotContext } from "../../../bindings";
+import { addCommentToIssue } from "../../../helpers";
 import { Payload } from "../../../types";
 
 export const registerWallet = async (body: string): Promise<void> => {
   const { log, payload: _payload } = getBotContext();
   const payload = _payload as Payload;
+  const issue = payload.issue;
   const sender = payload.sender.login;
   const regex = /(0x[a-fA-F0-9]{40})/g;
   const matches = body.match(regex);
@@ -17,4 +19,5 @@ export const registerWallet = async (body: string): Promise<void> => {
   }
 
   await upsertWalletAddress(sender, address);
+  await addCommentToIssue(`Updated the wallet address for @${sender} successfully!`, issue!.number);
 };

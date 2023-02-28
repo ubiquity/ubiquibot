@@ -31,14 +31,15 @@ export const handleIssueClosed = async () => {
   }
 
   const priceInETH = issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4);
-  const recipient = await getWalletAddress(assignee);
+  console.log({ assignee });
+  const recipient = await getWalletAddress(assignee.login);
   if (!recipient) {
     log.info(`Recipient address is missing`);
-    await addCommentToIssue(`@${assignee} would you please post your wallet address here?`, issue.number);
+    await addCommentToIssue(`@${assignee.login} would you please post your wallet address here?`, issue.number);
     return;
   }
 
   const payoutUrl = await generatePermit2Signature(recipient, priceInETH);
   log.info(`Posing a payout url to the issue, url: ${payoutUrl}`);
-  await addCommentToIssue(`@${assignee} You can receive your payment on ${payoutUrl}`, issue.number);
+  await addCommentToIssue(`@${assignee.login} You can receive your payment on ${payoutUrl}`, issue.number);
 };
