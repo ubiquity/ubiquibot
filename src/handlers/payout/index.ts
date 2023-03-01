@@ -30,7 +30,7 @@ export const handleIssueClosed = async () => {
     return;
   }
 
-  const priceInETH = issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4);
+  const priceInEth = issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4);
   console.log({ assignee });
   const recipient = await getWalletAddress(assignee.login);
   if (!recipient) {
@@ -39,7 +39,7 @@ export const handleIssueClosed = async () => {
     return;
   }
 
-  const payoutUrl = await generatePermit2Signature(recipient, priceInETH);
+  const payoutUrl = await generatePermit2Signature(recipient, priceInEth);
   log.info(`Posing a payout url to the issue, url: ${payoutUrl}`);
   await addCommentToIssue(`@${assignee.login} You can receive your payment on ${payoutUrl}`, issue.number);
 };
