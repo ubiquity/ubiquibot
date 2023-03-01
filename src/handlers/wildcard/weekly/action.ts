@@ -1,3 +1,4 @@
+import path from "path";
 import axios from "axios";
 import Jimp from "jimp";
 import nodeHtmlToImage from "node-html-to-image";
@@ -12,7 +13,7 @@ import { ProximaNovaRegularBase64 } from "../../../assets/fonts/ProximaNovaRegul
 import { ClosedIssueIcon, CommitIcon, MergedPullIcon, OpenedIssueIcon, OpenedPullIcon } from "../../../assets/svgs";
 import { wait } from "../../../helpers";
 
-const IMG_PATH = "../../../assets/images";
+const IMG_PATH = path.resolve(__dirname, "../../../assets/images");
 
 const fetchEvents = async (context: Context): Promise<any[]> => {
   const payload = context.payload as Payload;
