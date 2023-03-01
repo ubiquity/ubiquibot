@@ -1,5 +1,7 @@
 import { Probot } from "probot";
+import { EmitterWebhookEventName } from "@octokit/webhooks";
 import { bindEvents } from "./bindings";
+import { GithubEvent } from "./types";
 
 const UBIQUITY = `
   _|    _|  _|_|_|    _|_|_|    _|_|      _|    _|  _|_|_|  _|_|_|_|_|  _|      _|
@@ -12,7 +14,6 @@ const UBIQUITY = `
 
 export default function main(app: Probot) {
   console.log(UBIQUITY);
-  // app.onAny(bindEvents as any);
-  app.on("issue_comment.created", bindEvents);
-  app.on("issues.closed", bindEvents);
+  const allowedEvents = Object.values(GithubEvent) as EmitterWebhookEventName[];
+  app.on(allowedEvents, bindEvents);
 }
