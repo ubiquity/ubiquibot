@@ -41,5 +41,5 @@ export const handleIssueClosed = async () => {
 
   const payoutUrl = await generatePermit2Signature(recipient, priceInEth);
   log.info(`Posing a payout url to the issue, url: ${payoutUrl}`);
-  await addCommentToIssue(`@${assignee} **[ [ CLAIM ${priceInEth} ]** ](${payoutUrl}) for ${recipient}`, issue.number);
+  await addCommentToIssue(`@${assignee.login} **[ [ CLAIM ${priceInEth} ]** ](${payoutUrl}) for ${recipient}`, issue.number);
 };

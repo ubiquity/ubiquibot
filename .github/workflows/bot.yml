@@ -5,6 +5,7 @@ on:
       - labeled
       - unlabeled
       - assigned
+      - closed
   issue_comment:
     types:
       - created
@@ -29,7 +30,7 @@ jobs:
           node-version: "18.14.1"
 
       # This will authenticate the UbiquiBot with the UbiquiBot GitHub App
-      - name: Get GitHub App token
+      - name: Authenticate as UbiquiBot
         uses: tibdex/github-app-token@v1.7.0
         id: get_installation_token
         with:
@@ -45,5 +46,6 @@ jobs:
         env:
           SUPABASE_PROJECT_URL: ${{ secrets.SUPABASE_PROJECT_URL }}
           SUPABASE_PROJECT_KEY: ${{ secrets.SUPABASE_PROJECT_KEY }}
+          UBIQUIBOT_PRIVATE_KEY: ${{ secrets.UBIQUIBOT_PRIVATE_KEY }}
           FOLLOW_UP_TIME: '4 days'
           DISQUALIFY_TIME: '7 days'
