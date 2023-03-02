@@ -11,7 +11,6 @@ const extractEnsName = (text: string): string | undefined => {
 
   // Find the first match of the regular expression in the input text
   const match = text.match(ensRegex);
-  console.log("> match: ", match);
 
   if (match) {
     const ensName = match[0];
@@ -28,7 +27,7 @@ export const registerWallet = async (body: string): Promise<void> => {
   const sender = payload.sender.login;
   const regexForAddress = /(0x[a-fA-F0-9]{40})/g;
   const addressMatches = body.match(regexForAddress);
-  let address = addressMatches ? addressMatches[0] : undefined;
+  let address = addressMatches ? addressMatches[0] : null;
   const ensName = extractEnsName(body.replace(IssueCommentCommands.WALLET, "").trim());
   log.info(`Received '/wallet' command from user: ${sender}, body: ${body}, ${ensName}`);
 
@@ -48,5 +47,5 @@ export const registerWallet = async (body: string): Promise<void> => {
   }
 
   await upsertWalletAddress(sender, address);
-  await addCommentToIssue(`Updated the wallet address for @${sender} successfully! address: ${address}`, issue!.number);
+  await addCommentToIssue(`Updated the wallet address for @${sender} successfully!\t Your new address: ${address}`, issue!.number);
 };
