@@ -10,7 +10,7 @@ import {
   DEFAULT_DISQUALIFY_TIME,
   DEFAULT_FOLLOWUP_TIME,
   DEFAULT_PAYMENT_TOKEN,
-  DEFAULT_PERMIT_BASE_URL,
+  DEFAULT_PAYMENT_DAPP_DOMAIN,
   DEFAULT_RPC_ENDPOINT,
 } from "../configs";
 import { ajv } from "../utils";
@@ -31,9 +31,9 @@ export const loadConfig = async (): Promise<BotConfig> => {
     payout: {
       chainId: process.env.CHAIN_ID ? Number(process.env.CHAIN_ID) : DEFAULT_CHAIN_ID,
       rpc: process.env.RPC_PROVIDER_URL || DEFAULT_RPC_ENDPOINT,
-      privateKey: process.env.UBIQUIBOT_PRIVATE_KEY || "",
+      privateKey: process.env.EVM_SIGNING_KEY || "",
       paymentToken: process.env.PAYMENT_TOKEN || DEFAULT_PAYMENT_TOKEN,
-      permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
+      permitBaseUrl: process.env.PAYMENT_DAPP_DOMAIN || DEFAULT_PAYMENT_DAPP_DOMAIN,
     },
     unassign: {
       followUpTime: ms(process.env.FOLLOW_UP_TIME || DEFAULT_FOLLOWUP_TIME),
