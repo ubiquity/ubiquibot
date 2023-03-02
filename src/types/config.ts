@@ -13,6 +13,7 @@ export const PriceConfigSchema = Type.Object({
   timeLabels: Type.Array(LabelItemSchema),
   priorityLabels: Type.Array(LabelItemSchema),
 });
+export type PriceConfig = Static<typeof PriceConfigSchema>;
 
 export const SupabaseConfigSchema = Type.Object({
   url: Type.String(),
@@ -24,12 +25,13 @@ export const TelegramBotConfigSchema = Type.Object({
   delay: Type.Number(),
 });
 
-export const GitConfigSchema = Type.Object({
-  org: Type.String(),
-  repo: Type.String(),
+export const PayoutConfigSchema = Type.Object({
+  chainId: Type.Number(),
+  rpc: Type.String(),
+  privateKey: Type.String(),
+  paymentToken: Type.String(),
+  permitBaseUrl: Type.String(),
 });
-
-export type PriceConfig = Static<typeof PriceConfigSchema>;
 
 export const UnassignConfigSchema = Type.Object({
   followUpTime: Type.Number(),
@@ -37,6 +39,7 @@ export const UnassignConfigSchema = Type.Object({
 });
 export const BotConfigSchema = Type.Object({
   price: PriceConfigSchema,
+  payout: PayoutConfigSchema,
   unassign: UnassignConfigSchema,
   supabase: SupabaseConfigSchema,
   telegram: TelegramBotConfigSchema,

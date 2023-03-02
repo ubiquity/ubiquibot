@@ -4,6 +4,7 @@ import { pricingLabelLogic, validatePriceLabels } from "./pricing";
 import { checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate } from "./wildcard";
 import { nullHandler } from "./shared";
 import { handleComment } from "./comment";
+import { handleIssueClosed } from "./payout";
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_LABELED]: {
@@ -29,6 +30,11 @@ export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUE_COMMENT_EDITED]: {
     pre: [nullHandler],
     action: [handleComment],
+    post: [nullHandler],
+  },
+  [GithubEvent.ISSUES_CLOSED]: {
+    pre: [nullHandler],
+    action: [handleIssueClosed],
     post: [nullHandler],
   },
 };

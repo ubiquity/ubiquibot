@@ -20,3 +20,8 @@ export const DEFAULT_BOT_DELAY = 100; // 100ms
  */
 export const DEFAULT_FOLLOWUP_TIME = "4 days"; // 4 days
 export const DEFAULT_DISQUALIFY_TIME = "7 days"; // 7 days
+
+export const DEFAULT_CHAIN_ID = 1;
+export const DEFAULT_RPC_ENDPOINT = "https://rpc-pay.ubq.fi/v1/mainnet";
+export const DEFAULT_PAYMENT_TOKEN = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
+export const DEFAULT_PERMIT_BASE_URL = "https://pay.ubq.fi";

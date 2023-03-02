@@ -152,7 +152,7 @@ export const upsertUser = async (user: UserProfile): Promise<void> => {
 /**
  * Performs an UPSERT on the wallet table.
  * @param username The user name you want to upsert a wallet address for
- * @param address The EVM wallet address
+ * @param address The account address
  */
 export const upsertWalletAddress = async (username: string, address: string): Promise<void> => {
   const { log } = getBotContext();
@@ -170,4 +170,17 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
       .insert({ user_name: username, wallet_address: address, created_at: new Date().toUTCString(), updated_at: new Date().toUTCString() });
     log.info("Creating a new wallet_table record done", { data: _data, error: _error });
   }
+};
+
+/**
+ * Queries the wallet address registered previously
+ *
+ * @param username The username you want to find an address for
+ * @returns The ERC20 address
+ */
+export const getWalletAddress = async (username: string): Promise<string | undefined> => {
+  const { supabase } = getAdapters();
+
+  const { data } = await supabase.from("wallets").select("wallet_address").eq("user_name", username).single();
+  return data?.wallet_address;
 };
