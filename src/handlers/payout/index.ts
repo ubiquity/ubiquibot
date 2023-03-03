@@ -1,5 +1,6 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotContext } from "../../bindings";
+import { RESERVED_USERNAMES } from "../../configs";
 import { addCommentToIssue, generatePermit2Signature } from "../../helpers";
 import { Payload } from "../../types";
 import { bountyInfo } from "../wildcard";
@@ -34,8 +35,10 @@ export const handleIssueClosed = async () => {
   console.log({ assignee });
   const recipient = await getWalletAddress(assignee.login);
   if (!recipient) {
-    log.info(`Recipient address is missing`);
-    await addCommentToIssue(`@${assignee.login} would you please post your wallet address here?`, issue.number);
+    if (!RESERVED_USERNAMES[assignee.login]) {
+      log.info(`Recipient address is missing`);
+      await addCommentToIssue(`@${assignee.login} would you please post your wallet address here?`, issue.number);
+    }
     return;
   }
 
