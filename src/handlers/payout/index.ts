@@ -35,7 +35,14 @@ export const handleIssueClosed = async () => {
   console.log({ assignee });
   const recipient = await getWalletAddress(assignee.login);
   if (!recipient) {
-    if (!RESERVED_USERNAMES[assignee.login]) {
+    const {
+      data: { state_reason },
+    } = await context.octokit.issues.get({
+      owner: payload.organization!.login,
+      repo: payload.repository.name,
+      issue_number: issue.number,
+    });
+    if (!RESERVED_USERNAMES[assignee.login] && state_reason === "completed") {
       log.info(`Recipient address is missing`);
       await addCommentToIssue(`@${assignee.login} would you please post your wallet address here?`, issue.number);
     }
