@@ -28,7 +28,7 @@ jobs:
         run: yarn build
 
       - name: Authenticate SSH
-        if: github.ref == 'refs/heads/development'
+        if: github.ref == 'refs/heads/development' && secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH != ''
         uses: webfactory/ssh-agent@v0.4.0
         with:
           ssh-private-key: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }}
@@ -43,6 +43,12 @@ jobs:
           yarn build:ci
           git add -A
           git diff-index --quiet HEAD || git commit -am "build: update executable" --no-verify
-          git push git@github.com:${{github.repository}}.git ${{github.ref}}
+          git push git@github.com:${{github.repository}}.git ${{github.ref}} ||
+            (
+              # Try using the UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH secret first
+              # If it fails, fall back to using the default GITHUB_TOKEN
+              echo "Pushing with default token"
+              git push origin ${{github.ref}}
+            )
         env:
           GITHUB_TOKEN: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }}
