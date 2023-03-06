@@ -22,7 +22,7 @@ export const validatePriceLabels = async (): Promise<void> => {
     }
   }
 
-  const neededLabels: string[] = [...timeLabels, ...priorityLabels, ...targetLabels1, ...targetLabels2, ...aiLabels];
+  const neededLabels: string[] = [...timeLabels, ...priorityLabels, ...targetLabels1, ...targetLabels2];
   log.debug("Got needed labels for setting up price", neededLabels);
 
   // List all the labels for a repository
