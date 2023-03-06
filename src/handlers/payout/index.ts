@@ -1,12 +1,16 @@
 import { getWalletAddress } from "../../adapters/supabase";
-import { getBotContext } from "../../bindings";
 import { RESERVED_USERNAMES } from "../../configs";
-import { addCommentToIssue, generatePermit2Signature } from "../../helpers";
+import { getBotConfig, getBotContext } from "../../bindings";
+import { addCommentToIssue, generatePermit2Signature, getTokenSymbol } from "../../helpers";
 import { Payload } from "../../types";
+import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
 
 export const handleIssueClosed = async () => {
   const context = getBotContext();
+  const {
+    payout: { paymentToken, rpc },
+  } = getBotConfig();
   const { log } = context;
   const payload = context.payload as Payload;
   const issue = payload.issue;
@@ -50,6 +54,9 @@ export const handleIssueClosed = async () => {
   }
 
   const payoutUrl = await generatePermit2Signature(recipient, priceInEth);
-  log.info(`Posing a payout url to the issue, url: ${payoutUrl}`);
-  await addCommentToIssue(`@${assignee.login} **[ [ CLAIM ${priceInEth} ]** ](${payoutUrl}) for ${recipient}`, issue.number);
+  const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
+  const shortenRecipient = shortenEthAddress(recipient);
+  log.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
+  const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
+  await addCommentToIssue(comment, issue.number);
 };
