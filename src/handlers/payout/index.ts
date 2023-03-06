@@ -2,7 +2,7 @@ import { getWalletAddress } from "../../adapters/supabase";
 import { RESERVED_USERNAMES } from "../../configs";
 import { getBotConfig, getBotContext } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getTokenSymbol } from "../../helpers";
-import { Payload } from "../../types";
+import { Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
 
@@ -39,14 +39,7 @@ export const handleIssueClosed = async () => {
   console.log({ assignee });
   const recipient = await getWalletAddress(assignee.login);
   if (!recipient) {
-    const {
-      data: { state_reason },
-    } = await context.octokit.issues.get({
-      owner: payload.organization!.login,
-      repo: payload.repository.name,
-      issue_number: issue.number,
-    });
-    if (!RESERVED_USERNAMES[assignee.login] && state_reason === "completed") {
+    if (!RESERVED_USERNAMES[assignee.login] && issue.state_reason === StateReason.COMPLETED) {
       log.info(`Recipient address is missing`);
       await addCommentToIssue(`@${assignee.login} would you please post your wallet address here?`, issue.number);
     }
