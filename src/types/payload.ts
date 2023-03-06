@@ -27,6 +27,11 @@ export enum IssueType {
   ALL = "all",
 }
 
+export enum StateReason {
+  COMPLETED = "completed",
+  NOT_PLANNED = "not_planned",
+}
+
 const UserSchema = Type.Object({
   login: Type.String(),
   id: Type.Number(),
@@ -85,6 +90,7 @@ const IssueSchema = Type.Object({
   user: UserSchema,
   labels: Type.Array(LabelSchema),
   state: Type.Enum(IssueType),
+  state_reason: Type.Enum(StateReason),
   locked: Type.Boolean(),
   assignee: Type.Any(),
   assignees: Type.Array(Type.Any()),
