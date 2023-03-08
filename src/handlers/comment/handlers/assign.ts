@@ -1,6 +1,6 @@
 import { getBotConfig, getBotContext } from "../../../bindings";
 import { addAssignees, addCommentToIssue, getCommentsOfIssue, removeAssignees } from "../../../helpers";
-import { Payload, LabelItem, Comment } from "../../../types";
+import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
 import { IssueCommentCommands } from "../commands";
 
@@ -14,7 +14,16 @@ export const assign = async (body: string) => {
 
   const payload = _payload as Payload;
   log.info(`Received '/assign' command from user: ${payload.sender.login}`);
-  const issue_number = (_payload as Payload).issue?.number;
+  const issue = (_payload as Payload).issue;
+  if (!issue) {
+    log.info(`Skipping '/assign' because of no issue instance`);
+    return;
+  }
+  if (issue!.state == IssueType.CLOSED) {
+    log.info("Skipping '/assign', reason: closed ");
+    return;
+  }
+  const issue_number = issue!.number;
   const _assignees = payload.issue?.assignees;
   const assignees = _assignees ?? [];
 
