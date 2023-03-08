@@ -1,7 +1,7 @@
 import { getBotContext } from "../../../bindings";
 import { COMMAND_INSTRUCTIONS } from "../../../configs";
 import { addCommentToIssue } from "../../../helpers";
-import { Payload } from "../../../types";
+import { IssueType, Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 
 export const listAvailableCommands = async (body: string): Promise<void> => {
@@ -15,6 +15,11 @@ export const listAvailableCommands = async (body: string): Promise<void> => {
 
   if (!issue) {
     log.info("Skipping /help, reason: not issue");
+    return;
+  }
+
+  if (issue!.state == IssueType.CLOSED) {
+    log.info("Skipping '/assign', reason: closed ");
     return;
   }
   await addCommentToIssue(COMMAND_INSTRUCTIONS, issue!.number);
