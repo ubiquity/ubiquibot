@@ -29,7 +29,7 @@ export const assign = async (body: string) => {
   const assignees = _assignees ?? [];
 
   if (assignees.length !== 1 || assignees[0] != BountyAccount) {
-    log.info(`Skipping '/assign', reason: not assigned to devpool. assignees: ${assignees.length > 0 ? assignees.toString() : "NoAssignee"}`);
+    log.info(`Skipping '/assign', reason: not assigned to the devpool. assignees: ${assignees.length > 0 ? assignees.toString() : "NoAssignee"}`);
     return;
   }
 
