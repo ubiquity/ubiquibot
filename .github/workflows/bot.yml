@@ -40,7 +40,7 @@ jobs:
         env:
           TOKEN: ${{ steps.get_installation_token.outputs.token }}
         run: |
-          echo "The generated token is masked: ${TOKEN}"      
+          echo $TOKEN      
 
       - name: Invoke the UbiquiBot
         id: UbiquiBot
