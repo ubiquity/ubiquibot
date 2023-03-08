@@ -34,6 +34,7 @@ jobs:
         id: get_installation_token
         with:
           app_id: ${{ secrets.UBIQUITY_BOUNTY_BOT_APP_ID }}
+          private_key: ${{ secrets.UBIQUITY_BOUNTY_BOT_PRIVATE_KEY }}
 
       - name: Invoke the UbiquiBot
         id: UbiquiBot
