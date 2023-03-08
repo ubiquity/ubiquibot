@@ -36,11 +36,6 @@ jobs:
           app_id: ${{ secrets.UBIQUITY_BOUNTY_BOT_APP_ID }}
           private_key: ${{ secrets.UBIQUITY_BOUNTY_BOT_PRIVATE_KEY }}
 
-      - name: Use token
-        env:
-          TOKEN: ${{ steps.get_installation_token.outputs.token }}
-        run: echo "$TOKEN"
-
       - name: Invoke the UbiquiBot
         id: UbiquiBot
         uses: ./bin
