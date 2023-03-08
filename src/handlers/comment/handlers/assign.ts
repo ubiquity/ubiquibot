@@ -28,8 +28,10 @@ export const assign = async (body: string) => {
   const _assignees = payload.issue?.assignees;
   const assignees = _assignees ?? [];
 
-  if (assignees.length !== 1 || assignees[0] != BountyAccount) {
-    log.info(`Skipping '/assign', reason: not assigned to the devpool. assignees: ${assignees.length > 0 ? assignees.toString() : "NoAssignee"}`);
+  if (assignees.length !== 1 || assignees[0].login != BountyAccount) {
+    log.info(
+      `Skipping '/assign', reason: not assigned to the devpool. assignees: ${assignees.length > 0 ? assignees.map((i) => i.login).join() : "NoAssignee"}`
+    );
     return;
   }
 
