@@ -1,4 +1,5 @@
 import { getBotConfig, getBotContext } from "../../../bindings";
+import { BountyAccount } from "../../../configs";
 import { addAssignees, addCommentToIssue, getCommentsOfIssue, removeAssignees } from "../../../helpers";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
@@ -26,6 +27,11 @@ export const assign = async (body: string) => {
   const issue_number = issue!.number;
   const _assignees = payload.issue?.assignees;
   const assignees = _assignees ?? [];
+
+  if (assignees.length !== 1 || assignees[0] != BountyAccount) {
+    log.info(`Skipping '/assign', reason: not assigned to devpool. assignees: ${assignees.length > 0 ? assignees.toString() : "NoAssignee"}`);
+    return;
+  }
 
   // get the time label from the `labels`
   const labels = payload.issue?.labels;
