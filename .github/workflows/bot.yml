@@ -39,8 +39,7 @@ jobs:
       - name: Use token
         env:
           TOKEN: ${{ steps.get_installation_token.outputs.token }}
-        run: |
-          echo $TOKEN      
+        run: echo "$TOKEN"
 
       - name: Invoke the UbiquiBot
         id: UbiquiBot
