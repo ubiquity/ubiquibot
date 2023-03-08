@@ -90,7 +90,7 @@ const IssueSchema = Type.Object({
   user: UserSchema,
   labels: Type.Array(LabelSchema),
   state: Type.Enum(IssueType),
-  state_reason: Type.Enum(StateReason),
+  state_reason: Type.Optional(Type.Enum(StateReason)),
   locked: Type.Boolean(),
   assignee: Type.Any(),
   assignees: Type.Array(Type.Any()),
