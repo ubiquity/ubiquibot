@@ -40,8 +40,8 @@ export const loadConfig = async (): Promise<BotConfig> => {
       disqualifyTime: ms(process.env.DISQUALIFY_TIME || DEFAULT_DISQUALIFY_TIME),
     },
     supabase: {
-      url: process.env.SUPABASE_PROJECT_URL ?? "",
-      key: process.env.SUPABASE_PROJECT_KEY ?? "",
+      url: process.env.SUPABASE_URL ?? "",
+      key: process.env.SUPABASE_KEY ?? "",
     },
     telegram: {
       token: process.env.TELEGRAM_BOT_TOKEN ?? "",
