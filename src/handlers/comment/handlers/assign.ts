@@ -69,7 +69,7 @@ export const assign = async (body: string) => {
   const curDate = new Date();
   const curDateInMillisecs = curDate.getTime();
   const endDate = new Date(curDateInMillisecs + duration * 1000);
-  const commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toLocaleDateString("en-us")}`;
+  const commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
 
   log.info(`Creating an issue comment: ${commit_msg}`);
 
