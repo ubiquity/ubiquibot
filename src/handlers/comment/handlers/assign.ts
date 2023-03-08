@@ -57,15 +57,16 @@ export const assign = async (body: string) => {
   log.info(`Creating an issue comment: ${commit_msg}`);
 
   if (assignees.length > 0) {
-    const filteredAssignees = assignees.filter((i) => i != payload.sender.login);
+    const filteredAssignees = assignees.filter((i) => i.login != payload.sender.login);
     if (filteredAssignees.length > 0) {
+      const assigneeNamesToRemove = filteredAssignees.map((i) => i.login) as string[];
       // remove assignees from the issue
-      log.info("Removing the previous assignees...");
-      await removeAssignees(issue_number!, assignees);
+      log.info(`Removing the previous assignees... assignees: ${assigneeNamesToRemove}`);
+      await removeAssignees(issue_number!, assigneeNamesToRemove);
     }
   }
 
-  if (!assignees.includes(payload.sender.login)) {
+  if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     log.info(`Adding the assignee: ${payload.sender.login}`);
     // assign default bounty account to the issue
     await addAssignees(issue_number!, [payload.sender.login]);
