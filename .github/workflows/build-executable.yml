@@ -28,7 +28,7 @@ jobs:
         run: yarn build
 
       - name: Authenticate SSH
-        if: github.ref == 'refs/heads/development' && secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH != ''
+        if: github.ref == 'refs/heads/development'
         uses: webfactory/ssh-agent@v0.4.0
         with:
           ssh-private-key: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }}
