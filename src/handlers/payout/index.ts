@@ -1,5 +1,5 @@
 import { getWalletAddress } from "../../adapters/supabase";
-import { RESERVED_USERNAMES } from "../../configs";
+import { BountyAccount } from "../../configs";
 import { getBotConfig, getBotContext } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getTokenSymbol } from "../../helpers";
 import { Payload, StateReason } from "../../types";
@@ -39,7 +39,7 @@ export const handleIssueClosed = async () => {
   console.log({ assignee });
   const recipient = await getWalletAddress(assignee.login);
   if (!recipient) {
-    if (!RESERVED_USERNAMES[assignee.login] && issue.state_reason === StateReason.COMPLETED) {
+    if (assignee.login != BountyAccount && issue.state_reason === StateReason.COMPLETED) {
       log.info(`Recipient address is missing`);
       await addCommentToIssue(`@${assignee.login} would you please post your wallet address here?`, issue.number);
     }
