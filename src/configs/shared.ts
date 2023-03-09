@@ -1,4 +1,3 @@
-export const BountyAccount = "ubiquity-bounties";
 export const COLORS = {
   price: "008000",
 };

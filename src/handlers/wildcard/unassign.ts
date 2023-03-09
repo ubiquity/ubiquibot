@@ -1,7 +1,6 @@
 import { getBotConfig, getBotContext } from "../../bindings";
-import { BountyAccount } from "../../configs";
 import { GLOBAL_STRINGS } from "../../configs/strings";
-import { addAssignees, addCommentToIssue, getCommentsOfIssue, listIssuesForRepo, removeAssignees } from "../../helpers";
+import { addCommentToIssue, getCommentsOfIssue, listIssuesForRepo, removeAssignees } from "../../helpers";
 import { Comment, IssueType } from "../../types";
 import { deadLinePrefix } from "../shared";
 
@@ -18,7 +17,7 @@ export const checkBountiesToUnassign = async () => {
   // because GitHub's REST API v3 considers every pull request an issue
   const issues_opened = await listIssuesForRepo(IssueType.OPEN);
 
-  const assigned_issues = issues_opened.filter((issue) => issue.assignee && issue.assignee.login != BountyAccount);
+  const assigned_issues = issues_opened.filter((issue) => issue.assignee);
 
   // Checking the bounties in parallel
   const res = await Promise.all(assigned_issues.map(async (issue) => checkBountyToUnassign(issue)));
@@ -61,10 +60,6 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
     );
     // remove assignees from the issue
     await removeAssignees(issue.number, assignees);
-
-    // assign default bounty account to the issue
-    await addAssignees(issue.number, [BountyAccount]);
-
     await addCommentToIssue(`${unassignComment}`, issue.number);
 
     return true;

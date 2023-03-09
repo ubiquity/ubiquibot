@@ -37,6 +37,13 @@ export const bountyInfo = (
  */
 export const collectAnalytics = async (): Promise<void> => {
   const { log } = getBotContext();
+  const {
+    mode: { analytics },
+  } = getBotConfig();
+  if (!analytics) {
+    log.info(`Skipping to collect analytics, reason: mode=${analytics}`);
+    return;
+  }
   log.info("Collecting analytics information...");
   const maximumIssueNumber = await getMaxIssueNumber();
 

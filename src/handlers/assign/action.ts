@@ -1,10 +1,9 @@
 import { getBotConfig, getBotContext } from "../../bindings";
-import { BountyAccount } from "../../configs";
 import { addCommentToIssue } from "../../helpers";
 import { Payload, LabelItem } from "../../types";
 import { deadLinePrefix } from "../shared";
 
-const exclude_accounts = [BountyAccount];
+const exclude_accounts: string[] = [];
 export const commentWithAssignMessage = async (): Promise<void> => {
   const context = getBotContext();
   const config = getBotConfig();
