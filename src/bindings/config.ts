@@ -1,8 +1,9 @@
-import { BotConfig, BotConfigSchema } from "../types";
+import ms from "ms";
+import yaml from "js-yaml";
 import fs from "fs";
 import path from "path";
-import ms from "ms";
 
+import { BotConfig, BotConfigSchema } from "../types";
 import {
   DefaultPriceConfig,
   DEFAULT_BOT_DELAY,
@@ -17,9 +18,11 @@ import { ajv } from "../utils";
 
 export const loadConfig = async (): Promise<BotConfig> => {
   let configFile: any = {};
-  const configFilePath = path.join(__dirname, "./config.json");
-  if (fs.existsSync(configFilePath)) {
-    configFile = await import(configFilePath);
+  try {
+    const configFilePath = path.join(__dirname, "../../.github/ubiquibot-config.yml");
+    configFile = yaml.load(fs.readFileSync(configFilePath, "utf8"));
+  } catch (err) {
+    console.error(err);
   }
 
   const botConfig: BotConfig = {
@@ -35,7 +38,7 @@ export const loadConfig = async (): Promise<BotConfig> => {
     payout: {
       chainId: process.env.CHAIN_ID ? Number(process.env.CHAIN_ID) : DEFAULT_CHAIN_ID,
       rpc: process.env.RPC_PROVIDER_URL || DEFAULT_RPC_ENDPOINT,
-      privateKey: process.env.UBIQUIBOT_PRIVATE_KEY || "",
+      privateKey: process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY || "",
       paymentToken: process.env.PAYMENT_TOKEN || DEFAULT_PAYMENT_TOKEN,
       permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
     },
@@ -44,17 +47,25 @@ export const loadConfig = async (): Promise<BotConfig> => {
       disqualifyTime: ms(process.env.DISQUALIFY_TIME || DEFAULT_DISQUALIFY_TIME),
     },
     supabase: {
-      url: process.env.SUPABASE_PROJECT_URL ?? "",
-      key: process.env.SUPABASE_PROJECT_KEY ?? "",
+      url: process.env.SUPABASE_URL ?? "",
+      key: process.env.SUPABASE_KEY ?? "",
     },
     telegram: {
       token: process.env.TELEGRAM_BOT_TOKEN ?? "",
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
+    mode: {
+      autoPayMode: process.env.AUTO_PAY_MODE === "TRUE" ? true : false,
+      analyticsMode: process.env.ANALYTICS_MODE === "TRUE" ? true : false,
+    },
   };
 
   if (botConfig.log.ingestionKey == "") {
     throw new Error("LogDNA ingestion key missing");
+  }
+
+  if (botConfig.payout.privateKey == "") {
+    botConfig.mode.autoPayMode = false;
   }
 
   const validate = ajv.compile(BotConfigSchema);

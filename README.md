@@ -25,7 +25,7 @@ yarn start:watch
 
 ## How to use
 1. Create a new project at [Supabase](https://supabase.com/)
-2. Add Supabase's `Project URL` and `API key` to repository secrets `SUPABASE_PROJECT_URL` and `SUPABASE_PROJECT_KEY`
+2. Add Supabase's `Project URL` and `API key` to repository secrets `SUPABASE_URL` and `SUPABASE_KEY`
 3. Add a new github workflow which uses the action(use the latest commit hash):
 ```
 name: Calculate Bounty Based on Issue Labels
@@ -46,8 +46,8 @@ jobs:
       - name: Ubiquity Bounty Bot
         uses: ubiquity/bounty-bot@c1c6c99336f34ac5e94efaed49c9f218fb7a2d76
         env:
-          SUPABASE_PROJECT_URL: ${{ secrets.SUPABASE_PROJECT_URL }}
-          SUPABASE_PROJECT_KEY: ${{ secrets.SUPABASE_PROJECT_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           FOLLOWUP_TIME: '4 days'
           DISQUALIFY_TIME: '7 days'
 
@@ -61,8 +61,8 @@ jobs:
 3. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
 4. Create a new project at [Supabase](https://supabase.com/). Add `Project URL` and `API key` to the `.env` file:
 ```
-SUPABASE_PROJECT_URL=XXX
-SUPABASE_PROJECT_KEY=XXX
+SUPABASE_URL=XXX
+SUPABASE_KEY=XXX
 ```
 5. Add `FOLLOW_UP_TIME` and `DISQUALIFY_TIME` to the `.env` file if you don't want to use default ones. 
 ```

@@ -37,6 +37,10 @@ export const UnassignConfigSchema = Type.Object({
   followUpTime: Type.Number(),
   disqualifyTime: Type.Number(),
 });
+export const ModeSchema = Type.Object({
+  autoPayMode: Type.Boolean(),
+  analyticsMode: Type.Boolean(),
+});
 
 export const LogConfigSchema = Type.Object({
   level: Type.String(),
@@ -50,6 +54,7 @@ export const BotConfigSchema = Type.Object({
   unassign: UnassignConfigSchema,
   supabase: SupabaseConfigSchema,
   telegram: TelegramBotConfigSchema,
+  mode: ModeSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;

@@ -1,6 +1,5 @@
+import { addAssignees, addCommentToIssue, getCommentsOfIssue } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
-import { BountyAccount } from "../../../configs";
-import { addAssignees, addCommentToIssue, getCommentsOfIssue, removeAssignees } from "../../../helpers";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
 import { IssueCommentCommands } from "../commands";
@@ -29,7 +28,7 @@ export const assign = async (body: string) => {
   const _assignees = payload.issue?.assignees;
   const assignees = _assignees ?? [];
 
-  if (assignees.length !== 1 || assignees[0].login != BountyAccount) {
+  if (assignees.length !== 0) {
     logger.info(
       `Skipping '/assign', reason: not assigned to the devpool. assignees: ${assignees.length > 0 ? assignees.map((i) => i.login).join() : "NoAssignee"}`
     );
@@ -72,18 +71,6 @@ export const assign = async (body: string) => {
   const endDate = new Date(curDateInMillisecs + duration * 1000);
   const commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
 
-  logger.info(`Creating an issue comment: ${commit_msg}`);
-
-  if (assignees.length > 0) {
-    const filteredAssignees = assignees.filter((i) => i.login != payload.sender.login);
-    if (filteredAssignees.length > 0) {
-      const assigneeNamesToRemove = filteredAssignees.map((i) => i.login) as string[];
-      // remove assignees from the issue
-      logger.info(`Removing the previous assignees... assignees: ${assigneeNamesToRemove}`);
-      await removeAssignees(issue_number!, assigneeNamesToRemove);
-    }
-  }
-
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     logger.info(`Adding the assignee: ${payload.sender.login}`);
     // assign default bounty account to the issue
@@ -91,6 +78,7 @@ export const assign = async (body: string) => {
   }
 
   // double check whether the assign message has been already posted or not
+  logger.info(`Creating an issue comment: ${commit_msg}`);
   const issue_comments = await getCommentsOfIssue(issue_number!);
   const comments = issue_comments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latest_comment = comments.length > 0 ? comments[0].body : undefined;

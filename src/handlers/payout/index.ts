@@ -1,5 +1,4 @@
 import { getWalletAddress } from "../../adapters/supabase";
-import { BountyAccount } from "../../configs";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getTokenSymbol } from "../../helpers";
 import { Payload, StateReason } from "../../types";
@@ -10,6 +9,7 @@ export const handleIssueClosed = async () => {
   const context = getBotContext();
   const {
     payout: { paymentToken, rpc },
+    mode: { autoPayMode },
   } = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -17,6 +17,10 @@ export const handleIssueClosed = async () => {
   if (!issue) return;
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
+  if (!autoPayMode) {
+    logger.info(`Skipping to generate permit2 url, reason: { autoPayMode: ${autoPayMode}}`);
+    return;
+  }
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
     logger.info(`Skipping... its not a bounty`);
@@ -38,7 +42,7 @@ export const handleIssueClosed = async () => {
   const priceInEth = issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4);
   const recipient = await getWalletAddress(assignee.login);
   if (!recipient) {
-    if (assignee.login != BountyAccount && issue.state_reason === StateReason.COMPLETED) {
+    if (issue.state_reason === StateReason.COMPLETED) {
       logger.info(`Recipient address is missing`);
       await addCommentToIssue(`@${assignee.login} would you please post your wallet address here?`, issue.number);
     }
