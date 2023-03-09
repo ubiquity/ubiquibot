@@ -42,7 +42,13 @@ export const ModeSchema = Type.Object({
   analytics: Type.Boolean(),
 });
 
+export const LogConfigSchema = Type.Object({
+  level: Type.String(),
+  ingestionKey: Type.String(),
+});
+
 export const BotConfigSchema = Type.Object({
+  log: LogConfigSchema,
   price: PriceConfigSchema,
   payout: PayoutConfigSchema,
   unassign: UnassignConfigSchema,

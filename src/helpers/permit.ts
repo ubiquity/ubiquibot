@@ -1,7 +1,7 @@
 import { MaxUint256, PermitTransferFrom, SignatureTransfer } from "@uniswap/permit2-sdk";
 import { randomBytes } from "crypto";
 import { BigNumber, ethers } from "ethers";
-import { getBotConfig, getBotContext } from "../bindings";
+import { getBotConfig, getLogger } from "../bindings";
 
 const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on all chains
 
@@ -17,7 +17,7 @@ export const generatePermit2Signature = async (spender: string, amountInEth: str
   const {
     payout: { chainId, privateKey, permitBaseUrl, rpc, paymentToken },
   } = getBotConfig();
-  const { log } = getBotContext();
+  const logger = getLogger();
   const provider = new ethers.providers.JsonRpcProvider(rpc);
   const adminWallet = new ethers.Wallet(privateKey, provider);
 
@@ -57,6 +57,6 @@ export const generatePermit2Signature = async (spender: string, amountInEth: str
 
   const base64encodedTxData = Buffer.from(JSON.stringify(txData)).toString("base64");
   const result = `${permitBaseUrl}?claim=${base64encodedTxData}`;
-  log.info(`Generated permit2 url: ${result}`);
+  logger.info(`Generated permit2 url: ${result}`);
   return result;
 };

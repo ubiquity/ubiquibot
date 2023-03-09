@@ -26,6 +26,10 @@ export const loadConfig = async (): Promise<BotConfig> => {
   }
 
   const botConfig: BotConfig = {
+    log: {
+      level: process.env.LOG_LEVEL || "deubg",
+      ingestionKey: process.env.LOGDNA_INGESTION_KEY ?? "",
+    },
     price: {
       baseMultiplier: process.env.BASE_MULTIPLIER ? Number(process.env.BASE_MULTIPLIER) : configFile.baseMultiplier ?? DefaultPriceConfig.baseMultiplier,
       timeLabels: configFile.timeLabels ?? DefaultPriceConfig.timeLabels,
@@ -55,6 +59,10 @@ export const loadConfig = async (): Promise<BotConfig> => {
       analytics: process.env.ANALYTICS_MODE === "TRUE" ? true : false,
     },
   };
+
+  if (botConfig.log.ingestionKey == "") {
+    throw new Error("LogDNA ingestion key missing");
+  }
 
   if (botConfig.payout.privateKey == "") {
     botConfig.mode.autoPay = false;

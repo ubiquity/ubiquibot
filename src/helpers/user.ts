@@ -1,4 +1,4 @@
-import { getBotContext } from "../bindings";
+import { getBotContext, getLogger } from "../bindings";
 
 /**
  * @dev Gets the publicly available information about `useranme`
@@ -7,6 +7,7 @@ import { getBotContext } from "../bindings";
  */
 export const getUser = async (username: string): Promise<any> => {
   const context = getBotContext();
+  const logger = getLogger();
 
   try {
     const res = await context.octokit.rest.users.getByUsername({
@@ -15,10 +16,10 @@ export const getUser = async (username: string): Promise<any> => {
 
     if (res.status === 200) return res.data;
     else {
-      context.log.debug(`Unsatisfied response`, { status: res.status, data: res.data });
+      logger.debug(`Unsatisfied response { status: ${res.status}, data: ${res.data}`);
     }
   } catch (err: unknown) {
-    context.log.info(`Getting user info failed!`, { err });
+    logger.info(`Getting user info failed! err: ${err}`);
   }
 
   return undefined;

@@ -1,8 +1,9 @@
-import { getBotContext } from "../bindings";
+import { getBotContext, getLogger } from "../bindings";
 import { Comment, Payload } from "../types";
 
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   const context = getBotContext();
+  const logger = getLogger();
   const payload = context.payload as Payload;
 
   const labels = payload.issue!.labels;
@@ -18,12 +19,13 @@ export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
       name: issuePrices[0].name.toString(),
     });
   } catch (e: unknown) {
-    context.log.debug(`Clearing all price labels failed!, reason: ${(e as any)?.message}`);
+    logger.debug(`Clearing all price labels failed!, reason: ${(e as any)?.message}`);
   }
 };
 
 export const addLabelToIssue = async (labelName: string) => {
   const context = getBotContext();
+  const logger = getLogger();
   const payload = context.payload as Payload;
 
   try {
@@ -34,7 +36,7 @@ export const addLabelToIssue = async (labelName: string) => {
       labels: [labelName],
     });
   } catch (e: unknown) {
-    context.log.debug(`Adding a label to issue failed!, reason: ${(e as any)?.message}`);
+    logger.debug(`Adding a label to issue failed!, reason: ${(e as any)?.message}`);
   }
 };
 
@@ -59,6 +61,7 @@ export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open
 
 export const addCommentToIssue = async (msg: string, issue_number: number) => {
   const context = getBotContext();
+  const logger = getLogger();
   const payload = context.payload as Payload;
 
   try {
@@ -69,12 +72,13 @@ export const addCommentToIssue = async (msg: string, issue_number: number) => {
       body: msg,
     });
   } catch (e: unknown) {
-    context.log.debug(`Adding a comment failed!, reason: ${e}`);
+    logger.debug(`Adding a comment failed!, reason: ${e}`);
   }
 };
 
 export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[]> => {
   const context = getBotContext();
+  const logger = getLogger();
   const payload = context.payload as Payload;
 
   let result: Comment[] = [];
@@ -87,7 +91,7 @@ export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[
 
     if (response.data) result = response.data as Comment[];
   } catch (e: unknown) {
-    context.log.debug(`Listing issue comments failed!, reason: ${e}`);
+    logger.debug(`Listing issue comments failed!, reason: ${e}`);
   }
 
   return result;
@@ -95,6 +99,7 @@ export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[
 
 export const removeAssignees = async (issue_number: number, assignees: string[]): Promise<void> => {
   const context = getBotContext();
+  const logger = getLogger();
   const payload = context.payload as Payload;
 
   try {
@@ -105,12 +110,13 @@ export const removeAssignees = async (issue_number: number, assignees: string[])
       assignees,
     });
   } catch (e: unknown) {
-    context.log.debug(`Removing assignees failed!, reason: ${e}`);
+    logger.debug(`Removing assignees failed!, reason: ${e}`);
   }
 };
 
 export const addAssignees = async (issue_number: number, assignees: string[]): Promise<void> => {
   const context = getBotContext();
+  const logger = getLogger();
   const payload = context.payload as Payload;
 
   try {
@@ -121,6 +127,6 @@ export const addAssignees = async (issue_number: number, assignees: string[]): P
       assignees,
     });
   } catch (e: unknown) {
-    context.log.debug(`Adding assignees failed!, reason: ${e}`);
+    logger.debug(`Adding assignees failed!, reason: ${e}`);
   }
 };
