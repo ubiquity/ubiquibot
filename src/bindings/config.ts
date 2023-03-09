@@ -55,8 +55,8 @@ export const loadConfig = async (): Promise<BotConfig> => {
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
     mode: {
-      autoPay: process.env.AUTO_PAY_MODE === "TRUE" ? true : false,
-      analytics: process.env.ANALYTICS_MODE === "TRUE" ? true : false,
+      autoPayMode: process.env.AUTO_PAY_MODE === "TRUE" ? true : false,
+      analyticsMode: process.env.ANALYTICS_MODE === "TRUE" ? true : false,
     },
   };
 
@@ -65,7 +65,7 @@ export const loadConfig = async (): Promise<BotConfig> => {
   }
 
   if (botConfig.payout.privateKey == "") {
-    botConfig.mode.autoPay = false;
+    botConfig.mode.autoPayMode = false;
   }
 
   const validate = ajv.compile(BotConfigSchema);

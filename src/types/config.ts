@@ -38,8 +38,8 @@ export const UnassignConfigSchema = Type.Object({
   disqualifyTime: Type.Number(),
 });
 export const ModeSchema = Type.Object({
-  autoPay: Type.Boolean(),
-  analytics: Type.Boolean(),
+  autoPayMode: Type.Boolean(),
+  analyticsMode: Type.Boolean(),
 });
 
 export const LogConfigSchema = Type.Object({

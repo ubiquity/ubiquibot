@@ -9,7 +9,7 @@ export const handleIssueClosed = async () => {
   const context = getBotContext();
   const {
     payout: { paymentToken, rpc },
-    mode: { autoPay },
+    mode: { autoPayMode },
   } = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -17,8 +17,8 @@ export const handleIssueClosed = async () => {
   if (!issue) return;
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
-  if (!autoPay) {
-    logger.info(`Skipping to generate permit2 url, reason: { autoPay: ${autoPay}}`);
+  if (!autoPayMode) {
+    logger.info(`Skipping to generate permit2 url, reason: { autoPayMode: ${autoPayMode}}`);
     return;
   }
   const issueDetailed = bountyInfo(issue);
