@@ -26,7 +26,6 @@ export const bindEvents = async (context: Context): Promise<void> => {
   const payload = context.payload as Payload;
 
   botConfig = await loadConfig();
-  logger.info(`Config loaded! config: ${JSON.stringify({ price: botConfig.price, unassign: botConfig.unassign, mode: botConfig.mode, log: botConfig.log })}`);
 
   const options = {
     app: "UbiquiBot",
@@ -36,7 +35,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
   if (!logger) {
     return;
   }
-
+  logger.info(`Config loaded! config: ${JSON.stringify({ price: botConfig.price, unassign: botConfig.unassign, mode: botConfig.mode, log: botConfig.log })}`);
   const allowedEvents = Object.values(GithubEvent) as string[];
   const eventName = `${name}.${payload.action}`;
   logger.info(`Started binding events... id: ${id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);

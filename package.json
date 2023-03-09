@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsc",
     "build:ci": "ncc build src/index.ts -o dist && mv ./dist/index.js ./bin",
-    "start": "probot run ./lib/main.js",
+    "start": "probot run ./lib/index.js",
     "start:watch": "node copy.js && src/assets/images lib/assets/images && nodemon --exec 'yarn start'",
     "format": "prettier --write src",
     "format:check": "prettier -c src/**/*.ts",

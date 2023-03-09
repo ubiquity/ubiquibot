@@ -1,7 +1,19 @@
-import probot from "@probot/adapter-github-actions";
-import main from "./main";
+import { Probot } from "probot";
+import { EmitterWebhookEventName } from "@octokit/webhooks";
+import { bindEvents } from "./bindings";
+import { GithubEvent } from "./types";
 
-probot.run(main).catch((error: Error) => {
-  console.error(`Error happening... name: ${error.name}, message: ${error.message}`);
-  process.exit(1);
-});
+const UBIQUITY = `
+  _|    _|  _|_|_|    _|_|_|    _|_|      _|    _|  _|_|_|  _|_|_|_|_|  _|      _|
+  _|    _|  _|    _|    _|    _|    _|    _|    _|    _|        _|        _|  _|
+  _|    _|  _|_|_|      _|    _|  _|_|    _|    _|    _|        _|          _|
+  _|    _|  _|    _|    _|    _|    _|    _|    _|    _|        _|          _|
+    _|_|    _|_|_|    _|_|_|    _|_|  _|    _|_|    _|_|_|      _|          _|
+
+    `;
+
+export default function main(app: Probot) {
+  console.log(UBIQUITY);
+  const allowedEvents = Object.values(GithubEvent) as EmitterWebhookEventName[];
+  app.on(allowedEvents, bindEvents);
+}
