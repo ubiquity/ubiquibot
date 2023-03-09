@@ -1,11 +1,3 @@
 {
-  "functions": {
-    "lib/**/*.js": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
-  "buildCommand": "yarn build",
-  "outputDirectory": "lib",
-  "devCommand": "yarn start"
+  "buildCommand": "yarn build && yarn start"
 }
