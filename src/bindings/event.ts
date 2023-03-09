@@ -26,6 +26,8 @@ export const bindEvents = async (context: Context): Promise<void> => {
   const payload = context.payload as Payload;
 
   botConfig = await loadConfig();
+  logger.info(`Config loaded! config: ${JSON.stringify({ price: botConfig.price, unassign: botConfig.unassign, mode: botConfig.mode, log: botConfig.log })}`);
+
   const options = {
     app: "UbiquiBot",
     level: botConfig.log.level,
@@ -42,10 +44,6 @@ export const bindEvents = async (context: Context): Promise<void> => {
     logger.info(`Skipping the event. reason: not configured`);
     return;
   }
-
-  // Load config
-  logger.info("Loading config from .env...");
-  logger.info(`Config loaded! config: ${JSON.stringify({ price: botConfig.price, unassign: botConfig.unassign })}`);
 
   // Create adapters for telegram, supabase, twitter, discord, etc
   logger.info("Creating adapters for supabase, telegram, twitter, etc...");
