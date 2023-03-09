@@ -1,4 +1,4 @@
-import { getBotConfig, getBotContext } from "../../bindings";
+import { getBotConfig, getLogger } from "../../bindings";
 import { BountyAccount } from "../../configs";
 import { GLOBAL_STRINGS } from "../../configs/strings";
 import { addAssignees, addCommentToIssue, getCommentsOfIssue, listIssuesForRepo, removeAssignees } from "../../helpers";
@@ -10,9 +10,8 @@ import { deadLinePrefix } from "../shared";
  *  and try to release the bounty back to dev pool
  */
 export const checkBountiesToUnassign = async () => {
-  const context = getBotContext();
-  const { log } = context;
-  log.info(`Getting all the issues...`);
+  const logger = getLogger();
+  logger.info(`Getting all the issues...`);
 
   // List all the issues in the repository. It may include `pull_request`
   // because GitHub's REST API v3 considers every pull request an issue
@@ -22,16 +21,15 @@ export const checkBountiesToUnassign = async () => {
 
   // Checking the bounties in parallel
   const res = await Promise.all(assigned_issues.map(async (issue) => checkBountyToUnassign(issue)));
-  log.info(`Checking expired bounties done! total: ${res.length}, unassigned: ${res.filter((i) => i).length}`);
+  logger.info(`Checking expired bounties done! total: ${res.length}, unassigned: ${res.filter((i) => i).length}`);
 };
 
 const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
-  const context = getBotContext();
-  const { log } = context;
+  const logger = getLogger();
   const {
     unassign: { followUpTime, disqualifyTime },
   } = getBotConfig();
-  log.info(`Checking the bounty to unassign`, { issue_number: issue.number });
+  logger.info(`Checking the bounty to unassign, issue_number: ${issue.number}`);
   const { unassignComment, askUpdate } = GLOBAL_STRINGS;
   const assignees = issue.assignees.map((i: any) => i.login);
   const comments = await getCommentsOfIssue(issue.number);
@@ -56,7 +54,7 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
   const passedDuration = curTimestamp - lastAnswerTime;
 
   if (passedDuration >= disqualifyTime) {
-    log.info(
+    logger.info(
       `Unassigning... lastAnswerTime: ${lastAnswerTime}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
     );
     // remove assignees from the issue
@@ -69,12 +67,12 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
 
     return true;
   } else if (passedDuration >= followUpTime) {
-    log.info(
+    logger.info(
       `Asking for updates... lastAnswerTime: ${lastAnswerTime}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
     );
 
     if (lastAskTime > lastAnswerTime) {
-      log.info(`Skipping posting an update message cause its been already asked, lastAskTime: ${lastAskTime}, lastAnswerTime: ${lastAnswerTime}`);
+      logger.info(`Skipping posting an update message cause its been already asked, lastAskTime: ${lastAskTime}, lastAnswerTime: ${lastAnswerTime}`);
     } else await addCommentToIssue(`${askUpdate} @${assignees[0]}`, issue.number);
   }
 

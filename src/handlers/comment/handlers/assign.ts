@@ -1,4 +1,4 @@
-import { getBotConfig, getBotContext } from "../../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { BountyAccount } from "../../../configs";
 import { addAssignees, addCommentToIssue, getCommentsOfIssue, removeAssignees } from "../../../helpers";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
@@ -6,22 +6,23 @@ import { deadLinePrefix } from "../../shared";
 import { IssueCommentCommands } from "../commands";
 
 export const assign = async (body: string) => {
-  const { log, payload: _payload } = getBotContext();
+  const { payload: _payload } = getBotContext();
+  const logger = getLogger();
   const config = getBotConfig();
   if (body != IssueCommentCommands.ASSIGN && body.replace(/`/g, "") != IssueCommentCommands.ASSIGN) {
-    log.info(`Skipping to assign. body: ${body}`);
+    logger.info(`Skipping to assign. body: ${body}`);
     return;
   }
 
   const payload = _payload as Payload;
-  log.info(`Received '/assign' command from user: ${payload.sender.login}`);
+  logger.info(`Received '/assign' command from user: ${payload.sender.login}`);
   const issue = (_payload as Payload).issue;
   if (!issue) {
-    log.info(`Skipping '/assign' because of no issue instance`);
+    logger.info(`Skipping '/assign' because of no issue instance`);
     return;
   }
   if (issue!.state == IssueType.CLOSED) {
-    log.info("Skipping '/assign', reason: closed ");
+    logger.info("Skipping '/assign', reason: closed ");
     return;
   }
   const issue_number = issue!.number;
@@ -29,7 +30,7 @@ export const assign = async (body: string) => {
   const assignees = _assignees ?? [];
 
   if (assignees.length !== 1 || assignees[0].login != BountyAccount) {
-    log.info(
+    logger.info(
       `Skipping '/assign', reason: not assigned to the devpool. assignees: ${assignees.length > 0 ? assignees.map((i) => i.login).join() : "NoAssignee"}`
     );
     return;
@@ -38,7 +39,7 @@ export const assign = async (body: string) => {
   // get the time label from the `labels`
   const labels = payload.issue?.labels;
   if (!labels) {
-    log.info(`No labels to calculate timeline`);
+    logger.info(`No labels to calculate timeline`);
     return;
   }
   const timeLabelsDefined = config.price.timeLabels;
@@ -54,7 +55,7 @@ export const assign = async (body: string) => {
   }
 
   if (timeLabelsAssigned.length == 0) {
-    log.info(`No labels to calculate timeline`);
+    logger.info(`No labels to calculate timeline`);
     return;
   }
 
@@ -62,7 +63,7 @@ export const assign = async (body: string) => {
   const targetTimeLabel = sorted[0];
   const duration = targetTimeLabel.value;
   if (!duration) {
-    log.info(`Missing configure for timelabel: ${targetTimeLabel.name}`);
+    logger.info(`Missing configure for timelabel: ${targetTimeLabel.name}`);
     return;
   }
 
@@ -71,20 +72,20 @@ export const assign = async (body: string) => {
   const endDate = new Date(curDateInMillisecs + duration * 1000);
   const commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
 
-  log.info(`Creating an issue comment: ${commit_msg}`);
+  logger.info(`Creating an issue comment: ${commit_msg}`);
 
   if (assignees.length > 0) {
     const filteredAssignees = assignees.filter((i) => i.login != payload.sender.login);
     if (filteredAssignees.length > 0) {
       const assigneeNamesToRemove = filteredAssignees.map((i) => i.login) as string[];
       // remove assignees from the issue
-      log.info(`Removing the previous assignees... assignees: ${assigneeNamesToRemove}`);
+      logger.info(`Removing the previous assignees... assignees: ${assigneeNamesToRemove}`);
       await removeAssignees(issue_number!, assigneeNamesToRemove);
     }
   }
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
-    log.info(`Adding the assignee: ${payload.sender.login}`);
+    logger.info(`Adding the assignee: ${payload.sender.login}`);
     // assign default bounty account to the issue
     await addAssignees(issue_number!, [payload.sender.login]);
   }

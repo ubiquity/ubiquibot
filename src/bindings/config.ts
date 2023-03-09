@@ -23,6 +23,10 @@ export const loadConfig = async (): Promise<BotConfig> => {
   }
 
   const botConfig: BotConfig = {
+    log: {
+      level: process.env.LOG_LEVEL || "deubg",
+      ingestionKey: process.env.LOGDNA_INGESTION_KEY ?? "",
+    },
     price: {
       baseMultiplier: process.env.BASE_MULTIPLIER ? Number(process.env.BASE_MULTIPLIER) : configFile.baseMultiplier ?? DefaultPriceConfig.baseMultiplier,
       timeLabels: configFile.timeLabels ?? DefaultPriceConfig.timeLabels,
@@ -48,6 +52,10 @@ export const loadConfig = async (): Promise<BotConfig> => {
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
   };
+
+  if (botConfig.log.ingestionKey == "") {
+    throw new Error("LogDNA ingestion key missing");
+  }
 
   const validate = ajv.compile(BotConfigSchema);
   const valid = validate(botConfig);

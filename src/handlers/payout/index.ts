@@ -1,6 +1,6 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { BountyAccount } from "../../configs";
-import { getBotConfig, getBotContext } from "../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getTokenSymbol } from "../../helpers";
 import { Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
@@ -11,27 +11,27 @@ export const handleIssueClosed = async () => {
   const {
     payout: { paymentToken, rpc },
   } = getBotConfig();
-  const { log } = context;
+  const logger = getLogger();
   const payload = context.payload as Payload;
   const issue = payload.issue;
   if (!issue) return;
 
-  log.info(`Handling issues.closed event, issue: ${issue.number}`);
+  logger.info(`Handling issues.closed event, issue: ${issue.number}`);
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
-    log.info(`Skipping... its not a bounty`);
+    logger.info(`Skipping... its not a bounty`);
     return;
   }
 
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
-    log.info("Skipping to proceed the payment because `assignee` is undefined");
+    logger.info("Skipping to proceed the payment because `assignee` is undefined");
     return;
   }
 
   if (!issueDetailed.priceLabel) {
-    log.info("Skipping to proceed the payment because price not set");
+    logger.info("Skipping to proceed the payment because price not set");
     return;
   }
 
@@ -39,7 +39,7 @@ export const handleIssueClosed = async () => {
   const recipient = await getWalletAddress(assignee.login);
   if (!recipient) {
     if (assignee.login != BountyAccount && issue.state_reason === StateReason.COMPLETED) {
-      log.info(`Recipient address is missing`);
+      logger.info(`Recipient address is missing`);
       await addCommentToIssue(`@${assignee.login} would you please post your wallet address here?`, issue.number);
     }
     return;
@@ -49,7 +49,7 @@ export const handleIssueClosed = async () => {
     const payoutUrl = await generatePermit2Signature(recipient, priceInEth);
     const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
     const shortenRecipient = shortenEthAddress(recipient);
-    log.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
+    logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
     const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
     await addCommentToIssue(comment, issue.number);
   }

@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { getAdapters, getBotContext } from "../../../bindings";
+import { getAdapters, getLogger } from "../../../bindings";
 import { Issue, UserProfile } from "../../../types";
 import { Database } from "../types";
 
@@ -46,10 +46,10 @@ export const getLastWeeklyTime = async (): Promise<number> => {
  * @dev Updates the last weekly update timestamp
  */
 export const updateLastWeeklyTime = async (time: number): Promise<void> => {
-  const { log } = getBotContext();
+  const logger = getLogger();
   const { supabase } = getAdapters();
   const { data, error } = await supabase.from("weekly").update({ last_time: time });
-  log.info("Updating last time is done", { data, error });
+  logger.info(`Updating last time is done, data: ${data}, error: ${error}`);
   return;
 };
 
@@ -110,7 +110,7 @@ const getDbDataFromUserProfile = (userProfile: UserProfile, additions?: UserProf
  * @param issue The issue entity fetched from github event.
  */
 export const upsertIssue = async (issue: Issue, additions: IssueAdditions): Promise<void> => {
-  const { log } = getBotContext();
+  const logger = getLogger();
   const { supabase } = getAdapters();
   const { data, error } = await supabase.from("issues").select("id").eq("issue_number", issue.number).single();
 
@@ -120,10 +120,10 @@ export const upsertIssue = async (issue: Issue, additions: IssueAdditions): Prom
       .from("issues")
       .upsert({ id: key, ...getDbDataFromIssue(issue, additions) })
       .select();
-    log.info("Upserting an issue done", { data, error });
+    logger.info(`Upserting an issue done, data: ${data}, error: ${error}`);
   } else if (error) {
     const { data: _data, error: _error } = await supabase.from("issues").insert(getDbDataFromIssue(issue, additions));
-    log.info("Creating a new issue done", { data: _data, error: _error });
+    logger.info(`Creating a new issue done, { data: ${_data}, error: ${_error}`);
   }
 };
 
@@ -132,7 +132,7 @@ export const upsertIssue = async (issue: Issue, additions: IssueAdditions): Prom
  * @param user The user entity fetched from github event.
  */
 export const upsertUser = async (user: UserProfile): Promise<void> => {
-  const { log } = getBotContext();
+  const logger = getLogger();
   const { supabase } = getAdapters();
   const { data, error } = await supabase.from("users").select("id").eq("user_login", user.login).single();
 
@@ -142,10 +142,10 @@ export const upsertUser = async (user: UserProfile): Promise<void> => {
       .from("users")
       .upsert({ id: key, ...getDbDataFromUserProfile(user) })
       .select();
-    log.info("Upserting an user done", { data, error });
+    logger.info(`Upserting an user done", { data: ${data}, error: ${error} }`);
   } else if (error) {
     const { data: _data, error: _error } = await supabase.from("users").insert(getDbDataFromUserProfile(user));
-    log.info("Creating a new user done", { data: _data, error: _error });
+    logger.info(`Creating a new user done", { data: ${_data}, error: ${_error} }`);
   }
 };
 
@@ -155,7 +155,7 @@ export const upsertUser = async (user: UserProfile): Promise<void> => {
  * @param address The account address
  */
 export const upsertWalletAddress = async (username: string, address: string): Promise<void> => {
-  const { log } = getBotContext();
+  const logger = getLogger();
   const { supabase } = getAdapters();
 
   const { data, error } = await supabase.from("wallets").select("user_name").eq("user_name", username).single();
@@ -163,12 +163,12 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
     const { data: _data, error: _error } = await supabase
       .from("wallets")
       .upsert({ user_name: username, wallet_address: address, updated_at: new Date().toUTCString() });
-    log.info("Upserting a wallet address done", { data, error });
+    logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
   } else {
     const { data: _data, error: _error } = await supabase
       .from("wallets")
       .insert({ user_name: username, wallet_address: address, created_at: new Date().toUTCString(), updated_at: new Date().toUTCString() });
-    log.info("Creating a new wallet_table record done", { data: _data, error: _error });
+    logger.info(`Creating a new wallet_table record done, { data: ${_data}, error: ${_error} }`);
   }
 };
 

@@ -1,16 +1,16 @@
-import { getBotContext } from "../../bindings";
+import { getBotContext, getLogger } from "../../bindings";
 import { Payload } from "../../types";
 import { commandHandlers, commentPaser } from "./handlers";
 
 export const handleComment = async (): Promise<void> => {
   const context = getBotContext();
-  const { log } = context;
+  const logger = getLogger();
   const payload = context.payload as Payload;
 
-  log.info(`Handling an issue comment on issue ${payload.issue?.number}`);
+  logger.info(`Handling an issue comment on issue ${payload.issue?.number}`);
   const comment = payload.comment;
   if (!comment) {
-    log.info(`Comment is null. Skipping`);
+    logger.info(`Comment is null. Skipping`);
     return;
   }
 
@@ -20,10 +20,10 @@ export const handleComment = async (): Promise<void> => {
   for (const command of commands) {
     if (commandHandlers[command]) {
       const handler = commandHandlers[command];
-      log.info(`Running a comment handler: ${handler.name}`);
+      logger.info(`Running a comment handler: ${handler.name}`);
       await handler(body);
     } else {
-      log.info(`Skipping for a command: ${command}`);
+      logger.info(`Skipping for a command: ${command}`);
     }
   }
 };

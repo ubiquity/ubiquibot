@@ -1,4 +1,4 @@
-import { getBotConfig, getBotContext } from "../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel } from "../../helpers";
 import { Payload } from "../../types";
 import { getTargetPriceLabel } from "../shared";
@@ -6,7 +6,7 @@ import { getTargetPriceLabel } from "../shared";
 export const pricingLabelLogic = async (): Promise<void> => {
   const context = getBotContext();
   const config = getBotConfig();
-  const { log } = context;
+  const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.issue) return;
   const labels = payload.issue.labels;
@@ -20,20 +20,20 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
   if (targetPriceLabel) {
     if (labels.map((i) => i.name).includes(targetPriceLabel)) {
-      log.info({ labels, timeLabels, priorityLabels, targetPriceLabel }, `Skipping... already exists`);
+      logger.info(`Skipping... already exists`);
     } else {
-      log.info({ labels, timeLabels, priorityLabels, targetPriceLabel }, `Adding price label to issue`);
+      logger.info(`Adding price label to issue`);
       await clearAllPriceLabelsOnIssue();
 
       const exist = await getLabel(targetPriceLabel);
       if (!exist) {
-        log.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
+        logger.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
         await createLabel(targetPriceLabel);
       }
       await addLabelToIssue(targetPriceLabel);
     }
   } else {
     await clearAllPriceLabelsOnIssue();
-    log.info({ labels, timeLabels, priorityLabels, targetPriceLabel }, `Skipping action...`);
+    logger.info(`Skipping action...`);
   }
 };

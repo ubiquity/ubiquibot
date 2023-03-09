@@ -1,4 +1,4 @@
-import { getBotConfig, getBotContext } from "../../bindings";
+import { getBotConfig, getLogger } from "../../bindings";
 import { createLabel, listLabelsForRepo } from "../../helpers";
 import { calculateBountyPrice } from "../shared";
 
@@ -8,7 +8,7 @@ import { calculateBountyPrice } from "../shared";
  */
 export const validatePriceLabels = async (): Promise<void> => {
   const config = getBotConfig();
-  const { log } = getBotContext();
+  const logger = getLogger();
   const timeLabels = config.price.timeLabels.map((i) => i.name);
   const priorityLabels = config.price.priorityLabels.map((i) => i.name);
   const targetLabels1 = config.price.timeLabels.map((i) => i.target);
@@ -23,7 +23,7 @@ export const validatePriceLabels = async (): Promise<void> => {
   }
 
   const neededLabels: string[] = [...timeLabels, ...priorityLabels, ...targetLabels1, ...targetLabels2];
-  log.debug("Got needed labels for setting up price", neededLabels);
+  logger.debug(`Got needed labels for setting up price, neededLabels: ${neededLabels.toString()}`);
 
   // List all the labels for a repository
   const repoLabels = await listLabelsForRepo();
@@ -33,8 +33,8 @@ export const validatePriceLabels = async (): Promise<void> => {
 
   // Create missing labels
   if (missingLabels.length > 0) {
-    log.info(`Creating missing labels: ${missingLabels}`);
+    logger.info(`Creating missing labels: ${missingLabels}`);
     await Promise.all(missingLabels.map((label) => createLabel(label)));
-    log.info(`Creating missing labels done`);
+    logger.info(`Creating missing labels done`);
   }
 };

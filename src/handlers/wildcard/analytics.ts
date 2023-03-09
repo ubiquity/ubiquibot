@@ -1,5 +1,5 @@
 import { getMaxIssueNumber, upsertIssue, upsertUser } from "../../adapters/supabase";
-import { getBotConfig, getBotContext } from "../../bindings";
+import { getBotConfig, getLogger } from "../../bindings";
 import { listIssuesForRepo, getUser } from "../../helpers";
 import { Issue, IssueType, User, UserProfile } from "../../types";
 import { getTargetPriceLabel } from "../shared";
@@ -36,8 +36,8 @@ export const bountyInfo = (
  * Collects all the analytics information by scanning the issues opened | closed
  */
 export const collectAnalytics = async (): Promise<void> => {
-  const { log } = getBotContext();
-  log.info("Collecting analytics information...");
+  const logger = getLogger();
+  logger.info("Collecting analytics information...");
   const maximumIssueNumber = await getMaxIssueNumber();
 
   let fetchDone = false;
@@ -64,13 +64,18 @@ export const collectAnalytics = async (): Promise<void> => {
       })
     );
 
-    log.info({ users: userProfilesToUpsert.filter((i) => i.login).map((i) => i.login) }, "Upserting users");
+    logger.info(
+      `Upserting users: ${userProfilesToUpsert
+        .filter((i) => i.login)
+        .map((i) => i.login)
+        .toString()}`
+    );
 
     await Promise.all(userProfilesToUpsert.map(async (i) => upsertUser(i)));
 
     // No need to update the record for the bounties already closed
     const bountiesToUpsert = bounties.filter((bounty) => (bounty.state === IssueType.CLOSED ? bounty.number > maximumIssueNumber : true));
-    log.info({ bounties: bountiesToUpsert.map((i) => i.title) }, "Upserting bounties");
+    logger.info(`Upserting bounties: ${bountiesToUpsert.map((i) => i.title).toString()}`);
     await Promise.all(
       bountiesToUpsert.map(async (i) => {
         const additions = bountyInfo(i as Issue);

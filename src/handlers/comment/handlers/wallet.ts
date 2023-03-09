@@ -1,5 +1,5 @@
 import { upsertWalletAddress } from "../../../adapters/supabase";
-import { getBotContext } from "../../../bindings";
+import { getBotContext, getLogger } from "../../../bindings";
 import { addCommentToIssue, resolveAddress } from "../../../helpers";
 import { Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
@@ -21,7 +21,8 @@ const extractEnsName = (text: string): string | undefined => {
 };
 
 export const registerWallet = async (body: string): Promise<void> => {
-  const { log, payload: _payload } = getBotContext();
+  const { payload: _payload } = getBotContext();
+  const logger = getLogger();
   const payload = _payload as Payload;
   const issue = payload.issue;
   const sender = payload.sender.login;
@@ -29,21 +30,21 @@ export const registerWallet = async (body: string): Promise<void> => {
   const addressMatches = body.match(regexForAddress);
   let address = addressMatches ? addressMatches[0] : null;
   const ensName = extractEnsName(body.replace(IssueCommentCommands.WALLET, "").trim());
-  log.info(`Received '/wallet' command from user: ${sender}, body: ${body}, ${ensName}`);
+  logger.info(`Received '/wallet' command from user: ${sender}, body: ${body}, ${ensName}`);
 
   if (!address && !ensName) {
-    log.info("Skipping to register a wallet address because both address/ens doesn't exist");
+    logger.info("Skipping to register a wallet address because both address/ens doesn't exist");
     return;
   }
 
   if (!address) {
-    log.info(`Trying to resolve address from Ens name: ${ensName}`);
+    logger.info(`Trying to resolve address from Ens name: ${ensName}`);
     address = await resolveAddress(ensName!);
     if (!address) {
-      log.info(`Resolving address from Ens name failed, EnsName: ${ensName}`);
+      logger.info(`Resolving address from Ens name failed, EnsName: ${ensName}`);
       return;
     }
-    log.info(`Resolved address from Ens name: ${ensName}, address: ${address}`);
+    logger.info(`Resolved address from Ens name: ${ensName}, address: ${address}`);
   }
 
   await upsertWalletAddress(sender, address);

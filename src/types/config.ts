@@ -37,7 +37,14 @@ export const UnassignConfigSchema = Type.Object({
   followUpTime: Type.Number(),
   disqualifyTime: Type.Number(),
 });
+
+export const LogConfigSchema = Type.Object({
+  level: Type.String(),
+  ingestionKey: Type.String(),
+});
+
 export const BotConfigSchema = Type.Object({
+  log: LogConfigSchema,
   price: PriceConfigSchema,
   payout: PayoutConfigSchema,
   unassign: UnassignConfigSchema,
