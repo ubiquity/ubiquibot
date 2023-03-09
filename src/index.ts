@@ -1,19 +1,9 @@
-import { Probot } from "probot";
-import { EmitterWebhookEventName } from "@octokit/webhooks";
-import { bindEvents } from "./bindings";
-import { GithubEvent } from "./types";
+import { createNodeMiddleware, createProbot } from "probot";
+import main from "./main";
 
-const UBIQUITY = `
-  _|    _|  _|_|_|    _|_|_|    _|_|      _|    _|  _|_|_|  _|_|_|_|_|  _|      _|
-  _|    _|  _|    _|    _|    _|    _|    _|    _|    _|        _|        _|  _|
-  _|    _|  _|_|_|      _|    _|  _|_|    _|    _|    _|        _|          _|
-  _|    _|  _|    _|    _|    _|    _|    _|    _|    _|        _|          _|
-    _|_|    _|_|_|    _|_|_|    _|_|  _|    _|_|    _|_|_|      _|          _|
+const middleware = createNodeMiddleware(main, {
+  probot: createProbot(),
+  webhooksPath: "/api/github/webhooks",
+});
 
-    `;
-
-export default function main(app: Probot) {
-  console.log(UBIQUITY);
-  const allowedEvents = Object.values(GithubEvent) as EmitterWebhookEventName[];
-  app.on(allowedEvents, bindEvents);
-}
+export default middleware;
