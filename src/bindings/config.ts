@@ -1,7 +1,4 @@
 import ms from "ms";
-import yaml from "js-yaml";
-import fs from "fs";
-import path from "path";
 
 import { BotConfig, BotConfigSchema } from "../types";
 import {
