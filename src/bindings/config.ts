@@ -15,15 +15,11 @@ import {
   DEFAULT_RPC_ENDPOINT,
 } from "../configs";
 import { ajv } from "../utils";
+import { Context } from "probot";
 
-export const loadConfig = async (): Promise<BotConfig> => {
+export const loadConfig = async (context: Context): Promise<BotConfig> => {
   let configFile: any = {};
-  try {
-    const configFilePath = path.join(__dirname, "../../.github/ubiquibot-config.yml");
-    configFile = yaml.load(fs.readFileSync(configFilePath, "utf8"));
-  } catch (err) {
-    console.error(err);
-  }
+  configFile = await context.config("ubiquibot-config.yml");
 
   const botConfig: BotConfig = {
     log: {

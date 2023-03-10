@@ -25,7 +25,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
   botContext = context;
   const payload = context.payload as Payload;
 
-  botConfig = await loadConfig();
+  botConfig = await loadConfig(context);
 
   const options = {
     app: "UbiquiBot",
