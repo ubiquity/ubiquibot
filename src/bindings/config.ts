@@ -48,8 +48,8 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
     mode: {
-      autoPayMode: process.env.AUTO_PAY_MODE === "TRUE" ? true : false,
-      analyticsMode: process.env.ANALYTICS_MODE === "TRUE" ? true : false,
+      autoPayMode: process.env.AUTO_PAY_MODE === "TRUE" ? true : configFile.autoPayMode ?? false,
+      analyticsMode: process.env.ANALYTICS_MODE === "TRUE" ? true : configFile.analyticsMode ?? false,
     },
   };
 
