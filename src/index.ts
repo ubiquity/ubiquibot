@@ -1,8 +1,19 @@
-import { createLambdaFunction, createProbot } from "@probot/adapter-aws-lambda-serverless";
-import main from "./main";
+import { Probot } from "probot";
+import { EmitterWebhookEventName } from "@octokit/webhooks";
+import { bindEvents } from "./bindings";
+import { GithubEvent } from "./types";
 
-const lamdaFns = createLambdaFunction(main, {
-  probot: createProbot(),
-});
+const UBIQUITY = `
+  _|    _|  _|_|_|    _|_|_|    _|_|      _|    _|  _|_|_|  _|_|_|_|_|  _|      _|
+  _|    _|  _|    _|    _|    _|    _|    _|    _|    _|        _|        _|  _|
+  _|    _|  _|_|_|      _|    _|  _|_|    _|    _|    _|        _|          _|
+  _|    _|  _|    _|    _|    _|    _|    _|    _|    _|        _|          _|
+    _|_|    _|_|_|    _|_|_|    _|_|  _|    _|_|    _|_|_|      _|          _|
 
-export default lamdaFns;
+    `;
+
+export default function main(app: Probot) {
+  console.log(UBIQUITY);
+  const allowedEvents = Object.values(GithubEvent) as EmitterWebhookEventName[];
+  app.on(allowedEvents, bindEvents);
+}

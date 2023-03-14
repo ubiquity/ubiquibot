@@ -1633,7 +1633,7 @@
 
 "@probot/adapter-aws-lambda-serverless@^3.0.2":
   version "3.0.2"
-  resolved "https://registry.yarnpkg.com/@probot/adapter-aws-lambda-serverless/-/adapter-aws-lambda-serverless-3.0.2.tgz#1945144f4d3dffa39c495b9fc72d49770524a65c"
+  resolved "https://registry.npmjs.org/@probot/adapter-aws-lambda-serverless/-/adapter-aws-lambda-serverless-3.0.2.tgz"
   integrity sha512-1e7EHI6gkMbCdOK+caplqgDTW/x+J+2NSE0CdhqeHHiLUHkwzi4cgoP7/cJaTHBuCkZGJiyn6elI8cQtko+OfQ==
   dependencies:
     "@probot/get-private-key" "^1.1.0"
@@ -1838,7 +1838,7 @@
 
 "@types/aws-lambda@^8.10.85":
   version "8.10.111"
-  resolved "https://registry.yarnpkg.com/@types/aws-lambda/-/aws-lambda-8.10.111.tgz#9107c405f3011a5c423b5ac93fbf279439558571"
+  resolved "https://registry.npmjs.org/@types/aws-lambda/-/aws-lambda-8.10.111.tgz"
   integrity sha512-8HR9UjIKmoemEzE2BviVtFkeenxfbizSu8raFjnT2VXxguZZ2JTlNww7INOH7IA0J/zRa3TjOftkYq6hVNkxDA==
 
 "@types/babel__core@^7.0.0", "@types/babel__core@^7.1.7":
@@ -2753,7 +2753,7 @@ camelcase@^6.0.0:
 
 caniuse-lite@^1.0.30001449:
   version "1.0.30001465"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001465.tgz#c1b715bbb4ff6fdc20a4827e0afe9f4374fca217"
+  resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001465.tgz"
   integrity sha512-HvjgL3MYAJjceTDCcjRnQGjwUz/5qec9n7JPOzUursUoOTIsYCSDOb1l7RsnZE8mjbxG78zVRCKfrBXyvChBag==
 
 capture-exit@^2.0.0:
@@ -3327,7 +3327,7 @@ ee-first@1.1.1:
 
 electron-to-chromium@^1.4.284:
   version "1.4.328"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.328.tgz#b4565ffa502542b561cea16086d6d9b916c7095a"
+  resolved "https://registry.npmjs.org/electron-to-chromium/-/electron-to-chromium-1.4.328.tgz"
   integrity sha512-DE9tTy2PNmy1v55AZAO542ui+MLC2cvINMK4P2LXGsJdput/ThVG9t+QGecPuAZZSgC8XoI+Jh9M1OG9IoNSCw==
 
 elliptic@6.5.4:
@@ -5427,7 +5427,7 @@ log-update@^4.0.0:
 
 lowercase-keys@^2.0.0:
   version "2.0.0"
-  resolved "https://registry.yarnpkg.com/lowercase-keys/-/lowercase-keys-2.0.0.tgz#2603e78b7b4b0006cbca2fbcc8a3202558ac9479"
+  resolved "https://registry.npmjs.org/lowercase-keys/-/lowercase-keys-2.0.0.tgz"
   integrity sha512-tqNXrS78oMOE73NMxK4EMLQsQowWf8jKooH9g7xPavRT706R6bkQJ6DY2Te7QukaZsulxa30wQ7bk0pm4XiHmA==
 
 lru-cache@^5.1.1:
@@ -7320,7 +7320,7 @@ strtok3@^6.2.4:
 
 supabase@^1.38.1:
   version "1.42.5"
-  resolved "https://registry.yarnpkg.com/supabase/-/supabase-1.42.5.tgz#c5dc2e2c84a4b63492bcc7098f8a1c1d2e803dd6"
+  resolved "https://registry.npmjs.org/supabase/-/supabase-1.42.5.tgz"
   integrity sha512-SCojVEIYcBOEpYal0d9RTe1+8lH1jP+3uIOZFo4s3qXSTQIMT4YGLqJq9FIqVZMQFRzzwBkF/HQtT1ge+vxFQA==
   dependencies:
     bin-links "^4.0.1"

@@ -10,3 +10,5 @@ dist
 .temp/
 .yarn/
 supabase/.branches
+# Local Netlify folder
+.netlify
