@@ -1,9 +1,8 @@
-import { createNodeMiddleware, createProbot } from "probot";
+import { createLambdaFunction, createProbot } from "@probot/adapter-aws-lambda-serverless";
 import main from "./main";
 
-const middleware = createNodeMiddleware(main, {
+const lamdaFns = createLambdaFunction(main, {
   probot: createProbot(),
-  webhooksPath: "/api/github/webhooks",
 });
 
-export default middleware;
+export default lamdaFns;
