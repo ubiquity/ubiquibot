@@ -24,9 +24,9 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       ingestionKey: process.env.LOGDNA_INGESTION_KEY ?? "",
     },
     price: {
-      baseMultiplier: process.env.BASE_MULTIPLIER ? Number(process.env.BASE_MULTIPLIER) : configFile.baseMultiplier ?? DefaultPriceConfig.baseMultiplier,
-      timeLabels: configFile.timeLabels ?? DefaultPriceConfig.timeLabels,
-      priorityLabels: configFile.priorityLabels ?? DefaultPriceConfig.priorityLabels,
+      baseMultiplier: process.env.BASE_MULTIPLIER ? Number(process.env.BASE_MULTIPLIER) : configFile?.baseMultiplier ?? DefaultPriceConfig.baseMultiplier,
+      timeLabels: configFile?.timeLabels ?? DefaultPriceConfig.timeLabels,
+      priorityLabels: configFile?.priorityLabels ?? DefaultPriceConfig.priorityLabels,
     },
     payout: {
       chainId: process.env.CHAIN_ID ? Number(process.env.CHAIN_ID) : DEFAULT_CHAIN_ID,
@@ -48,8 +48,8 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
     mode: {
-      autoPayMode: process.env.AUTO_PAY_MODE === "TRUE" ? true : configFile.autoPayMode ?? false,
-      analyticsMode: process.env.ANALYTICS_MODE === "TRUE" ? true : configFile.analyticsMode ?? false,
+      autoPayMode: process.env.AUTO_PAY_MODE === "TRUE" ? true : configFile?.autoPayMode ?? false,
+      analyticsMode: process.env.ANALYTICS_MODE === "TRUE" ? true : configFile?.analyticsMode ?? false,
     },
   };
 
