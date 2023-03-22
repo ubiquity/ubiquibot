@@ -160,7 +160,7 @@ const RepositorySchema = Type.Object({
   size: Type.Number(),
   stargazers_count: Type.Number(),
   watchers_count: Type.Number(),
-  language: Type.String(),
+  language: Type.Any(),
   has_issues: Type.Boolean(),
   has_projects: Type.Boolean(),
   has_downloads: Type.Boolean(),
