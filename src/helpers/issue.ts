@@ -114,12 +114,33 @@ export const removeAssignees = async (issue_number: number, assignees: string[])
   }
 };
 
+export const getAssignees = async (issue_number: number): Promise<string[]> => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+
+  let result: string[] = [];
+  try {
+    const response = await context.octokit.rest.issues.listAssignees({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number,
+    });
+    result = response.data.map((info) => info.login);
+  } catch (e: unknown) {
+    logger.debug(`Getting assignees failed!, reason: ${e}`);
+  }
+  return result;
+};
+
 export const addAssignees = async (issue_number: number, assignees: string[]): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
 
   try {
+    const prevAssignees = await getAssignees(issue_number);
+    await removeAssignees(issue_number, prevAssignees);
     await context.octokit.rest.issues.addAssignees({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
