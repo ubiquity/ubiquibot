@@ -3,3 +3,7 @@ export const shortenEthAddress = (address: string) => {
   const suffix = address.substring(address.length - 4);
   return `${prefix}...${suffix}`;
 };
+
+export const formatEthAddress = (address: string) => {
+  return "`" + address + "`";
+};

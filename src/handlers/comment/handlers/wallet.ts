@@ -2,6 +2,7 @@ import { upsertWalletAddress } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
 import { addCommentToIssue, resolveAddress } from "../../../helpers";
 import { Payload } from "../../../types";
+import { formatEthAddress } from "../../../utils";
 import { IssueCommentCommands } from "../commands";
 
 // Extracts ensname from raw text.
@@ -48,5 +49,5 @@ export const registerWallet = async (body: string): Promise<void> => {
   }
 
   await upsertWalletAddress(sender, address);
-  await addCommentToIssue(`Updated the wallet address for @${sender} successfully!\t Your new address: ${address}`, issue!.number);
+  await addCommentToIssue(`Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`, issue!.number);
 };
