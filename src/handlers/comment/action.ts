@@ -1,6 +1,7 @@
 import { getBotContext, getLogger } from "../../bindings";
 import { Payload } from "../../types";
 import { commandHandlers, commentPaser } from "./handlers";
+import { verifyFirstCheck } from "./handlers/first";
 
 export const handleComment = async (): Promise<void> => {
   const context = getBotContext();
@@ -16,6 +17,11 @@ export const handleComment = async (): Promise<void> => {
 
   const body = comment.body;
   const commands = commentPaser(body);
+
+  if (commands.length === 0) {
+    await verifyFirstCheck();
+    return;
+  }
 
   for (const command of commands) {
     if (commandHandlers[command]) {
