@@ -69,7 +69,11 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
 
     if (lastAskTime > lastAnswerTime) {
       logger.info(`Skipping posting an update message cause its been already asked, lastAskTime: ${lastAskTime}, lastAnswerTime: ${lastAnswerTime}`);
-    } else await addCommentToIssue(`${askUpdate} @${assignees[0]}`, issue.number);
+    } else
+      await addCommentToIssue(
+        `${askUpdate} @${assignees[0]}? If you would like to release the bounty back to the DevPool, please comment \`/unassign\``,
+        issue.number
+      );
   }
 
   return false;

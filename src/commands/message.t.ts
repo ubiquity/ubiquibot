@@ -1,4 +1,4 @@
-import { telegramFormattedNotifier, telegramNotifier } from "./helpers";
+import { telegramFormattedNotifier, telegramNotifier } from "../adapters/telegram/helpers";
 const chatIds = ["tg1", "tg2", "tg3"]; // SHOULD update chatIds with valid ones
 
 /**@method telegramNotifier - call unformatted issue */
