@@ -14,7 +14,7 @@ export * from "./wallet";
  * @param body - The comment body
  * @returns The list of command names the comment includes
  */
-export const commentPaser = (body: string): IssueCommentCommands[] => {
+export const commentParser = (body: string): IssueCommentCommands[] => {
   // TODO: As a starting point, it may be simple but there could be cases for the comment to includes one or more commands
   // We need to continuously improve to parse even complex comments. Right now, we implement it simply.
   const commandList = Object.values(IssueCommentCommands) as string[];
