@@ -52,7 +52,7 @@ export const handleIssueClosed = async () => {
   if (issue.state_reason === StateReason.COMPLETED) {
     const payoutUrl = await generatePermit2Signature(recipient, priceInEth);
     const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
-    const shortenRecipient = shortenEthAddress(recipient);
+    const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
     logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
     const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
     await addCommentToIssue(comment, issue.number);
