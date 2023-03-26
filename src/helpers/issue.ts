@@ -130,3 +130,25 @@ export const addAssignees = async (issue_number: number, assignees: string[]): P
     logger.debug(`Adding assignees failed!, reason: ${e}`);
   }
 };
+
+export const deleteLabel = async (label: string): Promise<void> => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+
+  try {
+    const response = await context.octokit.rest.search.issuesAndPullRequests({
+      q: `repo:${payload.repository.owner.login}/${payload.repository.name} label:"${label}" state:open`,
+    });
+    if (response.data.items.length === 0) {
+      //remove label
+      await context.octokit.rest.issues.deleteLabel({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        name: label,
+      });
+    }
+  } catch (e: unknown) {
+    logger.debug(`Label deletion failed!, reason: ${e}`);
+  }
+};
