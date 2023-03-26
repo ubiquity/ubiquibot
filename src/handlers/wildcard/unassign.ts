@@ -1,6 +1,6 @@
 import { getBotConfig, getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs/strings";
-import { addCommentToIssue, getCommentsOfIssue, listIssuesForRepo, removeAssignees } from "../../helpers";
+import { addAssignees, addCommentToIssue, getCommentsOfIssue, listIssuesForRepo, removeAssignees } from "../../helpers";
 import { Comment, IssueType } from "../../types";
 import { deadLinePrefix } from "../shared";
 
@@ -29,7 +29,7 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
     unassign: { followUpTime, disqualifyTime },
   } = getBotConfig();
   logger.info(`Checking the bounty to unassign, issue_number: ${issue.number}`);
-  const { unassignComment, askUpdate } = GLOBAL_STRINGS;
+  const { unassignComment, askUpdate, assignees: globAssignees } = GLOBAL_STRINGS;
   const assignees = issue.assignees.map((i: any) => i.login);
   const comments = await getCommentsOfIssue(issue.number);
   if (!comments || comments.length == 0) return false;
@@ -59,6 +59,7 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
     // remove assignees from the issue
     await removeAssignees(issue.number, assignees);
     await addCommentToIssue(`${unassignComment}`, issue.number);
+    await addAssignees(issue.number, globAssignees);
 
     return true;
   } else if (passedDuration >= followUpTime) {
