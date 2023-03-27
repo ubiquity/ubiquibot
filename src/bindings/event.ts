@@ -1,7 +1,10 @@
 import { Context } from "probot";
-import { processors } from "../handlers/processors";
+import { createLogger } from "@logdna/logger";
+import { createAdapters } from "../adapters";
+import { processors, wildcardProcessors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
-import { BotConfig, Payload, PayloadSchema } from "../types";
+import { BotConfig, GithubEvent, Payload, PayloadSchema } from "../types";
+import { Adapters } from "../types/adapters";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
 
@@ -11,61 +14,84 @@ export const getBotContext = () => botContext;
 let botConfig: BotConfig = {} as BotConfig;
 export const getBotConfig = () => botConfig;
 
-const allowedActions = ["labeled", "unlabeled"];
+let adapters: Adapters = {} as Adapters;
+export const getAdapters = () => adapters;
+
+let logger: any;
+export const getLogger = () => logger!;
 
 export const bindEvents = async (context: Context): Promise<void> => {
-  const { log, id, name } = context;
+  const { id, name } = context;
   botContext = context;
   const payload = context.payload as Payload;
 
-  log.info(`Started binding events... id: ${id}, name: ${name}, action: ${payload.action}}`);
-  if (!allowedActions.includes(payload.action)) {
-    log.debug(`Skipping the event. reason: not configured`);
+  botConfig = await loadConfig(context);
+
+  const options = {
+    app: "UbiquiBot",
+    level: botConfig.log.level,
+  };
+  logger = createLogger(botConfig.log.ingestionKey, options);
+  if (!logger) {
+    return;
+  }
+  logger.info(`Config loaded! config: ${JSON.stringify({ price: botConfig.price, unassign: botConfig.unassign, mode: botConfig.mode, log: botConfig.log })}`);
+  const allowedEvents = Object.values(GithubEvent) as string[];
+  const eventName = `${name}.${payload.action}`;
+  logger.info(`Started binding events... id: ${id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
+  if (payload.action && !allowedEvents.includes(eventName)) {
+    logger.info(`Skipping the event. reason: not configured`);
     return;
   }
 
-  // Load config
-  log.info("Loading config from .env...");
-  botConfig = await loadConfig();
+  // Create adapters for telegram, supabase, twitter, discord, etc
+  logger.info("Creating adapters for supabase, telegram, twitter, etc...");
+  adapters = createAdapters(botConfig);
 
   // Validate payload
   const validate = ajv.compile(PayloadSchema);
   const valid = validate(payload);
   if (!valid) {
-    log.info("Payload schema validation failed!!!", payload);
-    log.warn(validate.errors!);
+    logger.info("Payload schema validation failed!!!", payload);
+    logger.warn(validate.errors!);
     return;
   }
 
   // Check if we should skip the event
   const { skip, reason } = shouldSkip();
   if (skip) {
-    log.info(`Skipping the event. reason: ${reason}`);
+    logger.info(`Skipping the event. reason: ${reason}`);
     return;
   }
 
   // Get the handlers for the action
-  const handlers = processors[payload.action];
+  const handlers = processors[eventName];
   if (!handlers) {
-    log.warn(`No handler configured for action: ${payload.action}`);
+    logger.warn(`No handler configured for event: ${eventName}`);
     return;
   }
 
   const { pre, action, post } = handlers;
   // Run pre-handlers
-  log.info(`Running pre handlers: ${pre.map((fn) => fn.name)}, action: ${payload.action}`);
+  logger.info(`Running pre handlers: ${pre.map((fn) => fn.name)}, event: ${eventName}`);
   for (const preAction of pre) {
     await preAction();
   }
   // Run main handlers
-  log.info(`Running main handlers: ${action.map((fn) => fn.name)}, action: ${payload.action}`);
+  logger.info(`Running main handlers: ${action.map((fn) => fn.name)}, event: ${eventName}`);
   for (const mainAction of action) {
     await mainAction();
   }
 
   // Run post-handlers
-  log.info(`Running post handlers: ${post.map((fn) => fn.name)}, action: ${payload.action}`);
+  logger.info(`Running post handlers: ${post.map((fn) => fn.name)}, event: ${eventName}`);
   for (const postAction of post) {
     await postAction();
+  }
+
+  // Run wildcard handlers
+  logger.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
+  for (const wildcardProcessor of wildcardProcessors) {
+    await wildcardProcessor();
   }
 };

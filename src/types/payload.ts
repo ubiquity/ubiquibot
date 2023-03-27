@@ -3,36 +3,34 @@
 import { Static, Type } from "@sinclair/typebox";
 import { LabelSchema } from "./label";
 
-export enum Action {
-  REQUESTED = "requested",
-  REVIEW_REQUESTED = "review_requested",
-  REVIEW_REQUEST_REMOVED = "review_request_removed",
-  COMPLETED = "completed",
-  REREQUESTED = "rerequested",
+export enum GithubEvent {
+  // issues events
+  ISSUES_LABELED = "issues.labeled",
+  ISSUES_UNLABELED = "issues.unlabeled",
+  ISSUES_ASSIGNED = "issues.assigned",
+  ISSUES_CLOSED = "issues.closed",
 
-  ASSIGNED = "assigned",
-  CLOSED = "closed",
-  CREATED = "created",
-  DELETED = "deleted",
-  MILESTONED = "milestoned",
-  DEMILESTONED = "demilestoned",
-  EDITED = "edited",
-  LABELED = "labeled",
-  LOCKED = "locked",
-  OPENED = "opened",
-  PINNED = "pinned",
-  REOPENED = "reopened",
-  TRANSFERRED = "transferred",
-  UNASSIGNED = "unassigned",
-  UNLABELED = "unlabeled",
-  UNLOCKED = "unlocked",
-  UNPINNED = "unpinned",
+  // issue_comment
+  ISSUE_COMMENT_CREATED = "issue_comment.created",
+  ISSUE_COMMENT_EDITED = "issue_comment.edited",
 }
 
 export enum UserType {
   User = "User",
   Bot = "Bot",
   Organization = "Organization",
+}
+
+export enum IssueType {
+  OPEN = "open",
+  CLOSED = "closed",
+  ALL = "all",
+}
+
+export enum StateReason {
+  COMPLETED = "completed",
+  NOT_PLANNED = "not_planned",
+  REOPENED = "reopened",
 }
 
 const UserSchema = Type.Object({
@@ -56,6 +54,29 @@ const UserSchema = Type.Object({
   site_admin: Type.Boolean(),
 });
 
+const UserProfileSchema = Type.Intersect([
+  UserSchema,
+  Type.Object({
+    name: Type.String(),
+    company: Type.String(),
+    blog: Type.String(),
+    location: Type.String(),
+    email: Type.String(),
+    hireable: Type.Boolean(),
+    bio: Type.String(),
+    twitter_username: Type.String(),
+    public_repos: Type.Number(),
+    public_gists: Type.Number(),
+    followers: Type.Number(),
+    following: Type.Number(),
+    created_at: Type.String(),
+    updated_at: Type.String(),
+  }),
+]);
+
+export type User = Static<typeof UserSchema>;
+export type UserProfile = Static<typeof UserProfileSchema>;
+
 const IssueSchema = Type.Object({
   url: Type.String(),
   repository_url: Type.String(),
@@ -69,7 +90,8 @@ const IssueSchema = Type.Object({
   title: Type.String(),
   user: UserSchema,
   labels: Type.Array(LabelSchema),
-  state: Type.String(),
+  state: Type.Enum(IssueType),
+  state_reason: Type.Union([Type.Enum(StateReason), Type.Null()]),
   locked: Type.Boolean(),
   assignee: Type.Any(),
   assignees: Type.Array(Type.Any()),
@@ -78,20 +100,8 @@ const IssueSchema = Type.Object({
   updated_at: Type.String({ format: "date-time" }),
   closed_at: Type.Any(),
   author_association: Type.String(),
-  reactions: Type.Object({
-    url: Type.String(),
-    total_count: Type.Number(),
-    "+1": Type.Number(),
-    "-1": Type.Number(),
-    laugh: Type.Number(),
-    hooray: Type.Number(),
-    confused: Type.Number(),
-    heart: Type.Number(),
-    rocket: Type.Number(),
-    eyes: Type.Number(),
-  }),
-  timeline_url: Type.String(),
 });
+export type Issue = Static<typeof IssueSchema>;
 
 const RepositorySchema = Type.Object({
   id: Type.Number(),
@@ -101,7 +111,7 @@ const RepositorySchema = Type.Object({
   private: Type.Boolean(),
   owner: UserSchema,
   html_url: Type.String(),
-  description: Type.String(),
+  description: Type.Union([Type.String(), Type.Null()]),
   fork: Type.Boolean(),
   url: Type.String(),
   forks_url: Type.String(),
@@ -150,7 +160,7 @@ const RepositorySchema = Type.Object({
   size: Type.Number(),
   stargazers_count: Type.Number(),
   watchers_count: Type.Number(),
-  language: Type.String(),
+  language: Type.Any(),
   has_issues: Type.Boolean(),
   has_projects: Type.Boolean(),
   has_downloads: Type.Boolean(),
@@ -160,13 +170,16 @@ const RepositorySchema = Type.Object({
   archived: Type.Boolean(),
   disabled: Type.Boolean(),
   open_issues_count: Type.Number(),
-  license: Type.Object({
-    key: Type.String(),
-    name: Type.String(),
-    spdx_id: Type.String(),
-    url: Type.String(),
-    node_id: Type.String(),
-  }),
+  license: Type.Union([
+    Type.Null(),
+    Type.Object({
+      key: Type.String(),
+      name: Type.String(),
+      spdx_id: Type.String(),
+      url: Type.String(),
+      node_id: Type.String(),
+    }),
+  ]),
   allow_forking: Type.Boolean(),
   is_template: Type.Boolean(),
   web_commit_signoff_required: Type.Boolean(),
@@ -198,13 +211,29 @@ const InstallationSchema = Type.Object({
   node_id: Type.String(),
 });
 
+export const CommentSchema = Type.Object({
+  url: Type.String(),
+  html_url: Type.String(),
+  issue_url: Type.String(),
+  id: Type.Number(),
+  node_id: Type.String(),
+  user: UserSchema,
+  created_at: Type.String({ format: "date-time" }),
+  updated_at: Type.String({ format: "date-time" }),
+  author_association: Type.String(),
+  body: Type.String(),
+});
+
+export type Comment = Static<typeof CommentSchema>;
+
 export const PayloadSchema = Type.Object({
   action: Type.String(),
   issue: Type.Optional(IssueSchema),
   label: Type.Optional(LabelSchema),
+  comment: Type.Optional(CommentSchema),
   sender: UserSchema,
   repository: RepositorySchema,
-  organization: OrganizationSchema,
+  organization: Type.Optional(OrganizationSchema),
   installation: Type.Optional(InstallationSchema),
 });
 

@@ -7,3 +7,8 @@ coverage
 lib
 .DS_Store
 dist
+.temp/
+.yarn/
+supabase/.branches
+# Local Netlify folder
+.netlify

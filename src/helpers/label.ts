@@ -1,14 +1,16 @@
-import { getBotContext } from "../bindings";
+import { getBotContext, getLogger } from "../bindings";
 import { COLORS } from "../configs";
 import { Payload } from "../types";
 
-export const listLabelsForRepo = async (): Promise<string[]> => {
+export const listLabelsForRepo = async (per_page?: number, page?: number): Promise<string[]> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
   const res = await context.octokit.rest.issues.listLabelsForRepo({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
+    per_page: per_page ?? 100,
+    page: page ?? 1,
   });
 
   if (res.status === 200) {
@@ -20,6 +22,7 @@ export const listLabelsForRepo = async (): Promise<string[]> => {
 
 export const createLabel = async (name: string): Promise<void> => {
   const context = getBotContext();
+  const logger = getLogger();
   const payload = context.payload as Payload;
   try {
     await context.octokit.rest.issues.createLabel({
@@ -29,6 +32,24 @@ export const createLabel = async (name: string): Promise<void> => {
       color: COLORS.price,
     });
   } catch (err: unknown) {
-    context.log.debug(`Error creating a label: ${name}. Is it already there?`);
+    logger.debug(`Error creating a label: ${name}. Is it already there?`);
   }
+};
+
+export const getLabel = async (name: string): Promise<boolean> => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  try {
+    const res = await context.octokit.rest.issues.getLabel({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      name,
+    });
+    return res.status === 200 ? true : false;
+  } catch (err: unknown) {
+    logger.debug(`Error creating a label: ${name}. Is it already there?`);
+  }
+
+  return false;
 };
