@@ -2,10 +2,12 @@ import { ActionHandler } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
+import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 
 export * from "./assign";
 export * from "./wallet";
+export * from "./unassign";
 
 /**
  * Parses the comment body and figure out the command name a user wants
@@ -24,6 +26,7 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
 
 export const commandHandlers: Record<string, ActionHandler> = {
   [IssueCommentCommands.ASSIGN]: assign,
+  [IssueCommentCommands.UNASSIGN]: unassign,
   [IssueCommentCommands.WALLET]: registerWallet,
   [IssueCommentCommands.HELP]: listAvailableCommands,
 };
