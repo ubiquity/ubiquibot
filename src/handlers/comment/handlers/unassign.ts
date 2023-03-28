@@ -23,10 +23,14 @@ export const unassign = async (body: string) => {
   const _assignees = payload.issue?.assignees;
   const assignees = _assignees ?? [];
   if (assignees.length == 0) return;
-  const shouldUnassign = payload.sender.login.toLowerCase() == assignees[0].toLowerCase();
+  const shouldUnassign = payload.sender.login.toLowerCase() == assignees[0].login.toLowerCase();
+  logger.debug(`Unassigning sender: ${payload.sender.login.toLowerCase()}, assignee: ${assignees[0].login.toLowerCase()}, shouldUnassign: ${shouldUnassign}`);
 
   if (shouldUnassign) {
-    await removeAssignees(issue_number, assignees);
+    await removeAssignees(
+      issue_number,
+      assignees.map((i) => i.login)
+    );
     await addCommentToIssue(`You have been unassigned from the bounty @${payload.sender.login}`, issue_number);
   }
 };
