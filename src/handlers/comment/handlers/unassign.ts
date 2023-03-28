@@ -27,7 +27,10 @@ export const unassign = async (body: string) => {
   logger.debug(`Unassigning sender: ${payload.sender.login.toLowerCase()}, assignee: ${assignees[0].login.toLowerCase()}, shouldUnassign: ${shouldUnassign}`);
 
   if (shouldUnassign) {
-    await removeAssignees(issue_number, assignees);
+    await removeAssignees(
+      issue_number,
+      assignees.map((i) => i.login)
+    );
     await addCommentToIssue(`You have been unassigned from the bounty @${payload.sender.login}`, issue_number);
   }
 };
