@@ -1,8 +1,7 @@
-import { addAssignees, addCommentToIssue, removeAssignees } from "../../../helpers";
+import { addCommentToIssue, removeAssignees } from "../../../helpers";
 import { getBotContext, getLogger } from "../../../bindings";
 import { Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
-import { GLOBAL_STRINGS } from "../../../configs";
 
 export const unassign = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -27,7 +26,6 @@ export const unassign = async (body: string) => {
 
   if (shouldUnassign) {
     await removeAssignees(issue_number, assignees);
-    await addAssignees(issue_number, GLOBAL_STRINGS.assignees);
     await addCommentToIssue(`You have been unassigned from the bounty @${payload.sender.login}`, issue_number);
   }
 };
