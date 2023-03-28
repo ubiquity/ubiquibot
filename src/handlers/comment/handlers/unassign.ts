@@ -22,7 +22,8 @@ export const unassign = async (body: string) => {
   const issue_number = issue!.number;
   const _assignees = payload.issue?.assignees;
   const assignees = _assignees ?? [];
-  const shouldUnassign = assignees.length > 0 && payload.sender.login === assignees[0];
+  if (assignees.length == 0) return;
+  const shouldUnassign = payload.sender.login.toLowerCase() == assignees[0].toLowerCase();
 
   if (shouldUnassign) {
     await removeAssignees(issue_number, assignees);
