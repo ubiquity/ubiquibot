@@ -44,7 +44,16 @@ export const handleIssueClosed = async () => {
   if (!recipient) {
     if (issue.state_reason === StateReason.COMPLETED) {
       logger.info(`Recipient address is missing`);
-      await addCommentToIssue(`@${assignee.login} would you please post your wallet address here?`, issue.number);
+      await addCommentToIssue(
+        "Please set your wallet address by using the `/wallet` command.\n" +
+          "```\n" +
+          "/wallet example.eth\n" +
+          "/wallet 0xBf...CdA\n" +
+          "```\n" +
+          "@" +
+          assignee.login,
+        issue.number
+      );
     }
     return;
   }
