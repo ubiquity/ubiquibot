@@ -2,12 +2,14 @@ import { ActionHandler } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
+import { payout } from "./payout";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 
 export * from "./assign";
 export * from "./wallet";
 export * from "./unassign";
+export * from "./payout";
 
 /**
  * Parses the comment body and figure out the command name a user wants
@@ -28,5 +30,6 @@ export const commandHandlers: Record<string, ActionHandler> = {
   [IssueCommentCommands.ASSIGN]: assign,
   [IssueCommentCommands.UNASSIGN]: unassign,
   [IssueCommentCommands.WALLET]: registerWallet,
+  [IssueCommentCommands.PAYOUT]: payout,
   [IssueCommentCommands.HELP]: listAvailableCommands,
 };
