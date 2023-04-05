@@ -3,4 +3,5 @@ export enum IssueCommentCommands {
   ASSIGN = "/assign", // assign the hunter to the issue automatically
   UNASSIGN = "/unassign", // unassign to default
   WALLET = "/wallet", // register wallet address
+  PAYOUT = "/payout", // request permit payout
 }
