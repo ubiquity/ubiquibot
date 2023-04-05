@@ -97,6 +97,38 @@ export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[
   return result;
 };
 
+export const getAllIssueComments = async (issue_number: number): Promise<Comment[] | null> => {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
+
+  let result: Comment[] | null = [];
+  let shouldFetch = true;
+  let page_number = 1;
+  try {
+    while (shouldFetch) {
+      const response = await context.octokit.rest.issues.listComments({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        issue_number: issue_number,
+        per_page: 100,
+        page: page_number,
+      });
+
+      if (response.data) {
+        response.data.forEach((item) => result!.push(item as Comment));
+        page_number++;
+      } else {
+        shouldFetch = false;
+      }
+    }
+  } catch (e: unknown) {
+    result = null;
+    shouldFetch = false;
+  }
+
+  return result;
+};
+
 export const removeAssignees = async (issue_number: number, assignees: string[]): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
