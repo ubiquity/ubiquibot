@@ -52,10 +52,25 @@ export const userCommands: UserCommandsSchema[] = [
   {
     handler: registerWallet,
     issueComment: IssueCommentCommands.WALLET,
-    description: "Register a wallet address to the origin sender.",
+    description: `<WALLET_ADDRESS | ENS_NAME>: Register the hunter's wallet address. \n  ex1: /wallet 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \n  ex2: /wallet vitalik.eth\n`,
   },
 ];
 
 userCommands.forEach((command: UserCommandsSchema) => {
   commandHandlers[command.issueComment] = command.handler;
 });
+
+export const generateHelpMenu = () => {
+  let helpMenu = "### Available commands\n```";
+
+  userCommands.map((command) => {
+    // if first command, add a new line
+    if (command.issueComment === userCommands[0].issueComment) {
+      helpMenu += `\n`;
+    }
+    helpMenu += `- ${command.issueComment}: ${command.description}\n`;
+  });
+
+  helpMenu += "```";
+  return helpMenu;
+};
