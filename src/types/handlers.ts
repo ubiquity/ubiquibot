@@ -14,3 +14,10 @@ export type Handler = {
   action: ActionHandler[];
   post: PostActionHandler[];
 };
+
+// UserCommandsSchema
+export type UserCommandsSchema = {
+  handler: ActionHandler;
+  issueComment: string;
+  description: string;
+};

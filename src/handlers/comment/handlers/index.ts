@@ -1,4 +1,4 @@
-import { ActionHandler } from "../../../types";
+import { ActionHandler, UserCommandsSchema } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
@@ -26,10 +26,36 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
   return result as IssueCommentCommands[];
 };
 
-export const commandHandlers: Record<string, ActionHandler> = {
-  [IssueCommentCommands.ASSIGN]: assign,
-  [IssueCommentCommands.UNASSIGN]: unassign,
-  [IssueCommentCommands.WALLET]: registerWallet,
-  [IssueCommentCommands.PAYOUT]: payout,
-  [IssueCommentCommands.HELP]: listAvailableCommands,
-};
+export const commandHandlers: Record<string, ActionHandler> = {};
+
+export const userCommands: UserCommandsSchema[] = [
+  {
+    handler: assign,
+    issueComment: IssueCommentCommands.ASSIGN,
+    description: "Assign the origin sender to the issue automatically.",
+  },
+  {
+    handler: unassign,
+    issueComment: IssueCommentCommands.UNASSIGN,
+    description: "Unassign the origin sender from the issue automatically.",
+  },
+  {
+    handler: listAvailableCommands,
+    issueComment: IssueCommentCommands.HELP,
+    description: "List all available commands.",
+  },
+  {
+    handler: payout,
+    issueComment: IssueCommentCommands.PAYOUT,
+    description: "Disable automatic payment for the issue.",
+  },
+  {
+    handler: registerWallet,
+    issueComment: IssueCommentCommands.WALLET,
+    description: "Register a wallet address to the origin sender.",
+  },
+];
+
+userCommands.forEach((command: UserCommandsSchema) => {
+  commandHandlers[command.issueComment] = command.handler;
+});
