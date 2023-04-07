@@ -68,7 +68,11 @@ export const generateHelpMenu = () => {
     if (command.issueComment === userCommands[0].issueComment) {
       helpMenu += `\n`;
     }
-    helpMenu += `- ${command.issueComment}: ${command.description}\n`;
+    helpMenu += `- ${command.issueComment}: ${command.description}`;
+    // if not last command, add a new line (fixes too much space below)
+    if (command.issueComment !== userCommands[userCommands.length - 1].issueComment) {
+      helpMenu += `\n`;
+    }
   });
 
   helpMenu += "```";
