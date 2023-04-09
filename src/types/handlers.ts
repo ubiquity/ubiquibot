@@ -16,7 +16,7 @@ export type Handler = {
 };
 
 // UserCommandsSchema
-export type UserCommandsSchema = {
+export type UserCommands = {
   handler: ActionHandler;
   issueComment: string;
   description: string;

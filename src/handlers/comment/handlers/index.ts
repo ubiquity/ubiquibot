@@ -1,4 +1,4 @@
-import { ActionHandler, UserCommandsSchema } from "../../../types";
+import { ActionHandler, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
@@ -28,7 +28,7 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
 
 export const commandHandlers: Record<string, ActionHandler> = {};
 
-export const userCommands: UserCommandsSchema[] = [
+export const userCommands: UserCommands[] = [
   {
     handler: assign,
     issueComment: IssueCommentCommands.ASSIGN,
@@ -56,7 +56,7 @@ export const userCommands: UserCommandsSchema[] = [
   },
 ];
 
-userCommands.forEach((command: UserCommandsSchema) => {
+userCommands.forEach((command: UserCommands) => {
   commandHandlers[command.issueComment] = command.handler;
 });
 
