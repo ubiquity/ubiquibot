@@ -1,4 +1,4 @@
-import { generateHelpMenu } from "../handlers/comment/handlers";
+import { generateHelpMenu } from "../handlers";
 
 export const COLORS = {
   price: "008000",
