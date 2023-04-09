@@ -1,4 +1,4 @@
-import { ActionHandler, UserCommandsSchema } from "../../../types";
+import { UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
@@ -10,6 +10,7 @@ export * from "./assign";
 export * from "./wallet";
 export * from "./unassign";
 export * from "./payout";
+export * from "./help";
 
 /**
  * Parses the comment body and figure out the command name a user wants
@@ -26,55 +27,30 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
   return result as IssueCommentCommands[];
 };
 
-export const commandHandlers: Record<string, ActionHandler> = {};
-
-export const userCommands: UserCommandsSchema[] = [
+export const userCommands: UserCommands[] = [
   {
-    handler: assign,
-    issueComment: IssueCommentCommands.ASSIGN,
+    id: IssueCommentCommands.ASSIGN,
     description: "Assign the origin sender to the issue automatically.",
+    handler: assign,
   },
   {
-    handler: unassign,
-    issueComment: IssueCommentCommands.UNASSIGN,
+    id: IssueCommentCommands.UNASSIGN,
     description: "Unassign the origin sender from the issue automatically.",
+    handler: unassign,
   },
   {
     handler: listAvailableCommands,
-    issueComment: IssueCommentCommands.HELP,
+    id: IssueCommentCommands.HELP,
     description: "List all available commands.",
   },
   {
-    handler: payout,
-    issueComment: IssueCommentCommands.PAYOUT,
+    id: IssueCommentCommands.PAYOUT,
     description: "Disable automatic payment for the issue.",
+    handler: payout,
   },
   {
-    handler: registerWallet,
-    issueComment: IssueCommentCommands.WALLET,
+    id: IssueCommentCommands.WALLET,
     description: `<WALLET_ADDRESS | ENS_NAME>: Register the hunter's wallet address. \n  ex1: /wallet 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \n  ex2: /wallet vitalik.eth\n`,
+    handler: registerWallet,
   },
 ];
-
-userCommands.forEach((command: UserCommandsSchema) => {
-  commandHandlers[command.issueComment] = command.handler;
-});
-
-export const generateHelpMenu = () => {
-  let helpMenu = "### Available commands\n```";
-
-  userCommands.map((command) => {
-    // if first command, add a new line
-    if (command.issueComment === userCommands[0].issueComment) {
-      helpMenu += `\n`;
-    }
-    helpMenu += `- ${command.issueComment}: ${command.description}`;
-    // if not last command, add a new line (fixes too much space below)
-    if (command.issueComment !== userCommands[userCommands.length - 1].issueComment) {
-      helpMenu += `\n`;
-    }
-  });
-
-  helpMenu += "```";
-  return helpMenu;
-};

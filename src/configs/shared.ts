@@ -28,12 +28,3 @@ export const DEFAULT_PAYMENT_TOKEN = "0x6B175474E89094C44Da98b954EedeAC495271d0F
 export const DEFAULT_PERMIT_BASE_URL = "https://pay.ubq.fi";
 
 export const COMMAND_INSTRUCTIONS = generateHelpMenu();
-//   "### Available commands\n" +
-//   "```\n" +
-//   `- /assign: Assign the origin sender to the issue automatically.
-//         ex: /assign
-
-// - /wallet <WALLET_ADDRESS | ENS_NAME>: Register the hunter's wallet address.
-// 	ex1: /wallet 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
-// 	ex2: /wallet vitalik.eth\n` +
-//   "```";

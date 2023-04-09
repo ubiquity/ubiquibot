@@ -15,9 +15,8 @@ export type Handler = {
   post: PostActionHandler[];
 };
 
-// UserCommandsSchema
-export type UserCommandsSchema = {
-  handler: ActionHandler;
-  issueComment: string;
+export type UserCommands = {
+  id: string;
   description: string;
+  handler: ActionHandler;
 };
