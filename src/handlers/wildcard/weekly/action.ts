@@ -37,11 +37,11 @@ const fetchEvents = async (context: Context): Promise<any[]> => {
       });
 
       // Check the remaining limit
-      const remainingRequests = parseInt(headers["x-ratelimit-remaining"]!);
+      const remainingRequests = parseInt(headers["x-ratelimit-remaining"]! || "0");
 
       // If there are no more remaining requests for this hour, we wait for the reset time
       if (remainingRequests === 0) {
-        const resetTime = new Date(parseInt(headers["x-ratelimit-reset"]!) * 1000);
+        const resetTime = new Date(parseInt(headers["x-ratelimit-reset"]! || "0") * 1000);
         const now = new Date();
         const timeToWait = resetTime.getTime() - now.getTime();
         console.log(`No remaining requests. Waiting for ${timeToWait}ms...`);
