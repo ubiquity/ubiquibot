@@ -176,7 +176,7 @@ const RepositorySchema = Type.Object({
       key: Type.String(),
       name: Type.String(),
       spdx_id: Type.String(),
-      url: Type.String(),
+      url: Type.Null() || Type.String(),
       node_id: Type.String(),
     }),
   ]),
