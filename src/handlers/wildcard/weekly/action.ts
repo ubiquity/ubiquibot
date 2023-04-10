@@ -30,12 +30,24 @@ const fetchEvents = async (context: Context): Promise<any[]> => {
   const perPage = 30;
   while (shouldFetch) {
     try {
-      await wait(1000);
-      const { data: pubOrgEvents } = await context.octokit.activity.listPublicOrgEvents({
+      const { data: pubOrgEvents, headers } = await context.octokit.activity.listPublicOrgEvents({
         org: payload.organization!.login,
         per_page: perPage,
         page: currentPage,
       });
+
+      // Check the remaining limit
+      const remainingRequests = parseInt(headers["x-ratelimit-remaining"]!);
+
+      // If there are no more remaining requests for this hour, we wait for the reset time
+      if (remainingRequests === 0) {
+        const resetTime = new Date(parseInt(headers["x-ratelimit-reset"]!) * 1000);
+        const now = new Date();
+        const timeToWait = resetTime.getTime() - now.getTime();
+        console.log(`No remaining requests. Waiting for ${timeToWait}ms...`);
+        await wait(timeToWait);
+      }
+
       pubOrgEvents.forEach((elem: any) => {
         const elemTimestamp = new Date(elem.created_at as string).getTime();
         if (elemTimestamp <= startTimestamp && elemTimestamp >= endTimestamp) {
@@ -49,6 +61,7 @@ const fetchEvents = async (context: Context): Promise<any[]> => {
           shouldFetch = false;
         }
       });
+
       currentPage++;
     } catch (error) {
       shouldFetch = false;
