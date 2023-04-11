@@ -77,7 +77,7 @@ SUPABASE_URL="XXX"
 SUPABASE_KEY="XXX"
 ```
 
-2. Create a new project at [Memzo](https://app.mezmo.com/). Add `LOGDNA_INGESTION_KEY ` to the `.env` file:
+2. Create a new organization at [Memzo](https://app.mezmo.com/). Add `LOGDNA_INGESTION_KEY` to the `.env` file:
 
 ```
 LOGDNA_INGESTION_KEY ="XXX"
@@ -97,7 +97,9 @@ DISQUALIFY_TIME="7 days" // 7 days
 6. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
 
 At this point the `.env` files auto-fill the empty fields (`PRIVATE_KEY` and `APP_ID`) if it is not previously filled.
-Now you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react. You can, for example:
+Now you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react. 
+
+You can, for example:
 
 1. Create a new issue
 2. Add a time label, ex: `Time: <1 Day`
