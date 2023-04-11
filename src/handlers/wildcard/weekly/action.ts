@@ -30,7 +30,7 @@ const fetchEvents = async (context: Context): Promise<any[]> => {
   const perPage = 30;
   while (shouldFetch) {
     try {
-      const { headers, data: pubOrgEvents } = await context.octokit.activity.listPublicOrgEvents({
+      const { data: pubOrgEvents, headers } = await context.octokit.activity.listPublicOrgEvents({
         org: payload.organization!.login,
         per_page: perPage,
         page: currentPage,
