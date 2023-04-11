@@ -16,7 +16,19 @@ yarn start:watch
 
 ## .env file
 
-- An `APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for internal developers to use.
+- Copy `.env.example` to `.env`
+- Update `.env` with the following fields:
+- `SUPABASE_URL`: Add your Supabase project URL.
+- `SUPABASE_KEY`: Add your Supabase project API key.
+- `LOGDNA_INGESTION_KEY`: Get it from [Memzo](https://app.mezmo.com/) by creating an account, adding an organization, and copying the ingestion key on the next screen.
+- `FOLLOWUP_TIME`: (optional) Set a custom follow-up time (default: 4 days).
+- `DISQUALIFY_TIME`: (optional) Set a custom disqualify time (default: 7 days).
+
+An `APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for internal developers to use.
+If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically generated when you install the app on your repository.
+
+**Note:** When setting up the project, please do not rename the `.env.example` file to `.env` as it will delete the environment example from the repository.
+Instead, it is recommended to make a copy of the `.env.example` file and replace the values with the appropriate ones.
 
 ## Overview
 
@@ -50,6 +62,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+		      LOGDNA_INGESTION_KEY: ${{ secrets.LOGDNA_INGESTION_KEY }}
           FOLLOWUP_TIME: '4 days'
           DISQUALIFY_TIME: '7 days'
 
@@ -57,26 +70,34 @@ jobs:
 
 ## How to run locally
 
-1. `yarn install`
-2. Open 2 terminal instances:
-   - in one instance run `yarn tsc --watch` (compiles the Typescript code)
-   - in another instance run `yarn start:watch` (runs the bot locally)
-3. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
-4. Create a new project at [Supabase](https://supabase.com/). Add `Project URL` and `API key` to the `.env` file:
+1. Create a new project at [Supabase](https://supabase.com/). Add `Project URL` and `API Key` to the `.env` file:
 
 ```
-SUPABASE_URL=XXX
-SUPABASE_KEY=XXX
+SUPABASE_URL="XXX"
+SUPABASE_KEY="XXX"
 ```
 
-5. Add `FOLLOW_UP_TIME` and `DISQUALIFY_TIME` to the `.env` file if you don't want to use default ones.
+2. Create a new project at [Memzo](https://app.mezmo.com/). Add `LOGDNA_INGESTION_KEY ` to the `.env` file:
+
+```
+LOGDNA_INGESTION_KEY ="XXX"
+```
+
+3. Add `FOLLOW_UP_TIME` and `DISQUALIFY_TIME` to the `.env` file if you don't want to use default ones.
 
 ```
 FOLLOW_UP_TIME="4 days" // 4 days
 DISQUALIFY_TIME="7 days" // 7 days
 ```
 
-At this point you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react. You can, for example:
+4. `yarn install`
+5. Open 2 terminal instances:
+   - in one instance run `yarn tsc --watch` (compiles the Typescript code)
+   - in another instance run `yarn start:watch` (runs the bot locally)
+6. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
+
+At this point the `.env` files auto-fill the empty fields (`PRIVATE_KEY` and `APP_ID`) if it is not previously filled.
+Now you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react. You can, for example:
 
 1. Create a new issue
 2. Add a time label, ex: `Time: <1 Day`
