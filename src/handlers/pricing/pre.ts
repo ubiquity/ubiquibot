@@ -11,8 +11,6 @@ export const validatePriceLabels = async (): Promise<void> => {
   const logger = getLogger();
   const timeLabels = config.price.timeLabels.map((i) => i.name);
   const priorityLabels = config.price.priorityLabels.map((i) => i.name);
-  const targetLabels1 = config.price.timeLabels.map((i) => i.target);
-  const targetLabels2 = config.price.priorityLabels.map((i) => i.target);
   const aiLabels: string[] = [];
   for (const timeLabel of config.price.timeLabels) {
     for (const priorityLabel of config.price.priorityLabels) {
@@ -22,7 +20,7 @@ export const validatePriceLabels = async (): Promise<void> => {
     }
   }
 
-  const neededLabels: string[] = [...timeLabels, ...priorityLabels, ...targetLabels1, ...targetLabels2];
+  const neededLabels: string[] = [...timeLabels, ...priorityLabels];
   logger.debug(`Got needed labels for setting up price, neededLabels: ${neededLabels.toString()}`);
 
   // List all the labels for a repository
