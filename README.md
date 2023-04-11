@@ -24,7 +24,7 @@ yarn start:watch
 - `FOLLOWUP_TIME`: (optional) Set a custom follow-up time (default: 4 days).
 - `DISQUALIFY_TIME`: (optional) Set a custom disqualify time (default: 7 days).
 
-An `APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for internal developers to use.
+`APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for internal developers to use.
 If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically generated when you install the app on your repository.
 
 **Note:** When setting up the project, please do not rename the `.env.example` file to `.env` as it will delete the environment example from the repository.
