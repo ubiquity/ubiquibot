@@ -24,7 +24,7 @@ yarn start:watch
 - `FOLLOWUP_TIME`: (optional) Set a custom follow-up time (default: 4 days).
 - `DISQUALIFY_TIME`: (optional) Set a custom disqualify time (default: 7 days).
 
-An `APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for internal developers to use.
+`APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for internal developers to use.
 If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically generated when you install the app on your repository.
 
 **Note:** When setting up the project, please do not rename the `.env.example` file to `.env` as it will delete the environment example from the repository.
@@ -39,7 +39,9 @@ Instead, it is recommended to make a copy of the `.env.example` file and replace
 
 1. Create a new project at [Supabase](https://supabase.com/)
 2. Add Supabase's `Project URL` and `API key` to repository secrets `SUPABASE_URL` and `SUPABASE_KEY`
-3. Add a new github workflow which uses the action(use the latest commit hash):
+3. Create a new project at [Memzo](https://app.mezmo.com/)
+4. Add Memzo's `Ingestion Key` to repository secrets `LOGDNA_INGESTION_KEY`
+5. Add a new github workflow which uses the action(use the latest commit hash):
 
 ```
 name: Calculate Bounty Based on Issue Labels
@@ -62,7 +64,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-		  LOGDNA_INGESTION_KEY: ${{ secrets.LOGDNA_INGESTION_KEY }}
+	  LOGDNA_INGESTION_KEY: ${{ secrets.LOGDNA_INGESTION_KEY }}
           FOLLOWUP_TIME: '4 days'
           DISQUALIFY_TIME: '7 days'
 
@@ -77,7 +79,7 @@ SUPABASE_URL="XXX"
 SUPABASE_KEY="XXX"
 ```
 
-2. Create a new project at [Memzo](https://app.mezmo.com/). Add `LOGDNA_INGESTION_KEY ` to the `.env` file:
+2. Create a new organization at [Memzo](https://app.mezmo.com/). Add `LOGDNA_INGESTION_KEY` to the `.env` file:
 
 ```
 LOGDNA_INGESTION_KEY ="XXX"
@@ -97,7 +99,9 @@ DISQUALIFY_TIME="7 days" // 7 days
 6. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
 
 At this point the `.env` files auto-fill the empty fields (`PRIVATE_KEY` and `APP_ID`) if it is not previously filled.
-Now you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react. You can, for example:
+Now you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react.
+
+You can, for example:
 
 1. Create a new issue
 2. Add a time label, ex: `Time: <1 Day`
