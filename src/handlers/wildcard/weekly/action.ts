@@ -11,7 +11,7 @@ import { fetchImage } from "../../../utils/webAssets";
 import { weeklyConfig } from "../../../configs/weekly";
 import { ProximaNovaRegularBase64 } from "../../../assets/fonts/ProximaNovaRegularB64";
 import { ClosedIssueIcon, CommitIcon, MergedPullIcon, OpenedIssueIcon, OpenedPullIcon } from "../../../assets/svgs";
-import { wait } from "../../../helpers";
+import { checkRateLimitGit } from "../../../utils";
 
 const IMG_PATH = path.resolve(__dirname, "../../../assets/images");
 
@@ -30,23 +30,13 @@ const fetchEvents = async (context: Context): Promise<any[]> => {
   const perPage = 30;
   while (shouldFetch) {
     try {
-      const { data: pubOrgEvents, headers } = await context.octokit.activity.listPublicOrgEvents({
+      const { headers, data: pubOrgEvents } = await context.octokit.activity.listPublicOrgEvents({
         org: payload.organization!.login,
         per_page: perPage,
         page: currentPage,
       });
 
-      // Check the remaining limit
-      const remainingRequests = parseInt(headers["x-ratelimit-remaining"]! || "0");
-
-      // If there are no more remaining requests for this hour, we wait for the reset time
-      if (remainingRequests === 0) {
-        const resetTime = new Date(parseInt(headers["x-ratelimit-reset"]! || "0") * 1000);
-        const now = new Date();
-        const timeToWait = resetTime.getTime() - now.getTime();
-        console.log(`No remaining requests. Waiting for ${timeToWait}ms...`);
-        await wait(timeToWait);
-      }
+      await checkRateLimitGit(headers);
 
       pubOrgEvents.forEach((elem: any) => {
         const elemTimestamp = new Date(elem.created_at as string).getTime();
