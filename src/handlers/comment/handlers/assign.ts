@@ -3,6 +3,7 @@ import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
 import { IssueCommentCommands } from "../commands";
+import { getWalletAddress } from "../../../adapters/supabase";
 
 export const assign = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -73,7 +74,7 @@ export const assign = async (body: string) => {
   const curDate = new Date();
   const curDateInMillisecs = curDate.getTime();
   const endDate = new Date(curDateInMillisecs + duration * 1000);
-  const commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
+  let commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     logger.info(`Adding the assignee: ${payload.sender.login}`);
@@ -87,6 +88,19 @@ export const assign = async (body: string) => {
   const comments = issue_comments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latest_comment = comments.length > 0 ? comments[0].body : undefined;
   if (latest_comment && commit_msg != latest_comment) {
+    const recipient = await getWalletAddress(payload.sender.login);
+    if (!recipient) {
+      //no wallet found
+      commit_msg =
+        commit_msg +
+        "\n\n" +
+        "It looks like you haven't set your wallet address,\n" +
+        "please use `/wallet 0x4FDE...BA18` to do so.\n" +
+        "(It's required to be paid for the bounty)";
+    } else {
+      //wallet found
+      commit_msg = commit_msg + "\n\n" + "Your currently set address is:\n" + recipient + "\n" + "please use `/wallet 0x4FDE...BA18` if you want to update it.";
+    }
     await addCommentToIssue(commit_msg, issue_number!);
   }
 };
