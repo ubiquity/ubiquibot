@@ -1,5 +1,6 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import { ALLOWED_REPOS_FOR_PERMIT_GENERATION } from "../../configs";
 import { addCommentToIssue, addLabelToIssue, deleteLabel, generatePermit2Signature, getTokenSymbol } from "../../helpers";
 import { Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
@@ -17,6 +18,7 @@ export const handleIssueClosed = async () => {
   if (!issue) return;
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
+
   if (!autoPayMode) {
     logger.info(`Skipping to generate permit2 url, reason: { autoPayMode: ${autoPayMode}}`);
     return;
@@ -36,6 +38,12 @@ export const handleIssueClosed = async () => {
 
   if (!issueDetailed.priceLabel) {
     logger.info("Skipping to proceed the payment because price not set");
+    return;
+  }
+
+  if (!ALLOWED_REPOS_FOR_PERMIT_GENERATION.includes(payload.repository.url)) {
+    logger.info(`Skipping to generate permit2 url, reason: repository not allowed`);
+    await addCommentToIssue("The repository is not allowed to generate permit2 url. Please contact to the ubquibot admins", issue.number);
     return;
   }
 
