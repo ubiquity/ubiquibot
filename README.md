@@ -62,7 +62,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-		  LOGDNA_INGESTION_KEY: ${{ secrets.LOGDNA_INGESTION_KEY }}
+	  LOGDNA_INGESTION_KEY: ${{ secrets.LOGDNA_INGESTION_KEY }}
           FOLLOWUP_TIME: '4 days'
           DISQUALIFY_TIME: '7 days'
 
