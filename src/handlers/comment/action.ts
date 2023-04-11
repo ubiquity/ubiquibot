@@ -1,6 +1,6 @@
 import { getBotContext, getLogger } from "../../bindings";
 import { Payload } from "../../types";
-import { commandHandlers, commentParser } from "./handlers";
+import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCheck } from "./handlers/first";
 
 export const handleComment = async (): Promise<void> => {
@@ -24,8 +24,9 @@ export const handleComment = async (): Promise<void> => {
   }
 
   for (const command of commands) {
-    if (commandHandlers[command]) {
-      const handler = commandHandlers[command];
+    const userCommand = userCommands.find((i) => i.id == command);
+    if (userCommand) {
+      const handler = userCommand.handler;
       logger.info(`Running a comment handler: ${handler.name}`);
       await handler(body);
     } else {

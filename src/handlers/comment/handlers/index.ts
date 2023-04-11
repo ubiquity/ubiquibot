@@ -1,4 +1,4 @@
-import { ActionHandler } from "../../../types";
+import { UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
@@ -10,6 +10,7 @@ export * from "./assign";
 export * from "./wallet";
 export * from "./unassign";
 export * from "./payout";
+export * from "./help";
 
 /**
  * Parses the comment body and figure out the command name a user wants
@@ -26,10 +27,30 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
   return result as IssueCommentCommands[];
 };
 
-export const commandHandlers: Record<string, ActionHandler> = {
-  [IssueCommentCommands.ASSIGN]: assign,
-  [IssueCommentCommands.UNASSIGN]: unassign,
-  [IssueCommentCommands.WALLET]: registerWallet,
-  [IssueCommentCommands.PAYOUT]: payout,
-  [IssueCommentCommands.HELP]: listAvailableCommands,
-};
+export const userCommands: UserCommands[] = [
+  {
+    id: IssueCommentCommands.ASSIGN,
+    description: "Assign the origin sender to the issue automatically.",
+    handler: assign,
+  },
+  {
+    id: IssueCommentCommands.UNASSIGN,
+    description: "Unassign the origin sender from the issue automatically.",
+    handler: unassign,
+  },
+  {
+    handler: listAvailableCommands,
+    id: IssueCommentCommands.HELP,
+    description: "List all available commands.",
+  },
+  {
+    id: IssueCommentCommands.PAYOUT,
+    description: "Disable automatic payment for the issue.",
+    handler: payout,
+  },
+  {
+    id: IssueCommentCommands.WALLET,
+    description: `<WALLET_ADDRESS | ENS_NAME>: Register the hunter's wallet address. \n  ex1: /wallet 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \n  ex2: /wallet vitalik.eth\n`,
+    handler: registerWallet,
+  },
+];
