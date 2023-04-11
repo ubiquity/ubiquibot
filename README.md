@@ -39,7 +39,9 @@ Instead, it is recommended to make a copy of the `.env.example` file and replace
 
 1. Create a new project at [Supabase](https://supabase.com/)
 2. Add Supabase's `Project URL` and `API key` to repository secrets `SUPABASE_URL` and `SUPABASE_KEY`
-3. Add a new github workflow which uses the action(use the latest commit hash):
+3. Create a new project at [Memzo](https://app.mezmo.com/)
+4. Add Memzo's `Ingestion Key` to repository secrets `LOGDNA_INGESTION_KEY`
+5. Add a new github workflow which uses the action(use the latest commit hash):
 
 ```
 name: Calculate Bounty Based on Issue Labels
