@@ -14,7 +14,7 @@
     "build": "tsc",
     "build:serverless": "ncc build src/index.ts -o dist",
     "start": "probot run ./lib/index.js",
-    "start:watch": "node copy.js && src/assets/images lib/assets/images && nodemon --exec 'yarn start'",
+    "start:watch": "node copy.js && nodemon --exec 'yarn start'",
     "format": "prettier --write src",
     "format:check": "prettier -c src/**/*.ts",
     "clean": "rimraf ./dist ./lib ./node_modules",
