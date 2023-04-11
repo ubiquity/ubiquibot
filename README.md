@@ -14,7 +14,7 @@ yarn tsc
 yarn start:watch
 ```
 
-## .env file
+## Environment Variables
 
 - Copy `.env.example` to `.env`
 - Update `.env` with the following fields:
