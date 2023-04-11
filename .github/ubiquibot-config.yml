@@ -38,3 +38,4 @@ priorityLabels:
   weight: 5
   target: 'Price: 500+ USD'
 autoPayMode: true
+analyticsMode: true

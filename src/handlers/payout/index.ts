@@ -1,6 +1,6 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue, deleteLabel, generatePermit2Signature, getTokenSymbol } from "../../helpers";
+import { addCommentToIssue, addLabelToIssue, deleteLabel, generatePermit2Signature, getTokenSymbol } from "../../helpers";
 import { Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
@@ -44,18 +44,28 @@ export const handleIssueClosed = async () => {
   if (!recipient) {
     if (issue.state_reason === StateReason.COMPLETED) {
       logger.info(`Recipient address is missing`);
-      await addCommentToIssue(`@${assignee.login} would you please post your wallet address here?`, issue.number);
+      await addCommentToIssue(
+        "Please set your wallet address by using the `/wallet` command.\n" +
+          "```\n" +
+          "/wallet example.eth\n" +
+          "/wallet 0xBf...CdA\n" +
+          "```\n" +
+          "@" +
+          assignee.login,
+        issue.number
+      );
     }
     return;
   }
 
   if (issue.state_reason === StateReason.COMPLETED) {
-    const payoutUrl = await generatePermit2Signature(recipient, priceInEth);
+    const payoutUrl = await generatePermit2Signature(recipient, priceInEth, issue.node_id);
     const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
     const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
     logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
     const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
     await addCommentToIssue(comment, issue.number);
     await deleteLabel(issueDetailed.priceLabel);
+    await addLabelToIssue("Paid");
   }
 };

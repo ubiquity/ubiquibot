@@ -14,3 +14,9 @@ export type Handler = {
   action: ActionHandler[];
   post: PostActionHandler[];
 };
+
+export type UserCommands = {
+  id: string;
+  description: string;
+  handler: ActionHandler;
+};

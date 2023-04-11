@@ -1,5 +1,5 @@
+import { userCommands } from ".";
 import { getBotContext, getLogger } from "../../../bindings";
-import { COMMAND_INSTRUCTIONS } from "../../../configs";
 import { addCommentToIssue } from "../../../helpers";
 import { IssueType, Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
@@ -23,5 +23,24 @@ export const listAvailableCommands = async (body: string): Promise<void> => {
     logger.info("Skipping '/assign', reason: closed ");
     return;
   }
-  await addCommentToIssue(COMMAND_INSTRUCTIONS, issue!.number);
+  await addCommentToIssue(generateHelpMenu(), issue!.number);
+};
+
+export const generateHelpMenu = () => {
+  let helpMenu = "### Available commands\n```";
+
+  userCommands.map((command) => {
+    // if first command, add a new line
+    if (command.id === userCommands[0].id) {
+      helpMenu += `\n`;
+    }
+    helpMenu += `- ${command.id}: ${command.description}`;
+    // if not last command, add a new line (fixes too much space below)
+    if (command.id !== userCommands[userCommands.length - 1].id) {
+      helpMenu += `\n`;
+    }
+  });
+
+  helpMenu += "```";
+  return helpMenu;
 };
