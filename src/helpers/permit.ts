@@ -1,7 +1,7 @@
 import { MaxUint256, PermitTransferFrom, SignatureTransfer } from "@uniswap/permit2-sdk";
 import { BigNumber, ethers } from "ethers";
 import { getBotConfig, getLogger } from "../bindings";
-import { keccak256 } from "ethers/lib/utils";
+import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 
 const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on all chains
 
@@ -30,7 +30,7 @@ export const generatePermit2Signature = async (spender: string, amountInEth: str
     },
     // who can transfer the tokens
     spender: spender,
-    nonce: BigNumber.from(keccak256(identifier)),
+    nonce: BigNumber.from(keccak256(toUtf8Bytes(identifier))),
     // signature deadline
     deadline: MaxUint256,
   };
