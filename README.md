@@ -111,17 +111,9 @@ You can, for example:
 
 Bounty bot is built using the [probot](https://probot.github.io/) framework so initially the bot is a github app. But thanks to the [probot/adapter-github-actions](https://github.com/probot/adapter-github-actions) you can also use the bot as a github action.
 
-You can use the bounty bot in 2 ways: [github action](https://github.com/marketplace/actions/ubiquity-bounty-bot) or [github app](https://github.com/marketplace/ubiquibot).
+You can use the bounty bot as a [github app](https://github.com/marketplace/ubiquibot).
 
-When using as a github action the flow is the following:
-
-1. Bounty bot is added to a repository as a github action
-2. Some event happens in a repository and the bot should react somehow (for example: on adding a time label to an issue the bot should add a price label)
-3. Github CI starts a runner (virtual linux machine)
-4. Event details are passed to the action directly in the runner
-5. The bot handles the event
-
-Using the bounty bot as a github app is mostly useful for development. Github app is simply a server app that receives events from github via webhooks and can somehow react to those events. This way the bot should be deployed somewhere as it is a server app. When using the bot as a github app then the flow is the following:
+When using as a github app the flow is the following:
 
 1. Bounty bot is added to a repository as a github app
 2. You run the bot "backend" (for example on your local machine)
