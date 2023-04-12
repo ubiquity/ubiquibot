@@ -1,5 +1,6 @@
 import { getBotContext, getLogger } from "../bindings";
 import { Comment, Payload } from "../types";
+import { checkRateLimitGit } from "../utils";
 
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   const context = getBotContext();
@@ -113,6 +114,8 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
         per_page: 100,
         page: page_number,
       });
+
+      await checkRateLimitGit(response?.headers);
 
       if (response.data) {
         response.data.forEach((item) => result!.push(item as Comment));

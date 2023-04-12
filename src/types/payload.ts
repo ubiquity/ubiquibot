@@ -170,16 +170,7 @@ const RepositorySchema = Type.Object({
   archived: Type.Boolean(),
   disabled: Type.Boolean(),
   open_issues_count: Type.Number(),
-  license: Type.Union([
-    Type.Null(),
-    Type.Object({
-      key: Type.String(),
-      name: Type.String(),
-      spdx_id: Type.String(),
-      url: Type.String(),
-      node_id: Type.String(),
-    }),
-  ]),
+  license: Type.Any(),
   allow_forking: Type.Boolean(),
   is_template: Type.Boolean(),
   web_commit_signoff_required: Type.Boolean(),
