@@ -47,8 +47,6 @@ To test the bot, you can:
 2. Add a time label, ex: `Time: <1 Day`
 3. At this point the bot should add a price label.
 
-```
-
 ## How to run locally
 
 1. Create a new project at [Supabase](https://supabase.com/). Add `Project URL` and `API Key` to the `.env` file:
@@ -114,4 +112,7 @@ When using as a github app the flow is the following:
 4. The Github action will create a release by recognizing the version tag
 
 ![ubiquibot-pfp-1](https://user-images.githubusercontent.com/4975670/208798502-0ac27adc-ab19-4148-82b8-8538040cf3b6.png)
+
+```
+
 ```
