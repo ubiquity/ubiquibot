@@ -1,15 +1,6 @@
-```js
- _____ _              _   _ _     _             _______       _   
-|_   _| |            | | | | |   (_)           (_) ___ \     | |  
-  | | | |__   ___    | | | | |__  _  __ _ _   _ _| |_/ / ___ | |_ 
-  | | | '_ \ / _ \   | | | | '_ \| |/ _` | | | | | ___ \/ _ \| __|
-  | | | | | |  __/   | |_| | |_) | | (_| | |_| | | |_/ / (_) | |_ 
-  |_| |_| |_|\___|    \___/|_.__/|_|\__, |\__,_|_\____/ \___/ \__|
-                                     | |                        
-                                     |_|                                              
-```
+# `@ubiquity/bounty-bot` the "UbiquiBot"
 
-This bot facilitates the Ubiquity Bounty System. (@ubiquity/bounty-bot)
+This bot facilitates the Ubiquity Bounty System.
 
 ## Quickstart
 
