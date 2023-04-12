@@ -37,36 +37,15 @@ Instead, it is recommended to make a copy of the `.env.example` file and replace
 
 ## How to use
 
-1. Create a new project at [Supabase](https://supabase.com/)
-2. Add Supabase's `Project URL` and `API key` to repository secrets `SUPABASE_URL` and `SUPABASE_KEY`
-3. Create a new project at [Memzo](https://app.mezmo.com/)
-4. Add Memzo's `Ingestion Key` to repository secrets `LOGDNA_INGESTION_KEY`
-5. Add a new github workflow which uses the action(use the latest commit hash):
+1. Go to the [UbiquiBot App Marketplace](https://github.com/marketplace/ubiquibot)
+2. Choose a plan and install UbiquiBot on your repository
+3. Congratulations! You can now use the UbiquiBot to manage your bounties.
 
-```
-name: Calculate Bounty Based on Issue Labels
-on:
-  issues:
-    types:
-      - labeled
-      - unlabeled
+To test the bot, you can:
 
-jobs:
-  calculate_bounty_job:
-    # ignore events invoked by bots
-    if: >-
-      github.event.pull_request.payload.sender.type != 'Bot'
-    runs-on: ubuntu-latest
-    name: Calculate Bounty with UbiquiBot
-    steps:
-      - name: Ubiquity Bounty Bot
-        uses: ubiquity/bounty-bot@c1c6c99336f34ac5e94efaed49c9f218fb7a2d76
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-	  LOGDNA_INGESTION_KEY: ${{ secrets.LOGDNA_INGESTION_KEY }}
-          FOLLOWUP_TIME: '4 days'
-          DISQUALIFY_TIME: '7 days'
+1. Create a new issue
+2. Add a time label, ex: `Time: <1 Day`
+3. At this point the bot should add a price label.
 
 ```
 
@@ -75,21 +54,27 @@ jobs:
 1. Create a new project at [Supabase](https://supabase.com/). Add `Project URL` and `API Key` to the `.env` file:
 
 ```
+
 SUPABASE_URL="XXX"
 SUPABASE_KEY="XXX"
+
 ```
 
 2. Create a new organization at [Memzo](https://app.mezmo.com/). Add `LOGDNA_INGESTION_KEY` to the `.env` file:
 
 ```
+
 LOGDNA_INGESTION_KEY ="XXX"
+
 ```
 
 3. Add `FOLLOW_UP_TIME` and `DISQUALIFY_TIME` to the `.env` file if you don't want to use default ones.
 
 ```
+
 FOLLOW_UP_TIME="4 days" // 4 days
 DISQUALIFY_TIME="7 days" // 7 days
+
 ```
 
 4. `yarn install`
@@ -129,3 +114,4 @@ When using as a github app the flow is the following:
 4. The Github action will create a release by recognizing the version tag
 
 ![ubiquibot-pfp-1](https://user-images.githubusercontent.com/4975670/208798502-0ac27adc-ab19-4148-82b8-8538040cf3b6.png)
+```
