@@ -1,4 +1,3 @@
-// import { AxiosResponseHeaders } from "axios";
 import { wait } from "../helpers";
 
 // explain how this works
