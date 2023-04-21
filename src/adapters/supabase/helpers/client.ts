@@ -207,3 +207,18 @@ export const getWalletAddress = async (username: string): Promise<string | undef
   const { data } = await supabase.from("wallets").select("wallet_address").eq("user_name", username).single();
   return data?.wallet_address;
 };
+
+/**
+ * Queries the wallet multiplier registered previously
+ *
+ * @param username The username you want to find an address for
+ * @returns The Multiplier, returns 1 if not found
+ *
+ */
+
+export const getWalletMultiplier = async (username: string): Promise<number> => {
+  const { supabase } = getAdapters();
+
+  const { data } = await supabase.from("wallets").select("multiplier").eq("user_name", username).single();
+  return data?.multiplier || 1;
+};

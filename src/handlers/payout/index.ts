@@ -1,4 +1,4 @@
-import { getWalletAddress } from "../../adapters/supabase";
+import { getWalletAddress, getWalletMultiplier } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, addLabelToIssue, deleteLabel, generatePermit2Signature, getTokenSymbol } from "../../helpers";
 import { Payload, StateReason } from "../../types";
@@ -39,8 +39,12 @@ export const handleIssueClosed = async () => {
     return;
   }
 
-  const priceInEth = issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4);
   const recipient = await getWalletAddress(assignee.login);
+  const multiplier = await getWalletMultiplier(assignee.login);
+
+  // TODO: add multiplier to the priceInEth
+  const priceInEth = (+issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4) * multiplier).toString();
+
   if (!recipient) {
     if (issue.state_reason === StateReason.COMPLETED) {
       logger.info(`Recipient address is missing`);

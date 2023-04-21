@@ -36,8 +36,8 @@ export const bountyMultiplier = async (body: string) => {
       return;
     }
 
-    console.log(username, bountyMultiplier, permissionLevel);
-    upsertWalletMultiplier(username, bountyMultiplier?.toString());
+    await upsertWalletMultiplier(username, bountyMultiplier?.toString());
+    await addCommentToIssue(`Updated the multiplier for @${username} successfully!\t New multiplier: ${bountyMultiplier}`, issue.number as number);
   } else {
     logger.error("Invalid body for bountyMultiplier command");
   }
