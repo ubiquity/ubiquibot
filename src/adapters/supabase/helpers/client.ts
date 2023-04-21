@@ -173,6 +173,29 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
 };
 
 /**
+ * Performs an UPSERT on the wallet table.
+ * @param username The user name you want to upsert a wallet address for
+ * @param address The account multiplier
+ */
+export const upsertWalletMultiplier = async (username: string, multiplier: string): Promise<void> => {
+  const logger = getLogger();
+  const { supabase } = getAdapters();
+
+  const { data, error } = await supabase.from("wallets").select("user_name").eq("user_name", username).single();
+  if (data) {
+    const { data: _data, error: _error } = await supabase
+      .from("wallets")
+      .upsert({ user_name: username, multiplier: multiplier, updated_at: new Date().toUTCString() });
+    logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
+  } else {
+    const { data: _data, error: _error } = await supabase
+      .from("wallets")
+      .insert({ user_name: username, wallet_address: "", multiplier: multiplier, created_at: new Date().toUTCString(), updated_at: new Date().toUTCString() });
+    logger.info(`Creating a new wallet_table record done, { data: ${_data}, error: ${_error} }`);
+  }
+};
+
+/**
  * Queries the wallet address registered previously
  *
  * @param username The username you want to find an address for

@@ -1,3 +1,4 @@
+import { upsertWalletMultiplier } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
 import { addCommentToIssue, getUserPermission } from "../../../helpers";
 import { Payload } from "../../../types";
@@ -16,7 +17,7 @@ export const bountyMultiplier = async (body: string) => {
     return;
   }
 
-  const regex = /\/bountyMultiplier @(\w+) (\d+\.\d+)/; // /bountyMultiplier @0xcodercrane 0.5
+  const regex = /\/bountyMultiplier @(\w+) (\d+(?:\.\d+)?)/; // /bountyMultiplier @0xcodercrane 0.5
 
   const matches = body.match(regex);
 
@@ -36,6 +37,7 @@ export const bountyMultiplier = async (body: string) => {
     }
 
     console.log(username, bountyMultiplier, permissionLevel);
+    upsertWalletMultiplier(username, bountyMultiplier?.toString());
   } else {
     logger.error("Invalid body for bountyMultiplier command");
   }
