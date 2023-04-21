@@ -1,3 +1,4 @@
+import { Context } from "probot";
 import { getBotContext, getLogger } from "../bindings";
 import { Comment, Payload } from "../types";
 import { checkRateLimitGit } from "../utils";
@@ -146,6 +147,28 @@ export const removeAssignees = async (issue_number: number, assignees: string[])
     });
   } catch (e: unknown) {
     logger.debug(`Removing assignees failed!, reason: ${e}`);
+  }
+};
+
+export const getUserPermission = async (username: string, context: Context): Promise<string> => {
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+
+  try {
+    const response = await context.octokit.rest.repos.getCollaboratorPermissionLevel({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      username,
+    });
+
+    if (response.status === 200) {
+      return response.data.permission;
+    } else {
+      return "";
+    }
+  } catch (e: unknown) {
+    logger.debug(`Checking if user is admin failed!, reason: ${e}`);
+    return "";
   }
 };
 

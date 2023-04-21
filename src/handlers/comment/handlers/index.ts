@@ -51,13 +51,13 @@ export const userCommands: UserCommands[] = [
     handler: payout,
   },
   {
+    id: IssueCommentCommands.BOUNTYMULTIPLIER,
+    description: `Set bounty multiplier (for treasury)`,
+    handler: bountyMultiplier,
+  },
+  {
     id: IssueCommentCommands.WALLET,
     description: `<WALLET_ADDRESS | ENS_NAME>: Register the hunter's wallet address. \n  ex1: /wallet 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \n  ex2: /wallet vitalik.eth\n`,
     handler: registerWallet,
-  },
-  {
-    id: IssueCommentCommands.BOUNTYMULTIPLIER,
-    description: `<MULTIPLIER>: Set bounty multiplier (for treasury)`,
-    handler: bountyMultiplier,
   },
 ];
