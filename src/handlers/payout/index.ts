@@ -42,10 +42,15 @@ export const handleIssueClosed = async () => {
   const recipient = await getWalletAddress(assignee.login);
   const multiplier = await getWalletMultiplier(assignee.login);
 
+  if (multiplier === 0) {
+    logger.info(`Skipping to proceed the payment because multiplier is 0`);
+    await addCommentToIssue("Skipping to proceed the payment because multiplier is 0", issue.number);
+    return;
+  }
+
   // TODO: add multiplier to the priceInEth
   const priceInEth = (+issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4) * multiplier).toString();
-
-  if (!recipient) {
+  if (!recipient || recipient?.trim() === "") {
     if (issue.state_reason === StateReason.COMPLETED) {
       logger.info(`Recipient address is missing`);
       await addCommentToIssue(
