@@ -5,12 +5,14 @@ import { listAvailableCommands } from "./help";
 import { payout } from "./payout";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
+import { bountyMultiplier } from "./bountyMultiplier";
 
 export * from "./assign";
 export * from "./wallet";
 export * from "./unassign";
 export * from "./payout";
 export * from "./help";
+export * from "./bountyMultiplier";
 
 /**
  * Parses the comment body and figure out the command name a user wants
@@ -52,5 +54,10 @@ export const userCommands: UserCommands[] = [
     id: IssueCommentCommands.WALLET,
     description: `<WALLET_ADDRESS | ENS_NAME>: Register the hunter's wallet address. \n  ex1: /wallet 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \n  ex2: /wallet vitalik.eth\n`,
     handler: registerWallet,
+  },
+  {
+    id: IssueCommentCommands.BOUNTYMULTIPLIER,
+    description: `<MULTIPLIER>: Set bounty multiplier (for treasury)`,
+    handler: bountyMultiplier,
   },
 ];
