@@ -19,11 +19,13 @@ export const handleIssueClosed = async () => {
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
   if (!autoPayMode) {
     logger.info(`Skipping to generate permit2 url, reason: { autoPayMode: ${autoPayMode}}`);
+    await addCommentToIssue(`Permit generation skipped since autoPayMode is disabled`, issue.number);
     return;
   }
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
     logger.info(`Skipping... its not a bounty`);
+    await addCommentToIssue(`Permit generation skipped since this issue didn't qualify as bounty`, issue.number);
     return;
   }
 
@@ -31,11 +33,13 @@ export const handleIssueClosed = async () => {
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
     logger.info("Skipping to proceed the payment because `assignee` is undefined");
+    await addCommentToIssue(`Permit generation skipped since assignee is undefined`, issue.number);
     return;
   }
 
   if (!issueDetailed.priceLabel) {
     logger.info("Skipping to proceed the payment because price not set");
+    await addCommentToIssue(`Permit generation skipped since price label is not set`, issue.number);
     return;
   }
 
