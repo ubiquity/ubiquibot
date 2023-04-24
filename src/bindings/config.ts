@@ -13,12 +13,13 @@ import {
 } from "../configs";
 import { ajv } from "../utils";
 import { Context } from "probot";
-import { getPrivateKey } from "../utils/private";
+import { getPrivateKey, getScalarKey } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   let configFile: any = {};
   configFile = await context.config("ubiquibot-config.yml");
   const keyData = await getPrivateKey();
+  const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
 
   const botConfig: BotConfig = {
     log: {
@@ -54,8 +55,8 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       analyticsMode: process.env.ANALYTICS_MODE === "TRUE" ? true : configFile?.analyticsMode ?? false,
     },
     sodium: {
-      publicKey: process.env.X25519_PUBLIC_KEY ?? "",
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",
+      publicKey: publicKey ?? "",
     },
   };
 
