@@ -187,3 +187,26 @@ export const deleteLabel = async (label: string): Promise<void> => {
     logger.debug(`Label deletion failed!, reason: ${e}`);
   }
 };
+
+// TEST METHOD
+export const listPullRequestForIssue = async (issue_number: number): Promise<void> => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+
+  try {
+    const { data: pullRequests } = await context.octokit.rest.repos.listPullRequestsAssociatedWithCommit({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      commit_sha: issue_number.toString(),
+    });
+    logger.debug("Getting pull requests done");
+    if (pullRequests.length > 0) {
+      pullRequests.forEach((pr) => logger.debug(pr.html_url));
+    } else {
+      logger.debug("No linked pull requests found");
+    }
+  } catch (e: unknown) {
+    logger.debug(`Adding assignees failed!, reason: ${e}`);
+  }
+};

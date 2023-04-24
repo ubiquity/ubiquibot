@@ -1,6 +1,6 @@
 import { userCommands } from ".";
 import { getBotContext, getLogger } from "../../../bindings";
-import { addCommentToIssue } from "../../../helpers";
+import { addCommentToIssue, listPullRequestForIssue } from "../../../helpers";
 import { IssueType, Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 
@@ -23,6 +23,9 @@ export const listAvailableCommands = async (body: string): Promise<void> => {
     logger.info("Skipping '/assign', reason: closed ");
     return;
   }
+
+  await listPullRequestForIssue(issue.number);
+
   await addCommentToIssue(generateHelpMenu(), issue!.number);
 };
 
