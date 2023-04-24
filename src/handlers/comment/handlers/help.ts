@@ -1,6 +1,6 @@
 import { userCommands } from ".";
 import { getBotContext, getLogger } from "../../../bindings";
-import { addCommentToIssue, listPullRequestForIssue } from "../../../helpers";
+import { addCommentToIssue } from "../../../helpers";
 import { IssueType, Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 
