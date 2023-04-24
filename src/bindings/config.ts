@@ -2,7 +2,6 @@ import ms from "ms";
 
 import { BotConfig, BotConfigSchema } from "../types";
 import {
-  DefaultPriceConfig,
   DEFAULT_BOT_DELAY,
   DEFAULT_CHAIN_ID,
   DEFAULT_DISQUALIFY_TIME,
@@ -13,12 +12,10 @@ import {
 } from "../configs";
 import { ajv } from "../utils";
 import { Context } from "probot";
-import { getPrivateKey, getScalarKey } from "../utils/private";
+import { getScalarKey, getWideConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
-  let configFile: any = {};
-  configFile = await context.config("ubiquibot-config.yml");
-  const keyData = await getPrivateKey();
+  const { privateKey, baseMultiplier, timeLabels, priorityLabels, autoPayMode, analyticsMode } = await getWideConfig(context);
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
 
   const botConfig: BotConfig = {
@@ -27,14 +24,14 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       ingestionKey: process.env.LOGDNA_INGESTION_KEY ?? "",
     },
     price: {
-      baseMultiplier: process.env.BASE_MULTIPLIER ? Number(process.env.BASE_MULTIPLIER) : configFile?.baseMultiplier ?? DefaultPriceConfig.baseMultiplier,
-      timeLabels: configFile?.timeLabels ?? DefaultPriceConfig.timeLabels,
-      priorityLabels: configFile?.priorityLabels ?? DefaultPriceConfig.priorityLabels,
+      baseMultiplier: baseMultiplier,
+      timeLabels: timeLabels,
+      priorityLabels: priorityLabels,
     },
     payout: {
       chainId: process.env.CHAIN_ID ? Number(process.env.CHAIN_ID) : DEFAULT_CHAIN_ID,
       rpc: process.env.RPC_PROVIDER_URL || DEFAULT_RPC_ENDPOINT,
-      privateKey: keyData ?? process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY ?? "",
+      privateKey: privateKey,
       paymentToken: process.env.PAYMENT_TOKEN || DEFAULT_PAYMENT_TOKEN,
       permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
     },
@@ -51,8 +48,8 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
     mode: {
-      autoPayMode: process.env.AUTO_PAY_MODE === "TRUE" ? true : configFile?.autoPayMode ?? true,
-      analyticsMode: process.env.ANALYTICS_MODE === "TRUE" ? true : configFile?.analyticsMode ?? false,
+      autoPayMode: autoPayMode,
+      analyticsMode: analyticsMode,
     },
     sodium: {
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",
