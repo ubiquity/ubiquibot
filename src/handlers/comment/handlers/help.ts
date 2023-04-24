@@ -24,8 +24,6 @@ export const listAvailableCommands = async (body: string): Promise<void> => {
     return;
   }
 
-  await listPullRequestForIssue(issue.number);
-
   await addCommentToIssue(generateHelpMenu(), issue!.number);
 };
 
