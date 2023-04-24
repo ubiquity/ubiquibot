@@ -200,13 +200,13 @@ export const listPullRequestForIssue = async (issue_number: number): Promise<voi
       repo: payload.repository.name,
       commit_sha: issue_number.toString(),
     });
-    logger.debug("Getting pull requests done");
+    logger.info("Getting pull requests done");
     if (pullRequests.length > 0) {
       pullRequests.forEach((pr) => logger.debug(pr.html_url));
     } else {
-      logger.debug("No linked pull requests found");
+      logger.info("No linked pull requests found");
     }
   } catch (e: unknown) {
-    logger.debug(`Adding assignees failed!, reason: ${e}`);
+    logger.info(`Listing pull request failed!, reason: ${e}`);
   }
 };
