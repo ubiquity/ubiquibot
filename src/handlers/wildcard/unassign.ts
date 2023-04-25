@@ -1,7 +1,8 @@
-import { getBotConfig, getLogger } from "../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs/strings";
 import { addCommentToIssue, getCommentsOfIssue, listIssuesForRepo, removeAssignees } from "../../helpers";
-import { Comment, IssueType } from "../../types";
+import { gitIssueParser } from "../../helpers/parser";
+import { Comment, IssueType, Payload } from "../../types";
 import { deadLinePrefix } from "../shared";
 
 /**
@@ -52,27 +53,38 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
   const curTimestamp = new Date().getTime();
   const passedDuration = curTimestamp - lastAnswerTime;
 
-  if (passedDuration >= disqualifyTime) {
-    logger.info(
-      `Unassigning... lastAnswerTime: ${lastAnswerTime}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
-    );
-    // remove assignees from the issue
-    await removeAssignees(issue.number, assignees);
-    await addCommentToIssue(`${unassignComment}`, issue.number);
+  if (passedDuration >= disqualifyTime || passedDuration >= followUpTime) {
+    const context = getBotContext();
+    const payload = context.payload as Payload;
+    const isLinked = await gitIssueParser({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: issue.number,
+    });
+    if (!isLinked) {
+      if (passedDuration >= disqualifyTime) {
+        logger.info(
+          `Unassigning... lastAnswerTime: ${lastAnswerTime}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
+        );
+        // remove assignees from the issue
+        await removeAssignees(issue.number, assignees);
+        await addCommentToIssue(`${unassignComment}`, issue.number);
 
-    return true;
-  } else if (passedDuration >= followUpTime) {
-    logger.info(
-      `Asking for updates... lastAnswerTime: ${lastAnswerTime}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
-    );
+        return true;
+      } else if (passedDuration >= followUpTime) {
+        logger.info(
+          `Asking for updates... lastAnswerTime: ${lastAnswerTime}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
+        );
 
-    if (lastAskTime > lastAnswerTime) {
-      logger.info(`Skipping posting an update message cause its been already asked, lastAskTime: ${lastAskTime}, lastAnswerTime: ${lastAnswerTime}`);
-    } else
-      await addCommentToIssue(
-        `${askUpdate} @${assignees[0]}? If you would like to release the bounty back to the DevPool, please comment \`/unassign\``,
-        issue.number
-      );
+        if (lastAskTime > lastAnswerTime) {
+          logger.info(`Skipping posting an update message cause its been already asked, lastAskTime: ${lastAskTime}, lastAnswerTime: ${lastAnswerTime}`);
+        } else
+          await addCommentToIssue(
+            `${askUpdate} @${assignees[0]}? If you would like to release the bounty back to the DevPool, please comment \`/unassign\``,
+            issue.number
+          );
+      }
+    }
   }
 
   return false;

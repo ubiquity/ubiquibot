@@ -23,6 +23,7 @@ export const listAvailableCommands = async (body: string): Promise<void> => {
     logger.info("Skipping '/assign', reason: closed ");
     return;
   }
+
   await addCommentToIssue(generateHelpMenu(), issue!.number);
 };
 
