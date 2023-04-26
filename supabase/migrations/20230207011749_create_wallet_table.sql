@@ -2,6 +2,5 @@ CREATE TABLE wallets (
     user_name character varying(255) NOT NULL PRIMARY KEY,
     wallet_address character(42),
     created_at text,
-    updated_at text,
-    multiplier text DEFAULT 1
+    updated_at text
 );
