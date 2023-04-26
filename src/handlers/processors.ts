@@ -38,9 +38,14 @@ export const processors: Record<string, Handler> = {
     action: [handleIssueClosed],
     post: [nullHandler],
   },
+  [GithubEvent.PULL_REQUEST_OPENED]: {
+    pre: [nullHandler],
+    action: [checkPullRequests],
+    post: [nullHandler],
+  },
 };
 
 /**
  * @dev The handlers which will run on every event hooked
  */
-export const wildcardProcessors: ActionHandler[] = [checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate, checkPullRequests];
+export const wildcardProcessors: ActionHandler[] = [checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate];
