@@ -5,6 +5,7 @@ import { checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate } from "./
 import { nullHandler } from "./shared";
 import { handleComment } from "./comment";
 import { handleIssueClosed } from "./payout";
+import { checkPullRequests } from "./assign/auto";
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_LABELED]: {
@@ -42,4 +43,4 @@ export const processors: Record<string, Handler> = {
 /**
  * @dev The handlers which will run on every event hooked
  */
-export const wildcardProcessors: ActionHandler[] = [checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate];
+export const wildcardProcessors: ActionHandler[] = [checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate, checkPullRequests];
