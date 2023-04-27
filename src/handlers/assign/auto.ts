@@ -1,6 +1,7 @@
 import { Context } from "probot";
 import { getBotContext, getLogger } from "../../bindings";
 import { addAssignees, listIssuesForRepo } from "../../helpers";
+import { gitLinkedIssueParser } from "../../helpers/parser";
 import { IssueType, Payload } from "../../types";
 
 // Use `context.octokit.rest` to get the pull requests for the repository
@@ -33,17 +34,20 @@ export const checkPullRequests = async () => {
 
   const payload = context.payload as Payload;
 
-  // get issues for repo
-  //const issues = await listIssuesForRepo(IssueType.OPEN);
-
   // Loop through the pull requests and assign them to their respective issues if needed
   for (const pull of pulls) {
-    // Check if the pull request is linked to an issue
-    const issueUrl = pull.issue_url;
-    const linkedIssueNumber = issueUrl.substring(issueUrl.lastIndexOf("/") + 1);
-    if (!linkedIssueNumber) {
+    let pullRequestLinked = await gitLinkedIssueParser({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: pull.number,
+    });
+
+    // if pullRequestLinked is empty, continue
+    if (pullRequestLinked == "") {
       continue;
     }
+
+    const linkedIssueNumber = pullRequestLinked.substring(pullRequestLinked.lastIndexOf("/") + 1);
 
     // Check if the pull request opener is assigned to the issue
     const opener = pull!.user!.login;
@@ -55,6 +59,7 @@ export const checkPullRequests = async () => {
 
     // if issue is already assigned, continue
     if (issue!.assignees!.length > 0) {
+      logger.debug(`Issue already assigned, ignoring...`);
       continue;
     }
 
