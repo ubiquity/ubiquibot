@@ -2,8 +2,8 @@ import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
 import { getBotConfig } from "../bindings";
 import { Payload } from "../types";
-import { DefaultPriceConfig } from "../configs";
 import { Context } from "probot";
+import { getAnalyticsMode, getAutoPayMode, getBaseMultiplier, getPriorityLabels, getTimeLabels } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
 const KEY_PATH = ".github/ubiquibot-config.yml";
@@ -28,14 +28,14 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo"):
   }
 };
 
-interface WideLabel {
+export interface WideLabel {
   name: string;
   weight: number;
   value?: number | undefined;
   target: string;
 }
 
-interface WideConfig {
+export interface WideConfig {
   baseMultiplier?: number;
   timeLabels?: WideLabel[];
   priorityLabels?: WideLabel[];
@@ -43,13 +43,13 @@ interface WideConfig {
   analyticsMode?: boolean;
 }
 
-interface WideRepoConfig extends WideConfig {}
+export interface WideRepoConfig extends WideConfig {}
 
-interface WideOrgConfig extends WideConfig {
+export interface WideOrgConfig extends WideConfig {
   PSK?: string;
 }
 
-interface DataConfig {
+export interface DataConfig {
   privateKey: string;
   baseMultiplier: number;
   timeLabels: WideLabel[];
@@ -121,36 +121,11 @@ export const getWideConfig = async (context: Context): Promise<DataConfig> => {
 
   const configData: DataConfig = {
     privateKey: PSK ?? process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY ?? "",
-    baseMultiplier:
-      parsedRepo && parsedRepo["baseMultiplier"] && !Number.isNaN(Number(parsedRepo["baseMultiplier"]))
-        ? Number(parsedRepo["baseMultiplier"])
-        : parsedOrg && parsedOrg["baseMultiplier"] && !Number.isNaN(Number(parsedOrg["baseMultiplier"]))
-        ? Number(parsedOrg["baseMultiplier"])
-        : Number(DefaultPriceConfig["baseMultiplier"]),
-    timeLabels:
-      parsedRepo && parsedRepo["timeLabels"] && Array.isArray(parsedRepo["timeLabels"]) && parsedRepo["timeLabels"].length > 0
-        ? parsedRepo["timeLabels"]
-        : parsedOrg && parsedOrg["timeLabels"] && Array.isArray(parsedOrg["timeLabels"]) && parsedOrg["timeLabels"].length > 0
-        ? parsedOrg["timeLabels"]
-        : DefaultPriceConfig["timeLabels"],
-    priorityLabels:
-      parsedRepo && parsedRepo["priorityLabels"] && Array.isArray(parsedRepo["priorityLabels"]) && parsedRepo["priorityLabels"].length > 0
-        ? parsedRepo["priorityLabels"]
-        : parsedOrg && parsedOrg["priorityLabels"] && Array.isArray(parsedOrg["priorityLabels"]) && parsedOrg["priorityLabels"].length > 0
-        ? parsedOrg["priorityLabels"]
-        : DefaultPriceConfig["priorityLabels"],
-    autoPayMode:
-      parsedRepo && parsedRepo["autoPayMode"] && typeof parsedRepo["autoPayMode"] === "boolean"
-        ? parsedRepo["autoPayMode"]
-        : parsedOrg && parsedOrg["autoPayMode"] && typeof parsedOrg["autoPayMode"] === "boolean"
-        ? parsedOrg["autoPayMode"]
-        : true,
-    analyticsMode:
-      parsedRepo && parsedRepo["analyticsMode"] && typeof parsedRepo["analyticsMode"] === "boolean"
-        ? parsedRepo["analyticsMode"]
-        : parsedOrg && parsedOrg["analyticsMode"] && typeof parsedOrg["analyticsMode"] === "boolean"
-        ? parsedOrg["analyticsMode"]
-        : false,
+    baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
+    timeLabels: getTimeLabels(parsedRepo, parsedOrg),
+    priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),
+    autoPayMode: getAutoPayMode(parsedRepo, parsedOrg),
+    analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg),
   };
 
   return configData;
