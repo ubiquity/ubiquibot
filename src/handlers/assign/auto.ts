@@ -1,8 +1,8 @@
 import { Context } from "probot";
 import { getBotContext, getLogger } from "../../bindings";
-import { addAssignees, listIssuesForRepo } from "../../helpers";
+import { addAssignees } from "../../helpers";
 import { gitLinkedIssueParser } from "../../helpers/parser";
-import { IssueType, Payload } from "../../types";
+import { Payload } from "../../types";
 
 // Use `context.octokit.rest` to get the pull requests for the repository
 export const getPullRequests = async (context: Context) => {
