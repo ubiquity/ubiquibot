@@ -47,6 +47,11 @@ export const LogConfigSchema = Type.Object({
   ingestionKey: Type.String(),
 });
 
+export const SodiumSchema = Type.Object({
+  publicKey: Type.String(),
+  privateKey: Type.String(),
+});
+
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
   price: PriceConfigSchema,
@@ -55,6 +60,7 @@ export const BotConfigSchema = Type.Object({
   supabase: SupabaseConfigSchema,
   telegram: TelegramBotConfigSchema,
   mode: ModeSchema,
+  sodium: SodiumSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;
