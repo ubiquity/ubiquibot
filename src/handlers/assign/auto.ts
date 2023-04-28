@@ -1,25 +1,7 @@
-import { Context } from "probot";
 import { getBotContext, getLogger } from "../../bindings";
-import { addAssignees } from "../../helpers";
+import { addAssignees, getIssueByNumber, getPullRequests } from "../../helpers";
 import { gitLinkedIssueParser } from "../../helpers/parser";
 import { Payload } from "../../types";
-
-// Use `context.octokit.rest` to get the pull requests for the repository
-export const getPullRequests = async (context: Context) => {
-  const logger = getLogger();
-  const payload = context.payload as Payload;
-  try {
-    const { data: pulls } = await context.octokit.rest.pulls.list({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      state: "open",
-    });
-    return pulls;
-  } catch (e: unknown) {
-    logger.debug(`Fetching pull requests failed!, reason: ${e}`);
-    return [];
-  }
-};
 
 // Check for pull requests linked to their respective issues but not assigned to them
 export const checkPullRequests = async () => {
@@ -51,11 +33,8 @@ export const checkPullRequests = async () => {
 
     // Check if the pull request opener is assigned to the issue
     const opener = pull!.user!.login;
-    const { data: issue } = await context.octokit.rest.issues.get({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: +linkedIssueNumber,
-    });
+
+    let issue = await getIssueByNumber(context, +linkedIssueNumber);
 
     // if issue is already assigned, continue
     if (issue!.assignees!.length > 0) {
@@ -67,7 +46,6 @@ export const checkPullRequests = async () => {
     if (!assignedUsernames.includes(opener)) {
       await addAssignees(+linkedIssueNumber, [opener]);
       logger.debug(`Assigned pull request #${pull.number} opener to issue ${linkedIssueNumber}.`);
-      console.log(`Assigned pull request #${pull.number} opener to issue ${linkedIssueNumber}.`);
     }
   }
 };
