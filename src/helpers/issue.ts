@@ -1,3 +1,4 @@
+import { Context } from "probot";
 import { getBotContext, getLogger } from "../bindings";
 import { Comment, Payload } from "../types";
 import { checkRateLimitGit } from "../utils";
@@ -185,5 +186,39 @@ export const deleteLabel = async (label: string): Promise<void> => {
     }
   } catch (e: unknown) {
     logger.debug(`Label deletion failed!, reason: ${e}`);
+  }
+};
+
+// Use `context.octokit.rest` to get the pull requests for the repository
+export const getPullRequests = async (context: Context, state: "open" | "closed" | "all" = "open") => {
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  try {
+    const { data: pulls } = await context.octokit.rest.pulls.list({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      state,
+    });
+    return pulls;
+  } catch (e: unknown) {
+    logger.debug(`Fetching pull requests failed!, reason: ${e}`);
+    return [];
+  }
+};
+
+// Get issues by issue number
+export const getIssueByNumber = async (context: Context, issue_number: number) => {
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  try {
+    const { data: issue } = await context.octokit.rest.issues.get({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number,
+    });
+    return issue;
+  } catch (e: unknown) {
+    logger.debug(`Fetching issue failed!, reason: ${e}`);
+    return;
   }
 };

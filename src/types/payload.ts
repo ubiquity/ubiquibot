@@ -13,6 +13,9 @@ export enum GithubEvent {
   // issue_comment
   ISSUE_COMMENT_CREATED = "issue_comment.created",
   ISSUE_COMMENT_EDITED = "issue_comment.edited",
+
+  // pull_request
+  PULL_REQUEST_OPENED = "pull_request.opened",
 }
 
 export enum UserType {

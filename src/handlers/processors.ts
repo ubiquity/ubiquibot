@@ -5,6 +5,7 @@ import { checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate } from "./
 import { nullHandler } from "./shared";
 import { handleComment } from "./comment";
 import { handleIssueClosed } from "./payout";
+import { checkPullRequests } from "./assign/auto";
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_LABELED]: {
@@ -35,6 +36,11 @@ export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_CLOSED]: {
     pre: [nullHandler],
     action: [handleIssueClosed],
+    post: [nullHandler],
+  },
+  [GithubEvent.PULL_REQUEST_OPENED]: {
+    pre: [nullHandler],
+    action: [checkPullRequests],
     post: [nullHandler],
   },
 };
