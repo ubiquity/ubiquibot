@@ -1,4 +1,4 @@
-import { getWalletAddress } from "../../adapters/supabase";
+import { getWalletAddress, getWalletMultiplier } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, addLabelToIssue, deleteLabel, generatePermit2Signature, getTokenSymbol } from "../../helpers";
 import { Payload, StateReason } from "../../types";
@@ -43,9 +43,18 @@ export const handleIssueClosed = async () => {
     return;
   }
 
-  const priceInEth = issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4);
   const recipient = await getWalletAddress(assignee.login);
-  if (!recipient) {
+  const multiplier = await getWalletMultiplier(assignee.login);
+
+  if (multiplier === 0) {
+    logger.info(`Skipping to proceed the payment because multiplier is 0`);
+    await addCommentToIssue("Skipping to proceed the payment because multiplier is 0", issue.number);
+    return;
+  }
+
+  // TODO: add multiplier to the priceInEth
+  const priceInEth = (+issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4) * multiplier).toString();
+  if (!recipient || recipient?.trim() === "") {
     if (issue.state_reason === StateReason.COMPLETED) {
       logger.info(`Recipient address is missing`);
       await addCommentToIssue(
