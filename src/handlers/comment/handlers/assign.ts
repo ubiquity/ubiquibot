@@ -1,4 +1,4 @@
-import { addAssignees, addCommentToIssue, getCommentsOfIssue } from "../../../helpers";
+import { addAssignees, getCommentsOfIssue } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";

@@ -1,6 +1,6 @@
 import { getWalletAddress, getWalletMultiplier } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue, addLabelToIssue, deleteLabel, generatePermit2Signature, getTokenSymbol } from "../../helpers";
+import { addLabelToIssue, deleteLabel, generatePermit2Signature, getTokenSymbol } from "../../helpers";
 import { Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
@@ -19,28 +19,24 @@ export const handleIssueClosed = async () => {
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
   if (!autoPayMode) {
     logger.info(`Skipping to generate permit2 url, reason: { autoPayMode: ${autoPayMode}}`);
-    await addCommentToIssue(`Permit generation skipped since autoPayMode is disabled`, issue.number);
-    return;
+    return `Permit generation skipped since autoPayMode is disabled`;
   }
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
     logger.info(`Skipping... its not a bounty`);
-    await addCommentToIssue(`Permit generation skipped since this issue didn't qualify as bounty`, issue.number);
-    return;
+    return `Permit generation skipped since this issue didn't qualify as bounty`;
   }
 
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
     logger.info("Skipping to proceed the payment because `assignee` is undefined");
-    await addCommentToIssue(`Permit generation skipped since assignee is undefined`, issue.number);
-    return;
+    return `Permit generation skipped since assignee is undefined`;
   }
 
   if (!issueDetailed.priceLabel) {
     logger.info("Skipping to proceed the payment because price not set");
-    await addCommentToIssue(`Permit generation skipped since price label is not set`, issue.number);
-    return;
+    return `Permit generation skipped since price label is not set`;
   }
 
   const recipient = await getWalletAddress(assignee.login);
@@ -48,8 +44,7 @@ export const handleIssueClosed = async () => {
 
   if (multiplier === 0) {
     logger.info(`Skipping to proceed the payment because multiplier is 0`);
-    await addCommentToIssue("Skipping to proceed the payment because multiplier is 0", issue.number);
-    return;
+    return "Skipping to proceed the payment because multiplier is 0";
   }
 
   // TODO: add multiplier to the priceInEth
@@ -57,15 +52,14 @@ export const handleIssueClosed = async () => {
   if (!recipient || recipient?.trim() === "") {
     if (issue.state_reason === StateReason.COMPLETED) {
       logger.info(`Recipient address is missing`);
-      await addCommentToIssue(
+      return (
         "Please set your wallet address by using the `/wallet` command.\n" +
-          "```\n" +
-          "/wallet example.eth\n" +
-          "/wallet 0xBf...CdA\n" +
-          "```\n" +
-          "@" +
-          assignee.login,
-        issue.number
+        "```\n" +
+        "/wallet example.eth\n" +
+        "/wallet 0xBf...CdA\n" +
+        "```\n" +
+        "@" +
+        assignee.login
       );
     }
     return;
@@ -77,8 +71,8 @@ export const handleIssueClosed = async () => {
     const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
     logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
     const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
-    await addCommentToIssue(comment, issue.number);
-    await deleteLabel(issueDetailed.priceLabel);
+    await deleteLabel(issueDetailed.priceLabel!);
     await addLabelToIssue("Paid");
+    return comment;
   }
 };
