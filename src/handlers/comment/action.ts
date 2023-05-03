@@ -34,14 +34,16 @@ export const handleComment = async (): Promise<void> => {
       const issue = (_payload as Payload).issue;
 
       try {
-        await handler(body);
-        if (successComment) {
-          return callback(issue!.number, successComment);
+        let response = await handler(body);
+        if (response || successComment) {
+          return callback(issue!.number, response! || successComment!);
         }
-      } catch (err) {
+      } catch (err: any) {
+        // Use failureComment for failed command if it is available
         if (failureComment) {
-          return callback(issue!.number, failureComment);
+          return callback(issue!.number, failureComment!);
         }
+        return callback(issue!.number, err?.message);
       }
     } else {
       logger.info(`Skipping for a command: ${command}`);
