@@ -33,4 +33,5 @@ export const unassign = async (body: string) => {
     );
     return `You have been unassigned from the bounty @${payload.sender.login}`;
   }
+  return;
 };

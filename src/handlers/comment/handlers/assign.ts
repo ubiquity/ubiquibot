@@ -98,4 +98,5 @@ export const assign = async (body: string) => {
     }
     return commit_msg;
   }
+  return;
 };

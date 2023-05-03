@@ -75,4 +75,5 @@ export const handleIssueClosed = async () => {
     await addLabelToIssue("Paid");
     return comment;
   }
+  return;
 };
