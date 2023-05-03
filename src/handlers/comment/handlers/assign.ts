@@ -6,6 +6,7 @@ import { IssueCommentCommands } from "../commands";
 import { getWalletAddress } from "../../../adapters/supabase";
 
 export const assign = async (body: string) => {
+  let maxIssues = process.env.BOUNTY_HUNTER_MAX_OPENED_ISSUES;
   const { payload: _payload } = getBotContext();
   const logger = getLogger();
   const config = getBotConfig();
@@ -27,13 +28,13 @@ export const assign = async (body: string) => {
 
   const assigned_issues = issues_opened.filter((issue) => issue.assignee && issue.assignee.login === payload.sender.login);
 
-  logger.info(`Max issue allowed is ${process.env.BOUNTY_HUNTER_MAX_OPENED_ISSUES}`);
+  logger.info(`Max issue allowed is ${maxIssues}`);
 
   const issue_number = issue!.number;
 
   // check for max and enforce max
-  if (assigned_issues.length >= (+process.env.BOUNTY_HUNTER_MAX_OPENED_ISSUES! || 2)) {
-    await addCommentToIssue(`Too many assigned issues, you have reached your max of ${process.env.BOUNTY_HUNTER_MAX_OPENED_ISSUES}`, issue_number);
+  if (assigned_issues.length >= (+maxIssues! || 2)) {
+    await addCommentToIssue(`Too many assigned issues, you have reached your max of ${maxIssues}`, issue_number);
     return;
   }
 
