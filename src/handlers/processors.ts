@@ -40,10 +40,14 @@ export const processors: Record<string, Handler> = {
     // Changed this because functions now returns string responses not void
     action: [
       async (): Promise<void> => {
-        const comment = await handleIssueClosed();
         const { payload: _payload } = getBotContext();
         const issue = (_payload as Payload).issue;
-        return await addCommentToIssue(comment!, issue!.number);
+        try {
+          const comment = await handleIssueClosed();
+          return await addCommentToIssue(comment!, issue!.number);
+        } catch (err: any) {
+          return await addCommentToIssue("Error: " + err.message, issue!.number);
+        }
       },
     ],
     post: [nullHandler],

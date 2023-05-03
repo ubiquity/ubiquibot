@@ -118,7 +118,8 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
 
       await checkRateLimitGit(response?.headers);
 
-      if (response.data) {
+      // Fixing infinite loop here, it keeps looping even when its an empty array
+      if (response.data && response.data.length > 0) {
         response.data.forEach((item) => result!.push(item as Comment));
         page_number++;
       } else {

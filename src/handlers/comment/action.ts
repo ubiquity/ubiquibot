@@ -43,11 +43,10 @@ export const handleComment = async (): Promise<void> => {
         if (failureComment) {
           return callback(issue!.number, failureComment!);
         }
-        return callback(issue!.number, err?.message);
+        return callback(issue!.number, "Error: " + err.message);
       }
     } else {
       logger.info(`Skipping for a command: ${command}`);
     }
-    //return promises.filter(Boolean) as Promise<any>[];
   }
 };
