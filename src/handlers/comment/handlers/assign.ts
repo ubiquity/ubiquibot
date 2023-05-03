@@ -1,4 +1,4 @@
-import { addAssignees, addCommentToIssue, getCommentsOfIssue } from "../../../helpers";
+import { addAssignees, addCommentToIssue, getCommentsOfIssue, listIssuesForRepo } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
@@ -22,7 +22,21 @@ export const assign = async (body: string) => {
     return;
   }
 
+  // List all the issues in the repository. It may include `pull_request`
+  const issues_opened = await listIssuesForRepo(IssueType.OPEN);
+
+  const assigned_issues = issues_opened.filter((issue) => issue.assignee && issue.assignee.login === payload.sender.login);
+
+  logger.info(`Max issue allowed is ${process.env.BOUNTY_HUNTER_MAX_OPENED_ISSUES}`);
+
   const issue_number = issue!.number;
+
+  // check for max and enforce max
+  if (assigned_issues.length >= (+process.env.BOUNTY_HUNTER_MAX_OPENED_ISSUES! || 2)) {
+    await addCommentToIssue(`Too many assigned issues, you have reached your max of ${process.env.BOUNTY_HUNTER_MAX_OPENED_ISSUES}`, issue_number);
+    return;
+  }
+
   if (issue!.state == IssueType.CLOSED) {
     logger.info("Skipping '/assign', reason: closed ");
     await addCommentToIssue("Skipping `/assign` since the issue is closed", issue_number);
