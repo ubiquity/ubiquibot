@@ -6,6 +6,7 @@ import { payout } from "./payout";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { bountyMultiplier } from "./bountyMultiplier";
+import { addCommentToIssue } from "../../../helpers";
 
 export * from "./assign";
 export * from "./wallet";
@@ -34,30 +35,48 @@ export const userCommands: UserCommands[] = [
     id: IssueCommentCommands.ASSIGN,
     description: "Assign the origin sender to the issue automatically.",
     handler: assign,
+    callback: async (issue_number, comment) => {
+      await addCommentToIssue(comment, issue_number!);
+    },
   },
   {
     id: IssueCommentCommands.UNASSIGN,
     description: "Unassign the origin sender from the issue automatically.",
     handler: unassign,
+    callback: async (issue_number, comment) => {
+      await addCommentToIssue(comment, issue_number!);
+    },
   },
   {
     handler: listAvailableCommands,
     id: IssueCommentCommands.HELP,
     description: "List all available commands.",
+    callback: async (issue_number, comment) => {
+      await addCommentToIssue(comment, issue_number!);
+    },
   },
   {
     id: IssueCommentCommands.PAYOUT,
     description: "Disable automatic payment for the issue.",
     handler: payout,
+    callback: async (issue_number, comment) => {
+      await addCommentToIssue(comment, issue_number!);
+    },
   },
   {
     id: IssueCommentCommands.BOUNTYMULTIPLIER,
     description: `Set bounty multiplier (for treasury)`,
     handler: bountyMultiplier,
+    callback: async (issue_number, comment) => {
+      await addCommentToIssue(comment, issue_number!);
+    },
   },
   {
     id: IssueCommentCommands.WALLET,
     description: `<WALLET_ADDRESS | ENS_NAME>: Register the hunter's wallet address. \n  ex1: /wallet 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \n  ex2: /wallet vitalik.eth\n`,
     handler: registerWallet,
+    callback: async (issue_number, comment) => {
+      await addCommentToIssue(comment, issue_number!);
+    },
   },
 ];

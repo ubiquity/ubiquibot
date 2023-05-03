@@ -25,12 +25,27 @@ export const handleComment = async (): Promise<void> => {
 
   for (const command of commands) {
     const userCommand = userCommands.find((i) => i.id == command);
+
     if (userCommand) {
-      const handler = userCommand.handler;
+      const { handler, callback, successComment, failureComment } = userCommand;
       logger.info(`Running a comment handler: ${handler.name}`);
-      await handler(body);
+
+      const { payload: _payload } = getBotContext();
+      const issue = (_payload as Payload).issue;
+
+      try {
+        await handler(body);
+        if (successComment) {
+          return callback(issue!.number, successComment);
+        }
+      } catch (err) {
+        if (failureComment) {
+          return callback(issue!.number, failureComment);
+        }
+      }
     } else {
       logger.info(`Skipping for a command: ${command}`);
     }
+    //return promises.filter(Boolean) as Promise<any>[];
   }
 };

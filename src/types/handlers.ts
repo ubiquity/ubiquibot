@@ -1,4 +1,5 @@
 export type ActionHandler = (args?: any) => Promise<void>;
+export type CallbackHandler = (issue_number: number, text: string) => Promise<void>;
 export type PreActionHandler = ActionHandler;
 export type PostActionHandler = ActionHandler;
 
@@ -19,4 +20,7 @@ export type UserCommands = {
   id: string;
   description: string;
   handler: ActionHandler;
+  callback: CallbackHandler;
+  successComment?: string;
+  failureComment?: string;
 };
