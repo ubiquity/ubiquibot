@@ -3416,9 +3416,9 @@ ee-first@1.1.1:
   integrity sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==
 
 electron-to-chromium@^1.4.284:
-  version "1.4.380"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.380.tgz#195dc59d930c6b74efbee6f0e6a267ce4af5ed91"
-  integrity sha512-XKGdI4pWM78eLH2cbXJHiBnWUwFSzZM7XujsB6stDiGu9AeSqziedP6amNLpJzE3i0rLTcfAwdCTs5ecP5yeSg==
+  version "1.4.382"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.382.tgz#87e659b0f0d5f7b19759038871bac0a327191f82"
+  integrity sha512-czMavlW52VIPgutbVL9JnZIZuFijzsG1ww/1z2Otu1r1q+9Qe2bTsH3My3sZarlvwyqHM6+mnZfEnt2Vr4dsIg==
 
 elliptic@6.5.4:
   version "6.5.4"
@@ -7458,9 +7458,9 @@ strtok3@^6.2.4:
     peek-readable "^4.1.0"
 
 supabase@^1.38.1:
-  version "1.54.0"
-  resolved "https://registry.yarnpkg.com/supabase/-/supabase-1.54.0.tgz#e7612f5e896ca17b456833887a8dde310452ed3d"
-  integrity sha512-1pRWYKkV7WOkZuM88pWZ4vgc77WrQAaTD67mzdV4FNjaEG1JKQUbm9wdgRjjyB1+fI3zy9QKKsaRy/wa2GxMJg==
+  version "1.54.1"
+  resolved "https://registry.yarnpkg.com/supabase/-/supabase-1.54.1.tgz#cef32dc0eaeea2dbcd5c62dcdfd9f3f200ba5e78"
+  integrity sha512-vyHOHDSQYLlTeCkDBZakYC6W1+33sVbTS53rUiNEe6sSRpKGMK+SjNPNTPQZAzr9zdRITJOMO8Eh0cUbkRU2mQ==
   dependencies:
     bin-links "^4.0.1"
     node-fetch "^3.2.10"
