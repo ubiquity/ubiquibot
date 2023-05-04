@@ -52,10 +52,10 @@ export const getAnalyticsMode = (parsedRepo: WideRepoConfig | undefined, parsedO
 };
 
 export const getBountyHunterMax = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
-  if (parsedRepo && parsedRepo["bountyHunterMax"] && typeof parsedRepo["bountyHunterMax"] === "boolean") {
-    return parsedRepo["bountyHunterMax"];
-  } else if (parsedOrg && parsedOrg["bountyHunterMax"] && typeof parsedOrg["bountyHunterMax"] === "boolean") {
-    return parsedOrg["bountyHunterMax"];
+  if (parsedRepo && parsedRepo["bountyHunterMax"] && !Number.isNaN(Number(parsedRepo["bountyHunterMax"]))) {
+    return Number(parsedRepo["bountyHunterMax"]);
+  } else if (parsedOrg && parsedOrg["bountyHunterMax"] && !Number.isNaN(Number(parsedRepo!["bountyHunterMax"]))) {
+    return Number(parsedOrg["bountyHunterMax"]);
   } else {
     return 2;
   }
