@@ -1,4 +1,4 @@
-import { addAssignees, addCommentToIssue, getCommentsOfIssue, listIssuesForRepo } from "../../../helpers";
+import { addAssignees, addCommentToIssue, getAssignedIssues, getCommentsOfIssue } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
@@ -22,10 +22,7 @@ export const assign = async (body: string) => {
     return;
   }
 
-  // List all the issues in the repository. It may include `pull_request`
-  const issues_opened = await listIssuesForRepo(IssueType.OPEN);
-
-  const assigned_issues = issues_opened.filter((issue) => issue.assignee && issue.assignee.login === payload.sender.login);
+  let assigned_issues = await getAssignedIssues(payload.sender.login);
 
   logger.info(`Max issue allowed is ${config.mode.bountyHunterMax}`);
 
