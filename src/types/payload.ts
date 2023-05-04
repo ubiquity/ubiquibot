@@ -232,6 +232,7 @@ export const PayloadSchema = Type.Object({
   repository: RepositorySchema,
   organization: Type.Optional(OrganizationSchema),
   installation: Type.Optional(InstallationSchema),
+  repositories_added: Type.Optional(Type.Array(RepositorySchema)),
 });
 
 export type Payload = Static<typeof PayloadSchema>;

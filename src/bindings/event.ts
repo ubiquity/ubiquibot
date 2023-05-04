@@ -92,9 +92,12 @@ export const bindEvents = async (context: Context): Promise<void> => {
     await postAction();
   }
 
-  // Run wildcard handlers
-  logger.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
-  for (const wildcardProcessor of wildcardProcessors) {
-    await wildcardProcessor();
+  // Skip wildcard handlers for installation event
+  if (eventName !== GithubEvent.INSTALLATION_ADDED_EVENT) {
+    // Run wildcard handlers
+    logger.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
+    for (const wildcardProcessor of wildcardProcessors) {
+      await wildcardProcessor();
+    }
   }
 };

@@ -1,15 +1,25 @@
-import { getBotContext } from "../../bindings";
+import { getBotContext, getLogger } from "../../bindings";
+import { Payload } from "../../types";
 
 export const createDevPoolPR = async () => {
-  console.log("new install");
   const context = getBotContext();
-  // replace with the owner and name of the repository you want to create the branch in
-  const owner = "seprintour";
-  const repo = "betterbuy";
+  const logger = getLogger();
+  let payload = context.payload as Payload;
+
+  if (payload.repositories_added?.length === 0) {
+    return;
+  }
+
+  let repository = payload.repositories_added![0];
+
+  const [owner, repo] = repository.full_name.split("/");
+
+  logger.info(`New Install: ${repository.full_name}`);
 
   // create a new branch
-  const branchName = "my-branch";
-  const baseRef = "master"; // replace with the name of the base branch
+  const branchName = `add-${repository.full_name}`;
+  const baseRef = "master";
+  const path = "projects.json";
 
   const { data: branch } = await context.octokit.repos.getBranch({
     owner,
@@ -17,6 +27,7 @@ export const createDevPoolPR = async () => {
     branch: "master",
   });
 
+  // Get the current projects json file
   const { data: file } = await context.octokit.repos.getContent({
     owner,
     repo,
@@ -26,38 +37,40 @@ export const createDevPoolPR = async () => {
 
   const curContent = Buffer.from(JSON.parse(JSON.stringify(file)).content!, "base64").toString();
 
-  console.log(curContent);
+  const curContentParsed = JSON.parse(curContent);
 
-  // const mainSha = branch.commit.sha;
+  // Edit the urls in content
+  curContentParsed["urls"].push(`https://github.com/${repository.full_name}`);
 
-  // await context.octokit.git.createRef({
-  //   owner,
-  //   repo,
-  //   ref: `refs/heads/${branchName}`,
-  //   sha: mainSha,
-  // });
+  // current hash of main branch
+  const mainSha = branch.commit.sha;
 
-  // // create a new file on the branch
-  // const path = 'path/to/my/file.txt';
-  // const content = 'This is my new content';
-  // const createFileResponse = await context.octokit.repos.createOrUpdateFileContents({
-  //   owner,
-  //   repo,
-  //   path,
-  //   message: 'Add file',
-  //   content: Buffer.from(content).toString('base64'),
-  //   branch: branchName
-  // });
-  // console.log(createFileResponse.data);
+  // create branch from sha
+  await context.octokit.git.createRef({
+    owner,
+    repo,
+    ref: `refs/heads/${branchName}`,
+    sha: mainSha,
+  });
 
-  // // create the pull request
-  // const pullRequest = await context.octokit.pulls.create({
-  //   owner,
-  //   repo,
-  //   title: 'My pull request',
-  //   head: branchName,
-  //   base: baseRef,
-  //   body: 'This is my pull request',
-  // });
-  // console.log(pullRequest.data);
+  await context.octokit.repos.createOrUpdateFileContents({
+    owner,
+    repo,
+    path,
+    message: `Add ${repository.full_name} to repo`,
+    content: Buffer.from(curContentParsed).toString("base64"),
+    branch: branchName,
+  });
+
+  // create the pull request
+  await context.octokit.pulls.create({
+    owner,
+    repo,
+    title: `Add ${repository.full_name} to repo`,
+    head: branchName,
+    base: baseRef,
+    body: "",
+  });
+
+  logger.info("New repository added to devpool");
 };
