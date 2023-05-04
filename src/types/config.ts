@@ -40,6 +40,7 @@ export const UnassignConfigSchema = Type.Object({
 export const ModeSchema = Type.Object({
   autoPayMode: Type.Boolean(),
   analyticsMode: Type.Boolean(),
+  bountyHunterMax: Type.Number(),
 });
 
 export const LogConfigSchema = Type.Object({

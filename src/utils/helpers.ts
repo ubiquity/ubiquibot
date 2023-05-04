@@ -50,3 +50,13 @@ export const getAnalyticsMode = (parsedRepo: WideRepoConfig | undefined, parsedO
     return false;
   }
 };
+
+export const getBountyHunterMax = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
+  if (parsedRepo && parsedRepo["bountyHunterMax"] && typeof parsedRepo["bountyHunterMax"] === "boolean") {
+    return parsedRepo["bountyHunterMax"];
+  } else if (parsedOrg && parsedOrg["bountyHunterMax"] && typeof parsedOrg["bountyHunterMax"] === "boolean") {
+    return parsedOrg["bountyHunterMax"];
+  } else {
+    return 2;
+  }
+};
