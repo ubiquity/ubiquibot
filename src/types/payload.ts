@@ -16,6 +16,9 @@ export enum GithubEvent {
 
   // pull_request
   PULL_REQUEST_OPENED = "pull_request.opened",
+
+  // installation event
+  INSTALLATION_ADDED_EVENT = "installation_repositories.added",
 }
 
 export enum UserType {
