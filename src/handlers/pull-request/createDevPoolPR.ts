@@ -2,9 +2,13 @@ import { getBotContext, getLogger } from "../../bindings";
 import { Payload } from "../../types";
 
 export const createDevPoolPR = async () => {
-  const context = getBotContext();
   const logger = getLogger();
+
+  const context = getBotContext();
   let payload = context.payload as Payload;
+
+  let devPoolOwner = "ubiquity";
+  let devPoolRepo = "devpool";
 
   if (payload.repositories_added?.length === 0) {
     return;
@@ -12,30 +16,32 @@ export const createDevPoolPR = async () => {
 
   let repository = payload.repositories_added![0];
 
-  const [owner, repo] = repository.full_name.split("/");
-
   logger.info(`New Install: ${repository.full_name}`);
 
+  const [owner, repo] = repository.full_name.split("/");
+
   // create a new branch
-  const branchName = `add-${repository.full_name}`;
-  const baseRef = "master";
+  const branchName = `add-${owner}-${repo}`;
+  const baseRef = "development";
   const path = "projects.json";
 
   const { data: branch } = await context.octokit.repos.getBranch({
-    owner,
-    repo,
-    branch: "master",
+    owner: devPoolOwner,
+    repo: devPoolRepo,
+    branch: "development",
   });
 
   // Get the current projects json file
   const { data: file } = await context.octokit.repos.getContent({
-    owner,
-    repo,
-    path: "projects.json",
-    ref: "master",
+    owner: devPoolOwner,
+    repo: devPoolRepo,
+    path,
+    ref: "development",
   });
 
-  const curContent = Buffer.from(JSON.parse(JSON.stringify(file)).content!, "base64").toString();
+  const contentFile = JSON.parse(JSON.stringify(file));
+
+  const curContent = Buffer.from(contentFile.content!, "base64").toString();
 
   const curContentParsed = JSON.parse(curContent);
 
@@ -47,25 +53,26 @@ export const createDevPoolPR = async () => {
 
   // create branch from sha
   await context.octokit.git.createRef({
-    owner,
-    repo,
-    ref: `refs/heads/${branchName}`,
+    owner: devPoolOwner,
+    repo: devPoolRepo,
+    ref: `refs/heads/add-${owner}-${repo}`,
     sha: mainSha,
   });
 
   await context.octokit.repos.createOrUpdateFileContents({
-    owner,
-    repo,
+    owner: devPoolOwner,
+    repo: devPoolRepo,
     path,
     message: `Add ${repository.full_name} to repo`,
-    content: Buffer.from(curContentParsed).toString("base64"),
+    content: Buffer.from(JSON.stringify(curContentParsed, null, 2)).toString("base64"),
     branch: branchName,
+    sha: contentFile.sha,
   });
 
   // create the pull request
   await context.octokit.pulls.create({
-    owner,
-    repo,
+    owner: devPoolOwner,
+    repo: devPoolRepo,
     title: `Add ${repository.full_name} to repo`,
     head: branchName,
     base: baseRef,
