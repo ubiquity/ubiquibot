@@ -6,7 +6,6 @@ import { getBotContext } from "../../../bindings";
 import { telegramPhotoNotifier } from "../../../adapters";
 import { Context } from "probot";
 import { Payload } from "../../../types";
-import { getFallback } from "../../../utils/fallback";
 import { fetchImage } from "../../../utils/webAssets";
 import { weeklyConfig } from "../../../configs/weekly";
 import { ProximaNovaRegularBase64 } from "../../../assets/fonts/ProximaNovaRegularB64";
@@ -303,7 +302,7 @@ const getFlatImage = async (): Promise<string> => {
       await fetchImage(remoteUrl);
       fileName = `${IMG_PATH}/webFlat.png`;
     } catch (error) {
-      fileName = await getFallback(fileName, "background");
+      console.error(`Error reading image. error: ${error}`);
     }
   }
   return fileName;
