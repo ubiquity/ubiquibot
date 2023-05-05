@@ -36,12 +36,12 @@ export interface WideLabel {
 }
 
 export interface WideConfig {
-  baseMultiplier?: number;
-  timeLabels?: WideLabel[];
-  priorityLabels?: WideLabel[];
-  autoPayMode?: boolean;
-  analyticsMode?: boolean;
-  bountyHunterMax?: number;
+  "base-multiplier"?: number;
+  "time-labels"?: WideLabel[];
+  "priority-labels"?: WideLabel[];
+  "auto-pay-mode"?: boolean;
+  "analytics-mode"?: boolean;
+  "max-concurrent-bounties"?: number;
 }
 
 export interface WideRepoConfig extends WideConfig {}

@@ -1,6 +1,6 @@
 ---
-baseMultiplier: 1000
-timeLabels:
+base-multiplier: 1000
+time-labels:
   - name: "Time: <1 Hour"
     weight: 0.125
     value: 3600
@@ -21,7 +21,7 @@ timeLabels:
     weight: 4
     value: 2592000
     target: "Price: 400+ USD"
-priorityLabels:
+priority-labels:
   - name: "Priority: 0 (Normal)"
     weight: 1
     target: "Price: 100+ USD"
@@ -37,6 +37,6 @@ priorityLabels:
   - name: "Priority: 4 (Emergency)"
     weight: 5
     target: "Price: 500+ USD"
-autoPayMode: true
-analyticsMode: true
-bountyHunterMax: 2
+auto-pay-mode: true
+analytics-mode: true
+max-concurrent-bounties: 2
