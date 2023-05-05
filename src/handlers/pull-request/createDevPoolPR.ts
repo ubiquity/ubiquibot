@@ -79,5 +79,5 @@ export const createDevPoolPR = async () => {
     body: "",
   });
 
-  logger.info("New repository added to devpool");
+  logger.info("New repository added to DevPool Directory");
 };
