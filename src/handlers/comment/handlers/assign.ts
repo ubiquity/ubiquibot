@@ -1,4 +1,4 @@
-import { addAssignees, addCommentToIssue, getCommentsOfIssue } from "../../../helpers";
+import { addAssignees, addCommentToIssue, getAssignedIssues, getCommentsOfIssue } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
@@ -22,27 +22,35 @@ export const assign = async (body: string) => {
     return;
   }
 
+  let assigned_issues = await getAssignedIssues(payload.sender.login);
+
+  logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
+
   const issue_number = issue!.number;
+
+  // check for max and enforce max
+  if (assigned_issues.length >= config.assign.bountyHunterMax) {
+    await addCommentToIssue(`Too many assigned issues, you have reached your max of ${config.assign.bountyHunterMax}`, issue_number);
+    return;
+  }
+
   if (issue!.state == IssueType.CLOSED) {
     logger.info("Skipping '/assign', reason: closed ");
-    await addCommentToIssue("Skipping `/assign` since the issue is closed", issue_number);
-    return;
+    return "Skipping `/assign` since the issue is closed";
   }
   const _assignees = payload.issue?.assignees;
   const assignees = _assignees ?? [];
 
   if (assignees.length !== 0) {
     logger.info(`Skipping '/assign', reason: already assigned. assignees: ${assignees.length > 0 ? assignees.map((i) => i.login).join() : "NoAssignee"}`);
-    await addCommentToIssue("Skipping `/assign` since the issue is already assigned", issue_number);
-    return;
+    return "Skipping `/assign` since the issue is already assigned";
   }
 
   // get the time label from the `labels`
   const labels = payload.issue?.labels;
   if (!labels) {
     logger.info(`No labels to calculate timeline`);
-    await addCommentToIssue("Skipping `/assign` since no issue labels are set to calculate the timeline", issue_number);
-    return;
+    return "Skipping `/assign` since no issue labels are set to calculate the timeline";
   }
   const timeLabelsDefined = config.price.timeLabels;
   const timeLabelsAssigned: LabelItem[] = [];
@@ -58,8 +66,7 @@ export const assign = async (body: string) => {
 
   if (timeLabelsAssigned.length == 0) {
     logger.info(`No time labels to calculate timeline`);
-    await addCommentToIssue("Skipping `/assign` since no time labels are set to calculate the timeline", issue_number);
-    return;
+    return "Skipping `/assign` since no time labels are set to calculate the timeline";
   }
 
   const sorted = timeLabelsAssigned.sort((a, b) => a.weight - b.weight);
@@ -67,8 +74,7 @@ export const assign = async (body: string) => {
   const duration = targetTimeLabel.value;
   if (!duration) {
     logger.info(`Missing configure for timelabel: ${targetTimeLabel.name}`);
-    await addCommentToIssue("Skipping `/assign` since configuration is missing for the following labels", issue_number);
-    return;
+    return "Skipping `/assign` since configuration is missing for the following labels";
   }
 
   const curDate = new Date();
@@ -101,6 +107,7 @@ export const assign = async (body: string) => {
       //wallet found
       commit_msg = commit_msg + "\n\n" + "Your currently set address is:\n" + recipient + "\n" + "please use `/wallet 0x4FDE...BA18` if you want to update it.";
     }
-    await addCommentToIssue(commit_msg, issue_number!);
+    return commit_msg;
   }
+  return;
 };

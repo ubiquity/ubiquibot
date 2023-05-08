@@ -1,6 +1,6 @@
 import { Context } from "probot";
 import { getBotContext, getLogger } from "../bindings";
-import { Comment, Payload } from "../types";
+import { Comment, IssueType, Payload } from "../types";
 import { checkRateLimitGit } from "../utils";
 
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
@@ -118,7 +118,8 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
 
       await checkRateLimitGit(response?.headers);
 
-      if (response.data) {
+      // Fixing infinite loop here, it keeps looping even when its an empty array
+      if (response?.data?.length > 0) {
         response.data.forEach((item) => result!.push(item as Comment));
         page_number++;
       } else {
@@ -243,4 +244,26 @@ export const getIssueByNumber = async (context: Context, issue_number: number) =
     logger.debug(`Fetching issue failed!, reason: ${e}`);
     return;
   }
+};
+
+// Get issues assigned to a username
+export const getAssignedIssues = async (username: string) => {
+  let issuesArr = [];
+  let fetchDone = false;
+  const perPage = 30;
+  let curPage = 1;
+  while (!fetchDone) {
+    const issues = await listIssuesForRepo(IssueType.OPEN, perPage, curPage);
+
+    // push the objects to array
+    issuesArr.push(...issues);
+
+    if (issues.length < perPage) fetchDone = true;
+    else curPage++;
+  }
+
+  // get only issues assigned to username
+  const assigned_issues = issuesArr.filter((issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username);
+
+  return assigned_issues;
 };

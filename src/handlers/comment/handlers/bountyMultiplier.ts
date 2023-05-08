@@ -1,6 +1,6 @@
 import { upsertWalletMultiplier } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
-import { addCommentToIssue, getUserPermission } from "../../../helpers";
+import { getUserPermission } from "../../../helpers";
 import { Payload } from "../../../types";
 
 export const bountyMultiplier = async (body: string) => {
@@ -32,13 +32,13 @@ export const bountyMultiplier = async (body: string) => {
     // if sender is not admin or billing_manager, return
     if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {
       logger.info(`User ${sender} is not an admin or billing_manager`);
-      addCommentToIssue(`Oops!, You are not an admin or billing_manager`, issue.number as number);
-      return;
+      return `Oops!, You are not an admin or billing_manager`;
     }
 
     await upsertWalletMultiplier(username, bountyMultiplier?.toString());
-    await addCommentToIssue(`Updated the multiplier for @${username} successfully!\t New multiplier: ${bountyMultiplier}`, issue.number as number);
+    return `Updated the multiplier for @${username} successfully!\t New multiplier: ${bountyMultiplier}`;
   } else {
     logger.error("Invalid body for bountyMultiplier command");
+    return `Invalid body for bountyMultiplier command`;
   }
 };
