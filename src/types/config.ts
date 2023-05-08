@@ -37,9 +37,13 @@ export const UnassignConfigSchema = Type.Object({
   followUpTime: Type.Number(),
   disqualifyTime: Type.Number(),
 });
+
 export const ModeSchema = Type.Object({
   autoPayMode: Type.Boolean(),
   analyticsMode: Type.Boolean(),
+});
+
+export const AssignSchema = Type.Object({
   bountyHunterMax: Type.Number(),
 });
 
@@ -61,6 +65,7 @@ export const BotConfigSchema = Type.Object({
   supabase: SupabaseConfigSchema,
   telegram: TelegramBotConfigSchema,
   mode: ModeSchema,
+  assign: AssignSchema,
   sodium: SodiumSchema,
 });
 

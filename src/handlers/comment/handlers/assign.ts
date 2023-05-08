@@ -24,13 +24,13 @@ export const assign = async (body: string) => {
 
   let assigned_issues = await getAssignedIssues(payload.sender.login);
 
-  logger.info(`Max issue allowed is ${config.mode.bountyHunterMax}`);
+  logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
 
   const issue_number = issue!.number;
 
   // check for max and enforce max
-  if (assigned_issues.length >= config.mode.bountyHunterMax) {
-    await addCommentToIssue(`Too many assigned issues, you have reached your max of ${config.mode.bountyHunterMax}`, issue_number);
+  if (assigned_issues.length >= config.assign.bountyHunterMax) {
+    await addCommentToIssue(`Too many assigned issues, you have reached your max of ${config.assign.bountyHunterMax}`, issue_number);
     return;
   }
 

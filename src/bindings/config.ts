@@ -50,6 +50,8 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     mode: {
       autoPayMode: autoPayMode,
       analyticsMode: analyticsMode,
+    },
+    assign: {
       bountyHunterMax: bountyHunterMax,
     },
     sodium: {
