@@ -3,8 +3,7 @@ import { commentWithAssignMessage } from "./assign";
 import { pricingLabelLogic, validatePriceLabels } from "./pricing";
 import { checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate } from "./wildcard";
 import { nullHandler } from "./shared";
-import { handleComment } from "./comment";
-import { handleIssueClosed } from "./payout";
+import { handleComment, issueClosedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
 
 export const processors: Record<string, Handler> = {
@@ -35,7 +34,7 @@ export const processors: Record<string, Handler> = {
   },
   [GithubEvent.ISSUES_CLOSED]: {
     pre: [nullHandler],
-    action: [handleIssueClosed],
+    action: [issueClosedCallback],
     post: [nullHandler],
   },
   [GithubEvent.PULL_REQUEST_OPENED]: {

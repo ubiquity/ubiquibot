@@ -2,7 +2,7 @@ import { getBotContext, getLogger } from "../../../bindings";
 import { Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { handleIssueClosed } from "../../payout";
-import { addCommentToIssue, getAllIssueComments } from "../../../helpers";
+import { getAllIssueComments } from "../../../helpers";
 
 export const payout = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -28,8 +28,7 @@ export const payout = async (body: string) => {
 
   const IssueComments = await getAllIssueComments(issue.number);
   if (IssueComments === null) {
-    addCommentToIssue(`Permit generation failed due to internal GitHub Error`, payload.issue?.number as number);
-    return;
+    return `Permit generation failed due to internal GitHub Error`;
   }
 
   const hasPosted = IssueComments.find((e) => e.user.type === "Bot" && e.body.includes("https://pay.ubq.fi?claim"));
@@ -38,5 +37,6 @@ export const payout = async (body: string) => {
     return;
   }
 
-  await handleIssueClosed();
+  let response = await handleIssueClosed();
+  return response;
 };
