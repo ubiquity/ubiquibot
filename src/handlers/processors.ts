@@ -1,13 +1,10 @@
-import { GithubEvent, Handler, ActionHandler, Payload } from "../types";
+import { GithubEvent, Handler, ActionHandler } from "../types";
 import { commentWithAssignMessage } from "./assign";
 import { pricingLabelLogic, validatePriceLabels } from "./pricing";
 import { checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate } from "./wildcard";
 import { nullHandler } from "./shared";
-import { handleComment } from "./comment";
-import { handleIssueClosed } from "./payout";
+import { handleComment, issueClosedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
-import { addCommentToIssue } from "../helpers";
-import { getBotContext } from "../bindings";
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_LABELED]: {
@@ -37,19 +34,7 @@ export const processors: Record<string, Handler> = {
   },
   [GithubEvent.ISSUES_CLOSED]: {
     pre: [nullHandler],
-    // Changed this because functions now returns string responses not void
-    action: [
-      async (): Promise<void> => {
-        const { payload: _payload } = getBotContext();
-        const issue = (_payload as Payload).issue;
-        try {
-          const comment = await handleIssueClosed();
-          return await addCommentToIssue(comment!, issue!.number);
-        } catch (err: any) {
-          return await addCommentToIssue("Error: " + err.message, issue!.number);
-        }
-      },
-    ],
+    action: [issueClosedCallback],
     post: [nullHandler],
   },
   [GithubEvent.PULL_REQUEST_OPENED]: {

@@ -1,4 +1,4 @@
-import { UserCommands } from "../../../types";
+import { Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
@@ -7,6 +7,8 @@ import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { bountyMultiplier } from "./bountyMultiplier";
 import { addCommentToIssue } from "../../../helpers";
+import { getBotContext } from "../../../bindings";
+import { handleIssueClosed } from "../../payout";
 
 export * from "./assign";
 export * from "./wallet";
@@ -28,6 +30,21 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
   const commandList = Object.values(IssueCommentCommands) as string[];
   const result = commandList.filter((command: string) => body.includes(command));
   return result as IssueCommentCommands[];
+};
+
+/**
+ * Callback for issues closed - Processor
+ */
+
+export const issueClosedCallback = async (): Promise<void> => {
+  const { payload: _payload } = getBotContext();
+  const issue = (_payload as Payload).issue;
+  try {
+    const comment = await handleIssueClosed();
+    return await addCommentToIssue(comment!, issue!.number);
+  } catch (err: any) {
+    return await addCommentToIssue("Error: " + err.message, issue!.number);
+  }
 };
 
 /**
