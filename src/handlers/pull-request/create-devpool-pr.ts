@@ -5,16 +5,16 @@ export const createDevPoolPR = async () => {
   const logger = getLogger();
 
   const context = getBotContext();
-  let payload = context.payload as Payload;
+  const payload = context.payload as Payload;
 
-  let devPoolOwner = "ubiquity";
-  let devPoolRepo = "devpool";
+  const devPoolOwner = "ubiquity";
+  const devPoolRepo = "devpool";
 
   if (payload.repositories_added?.length === 0) {
     return;
   }
 
-  let repository = payload.repositories_added![0];
+  const repository = payload.repositories_added![0];
 
   logger.info(`New Install: ${repository.full_name}`);
 
@@ -59,6 +59,8 @@ export const createDevPoolPR = async () => {
     sha: mainSha,
   });
 
+  logger.info("Branch created on DevPool Directory");
+
   await context.octokit.repos.createOrUpdateFileContents({
     owner: devPoolOwner,
     repo: devPoolRepo,
@@ -79,5 +81,5 @@ export const createDevPoolPR = async () => {
     body: "",
   });
 
-  logger.info("New repository added to DevPool Directory");
+  logger.info("Pull request created on DevPool Directory");
 };
