@@ -88,6 +88,7 @@ const IssueSchema = Type.Object({
   node_id: Type.String(),
   number: Type.Number(),
   title: Type.String(),
+  body: Type.String(),
   user: UserSchema,
   labels: Type.Array(LabelSchema),
   state: Type.Enum(IssueType),

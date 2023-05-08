@@ -1,6 +1,7 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel } from "../../helpers";
 import { Payload } from "../../types";
+import { isMeta } from "../../utils/meta";
 import { getTargetPriceLabel } from "../shared";
 
 export const pricingLabelLogic = async (): Promise<void> => {
@@ -8,7 +9,9 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const config = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
-  if (!payload.issue) return;
+  if (!payload.issue) {
+    return;
+  }
   const labels = payload.issue.labels;
 
   const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
@@ -19,6 +22,11 @@ export const pricingLabelLogic = async (): Promise<void> => {
 
   const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
   if (targetPriceLabel) {
+    const iM = await isMeta(payload.issue.title, payload.issue.body);
+    if (iM) {
+      logger.info(`Skipping labels since it's a meta issue`);
+      return;
+    }
     if (labels.map((i) => i.name).includes(targetPriceLabel)) {
       logger.info(`Skipping... already exists`);
     } else {
