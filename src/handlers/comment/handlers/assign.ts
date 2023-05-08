@@ -1,4 +1,4 @@
-import { addAssignees, getCommentsOfIssue } from "../../../helpers";
+import { addAssignees, addCommentToIssue, getAssignedIssues, getCommentsOfIssue } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
@@ -22,7 +22,18 @@ export const assign = async (body: string) => {
     return;
   }
 
+  let assigned_issues = await getAssignedIssues(payload.sender.login);
+
+  logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
+
   const issue_number = issue!.number;
+
+  // check for max and enforce max
+  if (assigned_issues.length >= config.assign.bountyHunterMax) {
+    await addCommentToIssue(`Too many assigned issues, you have reached your max of ${config.assign.bountyHunterMax}`, issue_number);
+    return;
+  }
+
   if (issue!.state == IssueType.CLOSED) {
     logger.info("Skipping '/assign', reason: closed ");
     return "Skipping `/assign` since the issue is closed";

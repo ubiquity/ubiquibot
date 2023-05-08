@@ -3,7 +3,7 @@ import YAML from "yaml";
 import { getBotConfig } from "../bindings";
 import { Payload } from "../types";
 import { Context } from "probot";
-import { getAnalyticsMode, getAutoPayMode, getBaseMultiplier, getPriorityLabels, getTimeLabels } from "./helpers";
+import { getAnalyticsMode, getAutoPayMode, getBaseMultiplier, getBountyHunterMax, getPriorityLabels, getTimeLabels } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
 const KEY_PATH = ".github/ubiquibot-config.yml";
@@ -36,11 +36,12 @@ export interface WideLabel {
 }
 
 export interface WideConfig {
-  baseMultiplier?: number;
-  timeLabels?: WideLabel[];
-  priorityLabels?: WideLabel[];
-  autoPayMode?: boolean;
-  analyticsMode?: boolean;
+  "base-multiplier"?: number;
+  "time-labels"?: WideLabel[];
+  "priority-labels"?: WideLabel[];
+  "auto-pay-mode"?: boolean;
+  "analytics-mode"?: boolean;
+  "max-concurrent-bounties"?: number;
 }
 
 export interface WideRepoConfig extends WideConfig {}
@@ -56,6 +57,7 @@ export interface DataConfig {
   priorityLabels: WideLabel[];
   autoPayMode: boolean;
   analyticsMode: boolean;
+  bountyHunterMax: number;
 }
 
 export const parseYAML = async (data: any): Promise<any | undefined> => {
@@ -126,6 +128,7 @@ export const getWideConfig = async (context: Context): Promise<DataConfig> => {
     priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),
     autoPayMode: getAutoPayMode(parsedRepo, parsedOrg),
     analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg),
+    bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
   };
 
   return configData;
