@@ -6,7 +6,7 @@ import { nullHandler } from "./shared";
 import { handleComment } from "./comment";
 import { handleIssueClosed } from "./payout";
 import { checkPullRequests } from "./assign/auto";
-import { createDevPoolPR } from "./pull-request/create-devpool-pr";
+import { createDevPoolPR } from "./pull-request";
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_LABELED]: {
