@@ -5,7 +5,7 @@ import { listAvailableCommands } from "./help";
 import { payout } from "./payout";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
-import { bountyMultiplier } from "./bountyMultiplier";
+import { multiplier } from "./multiplier";
 import { addCommentToIssue } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
@@ -15,7 +15,7 @@ export * from "./wallet";
 export * from "./unassign";
 export * from "./payout";
 export * from "./help";
-export * from "./bountyMultiplier";
+export * from "./multiplier";
 
 /**
  * Parses the comment body and figure out the command name a user wants
@@ -84,9 +84,9 @@ export const userCommands: UserCommands[] = [
     callback: commandCallback,
   },
   {
-    id: IssueCommentCommands.BOUNTYMULTIPLIER,
+    id: IssueCommentCommands.MULTIPLIER,
     description: `Set bounty multiplier (for treasury)`,
-    handler: bountyMultiplier,
+    handler: multiplier,
     callback: commandCallback,
   },
   {

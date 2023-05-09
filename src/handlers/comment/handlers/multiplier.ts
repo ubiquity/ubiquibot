@@ -3,21 +3,21 @@ import { getBotContext, getLogger } from "../../../bindings";
 import { getUserPermission } from "../../../helpers";
 import { Payload } from "../../../types";
 
-export const bountyMultiplier = async (body: string) => {
+export const multiplier = async (body: string) => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
 
-  logger.info(`Received '/bountyMultiplier' command from user: ${sender}`);
+  logger.info(`Received '/multiplier' command from user: ${sender}`);
 
   const issue = payload.issue;
   if (!issue) {
-    logger.info(`Skipping '/bountyMultiplier' because of no issue instance`);
+    logger.info(`Skipping '/multiplier' because of no issue instance`);
     return;
   }
 
-  const regex = /\/bountyMultiplier @(\w+) (\d+(?:\.\d+)?)/; // /bountyMultiplier @0xcodercrane 0.5
+  const regex = /\/multiplier @(\w+) (\d+(?:\.\d+)?)/; // /multiplier @0xcodercrane 0.5
 
   const matches = body.match(regex);
 
