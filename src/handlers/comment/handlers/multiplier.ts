@@ -27,7 +27,7 @@ export const multiplier = async (body: string) => {
 
     // check if sender is admin or billing_manager
     // passing in context so we don't have to make another request to get the user
-    const permissionLevel = await getUserPermission(username, context);
+    const permissionLevel = await getUserPermission(sender, context);
 
     // if sender is not admin or billing_manager, return
     if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {

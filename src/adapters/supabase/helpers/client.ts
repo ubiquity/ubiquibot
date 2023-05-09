@@ -196,6 +196,32 @@ export const upsertWalletMultiplier = async (username: string, multiplier: strin
 };
 
 /**
+ * Performs an UPSERT on the access table.
+ * @param username The user name you want to upsert a wallet address for
+ * @param repository The repository for access
+ * @param access Access granting
+ * @param bool Disabling or enabling
+ */
+export const upsertAccessControl = async (username: string, repository: string, access: string, bool: boolean): Promise<void> => {
+  console.log(username, repository, access, bool);
+  const logger = getLogger();
+  const { supabase } = getAdapters();
+
+  const { data, error } = await supabase.from("access").select("user_name").eq("user_name", username).single();
+  if (data) {
+    const { data: _data, error: _error } = await supabase
+      .from("wallets")
+      .upsert({ user_name: username, repository: repository, updated_at: new Date().toUTCString(), [access]: bool });
+    logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
+  } else {
+    const { data: _data, error: _error } = await supabase
+      .from("wallets")
+      .insert({ user_name: username, repository: repository, [access]: bool, created_at: new Date().toUTCString(), updated_at: new Date().toUTCString() });
+    logger.info(`Creating a new wallet_table record done, { data: ${_data}, error: ${_error} }`);
+  }
+};
+
+/**
  * Queries the wallet address registered previously
  *
  * @param username The username you want to find an address for

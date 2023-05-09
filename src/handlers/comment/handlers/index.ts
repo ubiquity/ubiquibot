@@ -5,6 +5,7 @@ import { listAvailableCommands } from "./help";
 import { payout } from "./payout";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
+import { setAccess } from "./set-access";
 import { multiplier } from "./multiplier";
 import { addCommentToIssue } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
@@ -87,6 +88,12 @@ export const userCommands: UserCommands[] = [
     id: IssueCommentCommands.MULTIPLIER,
     description: `Set bounty multiplier (for treasury)`,
     handler: multiplier,
+    callback: commandCallback,
+  },
+  {
+    id: IssueCommentCommands.ALLOW,
+    description: `Set access control. (Admin Only)`,
+    handler: setAccess,
     callback: commandCallback,
   },
   {
