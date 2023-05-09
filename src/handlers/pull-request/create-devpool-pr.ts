@@ -41,8 +41,6 @@ export const createDevPoolPR = async () => {
 
   const contentFile = Object.assign(file);
 
-  console.log(contentFile);
-
   const curContent = Buffer.from(contentFile.content!, "base64").toString();
 
   const curContentParsed = JSON.parse(curContent);
