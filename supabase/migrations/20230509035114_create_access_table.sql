@@ -1,4 +1,4 @@
-CREATE TABLE weekly (
+CREATE TABLE access (
     user_name character varying(255) NOT NULL PRIMARY KEY,
     priority_access  boolean,
     time_access boolean,
