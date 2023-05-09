@@ -5,6 +5,6 @@ CREATE TABLE access (
     time_access boolean,
     price_access boolean,
     multiplier_access boolean,
-    created_at text,
-    updated_at text
+    created_at TIMESTAMP WITHOUT TIME ZONE,
+    updated_at TIMESTAMP WITHOUT TIME ZONE
 );
