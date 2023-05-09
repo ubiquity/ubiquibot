@@ -236,3 +236,27 @@ export const PayloadSchema = Type.Object({
 });
 
 export type Payload = Static<typeof PayloadSchema>;
+
+export const GithubContentSchema = Type.Object({
+  type: Type.String(),
+  encoding: Type.String(),
+  size: Type.Number(),
+  name: Type.String(),
+  path: Type.String(),
+  content: Type.String(),
+  sha: Type.String(),
+  url: Type.String(),
+  git_url: Type.String(),
+  html_url: Type.String(),
+  download_url: Type.String(),
+  _links: Type.Union([
+    Type.Undefined(),
+    Type.Object({
+      git: Type.String(),
+      self: Type.String(),
+      html: Type.String(),
+    }),
+  ]),
+});
+
+export type GithubContent = Static<typeof GithubContentSchema>;

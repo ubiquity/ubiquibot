@@ -1,5 +1,5 @@
 import { getBotContext, getLogger } from "../../bindings";
-import { Payload } from "../../types";
+import { GithubContent, Payload } from "../../types";
 
 export const createDevPoolPR = async () => {
   const logger = getLogger();
@@ -39,7 +39,7 @@ export const createDevPoolPR = async () => {
     ref: "development",
   });
 
-  const contentFile = Object.assign(file);
+  const contentFile = Object.assign({} as GithubContent, file);
 
   const curContent = Buffer.from(contentFile.content!, "base64").toString();
 
