@@ -72,7 +72,7 @@ export const handleIssueClosed = async () => {
     logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
     const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
     await deleteLabel(issueDetailed.priceLabel!);
-    await addLabelToIssue("Paid");
+    await addLabelToIssue("Permitted");
     return comment;
   }
   return;
