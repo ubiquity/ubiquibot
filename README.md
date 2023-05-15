@@ -1,14 +1,14 @@
-# `@ubiquity/bounty-bot` the "UbiquiBot"
+# The "UbiquiBot"
 
-This bot facilitates the Ubiquity Bounty System.
+Ubiquity DAO's GitHub Bot to automate DevPool management.
 
 ## Quickstart
 
 ```sh
 #!/bin/bash
 
-git clone https://github.com/ubiquity/bounty-bot.git
-cd bounty-bot
+git clone https://github.com/ubiquity/ubiquibot.git
+cd ubiquibot
 yarn
 yarn tsc
 yarn start:watch
