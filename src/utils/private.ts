@@ -7,7 +7,7 @@ import { getAnalyticsMode, getAutoPayMode, getBaseMultiplier, getBountyHunterMax
 
 const CONFIG_REPO = "ubiquibot-config";
 const KEY_PATH = ".github/ubiquibot-config.yml";
-const KEY_NAME = "PSK";
+const KEY_NAME = "private-key-encrypted";
 const KEY_PREFIX = "HSK_";
 
 export const getConfigSuperset = async (context: Context, type: "org" | "repo"): Promise<string | undefined> => {
@@ -47,7 +47,7 @@ export interface WideConfig {
 export interface WideRepoConfig extends WideConfig {}
 
 export interface WideOrgConfig extends WideConfig {
-  PSK?: string;
+  "private-key-encrypted"?: string;
 }
 
 export interface DataConfig {
@@ -119,10 +119,11 @@ export const getWideConfig = async (context: Context): Promise<DataConfig> => {
 
   const parsedOrg: WideOrgConfig | undefined = await parseYAML(orgConfig);
   const parsedRepo: WideRepoConfig | undefined = await parseYAML(repoConfig);
-  const PSK = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
+  const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configData: DataConfig = {
-    privateKey: PSK ?? process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY ?? "",
+    // TODO: remove "process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY" when all partners are migrate to org wide config
+    privateKey: privateKeyDecrypted ?? process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY ?? "",
     baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
     timeLabels: getTimeLabels(parsedRepo, parsedOrg),
     priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),
