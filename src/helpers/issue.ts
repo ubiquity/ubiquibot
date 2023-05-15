@@ -212,6 +212,23 @@ export const deleteLabel = async (label: string): Promise<void> => {
   }
 };
 
+export const removeLabel = async (name: string) => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+
+  try {
+    await context.octokit.issues.removeLabel({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: payload.issue!.number,
+      name: name,
+    });
+  } catch (e: unknown) {
+    logger.debug(`Label removal failed!, reason: ${e}`);
+  }
+};
+
 // Use `context.octokit.rest` to get the pull requests for the repository
 export const getPullRequests = async (context: Context, state: "open" | "closed" | "all" = "open") => {
   const logger = getLogger();
