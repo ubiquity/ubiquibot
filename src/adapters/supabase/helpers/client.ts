@@ -196,6 +196,39 @@ export const upsertWalletMultiplier = async (username: string, multiplier: strin
 };
 
 /**
+ * Performs an UPSERT on the access table.
+ * @param username The user name you want to upsert a wallet address for
+ * @param repository The repository for access
+ * @param access Access granting
+ * @param bool Disabling or enabling
+ */
+export const upsertAccessControl = async (username: string, repository: string, access: string, bool: boolean): Promise<void> => {
+  const logger = getLogger();
+  const { supabase } = getAdapters();
+
+  const { data, error } = await supabase.from("access").select("user_name").eq("user_name", username).single();
+
+  const properties = { user_name: username, repository: repository, updated_at: new Date().toUTCString(), [access]: bool };
+
+  if (data) {
+    const { data: _data, error: _error } = await supabase.from("access").upsert(properties);
+    logger.info(`Upserting an access done, { data: ${data}, error: ${error} }`);
+  } else {
+    const { data: _data, error: _error } = await supabase
+      .from("access")
+      .insert({
+        created_at: new Date().toUTCString(),
+        price_access: false,
+        time_access: false,
+        multiplier_access: false,
+        priority_access: false,
+        ...properties,
+      });
+    logger.info(`Creating a new access record done, { data: ${_data}, error: ${_error} }`);
+  }
+};
+
+/**
  * Queries the wallet address registered previously
  *
  * @param username The username you want to find an address for
