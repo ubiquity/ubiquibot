@@ -21,7 +21,7 @@ export const payout = async (body: string) => {
   }
 
   const _labels = payload.issue?.labels;
-  if (_labels?.some((e) => e.name.toLowerCase() === "Paid".toLowerCase())) {
+  if (_labels?.some((e) => e.name.toLowerCase() === "Permitted".toLowerCase())) {
     logger.info(`Permit already generated for ${payload.issue?.number}`);
     return;
   }
