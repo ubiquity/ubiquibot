@@ -38,7 +38,7 @@ export const multiplier = async (body: string) => {
 
       if (!accessible) {
         logger.info(`User ${sender} is not an admin or billing_manager`);
-        return `Oops!, You are not an admin or billing_manager`;
+        return "`Insufficient permissions to update the payout multiplier. You are not an `admin` or `billing_manager`";
       }
     }
 
