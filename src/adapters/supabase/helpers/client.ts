@@ -226,13 +226,6 @@ export const upsertAccessControl = async (username: string, repository: string, 
   }
 };
 
-/**
- * Queries the access table
- *
- * @param username The username you want to find access for
- * @param label_type The label access you need
- * @returns Boolean
- */
 export const getAccessLevel = async (username: string, repository: string, label_type: string): Promise<boolean> => {
   const { supabase } = getAdapters();
 
