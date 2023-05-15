@@ -206,7 +206,7 @@ export const upsertAccessControl = async (username: string, repository: string, 
   const logger = getLogger();
   const { supabase } = getAdapters();
 
-  const { data, error } = await supabase.from("access").select("user_name").eq("user_name", username).single();
+  const { data, error } = await supabase.from("access").select("user_name").eq("user_name", username).eq("repository", repository).single();
 
   const properties = { user_name: username, repository: repository, updated_at: new Date().toUTCString(), [access]: bool };
 
@@ -214,18 +214,38 @@ export const upsertAccessControl = async (username: string, repository: string, 
     const { data: _data, error: _error } = await supabase.from("access").upsert(properties);
     logger.info(`Upserting an access done, { data: ${data}, error: ${error} }`);
   } else {
-    const { data: _data, error: _error } = await supabase
-      .from("access")
-      .insert({
-        created_at: new Date().toUTCString(),
-        price_access: false,
-        time_access: false,
-        multiplier_access: false,
-        priority_access: false,
-        ...properties,
-      });
+    const { data: _data, error: _error } = await supabase.from("access").insert({
+      created_at: new Date().toUTCString(),
+      price_access: false,
+      time_access: false,
+      multiplier_access: false,
+      priority_access: false,
+      ...properties,
+    });
     logger.info(`Creating a new access record done, { data: ${_data}, error: ${_error} }`);
   }
+};
+
+/**
+ * Queries the access table
+ *
+ * @param username The username you want to find access for
+ * @param label_type The label access you need
+ * @returns Boolean
+ */
+export const getAccessLevel = async (username: string, repository: string, label_type: string): Promise<boolean> => {
+  const { supabase } = getAdapters();
+
+  const { data } = await supabase.from("access").select("*").eq("user_name", username).eq("repository", repository).single();
+
+  if (!data) {
+    // no access
+    return false;
+  }
+
+  const accessValues = data![`${label_type}_access`];
+
+  return accessValues;
 };
 
 /**
