@@ -54,7 +54,7 @@ export const getAnalyticsMode = (parsedRepo: WideRepoConfig | undefined, parsedO
 export const getBountyHunterMax = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
   if (parsedRepo && parsedRepo["max-concurrent-bounties"] && !Number.isNaN(Number(parsedRepo["max-concurrent-bounties"]))) {
     return Number(parsedRepo["max-concurrent-bounties"]);
-  } else if (parsedOrg && parsedOrg["max-concurrent-bounties"] && !Number.isNaN(Number(parsedRepo!["max-concurrent-bounties"]))) {
+  } else if (parsedOrg && parsedOrg["max-concurrent-bounties"] && !Number.isNaN(Number(parsedOrg!["max-concurrent-bounties"]))) {
     return Number(parsedOrg["max-concurrent-bounties"]);
   } else {
     return 2;
