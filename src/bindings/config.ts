@@ -15,7 +15,7 @@ import { Context } from "probot";
 import { getScalarKey, getWideConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
-  const { privateKey, baseMultiplier, timeLabels, priorityLabels, autoPayMode, analyticsMode, bountyHunterMax } = await getWideConfig(context);
+  const { privateKey, baseMultiplier, timeLabels, priorityLabels, autoPayMode, analyticsMode, bountyHunterMax, incentiveMode } = await getWideConfig(context);
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
 
   const botConfig: BotConfig = {
@@ -50,6 +50,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     mode: {
       autoPayMode: autoPayMode,
       analyticsMode: analyticsMode,
+      incentiveMode: incentiveMode,
     },
     assign: {
       bountyHunterMax: bountyHunterMax,

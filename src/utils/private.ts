@@ -3,7 +3,7 @@ import YAML from "yaml";
 import { getBotConfig } from "../bindings";
 import { Payload } from "../types";
 import { Context } from "probot";
-import { getAnalyticsMode, getAutoPayMode, getBaseMultiplier, getBountyHunterMax, getPriorityLabels, getTimeLabels } from "./helpers";
+import { getAnalyticsMode, getAutoPayMode, getBaseMultiplier, getBountyHunterMax, getIncentiveMode, getPriorityLabels, getTimeLabels } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
 const KEY_PATH = ".github/ubiquibot-config.yml";
@@ -41,6 +41,7 @@ export interface WideConfig {
   "priority-labels"?: WideLabel[];
   "auto-pay-mode"?: boolean;
   "analytics-mode"?: boolean;
+  "incentive-mode"?: boolean;
   "max-concurrent-bounties"?: number;
 }
 
@@ -48,16 +49,6 @@ export interface WideRepoConfig extends WideConfig {}
 
 export interface WideOrgConfig extends WideConfig {
   PSK?: string;
-}
-
-export interface DataConfig {
-  privateKey: string;
-  baseMultiplier: number;
-  timeLabels: WideLabel[];
-  priorityLabels: WideLabel[];
-  autoPayMode: boolean;
-  analyticsMode: boolean;
-  bountyHunterMax: number;
 }
 
 export const parseYAML = async (data: any): Promise<any | undefined> => {
@@ -113,7 +104,7 @@ export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Prom
   }
 };
 
-export const getWideConfig = async (context: Context): Promise<DataConfig> => {
+export const getWideConfig = async (context: Context) => {
   const orgConfig = await getConfigSuperset(context, "org");
   const repoConfig = await getConfigSuperset(context, "repo");
 
@@ -121,7 +112,7 @@ export const getWideConfig = async (context: Context): Promise<DataConfig> => {
   const parsedRepo: WideRepoConfig | undefined = await parseYAML(repoConfig);
   const PSK = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
-  const configData: DataConfig = {
+  const configData = {
     privateKey: PSK ?? process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY ?? "",
     baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
     timeLabels: getTimeLabels(parsedRepo, parsedOrg),
@@ -129,6 +120,7 @@ export const getWideConfig = async (context: Context): Promise<DataConfig> => {
     autoPayMode: getAutoPayMode(parsedRepo, parsedOrg),
     analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg),
     bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
+    incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
   };
 
   return configData;

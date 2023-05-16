@@ -51,6 +51,16 @@ export const getAnalyticsMode = (parsedRepo: WideRepoConfig | undefined, parsedO
   }
 };
 
+export const getIncentiveMode = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): boolean => {
+  if (parsedRepo && parsedRepo["incentive-mode"] && typeof parsedRepo["incentive-mode"] === "boolean") {
+    return parsedRepo["incentive-mode"];
+  } else if (parsedOrg && parsedOrg["incentive-mode"] && typeof parsedOrg["incentive-mode"] === "boolean") {
+    return parsedOrg["incentive-mode"];
+  } else {
+    return false;
+  }
+};
+
 export const getBountyHunterMax = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
   if (parsedRepo && parsedRepo["max-concurrent-bounties"] && !Number.isNaN(Number(parsedRepo["max-concurrent-bounties"]))) {
     return Number(parsedRepo["max-concurrent-bounties"]);
