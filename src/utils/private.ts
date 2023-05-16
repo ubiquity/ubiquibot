@@ -3,7 +3,7 @@ import YAML from "yaml";
 import { getBotConfig } from "../bindings";
 import { Payload } from "../types";
 import { Context } from "probot";
-import { getAnalyticsMode, getAutoPayMode, getBaseMultiplier, getBountyHunterMax, getPriorityLabels, getTimeLabels } from "./helpers";
+import { getAnalyticsMode, getAutoPayMode, getBaseMultiplier, getBountyHunterMax, getChainId, getPriorityLabels, getTimeLabels } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
 const KEY_PATH = ".github/ubiquibot-config.yml";
@@ -36,6 +36,7 @@ export interface WideLabel {
 }
 
 export interface WideConfig {
+  "chain-id"?: number;
   "base-multiplier"?: number;
   "time-labels"?: WideLabel[];
   "priority-labels"?: WideLabel[];
@@ -51,6 +52,7 @@ export interface WideOrgConfig extends WideConfig {
 }
 
 export interface DataConfig {
+  chainId: number;
   privateKey: string;
   baseMultiplier: number;
   timeLabels: WideLabel[];
@@ -122,6 +124,7 @@ export const getWideConfig = async (context: Context): Promise<DataConfig> => {
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configData: DataConfig = {
+    chainId: getChainId(parsedRepo, parsedOrg),
     // TODO: remove "process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY" when all partners are migrate to org wide config
     privateKey: privateKeyDecrypted ?? process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY ?? "",
     baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
