@@ -227,11 +227,13 @@ export const upsertAccessControl = async (username: string, repository: string, 
 };
 
 export const getAccessLevel = async (username: string, repository: string, label_type: string): Promise<boolean> => {
+  const logger = getLogger();
   const { supabase } = getAdapters();
 
   const { data } = await supabase.from("access").select("*").eq("user_name", username).eq("repository", repository).single();
 
   if (!data) {
+    logger.info(`Access not found on the database`);
     // no access
     return false;
   }
