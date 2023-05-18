@@ -8,7 +8,6 @@ import { getAnalyticsMode, getAutoPayMode, getBaseMultiplier, getBountyHunterMax
 const CONFIG_REPO = "ubiquibot-config";
 const KEY_PATH = ".github/ubiquibot-config.yml";
 const KEY_NAME = "private-key-encrypted";
-const KEY_PREFIX = "HSK_";
 
 export const getConfigSuperset = async (context: Context, type: "org" | "repo"): Promise<string | undefined> => {
   try {
@@ -92,7 +91,6 @@ export const getPrivateKey = async (cipherText: string): Promise<string | undefi
     const binCipher = sodium.from_base64(cipherText, sodium.base64_variants.URLSAFE_NO_PADDING);
 
     let walletPrivateKey: string | undefined = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
-    walletPrivateKey = walletPrivateKey.startsWith(KEY_PREFIX) ? walletPrivateKey.replace(KEY_PREFIX, "") : undefined;
     return walletPrivateKey;
   } catch (error: any) {
     return undefined;
