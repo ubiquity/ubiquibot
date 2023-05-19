@@ -1,6 +1,6 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { getAllIssueComments } from "../../helpers";
-import { Payload } from "../../types";
+import { getAllIssueComments, parseComments } from "../../helpers";
+import { Payload, UserType } from "../../types";
 
 /**
  * Incentivize the contributors based on their contribution.
@@ -18,4 +18,14 @@ export const incentiveContribution = async () => {
   const context = getBotContext();
   const payload = context.payload as Payload;
   const issueComments = await getAllIssueComments(payload.issue?.number!);
+  const issueCommentsByUser: Record<string, string[]> = {};
+  for (const issueComment of issueComments) {
+    const user = issueComment.user;
+    issueCommentsByUser[user.login].push(issueComment.body);
+  }
+
+  for (const user of Object.keys(issueCommentsByUser)) {
+    const comments = issueCommentsByUser[user];
+    parseComments(comments);
+  }
 };
