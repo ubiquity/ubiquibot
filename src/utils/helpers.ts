@@ -51,7 +51,7 @@ export const getAnalyticsMode = (parsedRepo: WideRepoConfig | undefined, parsedO
   }
 };
 
-export const getIncentiveMode = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): boolean => {
+export const getIncentiveMode = (parsedRepo?: WideRepoConfig, parsedOrg?: WideOrgConfig): boolean => {
   if (parsedRepo && parsedRepo["incentive-mode"] && typeof parsedRepo["incentive-mode"] === "boolean") {
     return parsedRepo["incentive-mode"];
   } else if (parsedOrg && parsedOrg["incentive-mode"] && typeof parsedOrg["incentive-mode"] === "boolean") {
