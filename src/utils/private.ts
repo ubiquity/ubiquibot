@@ -3,11 +3,20 @@ import YAML from "yaml";
 import { getBotConfig } from "../bindings";
 import { Payload } from "../types";
 import { Context } from "probot";
-import { getAnalyticsMode, getAutoPayMode, getBaseMultiplier, getBountyHunterMax, getIncentiveMode, getPriorityLabels, getTimeLabels } from "./helpers";
+import {
+  getAnalyticsMode,
+  getAutoPayMode,
+  getBaseMultiplier,
+  getBountyHunterMax,
+  getIncentiveMode,
+  getChainId,
+  getPriorityLabels,
+  getTimeLabels,
+} from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
 const KEY_PATH = ".github/ubiquibot-config.yml";
-const KEY_NAME = "PSK";
+const KEY_NAME = "private-key-encrypted";
 const KEY_PREFIX = "HSK_";
 
 export const getConfigSuperset = async (context: Context, type: "org" | "repo"): Promise<string | undefined> => {
@@ -36,6 +45,7 @@ export interface WideLabel {
 }
 
 export interface WideConfig {
+  "chain-id"?: number;
   "base-multiplier"?: number;
   "time-labels"?: WideLabel[];
   "priority-labels"?: WideLabel[];
@@ -48,7 +58,7 @@ export interface WideConfig {
 export interface WideRepoConfig extends WideConfig {}
 
 export interface WideOrgConfig extends WideConfig {
-  PSK?: string;
+  "private-key-encrypted"?: string;
 }
 
 export const parseYAML = async (data: any): Promise<any | undefined> => {
@@ -81,7 +91,7 @@ export const getPrivateKey = async (cipherText: string): Promise<string | undefi
     const binCipher = sodium.from_base64(cipherText, sodium.base64_variants.URLSAFE_NO_PADDING);
 
     let walletPrivateKey: string | undefined = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
-    walletPrivateKey = walletPrivateKey.startsWith(KEY_PREFIX) ? walletPrivateKey.replace(KEY_PREFIX, "") : undefined;
+    walletPrivateKey = walletPrivateKey.replace(KEY_PREFIX, "");
     return walletPrivateKey;
   } catch (error: any) {
     return undefined;
@@ -110,10 +120,13 @@ export const getWideConfig = async (context: Context) => {
 
   const parsedOrg: WideOrgConfig | undefined = await parseYAML(orgConfig);
   const parsedRepo: WideRepoConfig | undefined = await parseYAML(repoConfig);
-  const PSK = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
+  const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configData = {
-    privateKey: PSK ?? process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY ?? "",
+    chainId: getChainId(parsedRepo, parsedOrg),
+    // TODO: remove "process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY" when all partners are migrate to org wide config
+    privateKey: privateKeyDecrypted ?? process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY ?? "",
+
     baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
     timeLabels: getTimeLabels(parsedRepo, parsedOrg),
     priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),

@@ -3,7 +3,6 @@ import ms from "ms";
 import { BotConfig, BotConfigSchema } from "../types";
 import {
   DEFAULT_BOT_DELAY,
-  DEFAULT_CHAIN_ID,
   DEFAULT_DISQUALIFY_TIME,
   DEFAULT_FOLLOWUP_TIME,
   DEFAULT_PAYMENT_TOKEN,
@@ -15,7 +14,10 @@ import { Context } from "probot";
 import { getScalarKey, getWideConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
-  const { privateKey, baseMultiplier, timeLabels, priorityLabels, autoPayMode, analyticsMode, bountyHunterMax, incentiveMode } = await getWideConfig(context);
+  const { privateKey, baseMultiplier, timeLabels, priorityLabels, autoPayMode, analyticsMode, bountyHunterMax, incentiveMode, chainId } = await getWideConfig(
+    context
+  );
+
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
 
   const botConfig: BotConfig = {
@@ -29,7 +31,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       priorityLabels: priorityLabels,
     },
     payout: {
-      chainId: process.env.CHAIN_ID ? Number(process.env.CHAIN_ID) : DEFAULT_CHAIN_ID,
+      chainId: chainId,
       rpc: process.env.RPC_PROVIDER_URL || DEFAULT_RPC_ENDPOINT,
       privateKey: privateKey,
       paymentToken: process.env.PAYMENT_TOKEN || DEFAULT_PAYMENT_TOKEN,

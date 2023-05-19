@@ -1,6 +1,7 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel } from "../../helpers";
 import { Payload } from "../../types";
+import { handleLabelsAccess } from "../access";
 import { getTargetPriceLabel } from "../shared";
 
 export const pricingLabelLogic = async (): Promise<void> => {
@@ -10,6 +11,12 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const payload = context.payload as Payload;
   if (!payload.issue) return;
   const labels = payload.issue.labels;
+
+  let valid = await handleLabelsAccess();
+
+  if (!valid) {
+    return;
+  }
 
   const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
   const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
