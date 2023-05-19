@@ -1,6 +1,5 @@
 import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
-import { getBotConfig } from "../bindings";
 import { Payload } from "../types";
 import { Context } from "probot";
 import { getAnalyticsMode, getAutoPayMode, getBaseMultiplier, getBountyHunterMax, getChainId, getPriorityLabels, getTimeLabels } from "./helpers";
@@ -79,16 +78,14 @@ export const getPrivateKey = async (cipherText: string): Promise<string | undefi
   try {
     await _sodium.ready;
     const sodium = _sodium;
-    const {
-      sodium: { publicKey, privateKey },
-    } = getBotConfig();
+    const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
 
-    if (publicKey === "" || privateKey === "") {
+    if (!publicKey || !process.env.X25519_PRIVATE_KEY) {
       return undefined;
     }
 
     const binPub = sodium.from_base64(publicKey, sodium.base64_variants.URLSAFE_NO_PADDING);
-    const binPriv = sodium.from_base64(privateKey, sodium.base64_variants.URLSAFE_NO_PADDING);
+    const binPriv = sodium.from_base64(process.env.X25519_PRIVATE_KEY, sodium.base64_variants.URLSAFE_NO_PADDING);
     const binCipher = sodium.from_base64(cipherText, sodium.base64_variants.URLSAFE_NO_PADDING);
 
     let walletPrivateKey: string | undefined = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
