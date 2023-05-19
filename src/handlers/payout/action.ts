@@ -16,6 +16,11 @@ export const handleIssueClosed = async () => {
   const issue = payload.issue;
   if (!issue) return;
 
+  if (issue.state_reason != StateReason.COMPLETED) {
+    logger.info(`The issue ${issue.number} has been closed, but not as completed`);
+    return;
+  }
+
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
   if (!autoPayMode) {
     logger.info(`Skipping to generate permit2 url, reason: { autoPayMode: ${autoPayMode}}`);
@@ -50,30 +55,24 @@ export const handleIssueClosed = async () => {
   // TODO: add multiplier to the priceInEth
   const priceInEth = (+issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4) * multiplier).toString();
   if (!recipient || recipient?.trim() === "") {
-    if (issue.state_reason === StateReason.COMPLETED) {
-      logger.info(`Recipient address is missing`);
-      return (
-        "Please set your wallet address by using the `/wallet` command.\n" +
-        "```\n" +
-        "/wallet example.eth\n" +
-        "/wallet 0xBf...CdA\n" +
-        "```\n" +
-        "@" +
-        assignee.login
-      );
-    }
-    return;
+    logger.info(`Recipient address is missing`);
+    return (
+      "Please set your wallet address by using the `/wallet` command.\n" +
+      "```\n" +
+      "/wallet example.eth\n" +
+      "/wallet 0xBf...CdA\n" +
+      "```\n" +
+      "@" +
+      assignee.login
+    );
   }
 
-  if (issue.state_reason === StateReason.COMPLETED) {
-    const payoutUrl = await generatePermit2Signature(recipient, priceInEth, issue.node_id);
-    const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
-    const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
-    logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
-    const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
-    await deleteLabel(issueDetailed.priceLabel!);
-    await addLabelToIssue("Paid");
-    return comment;
-  }
-  return;
+  const payoutUrl = await generatePermit2Signature(recipient, priceInEth, issue.node_id);
+  const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
+  const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
+  logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
+  const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
+  await deleteLabel(issueDetailed.priceLabel!);
+  await addLabelToIssue("Paid");
+  return comment;
 };

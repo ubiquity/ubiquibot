@@ -9,6 +9,13 @@ export const MarkdownItem = {
   Text: "text",
   Code: "code",
 } as const;
+
+const PriceItem: Record<string, number> = {
+  [MarkdownItem.Text]: 0.1,
+  [MarkdownItem.Link]: 0.5,
+  [MarkdownItem.List]: 0.5,
+};
+
 export type MarkdownItem = (typeof MarkdownItem)[keyof typeof MarkdownItem];
 
 type MdastNode = {
@@ -32,7 +39,7 @@ const traverse = (node: MdastNode): Record<string, string[]> => {
   return result;
 };
 
-export const parseComments = async (comments: string[]) => {
+export const parseComments = async (comments: string[]): Promise<number> => {
   let result: Record<string, string[]> = {};
   for (const comment of comments) {
     const tree = fromMarkdown(comment, {
@@ -51,4 +58,17 @@ export const parseComments = async (comments: string[]) => {
   }
 
   console.log(result);
+
+  let sum = 0;
+  for (const key of Object.keys(result)) {
+    const rewardValue = PriceItem[key];
+    const value = result[key];
+    if (key == MarkdownItem.Text) {
+      sum += value.length * rewardValue;
+    } else {
+      sum += rewardValue;
+    }
+  }
+
+  return sum;
 };
