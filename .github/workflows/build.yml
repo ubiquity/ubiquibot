@@ -20,3 +20,23 @@ jobs:
 
       - name: Local Build
         run: yarn build
+
+      - name: Authenticate SSH
+        if: github.ref == 'refs/heads/development'
+        uses: webfactory/ssh-agent@v0.4.0
+        with:
+          ssh-private-key: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }}
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+
+      - name: Commit and Push Changes
+        if: github.ref == 'refs/heads/development'
+        run: |
+          git config --local user.email "UbiquiBot[dev]@github.com"
+          git config --local user.name "UbiquiBot[dev]"
+          yarn build:ci
+          git add -A
+          git diff-index --quiet HEAD || git commit -am "build: update executable" --no-verify
+          git push git@github.com:${{github.repository}}.git ${{github.ref}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }}
