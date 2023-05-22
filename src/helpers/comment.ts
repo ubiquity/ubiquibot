@@ -14,6 +14,7 @@ const PriceItem: Record<string, number> = {
   [MarkdownItem.Text]: 0.1,
   [MarkdownItem.Link]: 0.5,
   [MarkdownItem.List]: 0.5,
+  [MarkdownItem.Code]: 5,
 };
 
 export type MarkdownItem = (typeof MarkdownItem)[keyof typeof MarkdownItem];
@@ -56,8 +57,6 @@ export const parseComments = async (comments: string[]): Promise<number> => {
       }
     }
   }
-
-  console.log(result);
 
   let sum = 0;
   for (const key of Object.keys(result)) {
