@@ -25,7 +25,6 @@ export const DEFAULT_DISQUALIFY_TIME = "7 days"; // 7 days
 export const DEFAULT_CHAIN_ID = 1; // ethereum
 export const DEFAULT_RPC_ENDPOINT = "https://rpc-bot.ubq.fi/v1/mainnet";
 
-export const DEFAULT_PAYMENT_TOKEN = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
 export const DEFAULT_PERMIT_BASE_URL = "https://pay.ubq.fi";
 
 export const COMMAND_INSTRUCTIONS = generateHelpMenu();
