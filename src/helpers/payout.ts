@@ -15,12 +15,18 @@ import { Static } from "@sinclair/typebox";
 import { DEFAULT_RPC_ENDPOINT } from "../configs";
 import { PayoutConfigSchema } from "../types";
 
-// chain ids
-const CHAIN_GNOSIS = 100;
 
 // available tokens for payouts
-const PAYMENT_TOKEN_CHAIN_ETHEREUM_MAINNET = "0x6B175474E89094C44Da98b954EedeAC495271d0F"; // DAI
-const PAYMENT_TOKEN_CHAIN_GNOSIS = "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d"; // WXDAI
+const PAYMENT_TOKEN_PER_CHAIN: Record<string, {"rpc": string, "token": string}> = {
+  "1": {
+    "rpc": DEFAULT_RPC_ENDPOINT,
+    "token": "0x6B175474E89094C44Da98b954EedeAC495271d0F" // DAI
+  },
+  "100": {
+    "rpc": "https://rpc.gnosischain.com",
+    "token": "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d" // WXDAI
+  }, 
+};
 
 type PayoutConfigPartial = Omit<Static<typeof PayoutConfigSchema>, "chainId" | "privateKey" | "permitBaseUrl">;
 
@@ -30,16 +36,13 @@ type PayoutConfigPartial = Omit<Static<typeof PayoutConfigSchema>, "chainId" | "
  * @returns RPC URL and payment token
  */
 export const getPayoutConfigByChainId = (chainId: number): PayoutConfigPartial => {
-  // prepare default payout config for ethereum mainnet
-  let payoutConfig: PayoutConfigPartial = {
-    rpc: DEFAULT_RPC_ENDPOINT,
-    paymentToken: PAYMENT_TOKEN_CHAIN_ETHEREUM_MAINNET,
-  };
-
-  if (chainId === CHAIN_GNOSIS) {
-    payoutConfig.rpc = "https://rpc.gnosischain.com";
-    payoutConfig.paymentToken = PAYMENT_TOKEN_CHAIN_GNOSIS;
+  const paymentToken = PAYMENT_TOKEN_PER_CHAIN[chainId.toString()];
+  if (!paymentToken) {
+    throw new Error(`No config setup for chainId: ${chainId}`);
   }
-
-  return payoutConfig;
+  
+  return {
+    rpc: paymentToken.rpc,
+    paymentToken: paymentToken.token,
+  };
 };
