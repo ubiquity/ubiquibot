@@ -1,6 +1,5 @@
 import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
-import { getBotConfig } from "../bindings";
 import { Payload } from "../types";
 import { Context } from "probot";
 import {
@@ -78,11 +77,11 @@ export const getPrivateKey = async (cipherText: string): Promise<string | undefi
   try {
     await _sodium.ready;
     const sodium = _sodium;
-    const {
-      sodium: { publicKey, privateKey },
-    } = getBotConfig();
 
-    if (publicKey === "" || privateKey === "") {
+    const privateKey = process.env.X25519_PRIVATE_KEY;
+    const publicKey = await getScalarKey(privateKey);
+
+    if (!publicKey || !privateKey) {
       return undefined;
     }
 

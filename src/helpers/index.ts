@@ -6,3 +6,4 @@ export * from "./permit";
 export * from "./ens";
 export * from "./contracts";
 export * from "./comment";
+export * from "./payout";

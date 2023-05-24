@@ -200,7 +200,7 @@ const OrganizationSchema = Type.Object({
   members_url: Type.String(),
   public_members_url: Type.String(),
   avatar_url: Type.String(),
-  description: Type.String(),
+  description: Type.Union([Type.String(), Type.Null()]),
 });
 
 const InstallationSchema = Type.Object({
