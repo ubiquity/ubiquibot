@@ -52,7 +52,7 @@ export const getCommentItemPrice = (parsedRepo: WideRepoConfig | undefined, pars
   }
 };
 
-export const getAutoPayMode = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): boolean => {
+export const getAutoPayMode = (parsedRepo?: WideRepoConfig, parsedOrg?: WideOrgConfig): boolean => {
   if (parsedRepo && parsedRepo["auto-pay-mode"] && typeof parsedRepo["auto-pay-mode"] === "boolean") {
     return parsedRepo["auto-pay-mode"];
   } else if (parsedOrg && parsedOrg["auto-pay-mode"] && typeof parsedOrg["auto-pay-mode"] === "boolean") {
