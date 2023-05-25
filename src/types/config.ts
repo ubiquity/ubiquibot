@@ -8,10 +8,14 @@ const LabelItemSchema = Type.Object({
 });
 export type LabelItem = Static<typeof LabelItemSchema>;
 
+const CommentElementPricingSchema = Type.Record(Type.String(), Type.Number());
+export type CommentElementPricing = Static<typeof CommentElementPricingSchema>;
+
 export const PriceConfigSchema = Type.Object({
   baseMultiplier: Type.Number(),
   timeLabels: Type.Array(LabelItemSchema),
   priorityLabels: Type.Array(LabelItemSchema),
+  commentElementPricing: CommentElementPricingSchema,
 });
 export type PriceConfig = Static<typeof PriceConfigSchema>;
 

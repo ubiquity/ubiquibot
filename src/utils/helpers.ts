@@ -1,4 +1,5 @@
 import { DEFAULT_CHAIN_ID, DefaultPriceConfig } from "../configs";
+import { CommentElementPricing } from "../types";
 import { WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
 export const getChainId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
@@ -38,6 +39,16 @@ export const getPriorityLabels = (parsedRepo: WideRepoConfig | undefined, parsed
     return parsedOrg["priority-labels"];
   } else {
     return DefaultPriceConfig["priorityLabels"];
+  }
+};
+
+export const getCommentItemPrice = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): CommentElementPricing => {
+  if (parsedRepo && parsedRepo["comment-element-pricing"]) {
+    return parsedRepo["comment-element-pricing"];
+  } else if (parsedOrg && parsedOrg["comment-element-pricing"]) {
+    return parsedOrg["comment-element-pricing"];
+  } else {
+    return DefaultPriceConfig["commentElementPricing"];
   }
 };
 

@@ -8,9 +8,8 @@ import { Context } from "probot";
 import { getScalarKey, getWideConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
-  const { privateKey, baseMultiplier, timeLabels, priorityLabels, autoPayMode, analyticsMode, bountyHunterMax, incentiveMode, chainId } = await getWideConfig(
-    context
-  );
+  const { privateKey, baseMultiplier, timeLabels, priorityLabels, commentElementPricing, autoPayMode, analyticsMode, bountyHunterMax, incentiveMode, chainId } =
+    await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
   const { rpc, paymentToken } = getPayoutConfigByChainId(chainId);
@@ -21,9 +20,10 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       ingestionKey: process.env.LOGDNA_INGESTION_KEY ?? "",
     },
     price: {
-      baseMultiplier: baseMultiplier,
-      timeLabels: timeLabels,
-      priorityLabels: priorityLabels,
+      baseMultiplier,
+      timeLabels,
+      priorityLabels,
+      commentElementPricing,
     },
     payout: {
       chainId: chainId,

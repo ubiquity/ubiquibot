@@ -11,7 +11,7 @@ export const incentivizeComments = async () => {
   const logger = getLogger();
   const {
     mode: { incentiveMode },
-    price: { baseMultiplier },
+    price: { baseMultiplier, commentElementPricing },
     payout: { paymentToken, rpc },
   } = getBotConfig();
   if (!incentiveMode) {
@@ -41,7 +41,7 @@ export const incentivizeComments = async () => {
   let comment: string = "";
   for (const user of Object.keys(issueCommentsByUser)) {
     const comments = issueCommentsByUser[user];
-    const rewardValue = await parseComments(comments);
+    const rewardValue = await parseComments(comments, commentElementPricing);
     const account = await getWalletAddress(user);
     const amountInETH = ((rewardValue * baseMultiplier) / 1000).toString();
     if (account) {

@@ -11,6 +11,7 @@ import {
   getChainId,
   getPriorityLabels,
   getTimeLabels,
+  getCommentItemPrice,
 } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
@@ -52,6 +53,7 @@ export interface WideConfig {
   "analytics-mode"?: boolean;
   "incentive-mode"?: boolean;
   "max-concurrent-bounties"?: number;
+  "comment-element-pricing"?: Record<string, number>;
 }
 
 export interface WideRepoConfig extends WideConfig {}
@@ -133,6 +135,7 @@ export const getWideConfig = async (context: Context) => {
     analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg),
     bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
     incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
+    commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
   };
 
   return configData;
