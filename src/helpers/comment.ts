@@ -11,7 +11,7 @@ export const MarkdownItem = {
   Image: "image",
 } as const;
 
-const PriceItem: Record<string, number> = {
+const CommentElementPricingDefaults: Record<string, number> = {
   [MarkdownItem.Text]: 0.1,
   [MarkdownItem.Link]: 0.5,
   [MarkdownItem.List]: 0.5,
@@ -62,7 +62,7 @@ export const parseComments = async (comments: string[]): Promise<number> => {
 
   let sum = 0;
   for (const key of Object.keys(result)) {
-    const rewardValue = PriceItem[key];
+    const rewardValue = CommentElementPricingDefaults[key];
     const value = result[key];
     if (key == MarkdownItem.Text) {
       sum += value.length * rewardValue;
