@@ -8,6 +8,7 @@ export const MarkdownItem = {
   Link: "link",
   Text: "text",
   Code: "code",
+  Image: "image",
 } as const;
 
 const PriceItem: Record<string, number> = {
@@ -15,6 +16,7 @@ const PriceItem: Record<string, number> = {
   [MarkdownItem.Link]: 0.5,
   [MarkdownItem.List]: 0.5,
   [MarkdownItem.Code]: 5,
+  [MarkdownItem.Image]: 5,
 };
 
 export type MarkdownItem = (typeof MarkdownItem)[keyof typeof MarkdownItem];
