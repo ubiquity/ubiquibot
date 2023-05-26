@@ -1,4 +1,4 @@
-import { addCommentToIssue, removeAssignees } from "../../../helpers";
+import { removeAssignees } from "../../../helpers";
 import { getBotContext, getLogger } from "../../../bindings";
 import { Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
@@ -31,6 +31,7 @@ export const unassign = async (body: string) => {
       issue_number,
       assignees.map((i) => i.login)
     );
-    await addCommentToIssue(`You have been unassigned from the bounty @${payload.sender.login}`, issue_number);
+    return `You have been unassigned from the bounty @${payload.sender.login}`;
   }
+  return;
 };

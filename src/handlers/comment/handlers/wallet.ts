@@ -1,6 +1,6 @@
 import { upsertWalletAddress } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
-import { addCommentToIssue, resolveAddress } from "../../../helpers";
+import { resolveAddress } from "../../../helpers";
 import { Payload } from "../../../types";
 import { formatEthAddress } from "../../../utils";
 import { IssueCommentCommands } from "../commands";
@@ -21,11 +21,10 @@ const extractEnsName = (text: string): string | undefined => {
   return undefined;
 };
 
-export const registerWallet = async (body: string): Promise<void> => {
+export const registerWallet = async (body: string) => {
   const { payload: _payload } = getBotContext();
   const logger = getLogger();
   const payload = _payload as Payload;
-  const issue = payload.issue;
   const sender = payload.sender.login;
   const regexForAddress = /(0x[a-fA-F0-9]{40})/g;
   const addressMatches = body.match(regexForAddress);
@@ -43,11 +42,11 @@ export const registerWallet = async (body: string): Promise<void> => {
     address = await resolveAddress(ensName!);
     if (!address) {
       logger.info(`Resolving address from Ens name failed, EnsName: ${ensName}`);
-      return;
+      return `Resolving address from Ens name failed, Try again`;
     }
     logger.info(`Resolved address from Ens name: ${ensName}, address: ${address}`);
   }
 
   await upsertWalletAddress(sender, address);
-  await addCommentToIssue(`Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`, issue!.number);
+  return `Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`;
 };

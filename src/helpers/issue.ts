@@ -1,5 +1,7 @@
+import { Context } from "probot";
 import { getBotContext, getLogger } from "../bindings";
-import { Comment, Payload } from "../types";
+import { Comment, IssueType, Payload } from "../types";
+import { checkRateLimitGit } from "../utils";
 
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   const context = getBotContext();
@@ -114,7 +116,10 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
         page: page_number,
       });
 
-      if (response.data) {
+      await checkRateLimitGit(response?.headers);
+
+      // Fixing infinite loop here, it keeps looping even when its an empty array
+      if (response?.data?.length > 0) {
         response.data.forEach((item) => result!.push(item as Comment));
         page_number++;
       } else {
@@ -143,6 +148,28 @@ export const removeAssignees = async (issue_number: number, assignees: string[])
     });
   } catch (e: unknown) {
     logger.debug(`Removing assignees failed!, reason: ${e}`);
+  }
+};
+
+export const getUserPermission = async (username: string, context: Context): Promise<string> => {
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+
+  try {
+    const response = await context.octokit.rest.repos.getCollaboratorPermissionLevel({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      username,
+    });
+
+    if (response.status === 200) {
+      return response.data.permission;
+    } else {
+      return "";
+    }
+  } catch (e: unknown) {
+    logger.debug(`Checking if user is admin failed!, reason: ${e}`);
+    return "";
   }
 };
 
@@ -183,4 +210,77 @@ export const deleteLabel = async (label: string): Promise<void> => {
   } catch (e: unknown) {
     logger.debug(`Label deletion failed!, reason: ${e}`);
   }
+};
+
+export const removeLabel = async (name: string) => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+
+  try {
+    await context.octokit.issues.removeLabel({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: payload.issue!.number,
+      name: name,
+    });
+  } catch (e: unknown) {
+    logger.debug(`Label removal failed!, reason: ${e}`);
+  }
+};
+
+// Use `context.octokit.rest` to get the pull requests for the repository
+export const getPullRequests = async (context: Context, state: "open" | "closed" | "all" = "open") => {
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  try {
+    const { data: pulls } = await context.octokit.rest.pulls.list({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      state,
+    });
+    return pulls;
+  } catch (e: unknown) {
+    logger.debug(`Fetching pull requests failed!, reason: ${e}`);
+    return [];
+  }
+};
+
+// Get issues by issue number
+export const getIssueByNumber = async (context: Context, issue_number: number) => {
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  try {
+    const { data: issue } = await context.octokit.rest.issues.get({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number,
+    });
+    return issue;
+  } catch (e: unknown) {
+    logger.debug(`Fetching issue failed!, reason: ${e}`);
+    return;
+  }
+};
+
+// Get issues assigned to a username
+export const getAssignedIssues = async (username: string) => {
+  let issuesArr = [];
+  let fetchDone = false;
+  const perPage = 30;
+  let curPage = 1;
+  while (!fetchDone) {
+    const issues = await listIssuesForRepo(IssueType.OPEN, perPage, curPage);
+
+    // push the objects to array
+    issuesArr.push(...issues);
+
+    if (issues.length < perPage) fetchDone = true;
+    else curPage++;
+  }
+
+  // get only issues assigned to username
+  const assigned_issues = issuesArr.filter((issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username);
+
+  return assigned_issues;
 };

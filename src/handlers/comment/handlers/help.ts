@@ -1,10 +1,9 @@
 import { userCommands } from ".";
 import { getBotContext, getLogger } from "../../../bindings";
-import { addCommentToIssue } from "../../../helpers";
 import { IssueType, Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 
-export const listAvailableCommands = async (body: string): Promise<void> => {
+export const listAvailableCommands = async (body: string) => {
   const { payload: _payload } = getBotContext();
   const logger = getLogger();
   if (body != IssueCommentCommands.HELP && body.replace(/`/g, "") != IssueCommentCommands.HELP) {
@@ -23,7 +22,8 @@ export const listAvailableCommands = async (body: string): Promise<void> => {
     logger.info("Skipping '/assign', reason: closed ");
     return;
   }
-  await addCommentToIssue(generateHelpMenu(), issue!.number);
+
+  return generateHelpMenu();
 };
 
 export const generateHelpMenu = () => {

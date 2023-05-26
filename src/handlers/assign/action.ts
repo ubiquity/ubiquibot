@@ -56,7 +56,7 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   const curDate = new Date();
   const curDateInMillisecs = curDate.getTime();
   const endDate = new Date(curDateInMillisecs + duration * 1000);
-  const commit_msg = `${flattened_assignees} ${deadLinePrefix} ${endDate.toLocaleDateString("en-us")}`;
+  const commit_msg = `${flattened_assignees} ${deadLinePrefix} ${endDate.toUTCString()}`;
   logger.debug(`Creating an issue comment, commit_msg: ${commit_msg}`);
 
   await addCommentToIssue(commit_msg, payload.issue!.number);

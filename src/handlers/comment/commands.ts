@@ -4,4 +4,9 @@ export enum IssueCommentCommands {
   UNASSIGN = "/unassign", // unassign to default
   WALLET = "/wallet", // register wallet address
   PAYOUT = "/payout", // request permit payout
+  MULTIPLIER = "/multiplier", // set bounty multiplier (for treasury)
+
+  // Access Controls
+
+  ALLOW = "/allow",
 }

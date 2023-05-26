@@ -173,6 +173,77 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
 };
 
 /**
+ * Performs an UPSERT on the wallet table.
+ * @param username The user name you want to upsert a wallet address for
+ * @param address The account multiplier
+ */
+export const upsertWalletMultiplier = async (username: string, multiplier: string): Promise<void> => {
+  const logger = getLogger();
+  const { supabase } = getAdapters();
+
+  const { data, error } = await supabase.from("wallets").select("user_name").eq("user_name", username).single();
+  if (data) {
+    const { data: _data, error: _error } = await supabase
+      .from("wallets")
+      .upsert({ user_name: username, multiplier: multiplier, updated_at: new Date().toUTCString() });
+    logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
+  } else {
+    const { data: _data, error: _error } = await supabase
+      .from("wallets")
+      .insert({ user_name: username, wallet_address: "", multiplier: multiplier, created_at: new Date().toUTCString(), updated_at: new Date().toUTCString() });
+    logger.info(`Creating a new wallet_table record done, { data: ${_data}, error: ${_error} }`);
+  }
+};
+
+/**
+ * Performs an UPSERT on the access table.
+ * @param username The user name you want to upsert a wallet address for
+ * @param repository The repository for access
+ * @param access Access granting
+ * @param bool Disabling or enabling
+ */
+export const upsertAccessControl = async (username: string, repository: string, access: string, bool: boolean): Promise<void> => {
+  const logger = getLogger();
+  const { supabase } = getAdapters();
+
+  const { data, error } = await supabase.from("access").select("user_name").eq("user_name", username).eq("repository", repository).single();
+
+  const properties = { user_name: username, repository: repository, updated_at: new Date().toUTCString(), [access]: bool };
+
+  if (data) {
+    const { data: _data, error: _error } = await supabase.from("access").upsert(properties);
+    logger.info(`Upserting an access done, { data: ${data}, error: ${error} }`);
+  } else {
+    const { data: _data, error: _error } = await supabase.from("access").insert({
+      created_at: new Date().toUTCString(),
+      price_access: false,
+      time_access: false,
+      multiplier_access: false,
+      priority_access: false,
+      ...properties,
+    });
+    logger.info(`Creating a new access record done, { data: ${_data}, error: ${_error} }`);
+  }
+};
+
+export const getAccessLevel = async (username: string, repository: string, label_type: string): Promise<boolean> => {
+  const logger = getLogger();
+  const { supabase } = getAdapters();
+
+  const { data } = await supabase.from("access").select("*").eq("user_name", username).eq("repository", repository).single();
+
+  if (!data) {
+    logger.info(`Access not found on the database`);
+    // no access
+    return false;
+  }
+
+  const accessValues = data![`${label_type}_access`];
+
+  return accessValues;
+};
+
+/**
  * Queries the wallet address registered previously
  *
  * @param username The username you want to find an address for
@@ -183,4 +254,19 @@ export const getWalletAddress = async (username: string): Promise<string | undef
 
   const { data } = await supabase.from("wallets").select("wallet_address").eq("user_name", username).single();
   return data?.wallet_address;
+};
+
+/**
+ * Queries the wallet multiplier registered previously
+ *
+ * @param username The username you want to find an address for
+ * @returns The Multiplier, returns 1 if not found
+ *
+ */
+
+export const getWalletMultiplier = async (username: string): Promise<number> => {
+  const { supabase } = getAdapters();
+
+  const { data } = await supabase.from("wallets").select("multiplier").eq("user_name", username).single();
+  return data?.multiplier || 1;
 };

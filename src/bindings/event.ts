@@ -48,20 +48,23 @@ export const bindEvents = async (context: Context): Promise<void> => {
   logger.info("Creating adapters for supabase, telegram, twitter, etc...");
   adapters = createAdapters(botConfig);
 
-  // Validate payload
-  const validate = ajv.compile(PayloadSchema);
-  const valid = validate(payload);
-  if (!valid) {
-    logger.info("Payload schema validation failed!!!", payload);
-    logger.warn(validate.errors!);
-    return;
-  }
+  // Skip validation for installation event
+  if (eventName !== GithubEvent.INSTALLATION_ADDED_EVENT) {
+    // Validate payload
+    const validate = ajv.compile(PayloadSchema);
+    const valid = validate(payload);
+    if (!valid) {
+      logger.info("Payload schema validation failed!!!", payload);
+      logger.warn(validate.errors!);
+      return;
+    }
 
-  // Check if we should skip the event
-  const { skip, reason } = shouldSkip();
-  if (skip) {
-    logger.info(`Skipping the event. reason: ${reason}`);
-    return;
+    // Check if we should skip the event
+    const { skip, reason } = shouldSkip();
+    if (skip) {
+      logger.info(`Skipping the event. reason: ${reason}`);
+      return;
+    }
   }
 
   // Get the handlers for the action
@@ -89,9 +92,12 @@ export const bindEvents = async (context: Context): Promise<void> => {
     await postAction();
   }
 
-  // Run wildcard handlers
-  logger.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
-  for (const wildcardProcessor of wildcardProcessors) {
-    await wildcardProcessor();
+  // Skip wildcard handlers for installation event
+  if (eventName !== GithubEvent.INSTALLATION_ADDED_EVENT) {
+    // Run wildcard handlers
+    logger.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
+    for (const wildcardProcessor of wildcardProcessors) {
+      await wildcardProcessor();
+    }
   }
 };

@@ -6,12 +6,11 @@ import { getBotContext } from "../../../bindings";
 import { telegramPhotoNotifier } from "../../../adapters";
 import { Context } from "probot";
 import { Payload } from "../../../types";
-import { getFallback } from "../../../utils/fallback";
 import { fetchImage } from "../../../utils/webAssets";
 import { weeklyConfig } from "../../../configs/weekly";
 import { ProximaNovaRegularBase64 } from "../../../assets/fonts/ProximaNovaRegularB64";
 import { ClosedIssueIcon, CommitIcon, MergedPullIcon, OpenedIssueIcon, OpenedPullIcon } from "../../../assets/svgs";
-import { wait } from "../../../helpers";
+import { checkRateLimitGit } from "../../../utils";
 
 const IMG_PATH = path.resolve(__dirname, "../../../assets/images");
 
@@ -30,12 +29,14 @@ const fetchEvents = async (context: Context): Promise<any[]> => {
   const perPage = 30;
   while (shouldFetch) {
     try {
-      await wait(1000);
-      const { data: pubOrgEvents } = await context.octokit.activity.listPublicOrgEvents({
+      const { data: pubOrgEvents, headers } = await context.octokit.activity.listPublicOrgEvents({
         org: payload.organization!.login,
         per_page: perPage,
         page: currentPage,
       });
+
+      await checkRateLimitGit(headers);
+
       pubOrgEvents.forEach((elem: any) => {
         const elemTimestamp = new Date(elem.created_at as string).getTime();
         if (elemTimestamp <= startTimestamp && elemTimestamp >= endTimestamp) {
@@ -49,6 +50,7 @@ const fetchEvents = async (context: Context): Promise<any[]> => {
           shouldFetch = false;
         }
       });
+
       currentPage++;
     } catch (error) {
       shouldFetch = false;
@@ -300,7 +302,7 @@ const getFlatImage = async (): Promise<string> => {
       await fetchImage(remoteUrl);
       fileName = `${IMG_PATH}/webFlat.png`;
     } catch (error) {
-      fileName = await getFallback(fileName, "background");
+      console.error(`Error reading image. error: ${error}`);
     }
   }
   return fileName;

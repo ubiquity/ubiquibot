@@ -13,6 +13,12 @@ export enum GithubEvent {
   // issue_comment
   ISSUE_COMMENT_CREATED = "issue_comment.created",
   ISSUE_COMMENT_EDITED = "issue_comment.edited",
+
+  // pull_request
+  PULL_REQUEST_OPENED = "pull_request.opened",
+
+  // installation event
+  INSTALLATION_ADDED_EVENT = "installation_repositories.added",
 }
 
 export enum UserType {
@@ -194,7 +200,7 @@ const OrganizationSchema = Type.Object({
   members_url: Type.String(),
   public_members_url: Type.String(),
   avatar_url: Type.String(),
-  description: Type.String(),
+  description: Type.Union([Type.String(), Type.Null()]),
 });
 
 const InstallationSchema = Type.Object({
@@ -226,6 +232,31 @@ export const PayloadSchema = Type.Object({
   repository: RepositorySchema,
   organization: Type.Optional(OrganizationSchema),
   installation: Type.Optional(InstallationSchema),
+  repositories_added: Type.Optional(Type.Array(RepositorySchema)),
 });
 
 export type Payload = Static<typeof PayloadSchema>;
+
+export const GithubContentSchema = Type.Object({
+  type: Type.String(),
+  encoding: Type.String(),
+  size: Type.Number(),
+  name: Type.String(),
+  path: Type.String(),
+  content: Type.String(),
+  sha: Type.String(),
+  url: Type.String(),
+  git_url: Type.String(),
+  html_url: Type.String(),
+  download_url: Type.String(),
+  _links: Type.Union([
+    Type.Undefined(),
+    Type.Object({
+      git: Type.String(),
+      self: Type.String(),
+      html: Type.String(),
+    }),
+  ]),
+});
+
+export type GithubContent = Static<typeof GithubContentSchema>;

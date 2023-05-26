@@ -1,22 +1,16 @@
 import ms from "ms";
 
 import { BotConfig, BotConfigSchema } from "../types";
-import {
-  DefaultPriceConfig,
-  DEFAULT_BOT_DELAY,
-  DEFAULT_CHAIN_ID,
-  DEFAULT_DISQUALIFY_TIME,
-  DEFAULT_FOLLOWUP_TIME,
-  DEFAULT_PAYMENT_TOKEN,
-  DEFAULT_PERMIT_BASE_URL,
-  DEFAULT_RPC_ENDPOINT,
-} from "../configs";
+import { DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFAULT_PERMIT_BASE_URL } from "../configs";
+import { getPayoutConfigByChainId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
+import { getScalarKey, getWideConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
-  let configFile: any = {};
-  configFile = await context.config("ubiquibot-config.yml");
+  const { privateKey, baseMultiplier, timeLabels, priorityLabels, autoPayMode, analyticsMode, bountyHunterMax, chainId } = await getWideConfig(context);
+  const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
+  const { rpc, paymentToken } = getPayoutConfigByChainId(chainId);
 
   const botConfig: BotConfig = {
     log: {
@@ -24,15 +18,15 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       ingestionKey: process.env.LOGDNA_INGESTION_KEY ?? "",
     },
     price: {
-      baseMultiplier: process.env.BASE_MULTIPLIER ? Number(process.env.BASE_MULTIPLIER) : configFile?.baseMultiplier ?? DefaultPriceConfig.baseMultiplier,
-      timeLabels: configFile?.timeLabels ?? DefaultPriceConfig.timeLabels,
-      priorityLabels: configFile?.priorityLabels ?? DefaultPriceConfig.priorityLabels,
+      baseMultiplier: baseMultiplier,
+      timeLabels: timeLabels,
+      priorityLabels: priorityLabels,
     },
     payout: {
-      chainId: process.env.CHAIN_ID ? Number(process.env.CHAIN_ID) : DEFAULT_CHAIN_ID,
-      rpc: process.env.RPC_PROVIDER_URL || DEFAULT_RPC_ENDPOINT,
-      privateKey: process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY || "",
-      paymentToken: process.env.PAYMENT_TOKEN || DEFAULT_PAYMENT_TOKEN,
+      chainId: chainId,
+      rpc: process.env.RPC_PROVIDER_URL || rpc,
+      privateKey: privateKey,
+      paymentToken: paymentToken,
       permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
     },
     unassign: {
@@ -48,8 +42,15 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
     mode: {
-      autoPayMode: process.env.AUTO_PAY_MODE === "TRUE" ? true : configFile?.autoPayMode ?? true,
-      analyticsMode: process.env.ANALYTICS_MODE === "TRUE" ? true : configFile?.analyticsMode ?? false,
+      autoPayMode: autoPayMode,
+      analyticsMode: analyticsMode,
+    },
+    assign: {
+      bountyHunterMax: bountyHunterMax,
+    },
+    sodium: {
+      privateKey: process.env.X25519_PRIVATE_KEY ?? "",
+      publicKey: publicKey ?? "",
     },
   };
 
