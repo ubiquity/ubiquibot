@@ -2,5 +2,3 @@
 ID = "d2668848-c2a6-411f-b884-004faee1942f"
 [build]
 functions = "./.netlify/functions"
-[build.environment]
-YARN_VERSION = "1.22.19"
