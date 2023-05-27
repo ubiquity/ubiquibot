@@ -15,7 +15,10 @@ jobs:
         with:
           node-version: "18.16.0"
 
-      - name: Install
+      - name: Install latest yarn version
+        run: yarn set version latest
+
+      - name: Install dependencies
         run: yarn install
 
       - name: Local Build
