@@ -1,7 +1,6 @@
 import { createProbot } from "probot";
 import { Handler } from "@netlify/functions";
 import { EmitterWebhookEventName } from "@octokit/webhooks";
-import isCoreModule from "is-core-module";
 
 import app from "../../../src";
 
