@@ -38,6 +38,7 @@
     "axios": "^1.3.2",
     "ethers": "^5.7.2",
     "husky": "^8.0.2",
+    "is-core-module": "^2.12.1",
     "jimp": "^0.22.4",
     "js-yaml": "^4.1.0",
     "libsodium-wrappers": "^0.7.11",
