@@ -1,6 +1,6 @@
 import { getWalletAddress, getWalletMultiplier } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addLabelToIssue, deleteLabel, generatePermit2Signature, getTokenSymbol } from "../../helpers";
+import { addLabelToIssue, deleteLabel, generatePermit2Signature, getAllIssueComments, getTokenSymbol } from "../../helpers";
 import { Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
@@ -15,6 +15,11 @@ export const handleIssueClosed = async () => {
   const payload = context.payload as Payload;
   const issue = payload.issue;
   if (!issue) return;
+
+  if (issue.state_reason !== StateReason.COMPLETED) {
+    logger.info("Permit generation skipped because the issue was not closed as completed");
+    return "Permit generation skipped because the issue was not closed as completed";
+  }
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
   if (!autoPayMode) {
@@ -50,30 +55,31 @@ export const handleIssueClosed = async () => {
   // TODO: add multiplier to the priceInEth
   const priceInEth = (+issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4) * multiplier).toString();
   if (!recipient || recipient?.trim() === "") {
-    if (issue.state_reason === StateReason.COMPLETED) {
-      logger.info(`Recipient address is missing`);
-      return (
-        "Please set your wallet address by using the `/wallet` command.\n" +
-        "```\n" +
-        "/wallet example.eth\n" +
-        "/wallet 0xBf...CdA\n" +
-        "```\n" +
-        "@" +
-        assignee.login
-      );
-    }
-    return;
+    logger.info(`Recipient address is missing`);
+    return (
+      "Please set your wallet address by using the `/wallet` command.\n" +
+      "```\n" +
+      "/wallet example.eth\n" +
+      "/wallet 0xBf...CdA\n" +
+      "```\n" +
+      "@" +
+      assignee.login
+    );
   }
 
-  if (issue.state_reason === StateReason.COMPLETED) {
-    const payoutUrl = await generatePermit2Signature(recipient, priceInEth, issue.node_id);
-    const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
-    const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
-    logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
-    const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
-    await deleteLabel(issueDetailed.priceLabel!);
-    await addLabelToIssue("Permitted");
-    return comment;
+  const payoutUrl = await generatePermit2Signature(recipient, priceInEth, issue.node_id);
+  const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
+  const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
+  logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
+  const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
+  const comments = await getAllIssueComments(issue.number);
+  const commentContents = comments.map((i) => i.body);
+  const exist = commentContents.find((content) => content.includes(comment));
+  if (exist) {
+    logger.info(`Skip to generate a permit url because it has been already posted`);
+    return `Permit generation skipped because it was already posted to this issue.`;
   }
-  return;
+  await deleteLabel(issueDetailed.priceLabel!);
+  await addLabelToIssue("Permitted");
+  return comment;
 };
