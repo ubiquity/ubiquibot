@@ -17,7 +17,7 @@ export const handleIssueClosed = async () => {
   if (!issue) return;
 
   if (issue.state_reason !== StateReason.COMPLETED) {
-    logger.info("No need to generate a permit url for an uncompleted issue");
+    logger.info("Permit generation skipped because the issue was not closed as completed");
     return "Permit generation skipped because the issue was not closed as completed";
   }
 
