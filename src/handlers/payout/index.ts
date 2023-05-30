@@ -1,6 +1,6 @@
 import { getWalletAddress, getWalletMultiplier } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addLabelToIssue, deleteLabel, generatePermit2Signature, getTokenSymbol } from "../../helpers";
+import { addLabelToIssue, deleteLabel, generatePermit2Signature, getAllIssueComments, getTokenSymbol } from "../../helpers";
 import { Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
@@ -17,7 +17,7 @@ export const handleIssueClosed = async () => {
   if (!issue) return;
 
   if (issue.state_reason !== StateReason.COMPLETED) {
-    logger.info("No need to generate a permit url for an uncompleted issue");
+    logger.info("Permit generation skipped because the issue was not closed as completed");
     return "Permit generation skipped because the issue was not closed as completed";
   }
 
@@ -72,6 +72,13 @@ export const handleIssueClosed = async () => {
   const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
   logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
   const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
+  const comments = await getAllIssueComments(issue.number);
+  const commentContents = comments.map((i) => i.body);
+  const exist = commentContents.find((content) => content.includes(comment));
+  if (exist) {
+    logger.info(`Skip to generate a permit url because it has been already posted`);
+    return `Permit generation skipped because it was already posted to this issue.`;
+  }
   await deleteLabel(issueDetailed.priceLabel!);
   await addLabelToIssue("Permitted");
   return comment;
