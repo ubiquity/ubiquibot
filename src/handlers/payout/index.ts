@@ -77,7 +77,7 @@ export const handleIssueClosed = async () => {
   const exist = commentContents.find((content) => content.includes(comment));
   if (exist) {
     logger.info(`Skip to generate a permit url because it has been already posted`);
-    return `Skip to generate a permit url because it has been already posted`;
+    return `Permit generation skipped because it was already posted to this issue.`;
   }
   await deleteLabel(issueDetailed.priceLabel!);
   await addLabelToIssue("Permitted");
