@@ -73,8 +73,6 @@ export const bindEvents = async (context: Context): Promise<void> => {
     }
   }
 
-  console.log(eventName);
-
   // Get the handlers for the action
   const handlers = processors[eventName];
   if (!handlers) {

@@ -249,6 +249,7 @@ export const PayloadSchema = Type.Object({
 export type Payload = Static<typeof PayloadSchema>;
 
 export const PushSchema = Type.Object({
+  ref: Type.String(),
   action: Type.String(),
   before: Type.String(),
   after: Type.String(),
