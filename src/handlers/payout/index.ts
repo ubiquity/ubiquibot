@@ -16,6 +16,11 @@ export const handleIssueClosed = async () => {
   const issue = payload.issue;
   if (!issue) return;
 
+  if (issue.state_reason !== StateReason.COMPLETED) {
+    logger.info("No need to generate a permit url for an uncompleted issue");
+    return "Permit generation skipped because the issue was not closed as completed";
+  }
+
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
   if (!autoPayMode) {
     logger.info(`Skipping to generate permit2 url, reason: { autoPayMode: ${autoPayMode}}`);
