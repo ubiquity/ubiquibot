@@ -2,7 +2,7 @@ import { getBotContext, getLogger } from "../bindings";
 import { COLORS } from "../configs";
 import { Payload } from "../types";
 
-export const listLabelsForRepo = async (per_page?: number, page?: number): Promise<string[]> => {
+export const listLabelsForRepo = async (per_page?: number, page?: number, all?: boolean): Promise<string[] | {}> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -14,7 +14,7 @@ export const listLabelsForRepo = async (per_page?: number, page?: number): Promi
   });
 
   if (res.status === 200) {
-    return res.data.map((i) => i.name);
+    return all ? res.data : res.data.map((i) => i.name);
   }
 
   throw new Error(`Failed to fetch lists of labels, code: ${res.status}`);
@@ -53,3 +53,30 @@ export const getLabel = async (name: string): Promise<boolean> => {
 
   return false;
 };
+
+// Function to update labels based on the base rate difference
+export async function updateLabelsFromBaseRate(owner: string, repo: string, labels: string[], baseRateDifference: number) {
+  try {
+    for (const label of labels) {
+      if (label.startsWith("Price: ")) {
+        const currentLabelValue = parseFloat(label.replace("Price: ", ""));
+        const updatedLabelValue =
+          baseRateDifference > 0 ? (currentLabelValue * (1 + baseRateDifference)).toFixed(2) : (currentLabelValue / (1 - baseRateDifference)).toFixed(2);
+        const updatedLabelName = `Price: ${updatedLabelValue}`;
+
+        await octokit.issues.updateLabel({
+          owner,
+          repo,
+          current_name: label,
+          name: updatedLabelName,
+          color: label.color,
+          description: label.description,
+        });
+
+        console.log(`Label updated: ${label.name} -> ${updatedLabelName}`);
+      }
+    }
+  } catch (error) {
+    console.error("Error updating labels:", error);
+  }
+}
