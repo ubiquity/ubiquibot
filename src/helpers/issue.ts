@@ -99,11 +99,11 @@ export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[
   return result;
 };
 
-export const getAllIssueComments = async (issue_number: number): Promise<Comment[] | null> => {
+export const getAllIssueComments = async (issue_number: number): Promise<Comment[]> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
-  let result: Comment[] | null = [];
+  let result: Comment[] = [];
   let shouldFetch = true;
   let page_number = 1;
   try {
@@ -127,7 +127,6 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
       }
     }
   } catch (e: unknown) {
-    result = null;
     shouldFetch = false;
   }
 
