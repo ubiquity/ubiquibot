@@ -1,7 +1,7 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getTokenSymbol, parseComments } from "../../helpers";
-import { Payload } from "../../types";
+import { Payload, UserType } from "../../types";
 
 /**
  * Incentivize the contributors based on their contribution.
@@ -22,13 +22,21 @@ export const incentivizeComments = async () => {
   const payload = context.payload as Payload;
   const issue = payload.issue;
   if (!issue) {
-    logger.info(`Not an gh issue, skipping`);
+    logger.info(`Not an github issue, skipping`);
     return;
   }
+  const assignees = issue?.assignees ?? [];
+  const assignee = assignees.length > 0 ? assignees[0] : undefined;
+  if (!assignee) {
+    logger.info("Skipping to proceed the payment because `assignee` is undefined");
+    return `Permit generation skipped since assignee is undefined`;
+  }
+
   const issueComments = await getAllIssueComments(payload.issue?.number!);
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
+    if (user.type == UserType.Bot || user.login == assignee) continue;
     issueCommentsByUser[user.login].push(issueComment.body);
   }
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);

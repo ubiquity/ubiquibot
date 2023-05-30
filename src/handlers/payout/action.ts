@@ -16,9 +16,9 @@ export const handleIssueClosed = async () => {
   const issue = payload.issue;
   if (!issue) return;
 
-  if (issue.state_reason != StateReason.COMPLETED) {
-    logger.info(`The issue ${issue.number} has been closed, but not as completed`);
-    return;
+  if (issue.state_reason !== StateReason.COMPLETED) {
+    logger.info("Permit generation skipped because the issue was not closed as completed");
+    return "Permit generation skipped because the issue was not closed as completed";
   }
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
