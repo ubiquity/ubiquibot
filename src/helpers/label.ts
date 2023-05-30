@@ -1,8 +1,8 @@
 import { getBotContext, getLogger } from "../bindings";
 import { COLORS } from "../configs";
-import { Payload } from "../types";
+import { Label, Payload } from "../types";
 
-export const listLabelsForRepo = async (per_page?: number, page?: number, all?: boolean): Promise<string[] | {}> => {
+export const listLabelsForRepo = async (per_page?: number, page?: number, all?: boolean): Promise<Label[] | string[]> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -55,22 +55,39 @@ export const getLabel = async (name: string): Promise<boolean> => {
 };
 
 // Function to update labels based on the base rate difference
-export async function updateLabelsFromBaseRate(owner: string, repo: string, labels: string[], baseRateDifference: number) {
+export async function updateLabelsFromBaseRate(owner: string, repo: string, labels: Label[], baseRateDifference: number) {
+  const context = getBotContext();
   try {
     for (const label of labels) {
-      if (label.startsWith("Price: ")) {
-        const currentLabelValue = parseFloat(label.replace("Price: ", ""));
-        const updatedLabelValue =
-          baseRateDifference > 0 ? (currentLabelValue * (1 + baseRateDifference)).toFixed(2) : (currentLabelValue / (1 - baseRateDifference)).toFixed(2);
-        const updatedLabelName = `Price: ${updatedLabelValue}`;
+      if (label.name.startsWith("Price: ")) {
+        const labelParts = label.name.split(": ");
+        const prefix = labelParts[0];
+        const valueAndSuffix = labelParts[1].split(" ");
 
-        await octokit.issues.updateLabel({
+        let labelValue = parseFloat(valueAndSuffix[0]);
+
+        let updatedLabelValue =
+          baseRateDifference > 0 ? (labelValue * (1 + baseRateDifference)).toFixed(0) : (labelValue / (1 - baseRateDifference)).toFixed(0);
+
+        const suffix = valueAndSuffix.slice(1).join(" ");
+
+        // Don't want to remove the +
+        if (valueAndSuffix[0].includes("+")) {
+          updatedLabelValue += "+";
+        }
+
+        const updatedLabelName = `${prefix}: ${updatedLabelValue} ${suffix}`;
+
+        await context.octokit.issues.updateLabel({
           owner,
           repo,
-          current_name: label,
-          name: updatedLabelName,
+          name: label.name,
+          new_name: updatedLabelName,
           color: label.color,
           description: label.description,
+          headers: {
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
         });
 
         console.log(`Label updated: ${label.name} -> ${updatedLabelName}`);

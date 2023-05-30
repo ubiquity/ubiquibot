@@ -1,7 +1,7 @@
 import { Context } from "probot";
 import { getLogger } from "../../bindings";
-import { getPreviousFileContent, listLabelsForRepo } from "../../helpers";
-import { GithubContent, PushPayload } from "../../types";
+import { getPreviousFileContent, listLabelsForRepo, updateLabelsFromBaseRate } from "../../helpers";
+import { GithubContent, Label, PushPayload } from "../../types";
 import { parseYAML } from "../../utils/private";
 
 export const updateBaseRate = async (context: Context, payload: PushPayload, filePath: string) => {
@@ -45,4 +45,11 @@ export const updateBaseRate = async (context: Context, payload: PushPayload, fil
   const repoLabels = await listLabelsForRepo(100, 1, true);
 
   console.log(repoLabels, baseRateDifference);
+
+  if (repoLabels.length === 0) {
+    logger.debug("No labels on this repo");
+    return;
+  }
+
+  updateLabelsFromBaseRate(owner, repo, repoLabels as Label[], baseRateDifference);
 };
