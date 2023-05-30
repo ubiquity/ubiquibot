@@ -1,6 +1,7 @@
 import { createProbot } from "probot";
 import { Handler } from "@netlify/functions";
 import { EmitterWebhookEventName } from "@octokit/webhooks";
+
 import app from "../../../src";
 
 const probot = createProbot();

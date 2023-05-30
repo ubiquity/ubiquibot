@@ -1,6 +1,6 @@
 {
   "name": "ubiquibot",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Enables Ubiquity DevPool automation in your repository.",
   "author": "Ubiquity DAO",
   "license": "ISC",
@@ -76,6 +76,5 @@
     "*.{ts,json}": [
       "prettier --write"
     ]
-  },
-  "packageManager": "yarn@3.5.0"
+  }
 }
