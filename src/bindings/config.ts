@@ -65,7 +65,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const validate = ajv.compile(BotConfigSchema);
   const valid = validate(botConfig);
   if (!valid) {
-    throw new Error(`Config schema validation failed!!!, config: ${botConfig}`);
+    throw new Error(validate.errors?.map((err: unknown) => JSON.stringify(err, null, 2)).join(","));
   }
 
   if (botConfig.unassign.followUpTime < 0 || botConfig.unassign.disqualifyTime < 0) {
