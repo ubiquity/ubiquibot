@@ -41,7 +41,6 @@ export interface WideLabel {
   name: string;
   weight: number;
   value?: number | undefined;
-  target: string;
 }
 
 export interface WideConfig {
