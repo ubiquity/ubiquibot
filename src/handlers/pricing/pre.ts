@@ -25,7 +25,7 @@ export const validatePriceLabels = async (): Promise<void> => {
   logger.debug(`Got needed labels for setting up price, neededLabels: ${neededLabels.toString()}`);
 
   // List all the labels for a repository
-  const repoLabels = await listLabelsForRepo();
+  const repoLabels = (await listLabelsForRepo()) as string[];
 
   // Get the missing labels
   const missingLabels = neededLabels.filter((label) => !repoLabels.includes(label));
