@@ -22,7 +22,7 @@ export const incentivizeComments = async () => {
   const payload = context.payload as Payload;
   const issue = payload.issue;
   if (!issue) {
-    logger.info(`Not an github issue, skipping`);
+    logger.info(`Not a GitHub issue...skipping.`);
     return;
   }
   const assignees = issue?.assignees ?? [];
