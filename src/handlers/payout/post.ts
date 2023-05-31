@@ -29,7 +29,7 @@ export const incentivizeComments = async () => {
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
     logger.info("Skipping to proceed the payment because `assignee` is undefined");
-    return `Permit generation skipped since assignee is undefined`;
+    return;
   }
 
   const issueComments = await getAllIssueComments(payload.issue?.number!);
