@@ -36,11 +36,14 @@ export const incentivizeComments = async () => {
 
   const issueComments = await getAllIssueComments(payload.issue?.number!);
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
+  const validIssueComments = issueComments.filter(
+    (issueComment) => issueComment.user.login && issueComment.user.login.toLowerCase() != assignee.toLowerCase() && issueComment.user.type != UserType.Bot
+  );
   const issueCommentsByUser: Record<string, string[]> = {};
-  for (const issueComment of issueComments) {
+  for (const issueComment of validIssueComments) {
     const user = issueComment.user;
-    if (!user.login || user.type == UserType.Bot || user.login == assignee) continue;
-    issueCommentsByUser[user.login].push(issueComment.body);
+    if (issueCommentsByUser[user.login]) issueCommentsByUser[user.login].push(issueComment.body);
+    else issueCommentsByUser[user.login] = [issueComment.body];
   }
 
   logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
