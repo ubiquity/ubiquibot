@@ -124,9 +124,7 @@ export const getWideConfig = async (context: Context) => {
 
   const configData = {
     chainId: getChainId(parsedRepo, parsedOrg),
-    // TODO: remove "process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY" when all partners are migrate to org wide config
-    privateKey: privateKeyDecrypted ?? process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY ?? "",
-
+    privateKey: privateKeyDecrypted ?? "",
     baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
     timeLabels: getTimeLabels(parsedRepo, parsedOrg),
     priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),
