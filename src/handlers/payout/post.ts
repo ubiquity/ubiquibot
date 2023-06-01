@@ -35,6 +35,7 @@ export const incentivizeComments = async () => {
   }
 
   const issueComments = await getAllIssueComments(payload.issue?.number!);
+  logger.info(`Getting the issue comments done`, { comments: issueComments });
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
