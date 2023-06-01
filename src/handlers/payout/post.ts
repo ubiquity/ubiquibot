@@ -35,10 +35,11 @@ export const incentivizeComments = async () => {
   }
 
   const issueComments = await getAllIssueComments(payload.issue?.number!);
+  logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
-    if (user.type == UserType.Bot || user.login == assignee) continue;
+    if (!user.login || user.type == UserType.Bot || user.login == assignee) continue;
     issueCommentsByUser[user.login].push(issueComment.body);
   }
 
