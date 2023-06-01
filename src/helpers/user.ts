@@ -1,5 +1,4 @@
 import { getBotContext, getLogger } from "../bindings";
-import { Payload } from "../types";
 
 /**
  * @dev Gets the publicly available information about `useranme`
@@ -53,5 +52,5 @@ export const getOrgMembershipOfUser = async (org: string, username: string): Pro
     logger.info(`Getting organization membership failed! err: ${err}`);
   }
 
-  return undefined;
+  return membership;
 };
