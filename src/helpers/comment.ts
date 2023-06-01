@@ -9,7 +9,6 @@ type MdastNode = {
   value: string;
   children: MdastNode[];
 };
-const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
 const cachedResult: Record<string, string[]> = {};
 const traverse = (node: MdastNode, itemsToExclude: string[]): Record<string, string[]> => {
   if (!cachedResult[node.type]) {
@@ -48,7 +47,7 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
   for (const key of Object.keys(result)) {
     const rewardValue = commentElementPricing[key];
     const value = result[key];
-    if (key == MarkdownItem.Text) {
+    if (key == MarkdownItem.Text || key == MarkdownItem.Paragraph) {
       sum += value.length * rewardValue;
     } else {
       sum += rewardValue;
