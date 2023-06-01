@@ -1,7 +1,7 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getOrgMembershipOfUser, getTokenSymbol, parseComments } from "../../helpers";
-import { MarkdownItem, Payload, UserType } from "../../types";
+import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getTokenSymbol, parseComments } from "../../helpers";
+import { MarkdownItem, Payload, UserType, CommentElementPricing } from "../../types";
 
 const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
 /**
@@ -38,8 +38,7 @@ export const incentivizeComments = async () => {
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
-    const membership = await getOrgMembershipOfUser(org, user.login);
-    if (user.type == UserType.Bot || user.login == assignee || !membership) continue;
+    if (user.type == UserType.Bot || user.login == assignee) continue;
     issueCommentsByUser[user.login].push(issueComment.body);
   }
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
@@ -52,7 +51,9 @@ export const incentivizeComments = async () => {
   let comment: string = "";
   for (const user of Object.keys(issueCommentsByUser)) {
     const comments = issueCommentsByUser[user];
-    const rewardValue = await parseComments(comments, ItemsToExclude, commentElementPricing);
+    const commentsByNode = await parseComments(comments, ItemsToExclude);
+    const rewardValue = calculateRewardValue(commentsByNode, commentElementPricing);
+    logger.debug(`Comment parsed for the user: ${user}`, { commments: commentsByNode, sum: rewardValue });
     const account = await getWalletAddress(user);
     const amountInETH = ((rewardValue * baseMultiplier) / 1000).toString();
     if (account) {
@@ -68,4 +69,26 @@ export const incentivizeComments = async () => {
   logger.info("Skipping to generate a permit url for missing accounts", { fallbackReward });
 
   await addCommentToIssue(comment, issue.number);
+};
+
+/**
+ * @dev Calculates the reward values for a given comments. We'll improve the formula whenever we get the better one.
+ *
+ * @param comments - The comments to calculate the reward for
+ * @param commentElementPricing - The basic price table for reward calculation
+ * @returns - The reward value
+ */
+const calculateRewardValue = (comments: Record<string, string[]>, commentElementPricing: CommentElementPricing): number => {
+  let sum = 0;
+  for (const key of Object.keys(comments)) {
+    const rewardValue = commentElementPricing[key];
+    const value = comments[key];
+    if (key == MarkdownItem.Text || key == MarkdownItem.Paragraph) {
+      sum += value.length * rewardValue;
+    } else {
+      sum += rewardValue;
+    }
+  }
+
+  return sum;
 };

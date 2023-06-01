@@ -1,8 +1,6 @@
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
-import { MarkdownItem } from "../types";
-import { CommentElementPricing } from "../types";
 
 type MdastNode = {
   type: string;
@@ -25,7 +23,7 @@ const traverse = (node: MdastNode, itemsToExclude: string[]): Record<string, str
   return cachedResult;
 };
 
-export const parseComments = async (comments: string[], itemsToExclude: string[], commentElementPricing: CommentElementPricing): Promise<number> => {
+export const parseComments = async (comments: string[], itemsToExclude: string[]): Promise<Record<string, string[]>> => {
   const result: Record<string, string[]> = {};
   for (const comment of comments) {
     const tree = fromMarkdown(comment, {
@@ -43,16 +41,5 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
     }
   }
 
-  let sum = 0;
-  for (const key of Object.keys(result)) {
-    const rewardValue = commentElementPricing[key];
-    const value = result[key];
-    if (key == MarkdownItem.Text || key == MarkdownItem.Paragraph) {
-      sum += value.length * rewardValue;
-    } else {
-      sum += rewardValue;
-    }
-  }
-
-  return sum;
+  return result;
 };
