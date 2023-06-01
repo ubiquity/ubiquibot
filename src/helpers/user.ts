@@ -1,7 +1,7 @@
 import { getBotContext, getLogger } from "../bindings";
 
 /**
- * @dev Gets the publicly available information about `useranme`
+ * @dev Gets the publicly available information about `username`
  *
  * @param username The username you're getting information for
  */
