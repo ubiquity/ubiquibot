@@ -43,6 +43,7 @@ export const incentivizeComments = async () => {
     issueCommentsByUser[user.login].push(issueComment.body);
   }
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
+  logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
 
   // The mapping between gh handle and comment with a permit url
   let reward: Record<string, string> = {};
