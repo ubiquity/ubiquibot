@@ -35,19 +35,18 @@ export const incentivizeComments = async () => {
   }
 
   const issueComments = await getAllIssueComments(payload.issue?.number!);
-  logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
     if (user.type == UserType.Bot || user.login == assignee) continue;
     issueCommentsByUser[user.login].push(issueComment.body);
   }
-  const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
+
   logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
+  const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
 
   // The mapping between gh handle and comment with a permit url
   let reward: Record<string, string> = {};
-
   // The mapping between gh handle and amount in ETH
   let fallbackReward: Record<string, string> = {};
   let comment: string = "";
