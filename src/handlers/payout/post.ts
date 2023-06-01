@@ -35,7 +35,7 @@ export const incentivizeComments = async () => {
   }
 
   const issueComments = await getAllIssueComments(payload.issue?.number!);
-  logger.info(`Getting the issue comments done`, { comments: issueComments });
+  logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
@@ -54,7 +54,7 @@ export const incentivizeComments = async () => {
     const comments = issueCommentsByUser[user];
     const commentsByNode = await parseComments(comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, commentElementPricing);
-    logger.debug(`Comment parsed for the user: ${user}`, { commments: commentsByNode, sum: rewardValue });
+    logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
     const amountInETH = ((rewardValue * baseMultiplier) / 1000).toString();
     if (account) {
@@ -66,8 +66,8 @@ export const incentivizeComments = async () => {
     }
   }
 
-  logger.info("Permit url generated for contributors", { reward });
-  logger.info("Skipping to generate a permit url for missing accounts", { fallbackReward });
+  logger.info(`Permit url generated for contributors. reward: ${JSON.stringify(reward)}`);
+  logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
 
   await addCommentToIssue(comment, issue.number);
 };
