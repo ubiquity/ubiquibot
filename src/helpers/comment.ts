@@ -9,31 +9,32 @@ type MdastNode = {
   value: string;
   children: MdastNode[];
 };
-
-const traverse = (node: MdastNode): Record<string, string[]> => {
-  let result: Record<string, string[]> = {};
-  if (!result[node.type]) {
-    result[node.type] = [];
+const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
+const cachedResult: Record<string, string[]> = {};
+const traverse = (node: MdastNode, itemsToExclude: string[]): Record<string, string[]> => {
+  if (!cachedResult[node.type]) {
+    cachedResult[node.type] = [];
   }
 
-  result[node.type].push(node.value);
-
-  if (node.children) {
-    node.children.forEach((child) => traverse(child));
+  if (!itemsToExclude.includes(node.type)) {
+    // skip pushing if the node type has been excluded
+    cachedResult[node.type].push(node.value);
+  } else if (node.children.length > 0) {
+    node.children.forEach((child) => traverse(child, itemsToExclude));
   }
 
-  return result;
+  return cachedResult;
 };
 
-export const parseComments = async (comments: string[], commentElementPricing: CommentElementPricing): Promise<number> => {
-  let result: Record<string, string[]> = {};
+export const parseComments = async (comments: string[], itemsToExclude: string[], commentElementPricing: CommentElementPricing): Promise<number> => {
+  const result: Record<string, string[]> = {};
   for (const comment of comments) {
     const tree = fromMarkdown(comment, {
       extensions: [gfm()],
       mdastExtensions: [gfmFromMarkdown()],
     });
 
-    const parsedContent = traverse(tree as MdastNode);
+    const parsedContent = traverse(tree as MdastNode, itemsToExclude);
     for (const key of Object.keys(parsedContent)) {
       if (Object.keys(result).includes(key)) {
         result[key].push(...parsedContent[key]);

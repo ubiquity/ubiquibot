@@ -5,5 +5,6 @@ export const MarkdownItem = {
   Text: "text",
   Code: "code",
   Image: "image",
+  BlockQuote: "blockquote",
 } as const;
 export type MarkdownItem = (typeof MarkdownItem)[keyof typeof MarkdownItem];

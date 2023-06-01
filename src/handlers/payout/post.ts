@@ -1,8 +1,9 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getTokenSymbol, parseComments } from "../../helpers";
-import { Payload, UserType } from "../../types";
+import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getOrgMembershipOfUser, getTokenSymbol, parseComments } from "../../helpers";
+import { MarkdownItem, Payload, UserType } from "../../types";
 
+const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
 /**
  * Incentivize the contributors based on their contribution.
  * The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
@@ -20,9 +21,10 @@ export const incentivizeComments = async () => {
   }
   const context = getBotContext();
   const payload = context.payload as Payload;
+  const org = payload.organization?.login;
   const issue = payload.issue;
-  if (!issue) {
-    logger.info(`Not a GitHub issue...skipping.`);
+  if (!issue || !org) {
+    logger.info(`Incomplete payload. issue: ${issue}, org: ${org}`);
     return;
   }
   const assignees = issue?.assignees ?? [];
@@ -36,7 +38,8 @@ export const incentivizeComments = async () => {
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
-    if (user.type == UserType.Bot || user.login == assignee) continue;
+    const membership = await getOrgMembershipOfUser(org, user.login);
+    if (user.type == UserType.Bot || user.login == assignee || !membership) continue;
     issueCommentsByUser[user.login].push(issueComment.body);
   }
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
@@ -49,7 +52,7 @@ export const incentivizeComments = async () => {
   let comment: string = "";
   for (const user of Object.keys(issueCommentsByUser)) {
     const comments = issueCommentsByUser[user];
-    const rewardValue = await parseComments(comments, commentElementPricing);
+    const rewardValue = await parseComments(comments, ItemsToExclude, commentElementPricing);
     const account = await getWalletAddress(user);
     const amountInETH = ((rewardValue * baseMultiplier) / 1000).toString();
     if (account) {
