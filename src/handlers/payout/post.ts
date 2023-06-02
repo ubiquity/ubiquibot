@@ -35,7 +35,6 @@ export const incentivizeComments = async () => {
   }
 
   const issueComments = await getAllIssueComments(payload.issue?.number!);
-  logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const validIssueComments = issueComments
     .filter((issueComment) => issueComment.user?.login)
     .filter((issueComment) => issueComment.user.login.toLowerCase() != assignee.login.toLowerCase() && issueComment.user.type != UserType.Bot);
@@ -46,7 +45,6 @@ export const incentivizeComments = async () => {
     logger.debug(`user: ${user.login}`);
     if (issueCommentsByUser[user.login]) issueCommentsByUser[user.login].push(issueComment.body);
     else issueCommentsByUser[user.login] = [issueComment.body];
-    logger.debug(`issueCommentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
   }
 
   logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
