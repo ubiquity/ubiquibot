@@ -27,7 +27,7 @@ export const payout = async (body: string) => {
   }
 
   const IssueComments = await getAllIssueComments(issue.number);
-  if (IssueComments.length === 0) {
+  if (IssueComments.length == 0) {
     return `Permit generation failed due to internal GitHub Error`;
   }
 

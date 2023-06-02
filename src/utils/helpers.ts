@@ -1,4 +1,5 @@
 import { DEFAULT_CHAIN_ID, DefaultPriceConfig } from "../configs";
+import { CommentElementPricing } from "../types";
 import { WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
 export const getChainId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
@@ -41,7 +42,17 @@ export const getPriorityLabels = (parsedRepo: WideRepoConfig | undefined, parsed
   }
 };
 
-export const getAutoPayMode = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): boolean => {
+export const getCommentItemPrice = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): CommentElementPricing => {
+  if (parsedRepo && parsedRepo["comment-element-pricing"]) {
+    return parsedRepo["comment-element-pricing"];
+  } else if (parsedOrg && parsedOrg["comment-element-pricing"]) {
+    return parsedOrg["comment-element-pricing"];
+  } else {
+    return DefaultPriceConfig["commentElementPricing"];
+  }
+};
+
+export const getAutoPayMode = (parsedRepo?: WideRepoConfig, parsedOrg?: WideOrgConfig): boolean => {
   if (parsedRepo && parsedRepo["auto-pay-mode"] && typeof parsedRepo["auto-pay-mode"] === "boolean") {
     return parsedRepo["auto-pay-mode"];
   } else if (parsedOrg && parsedOrg["auto-pay-mode"] && typeof parsedOrg["auto-pay-mode"] === "boolean") {
@@ -56,6 +67,16 @@ export const getAnalyticsMode = (parsedRepo: WideRepoConfig | undefined, parsedO
     return parsedRepo["analytics-mode"];
   } else if (parsedOrg && parsedOrg["analytics-mode"] && typeof parsedOrg["analytics-mode"] === "boolean") {
     return parsedOrg["analytics-mode"];
+  } else {
+    return false;
+  }
+};
+
+export const getIncentiveMode = (parsedRepo?: WideRepoConfig, parsedOrg?: WideOrgConfig): boolean => {
+  if (parsedRepo && parsedRepo["incentive-mode"] && typeof parsedRepo["incentive-mode"] === "boolean") {
+    return parsedRepo["incentive-mode"];
+  } else if (parsedOrg && parsedOrg["incentive-mode"] && typeof parsedOrg["incentive-mode"] === "boolean") {
+    return parsedOrg["incentive-mode"];
   } else {
     return false;
   }

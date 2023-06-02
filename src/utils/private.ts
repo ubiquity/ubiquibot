@@ -2,7 +2,17 @@ import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
 import { Payload } from "../types";
 import { Context } from "probot";
-import { getAnalyticsMode, getAutoPayMode, getBaseMultiplier, getBountyHunterMax, getChainId, getPriorityLabels, getTimeLabels } from "./helpers";
+import {
+  getAnalyticsMode,
+  getAutoPayMode,
+  getBaseMultiplier,
+  getBountyHunterMax,
+  getIncentiveMode,
+  getChainId,
+  getPriorityLabels,
+  getTimeLabels,
+  getCommentItemPrice,
+} from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
 const KEY_PATH = ".github/ubiquibot-config.yml";
@@ -40,24 +50,15 @@ export interface WideConfig {
   "priority-labels"?: WideLabel[];
   "auto-pay-mode"?: boolean;
   "analytics-mode"?: boolean;
+  "incentive-mode"?: boolean;
   "max-concurrent-bounties"?: number;
+  "comment-element-pricing"?: Record<string, number>;
 }
 
 export interface WideRepoConfig extends WideConfig {}
 
 export interface WideOrgConfig extends WideConfig {
   "private-key-encrypted"?: string;
-}
-
-export interface DataConfig {
-  chainId: number;
-  privateKey: string;
-  baseMultiplier: number;
-  timeLabels: WideLabel[];
-  priorityLabels: WideLabel[];
-  autoPayMode: boolean;
-  analyticsMode: boolean;
-  bountyHunterMax: number;
 }
 
 export const parseYAML = async (data: any): Promise<any | undefined> => {
@@ -113,7 +114,7 @@ export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Prom
   }
 };
 
-export const getWideConfig = async (context: Context): Promise<DataConfig> => {
+export const getWideConfig = async (context: Context) => {
   const orgConfig = await getConfigSuperset(context, "org");
   const repoConfig = await getConfigSuperset(context, "repo");
 
@@ -121,16 +122,17 @@ export const getWideConfig = async (context: Context): Promise<DataConfig> => {
   const parsedRepo: WideRepoConfig | undefined = await parseYAML(repoConfig);
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
-  const configData: DataConfig = {
+  const configData = {
     chainId: getChainId(parsedRepo, parsedOrg),
-    // TODO: remove "process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY" when all partners are migrate to org wide config
-    privateKey: privateKeyDecrypted ?? process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY ?? "",
+    privateKey: privateKeyDecrypted ?? "",
     baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
     timeLabels: getTimeLabels(parsedRepo, parsedOrg),
     priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),
     autoPayMode: getAutoPayMode(parsedRepo, parsedOrg),
     analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg),
     bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
+    incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
+    commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
   };
 
   return configData;
