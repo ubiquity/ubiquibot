@@ -1,3 +1,4 @@
+import { Context } from "probot";
 import { getBotConfig, getBotContext, getLogger } from "../bindings";
 import { COLORS } from "../configs";
 import { calculateBountyPrice } from "../handlers";
@@ -57,50 +58,63 @@ export const getLabel = async (name: string): Promise<boolean> => {
 };
 
 // Function to update labels based on the base rate difference
-export async function updateLabelsFromBaseRate(labels: Label[]) {
+export async function updateLabelsFromBaseRate(owner: string, repo: string, context: Context, labels: Label[], previousBaseRate: number) {
+  const logger = getLogger();
   const config = getBotConfig();
-  const aiLabels: string[] = [];
+
+  const newLabels: string[] = [];
+  const previousLabels: string[] = [];
+
   for (const timeLabel of config.price.timeLabels) {
     for (const priorityLabel of config.price.priorityLabels) {
       const targetPrice = calculateBountyPrice(timeLabel.weight, priorityLabel.weight, config.price.baseMultiplier);
       const targetPriceLabel = `Price: ${targetPrice} USD`;
-      aiLabels.push(targetPriceLabel);
+      newLabels.push(targetPriceLabel);
+
+      const previousTargetPrice = calculateBountyPrice(timeLabel.weight, priorityLabel.weight, previousBaseRate);
+      const previousTargetPriceLabel = `Price: ${previousTargetPrice} USD`;
+      previousLabels.push(previousTargetPriceLabel);
     }
   }
-  let uniqueAiLabels = [...new Set(aiLabels)];
 
-  console.log(uniqueAiLabels, config.price.baseMultiplier);
+  let uniqueNewLabels = [...new Set(newLabels)];
+  let uniquePreviousLabels = [...new Set(previousLabels)];
+
+  let labelsFiltered: string[] = labels.map((obj) => obj["name"]);
+  const usedLabels = uniquePreviousLabels.filter((value: string) => labelsFiltered.includes(value));
+
+  logger.debug(`${usedLabels.length} previous labels used on issues`);
+
   try {
-    for (const label of labels) {
-      //deleteLabel(label.name)
-      // if (label.name.startsWith("Price: ")) {
-      //   const labelParts = label.name.split(": ");
-      //   const prefix = labelParts[0];
-      //   const valueAndSuffix = labelParts[1].split(" ");
-      //   let labelValue = parseFloat(valueAndSuffix[0]);
-      //   let updatedLabelValue =
-      //     baseRateDifference > 0 ? (labelValue * (1 + baseRateDifference)).toFixed(0) : (labelValue / (1 - baseRateDifference)).toFixed(0);
-      //   const suffix = valueAndSuffix.slice(1).join(" ");
-      //   // Don't want to remove the +
-      //   if (valueAndSuffix[0].includes("+")) {
-      //     updatedLabelValue += "+";
-      //   }
-      //   const updatedLabelName = `${prefix}: ${updatedLabelValue} ${suffix}`;
-      //   await context.octokit.issues.updateLabel({
-      //     owner,
-      //     repo,
-      //     name: label.name,
-      //     new_name: updatedLabelName,
-      //     color: label.color,
-      //     description: label.description,
-      //     headers: {
-      //       "X-GitHub-Api-Version": "2022-11-28",
-      //     },
-      //   });
-      //   console.log(`Label updated: ${label.name} -> ${updatedLabelName}`);
-      // }
+    for (const label of usedLabels) {
+      if (label.startsWith("Price: ")) {
+        let labelData = labels.find((obj) => obj["name"] === label) as Label;
+        let index = uniquePreviousLabels.findIndex((obj) => obj === label);
+
+        const exist = await getLabel(uniqueNewLabels[index]);
+        if (exist) {
+          // we have to delete first
+          logger.debug(`Deleted ${uniqueNewLabels[index]}, updating it`);
+          await deleteLabel(uniqueNewLabels[index]);
+        }
+
+        // we can update safely
+        await context.octokit.issues.updateLabel({
+          owner,
+          repo,
+          name: label,
+          new_name: uniqueNewLabels[index],
+          color: labelData.color,
+          description: labelData.description,
+          headers: {
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+        });
+
+        logger.debug(`Label updated: ${label} -> ${uniqueNewLabels[index]}`);
+      }
     }
-  } catch (error) {
-    console.error("Error updating labels:", error);
+  } catch (error: any) {
+    console.error("Error updating labels:", error.message);
   }
 }
