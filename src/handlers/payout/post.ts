@@ -1,7 +1,7 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getTokenSymbol, parseComments } from "../../helpers";
-import { MarkdownItem, Payload, CommentElementPricing } from "../../types";
+import { MarkdownItem, Payload, CommentElementPricing, UserType } from "../../types";
 
 const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
 /**
@@ -36,11 +36,9 @@ export const incentivizeComments = async () => {
 
   const issueComments = await getAllIssueComments(payload.issue?.number!);
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
-  logger.debug("Getting valid comments...");
-  // const validIssueComments = issueComments.filter(
-  //   (issueComment) => issueComment.user.login && issueComment.user.login.toLowerCase() != assignee.toLowerCase() && issueComment.user.type != UserType.Bot
-  // );
-  const validIssueComments = issueComments.filter((issueComment) => issueComment.user?.login);
+  const validIssueComments = issueComments
+    .filter((issueComment) => issueComment.user?.login)
+    .filter((issueComment) => issueComment.user.login.toLowerCase() != assignee.toLowerCase() && issueComment.user.type != UserType.Bot);
   logger.debug(`Valid issue comments ${JSON.stringify(validIssueComments)}`);
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of validIssueComments) {
