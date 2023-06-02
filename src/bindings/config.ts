@@ -27,7 +27,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     payout: {
       chainId: chainId,
-      rpc: process.env.RPC_PROVIDER_URL || rpc,
+      rpc: rpc,
       privateKey: privateKey,
       paymentToken: paymentToken,
       permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
