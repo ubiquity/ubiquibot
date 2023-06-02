@@ -30,6 +30,7 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
       extensions: [gfm()],
       mdastExtensions: [gfmFromMarkdown()],
     });
+
     const parsedContent = traverse(tree as MdastNode, itemsToExclude);
     for (const key of Object.keys(parsedContent)) {
       if (Object.keys(result).includes(key)) {

@@ -134,8 +134,6 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
 };
 
 export const issueAutopayCheck = async (issue_number: number) => {
-  const context = getBotContext();
-  console.log(context);
   let comments = await getAllIssueComments(issue_number);
   let lastAutopayStatus = null;
 
