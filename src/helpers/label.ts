@@ -1,6 +1,8 @@
-import { getBotContext, getLogger } from "../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../bindings";
 import { COLORS } from "../configs";
+import { calculateBountyPrice } from "../handlers";
 import { Label, Payload } from "../types";
+import { deleteLabel } from "./issue";
 
 export const listLabelsForRepo = async (per_page?: number, page?: number, all?: boolean): Promise<Label[] | string[]> => {
   const context = getBotContext();
@@ -55,43 +57,48 @@ export const getLabel = async (name: string): Promise<boolean> => {
 };
 
 // Function to update labels based on the base rate difference
-export async function updateLabelsFromBaseRate(owner: string, repo: string, labels: Label[], baseRateDifference: number) {
-  const context = getBotContext();
+export async function updateLabelsFromBaseRate(labels: Label[]) {
+  const config = getBotConfig();
+  const aiLabels: string[] = [];
+  for (const timeLabel of config.price.timeLabels) {
+    for (const priorityLabel of config.price.priorityLabels) {
+      const targetPrice = calculateBountyPrice(timeLabel.weight, priorityLabel.weight, config.price.baseMultiplier);
+      const targetPriceLabel = `Price: ${targetPrice} USD`;
+      aiLabels.push(targetPriceLabel);
+    }
+  }
+  let uniqueAiLabels = [...new Set(aiLabels)];
+
+  console.log(uniqueAiLabels, config.price.baseMultiplier);
   try {
     for (const label of labels) {
-      if (label.name.startsWith("Price: ")) {
-        const labelParts = label.name.split(": ");
-        const prefix = labelParts[0];
-        const valueAndSuffix = labelParts[1].split(" ");
-
-        let labelValue = parseFloat(valueAndSuffix[0]);
-
-        let updatedLabelValue =
-          baseRateDifference > 0 ? (labelValue * (1 + baseRateDifference)).toFixed(0) : (labelValue / (1 - baseRateDifference)).toFixed(0);
-
-        const suffix = valueAndSuffix.slice(1).join(" ");
-
-        // Don't want to remove the +
-        if (valueAndSuffix[0].includes("+")) {
-          updatedLabelValue += "+";
-        }
-
-        const updatedLabelName = `${prefix}: ${updatedLabelValue} ${suffix}`;
-
-        await context.octokit.issues.updateLabel({
-          owner,
-          repo,
-          name: label.name,
-          new_name: updatedLabelName,
-          color: label.color,
-          description: label.description,
-          headers: {
-            "X-GitHub-Api-Version": "2022-11-28",
-          },
-        });
-
-        console.log(`Label updated: ${label.name} -> ${updatedLabelName}`);
-      }
+      //deleteLabel(label.name)
+      // if (label.name.startsWith("Price: ")) {
+      //   const labelParts = label.name.split(": ");
+      //   const prefix = labelParts[0];
+      //   const valueAndSuffix = labelParts[1].split(" ");
+      //   let labelValue = parseFloat(valueAndSuffix[0]);
+      //   let updatedLabelValue =
+      //     baseRateDifference > 0 ? (labelValue * (1 + baseRateDifference)).toFixed(0) : (labelValue / (1 - baseRateDifference)).toFixed(0);
+      //   const suffix = valueAndSuffix.slice(1).join(" ");
+      //   // Don't want to remove the +
+      //   if (valueAndSuffix[0].includes("+")) {
+      //     updatedLabelValue += "+";
+      //   }
+      //   const updatedLabelName = `${prefix}: ${updatedLabelValue} ${suffix}`;
+      //   await context.octokit.issues.updateLabel({
+      //     owner,
+      //     repo,
+      //     name: label.name,
+      //     new_name: updatedLabelName,
+      //     color: label.color,
+      //     description: label.description,
+      //     headers: {
+      //       "X-GitHub-Api-Version": "2022-11-28",
+      //     },
+      //   });
+      //   console.log(`Label updated: ${label.name} -> ${updatedLabelName}`);
+      // }
     }
   } catch (error) {
     console.error("Error updating labels:", error);

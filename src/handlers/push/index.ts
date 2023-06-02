@@ -26,6 +26,6 @@ export const runOnPush = async () => {
   // check for modified or added files and check for specified file
   if (payload.head_commit.modified.includes(BASE_RATE_FILE) || payload.head_commit.added.includes(BASE_RATE_FILE)) {
     // update base rate
-    updateBaseRate(context, payload, BASE_RATE_FILE);
+    updateBaseRate();
   }
 };

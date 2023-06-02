@@ -22,17 +22,21 @@ const KEY_PREFIX = "HSK_";
 export const getConfigSuperset = async (context: Context, type: "org" | "repo"): Promise<string | undefined> => {
   try {
     const payload = context.payload as Payload;
+    console.log(payload.repository.name, payload.repository);
     const repo = type === "org" ? CONFIG_REPO : payload.repository.name!;
+    const owner = type === "org" ? payload.organization?.login! : payload.repository.owner.login!;
     const { data } = await context.octokit.rest.repos.getContent({
-      owner: payload.organization?.login!,
+      owner,
       repo: repo,
       path: KEY_PATH,
       mediaType: {
         format: "raw",
       },
     });
+    console.log(data);
     return data as unknown as string;
   } catch (error: any) {
+    console.log(error);
     return undefined;
   }
 };
@@ -121,6 +125,8 @@ export const getWideConfig = async (context: Context) => {
   const parsedOrg: WideOrgConfig | undefined = await parseYAML(orgConfig);
   const parsedRepo: WideRepoConfig | undefined = await parseYAML(repoConfig);
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
+
+  console.log(parsedRepo, parsedOrg);
 
   const configData = {
     chainId: getChainId(parsedRepo, parsedOrg),
