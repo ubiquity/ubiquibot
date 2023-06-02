@@ -38,7 +38,7 @@ export const incentivizeComments = async () => {
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const validIssueComments = issueComments
     .filter((issueComment) => issueComment.user?.login)
-    .filter((issueComment) => issueComment.user.login.toLowerCase() != assignee.toLowerCase() && issueComment.user.type != UserType.Bot);
+    .filter((issueComment) => issueComment.user.login.toLowerCase() != assignee.login.toLowerCase() && issueComment.user.type != UserType.Bot);
   logger.debug(`Valid issue comments ${JSON.stringify(validIssueComments)}`);
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of validIssueComments) {
