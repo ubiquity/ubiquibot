@@ -42,8 +42,10 @@ export const incentivizeComments = async () => {
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of validIssueComments) {
     const user = issueComment.user;
+    logger.debug(`user: ${user.login}`);
     if (issueCommentsByUser[user.login]) issueCommentsByUser[user.login].push(issueComment.body);
     else issueCommentsByUser[user.login] = [issueComment.body];
+    logger.debug(`issueCommentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
   }
 
   logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
