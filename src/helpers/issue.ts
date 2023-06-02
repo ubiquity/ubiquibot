@@ -134,8 +134,30 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
 };
 
 export const issueAutopayCheck = async (issue_number: number) => {
+  const context = getBotContext();
+  console.log(context);
   let comments = await getAllIssueComments(issue_number);
-  console.log(comments);
+  let lastAutopayStatus = null;
+
+  const regex = /Autopay is (disabled|enabled)/;
+
+  for (const item of comments) {
+    const { body, user } = item;
+    if (user?.login === "ubiquibot[bot]" && user?.type === "Bot") {
+      const match = body.match(regex);
+
+      if (match && match[1]) {
+        const status = match[1];
+        if (status === "enabled") {
+          lastAutopayStatus = true;
+        } else if (status === "disabled") {
+          lastAutopayStatus = false;
+        }
+      }
+    }
+  }
+
+  return lastAutopayStatus === null ? true : lastAutopayStatus;
 };
 
 export const removeAssignees = async (issue_number: number, assignees: string[]): Promise<void> => {

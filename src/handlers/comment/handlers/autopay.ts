@@ -21,6 +21,7 @@ export const autopay = async (body: string) => {
   const matches = body.match(regex);
 
   if (matches) {
+    let status = matches[1] === "true" ? "enabled" : "disabled";
     // check if sender is an admin
     // passing in context so we don't have to make another request to get the user
     const permissionLevel = await getUserPermission(sender, context);
@@ -31,7 +32,7 @@ export const autopay = async (body: string) => {
       return "Insufficient permissions to update auto payout for this issue.";
     }
 
-    return `Autopay is disabled for issue #${issue?.number}`;
+    return `Autopay is ${status} for issue #${issue?.number}`;
   } else {
     logger.error("Invalid body for autopay command");
     return `Invalid body for autopay command, ex: /autopay true|false`;
