@@ -133,6 +133,11 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
   return result;
 };
 
+export const issueAutopayCheck = async (issue_number: number) => {
+  let comments = await getAllIssueComments(issue_number);
+  console.log(comments);
+};
+
 export const removeAssignees = async (issue_number: number, assignees: string[]): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();

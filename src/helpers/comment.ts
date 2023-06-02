@@ -1,4 +1,4 @@
-import { fromMarkdown } from "mdast-util-from-markdown";
+// import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
 
@@ -26,19 +26,18 @@ const traverse = (node: MdastNode, itemsToExclude: string[]): Record<string, str
 export const parseComments = async (comments: string[], itemsToExclude: string[]): Promise<Record<string, string[]>> => {
   const result: Record<string, string[]> = {};
   for (const comment of comments) {
-    const tree = fromMarkdown(comment, {
-      extensions: [gfm()],
-      mdastExtensions: [gfmFromMarkdown()],
-    });
-
-    const parsedContent = traverse(tree as MdastNode, itemsToExclude);
-    for (const key of Object.keys(parsedContent)) {
-      if (Object.keys(result).includes(key)) {
-        result[key].push(...parsedContent[key]);
-      } else {
-        result[key] = parsedContent[key];
-      }
-    }
+    // const tree = fromMarkdown(comment, {
+    //   extensions: [gfm()],
+    //   mdastExtensions: [gfmFromMarkdown()],
+    // });
+    // const parsedContent = traverse(tree as MdastNode, itemsToExclude);
+    // for (const key of Object.keys(parsedContent)) {
+    //   if (Object.keys(result).includes(key)) {
+    //     result[key].push(...parsedContent[key]);
+    //   } else {
+    //     result[key] = parsedContent[key];
+    //   }
+    // }
   }
 
   return result;
