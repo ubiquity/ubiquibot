@@ -4,6 +4,7 @@ export const MarkdownItem = {
   Link: "link",
   Text: "text",
   Code: "code",
+  InlineCode: "inlineCode",
   Image: "image",
   BlockQuote: "blockquote",
 } as const;

@@ -17,11 +17,9 @@ const traverse = (node: MdastNode, itemsToExclude: string[]): Record<string, str
   }
 
   const value = node?.value || node?.url || undefined;
-
-  if (!itemsToExclude.includes(node.type) || value) {
-    // skip pushing if the node type has been excluded
-    cachedResult[node.type].push(value!);
-  } else if (node.children.length > 0) {
+  if (!itemsToExclude.includes(node.type) && value) {
+    cachedResult[node.type].push(value);
+  } else if (node.children && node.children.length > 0) {
     for (const child of node.children) {
       traverse(child, itemsToExclude);
     }
