@@ -88,11 +88,13 @@ const calculateRewardValue = (comments: Record<string, string[]>, commentElement
   let sum = 0;
   for (const key of Object.keys(comments)) {
     const rewardValue = commentElementPricing[key];
-    const value = comments[key];
-    if (key == MarkdownItem.Text || key == MarkdownItem.Paragraph) {
-      sum += value.length * rewardValue;
-    } else {
-      sum += rewardValue;
+    const values = comments[key];
+    for (const value of values) {
+      if (key == MarkdownItem.Text || key == MarkdownItem.Paragraph) {
+        sum += value.length * rewardValue;
+      } else {
+        sum += rewardValue;
+      }
     }
   }
 

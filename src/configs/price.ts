@@ -55,8 +55,8 @@ export const DefaultPriceConfig: PriceConfig = {
   commentElementPricing: {
     [MarkdownItem.Text]: 0.1,
     [MarkdownItem.Link]: 0.5,
-    [MarkdownItem.List]: 0.5,
     [MarkdownItem.Code]: 5,
+    [MarkdownItem.InlineCode]: 1,
     [MarkdownItem.Image]: 5,
   },
 };
