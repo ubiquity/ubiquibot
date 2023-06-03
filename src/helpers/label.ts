@@ -5,7 +5,7 @@ import { calculateBountyPrice } from "../handlers";
 import { Label, Payload } from "../types";
 import { deleteLabel } from "./issue";
 
-export const listLabelsForRepo = async (per_page?: number, page?: number, all?: boolean): Promise<Label[] | string[]> => {
+export const listLabelsForRepo = async (per_page?: number, page?: number): Promise<Label[]> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -17,7 +17,7 @@ export const listLabelsForRepo = async (per_page?: number, page?: number, all?: 
   });
 
   if (res.status === 200) {
-    return all ? res.data : res.data.map((i) => i.name);
+    return res.data;
   }
 
   throw new Error(`Failed to fetch lists of labels, code: ${res.status}`);
@@ -58,7 +58,7 @@ export const getLabel = async (name: string): Promise<boolean> => {
 };
 
 // Function to update labels based on the base rate difference
-export const updateLabelsFromBaseRate = async (owner: string, repo: string, context: Context, labels: Label[], previousBaseRate: number) =>{
+export const updateLabelsFromBaseRate = async (owner: string, repo: string, context: Context, labels: Label[], previousBaseRate: number) => {
   const logger = getLogger();
   const config = getBotConfig();
 
@@ -117,4 +117,4 @@ export const updateLabelsFromBaseRate = async (owner: string, repo: string, cont
   } catch (error: any) {
     console.error("Error updating labels:", error.message);
   }
-}
+};

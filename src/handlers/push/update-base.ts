@@ -25,7 +25,7 @@ export const updateBaseRate = async (context: Context, payload: PushPayload, fil
   const previousBaseRate = previousConfig["base-multiplier"];
 
   // fetch all labels
-  const repoLabels = await listLabelsForRepo(100, 1, true);
+  const repoLabels = await listLabelsForRepo();
 
   if (repoLabels.length === 0) {
     logger.debug("No labels on this repo");
