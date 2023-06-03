@@ -2,7 +2,6 @@ import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
 import { getBotContext, getLogger } from "../bindings";
-import { Payload } from "../types";
 
 type MdastNode = {
   type: string;
@@ -60,7 +59,7 @@ export const renderMarkdown = async (text: string): Promise<string | undefined> 
     });
     return res.status === 200 ? res.data : undefined;
   } catch (err: unknown) {
-    logger.debug(`Error creating a label: ${name}. Is it already there?`);
+    logger.debug(`Error rednering a text: ${text}.`);
   }
 
   return undefined;
