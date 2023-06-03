@@ -32,6 +32,7 @@
     "@supabase/supabase-js": "^2.4.0",
     "@types/mdast": "^3.0.11",
     "@types/ms": "^0.7.31",
+    "@types/turndown": "^5.0.1",
     "@uniswap/permit2-sdk": "^1.2.0",
     "@vercel/ncc": "^0.34.0",
     "ajv": "^8.11.2",
@@ -53,6 +54,7 @@
     "prettier": "^2.7.1",
     "probot": "^12.2.4",
     "telegraf": "^4.11.2",
+    "turndown": "^7.1.2",
     "yaml": "^2.2.2"
   },
   "devDependencies": {
