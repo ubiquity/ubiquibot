@@ -1,7 +1,8 @@
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
-import { getLogger } from "../bindings";
+import { getBotContext, getLogger } from "../bindings";
+import { Payload } from "../types";
 
 type MdastNode = {
   type: string;
@@ -28,7 +29,9 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
   const logger = getLogger();
   const result: Record<string, string[]> = {};
   for (const comment of comments) {
-    const tree = fromMarkdown(comment, {
+    const mardownDoc = await renderMarkdown(comment);
+    if (!mardownDoc) continue;
+    const tree = fromMarkdown(mardownDoc, {
       extensions: [gfm()],
       mdastExtensions: [gfmFromMarkdown()],
     });
@@ -46,4 +49,19 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
   }
 
   return result;
+};
+
+export const renderMarkdown = async (text: string): Promise<string | undefined> => {
+  const logger = getLogger();
+  const context = getBotContext();
+  try {
+    const res = await context.octokit.rest.markdown.render({
+      text,
+    });
+    return res.status === 200 ? res.data : undefined;
+  } catch (err: unknown) {
+    logger.debug(`Error creating a label: ${name}. Is it already there?`);
+  }
+
+  return undefined;
 };
