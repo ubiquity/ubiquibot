@@ -141,7 +141,7 @@ export const issueAutopayCheck = async (issue_number: number) => {
 
   for (const item of comments) {
     const { body, user } = item;
-    if (user?.login === "ubiquibot[bot]" && user?.type === "Bot") {
+   if (user?.type === "Bot") {
       const match = body.match(regex);
 
       if (match && match[1]) {
