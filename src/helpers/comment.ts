@@ -6,7 +6,8 @@ import { getBotContext, getLogger } from "../bindings";
 
 type MdastNode = {
   type: string;
-  value: string;
+  value?: string;
+  url?: string;
   children: MdastNode[];
 };
 const cachedResult: Record<string, string[]> = {};
@@ -15,9 +16,11 @@ const traverse = (node: MdastNode, itemsToExclude: string[]): Record<string, str
     cachedResult[node.type] = [];
   }
 
-  if (!itemsToExclude.includes(node.type)) {
+  const value = node?.value || node?.url || undefined;
+
+  if (!itemsToExclude.includes(node.type) || value) {
     // skip pushing if the node type has been excluded
-    cachedResult[node.type].push(node.value);
+    cachedResult[node.type].push(value!);
   } else if (node.children.length > 0) {
     node.children.forEach((child) => traverse(child, itemsToExclude));
   }
@@ -40,7 +43,8 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
     logger.debug(tree);
 
     const parsedContent = traverse(tree as MdastNode, itemsToExclude);
-    logger.debug("Parsed content: ", parsedContent);
+    logger.debug("Parsed content: ");
+    logger.debug(parsedContent);
     for (const key of Object.keys(parsedContent)) {
       if (Object.keys(result).includes(key)) {
         result[key].push(...parsedContent[key]);
