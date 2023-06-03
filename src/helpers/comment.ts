@@ -22,7 +22,9 @@ const traverse = (node: MdastNode, itemsToExclude: string[]): Record<string, str
     // skip pushing if the node type has been excluded
     cachedResult[node.type].push(value!);
   } else if (node.children.length > 0) {
-    node.children.forEach((child) => traverse(child, itemsToExclude));
+    for (const child of node.children) {
+      traverse(child, itemsToExclude);
+    }
   }
 
   return cachedResult;
