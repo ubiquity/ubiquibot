@@ -3,6 +3,7 @@ import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
 import TurndownService from "turndown";
 import { getBotContext, getLogger } from "../bindings";
+import { MarkdownItem } from "../types";
 
 type MdastNode = {
   type: string;
@@ -10,7 +11,7 @@ type MdastNode = {
   url?: string;
   children: MdastNode[];
 };
-const cachedResult: Record<string, string[]> = {};
+let cachedResult: Record<string, string[]> = {};
 const traverse = (node: MdastNode, itemsToExclude: string[]): Record<string, string[]> => {
   if (!cachedResult[node.type]) {
     cachedResult[node.type] = [];
@@ -40,11 +41,8 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
       mdastExtensions: [gfmFromMarkdown()],
     });
 
-    logger.debug(tree);
-
     const parsedContent = traverse(tree as MdastNode, itemsToExclude);
-    logger.debug("Parsed content: ");
-    logger.debug(parsedContent);
+    cachedResult = {};
     for (const key of Object.keys(parsedContent)) {
       if (Object.keys(result).includes(key)) {
         result[key].push(...parsedContent[key]);
@@ -53,6 +51,9 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
       }
     }
   }
+
+  logger.debug("Returning the result");
+  logger.debug(result);
 
   return result;
 };
