@@ -3,7 +3,6 @@ import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
 import TurndownService from "turndown";
 import { getBotContext, getLogger } from "../bindings";
-import { MarkdownItem } from "../types";
 
 type MdastNode = {
   type: string;
