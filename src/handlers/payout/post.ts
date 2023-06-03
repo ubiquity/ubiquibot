@@ -58,7 +58,7 @@ export const incentivizeComments = async () => {
   for (const user of Object.keys(issueCommentsByUser)) {
     const comments = issueCommentsByUser[user];
     const commentsByNode = await parseComments(comments, ItemsToExclude);
-    logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}`);
+    logger.debug(`Comment parsed for the user: ${user}.`);
     const rewardValue = calculateRewardValue(commentsByNode, commentElementPricing);
     logger.debug(`Reward calculated for the user: ${user}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
