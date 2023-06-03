@@ -67,6 +67,10 @@ export const handleIssueClosed = async () => {
     );
   }
 
+  await addLabelToIssue(
+    `If you enjoy the DevPool experience, please follow <a href="https://github.com/ubiquity">Ubiquity on GitHub</a> and star <a href="https://github.com/ubiquity/devpool-directory">this repo</a> to show your support. It helps a lot!`
+  );
+
   const payoutUrl = await generatePermit2Signature(recipient, priceInEth, issue.node_id);
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
@@ -79,9 +83,6 @@ export const handleIssueClosed = async () => {
     logger.info(`Skip to generate a permit url because it has been already posted`);
     return `Permit generation skipped because it was already posted to this issue.`;
   }
-  await addLabelToIssue(
-    `If you enjoy the DevPool experience, please follow <a href="https://github.com/ubiquity">Ubiquity on GitHub</a> and star <a href="https://github.com/ubiquity/devpool-directory">this repo</a> to show your support. It helps a lot!`
-  );
   await deleteLabel(issueDetailed.priceLabel!);
   await addLabelToIssue("Permitted");
   return comment;
