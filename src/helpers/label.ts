@@ -58,7 +58,7 @@ export const getLabel = async (name: string): Promise<boolean> => {
 };
 
 // Function to update labels based on the base rate difference
-export async function updateLabelsFromBaseRate(owner: string, repo: string, context: Context, labels: Label[], previousBaseRate: number) {
+export const updateLabelsFromBaseRate = async (owner: string, repo: string, context: Context, labels: Label[], previousBaseRate: number) =>{
   const logger = getLogger();
   const config = getBotConfig();
 
