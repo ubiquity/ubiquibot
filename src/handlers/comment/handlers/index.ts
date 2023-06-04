@@ -68,8 +68,8 @@ export const issueCreatedCallback = async (): Promise<void> => {
     const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
     const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
-    if (timeLabels.length === 0) await createLabel(timeLabelConfigs[0].name);
-    if (priorityLabels.length === 0) await createLabel(priorityLabelConfigs[0].name);
+    if (timeLabels.length === 0 && timeLabelConfigs.length > 0) await createLabel(timeLabelConfigs[0].name);
+    if (priorityLabels.length === 0 && priorityLabelConfigs.length > 0) await createLabel(priorityLabelConfigs[0].name);
     return;
   } catch (err: any) {
     return await addCommentToIssue("Error: " + err.message, issue!.number);
