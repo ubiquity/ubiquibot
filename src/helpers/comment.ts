@@ -33,6 +33,7 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
   const result: Record<string, string[]> = {};
   const turndown = new TurndownService();
   for (const comment of comments) {
+    logger.debug(`Parsing content: ${comment}`);
     const mardownDoc = await renderMarkdown(comment);
     if (!mardownDoc) continue;
     const tree = fromMarkdown(turndown.turndown(mardownDoc), {
@@ -40,7 +41,6 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
       mdastExtensions: [gfmFromMarkdown()],
     });
 
-    logger.debug("Parsing content: ");
     const parsedContent = traverse(tree as MdastNode, itemsToExclude);
     cachedResult = {};
     logger.debug("Parsed content: ");
