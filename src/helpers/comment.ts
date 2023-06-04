@@ -42,6 +42,9 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
 
     const parsedContent = traverse(tree as MdastNode, itemsToExclude);
     cachedResult = {};
+    logger.debug("Parsed content: ");
+    logger.debug(parsedContent);
+
     for (const key of Object.keys(parsedContent)) {
       if (Object.keys(result).includes(key)) {
         result[key].push(...parsedContent[key]);
