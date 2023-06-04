@@ -63,11 +63,13 @@ export const issueCreatedCallback = async (): Promise<void> => {
   const issue = (_payload as Payload).issue;
   const labels = issue!.labels;
   try {
+    const timeLabelConfigs = config.price.timeLabels.sort((label1, label2) => label1.weight - label2.weight);
+    const priorityLabelConfigs = config.price.priorityLabels.sort((label1, label2) => label1.weight - label2.weight);
     const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
     const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
-    if (timeLabels.length === 0) await createLabel("Time: <1 Hour");
-    if (priorityLabels.length === 0) await createLabel("Priority: 0 (Normal)");
+    if (timeLabels.length === 0) await createLabel(timeLabelConfigs[0].name);
+    if (priorityLabels.length === 0) await createLabel(priorityLabelConfigs[0].name);
     return;
   } catch (err: any) {
     return await addCommentToIssue("Error: " + err.message, issue!.number);
