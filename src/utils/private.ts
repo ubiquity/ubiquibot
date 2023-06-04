@@ -13,6 +13,7 @@ import {
   getTimeLabels,
   getCommentItemPrice,
 } from "./helpers";
+import { readFileSync } from "fs";
 
 const CONFIG_REPO = "ubiquibot-config";
 const KEY_PATH = ".github/ubiquibot-config.yml";
@@ -117,22 +118,24 @@ export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Prom
 export const getWideConfig = async (context: Context) => {
   const orgConfig = await getConfigSuperset(context, "org");
   const repoConfig = await getConfigSuperset(context, "repo");
+  const defaultConfig = readFileSync("default_config.yml", "utf8");
 
   const parsedOrg: WideOrgConfig | undefined = await parseYAML(orgConfig);
   const parsedRepo: WideRepoConfig | undefined = await parseYAML(repoConfig);
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
+  const parsedDefaultConfig: WideRepoConfig = await parseYAML(defaultConfig);
 
   const configData = {
-    chainId: getChainId(parsedRepo, parsedOrg),
+    chainId: getChainId(parsedRepo, parsedOrg) ?? parsedDefaultConfig["chain-id"]!,
     privateKey: privateKeyDecrypted ?? "",
-    baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
-    timeLabels: getTimeLabels(parsedRepo, parsedOrg),
-    priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),
-    autoPayMode: getAutoPayMode(parsedRepo, parsedOrg),
-    analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg),
-    bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
-    incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
-    commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
+    baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg) ?? parsedDefaultConfig["base-multiplier"]!,
+    timeLabels: getTimeLabels(parsedRepo, parsedOrg) ?? parsedDefaultConfig["time-labels"]!,
+    priorityLabels: getPriorityLabels(parsedRepo, parsedOrg) ?? parsedDefaultConfig["priority-labels"]!,
+    autoPayMode: getAutoPayMode(parsedRepo, parsedOrg) ?? parsedDefaultConfig["auto-pay-mode"]!,
+    analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg) ?? parsedDefaultConfig["analytics-mode"]!,
+    bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg) ?? parsedDefaultConfig["max-concurrent-bounties"]!,
+    incentiveMode: getIncentiveMode(parsedRepo, parsedOrg) ?? parsedDefaultConfig["incentive-mode"]!,
+    commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg) ?? parsedDefaultConfig["comment-element-pricing"]!,
   };
 
   return configData;
