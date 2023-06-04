@@ -40,6 +40,7 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
       mdastExtensions: [gfmFromMarkdown()],
     });
 
+    logger.debug("Parsing content: ");
     const parsedContent = traverse(tree as MdastNode, itemsToExclude);
     cachedResult = {};
     logger.debug("Parsed content: ");
@@ -52,6 +53,8 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
         result[key] = parsedContent[key];
       }
     }
+
+    logger.debug("Next iterating:");
   }
 
   logger.debug("Returning the result");
