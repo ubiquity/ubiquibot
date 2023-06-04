@@ -34,27 +34,31 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
   const turndown = new TurndownService();
   for (const comment of comments) {
     logger.debug(`Parsing content: ${comment}`);
-    const mardownDoc = await renderMarkdown(comment);
-    if (!mardownDoc) continue;
-    const tree = fromMarkdown(turndown.turndown(mardownDoc), {
-      extensions: [gfm()],
-      mdastExtensions: [gfmFromMarkdown()],
-    });
+    try {
+      const mardownDoc = await renderMarkdown(comment);
+      if (!mardownDoc) continue;
+      const tree = fromMarkdown(turndown.turndown(mardownDoc), {
+        extensions: [gfm()],
+        mdastExtensions: [gfmFromMarkdown()],
+      });
 
-    const parsedContent = traverse(tree as MdastNode, itemsToExclude);
-    cachedResult = {};
-    logger.debug("Parsed content: ");
-    logger.debug(parsedContent);
+      const parsedContent = traverse(tree as MdastNode, itemsToExclude);
+      cachedResult = {};
+      logger.debug("Parsed content: ");
+      logger.debug(parsedContent);
 
-    for (const key of Object.keys(parsedContent)) {
-      if (Object.keys(result).includes(key)) {
-        result[key].push(...parsedContent[key]);
-      } else {
-        result[key] = parsedContent[key];
+      for (const key of Object.keys(parsedContent)) {
+        if (Object.keys(result).includes(key)) {
+          result[key].push(...parsedContent[key]);
+        } else {
+          result[key] = parsedContent[key];
+        }
       }
-    }
 
-    logger.debug("Next iterating:");
+      logger.debug("Next iterating:");
+    } catch (err: unknown) {
+      continue;
+    }
   }
 
   logger.debug("Returning the result");
