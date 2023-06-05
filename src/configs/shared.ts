@@ -1,7 +1,8 @@
 import { generateHelpMenu } from "../handlers";
 
 export const COLORS = {
-  price: "008000",
+  default: "ededed",
+  price: "1f883d",
 };
 export const DEFAULT_BOT_DELAY = 100; // 100ms
 

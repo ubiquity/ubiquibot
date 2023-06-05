@@ -23,7 +23,7 @@ export const listLabelsForRepo = async (per_page?: number, page?: number): Promi
   throw new Error(`Failed to fetch lists of labels, code: ${res.status}`);
 };
 
-export const createLabel = async (name: string): Promise<void> => {
+export const createLabel = async (name: string, labelType?: keyof typeof COLORS): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -32,7 +32,7 @@ export const createLabel = async (name: string): Promise<void> => {
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       name,
-      color: COLORS.price,
+      color: COLORS[labelType ?? "default"],
     });
   } catch (err: unknown) {
     logger.debug(`Error creating a label: ${name}. Is it already there?`);
