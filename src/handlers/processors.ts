@@ -3,12 +3,17 @@ import { commentWithAssignMessage } from "./assign";
 import { pricingLabelLogic, validatePriceLabels } from "./pricing";
 import { checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate } from "./wildcard";
 import { nullHandler } from "./shared";
-import { handleComment, issueClosedCallback } from "./comment";
+import { handleComment, issueClosedCallback, issueCreatedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
 import { incentivizeComments } from "./payout";
 
 export const processors: Record<string, Handler> = {
+  [GithubEvent.ISSUES_CREATED]: {
+    pre: [nullHandler],
+    action: [issueCreatedCallback],
+    post: [nullHandler],
+  },
   [GithubEvent.ISSUES_LABELED]: {
     pre: [validatePriceLabels],
     action: [pricingLabelLogic],
