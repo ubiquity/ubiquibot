@@ -32,5 +32,5 @@ export const updateBaseRate = async (context: Context, payload: PushPayload, fil
     return;
   }
 
-  updateLabelsFromBaseRate(owner, repo, context, repoLabels as Label[], previousBaseRate);
+  await updateLabelsFromBaseRate(owner, repo, context, repoLabels as Label[], previousBaseRate);
 };
