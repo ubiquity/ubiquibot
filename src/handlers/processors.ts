@@ -6,6 +6,7 @@ import { nullHandler } from "./shared";
 import { handleComment, issueClosedCallback, issueCreatedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
+import { runOnPush } from "./push";
 import { incentivizeComments } from "./payout";
 
 export const processors: Record<string, Handler> = {
@@ -52,6 +53,11 @@ export const processors: Record<string, Handler> = {
   [GithubEvent.INSTALLATION_ADDED_EVENT]: {
     pre: [nullHandler],
     action: [createDevPoolPR],
+    post: [nullHandler],
+  },
+  [GithubEvent.PUSH_EVENT]: {
+    pre: [nullHandler],
+    action: [runOnPush],
     post: [nullHandler],
   },
 };

@@ -23,8 +23,9 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo"):
   try {
     const payload = context.payload as Payload;
     const repo = type === "org" ? CONFIG_REPO : payload.repository.name!;
+    const owner = type === "org" ? payload.organization?.login! : payload.repository.owner.login!;
     const { data } = await context.octokit.rest.repos.getContent({
-      owner: payload.organization?.login!,
+      owner,
       repo: repo,
       path: KEY_PATH,
       mediaType: {
