@@ -1,3 +1,4 @@
+import { getBotConfig } from "../../../bindings";
 import { Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
@@ -7,7 +8,7 @@ import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { setAccess } from "./set-access";
 import { multiplier } from "./multiplier";
-import { addCommentToIssue } from "../../../helpers";
+import { addCommentToIssue, createLabel } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
 
@@ -42,7 +43,34 @@ export const issueClosedCallback = async (): Promise<void> => {
   const issue = (_payload as Payload).issue;
   try {
     const comment = await handleIssueClosed();
+    await addCommentToIssue(
+      `If you enjoy the DevPool experience, please follow <a href="https://github.com/ubiquity">Ubiquity on GitHub</a> and star <a href="https://github.com/ubiquity/devpool-directory">this repo</a> to show your support. It helps a lot!`,
+      issue!.number
+    );
     return await addCommentToIssue(comment!, issue!.number);
+  } catch (err: any) {
+    return await addCommentToIssue("Error: " + err.message, issue!.number);
+  }
+};
+
+/**
+ * Callback for issues created - Processor
+ */
+
+export const issueCreatedCallback = async (): Promise<void> => {
+  const { payload: _payload } = getBotContext();
+  const config = getBotConfig();
+  const issue = (_payload as Payload).issue;
+  const labels = issue!.labels;
+  try {
+    const timeLabelConfigs = config.price.timeLabels.sort((label1, label2) => label1.weight - label2.weight);
+    const priorityLabelConfigs = config.price.priorityLabels.sort((label1, label2) => label1.weight - label2.weight);
+    const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
+    const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
+
+    if (timeLabels.length === 0 && timeLabelConfigs.length > 0) await createLabel(timeLabelConfigs[0].name);
+    if (priorityLabels.length === 0 && priorityLabelConfigs.length > 0) await createLabel(priorityLabelConfigs[0].name);
+    return;
   } catch (err: any) {
     return await addCommentToIssue("Error: " + err.message, issue!.number);
   }
