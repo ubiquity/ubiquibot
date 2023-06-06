@@ -16,7 +16,7 @@
     "build:ci": "ncc build adapters/index.ts -o dist && mv ./dist/index.js ./bin",
     "start": "probot run ./lib/index.js",
     "start:watch": "node copy.js && nodemon --exec 'yarn start'",
-    "start:serverless": "npx tsx adapters/index.ts",
+    "start:serverless": "tsx adapters/index.ts",
     "format": "prettier --write src",
     "format:check": "prettier -c src/**/*.ts",
     "clean": "rimraf ./dist ./lib ./node_modules",
