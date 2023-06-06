@@ -1,10 +1,6 @@
+import { DEFAULT_CHAIN_ID, DefaultPriceConfig } from "../configs";
 import { CommentElementPricing } from "../types";
-import { WideLabel, WideOrgConfig, WideRepoConfig, parseYAML } from "./private";
-import { readFileSync } from "fs";
-
-const DEFAULT_CONFIG_FILE = "ubiquibot-config-default.yml";
-const defaultConfig = readFileSync(DEFAULT_CONFIG_FILE, "utf8");
-const parsedDefaultConfig: WideRepoConfig = parseYAML(defaultConfig);
+import { WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
 export const getChainId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
   if (parsedRepo && parsedRepo["chain-id"] && !Number.isNaN(Number(parsedRepo["chain-id"]))) {
@@ -12,7 +8,7 @@ export const getChainId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: Wi
   } else if (parsedOrg && parsedOrg["chain-id"] && !Number.isNaN(Number(parsedOrg["chain-id"]))) {
     return Number(parsedOrg["chain-id"]);
   } else {
-    return Number(parsedDefaultConfig["chain-id"]!);
+    return DEFAULT_CHAIN_ID;
   }
 };
 
@@ -22,7 +18,7 @@ export const getBaseMultiplier = (parsedRepo: WideRepoConfig | undefined, parsed
   } else if (parsedOrg && parsedOrg["base-multiplier"] && !Number.isNaN(Number(parsedOrg["base-multiplier"]))) {
     return Number(parsedOrg["base-multiplier"]);
   } else {
-    return Number(parsedDefaultConfig["base-multiplier"]!);
+    return Number(DefaultPriceConfig["baseMultiplier"]);
   }
 };
 
@@ -32,7 +28,7 @@ export const getTimeLabels = (parsedRepo: WideRepoConfig | undefined, parsedOrg:
   } else if (parsedOrg && parsedOrg["time-labels"] && Array.isArray(parsedOrg["time-labels"]) && parsedOrg["time-labels"].length > 0) {
     return parsedOrg["time-labels"];
   } else {
-    return parsedDefaultConfig["time-labels"]!;
+    return DefaultPriceConfig["timeLabels"];
   }
 };
 
@@ -42,7 +38,7 @@ export const getPriorityLabels = (parsedRepo: WideRepoConfig | undefined, parsed
   } else if (parsedOrg && parsedOrg["priority-labels"] && Array.isArray(parsedOrg["priority-labels"]) && parsedOrg["priority-labels"].length > 0) {
     return parsedOrg["priority-labels"];
   } else {
-    return parsedDefaultConfig["priority-labels"]!;
+    return DefaultPriceConfig["priorityLabels"];
   }
 };
 
@@ -52,7 +48,7 @@ export const getCommentItemPrice = (parsedRepo: WideRepoConfig | undefined, pars
   } else if (parsedOrg && parsedOrg["comment-element-pricing"]) {
     return parsedOrg["comment-element-pricing"];
   } else {
-    return parsedDefaultConfig["comment-element-pricing"]!;
+    return DefaultPriceConfig["commentElementPricing"];
   }
 };
 
@@ -62,7 +58,7 @@ export const getAutoPayMode = (parsedRepo?: WideRepoConfig, parsedOrg?: WideOrgC
   } else if (parsedOrg && parsedOrg["auto-pay-mode"] && typeof parsedOrg["auto-pay-mode"] === "boolean") {
     return parsedOrg["auto-pay-mode"];
   } else {
-    return parsedDefaultConfig["auto-pay-mode"]!;
+    return true;
   }
 };
 
@@ -72,7 +68,7 @@ export const getAnalyticsMode = (parsedRepo: WideRepoConfig | undefined, parsedO
   } else if (parsedOrg && parsedOrg["analytics-mode"] && typeof parsedOrg["analytics-mode"] === "boolean") {
     return parsedOrg["analytics-mode"];
   } else {
-    return parsedDefaultConfig["analytics-mode"]!;
+    return false;
   }
 };
 
@@ -82,7 +78,7 @@ export const getIncentiveMode = (parsedRepo?: WideRepoConfig, parsedOrg?: WideOr
   } else if (parsedOrg && parsedOrg["incentive-mode"] && typeof parsedOrg["incentive-mode"] === "boolean") {
     return parsedOrg["incentive-mode"];
   } else {
-    return parsedDefaultConfig["incentive-mode"]!;
+    return false;
   }
 };
 
@@ -92,6 +88,6 @@ export const getBountyHunterMax = (parsedRepo: WideRepoConfig | undefined, parse
   } else if (parsedOrg && parsedOrg["max-concurrent-bounties"] && !Number.isNaN(Number(parsedOrg!["max-concurrent-bounties"]))) {
     return Number(parsedOrg["max-concurrent-bounties"]);
   } else {
-    return Number(parsedDefaultConfig["max-concurrent-bounties"]!);
+    return 2;
   }
 };
