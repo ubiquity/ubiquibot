@@ -1,0 +1,51 @@
+name: Calculate Bounty Based on Events
+on:
+  push:
+  issues:
+    types:
+      - labeled
+      - unlabeled
+      - assigned
+      - created
+      - closed
+  issue_comment:
+    types:
+      - created
+      - edited
+  pull_request:
+    types:
+      - opened
+  installation_repositories:
+    types: 
+      - added
+  
+
+jobs:
+  calculate_bounty_job:
+    # ignore events invoked by bots
+    if: >-
+      github.event.pull_request.payload.sender.type != 'Bot'
+    runs-on: ubuntu-latest
+    name: Calculate Bounty with UbiquiBot
+    steps:
+      # To use this repository's private action,
+      # you must check out the repository
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.14.1"
+
+      - name: Invoke the UbiquiBot
+        id: UbiquiBot
+        uses: ./bin
+        # [probot/adapter-github-actions] a token must be passed as `env.GITHUB_TOKEN` or `with.GITHUB_TOKEN` or `with.token`, see https://github.com/probot/adapter-github-actions#usage
+        with:
+          GITHUB_TOKEN: ${{ steps.GITHUB_TOKEN }}
+        env:
+          SUPABASE_PROJECT_URL: ${{ secrets.SUPABASE_PROJECT_URL }}
+          SUPABASE_PROJECT_KEY: ${{ secrets.SUPABASE_PROJECT_KEY }}
+          FOLLOW_UP_TIME: '4 days'
+          DISQUALIFY_TIME: '7 days'
