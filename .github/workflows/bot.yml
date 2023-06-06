@@ -44,7 +44,7 @@ jobs:
         id: UbiquiBot
         run: yarn start:serverless
         env:
-          GITHUB_TOKEN: ${{ steps.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LOGDNA_INGESTION_KEY: ${{ secrets.LOGDNA_INGESTION_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
