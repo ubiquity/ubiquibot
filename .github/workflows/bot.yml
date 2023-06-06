@@ -40,12 +40,14 @@ jobs:
 
       - name: Invoke the UbiquiBot
         id: UbiquiBot
-        uses: ./bin
+        run: yarn start:serverless
         # [probot/adapter-github-actions] a token must be passed as `env.GITHUB_TOKEN` or `with.GITHUB_TOKEN` or `with.token`, see https://github.com/probot/adapter-github-actions#usage
         with:
           GITHUB_TOKEN: ${{ steps.GITHUB_TOKEN }}
         env:
-          SUPABASE_PROJECT_URL: ${{ secrets.SUPABASE_PROJECT_URL }}
-          SUPABASE_PROJECT_KEY: ${{ secrets.SUPABASE_PROJECT_KEY }}
+          LOGDNA_INGESTION_KEY: ${{ secrets.LOGDNA_INGESTION_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          X25519_PRIVATE_KEY: ${{ secrets.X25519_PRIVATE_KEY }}
           FOLLOW_UP_TIME: '4 days'
           DISQUALIFY_TIME: '7 days'
