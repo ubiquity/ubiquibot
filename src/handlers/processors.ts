@@ -10,7 +10,7 @@ import { runOnPush } from "./push";
 import { incentivizeComments } from "./payout";
 
 export const processors: Record<string, Handler> = {
-  [GithubEvent.ISSUES_CREATED]: {
+  [GithubEvent.ISSUES_OPENED]: {
     pre: [nullHandler],
     action: [issueCreatedCallback],
     post: [nullHandler],
