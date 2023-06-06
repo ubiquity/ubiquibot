@@ -1,21 +1,18 @@
 import ms from "ms";
 
 import { BotConfig, BotConfigSchema } from "../types";
-import {
-  DEFAULT_BOT_DELAY,
-  DEFAULT_DISQUALIFY_TIME,
-  DEFAULT_FOLLOWUP_TIME,
-  DEFAULT_PAYMENT_TOKEN,
-  DEFAULT_PERMIT_BASE_URL,
-  DEFAULT_RPC_ENDPOINT,
-} from "../configs";
+import { DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFAULT_PERMIT_BASE_URL } from "../configs";
+import { getPayoutConfigByChainId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
 import { getScalarKey, getWideConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
-  const { privateKey, baseMultiplier, timeLabels, priorityLabels, autoPayMode, analyticsMode, bountyHunterMax, chainId } = await getWideConfig(context);
+  const { privateKey, baseMultiplier, timeLabels, priorityLabels, commentElementPricing, autoPayMode, analyticsMode, bountyHunterMax, incentiveMode, chainId } =
+    await getWideConfig(context);
+
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
+  const { rpc, paymentToken } = getPayoutConfigByChainId(chainId);
 
   const botConfig: BotConfig = {
     log: {
@@ -23,15 +20,16 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       ingestionKey: process.env.LOGDNA_INGESTION_KEY ?? "",
     },
     price: {
-      baseMultiplier: baseMultiplier,
-      timeLabels: timeLabels,
-      priorityLabels: priorityLabels,
+      baseMultiplier,
+      timeLabels,
+      priorityLabels,
+      commentElementPricing,
     },
     payout: {
       chainId: chainId,
-      rpc: process.env.RPC_PROVIDER_URL || DEFAULT_RPC_ENDPOINT,
+      rpc: rpc,
       privateKey: privateKey,
-      paymentToken: process.env.PAYMENT_TOKEN || DEFAULT_PAYMENT_TOKEN,
+      paymentToken: paymentToken,
       permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
     },
     unassign: {
@@ -49,6 +47,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     mode: {
       autoPayMode: autoPayMode,
       analyticsMode: analyticsMode,
+      incentiveMode: incentiveMode,
     },
     assign: {
       bountyHunterMax: bountyHunterMax,
@@ -70,7 +69,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const validate = ajv.compile(BotConfigSchema);
   const valid = validate(botConfig);
   if (!valid) {
-    throw new Error(`Config schema validation failed!!!, config: ${botConfig}`);
+    throw new Error(validate.errors?.map((err: unknown) => JSON.stringify(err, null, 2)).join(","));
   }
 
   if (botConfig.unassign.followUpTime < 0 || botConfig.unassign.disqualifyTime < 0) {

@@ -8,7 +8,8 @@ lib
 .DS_Store
 dist
 .temp/
-.yarn/
+.yarn/cache
 supabase/.branches
+supabase/temp
 # Local Netlify folder
 .netlify

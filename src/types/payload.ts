@@ -9,6 +9,7 @@ export enum GithubEvent {
   ISSUES_UNLABELED = "issues.unlabeled",
   ISSUES_ASSIGNED = "issues.assigned",
   ISSUES_CLOSED = "issues.closed",
+  ISSUES_CREATED = "issues.created",
 
   // issue_comment
   ISSUE_COMMENT_CREATED = "issue_comment.created",
@@ -19,6 +20,9 @@ export enum GithubEvent {
 
   // installation event
   INSTALLATION_ADDED_EVENT = "installation_repositories.added",
+
+  // push event
+  PUSH_EVENT = "push",
 }
 
 export enum UserType {
@@ -203,6 +207,14 @@ const OrganizationSchema = Type.Object({
   description: Type.Union([Type.String(), Type.Null()]),
 });
 
+const CommitsSchema = Type.Object({
+  id: Type.String(),
+  distinct: Type.Boolean(),
+  added: Type.Array(Type.String()),
+  removed: Type.Array(Type.String()),
+  modified: Type.Array(Type.String()),
+});
+
 const InstallationSchema = Type.Object({
   id: Type.Number(),
   node_id: Type.String(),
@@ -236,6 +248,23 @@ export const PayloadSchema = Type.Object({
 });
 
 export type Payload = Static<typeof PayloadSchema>;
+
+export const PushSchema = Type.Object({
+  ref: Type.String(),
+  action: Type.String(),
+  before: Type.String(),
+  after: Type.String(),
+  repository: RepositorySchema,
+  sender: UserSchema,
+  created: Type.Boolean(),
+  deleted: Type.Boolean(),
+  forced: Type.Boolean(),
+  commits: Type.Array(CommitsSchema),
+  head_commit: CommitsSchema,
+  installation: Type.Optional(InstallationSchema),
+});
+
+export type PushPayload = Static<typeof PushSchema>;
 
 export const GithubContentSchema = Type.Object({
   type: Type.String(),
