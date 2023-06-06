@@ -1,6 +1,6 @@
 import { getWalletAddress, getWalletMultiplier } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addLabelToIssue, deleteLabel, generatePermit2Signature, getAllIssueComments, getTokenSymbol, issueAutopayCheck } from "../../helpers";
+import { addLabelToIssue, deleteLabel, generatePermit2Signature, getAllIssueComments, getTokenSymbol } from "../../helpers";
 import { Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
@@ -22,20 +22,10 @@ export const handleIssueClosed = async () => {
   }
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
-
-  let issueWideAutopay = await issueAutopayCheck(issue.number);
-
-  // would leave this because it shows private key is empty most of the time
   if (!autoPayMode) {
     logger.info(`Skipping to generate permit2 url, reason: { autoPayMode: ${autoPayMode}}`);
     return `Permit generation skipped since autoPayMode is disabled`;
   }
-
-  if (!issueWideAutopay) {
-    logger.info(`Skipping to generate permit2 url, reason: { issueAutopay: ${issueWideAutopay}}`);
-    return `Permit generation skipped since autopay is disabled on this issue`;
-  }
-
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
     logger.info(`Skipping... its not a bounty`);
