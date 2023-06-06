@@ -11,6 +11,7 @@ import { multiplier } from "./multiplier";
 import { addCommentToIssue, createLabel } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
+import { autopay } from "./autopay";
 
 export * from "./assign";
 export * from "./wallet";
@@ -18,6 +19,7 @@ export * from "./unassign";
 export * from "./payout";
 export * from "./help";
 export * from "./multiplier";
+export * from "./autopay";
 
 /**
  * Parses the comment body and figure out the command name a user wants
@@ -116,6 +118,12 @@ export const userCommands: UserCommands[] = [
     id: IssueCommentCommands.MULTIPLIER,
     description: `Set bounty multiplier (for treasury)`,
     handler: multiplier,
+    callback: commandCallback,
+  },
+  {
+    id: IssueCommentCommands.AUTOPAY,
+    description: `Disable/enable auto payout for an issue`,
+    handler: autopay,
     callback: commandCallback,
   },
   {
