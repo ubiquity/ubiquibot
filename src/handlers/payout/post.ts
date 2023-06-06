@@ -1,7 +1,7 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getTokenSymbol, parseComments } from "../../helpers";
-import { MarkdownItem, Payload, UserType, CommentElementPricing, Comment, Issue } from "../../types";
+import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getIssueDescription, getTokenSymbol, parseComments } from "../../helpers";
+import { MarkdownItem, Payload, UserType, CommentElementPricing, Issue } from "../../types";
 
 const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
 /**
@@ -39,8 +39,8 @@ export const incentivizeComments = async () => {
   const issueComments = await getAllIssueComments(payload.issue?.number!);
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
 
-  const [creatorComment] = issueComments.splice(0, 1);
-  incentivizeCreatorComment(creatorComment, issueCreatorMultiplier, commentElementPricing, tokenSymbol, issue);
+  const description = await getIssueDescription(payload.issue?.number!);
+  incentivizeCreatorComment(issueCreatorMultiplier, commentElementPricing, tokenSymbol, issue, description);
 
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
@@ -68,16 +68,16 @@ export const incentivizeComments = async () => {
 };
 
 export const incentivizeCreatorComment = async (
-  creatorComment: Comment,
   issueCreatorMultiplier: number,
   commentElementPricing: Record<string, number>,
   tokenSymbol: string,
-  issue: Issue
+  issue: Issue,
+  description: string
 ) => {
   const logger = getLogger();
-  const creator = creatorComment.user;
+  const creator = issue.user;
   if (!(creator.type == UserType.Bot || creator.login == issue.assignee)) {
-    const comments = [creatorComment.body];
+    const comments = [description];
     const result = await generatePermitForCommit(creator.login, comments, issueCreatorMultiplier, commentElementPricing, tokenSymbol, issue.node_id);
     if (result.payoutUrl) logger.info(`Permit url generated for creator. reward: ${result.payoutUrl}`);
     if (result.amountInETH) logger.info(`Skipping to generate a premit url for missing creator. fallback:${result.amountInETH}`);

@@ -99,6 +99,29 @@ export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[
   return result;
 };
 
+export const getIssueDescription = async (issue_number: number): Promise<string> => {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
+
+  let shouldFetch = true;
+  try {
+    while (shouldFetch) {
+      const response = await context.octokit.rest.issues.get({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        issue_number: issue_number,
+      });
+
+      await checkRateLimitGit(response?.headers);
+      return response.data.body!;
+      // Fixing infinite loop here, it keeps looping even when its an empty array
+    }
+  } catch (e: unknown) {
+    shouldFetch = false;
+  }
+  return "";
+};
+
 export const getAllIssueComments = async (issue_number: number): Promise<Comment[]> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
