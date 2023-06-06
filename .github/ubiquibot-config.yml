@@ -29,5 +29,5 @@ priority-labels:
   - name: "Priority: 4 (Emergency)"
     weight: 5
 auto-pay-mode: true
-analytics-mode: true
+analytics-mode: false
 max-concurrent-bounties: 2
