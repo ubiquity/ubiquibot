@@ -33,7 +33,13 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "18.14.1"
+          
+      - name: Install
+        run: yarn install
 
+      - name: Local Build
+        run: yarn build
+        
       - name: Invoke the UbiquiBot
         id: UbiquiBot
         run: yarn start:serverless
