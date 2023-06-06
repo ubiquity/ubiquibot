@@ -16,7 +16,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
 
   const botConfig: BotConfig = {
     log: {
-      level: process.env.LOG_LEVEL || "deubg",
+      level: process.env.LOG_LEVEL || "debug",
       ingestionKey: process.env.LOGDNA_INGESTION_KEY ?? "",
     },
     price: {

@@ -6,7 +6,7 @@ on:
       - labeled
       - unlabeled
       - assigned
-      - created
+      - opened
       - closed
   issue_comment:
     types:
@@ -33,12 +33,18 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "18.14.1"
+          
+      - name: Install
+        run: yarn install
 
+      - name: Local Build
+        run: yarn build
+        
       - name: Invoke the UbiquiBot
         id: UbiquiBot
         run: yarn start:serverless
         env:
-          GITHUB_TOKEN: ${{ steps.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LOGDNA_INGESTION_KEY: ${{ secrets.LOGDNA_INGESTION_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
