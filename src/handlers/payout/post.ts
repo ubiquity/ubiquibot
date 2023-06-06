@@ -40,7 +40,7 @@ export const incentivizeComments = async () => {
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
 
   const [creatorComment] = issueComments.splice(0, 1);
-  IncentivizeCreatorComment(creatorComment, issueCreatorMultiplier, commentElementPricing, tokenSymbol, issue);
+  incentivizeCreatorComment(creatorComment, issueCreatorMultiplier, commentElementPricing, tokenSymbol, issue);
 
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
@@ -67,7 +67,7 @@ export const incentivizeComments = async () => {
   logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
 };
 
-export const IncentivizeCreatorComment = async (
+export const incentivizeCreatorComment = async (
   creatorComment: Comment,
   issueCreatorMultiplier: number,
   commentElementPricing: Record<string, number>,
