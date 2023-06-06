@@ -12,6 +12,7 @@ import {
   getPriorityLabels,
   getTimeLabels,
   getCommentItemPrice,
+  getCreatorMultiplier,
 } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
@@ -47,6 +48,7 @@ export interface WideLabel {
 export interface WideConfig {
   "chain-id"?: number;
   "base-multiplier"?: number;
+  "issue-creator-multiplier"?: number;
   "time-labels"?: WideLabel[];
   "priority-labels"?: WideLabel[];
   "auto-pay-mode"?: boolean;
@@ -127,6 +129,7 @@ export const getWideConfig = async (context: Context) => {
     chainId: getChainId(parsedRepo, parsedOrg),
     privateKey: privateKeyDecrypted ?? "",
     baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
+    issueCreatorMultiplier: getCreatorMultiplier(parsedRepo, parsedOrg),
     timeLabels: getTimeLabels(parsedRepo, parsedOrg),
     priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),
     autoPayMode: getAutoPayMode(parsedRepo, parsedOrg),

@@ -12,6 +12,7 @@ export type CommentElementPricing = Static<typeof CommentElementPricingSchema>;
 
 export const PriceConfigSchema = Type.Object({
   baseMultiplier: Type.Number(),
+  issueCreatorMultiplier: Type.Number(),
   timeLabels: Type.Array(LabelItemSchema),
   priorityLabels: Type.Array(LabelItemSchema),
   commentElementPricing: CommentElementPricingSchema,

@@ -12,7 +12,7 @@ export const incentivizeComments = async () => {
   const logger = getLogger();
   const {
     mode: { incentiveMode },
-    price: { baseMultiplier, commentElementPricing },
+    price: { baseMultiplier, commentElementPricing, issueCreatorMultiplier },
     payout: { paymentToken, rpc },
   } = getBotConfig();
   if (!incentiveMode) {
@@ -34,15 +34,26 @@ export const incentivizeComments = async () => {
     return;
   }
 
+  const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
+
   const issueComments = await getAllIssueComments(payload.issue?.number!);
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
+
+  const [creatorComment] = issueComments.splice(0, 1);
+  const creator = creatorComment.user;
+  if (!(creator.type == UserType.Bot || creator.login == assignee)) {
+    const comments = [creatorComment.body];
+    const result = await generatePermitForCommit(creator.login, comments, issueCreatorMultiplier, commentElementPricing, tokenSymbol, issue.node_id);
+    if (result[0]) logger.info(`Permit url generated for creator. reward: ${result[0]}`);
+    if (result[1]) logger.info(`Skipping to generate a premit url for missing creator. fallback:${result[1]}`);
+  }
+
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
     if (user.type == UserType.Bot || user.login == assignee) continue;
     issueCommentsByUser[user.login].push(issueComment.body);
   }
-  const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
 
   // The mapping between gh handle and comment with a permit url
@@ -53,24 +64,39 @@ export const incentivizeComments = async () => {
   let comment: string = "";
   for (const user of Object.keys(issueCommentsByUser)) {
     const comments = issueCommentsByUser[user];
-    const commentsByNode = await parseComments(comments, ItemsToExclude);
-    const rewardValue = calculateRewardValue(commentsByNode, commentElementPricing);
-    logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
-    const account = await getWalletAddress(user);
-    const amountInETH = ((rewardValue * baseMultiplier) / 1000).toString();
-    if (account) {
-      const payoutUrl = await generatePermit2Signature(account, amountInETH, issue.node_id);
-      comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
-      reward[user] = payoutUrl;
-    } else {
-      fallbackReward[user] = amountInETH;
-    }
+    const result = await generatePermitForCommit(user, comments, baseMultiplier, commentElementPricing, tokenSymbol, issue.node_id);
+    if (result[0]) reward[user] = result[0];
+    if (result[1]) fallbackReward[user] = result[1];
   }
 
   logger.info(`Permit url generated for contributors. reward: ${JSON.stringify(reward)}`);
   logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
 
   await addCommentToIssue(comment, issue.number);
+};
+
+const generatePermitForCommit = async (
+  user: string,
+  comments: string[],
+  multiplier: number,
+  commentElementPricing: Record<string, number>,
+  tokenSymbol: string,
+  node_id: string
+): Promise<[string | undefined, string | undefined]> => {
+  const logger = getLogger();
+  const commentsByNode = await parseComments(comments, ItemsToExclude);
+  const rewardValue = calculateRewardValue(commentsByNode, commentElementPricing);
+  logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+  const account = await getWalletAddress(user);
+  const amountInETH = ((rewardValue * multiplier) / 1000).toString();
+  let comment: string = "";
+  if (account) {
+    const payoutUrl = await generatePermit2Signature(account, amountInETH, node_id);
+    comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
+    return [payoutUrl, undefined];
+  } else {
+    return [undefined, amountInETH];
+  }
 };
 
 /**

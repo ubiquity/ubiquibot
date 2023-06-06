@@ -2,6 +2,7 @@ import { PriceConfig } from "../types";
 import { MarkdownItem } from "../types/markdown";
 
 export const DefaultPriceConfig: PriceConfig = {
+  issueCreatorMultiplier: 1500,
   baseMultiplier: 1000,
   timeLabels: [
     {
