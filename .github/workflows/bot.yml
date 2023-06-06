@@ -15,10 +15,6 @@ on:
   pull_request:
     types:
       - opened
-  installation_repositories:
-    types: 
-      - added
-  
 
 jobs:
   calculate_bounty_job:
