@@ -3,7 +3,6 @@ import { Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
-import { payout } from "./payout";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { setAccess } from "./set-access";
@@ -106,12 +105,12 @@ export const userCommands: UserCommands[] = [
     description: "List all available commands.",
     callback: commandCallback,
   },
-  {
+  /*{
     id: IssueCommentCommands.PAYOUT,
     description: "Disable automatic payment for the issue.",
     handler: payout,
     callback: commandCallback,
-  },
+  },*/
   {
     id: IssueCommentCommands.MULTIPLIER,
     description: `Set bounty multiplier (for treasury)`,
