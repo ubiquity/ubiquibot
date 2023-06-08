@@ -8,7 +8,7 @@ import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { setAccess } from "./set-access";
 import { multiplier } from "./multiplier";
-import { addCommentToIssue, createLabel } from "../../../helpers";
+import { addCommentToIssue, createLabel, addLabelToIssue } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
 
@@ -70,6 +70,8 @@ export const issueCreatedCallback = async (): Promise<void> => {
 
     if (timeLabels.length === 0 && timeLabelConfigs.length > 0) await createLabel(timeLabelConfigs[0].name);
     if (priorityLabels.length === 0 && priorityLabelConfigs.length > 0) await createLabel(priorityLabelConfigs[0].name);
+    addLabelToIssue(timeLabelConfigs[0].name);
+    addLabelToIssue(priorityLabelConfigs[0].name);
     return;
   } catch (err: any) {
     return await addCommentToIssue("Error: " + err.message, issue!.number);

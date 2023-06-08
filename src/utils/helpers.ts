@@ -22,6 +22,16 @@ export const getBaseMultiplier = (parsedRepo: WideRepoConfig | undefined, parsed
   }
 };
 
+export const getCreatorMultiplier = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
+  if (parsedRepo && parsedRepo["issue-creator-multiplier"] && !Number.isNaN(Number(parsedRepo["issue-creator-multiplier"]))) {
+    return Number(parsedRepo["issue-creator-multiplier"]);
+  } else if (parsedOrg && parsedOrg["issue-creator-multiplier"] && !Number.isNaN(Number(parsedOrg["issue-creator-multiplier"]))) {
+    return Number(parsedOrg["issue-creator-multiplier"]);
+  } else {
+    return Number(DefaultPriceConfig["issueCreatorMultiplier"]);
+  }
+};
+
 export const getTimeLabels = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): WideLabel[] => {
   if (parsedRepo && parsedRepo["time-labels"] && Array.isArray(parsedRepo["time-labels"]) && parsedRepo["time-labels"].length > 0) {
     return parsedRepo["time-labels"];

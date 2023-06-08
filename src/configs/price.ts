@@ -3,6 +3,7 @@ import { MarkdownItem } from "../types/markdown";
 
 export const DefaultPriceConfig: PriceConfig = {
   baseMultiplier: 1000,
+  issueCreatorMultiplier: 2000,
   timeLabels: [
     {
       name: "Time: <1 Hour",

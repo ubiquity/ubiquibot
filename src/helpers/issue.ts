@@ -99,6 +99,24 @@ export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[
   return result;
 };
 
+export const getIssueDescription = async (issue_number: number): Promise<string> => {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
+
+  let result = "";
+  try {
+    const response = await context.octokit.rest.issues.get({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: issue_number,
+    });
+
+    await checkRateLimitGit(response?.headers);
+    if (response.data.body) result = response.data.body;
+  } catch (e: unknown) {}
+  return result;
+};
+
 export const getAllIssueComments = async (issue_number: number): Promise<Comment[]> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
