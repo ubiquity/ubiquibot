@@ -64,9 +64,9 @@ export interface WideOrgConfig extends WideConfig {
   "private-key-encrypted"?: string;
 }
 
-export const parseYAML = async (data: any): Promise<any | undefined> => {
+export const parseYAML = (data: any): any | undefined => {
   try {
-    const parsedData = await YAML.parse(data);
+    const parsedData = YAML.parse(data);
     if (parsedData !== null) {
       return parsedData;
     } else {
@@ -121,8 +121,8 @@ export const getWideConfig = async (context: Context) => {
   const orgConfig = await getConfigSuperset(context, "org");
   const repoConfig = await getConfigSuperset(context, "repo");
 
-  const parsedOrg: WideOrgConfig | undefined = await parseYAML(orgConfig);
-  const parsedRepo: WideRepoConfig | undefined = await parseYAML(repoConfig);
+  const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
+  const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configData = {
