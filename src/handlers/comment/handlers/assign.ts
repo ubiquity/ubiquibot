@@ -24,7 +24,7 @@ export const assign = async (body: string) => {
 
   const opened_prs = await getLast24HoursOpenedPullRequestsWithNoReviews(payload.sender.login);
 
-  logger.info(`Opened Pull Requests with no reviews within 24 hours: ${JSON.stringify(opened_prs)}`);
+  logger.info(`Opened Pull Requests with no reviews but over 24 hours have passed: ${JSON.stringify(opened_prs)}`);
 
   let assigned_issues = await getAssignedIssues(payload.sender.login);
 
