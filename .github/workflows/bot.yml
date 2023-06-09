@@ -1,0 +1,53 @@
+name: Calculate Bounty Based on Events
+on:
+  push:
+  issues:
+    types:
+      - labeled
+      - unlabeled
+      - assigned
+      - opened
+      - closed
+  issue_comment:
+    types:
+      - created
+      - edited
+  pull_request:
+    types:
+      - opened
+
+jobs:
+  calculate_bounty_job:
+    # ignore events invoked by bots
+    if: >-
+      github.event.pull_request.payload.sender.type != 'Bot'
+    runs-on: ubuntu-latest
+    name: Calculate Bounty with UbiquiBot
+    steps:
+      # To use this repository's private action,
+      # you must check out the repository
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.14.1"
+          
+      - name: Install
+        run: yarn install
+
+      - name: Local Build
+        run: yarn build
+        
+      - name: Invoke the UbiquiBot
+        id: UbiquiBot
+        run: yarn start:serverless
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LOGDNA_INGESTION_KEY: ${{ secrets.LOGDNA_INGESTION_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          X25519_PRIVATE_KEY: ${{ secrets.X25519_PRIVATE_KEY }}
+          FOLLOW_UP_TIME: '4 days'
+          DISQUALIFY_TIME: '7 days'
