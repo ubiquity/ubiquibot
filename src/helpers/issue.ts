@@ -318,7 +318,7 @@ export const getAssignedIssues = async (username: string) => {
   return assigned_issues;
 };
 
-export const getOpenedPullRequests = async (username: string) => {
+export const getLast24HoursOpenedPullRequestsWithNoReviews = async (username: string) => {
   const context = getBotContext();
   const prs = await getPullRequests(context, "open");
   const opened_prs = [];
