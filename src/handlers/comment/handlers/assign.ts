@@ -33,7 +33,7 @@ export const assign = async (body: string) => {
   const issue_number = issue!.number;
 
   // check for max and enforce max
-  if (assigned_issues.length + opened_prs.length >= config.assign.bountyHunterMax) {
+  if (assigned_issues.length - opened_prs.length >= config.assign.bountyHunterMax) {
     await addCommentToIssue(`Too many assigned issues, you have reached your max of ${config.assign.bountyHunterMax}`, issue_number);
     return;
   }
