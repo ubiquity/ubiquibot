@@ -19,6 +19,12 @@ export const multiplier = async (body: string) => {
   }
 
   const regex = /(".*?"|[^"\s]+)(?=\s*|\s*$)/g;
+  // possible commands
+  // /multiplier @user 0.5 "Multiplier reason"
+  // /multiplier 0.5 @user "Multiplier reason"
+  // /multiplier "Multiplier reason" @user 0.5
+  // /multiplier 0.5 "Multiplier reason" @user
+  // /multiplier @user "Multiplier reason" 0.5
 
   const matches = body.match(regex);
 
@@ -35,7 +41,7 @@ export const multiplier = async (body: string) => {
       } else if (part.startsWith("@")) {
         username = part.substring(1);
       } else {
-        reason = part;
+        reason += part.replace(/['"]/g, "") + " ";
       }
     }
 
