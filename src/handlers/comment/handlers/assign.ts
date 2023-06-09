@@ -1,4 +1,4 @@
-import { addAssignees, addCommentToIssue, getAssignedIssues, getCommentsOfIssue, getPullRequestReviews, getPullRequests } from "../../../helpers";
+import { addAssignees, addCommentToIssue, getAssignedIssues, getCommentsOfIssue, getOpenedPullRequests } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
@@ -23,16 +23,7 @@ export const assign = async (body: string) => {
     return;
   }
 
-  const prs = await getPullRequests(context, "open");
-  const opened_prs = [];
-  for (let i = 0; i < prs.length; i++) {
-    const pr = prs[i];
-    if (pr.user?.login !== payload.sender.login) continue;
-    const reviews = await getPullRequestReviews(context, pr.number);
-    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) < 24) {
-      opened_prs.push(pr);
-    }
-  }
+  const opened_prs = await getOpenedPullRequests(payload.sender.login);
 
   logger.info(`Opened Pull Requests with no reviews within 24 hours: ${JSON.stringify(opened_prs)}`);
 

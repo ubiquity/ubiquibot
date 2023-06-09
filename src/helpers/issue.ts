@@ -317,3 +317,18 @@ export const getAssignedIssues = async (username: string) => {
 
   return assigned_issues;
 };
+
+export const getOpenedPullRequests = async (username: string) => {
+  const context = getBotContext();
+  const prs = await getPullRequests(context, "open");
+  const opened_prs = [];
+  for (let i = 0; i < prs.length; i++) {
+    const pr = prs[i];
+    if (pr.user?.login !== username) continue;
+    const reviews = await getPullRequestReviews(context, pr.number);
+    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) < 24) {
+      opened_prs.push(pr);
+    }
+  }
+  return opened_prs;
+};
