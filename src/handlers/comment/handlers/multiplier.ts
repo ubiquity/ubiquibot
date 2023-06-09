@@ -35,7 +35,7 @@ export const multiplier = async (body: string) => {
       } else if (part.startsWith("@")) {
         username = part.substring(1);
       } else {
-        reason += part + " ";
+        reason = part;
       }
     }
 
@@ -56,7 +56,9 @@ export const multiplier = async (body: string) => {
     }
 
     await upsertWalletMultiplier(username, bountyMultiplier?.toString());
-    return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason provided is ${reason}.`;
+    return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
+      reason ? `provided is ${reason}` : "is not provided"
+    }.`;
   } else {
     logger.error("Invalid body for bountyMultiplier command");
     return `Invalid body for bountyMultiplier command`;
