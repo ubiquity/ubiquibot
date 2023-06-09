@@ -24,7 +24,7 @@ export const multiplier = async (body: string) => {
 
   if (matches) {
     const username = matches[1];
-    const bountyMultiplier = parseFloat(matches[2]);
+    const bountyMultiplier = parseFloat(matches[2]).toFixed(2);
 
     // check if sender is admin or billing_manager
     // passing in context so we don't have to make another request to get the user
