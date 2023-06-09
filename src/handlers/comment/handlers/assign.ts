@@ -6,8 +6,7 @@ import { IssueCommentCommands } from "../commands";
 import { getWalletAddress } from "../../../adapters/supabase";
 
 export const assign = async (body: string) => {
-  const context = getBotContext();
-  const _payload = context.payload;
+  const { payload: _payload } = getBotContext();
   const logger = getLogger();
   const config = getBotConfig();
   if (body != IssueCommentCommands.ASSIGN && body.replace(/`/g, "") != IssueCommentCommands.ASSIGN) {
