@@ -1,4 +1,4 @@
-import { addAssignees, addCommentToIssue, getAssignedIssues, getCommentsOfIssue } from "../../../helpers";
+import { addAssignees, addCommentToIssue, getAssignedIssues, getCommentsOfIssue, getPullRequestReviews, getPullRequests } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
@@ -6,7 +6,8 @@ import { IssueCommentCommands } from "../commands";
 import { getWalletAddress } from "../../../adapters/supabase";
 
 export const assign = async (body: string) => {
-  const { payload: _payload } = getBotContext();
+  const context = getBotContext();
+  const _payload = context.payload;
   const logger = getLogger();
   const config = getBotConfig();
   if (body != IssueCommentCommands.ASSIGN && body.replace(/`/g, "") != IssueCommentCommands.ASSIGN) {
@@ -22,6 +23,19 @@ export const assign = async (body: string) => {
     return;
   }
 
+  const prs = await getPullRequests(context, "open");
+  const opened_prs = [];
+  for (let i = 0; i < prs.length; i++) {
+    const pr = prs[i];
+    if (pr.user?.login !== payload.sender.login) continue;
+    const reviews = await getPullRequestReviews(context, pr.number);
+    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) < 24) {
+      opened_prs.push(pr);
+    }
+  }
+
+  logger.info(`Opened Pull Requests with no reviews within 24 hours: ${JSON.stringify(opened_prs)}`);
+
   let assigned_issues = await getAssignedIssues(payload.sender.login);
 
   logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
@@ -29,7 +43,7 @@ export const assign = async (body: string) => {
   const issue_number = issue!.number;
 
   // check for max and enforce max
-  if (assigned_issues.length >= config.assign.bountyHunterMax) {
+  if (assigned_issues.length + opened_prs.length >= config.assign.bountyHunterMax) {
     await addCommentToIssue(`Too many assigned issues, you have reached your max of ${config.assign.bountyHunterMax}`, issue_number);
     return;
   }

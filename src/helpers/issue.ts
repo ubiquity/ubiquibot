@@ -263,6 +263,22 @@ export const getPullRequests = async (context: Context, state: "open" | "closed"
   }
 };
 
+export const getPullRequestReviews = async (context: Context, pull_number: number) => {
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  try {
+    const { data: reviews } = await context.octokit.rest.pulls.listReviews({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number,
+    });
+    return reviews;
+  } catch (e: unknown) {
+    logger.debug(`Fetching pull request reviews failed!, reason: ${e}`);
+    return [];
+  }
+};
+
 // Get issues by issue number
 export const getIssueByNumber = async (context: Context, issue_number: number) => {
   const logger = getLogger();
