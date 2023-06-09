@@ -324,6 +324,7 @@ export const getLast24HoursOpenedPullRequestsWithNoReviews = async (username: st
   const opened_prs = [];
   for (let i = 0; i < prs.length; i++) {
     const pr = prs[i];
+    if (pr.draft) continue;
     if (pr.user?.login !== username) continue;
     const reviews = await getPullRequestReviews(context, pr.number);
     if (reviews.length > 0 || (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= 24)) {
