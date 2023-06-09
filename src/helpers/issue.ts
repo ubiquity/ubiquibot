@@ -337,7 +337,7 @@ export const getAssignedIssues = async (username: string) => {
   return assigned_issues;
 };
 
-export const getLast24HoursOpenedPullRequestsWithNoReviews = async (username: string) => {
+export const getOpenedPullRequestWithNoReviewsOver24HoursPassedAfterCreated = async (username: string) => {
   const context = getBotContext();
   const prs = await getPullRequests(context, "open");
   const opened_prs = [];
@@ -346,7 +346,7 @@ export const getLast24HoursOpenedPullRequestsWithNoReviews = async (username: st
     if (pr.draft) continue;
     if (pr.user?.login !== username) continue;
     const reviews = await getAllPullRequestReviews(context, pr.number);
-    if (reviews.length > 0 || (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= 0)) {
+    if (reviews.length > 0 || (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= 24)) {
       opened_prs.push(pr);
     }
   }
