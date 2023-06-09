@@ -2,7 +2,7 @@ import { CommentElementPricing } from "../types";
 import { WideLabel, WideOrgConfig, WideRepoConfig, parseYAML } from "./private";
 import { readFileSync } from "fs";
 
-const DEFAULT_CONFIG_FILE = "../../ubiquibot-config-default.yml";
+const DEFAULT_CONFIG_FILE = `${__dirname}/../../ubiquibot-config-default.yml`;
 const defaultConfig = readFileSync(DEFAULT_CONFIG_FILE, "utf8");
 const parsedDefaultConfig: WideRepoConfig = parseYAML(defaultConfig);
 
