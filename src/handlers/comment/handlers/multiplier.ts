@@ -19,12 +19,17 @@ export const multiplier = async (body: string) => {
   }
 
   const regex = /(".*?"|[^"\s]+)(?=\s*|\s*$)/g;
-  // possible commands
-  // /multiplier @user 0.5 "Multiplier reason"
-  // /multiplier 0.5 @user "Multiplier reason"
-  // /multiplier "Multiplier reason" @user 0.5
-  // /multiplier 0.5 "Multiplier reason" @user
-  // /multiplier @user "Multiplier reason" 0.5
+  /** You can use this command to set a multiplier for a user.
+   * It will accept arguments in any order.
+   * Example usage:
+   *
+   * /multiplier @user 0.5 "Multiplier reason"
+   * /multiplier 0.5 @user "Multiplier reason"
+   * /multiplier "Multiplier reason" @user 0.5
+   * /multiplier 0.5 "Multiplier reason" @user
+   * /multiplier @user "Multiplier reason" 0.5
+   *
+   **/
 
   const matches = body.match(regex);
 
@@ -63,7 +68,7 @@ export const multiplier = async (body: string) => {
 
     await upsertWalletMultiplier(username, bountyMultiplier?.toString());
     return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
-      reason ? `provided is ${reason}` : "is not provided"
+      reason ? `provided is "${reason}"` : "is not provided"
     }.`;
   } else {
     logger.error("Invalid body for bountyMultiplier command");
