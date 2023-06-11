@@ -40,14 +40,21 @@ jobs:
       - name: Local Build
         run: yarn build
         
+      - name: Authenticate as UbiquiBot
+        uses: tibdex/github-app-token@v1.7.0
+        id: get_installation_token
+        with:
+          app_id: ${{ secrets.UBIQUIBOT_DEV_APP_ID }}
+          private_key: ${{ secrets.UBIQUIBOT_DEV_PRIVATE_KEY }}
+          
       - name: Invoke the UbiquiBot
         id: UbiquiBot
-        run: yarn start:serverless
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{steps.get_installation_token.outputs.token}}
           LOGDNA_INGESTION_KEY: ${{ secrets.LOGDNA_INGESTION_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           X25519_PRIVATE_KEY: ${{ secrets.X25519_PRIVATE_KEY }}
           FOLLOW_UP_TIME: '4 days'
           DISQUALIFY_TIME: '7 days'
+        run: yarn start:serverless
