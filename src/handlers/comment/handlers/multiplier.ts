@@ -66,7 +66,7 @@ export const multiplier = async (body: string) => {
       }
     }
 
-    await upsertWalletMultiplier(username, bountyMultiplier?.toString());
+    await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason);
     return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
       reason ? `provided is "${reason}"` : "is not provided"
     }.`;
