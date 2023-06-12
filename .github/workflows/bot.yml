@@ -33,20 +33,17 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "18.14.1"
-          
+
       - name: Install
         run: yarn install
 
-      - name: Local Build
-        run: yarn build
-        
       - name: Authenticate as UbiquiBot
         uses: tibdex/github-app-token@v1.7.0
         id: get_installation_token
         with:
           app_id: ${{ secrets.UBIQUIBOT_DEV_APP_ID }}
           private_key: ${{ secrets.UBIQUIBOT_DEV_PRIVATE_KEY }}
-          
+
       - name: Invoke the UbiquiBot
         id: UbiquiBot
         env:
@@ -55,6 +52,6 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           X25519_PRIVATE_KEY: ${{ secrets.X25519_PRIVATE_KEY }}
-          FOLLOW_UP_TIME: '4 days'
-          DISQUALIFY_TIME: '7 days'
+          FOLLOW_UP_TIME: "4 days"
+          DISQUALIFY_TIME: "7 days"
         run: yarn start:serverless
