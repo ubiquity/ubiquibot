@@ -20,7 +20,7 @@ jobs:
   calculate_bounty_job:
     # ignore events invoked by bots
     if: >-
-      github.event.pull_request.payload.sender.type != 'Bot'
+      github.event.pull_request.payload.sender.type != 'Bot' && github.repository != 'ubiquity/ubiquibot'
     runs-on: ubuntu-latest
     name: Calculate Bounty with UbiquiBot
     steps:
