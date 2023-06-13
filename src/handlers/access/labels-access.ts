@@ -15,7 +15,7 @@ export const handleLabelsAccess = async () => {
   const permissionLevel = await getUserPermission(sender, context);
 
   // event in plain english
-  let eventName = payload.action === "labeled" ? "add" : "remove";
+  const eventName = payload.action === "labeled" ? "add" : "remove";
 
   // get text before :
   const match = payload.label?.name?.split(":");
@@ -25,7 +25,7 @@ export const handleLabelsAccess = async () => {
   if (permissionLevel !== "admin") {
     logger.info(`Getting ${label_type} access for ${sender} on ${repo.full_name}`);
     // check permission
-    let accessible = await getAccessLevel(sender, repo.full_name, label_type);
+    const accessible = await getAccessLevel(sender, repo.full_name, label_type);
 
     if (accessible) {
       return true;

@@ -18,7 +18,7 @@ export const checkPullRequests = async () => {
 
   // Loop through the pull requests and assign them to their respective issues if needed
   for (const pull of pulls) {
-    let pullRequestLinked = await gitLinkedIssueParser({
+    const pullRequestLinked = await gitLinkedIssueParser({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: pull.number,
@@ -34,7 +34,7 @@ export const checkPullRequests = async () => {
     // Check if the pull request opener is assigned to the issue
     const opener = pull!.user!.login;
 
-    let issue = await getIssueByNumber(context, +linkedIssueNumber);
+    const issue = await getIssueByNumber(context, +linkedIssueNumber);
 
     // if issue is already assigned, continue
     if (issue!.assignees!.length > 0) {

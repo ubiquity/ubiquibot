@@ -28,7 +28,7 @@ export const assign = async (body: string) => {
 
   logger.info(`Opened Pull Requests with no reviews but over 24 hours have passed: ${JSON.stringify(opened_prs)}`);
 
-  let assigned_issues = await getAssignedIssues(payload.sender.login);
+  const assigned_issues = await getAssignedIssues(payload.sender.login);
 
   logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
 

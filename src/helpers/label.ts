@@ -77,10 +77,10 @@ export const updateLabelsFromBaseRate = async (owner: string, repo: string, cont
     }
   }
 
-  let uniqueNewLabels = [...new Set(newLabels)];
-  let uniquePreviousLabels = [...new Set(previousLabels)];
+  const uniqueNewLabels = [...new Set(newLabels)];
+  const uniquePreviousLabels = [...new Set(previousLabels)];
 
-  let labelsFiltered: string[] = labels.map((obj) => obj["name"]);
+  const labelsFiltered: string[] = labels.map((obj) => obj["name"]);
   const usedLabels = uniquePreviousLabels.filter((value: string) => labelsFiltered.includes(value));
 
   logger.debug(`${usedLabels.length} previous labels used on issues`);
@@ -88,8 +88,8 @@ export const updateLabelsFromBaseRate = async (owner: string, repo: string, cont
   try {
     for (const label of usedLabels) {
       if (label.startsWith("Price: ")) {
-        let labelData = labels.find((obj) => obj["name"] === label) as Label;
-        let index = uniquePreviousLabels.findIndex((obj) => obj === label);
+        const labelData = labels.find((obj) => obj["name"] === label) as Label;
+        const index = uniquePreviousLabels.findIndex((obj) => obj === label);
 
         const exist = await getLabel(uniqueNewLabels[index]);
         if (exist) {

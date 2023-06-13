@@ -58,7 +58,7 @@ export interface WideConfig {
   "comment-element-pricing"?: Record<string, number>;
 }
 
-export interface WideRepoConfig extends WideConfig {}
+export type WideRepoConfig = WideConfig;
 
 export interface WideOrgConfig extends WideConfig {
   "private-key-encrypted"?: string;

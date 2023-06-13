@@ -68,14 +68,14 @@ type SummaryType = {
 };
 
 const processEvents = (JSONList: any[]): SummaryType => {
-  let openedIssues: number = 0;
-  let closedIssues: number = 0;
-  let comments: number = 0;
-  let bountiesUSD: number = 0;
-  let openedPRs: number = 0;
-  let closedPRs: number = 0;
-  let mergedPRs: number = 0;
-  let commits: number = 0;
+  let openedIssues = 0;
+  let closedIssues = 0;
+  let comments = 0;
+  let bountiesUSD = 0;
+  let openedPRs = 0;
+  let closedPRs = 0;
+  let mergedPRs = 0;
+  let commits = 0;
   JSONList.forEach((elem: any) => {
     const { type: eventType } = elem;
     switch (eventType) {

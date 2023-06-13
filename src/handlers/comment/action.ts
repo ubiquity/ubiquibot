@@ -34,7 +34,7 @@ export const handleComment = async (): Promise<void> => {
       const issue = (_payload as Payload).issue;
 
       try {
-        let response = await handler(body);
+        const response = await handler(body);
         if (response || successComment) {
           return callback(issue!.number, response! || successComment!);
         }
