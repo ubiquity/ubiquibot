@@ -104,6 +104,14 @@ When using as a github app the flow is the following:
 4. Event details are sent to your deployed bot instance (to a webhook URL that was set in github app's settings)
 5. The bot handles the event
 
+## How to QA any additions to the bot
+
+1. Fork the ubiquibot repo and install the [ubiquibot-qa app](https://github.com/apps/ubiquibot-qa) on the forked repository.
+2. Enable github action running on the forked repo and allow `issues` on the settings tab.
+3. Create a [QA issue](https://github.com/ubiquibot/staging/issues/21) similar to this where you show the feature working in the forked repo
+4. Describe carefully the steps taken to get the feature working, this way our team can easily verify
+5. Link that QA issue to the pull request as indicated on the template before requesting a review
+
 ## How to create a new release
 
 1. Update the version in package.json: `yarn version --new-version x.x.x`
