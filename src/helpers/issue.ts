@@ -2,6 +2,7 @@ import { Context } from "probot";
 import { getBotContext, getLogger } from "../bindings";
 import { Comment, IssueType, Payload } from "../types";
 import { checkRateLimitGit } from "../utils";
+import { TIME_RANGE_FOR_MAX_ISSUE, TIME_RANGE_FOR_MAX_ISSUE_ENABLED } from "../configs";
 
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   const context = getBotContext();
@@ -338,6 +339,7 @@ export const getAssignedIssues = async (username: string) => {
 };
 
 export const getOpenedPullRequestWithNoReviewsOver24HoursPassedAfterCreated = async (username: string) => {
+  if (!TIME_RANGE_FOR_MAX_ISSUE_ENABLED) return [];
   const context = getBotContext();
   const prs = await getPullRequests(context, "open");
   const opened_prs = [];
@@ -346,7 +348,10 @@ export const getOpenedPullRequestWithNoReviewsOver24HoursPassedAfterCreated = as
     if (pr.draft) continue;
     if (pr.user?.login !== username) continue;
     const reviews = await getAllPullRequestReviews(context, pr.number);
-    if (reviews.length > 0 || (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= 24)) {
+    if (
+      reviews.length > 0 ||
+      (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= TIME_RANGE_FOR_MAX_ISSUE)
+    ) {
       opened_prs.push(pr);
     }
   }
