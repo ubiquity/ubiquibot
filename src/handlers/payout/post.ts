@@ -46,11 +46,11 @@ export const incentivizeComments = async () => {
   logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
 
   // The mapping between gh handle and comment with a permit url
-  let reward: Record<string, string> = {};
+  const reward: Record<string, string> = {};
 
   // The mapping between gh handle and amount in ETH
-  let fallbackReward: Record<string, string> = {};
-  let comment: string = "";
+  const fallbackReward: Record<string, string> = {};
+  let comment = "";
   for (const user of Object.keys(issueCommentsByUser)) {
     const comments = issueCommentsByUser[user];
     const commentsByNode = await parseComments(comments, ItemsToExclude);
@@ -133,7 +133,7 @@ const generatePermitForComments = async (
   logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
   const account = await getWalletAddress(user);
   const amountInETH = ((rewardValue * multiplier) / 1000).toString();
-  let comment: string = "";
+  let comment = "";
   if (account) {
     const payoutUrl = await generatePermit2Signature(account, amountInETH, node_id);
     comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;

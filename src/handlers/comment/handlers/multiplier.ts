@@ -34,7 +34,7 @@ export const multiplier = async (body: string) => {
     if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {
       logger.info(`Getting multiplier access for ${sender} on ${repo.full_name}`);
       // check db permission
-      let accessible = await getAccessLevel(sender, repo.full_name, "multiplier");
+      const accessible = await getAccessLevel(sender, repo.full_name, "multiplier");
 
       if (!accessible) {
         logger.info(`User ${sender} is not an admin or billing_manager`);

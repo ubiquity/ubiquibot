@@ -37,6 +37,6 @@ export const payout = async (body: string) => {
     return;
   }
 
-  let response = await handleIssueClosed();
+  const response = await handleIssueClosed();
   return response;
 };

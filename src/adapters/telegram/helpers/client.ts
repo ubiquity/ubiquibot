@@ -38,14 +38,14 @@ export const telegramFormattedNotifier = async (messagePayload: TLMessageFormatt
   sendHandler();
 };
 
-export const telegramNotifier = (messagePayload: TLMessagePayload) => {
+export const telegramNotifier = async (messagePayload: TLMessagePayload) => {
   const messageString = messageFormatter(messagePayload);
   const messageObj: TLMessageFormattedPayload = {
     chatIds: messagePayload.chatIds,
     text: messageString,
     parseMode: "HTML",
   };
-  telegramFormattedNotifier(messageObj);
+  await telegramFormattedNotifier(messageObj);
 };
 
 export const telegramPhotoNotifier = async (messagePayload: TLPhotoPayload) => {

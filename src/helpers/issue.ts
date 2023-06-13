@@ -42,7 +42,7 @@ export const addLabelToIssue = async (labelName: string) => {
   }
 };
 
-export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open", per_page: number = 30, page: number = 1) => {
+export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open", per_page = 30, page = 1) => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -121,7 +121,7 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
   const context = getBotContext();
   const payload = context.payload as Payload;
 
-  let result: Comment[] = [];
+  const result: Comment[] = [];
   let shouldFetch = true;
   let page_number = 1;
   try {
@@ -264,7 +264,7 @@ export const getPullRequests = async (context: Context, state: "open" | "closed"
 };
 
 export const getAllPullRequestReviews = async (context: Context, pull_number: number) => {
-  let prArr = [];
+  const prArr = [];
   let fetchDone = false;
   const perPage = 30;
   let curPage = 1;
@@ -317,7 +317,7 @@ export const getIssueByNumber = async (context: Context, issue_number: number) =
 
 // Get issues assigned to a username
 export const getAssignedIssues = async (username: string) => {
-  let issuesArr = [];
+  const issuesArr = [];
   let fetchDone = false;
   const perPage = 30;
   let curPage = 1;
