@@ -344,11 +344,13 @@ export const getOpenedPullRequests = async (username: string) => {
   return prs.filter((pr) => !pr.draft && pr.user?.login === username);
 };
 
-export const getOpenedPullRequestWithNoReviewsOver24HoursPassedAfterCreated = async (username: string) => {
+export const getAvailableOpenedPullRequests = async (username: string) => {
   if (!DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED) return [];
   const context = getBotContext();
   const opened_prs = await getOpenedPullRequests(username);
+
   const result = [];
+
   for (let i = 0; i < opened_prs.length; i++) {
     const pr = opened_prs[i];
     const reviews = await getAllPullRequestReviews(context, pr.number);

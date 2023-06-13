@@ -6,7 +6,7 @@ export const COLORS = {
 };
 export const DEFAULT_BOT_DELAY = 100; // 100ms
 export const DEFAULT_TIME_RANGE_FOR_MAX_ISSUE = 24;
-export const DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED = false;
+export const DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED = true;
 /**
  * ms('2 days')  // 172800000
  * ms('1d')      // 86400000
