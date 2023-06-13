@@ -1,4 +1,10 @@
-import { addAssignees, addCommentToIssue, getAssignedIssues, getCommentsOfIssue } from "../../../helpers";
+import {
+  addAssignees,
+  addCommentToIssue,
+  getAssignedIssues,
+  getCommentsOfIssue,
+  getOpenedPullRequestWithNoReviewsOver24HoursPassedAfterCreated,
+} from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
@@ -22,6 +28,10 @@ export const assign = async (body: string) => {
     return;
   }
 
+  const opened_prs = await getOpenedPullRequestWithNoReviewsOver24HoursPassedAfterCreated(payload.sender.login);
+
+  logger.info(`Opened Pull Requests with no reviews but over 24 hours have passed: ${JSON.stringify(opened_prs)}`);
+
   let assigned_issues = await getAssignedIssues(payload.sender.login);
 
   logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
@@ -29,7 +39,7 @@ export const assign = async (body: string) => {
   const issue_number = issue!.number;
 
   // check for max and enforce max
-  if (assigned_issues.length >= config.assign.bountyHunterMax) {
+  if (assigned_issues.length - opened_prs.length >= config.assign.bountyHunterMax) {
     await addCommentToIssue(`Too many assigned issues, you have reached your max of ${config.assign.bountyHunterMax}`, issue_number);
     return;
   }

@@ -263,6 +263,41 @@ export const getPullRequests = async (context: Context, state: "open" | "closed"
   }
 };
 
+export const getAllPullRequestReviews = async (context: Context, pull_number: number) => {
+  let prArr = [];
+  let fetchDone = false;
+  const perPage = 30;
+  let curPage = 1;
+  while (!fetchDone) {
+    const prs = await getPullRequestReviews(context, pull_number, perPage, curPage);
+
+    // push the objects to array
+    prArr.push(...prs);
+
+    if (prs.length < perPage) fetchDone = true;
+    else curPage++;
+  }
+  return prArr;
+};
+
+export const getPullRequestReviews = async (context: Context, pull_number: number, per_page: number, page: number) => {
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  try {
+    const { data: reviews } = await context.octokit.rest.pulls.listReviews({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number,
+      per_page,
+      page,
+    });
+    return reviews;
+  } catch (e: unknown) {
+    logger.debug(`Fetching pull request reviews failed!, reason: ${e}`);
+    return [];
+  }
+};
+
 // Get issues by issue number
 export const getIssueByNumber = async (context: Context, issue_number: number) => {
   const logger = getLogger();
@@ -300,4 +335,20 @@ export const getAssignedIssues = async (username: string) => {
   const assigned_issues = issuesArr.filter((issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username);
 
   return assigned_issues;
+};
+
+export const getOpenedPullRequestWithNoReviewsOver24HoursPassedAfterCreated = async (username: string) => {
+  const context = getBotContext();
+  const prs = await getPullRequests(context, "open");
+  const opened_prs = [];
+  for (let i = 0; i < prs.length; i++) {
+    const pr = prs[i];
+    if (pr.draft) continue;
+    if (pr.user?.login !== username) continue;
+    const reviews = await getAllPullRequestReviews(context, pr.number);
+    if (reviews.length > 0 || (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= 24)) {
+      opened_prs.push(pr);
+    }
+  }
+  return opened_prs;
 };
