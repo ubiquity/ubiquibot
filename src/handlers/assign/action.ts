@@ -62,7 +62,7 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   await addCommentToIssue(commit_msg, payload.issue!.number);
 };
 
-export const closePullRequestOfTheIssue = async (): Promise<void> => {
+export const closePullRequestForAnIssue = async (): Promise<void> => {
   const context = getBotContext();
   // const config = getBotConfig();
   const logger = getLogger();
