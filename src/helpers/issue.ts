@@ -356,12 +356,15 @@ export const getAssignedIssues = async (username: string) => {
 
 export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userName: string) => {
   const pulls = await getOpenedPullRequests(userName);
+
   return pulls.filter((pull) => {
     if (pull.draft) return false;
+
     const issues = pull.body!.match(/#(\d+)/gi);
+
     if (!issues) return false;
+
     const linkedIssueNumbers = Array.from(new Set(issues.map((issue) => issue.replace("#", ""))));
-    console.log(linkedIssueNumbers);
     if (linkedIssueNumbers.indexOf(`${issueNumber}`) !== -1) return true;
     return false;
   });
