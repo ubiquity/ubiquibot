@@ -264,6 +264,22 @@ export const getPullRequests = async (context: Context, state: "open" | "closed"
   }
 };
 
+export const closePullRequest = async (pull_number: number) => {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
+  const logger = getLogger();
+  try {
+    await getBotContext().octokit.rest.pulls.update({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number,
+      state: "closed",
+    });
+  } catch (e: unknown) {
+    logger.debug(`Closing pull requests failed!, reason: ${e}`);
+  }
+};
+
 export const getAllPullRequestReviews = async (context: Context, pull_number: number) => {
   let prArr = [];
   let fetchDone = false;
@@ -336,6 +352,19 @@ export const getAssignedIssues = async (username: string) => {
   const assigned_issues = issuesArr.filter((issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username);
 
   return assigned_issues;
+};
+
+export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userName: string) => {
+  const pulls = await getOpenedPullRequests(userName);
+  return pulls.filter((pull) => {
+    if (pull.draft) return false;
+    const issues = pull.body!.match(/#(\d+)/gi);
+    if (!issues) return false;
+    const linkedIssueNumbers = Array.from(new Set(issues.map((issue) => issue.replace("#", ""))));
+    console.log(linkedIssueNumbers);
+    if (linkedIssueNumbers.indexOf(`${issueNumber}`) !== -1) return true;
+    return false;
+  });
 };
 
 export const getOpenedPullRequests = async (username: string) => {
