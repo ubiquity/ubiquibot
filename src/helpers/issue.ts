@@ -358,8 +358,6 @@ export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userN
   const pulls = await getOpenedPullRequests(userName);
 
   return pulls.filter((pull) => {
-    if (pull.draft) return false;
-
     const issues = pull.body!.match(/#(\d+)/gi);
 
     if (!issues) return false;
