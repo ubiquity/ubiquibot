@@ -1,10 +1,11 @@
 import { CommentElementPricing } from "../types";
-import { WideLabel, WideOrgConfig, WideRepoConfig, parseYAML } from "./private";
+import { WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 import { readFileSync } from "fs";
+import * as YAML from "yaml";
 
 const DEFAULT_CONFIG_FILE = `${__dirname}/../../ubiquibot-config-default.yml`;
 const defaultConfig = readFileSync(DEFAULT_CONFIG_FILE, "utf8");
-const parsedDefaultConfig: WideRepoConfig = parseYAML(defaultConfig);
+const parsedDefaultConfig: WideRepoConfig = YAML.parse(defaultConfig);
 
 export const getChainId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
   if (parsedRepo && parsedRepo["chain-id"] && !Number.isNaN(Number(parsedRepo["chain-id"]))) {
