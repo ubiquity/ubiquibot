@@ -18,13 +18,37 @@ export const multiplier = async (body: string) => {
     return;
   }
 
-  const regex = /\/multiplier @(\w+) (\d+(?:\.\d+)?)/; // /multiplier @0xcodercrane 0.5
+  const regex = /(".*?"|[^"\s]+)(?=\s*|\s*$)/g;
+  /** You can use this command to set a multiplier for a user.
+   * It will accept arguments in any order.
+   * Example usage:
+   *
+   * /multiplier @user 0.5 "Multiplier reason"
+   * /multiplier 0.5 @user "Multiplier reason"
+   * /multiplier "Multiplier reason" @user 0.5
+   * /multiplier 0.5 "Multiplier reason" @user
+   * /multiplier @user "Multiplier reason" 0.5
+   *
+   **/
 
   const matches = body.match(regex);
 
+  matches?.shift();
+
   if (matches) {
-    const username = matches[1];
-    const bountyMultiplier = parseFloat(matches[2]);
+    let bountyMultiplier = 1;
+    let username = "";
+    let reason = "";
+
+    for (const part of matches) {
+      if (!isNaN(parseFloat(part))) {
+        bountyMultiplier = parseFloat(part);
+      } else if (part.startsWith("@")) {
+        username = part.substring(1);
+      } else {
+        reason += part.replace(/['"]/g, "") + " ";
+      }
+    }
 
     // check if sender is admin or billing_manager
     // passing in context so we don't have to make another request to get the user
@@ -42,8 +66,10 @@ export const multiplier = async (body: string) => {
       }
     }
 
-    await upsertWalletMultiplier(username, bountyMultiplier?.toString());
-    return `Updated the multiplier for @${username} successfully!\t New multiplier: ${bountyMultiplier}`;
+    await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason);
+    return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
+      reason ? `provided is "${reason}"` : "is not provided"
+    }.`;
   } else {
     logger.error("Invalid body for bountyMultiplier command");
     return `Invalid body for bountyMultiplier command`;
