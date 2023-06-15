@@ -2,6 +2,7 @@ import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
 import { Payload } from "../types";
 import { Context } from "probot";
+import { readFileSync } from "fs";
 import {
   getAnalyticsMode,
   getAutoPayMode,
@@ -38,6 +39,8 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo"):
     return undefined;
   }
 };
+
+
 
 export interface WideLabel {
   name: string;
@@ -76,6 +79,15 @@ export const parseYAML = (data: any): any | undefined => {
     return undefined;
   }
 };
+
+export const getDefaultConfig = (): WideRepoConfig | undefined => {
+  try {
+    const defaultConfig = readFileSync(`${__dirname}/../../ubiquibot-config-default.yml`, "utf8");
+    return parseYAML(defaultConfig) as WideRepoConfig;
+  } catch (error: any) {
+    return undefined
+  }
+}
 
 export const getPrivateKey = async (cipherText: string): Promise<string | undefined> => {
   try {
@@ -123,20 +135,21 @@ export const getWideConfig = async (context: Context) => {
 
   const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
   const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
+  const parsedDefault: WideRepoConfig | undefined = getDefaultConfig();
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configData = {
-    chainId: getChainId(parsedRepo, parsedOrg),
+    chainId: getChainId(parsedRepo, parsedOrg, parsedDefault),
     privateKey: privateKeyDecrypted ?? "",
-    baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
-    issueCreatorMultiplier: getCreatorMultiplier(parsedRepo, parsedOrg),
-    timeLabels: getTimeLabels(parsedRepo, parsedOrg),
-    priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),
-    autoPayMode: getAutoPayMode(parsedRepo, parsedOrg),
-    analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg),
-    bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
-    incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
-    commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
+    baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg, parsedDefault),
+    issueCreatorMultiplier: getCreatorMultiplier(parsedRepo, parsedOrg, parsedDefault),
+    timeLabels: getTimeLabels(parsedRepo, parsedOrg, parsedDefault),
+    priorityLabels: getPriorityLabels(parsedRepo, parsedOrg, parsedDefault),
+    autoPayMode: getAutoPayMode(parsedRepo, parsedOrg, parsedDefault),
+    analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg, parsedDefault),
+    bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg, parsedDefault),
+    incentiveMode: getIncentiveMode(parsedRepo, parsedOrg, parsedDefault),
+    commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg, parsedDefault),
   };
 
   return configData;
