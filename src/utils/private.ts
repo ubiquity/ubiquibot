@@ -40,8 +40,6 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo"):
   }
 };
 
-
-
 export interface WideLabel {
   name: string;
   weight: number;
@@ -85,9 +83,9 @@ export const getDefaultConfig = (): WideRepoConfig | undefined => {
     const defaultConfig = readFileSync(`${__dirname}/../../ubiquibot-config-default.yml`, "utf8");
     return parseYAML(defaultConfig) as WideRepoConfig;
   } catch (error: any) {
-    return undefined
+    return undefined;
   }
-}
+};
 
 export const getPrivateKey = async (cipherText: string): Promise<string | undefined> => {
   try {
@@ -135,7 +133,7 @@ export const getWideConfig = async (context: Context) => {
 
   const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
   const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
-  const parsedDefault: WideRepoConfig | undefined = getDefaultConfig();
+  const parsedDefault: WideRepoConfig = getDefaultConfig()!;
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configData = {
