@@ -374,7 +374,7 @@ export const getOpenedPullRequests = async (username: string) => {
   return prs.filter((pr) => !pr.draft && pr.user?.login === username);
 };
 
-export const getCommitsOnPullRequest = async (pull_number: number) => {
+export const getCommitsOnPullRequest = async (pullNumber: number) => {
   const logger = getLogger();
   const context = getBotContext();
   const payload = getBotContext().payload as Payload;
@@ -382,7 +382,7 @@ export const getCommitsOnPullRequest = async (pull_number: number) => {
     const { data: commits } = await context.octokit.rest.pulls.listCommits({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      pull_number,
+      pull_number: pullNumber,
     });
     return commits;
   } catch (e: unknown) {
