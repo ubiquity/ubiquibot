@@ -374,6 +374,23 @@ export const getOpenedPullRequests = async (username: string) => {
   return prs.filter((pr) => !pr.draft && pr.user?.login === username);
 };
 
+export const getCommitsOnPullRequest = async (pull_number: number) => {
+  const logger = getLogger();
+  const context = getBotContext();
+  const payload = getBotContext().payload as Payload;
+  try {
+    const { data: commits } = await context.octokit.rest.pulls.listCommits({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number,
+    });
+    return commits;
+  } catch (e: unknown) {
+    logger.debug(`Fetching pull request commits failed!, reason: ${e}`);
+    return [];
+  }
+};
+
 export const getAvailableOpenedPullRequests = async (username: string) => {
   if (!DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED) return [];
   const context = getBotContext();
