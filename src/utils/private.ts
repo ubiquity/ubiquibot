@@ -78,13 +78,9 @@ export const parseYAML = (data: any): any | undefined => {
   }
 };
 
-export const getDefaultConfig = (): WideRepoConfig | undefined => {
-  try {
-    const defaultConfig = readFileSync(`${__dirname}/../../ubiquibot-config-default.yml`, "utf8");
-    return parseYAML(defaultConfig) as WideRepoConfig;
-  } catch (error: any) {
-    return undefined;
-  }
+export const getDefaultConfig = (): WideRepoConfig => {
+  const defaultConfig = readFileSync(`${__dirname}/../../ubiquibot-config-default.yml`, "utf8");
+  return parseYAML(defaultConfig);
 };
 
 export const getPrivateKey = async (cipherText: string): Promise<string | undefined> => {
@@ -133,21 +129,22 @@ export const getWideConfig = async (context: Context) => {
 
   const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
   const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
-  const parsedDefault: WideRepoConfig = getDefaultConfig()!;
+  const parsedDefault: WideRepoConfig = getDefaultConfig();
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
+  const configs = { parsedRepo, parsedOrg, parsedDefault };
   const configData = {
-    chainId: getChainId(parsedRepo, parsedOrg, parsedDefault),
+    chainId: getChainId(configs),
     privateKey: privateKeyDecrypted ?? "",
-    baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg, parsedDefault),
-    issueCreatorMultiplier: getCreatorMultiplier(parsedRepo, parsedOrg, parsedDefault),
-    timeLabels: getTimeLabels(parsedRepo, parsedOrg, parsedDefault),
-    priorityLabels: getPriorityLabels(parsedRepo, parsedOrg, parsedDefault),
-    autoPayMode: getAutoPayMode(parsedRepo, parsedOrg, parsedDefault),
-    analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg, parsedDefault),
-    bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg, parsedDefault),
-    incentiveMode: getIncentiveMode(parsedRepo, parsedOrg, parsedDefault),
-    commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg, parsedDefault),
+    baseMultiplier: getBaseMultiplier(configs),
+    issueCreatorMultiplier: getCreatorMultiplier(configs),
+    timeLabels: getTimeLabels(configs),
+    priorityLabels: getPriorityLabels(configs),
+    autoPayMode: getAutoPayMode(configs),
+    analyticsMode: getAnalyticsMode(configs),
+    bountyHunterMax: getBountyHunterMax(configs),
+    incentiveMode: getIncentiveMode(configs),
+    commentElementPricing: getCommentItemPrice(configs),
   };
 
   return configData;
