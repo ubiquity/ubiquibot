@@ -33,12 +33,12 @@ export const handleLabelsAccess = async () => {
 
     if (payload.action === "labeled") {
       // remove the label
-      removeLabel(payload.label?.name!);
+      await removeLabel(payload.label?.name!);
     } else if (payload.action === "unlabeled") {
       // add the label
-      addLabelToIssue(payload.label?.name!);
+      await addLabelToIssue(payload.label?.name!);
     }
-    addCommentToIssue(`@${sender}, You are not allowed to ${eventName} ${payload.label?.name!}`, payload.issue.number);
+    await addCommentToIssue(`@${sender}, You are not allowed to ${eventName} ${payload.label?.name!}`, payload.issue.number);
     logger.info(`@${sender} is not allowed to ${eventName} ${payload.label?.name!}`);
     return false;
   }
