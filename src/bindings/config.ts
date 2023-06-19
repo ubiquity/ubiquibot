@@ -62,11 +62,11 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     botConfig.mode.autoPayMode = false;
   }
 
-  const validate = ajv.compile(BotConfigSchema);
-  const valid = validate(botConfig);
-  if (!valid) {
-    throw new Error(validate.errors?.map((err: unknown) => JSON.stringify(err, null, 2)).join(","));
-  }
+  // const validate = ajv.compile(BotConfigSchema);
+  // const valid = validate(botConfig);
+  // if (!valid) {
+  //   throw new Error(validate.errors?.map((err: unknown) => JSON.stringify(err, null, 2)).join(","));
+  // }
 
   if (botConfig.unassign.followUpTime < 0 || botConfig.unassign.disqualifyTime < 0) {
     throw new Error(`Invalid time interval, followUpTime: ${botConfig.unassign.followUpTime}, disqualifyTime: ${botConfig.unassign.disqualifyTime}`);
