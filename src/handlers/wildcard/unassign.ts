@@ -95,14 +95,14 @@ const lastActivityTime = async (issue: any): Promise<Date> => {
   const pr = openedPrsForIssue.length > 0 ? openedPrsForIssue[0] : undefined;
   // get last commit and last comment on the linked pr
   if (pr) {
-    const commits = (await getCommitsOnPullRequest(pr.number)).sort(
-      (a, b) => new Date(b.commit.committer?.date!).getTime() - new Date(a.commit.committer?.date!).getTime()
-    );
+    const commits = (await getCommitsOnPullRequest(pr.number))
+      .filter((it) => it.commit.committer?.date)
+      .sort((a, b) => new Date(b.commit.committer.date).getTime() - new Date(a.commit.committer.date).getTime());
     const prComments = (await getCommentsOfIssue(pr.number))
       .filter((comment) => comment.user.login === assignees[0])
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-    if (commits.length > 0) activities.push(new Date(commits[0].commit.committer?.date!));
+    if (commits.length > 0) activities.push(new Date(commits[0].commit.committer.date));
     if (prComments.length > 0) activities.push(new Date(prComments[0].created_at));
   }
 
