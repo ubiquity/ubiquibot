@@ -1,4 +1,4 @@
-name: Enforce kebab-case filenames
+name: Check Filenames
 
 on: [push, pull_request]
 
@@ -9,8 +9,9 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
-      - name: Enforce kebab-case filenames
+      - name: Check filenames
         run: |
+          non_compliant_files=()
           find . -type f | while read -r file; do
             # Extract the base file name
             basefile=$(basename "$file")
@@ -20,7 +21,14 @@ jobs:
               continue
             # If the file is not in kebab-case
             elif ! echo "$basefile" | grep -q -E "^([a-z0-9]+-)*[a-z0-9]+(\.[a-zA-Z0-9]+)?$"; then
-              echo "File $file is not in kebab-case"
-              exit 1
+              non_compliant_files+=("$file")
             fi
           done
+
+          if [ ${#non_compliant_files[@]} -ne 0 ]; then
+            echo "The following files are not in kebab-case:"
+            for file in "${non_compliant_files[@]}"; do
+              echo "  - $file"
+            done
+            exit 1
+          fi

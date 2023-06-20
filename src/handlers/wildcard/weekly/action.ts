@@ -8,7 +8,7 @@ import { Context } from "probot";
 import { Payload } from "../../../types";
 import { fetchImage } from "../../../utils/web-assets";
 import { weeklyConfig } from "../../../configs/weekly";
-import { ProximaNovaRegularBase64 } from "../../../assets/fonts/ProximaNovaRegularB64";
+import { ProximaNovaRegularBase64 } from "../../../assets/fonts/proxima-nova-regular-b64";
 import { ClosedIssueIcon, CommitIcon, MergedPullIcon, OpenedIssueIcon, OpenedPullIcon } from "../../../assets/svgs";
 import { checkRateLimitGit } from "../../../utils";
 
