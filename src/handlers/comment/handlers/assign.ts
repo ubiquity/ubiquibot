@@ -3,7 +3,9 @@ import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
 import { IssueCommentCommands } from "../commands";
-import { getWalletAddress } from "../../../adapters/supabase";
+import { getWalletAddress, getWalletMultiplier } from "../../../adapters/supabase";
+import { tableComment } from "./table";
+import { bountyInfo } from "../../wildcard";
 
 export const assign = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -84,6 +86,10 @@ export const assign = async (body: string) => {
   const curDate = new Date();
   const curDateInMillisecs = curDate.getTime();
   const endDate = new Date(curDateInMillisecs + duration * 1000);
+  const deadline_msg = endDate.toUTCString();
+  const reason_msg = issue.state_reason ? issue.state_reason : "Reason";
+  let wallet_msg, multiplier_msg, bouty_msg;
+
   let commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
@@ -101,17 +107,24 @@ export const assign = async (body: string) => {
     const recipient = await getWalletAddress(payload.sender.login);
     if (!recipient) {
       //no wallet found
-      commit_msg =
-        commit_msg +
-        "\n\n" +
-        "It looks like you haven't set your wallet address,\n" +
-        "please use `/wallet 0x4FDE...BA18` to do so.\n" +
-        "(It's required to be paid for the bounty)";
+      wallet_msg = "Please set your wallet address to use `/wallet 0x4FDE...BA18`";
     } else {
       //wallet found
-      commit_msg = commit_msg + "\n\n" + "Your currently set address is:\n" + recipient + "\n" + "please use `/wallet 0x4FDE...BA18` if you want to update it.";
+      wallet_msg = recipient;
     }
-    return commit_msg;
+    const multiplier = await getWalletMultiplier(payload.sender.login);
+    if (!multiplier) {
+      multiplier_msg = "1.00";
+    } else {
+      multiplier_msg = multiplier.toFixed(2);
+    }
+    const issueDetailed = bountyInfo(issue);
+    if (!issueDetailed.priceLabel) {
+      bouty_msg = `Permit generation skipped since price label is not set`;
+    } else {
+      bouty_msg = (+issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4) * multiplier).toString() + " USD";
+    }
+    return tableComment(deadline_msg, wallet_msg, multiplier_msg, reason_msg, bouty_msg);
   }
   return;
 };
