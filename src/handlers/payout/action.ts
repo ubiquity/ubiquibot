@@ -48,8 +48,9 @@ export const handleIssueClosed = async () => {
   const multiplier = await getWalletMultiplier(assignee.login);
 
   if (multiplier === 0) {
-    logger.info(`Refusing to generate the payment permit because @${assignee.login} payment multiplier is 0`);
-    return `Refusing to generate the payment permit because @${assignee.login} payment multiplier is 0`;
+    const errMsg = "Refusing to generate the payment permit because" + `@${assignee.login}` + "'s payment `multiplier` is `0`";
+    logger.info(errMsg);
+    return errMsg;
   }
 
   // TODO: add multiplier to the priceInEth
