@@ -6,7 +6,7 @@ import { getBotContext } from "../../../bindings";
 import { telegramPhotoNotifier } from "../../../adapters";
 import { Context } from "probot";
 import { Payload } from "../../../types";
-import { fetchImage } from "../../../utils/webAssets";
+import { fetchImage } from "../../../utils/web-assets";
 import { weeklyConfig } from "../../../configs/weekly";
 import { ProximaNovaRegularBase64 } from "../../../assets/fonts/ProximaNovaRegularB64";
 import { ClosedIssueIcon, CommitIcon, MergedPullIcon, OpenedIssueIcon, OpenedPullIcon } from "../../../assets/svgs";
@@ -179,13 +179,13 @@ const htmlImage = async (summaryInfo: SummaryType) => {
       <html>
       <body>
           <style>
-              @font-face { 
+              @font-face {
                 font-family: "ProximaNovaRegular";
                 font-weight: 100 900;
                 font-style: normal italic;
                 src: url(data:application/font-woff;base64,${ProximaNovaRegularBase64});
               }
-              
+
               html {
                   width: 100%;
                   height: 100%;
