@@ -1,4 +1,4 @@
-name: Enforce Camel Case Filenames
+name: Enforce Kebab Case Filenames
 
 on:
   push:
@@ -15,10 +15,10 @@ jobs:
         run: |
           for file in $(git ls-files); do
             basefile=$(basename "$file")
-            if [[ $file == .*/* ]] || [[ $file == */* ]] || [[ $file == *.* ]] || [[ $basefile =~ ^[a-z0-9]*([A-Z][a-z0-9]*|\.[a-z0-9]+)*$ ]]; then
+            if [[ $file == .*/* ]] || [[ $file == */* ]] || [[ $file == *.* ]] || [[ $basefile =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
               continue
             else
-              echo "File $file is not in camelCase, UPPER_CASE, or .lowercase"
+              echo "File $file is not in kebab-case, UPPER_CASE, or .lowercase"
               exit 1
             fi
           done
