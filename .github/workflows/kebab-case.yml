@@ -1,24 +1,26 @@
 name: Enforce Kebab Case Filenames
 
-on:
-  push:
-  pull_request:
+on: [push, pull_request]
 
 jobs:
   check_filenames:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
-      - name: Check Filenames
-        run: |
-          for file in $(git ls-files); do
-            basefile=$(basename "$file")
-            if [[ $file == .*/* ]] || [[ $file == */* ]] || [[ $basefile =~ ^[^/]*$ ]] || [[ $basefile =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
-              continue
-            else
-              echo "File $file is not in kebab-case, UPPER_CASE, or .lowercase"
-              exit 1
-            fi
-          done
+    - name: Check Filenames
+      run: |
+        for file in $(git ls-files); do
+          # Extract the base file name
+          basefile=$(basename "$file")
+
+          # If the file is within a hidden directory or is a file in the root directory
+          if [[ $file == .*/* ]] || [[ $basefile =~ ^[^/]*$ ]]; then
+            continue
+          # If the file is not in kebab-case
+          elif ! [[ $file =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+            echo "File $file is not in kebab-case"
+            exit 1
+          fi
+        done
