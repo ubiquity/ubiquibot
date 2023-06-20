@@ -3,8 +3,8 @@
   "version": "0.1.2",
   "description": "Enables Ubiquity DevPool automation in your repository.",
   "author": "Ubiquity DAO",
-  "license": "ISC",
-  "homepage": "https://github.com/ubiquity/bounty-bot.git",
+  "license": "MIT",
+  "homepage": "https://github.com/ubiquity/ubiquibot.git",
   "keywords": [
     "probot",
     "github",
@@ -13,9 +13,11 @@
   "scripts": {
     "build": "tsc",
     "build:serverless": "ncc build src/index.ts -o dist",
-    "build:ci": "ncc build adapters/index.ts -o dist && mv ./dist/index.js ./bin",
+    "build:ci": "ncc build adapters/index.ts -o dist",
+    "postbuild:ci": "mv ./dist/index.js ./bin",
     "start": "probot run ./lib/index.js",
-    "start:watch": "node copy.js && nodemon --exec 'yarn start'",
+    "prestart:watch": "ln -s src/assets/images lib/assets/images",
+    "start:watch": "nodemon --exec 'yarn start'",
     "start:serverless": "tsx adapters/index.ts",
     "format": "prettier --write src",
     "format:check": "prettier -c src/**/*.ts",
@@ -79,5 +81,17 @@
     "*.{ts,json}": [
       "prettier --write"
     ]
+  },
+  "nodemonConfig": {
+    "events": {
+      "config": "",
+      "exit": "",
+      "crash": "",
+      "restart": "clear && printf '\\033[3J'",
+      "start": "clear && printf '\\033[3J'"
+    },
+    "verbose": true,
+    "ext": "ts",
+    "exec": "yarn start"
   }
 }
