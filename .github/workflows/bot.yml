@@ -12,9 +12,6 @@ on:
     types:
       - created
       - edited
-  # pull_request:
-  #   types:
-  #     - opened
 
 jobs:
   calculate_bounty_job:
