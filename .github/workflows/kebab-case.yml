@@ -1,4 +1,4 @@
-name: Check Filenames
+name: Enforce kebab-case
 
 on: [push, pull_request]
 
@@ -9,7 +9,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
-      - name: Check filenames
+      - name: Enforce kebab-case
         run: |
           non_compliant_files=()
           find . -type f | while read -r file; do
