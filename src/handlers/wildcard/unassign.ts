@@ -8,7 +8,7 @@ import {
   listIssuesForRepo,
   removeAssignees,
 } from "../../helpers";
-import { Comment, IssueType } from "../../types";
+import { Comment, Issue, IssueType } from "../../types";
 
 /**
  * @dev Check out the bounties which haven't been completed within the initial timeline
@@ -25,18 +25,18 @@ export const checkBountiesToUnassign = async () => {
   const assigned_issues = issues_opened.filter((issue) => issue.assignee);
 
   // Checking the bounties in parallel
-  const res = await Promise.all(assigned_issues.map(async (issue) => checkBountyToUnassign(issue)));
+  const res = await Promise.all(assigned_issues.map(async (issue) => checkBountyToUnassign(issue as Issue)));
   logger.info(`Checking expired bounties done! total: ${res.length}, unassigned: ${res.filter((i) => i).length}`);
 };
 
-const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
+const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   const logger = getLogger();
   const {
     unassign: { followUpTime, disqualifyTime },
   } = getBotConfig();
   logger.info(`Checking the bounty to unassign, issue_number: ${issue.number}`);
   const { unassignComment, askUpdate } = GLOBAL_STRINGS;
-  const assignees = issue.assignees.map((i: any) => i.login);
+  const assignees = issue.assignees.map((i) => i.login);
   const comments = await getCommentsOfIssue(issue.number);
   if (!comments || comments.length == 0) return false;
 
@@ -78,10 +78,10 @@ const checkBountyToUnassign = async (issue: any): Promise<boolean> => {
   return false;
 };
 
-const lastActivityTime = async (issue: any): Promise<Date> => {
+const lastActivityTime = async (issue: Issue): Promise<Date> => {
   const logger = getLogger();
   logger.info(`Checking the latest activity for the issue, issue_number: ${issue.number}`);
-  const assignees = issue.assignees.map((i: any) => i.login);
+  const assignees = issue.assignees.map((i) => i.login);
   const activities: Date[] = [new Date(issue.created_at)];
 
   // get last comment on the issue
@@ -97,12 +97,12 @@ const lastActivityTime = async (issue: any): Promise<Date> => {
   if (pr) {
     const commits = (await getCommitsOnPullRequest(pr.number))
       .filter((it) => it.commit.committer?.date)
-      .sort((a, b) => new Date(b.commit.committer.date).getTime() - new Date(a.commit.committer.date).getTime());
+      .sort((a, b) => new Date(b.commit.committer?.date ?? 0).getTime() - new Date(a.commit.committer?.date ?? 0).getTime());
     const prComments = (await getCommentsOfIssue(pr.number))
       .filter((comment) => comment.user.login === assignees[0])
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-    if (commits.length > 0) activities.push(new Date(commits[0].commit.committer.date));
+    if (commits.length > 0) activities.push(new Date(commits[0].commit.committer?.date ?? 0));
     if (prComments.length > 0) activities.push(new Date(prComments[0].created_at));
   }
 

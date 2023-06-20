@@ -25,24 +25,25 @@ export const checkPullRequests = async () => {
     });
 
     // if pullRequestLinked is empty, continue
-    if (pullRequestLinked == "") {
+    if (pullRequestLinked == "" || !pull.user) {
       continue;
     }
 
     const linkedIssueNumber = pullRequestLinked.substring(pullRequestLinked.lastIndexOf("/") + 1);
 
     // Check if the pull request opener is assigned to the issue
-    const opener = pull!.user!.login;
+    const opener = pull.user.login;
 
     const issue = await getIssueByNumber(context, +linkedIssueNumber);
+    if (!issue?.assignees) continue;
 
     // if issue is already assigned, continue
-    if (issue!.assignees!.length > 0) {
+    if (issue.assignees.length > 0) {
       logger.debug(`Issue already assigned, ignoring...`);
       continue;
     }
 
-    const assignedUsernames = issue!.assignees!.map((assignee) => assignee.login);
+    const assignedUsernames = issue.assignees.map((assignee) => assignee.login);
     if (!assignedUsernames.includes(opener)) {
       await addAssignees(+linkedIssueNumber, [opener]);
       logger.debug(`Assigned pull request #${pull.number} opener to issue ${linkedIssueNumber}.`);

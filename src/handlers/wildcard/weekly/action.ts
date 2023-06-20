@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+//
+// TODO: The above line SHOULD be removed finally by creating types for `any` types
+//
 import path from "path";
 import axios from "axios";
 import Jimp from "jimp";
@@ -29,29 +33,31 @@ const fetchEvents = async (context: Context): Promise<any[]> => {
   const perPage = 30;
   while (shouldFetch) {
     try {
-      const { data: pubOrgEvents, headers } = await context.octokit.activity.listPublicOrgEvents({
-        org: payload.organization!.login,
-        per_page: perPage,
-        page: currentPage,
-      });
+      if (payload.organization) {
+        const { data: pubOrgEvents, headers } = await context.octokit.activity.listPublicOrgEvents({
+          org: payload.organization.login,
+          per_page: perPage,
+          page: currentPage,
+        });
 
-      await checkRateLimitGit(headers);
+        await checkRateLimitGit(headers);
 
-      pubOrgEvents.forEach((elem: any) => {
-        const elemTimestamp = new Date(elem.created_at as string).getTime();
-        if (elemTimestamp <= startTimestamp && elemTimestamp >= endTimestamp) {
-          //pass
-          elemList.push(elem);
-        } else if (elemTimestamp > startTimestamp) {
-          //outta range
-          //skip
-        } else {
-          //fail end
-          shouldFetch = false;
-        }
-      });
+        pubOrgEvents.forEach((elem: any) => {
+          const elemTimestamp = new Date(elem.created_at as string).getTime();
+          if (elemTimestamp <= startTimestamp && elemTimestamp >= endTimestamp) {
+            //pass
+            elemList.push(elem);
+          } else if (elemTimestamp > startTimestamp) {
+            //outta range
+            //skip
+          } else {
+            //fail end
+            shouldFetch = false;
+          }
+        });
 
-      currentPage++;
+        currentPage++;
+      }
     } catch (error) {
       shouldFetch = false;
     }
