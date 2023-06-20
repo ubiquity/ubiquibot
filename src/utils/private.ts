@@ -65,14 +65,13 @@ export interface WideOrgConfig extends WideConfig {
   "private-key-encrypted"?: string;
 }
 
-export const parseYAML = async (data: any): Promise<any | undefined> => {
+export const parseYAML = async (data?: string): Promise<WideConfig | undefined> => {
   try {
-    const parsedData = await YAML.parse(data);
-    if (parsedData !== null) {
-      return parsedData;
-    } else {
-      return undefined;
+    if (data) {
+      const parsedData = await YAML.parse(data);
+      return parsedData ?? undefined;
     }
+    return undefined;
   } catch (error) {
     return undefined;
   }
@@ -97,7 +96,7 @@ export const getPrivateKey = async (cipherText: string): Promise<string | undefi
     let walletPrivateKey: string | undefined = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
     walletPrivateKey = walletPrivateKey.replace(KEY_PREFIX, "");
     return walletPrivateKey;
-  } catch (error: any) {
+  } catch (error: unknown) {
     return undefined;
   }
 };
@@ -113,7 +112,7 @@ export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Prom
       return scalerPub;
     }
     return undefined;
-  } catch (error: any) {
+  } catch (error: unknown) {
     return undefined;
   }
 };
