@@ -10,7 +10,7 @@ import { wait } from "../helpers";
  * console.log(`Remaining requests: ${remainingRequests}`);
  **/
 
-export const checkRateLimitGit = async (headers: any) => {
+export const checkRateLimitGit = async (headers: { "x-ratelimit-remaining"?: string; "x-ratelimit-reset"?: string }) => {
   // Check the remaining limit
   const remainingRequests = headers["x-ratelimit-remaining"] ? parseInt(headers["x-ratelimit-remaining"]) : 0;
 

@@ -9,8 +9,12 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   const config = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
+  if (!payload.issue) {
+    logger.debug(`Empty issue object`);
+    return;
+  }
 
-  logger.info(`Commenting timeline message for issue: ${payload.issue?.number}`);
+  logger.info(`Commenting timeline message for issue: ${payload.issue.number}`);
 
   const _assignees = payload.issue?.assignees;
   const assignees = _assignees ? _assignees?.filter((i) => !exclude_accounts.includes(i.login)) : [];
@@ -59,7 +63,7 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   const commit_msg = `${flattened_assignees} ${deadLinePrefix} ${endDate.toUTCString()}`;
   logger.debug(`Creating an issue comment, commit_msg: ${commit_msg}`);
 
-  await addCommentToIssue(commit_msg, payload.issue!.number);
+  await addCommentToIssue(commit_msg, payload.issue?.number);
 };
 
 export const closePullRequestForAnIssue = async (): Promise<void> => {

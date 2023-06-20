@@ -108,7 +108,7 @@ export const incentivizeCreatorComment = async () => {
   }
 
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
-  const result = await generatePermitForComments(creator?.login, [description], issueCreatorMultiplier, commentElementPricing, tokenSymbol, issue!.node_id);
+  const result = await generatePermitForComments(creator?.login, [description], issueCreatorMultiplier, commentElementPricing, tokenSymbol, issue.node_id);
 
   if (result.payoutUrl) {
     logger.info(`Permit url generated for creator. reward: ${result.payoutUrl}`);

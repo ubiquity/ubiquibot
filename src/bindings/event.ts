@@ -17,8 +17,14 @@ export const getBotConfig = () => botConfig;
 let adapters: Adapters = {} as Adapters;
 export const getAdapters = () => adapters;
 
-let logger: any;
-export const getLogger = () => logger!;
+export type Logger = {
+  info: (msg: string | object, options?: JSON) => void;
+  debug: (msg: string | object, options?: JSON) => void;
+  warn: (msg: string | object, options?: JSON) => void;
+  error: (msg: string | object, options?: JSON) => void;
+};
+let logger: Logger;
+export const getLogger = (): Logger => logger;
 
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT as string, GithubEvent.PUSH_EVENT as string];
 
@@ -33,7 +39,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
     app: "UbiquiBot",
     level: botConfig.log.level,
   };
-  logger = createLogger(botConfig.log.ingestionKey, options);
+  logger = createLogger(botConfig.log.ingestionKey, options) as Logger;
   if (!logger) {
     return;
   }
@@ -61,7 +67,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
     const valid = validate(payload);
     if (!valid) {
       logger.info("Payload schema validation failed!!!", payload);
-      logger.warn(validate.errors!);
+      if (validate.errors) logger.warn(validate.errors);
       return;
     }
 

@@ -30,7 +30,7 @@ export const assign = async (body: string) => {
 
   logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
 
-  const issue_number = issue!.number;
+  const issue_number = issue.number;
 
   // check for max and enforce max
   if (assigned_issues.length - opened_prs.length >= config.assign.bountyHunterMax) {
@@ -38,7 +38,7 @@ export const assign = async (body: string) => {
     return;
   }
 
-  if (issue!.state == IssueType.CLOSED) {
+  if (issue.state == IssueType.CLOSED) {
     logger.info("Skipping '/assign', reason: closed ");
     return "Skipping `/assign` since the issue is closed";
   }
@@ -89,12 +89,12 @@ export const assign = async (body: string) => {
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     logger.info(`Adding the assignee: ${payload.sender.login}`);
     // assign default bounty account to the issue
-    await addAssignees(issue_number!, [payload.sender.login]);
+    await addAssignees(issue_number, [payload.sender.login]);
   }
 
   // double check whether the assign message has been already posted or not
   logger.info(`Creating an issue comment: ${commit_msg}`);
-  const issue_comments = await getCommentsOfIssue(issue_number!);
+  const issue_comments = await getCommentsOfIssue(issue_number);
   const comments = issue_comments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latest_comment = comments.length > 0 ? comments[0].body : undefined;
   if (latest_comment && commit_msg != latest_comment) {

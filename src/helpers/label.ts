@@ -114,7 +114,7 @@ export const updateLabelsFromBaseRate = async (owner: string, repo: string, cont
         logger.debug(`Label updated: ${label} -> ${uniqueNewLabels[index]}`);
       }
     }
-  } catch (error: any) {
-    console.error("Error updating labels:", error.message);
+  } catch (error: unknown) {
+    logger.error(`Error updating labels, error: ${error}`);
   }
 };
