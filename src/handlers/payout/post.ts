@@ -34,7 +34,7 @@ export const incentivizeComments = async () => {
     return;
   }
 
-  const issueComments = await getAllIssueComments(payload.issue?.number!);
+  const issueComments = await getAllIssueComments(issue.number);
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
@@ -99,9 +99,9 @@ export const incentivizeCreatorComment = async () => {
     return;
   }
 
-  const description = await getIssueDescription(payload.issue?.number!);
+  const description = await getIssueDescription(issue.number);
   logger.info(`Getting the issue description done. description: ${description}`);
-  const creator = issue!.user;
+  const creator = issue.user;
   if (creator?.type === UserType.Bot || creator?.login === issue?.assignee) {
     logger.info("Issue creator assigneed himself or Bot created this issue.");
     return;
@@ -112,7 +112,7 @@ export const incentivizeCreatorComment = async () => {
 
   if (result.payoutUrl) {
     logger.info(`Permit url generated for creator. reward: ${result.payoutUrl}`);
-    addCommentToIssue(result.comment, issue!.number);
+    await addCommentToIssue(result.comment, issue.number);
   }
   if (result.amountInETH) {
     logger.info(`Skipping to generate a permit url for missing account. fallback: ${result.amountInETH}`);

@@ -64,16 +64,16 @@ export const commentWithAssignMessage = async (): Promise<void> => {
 
 export const closePullRequestForAnIssue = async (): Promise<void> => {
   const context = getBotContext();
-  // const config = getBotConfig();
   const logger = getLogger();
-
   const payload = context.payload as Payload;
-  const prs = await getOpenedPullRequestsForAnIssue(payload.issue?.number!, payload.sender.login);
+  if (!payload.issue?.number) return;
+
+  const prs = await getOpenedPullRequestsForAnIssue(payload.issue.number, payload.sender.login);
   logger.info(`Opened prs for this issue: ${JSON.stringify(prs)}`);
   let comment = `These linked pull requests are closed: `;
   for (let i = 0; i < prs.length; i++) {
     await closePullRequest(prs[i].number);
     comment += ` <a href="${prs[i]._links.html.href}">#${prs[i].number}</a> `;
   }
-  await addCommentToIssue(comment, payload.issue?.number!);
+  await addCommentToIssue(comment, payload.issue.number);
 };
