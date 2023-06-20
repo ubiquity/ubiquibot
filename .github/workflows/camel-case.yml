@@ -1,0 +1,21 @@
+name: Enforce Camel Case Filenames
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check_filenames:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Check Filenames
+      run: |
+        for file in $(git ls-files); do
+          if [[ $(basename "$file") =~ [^a-z0-9]([A-Z]) ]]; then
+            echo "File $file is not in camelCase"
+            exit 1
+          fi
+        done
