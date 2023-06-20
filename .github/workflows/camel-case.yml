@@ -10,11 +10,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: "Check Filenames"
+      - name: Check Filenames
         run: |
           for file in $(git ls-files); do
             basefile=$(basename "$file")
-            if [[ ! $basefile =~ ^(\.github\/.*|[a-z0-9]*([A-Z][a-z0-9]*|\.[a-z0-9]+)*|[A-Z]+)$ ]]; then
+            if [[ $file == .github/* ]] || [[ $basefile =~ ^[a-z0-9]*([A-Z][a-z0-9]*|\.[a-z0-9]+)*$ ]]; then
+              continue
+            else
               echo "File $file is not in camelCase, UPPER_CASE, or .lowercase"
               exit 1
             fi
