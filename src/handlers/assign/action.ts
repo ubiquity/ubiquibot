@@ -1,5 +1,5 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue } from "../../helpers";
+import { addCommentToIssue, closePullRequest, getOpenedPullRequestsForAnIssue } from "../../helpers";
 import { Payload, LabelItem } from "../../types";
 import { deadLinePrefix } from "../shared";
 
@@ -60,4 +60,20 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   logger.debug(`Creating an issue comment, commit_msg: ${commit_msg}`);
 
   await addCommentToIssue(commit_msg, payload.issue!.number);
+};
+
+export const closePullRequestForAnIssue = async (): Promise<void> => {
+  const context = getBotContext();
+  // const config = getBotConfig();
+  const logger = getLogger();
+
+  const payload = context.payload as Payload;
+  const prs = await getOpenedPullRequestsForAnIssue(payload.issue?.number!, payload.sender.login);
+  logger.info(`Opened prs for this issue: ${JSON.stringify(prs)}`);
+  let comment = `These linked pull requests are closed: `;
+  for (let i = 0; i < prs.length; i++) {
+    await closePullRequest(prs[i].number);
+    comment += ` <a href="${prs[i]._links.html.href}">#${prs[i].number}</a> `;
+  }
+  await addCommentToIssue(comment, payload.issue?.number!);
 };
