@@ -14,7 +14,7 @@ jobs:
         run: |
           for file in $(git ls-files); do
             basefile=$(basename "$file")
-            if [[ ! $basefile =~ ^[a-z0-9]*([A-Z][a-z0-9]*|\.[a-z0-9]+)*$ ]]; then
+            if [[ ! $basefile =~ ^(\.github\/.*|[a-z0-9]*([A-Z][a-z0-9]*|\.[a-z0-9]+)*|[A-Z]+)$ ]]; then
               echo "File $file is not in camelCase, UPPER_CASE, or .lowercase"
               exit 1
             fi
