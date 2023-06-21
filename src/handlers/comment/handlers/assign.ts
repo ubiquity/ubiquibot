@@ -125,7 +125,7 @@ export const assign = async (body: string) => {
       bounty_msg = (+issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4) * multiplier).toString() + " USD";
     }
     const reason = await getWalletReason(payload.sender.login);
-    reason_msg = reason ? reason : "";
+    reason_msg = reason ?? "";
     return tableComment(deadline_msg, wallet_msg, multiplier_msg, reason_msg, bounty_msg);
   }
   return;
