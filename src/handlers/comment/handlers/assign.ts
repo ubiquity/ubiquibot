@@ -89,7 +89,10 @@ export const assign = async (body: string) => {
   const deadline_msg = endDate.toUTCString();
 
   let wallet_msg, multiplier_msg, reason_msg, bounty_msg;
-
+  const tips_msg = `\nTips:\n
+  - Use /wallet 0x4FDE...BA18 if you want to update your registered payment wallet address ${payload.sender.login}
+  - Be sure to open a draft pull request as soon as possible to communicate updates on your progress.
+  - Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the bounty.`;
   let commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
@@ -126,7 +129,7 @@ export const assign = async (body: string) => {
     }
     const reason = await getWalletReason(payload.sender.login);
     reason_msg = reason ? reason : "";
-    return tableComment(deadline_msg, wallet_msg, multiplier_msg, reason_msg, bounty_msg);
+    return tableComment(deadline_msg, wallet_msg, multiplier_msg, reason_msg, bounty_msg) + tips_msg;
   }
   return;
 };
