@@ -93,13 +93,13 @@ const commandCallback = async (issue_number: number, comment: string) => {
 export const userCommands: UserCommands[] = [
   {
     id: IssueCommentCommands.ASSIGN,
-    description: "Assign the origin sender to the issue automatically.",
+    description: "Start the origin sender to the issue automatically.",
     handler: assign,
     callback: commandCallback,
   },
   {
     id: IssueCommentCommands.UNASSIGN,
-    description: "Unassign the origin sender from the issue automatically.",
+    description: "Stop the origin sender from the issue automatically.",
     handler: unassign,
     callback: commandCallback,
   },
