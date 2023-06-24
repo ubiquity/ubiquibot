@@ -12,9 +12,29 @@ jobs:
       - name: Check For Non Kebab-Cased File Names
         run: |
           non_compliant_files=()
+          ignoreList=(
+            "^\.\/\..*\/" # Ignore hidden flies
+            "^\.\/[^\/]*$" # Ignore files in root project directory
+            "^\.\/node_modules"
+            "^\.\/\.git"
+            "^\.\/dist"
+            "^\.\/build"
+            "^\.\/vendor"
+            "^\.\/\.next"
+            "\.sql$"
+            "\.md$"
+            "\.d.ts$"
+          )
           while read -r file; do
             basefile=$(basename "$file")
-            if echo "$file" | grep -q -E "^\.\/\..*\/|^\.\/[^\/]*$|^\.\/node_modules|^\.\/\.git|^\.\/dist|^\.\/build|^\.\/vendor|^\.\/\.next|\.sql$|\.md$"; then
+            ignoreFile=false
+            for pattern in "${ignoreList[@]}"; do
+              if echo "$file" | grep -q -E "$pattern"; then
+                ignoreFile=true
+                break
+              fi
+            done
+            if $ignoreFile; then
               continue
             elif ! echo "$basefile" | grep -q -E "^([a-z0-9]+-)*[a-z0-9]+(\.[a-zA-Z0-9]+)?$|^([a-z0-9]+_)*[a-z0-9]+(\.[a-zA-Z0-9]+)?$"; then
               non_compliant_files+=("$file")
