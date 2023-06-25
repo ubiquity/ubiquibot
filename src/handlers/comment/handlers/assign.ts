@@ -3,7 +3,7 @@ import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
 import { IssueCommentCommands } from "../commands";
-import { getWalletAddress, getWalletMultiplier, getWalletReason } from "../../../adapters/supabase";
+import { getWalletAddress, getWalletMultiplier, getMultiplierReason } from "../../../adapters/supabase";
 import { tableComment } from "./table";
 import { bountyInfo } from "../../wildcard";
 
@@ -124,7 +124,7 @@ export const assign = async (body: string) => {
     } else {
       bounty_msg = (+issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4) * multiplier).toString() + " USD";
     }
-    const reason = await getWalletReason(payload.sender.login);
+    const reason = await getMultiplierReason(payload.sender.login);
     reason_msg = reason ?? "";
     return tableComment(deadline_msg, wallet_msg, multiplier_msg, reason_msg, bounty_msg);
   }
