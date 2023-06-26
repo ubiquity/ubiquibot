@@ -12,9 +12,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "build:serverless": "ncc build src/index.ts -o dist",
-    "build:ci": "ncc build adapters/github-actions.ts -o dist",
-    "postbuild:ci": "mv ./dist/index.js ./bin",
+    "build:serverless": "ncc build src/index.ts -o ./",
+    "build:ci": "ncc build adapters/github-actions.ts -o ./",
     "start": "probot run ./lib/index.js",
     "prestart:watch": "ln -s src/assets/images lib/assets/images",
     "start:watch": "nodemon --exec 'yarn start'",
