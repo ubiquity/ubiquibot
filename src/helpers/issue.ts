@@ -8,8 +8,9 @@ export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
+  if (!payload.issue) return;
 
-  const labels = payload.issue!.labels;
+  const labels = payload.issue.labels;
   const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));
 
   if (!issuePrices.length) return;
@@ -18,11 +19,11 @@ export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
     await context.octokit.issues.removeLabel({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number: payload.issue!.number,
+      issue_number: payload.issue.number,
       name: issuePrices[0].name.toString(),
     });
   } catch (e: unknown) {
-    logger.debug(`Clearing all price labels failed!, reason: ${(e as any)?.message}`);
+    logger.debug(`Clearing all price labels failed!, reason: ${e}`);
   }
 };
 
@@ -30,20 +31,24 @@ export const addLabelToIssue = async (labelName: string) => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
+  if (!payload.issue) {
+    logger.debug("Issue object is null");
+    return;
+  }
 
   try {
     await context.octokit.issues.addLabels({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number: payload.issue!.number,
+      issue_number: payload.issue.number,
       labels: [labelName],
     });
   } catch (e: unknown) {
-    logger.debug(`Adding a label to issue failed!, reason: ${(e as any)?.message}`);
+    logger.debug(`Adding a label to issue failed!, reason: ${e}`);
   }
 };
 
-export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open", per_page: number = 30, page: number = 1) => {
+export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open", per_page = 30, page = 1) => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -102,6 +107,7 @@ export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[
 
 export const getIssueDescription = async (issue_number: number): Promise<string> => {
   const context = getBotContext();
+  const logger = getLogger();
   const payload = context.payload as Payload;
 
   let result = "";
@@ -114,7 +120,9 @@ export const getIssueDescription = async (issue_number: number): Promise<string>
 
     await checkRateLimitGit(response?.headers);
     if (response.data.body) result = response.data.body;
-  } catch (e: unknown) {}
+  } catch (e: unknown) {
+    logger.debug(`Getting issue description failed!, reason: ${e}`);
+  }
   return result;
 };
 
@@ -122,7 +130,7 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
   const context = getBotContext();
   const payload = context.payload as Payload;
 
-  let result: Comment[] = [];
+  const result: Comment[] = [];
   let shouldFetch = true;
   let page_number = 1;
   try {
@@ -139,7 +147,7 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
 
       // Fixing infinite loop here, it keeps looping even when its an empty array
       if (response?.data?.length > 0) {
-        response.data.forEach((item) => result!.push(item as Comment));
+        response.data.forEach((item) => result?.push(item as Comment));
         page_number++;
       } else {
         shouldFetch = false;
@@ -234,12 +242,16 @@ export const removeLabel = async (name: string) => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
+  if (!payload.issue) {
+    logger.debug("Invalid issue object");
+    return;
+  }
 
   try {
     await context.octokit.issues.removeLabel({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number: payload.issue!.number,
+      issue_number: payload.issue.number,
       name: name,
     });
   } catch (e: unknown) {
@@ -281,7 +293,7 @@ export const closePullRequest = async (pull_number: number) => {
 };
 
 export const getAllPullRequestReviews = async (context: Context, pull_number: number) => {
-  let prArr = [];
+  const prArr = [];
   let fetchDone = false;
   const perPage = 30;
   let curPage = 1;
@@ -334,7 +346,7 @@ export const getIssueByNumber = async (context: Context, issue_number: number) =
 
 // Get issues assigned to a username
 export const getAssignedIssues = async (username: string) => {
-  let issuesArr = [];
+  const issuesArr = [];
   let fetchDone = false;
   const perPage = 30;
   let curPage = 1;
@@ -358,7 +370,8 @@ export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userN
   const pulls = await getOpenedPullRequests(userName);
 
   return pulls.filter((pull) => {
-    const issues = pull.body!.match(/#(\d+)/gi);
+    if (!pull.body) return false;
+    const issues = pull.body.match(/#(\d+)/gi);
 
     if (!issues) return false;
 

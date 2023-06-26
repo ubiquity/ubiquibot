@@ -1,3 +1,3 @@
 import { run } from "../handlers/wildcard/weekly/action";
 
-run();
+export default run;

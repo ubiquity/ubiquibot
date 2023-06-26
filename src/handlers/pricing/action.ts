@@ -12,7 +12,7 @@ export const pricingLabelLogic = async (): Promise<void> => {
   if (!payload.issue) return;
   const labels = payload.issue.labels;
 
-  let valid = await handleLabelsAccess();
+  const valid = await handleLabelsAccess();
 
   if (!valid) {
     return;
