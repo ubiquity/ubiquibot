@@ -44,14 +44,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
     return;
   }
 
-  logger.info(
-    `Config loaded! config: ${JSON.stringify({
-      price: botConfig.price,
-      unassign: botConfig.unassign,
-      mode: botConfig.mode,
-      log: botConfig.log,
-    })}`
-  );
+  logger.info(`Config loaded! config: ${JSON.stringify({ price: botConfig.price, unassign: botConfig.unassign, mode: botConfig.mode, log: botConfig.log })}`);
   const allowedEvents = Object.values(GithubEvent) as string[];
   const eventName = payload.action ? `${name}.${payload.action}` : name; // some events wont have actions as this grows
 

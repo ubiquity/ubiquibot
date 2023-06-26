@@ -12,6 +12,9 @@ on:
     types:
       - created
       - edited
+  pull_request:
+    types:
+      - opened
 
 jobs:
   calculate_bounty_job:
@@ -30,18 +33,15 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "18.14.1"
-
+          
       - name: Install
         run: yarn install
-
+        
       - name: Authenticate as UbiquiBot
         uses: tibdex/github-app-token@v1.7.0
         id: get_installation_token
         with:
           app_id: 346074
-          # https://github.com/organizations/ubiquibot/settings/apps/ubiquibot-qa/installations
-          # https://github.com/apps/ubiquibot-qa/installations/new/permissions?target_id=4975670
-          # https://github.com/settings/installations/38790399
           private_key: |
             -----BEGIN RSA PRIVATE KEY-----
             MIIEpQIBAAKCAQEA3QM8hM2PNtmZVDu9fMWCznTw4FefZ2JXe+3ong4TX4G/d3QD
@@ -70,7 +70,7 @@ jobs:
             RoF1Gt57QIS+TdRQFMkNgd7fyq4+kotQBjuRQIfDOPhKXVnopeFJOFJkAGRc4Saa
             BGZvyfK5g8aSy8Wtg4Lj7/wL4pEde4cm8AF4K0wbb3AfbDBB0GQk6N8=
             -----END RSA PRIVATE KEY-----
-
+          
       - name: Invoke the UbiquiBot
         id: UbiquiBot
         env:
