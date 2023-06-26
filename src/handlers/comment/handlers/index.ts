@@ -120,7 +120,7 @@ export const userCommands: UserCommands[] = [
   },*/
   {
     id: IssueCommentCommands.MULTIPLIER,
-    description: `Set bounty multiplier (for treasury)`,
+    description: `Set bounty multiplier (for treasury) can add reason by leaving a space and typing it`,
     handler: multiplier,
     callback: commandCallback,
   },
