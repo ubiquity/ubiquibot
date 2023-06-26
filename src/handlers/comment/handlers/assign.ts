@@ -90,7 +90,7 @@ export const assign = async (body: string) => {
 
   let wallet_msg, multiplier_msg, reason_msg, bounty_msg;
 
-  let commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
+  const commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     logger.info(`Adding the assignee: ${payload.sender.login}`);
@@ -122,7 +122,7 @@ export const assign = async (body: string) => {
     if (!issueDetailed.priceLabel) {
       bounty_msg = `Permit generation skipped since price label is not set`;
     } else {
-      bounty_msg = (+issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4) * multiplier).toString() + " USD";
+      bounty_msg = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * multiplier).toString() + " USD";
     }
     const reason = await getMultiplierReason(payload.sender.login);
     reason_msg = reason ?? "";
