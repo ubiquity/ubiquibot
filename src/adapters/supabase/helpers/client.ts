@@ -160,12 +160,19 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
 
   const { data, error } = await supabase.from("wallets").select("user_name").eq("user_name", username).single();
   if (data) {
-    await supabase.from("wallets").upsert({ user_name: username, wallet_address: address, updated_at: new Date().toUTCString() });
+    await supabase.from("wallets").upsert({
+      user_name: username,
+      wallet_address: address,
+      updated_at: new Date().toUTCString(),
+    });
     logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
   } else {
-    const { data: _data, error: _error } = await supabase
-      .from("wallets")
-      .insert({ user_name: username, wallet_address: address, created_at: new Date().toUTCString(), updated_at: new Date().toUTCString() });
+    const { data: _data, error: _error } = await supabase.from("wallets").insert({
+      user_name: username,
+      wallet_address: address,
+      created_at: new Date().toUTCString(),
+      updated_at: new Date().toUTCString(),
+    });
     logger.info(`Creating a new wallet_table record done, { data: ${_data}, error: ${_error} }`);
   }
 };
@@ -181,12 +188,22 @@ export const upsertWalletMultiplier = async (username: string, multiplier: strin
 
   const { data, error } = await supabase.from("wallets").select("user_name").eq("user_name", username).single();
   if (data) {
-    await supabase.from("wallets").upsert({ user_name: username, multiplier, reason, updated_at: new Date().toUTCString() });
+    await supabase.from("wallets").upsert({
+      user_name: username,
+      multiplier,
+      reason,
+      updated_at: new Date().toUTCString(),
+    });
     logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
   } else {
-    const { data: _data, error: _error } = await supabase
-      .from("wallets")
-      .insert({ user_name: username, wallet_address: "", multiplier, reason, created_at: new Date().toUTCString(), updated_at: new Date().toUTCString() });
+    const { data: _data, error: _error } = await supabase.from("wallets").insert({
+      user_name: username,
+      wallet_address: "",
+      multiplier,
+      reason,
+      created_at: new Date().toUTCString(),
+      updated_at: new Date().toUTCString(),
+    });
     logger.info(`Creating a new wallet_table record done, { data: ${_data}, error: ${_error} }`);
   }
 };
@@ -204,7 +221,12 @@ export const upsertAccessControl = async (username: string, repository: string, 
 
   const { data, error } = await supabase.from("access").select("user_name").eq("user_name", username).eq("repository", repository).single();
 
-  const properties = { user_name: username, repository: repository, updated_at: new Date().toUTCString(), [access]: bool };
+  const properties = {
+    user_name: username,
+    repository: repository,
+    updated_at: new Date().toUTCString(),
+    [access]: bool,
+  };
 
   if (data) {
     await supabase.from("access").upsert(properties);
