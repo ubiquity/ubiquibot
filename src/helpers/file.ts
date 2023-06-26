@@ -22,7 +22,7 @@ export async function getPreviousFileContent(owner: string, repo: string, branch
     });
 
     // Find the file in the commit tree
-    const file = commitData.data.files!.find((file) => file.filename === filePath);
+    const file = commitData.data.files ? commitData.data.files.find((file) => file.filename === filePath) : undefined;
     if (file) {
       // Retrieve the previous file content from the commit's parent
       const previousCommitSha = commitData.data.parents[0].sha;
@@ -43,19 +43,19 @@ export async function getPreviousFileContent(owner: string, repo: string, branch
 
       // Find the previous file content in the tree
       const previousFile = previousTree.data.tree.find((item) => item.path === filePath);
-      if (previousFile) {
+      if (previousFile && previousFile.sha) {
         // Get the previous file content
         const previousFileContent = await context.octokit.git.getBlob({
           owner,
           repo,
-          file_sha: previousFile.sha!,
+          file_sha: previousFile.sha,
         });
         return previousFileContent.data.content;
       }
     }
     return "";
-  } catch (error) {
-    logger.debug("Error retrieving previous file content:", error);
+  } catch (error: unknown) {
+    logger.debug(`Error retrieving previous file content. error: ${error}`);
     return "";
   }
 }

@@ -30,7 +30,9 @@ export const telegramFormattedNotifier = async (messagePayload: TLMessageFormatt
 
     const sendInterval = setInterval(async () => {
       clearInterval(sendInterval);
-      await telegram.sendMessage(chatIds[currentElem], text, { parse_mode: parseMode });
+      await telegram.sendMessage(chatIds[currentElem], text, {
+        parse_mode: parseMode,
+      });
       currentElem++;
       sendHandler();
     }, delay);
@@ -38,18 +40,21 @@ export const telegramFormattedNotifier = async (messagePayload: TLMessageFormatt
   sendHandler();
 };
 
-export const telegramNotifier = (messagePayload: TLMessagePayload) => {
+export const telegramNotifier = async (messagePayload: TLMessagePayload) => {
   const messageString = messageFormatter(messagePayload);
   const messageObj: TLMessageFormattedPayload = {
     chatIds: messagePayload.chatIds,
     text: messageString,
     parseMode: "HTML",
   };
-  telegramFormattedNotifier(messageObj);
+  await telegramFormattedNotifier(messageObj);
 };
 
 export const telegramPhotoNotifier = async (messagePayload: TLPhotoPayload) => {
   const { chatId, file, caption } = messagePayload;
   const { telegram } = getAdapters();
-  await telegram.sendPhoto(chatId, Input.fromLocalFile(file), { caption: caption, parse_mode: "HTML" });
+  await telegram.sendPhoto(chatId, Input.fromLocalFile(file), {
+    caption: caption,
+    parse_mode: "HTML",
+  });
 };

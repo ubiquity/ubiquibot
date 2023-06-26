@@ -42,15 +42,16 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
 export const issueClosedCallback = async (): Promise<void> => {
   const { payload: _payload } = getBotContext();
   const issue = (_payload as Payload).issue;
+  if (!issue) return;
   try {
     const comment = await handleIssueClosed();
-    await addCommentToIssue(comment!, issue!.number);
+    if (comment) await addCommentToIssue(comment, issue.number);
     await addCommentToIssue(
       `If you enjoy the DevPool experience, please follow <a href="https://github.com/ubiquity">Ubiquity on GitHub</a> and star <a href="https://github.com/ubiquity/devpool-directory">this repo</a> to show your support. It helps a lot!`,
-      issue!.number
+      issue.number
     );
-  } catch (err: any) {
-    return await addCommentToIssue("Error: " + err.message, issue!.number);
+  } catch (err: unknown) {
+    return await addCommentToIssue(`Error: ${err}`, issue.number);
   }
 };
 
@@ -62,7 +63,8 @@ export const issueCreatedCallback = async (): Promise<void> => {
   const { payload: _payload } = getBotContext();
   const config = getBotConfig();
   const issue = (_payload as Payload).issue;
-  const labels = issue!.labels;
+  if (!issue) return;
+  const labels = issue.labels;
   try {
     const timeLabelConfigs = config.price.timeLabels.sort((label1, label2) => label1.weight - label2.weight);
     const priorityLabelConfigs = config.price.priorityLabels.sort((label1, label2) => label1.weight - label2.weight);
@@ -71,11 +73,11 @@ export const issueCreatedCallback = async (): Promise<void> => {
 
     if (timeLabels.length === 0 && timeLabelConfigs.length > 0) await createLabel(timeLabelConfigs[0].name);
     if (priorityLabels.length === 0 && priorityLabelConfigs.length > 0) await createLabel(priorityLabelConfigs[0].name);
-    addLabelToIssue(timeLabelConfigs[0].name);
-    addLabelToIssue(priorityLabelConfigs[0].name);
+    await addLabelToIssue(timeLabelConfigs[0].name);
+    await addLabelToIssue(priorityLabelConfigs[0].name);
     return;
-  } catch (err: any) {
-    return await addCommentToIssue("Error: " + err.message, issue!.number);
+  } catch (err: unknown) {
+    return await addCommentToIssue(`Error: ${err}`, issue.number);
   }
 };
 
@@ -87,7 +89,7 @@ export const issueCreatedCallback = async (): Promise<void> => {
  * @param comment - Comment string
  */
 const commandCallback = async (issue_number: number, comment: string) => {
-  await addCommentToIssue(comment, issue_number!);
+  await addCommentToIssue(comment, issue_number);
 };
 
 export const userCommands: UserCommands[] = [

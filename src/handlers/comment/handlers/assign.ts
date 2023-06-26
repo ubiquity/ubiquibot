@@ -3,7 +3,7 @@ import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
 import { IssueCommentCommands } from "../commands";
-import { getWalletAddress, getWalletMultiplier, getWalletReason } from "../../../adapters/supabase";
+import { getWalletAddress, getWalletMultiplier, getMultiplierReason } from "../../../adapters/supabase";
 import { tableComment } from "./table";
 import { bountyInfo } from "../../wildcard";
 
@@ -28,11 +28,11 @@ export const assign = async (body: string) => {
 
   logger.info(`Opened Pull Requests with no reviews but over 24 hours have passed: ${JSON.stringify(opened_prs)}`);
 
-  let assigned_issues = await getAssignedIssues(payload.sender.login);
+  const assigned_issues = await getAssignedIssues(payload.sender.login);
 
   logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
 
-  const issue_number = issue!.number;
+  const issue_number = issue.number;
 
   // check for max and enforce max
   if (assigned_issues.length - opened_prs.length >= config.assign.bountyHunterMax) {
@@ -40,7 +40,7 @@ export const assign = async (body: string) => {
     return;
   }
 
-  if (issue!.state == IssueType.CLOSED) {
+  if (issue.state == IssueType.CLOSED) {
     logger.info("Skipping '/assign', reason: closed ");
     return "Skipping `/assign` since the issue is closed";
   }
@@ -90,17 +90,17 @@ export const assign = async (body: string) => {
 
   let wallet_msg, multiplier_msg, reason_msg, bounty_msg;
 
-  let commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
+  const commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     logger.info(`Adding the assignee: ${payload.sender.login}`);
     // assign default bounty account to the issue
-    await addAssignees(issue_number!, [payload.sender.login]);
+    await addAssignees(issue_number, [payload.sender.login]);
   }
 
   // double check whether the assign message has been already posted or not
   logger.info(`Creating an issue comment: ${commit_msg}`);
-  const issue_comments = await getCommentsOfIssue(issue_number!);
+  const issue_comments = await getCommentsOfIssue(issue_number);
   const comments = issue_comments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latest_comment = comments.length > 0 ? comments[0].body : undefined;
   if (latest_comment && commit_msg != latest_comment) {
@@ -122,9 +122,9 @@ export const assign = async (body: string) => {
     if (!issueDetailed.priceLabel) {
       bounty_msg = `Permit generation skipped since price label is not set`;
     } else {
-      bounty_msg = (+issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4) * multiplier).toString() + " USD";
+      bounty_msg = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * multiplier).toString() + " USD";
     }
-    const reason = await getWalletReason(payload.sender.login);
+    const reason = await getMultiplierReason(payload.sender.login);
     reason_msg = reason ?? "";
     return tableComment(deadline_msg, wallet_msg, multiplier_msg, reason_msg, bounty_msg);
   }
