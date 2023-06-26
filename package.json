@@ -13,8 +13,6 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint --ext .ts ./src",
-    "build:serverless": "ncc build src/index.ts -o dist",
-    "build:ci": "ncc build adapters/index.ts -o dist && mv ./dist/index.js ./bin",
     "start": "probot run ./lib/index.js",
     "start:watch": "node copy.js && nodemon --exec 'yarn start'",
     "start:serverless": "tsx adapters/index.ts",
