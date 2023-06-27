@@ -1,3 +1,9 @@
 import { run } from "../handlers/wildcard/weekly/action";
 
-run();
+run()
+  .then((res) => {
+    console.log(res);
+  })
+  .catch((err) => {
+    console.log(err);
+  });
