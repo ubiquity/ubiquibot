@@ -14,3 +14,4 @@ supabase/temp
 # Local Netlify folder
 .netlify
 bin
+.yarn
