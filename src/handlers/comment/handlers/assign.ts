@@ -1,8 +1,7 @@
-import { addAssignees, addCommentToIssue, getAssignedIssues, getCommentsOfIssue, getAvailableOpenedPullRequests } from "../../../helpers";
+import { addAssignees, getAssignedIssues, getCommentsOfIssue, getAvailableOpenedPullRequests } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
-import { IssueCommentCommands } from "../commands";
 import { getWalletAddress, getWalletMultiplier, getMultiplierReason } from "../../../adapters/supabase";
 import { tableComment } from "./table";
 import { bountyInfo } from "../../wildcard";
@@ -11,17 +10,13 @@ export const assign = async (body: string) => {
   const { payload: _payload } = getBotContext();
   const logger = getLogger();
   const config = getBotConfig();
-  if (body != IssueCommentCommands.ASSIGN && body.replace(/`/g, "") != IssueCommentCommands.ASSIGN) {
-    logger.info(`Skipping to assign. body: ${body}`);
-    return;
-  }
 
   const payload = _payload as Payload;
-  logger.info(`Received '/assign' command from user: ${payload.sender.login}`);
+  logger.info(`Received '/assign' command from user: ${payload.sender.login}, body: ${body}`);
   const issue = (_payload as Payload).issue;
   if (!issue) {
     logger.info(`Skipping '/assign' because of no issue instance`);
-    return;
+    return "Skipping '/assign' because of no issue instance";
   }
 
   const opened_prs = await getAvailableOpenedPullRequests(payload.sender.login);
@@ -36,8 +31,7 @@ export const assign = async (body: string) => {
 
   // check for max and enforce max
   if (assigned_issues.length - opened_prs.length >= config.assign.bountyHunterMax) {
-    await addCommentToIssue(`Too many assigned issues, you have reached your max of ${config.assign.bountyHunterMax}`, issue_number);
-    return;
+    return `Too many assigned issues, you have reached your max of ${config.assign.bountyHunterMax}`;
   }
 
   if (issue.state == IssueType.CLOSED) {
