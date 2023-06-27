@@ -2,7 +2,7 @@ import { Input } from "telegraf";
 import { getAdapters, getBotConfig } from "../../../bindings";
 import { TLMessageFormattedPayload, TLMessagePayload, TLPhotoPayload } from "../types/payload";
 
-export const messageFormatter = (messagePayload: TLMessagePayload) => {
+export function messageFormatter(messagePayload: TLMessagePayload) {
   const { action, title, description, id, ref, user } = messagePayload;
   const msgObj =
     `<b>${action}: ${title}</b> ` +
@@ -12,9 +12,9 @@ export const messageFormatter = (messagePayload: TLMessagePayload) => {
     `<code>${description}</code>`;
 
   return msgObj;
-};
+}
 
-export const telegramFormattedNotifier = async (messagePayload: TLMessageFormattedPayload) => {
+export async function telegramFormattedNotifier(messagePayload: TLMessageFormattedPayload) {
   const {
     telegram: { delay },
   } = getBotConfig();
@@ -38,9 +38,9 @@ export const telegramFormattedNotifier = async (messagePayload: TLMessageFormatt
     }, delay);
   };
   sendHandler();
-};
+}
 
-export const telegramNotifier = async (messagePayload: TLMessagePayload) => {
+export async function telegramNotifier(messagePayload: TLMessagePayload) {
   const messageString = messageFormatter(messagePayload);
   const messageObj: TLMessageFormattedPayload = {
     chatIds: messagePayload.chatIds,
@@ -48,13 +48,10 @@ export const telegramNotifier = async (messagePayload: TLMessagePayload) => {
     parseMode: "HTML",
   };
   await telegramFormattedNotifier(messageObj);
-};
+}
 
-export const telegramPhotoNotifier = async (messagePayload: TLPhotoPayload) => {
+export async function telegramPhotoNotifier(messagePayload: TLPhotoPayload) {
   const { chatId, file, caption } = messagePayload;
   const { telegram } = getAdapters();
-  await telegram.sendPhoto(chatId, Input.fromLocalFile(file), {
-    caption: caption,
-    parse_mode: "HTML",
-  });
-};
+  await telegram.sendPhoto(chatId, Input.fromLocalFile(file), { caption: caption, parse_mode: "HTML" });
+}

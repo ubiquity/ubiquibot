@@ -67,6 +67,6 @@
     "pretty": false,
     "skipLibCheck": true
   },
-  "include": ["src/", "tests"],
+  "include": ["src/", "src/tests"],
   "compileOnSave": false
 }

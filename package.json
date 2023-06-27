@@ -11,17 +11,17 @@
     "probot-app"
   ],
   "scripts": {
-    "build": "tsc",
+    "build:ci": "ncc build src/adapters/github/github-actions.ts -o ./",
     "build:serverless": "ncc build src/index.ts -o ./",
-    "build:ci": "ncc build adapters/github-actions.ts -o ./",
-    "lint": "eslint --ext .ts ./src",
-    "start": "probot run ./lib/index.js",
-    "prestart:watch": "ln -s src/assets/images lib/assets/images",
-    "start:watch": "nodemon --exec 'yarn start'",
-    "start:serverless": "tsx adapters/github-actions.ts",
-    "format": "prettier --write src",
-    "format:check": "prettier -c src/**/*.ts",
+    "build": "tsc",
     "clean": "rimraf ./dist ./lib ./node_modules",
+    "format:check": "prettier -c src/**/*.ts",
+    "format": "prettier --write src",
+    "lint": "eslint --ext .ts ./src",
+    "prestart:watch": "ln -s src/assets/images lib/assets/images",
+    "start:serverless": "tsx src/adapters/github/github-actions.ts",
+    "start:watch": "nodemon --exec 'yarn start'",
+    "start": "probot run ./lib/index.js",
     "prepare": "husky install"
   },
   "dependencies": {
