@@ -1,7 +1,7 @@
-import { telegramFormattedNotifier, telegramNotifier } from "../src/adapters/telegram/helpers";
+import { telegramFormattedNotifier, telegramNotifier } from "../adapters/telegram/helpers";
 const chatIds = ["tg1", "tg2", "tg3"]; // SHOULD update chatIds with valid ones
 
-export const test = async (): Promise<void> => {
+export async function messageTests() {
   /**@method telegramNotifier - call unformatted issue */
   await telegramNotifier({
     chatIds: chatIds,
@@ -47,4 +47,4 @@ export const test = async (): Promise<void> => {
       `<code>Small enhancements but mostly renamed the \ninternal smart contract references, and \nadded support for DAI and USDT in the inventory.</code>`,
     parseMode: "HTML",
   });
-};
+}
