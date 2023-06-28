@@ -20,7 +20,7 @@ export const unassign = async (body: string) => {
     return;
   }
 
-  const issue_number = issue!.number;
+  const issue_number = issue.number;
   const _assignees = payload.issue?.assignees;
   const assignees = _assignees ?? [];
   if (assignees.length == 0) return;

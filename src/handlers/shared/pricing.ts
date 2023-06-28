@@ -12,10 +12,12 @@ export const getTargetPriceLabel = (timeLabel: string | undefined, priorityLabel
   const botConfig = getBotConfig();
   let targetPriceLabel: string | undefined = undefined;
   if (timeLabel && priorityLabel) {
-    const timeWeight = botConfig.price.timeLabels.find((item) => item.name === timeLabel)!.weight;
-    const priorityWeight = botConfig.price.priorityLabels.find((item) => item.name === priorityLabel)!.weight;
-    const bountyPrice = calculateBountyPrice(timeWeight, priorityWeight);
-    targetPriceLabel = `Price: ${bountyPrice} USD`;
+    const timeWeight = botConfig.price.timeLabels.find((item) => item.name === timeLabel)?.weight;
+    const priorityWeight = botConfig.price.priorityLabels.find((item) => item.name === priorityLabel)?.weight;
+    if (timeWeight && priorityWeight) {
+      const bountyPrice = calculateBountyPrice(timeWeight, priorityWeight);
+      targetPriceLabel = `Price: ${bountyPrice} USD`;
+    }
   }
   return targetPriceLabel;
 };

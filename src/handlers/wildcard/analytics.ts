@@ -11,7 +11,12 @@ import { getTargetPriceLabel } from "../shared";
  */
 export const bountyInfo = (
   issue: Issue
-): { isBounty: boolean; timelabel: string | undefined; priorityLabel: string | undefined; priceLabel: string | undefined } => {
+): {
+  isBounty: boolean;
+  timelabel: string | undefined;
+  priorityLabel: string | undefined;
+  priceLabel: string | undefined;
+} => {
   const config = getBotConfig();
   const labels = issue.labels;
   const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
@@ -86,7 +91,14 @@ export const collectAnalytics = async (): Promise<void> => {
     await Promise.all(
       bountiesToUpsert.map(async (i) => {
         const additions = bountyInfo(i as Issue);
-        await upsertIssue(i as Issue, { labels: { timeline: additions.timelabel!, priority: additions.priorityLabel!, price: additions.priceLabel! } });
+        if (additions.timelabel && additions.priorityLabel && additions.priceLabel)
+          await upsertIssue(i as Issue, {
+            labels: {
+              timeline: additions.timelabel,
+              priority: additions.priorityLabel,
+              price: additions.priceLabel,
+            },
+          });
       })
     );
 

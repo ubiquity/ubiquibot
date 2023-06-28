@@ -1,5 +1,0 @@
-name: Bounty Bot
-description: "Ubiquity bot built with Probot"
-runs:
-  using: "node16"
-  main: "index.js"
