@@ -65,7 +65,7 @@ export const createDevPoolPR = async () => {
     owner: devPoolOwner,
     repo: devPoolRepo,
     path,
-    message: `Add ${repository.full_name} to repo`,
+    message: `feat: add ${repository.full_name}`,
     content: Buffer.from(JSON.stringify(curContentParsed, null, 2)).toString("base64"),
     branch: branchName,
     sha: contentFile.sha,
