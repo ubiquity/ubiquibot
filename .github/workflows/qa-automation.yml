@@ -22,7 +22,7 @@ jobs:
         with:
           token: ${{ secrets.UBIQUITY_BOUNTY_BOT_PRIVATE_KEY_DEV }}
           org: ubiquibot
-          repo: stagin
+          repo: staging
           title: QA for ${{ github.event.pull_request.title }}
           body: |
             Testing pr <a href="${{ github.event.pull_request.html_url }}">${{ github.event.pull_request.number }}</a>
