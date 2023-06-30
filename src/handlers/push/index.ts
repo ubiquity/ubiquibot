@@ -24,7 +24,6 @@ export const runOnPush = async () => {
 
   const context = getBotContext();
   const payload = context.payload as PushPayload;
-  console.log("Before", payload);
 
   // if zero sha, push is a pr change
   if (payload.before === ZERO_SHA) {
