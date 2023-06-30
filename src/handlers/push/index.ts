@@ -42,6 +42,6 @@ export const runOnPush = async () => {
   // check for modified or added files and check for specified file
   if (changes.includes(BASE_RATE_FILE)) {
     // update base rate
-    updateBaseRate(context, payload, BASE_RATE_FILE);
+    await updateBaseRate(context, payload, BASE_RATE_FILE);
   }
 };
