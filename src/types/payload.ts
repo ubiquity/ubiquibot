@@ -215,6 +215,8 @@ const CommitsSchema = Type.Object({
   modified: Type.Array(Type.String()),
 });
 
+export type CommitsPayload = Static<typeof CommitsSchema>;
+
 const InstallationSchema = Type.Object({
   id: Type.Number(),
   node_id: Type.String(),
