@@ -12,17 +12,23 @@ jobs:
     name: Add issue to project
     runs-on: ubuntu-latest
     steps:
+      - name: Get UbiquiBot Token
+        uses: tibdex/github-app-token@v1.7.0
+        id: get_installation_token
+        with:
+          app_id: ${{ secrets.UBIQUITY_BOUNTY_BOT_APP_ID }}
+          private_key: ${{ secrets.UBIQUITY_BOUNTY_BOT_PRIVATE_KEY }}
       - name: add pr to project
         if: contains(github.event.pull_request.requested_reviewers.*.login, 'Draeieg')
         uses: actions/add-to-project@v0.5.0
         with:
           project-url: https://github.com/orgs/ubiquity/projects/23
-          github-token: ${{ secrets.UBIQUITY_BOUNTY_BOT_PRIVATE_KEY }}
+          github-token: ${{ steps.get_installation_token.outputs.token }}
       - name: Create QA Issue
         if: contains(github.event.pull_request.requested_reviewers.*.login, 'Draeieg')
         uses: dacbd/create-issue-action@v1
         with:
-          token: ${{ secrets.UBIQUITY_BOUNTY_BOT_PRIVATE_KEY }}
+          token: ${{ steps.get_installation_token.outputs.token }}
           org: ubiquibot
           repo: staging
           title: QA for ${{ github.event.pull_request.title }}
