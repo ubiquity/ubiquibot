@@ -4,6 +4,8 @@ on:
   pull_request:
     types:
       - review_requested
+    branches:
+      - development
 
 jobs:
   add-to-project:
