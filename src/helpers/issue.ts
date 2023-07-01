@@ -384,7 +384,7 @@ export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userN
 export const getOpenedPullRequests = async (username: string) => {
   const context = getBotContext();
   const prs = await getPullRequests(context, "open");
-  return prs.filter((pr) => !pr.draft && pr.user?.login === username);
+  return prs.filter((pr) => !pr.draft && (pr.user?.login === username || !username));
 };
 
 export const getCommitsOnPullRequest = async (pullNumber: number) => {

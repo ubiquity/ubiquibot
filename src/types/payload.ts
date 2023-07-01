@@ -8,6 +8,7 @@ export enum GithubEvent {
   ISSUES_LABELED = "issues.labeled",
   ISSUES_UNLABELED = "issues.unlabeled",
   ISSUES_ASSIGNED = "issues.assigned",
+  ISSUES_UNASSIGNED = "issues.unassigned",
   ISSUES_CLOSED = "issues.closed",
   ISSUES_OPENED = "issues.opened",
 
