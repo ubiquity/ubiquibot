@@ -16,38 +16,8 @@ jobs:
         uses: tibdex/github-app-token@v1.7.0
         id: get_installation_token
         with:
-          app_id: 346074
-          # https://github.com/organizations/ubiquibot/settings/apps/ubiquibot-qa/installations
-          # https://github.com/apps/ubiquibot-qa/installations/new/permissions?target_id=4975670
-          # https://github.com/settings/installations/38790399
-          private_key: |
-            -----BEGIN RSA PRIVATE KEY-----
-            MIIEpQIBAAKCAQEA3QM8hM2PNtmZVDu9fMWCznTw4FefZ2JXe+3ong4TX4G/d3QD
-            jhjRp5PvyPI+nsK0u/22pFCduwUGTFfKxGrMfnqsoBI+S5zUm8gfViX0NGzM7Xqn
-            EPfTyu3gTKfaJ2G9/JXTNx02iW95vgWAq7W/g4l6VdM/RbzQkYH/Ixn7CAxxXd3Y
-            /Lvjw4Mo7TkWsdpwx3x7Jzdbf6RvT/7lD1bAEciOv28XxVsaEKt7JN/a0HqKullc
-            7JR5jyKEhg9NjXdj1UnHhN5SNg5PorXk3FAhFiBAQZbgOpWyxzfnvBagM+MUr/Iw
-            Zf0pm/XuR3vfjYYyxJEeyXPTRO3MmsVrUz4yKQIDAQABAoIBAQDbx0MgQRXgkoSC
-            GiI1eGe6jNmYDipq8YVTrOK8gfzL5ceTrx9158Jc5aT2a8bPs4lsxEEipzQi7T01
-            H7x4lEekorMVPu8J2/wkqd5Xmch9dZBXu7d1DS1kyCZbtDMhJHZ8PjVawkcgZmVn
-            DCvHFSZMVKL9w+NQoxG5EM+5hTV36qZ2rQ2d56yw+ZDBl7ghjyVSpeXZDm6HCeRf
-            0VaDf8hADi3awnwOTpoq0qgoUbuA+QZhwdNgF2KWQTlEL+m59Dv+774uaZTzrRf/
-            73UCbI5Ukw5sP4VK/4Gs3rKXjD9G/gpRqcTDtaj0HSA/Id/iYxTkW8lP+YlZSW7C
-            ggkbNASBAoGBAPRHEhWSAd6NST5po3XCWBZwOvEjSW+4vZN/octQJ0lKG5cvPxsi
-            p8k8M2vd65VKT9uyVAG89JVcE50E6sGE52JD5u5yLLqcCWYRzo2g1hzcnoZVECQt
-            l80CvhEKCkaAD1ZSsCEeasj5A+UUaHMWLfcP3xWCB3H+Bs7BVs2qWtYRAoGBAOee
-            W4cZxU2z7uPP3uu119tebYtCwDYFSWLhOm784iLHEaw82dP58Anu9gHe3Ph6nK42
-            Ec3NH7C8CmaP42Q47wMTXW47NJcC626PfuBYFj43DtkiuRBEjE8kVyXFjFBTN66K
-            /y+BCeNekXcmlX3l7/K9OINXsrxDzsxO2z3sJiKZAoGBAM5WUiJCSK3ybhH4LYjE
-            9p9NgZw6kEd8pzW2M7aHKAgyPwf/crC7HztOTKkqtVpPgRE0mt00/OxE8JRLmPiK
-            CODqNmDntHyUXSQImo7rcrDCcm1J4O6OTJFxZZcDAhb3CP2Drx7qkIzeOrn/+RJt
-            g7oTf/6s7RkO2DVA/s+OvFfhAoGATRHNZNv3Yg6gS9+MTqRYah82liMk8BS8QZGu
-            LuYonOfegpBQ7w74h2WjKCYvIuMxpWpKbE933wgC8fOo911WcpCMAzTiH+mRy10m
-            G6JT7GnHoArEx5v3kBIIiYH9WXEHUyXfGcB3ONfr0VjeX2EWgY/i8RlKWQi7FBKd
-            MzKT0ekCgYEAmLNlBi5/krNJ79lhxErr/6zZw8ltAXa7uVcOUd8FNE0B9ppm2WI7
-            RoF1Gt57QIS+TdRQFMkNgd7fyq4+kotQBjuRQIfDOPhKXVnopeFJOFJkAGRc4Saa
-            BGZvyfK5g8aSy8Wtg4Lj7/wL4pEde4cm8AF4K0wbb3AfbDBB0GQk6N8=
-            -----END RSA PRIVATE KEY-----
+          app_id: ${{ secrets.UBIQUITY_BOUNTY_BOT_APP_ID }}
+          private_key: ${{ secrets.UBIQUITY_BOUNTY_BOT_PRIVATE_KEY }}
       - name: add pr to project
         if: contains(github.event.pull_request.requested_reviewers.*.login, 'Draeieg')
         uses: actions/add-to-project@v0.5.0
