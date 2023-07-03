@@ -32,18 +32,18 @@ export const handleComment = async (): Promise<void> => {
 
       const { payload: _payload } = getBotContext();
       const issue = (_payload as Payload).issue;
-      if (!issue) continue;
 
       try {
-        const response = await handler(body);
-        const callbackComment = response ?? successComment ?? "";
-        if (callbackComment) await callback(issue.number, callbackComment);
-      } catch (err: unknown) {
+        let response = await handler(body);
+        if (response || successComment) {
+          return callback(issue!.number, response! || successComment!);
+        }
+      } catch (err: any) {
         // Use failureComment for failed command if it is available
         if (failureComment) {
-          await callback(issue.number, failureComment);
+          return callback(issue!.number, failureComment!);
         }
-        await callback(issue.number, `Error: ${err}`);
+        return callback(issue!.number, "Error: " + err.message);
       }
     } else {
       logger.info(`Skipping for a command: ${command}`);

@@ -15,16 +15,17 @@ import { Static } from "@sinclair/typebox";
 import { DEFAULT_RPC_ENDPOINT } from "../configs";
 import { PayoutConfigSchema } from "../types";
 
+
 // available tokens for payouts
-const PAYMENT_TOKEN_PER_CHAIN: Record<string, { rpc: string; token: string }> = {
+const PAYMENT_TOKEN_PER_CHAIN: Record<string, {"rpc": string, "token": string}> = {
   "1": {
-    rpc: DEFAULT_RPC_ENDPOINT,
-    token: "0x6B175474E89094C44Da98b954EedeAC495271d0F", // DAI
+    "rpc": DEFAULT_RPC_ENDPOINT,
+    "token": "0x6B175474E89094C44Da98b954EedeAC495271d0F" // DAI
   },
   "100": {
-    rpc: "https://rpc.gnosischain.com",
-    token: "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d", // WXDAI
-  },
+    "rpc": "https://rpc.gnosischain.com",
+    "token": "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d" // WXDAI
+  }, 
 };
 
 type PayoutConfigPartial = Omit<Static<typeof PayoutConfigSchema>, "chainId" | "privateKey" | "permitBaseUrl">;
@@ -39,7 +40,7 @@ export const getPayoutConfigByChainId = (chainId: number): PayoutConfigPartial =
   if (!paymentToken) {
     throw new Error(`No config setup for chainId: ${chainId}`);
   }
-
+  
   return {
     rpc: paymentToken.rpc,
     paymentToken: paymentToken.token,

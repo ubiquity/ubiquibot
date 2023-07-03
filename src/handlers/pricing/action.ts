@@ -12,7 +12,7 @@ export const pricingLabelLogic = async (): Promise<void> => {
   if (!payload.issue) return;
   const labels = payload.issue.labels;
 
-  const valid = await handleLabelsAccess();
+  let valid = await handleLabelsAccess();
 
   if (!valid) {
     return;
@@ -35,7 +35,7 @@ export const pricingLabelLogic = async (): Promise<void> => {
       const exist = await getLabel(targetPriceLabel);
       if (!exist) {
         logger.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
-        await createLabel(targetPriceLabel, "price");
+        await createLabel(targetPriceLabel);
       }
       await addLabelToIssue(targetPriceLabel);
     }

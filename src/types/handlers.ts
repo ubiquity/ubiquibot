@@ -1,5 +1,5 @@
-export type CommandsHandler = (args: string) => Promise<string | undefined>;
-export type ActionHandler = (args?: string) => Promise<void>;
+export type CommandsHandler = (args?: any) => Promise<string | undefined>;
+export type ActionHandler = (args?: any) => Promise<void>;
 export type CallbackHandler = (issue_number: number, text: string) => Promise<void>;
 export type PreActionHandler = ActionHandler;
 export type PostActionHandler = ActionHandler;

@@ -37,9 +37,9 @@ export const registerWallet = async (body: string) => {
     return;
   }
 
-  if (!address && ensName) {
+  if (!address) {
     logger.info(`Trying to resolve address from Ens name: ${ensName}`);
-    address = await resolveAddress(ensName);
+    address = await resolveAddress(ensName!);
     if (!address) {
       logger.info(`Resolving address from Ens name failed, EnsName: ${ensName}`);
       return `Resolving address from Ens name failed, Try again`;
@@ -47,10 +47,6 @@ export const registerWallet = async (body: string) => {
     logger.info(`Resolved address from Ens name: ${ensName}, address: ${address}`);
   }
 
-  if (address) {
-    await upsertWalletAddress(sender, address);
-    return `Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`;
-  }
-
-  return;
+  await upsertWalletAddress(sender, address);
+  return `Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`;
 };

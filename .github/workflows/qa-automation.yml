@@ -21,7 +21,6 @@ jobs:
           project-url: https://github.com/orgs/ubiquity/projects/23
           github-token: ${{ secrets.ADD_TO_PROJECT }}
 
-
       - name: Create QA Issue
         if: contains(github.event.pull_request.requested_reviewers.*.login, 'Draeieg')
         uses: dacbd/create-issue-action@v1

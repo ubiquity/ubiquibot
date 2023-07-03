@@ -10,11 +10,11 @@ export const createDevPoolPR = async () => {
   const devPoolOwner = "ubiquity";
   const devPoolRepo = "devpool";
 
-  if (!payload.repositories_added) {
+  if (payload.repositories_added?.length === 0) {
     return;
   }
 
-  const repository = payload.repositories_added[0];
+  const repository = payload.repositories_added![0];
 
   logger.info(`New Install: ${repository.full_name}`);
 
@@ -41,7 +41,7 @@ export const createDevPoolPR = async () => {
 
   const contentFile = Object.assign({} as GithubContent, file);
 
-  const curContent = Buffer.from(contentFile.content, "base64").toString();
+  const curContent = Buffer.from(contentFile.content!, "base64").toString();
 
   const curContentParsed = JSON.parse(curContent);
 
@@ -65,7 +65,7 @@ export const createDevPoolPR = async () => {
     owner: devPoolOwner,
     repo: devPoolRepo,
     path,
-    message: `feat: add ${repository.full_name}`,
+    message: `Add ${repository.full_name} to repo`,
     content: Buffer.from(JSON.stringify(curContentParsed, null, 2)).toString("base64"),
     branch: branchName,
     sha: contentFile.sha,
