@@ -2,18 +2,7 @@ import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
 import { Payload } from "../types";
 import { Context } from "probot";
-import {
-  getAnalyticsMode,
-  getAutoPayMode,
-  getBaseMultiplier,
-  getCreatorMultiplier,
-  getBountyHunterMax,
-  getIncentiveMode,
-  getChainId,
-  getPriorityLabels,
-  getTimeLabels,
-  getCommentItemPrice,
-} from "./helpers";
+import { getAnalyticsMode, getAutoPayMode, getBaseMultiplier, getBountyHunterMax, getChainId, getPriorityLabels, getTimeLabels } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
 const KEY_PATH = ".github/ubiquibot-config.yml";
@@ -23,19 +12,17 @@ const KEY_PREFIX = "HSK_";
 export const getConfigSuperset = async (context: Context, type: "org" | "repo"): Promise<string | undefined> => {
   try {
     const payload = context.payload as Payload;
-    const repo = type === "org" ? CONFIG_REPO : payload.repository.name;
-    const owner = type === "org" ? payload.organization?.login : payload.repository.owner.login;
-    if (!repo || !owner) return undefined;
+    const repo = type === "org" ? CONFIG_REPO : payload.repository.name!;
     const { data } = await context.octokit.rest.repos.getContent({
-      owner,
-      repo,
+      owner: payload.organization?.login!,
+      repo: repo,
       path: KEY_PATH,
       mediaType: {
         format: "raw",
       },
     });
     return data as unknown as string;
-  } catch (error: unknown) {
+  } catch (error: any) {
     return undefined;
   }
 };
@@ -49,29 +36,38 @@ export interface WideLabel {
 export interface WideConfig {
   "chain-id"?: number;
   "base-multiplier"?: number;
-  "issue-creator-multiplier": number;
   "time-labels"?: WideLabel[];
   "priority-labels"?: WideLabel[];
   "auto-pay-mode"?: boolean;
   "analytics-mode"?: boolean;
-  "incentive-mode"?: boolean;
   "max-concurrent-bounties"?: number;
-  "comment-element-pricing"?: Record<string, number>;
 }
 
-export type WideRepoConfig = WideConfig;
+export interface WideRepoConfig extends WideConfig {}
 
 export interface WideOrgConfig extends WideConfig {
   "private-key-encrypted"?: string;
 }
 
-export const parseYAML = async (data?: string): Promise<WideConfig | undefined> => {
+export interface DataConfig {
+  chainId: number;
+  privateKey: string;
+  baseMultiplier: number;
+  timeLabels: WideLabel[];
+  priorityLabels: WideLabel[];
+  autoPayMode: boolean;
+  analyticsMode: boolean;
+  bountyHunterMax: number;
+}
+
+export const parseYAML = async (data: any): Promise<any | undefined> => {
   try {
-    if (data) {
-      const parsedData = await YAML.parse(data);
-      return parsedData ?? undefined;
+    const parsedData = await YAML.parse(data);
+    if (parsedData !== null) {
+      return parsedData;
+    } else {
+      return undefined;
     }
-    return undefined;
   } catch (error) {
     return undefined;
   }
@@ -96,7 +92,7 @@ export const getPrivateKey = async (cipherText: string): Promise<string | undefi
     let walletPrivateKey: string | undefined = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
     walletPrivateKey = walletPrivateKey.replace(KEY_PREFIX, "");
     return walletPrivateKey;
-  } catch (error: unknown) {
+  } catch (error: any) {
     return undefined;
   }
 };
@@ -112,12 +108,12 @@ export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Prom
       return scalerPub;
     }
     return undefined;
-  } catch (error: unknown) {
+  } catch (error: any) {
     return undefined;
   }
 };
 
-export const getWideConfig = async (context: Context) => {
+export const getWideConfig = async (context: Context): Promise<DataConfig> => {
   const orgConfig = await getConfigSuperset(context, "org");
   const repoConfig = await getConfigSuperset(context, "repo");
 
@@ -125,18 +121,16 @@ export const getWideConfig = async (context: Context) => {
   const parsedRepo: WideRepoConfig | undefined = await parseYAML(repoConfig);
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
-  const configData = {
+  const configData: DataConfig = {
     chainId: getChainId(parsedRepo, parsedOrg),
-    privateKey: privateKeyDecrypted ?? "",
+    // TODO: remove "process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY" when all partners are migrate to org wide config
+    privateKey: privateKeyDecrypted ?? process.env.UBIQUITY_BOT_EVM_PRIVATE_KEY ?? "",
     baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
-    issueCreatorMultiplier: getCreatorMultiplier(parsedRepo, parsedOrg),
     timeLabels: getTimeLabels(parsedRepo, parsedOrg),
     priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),
     autoPayMode: getAutoPayMode(parsedRepo, parsedOrg),
     analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg),
     bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
-    incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
-    commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
   };
 
   return configData;

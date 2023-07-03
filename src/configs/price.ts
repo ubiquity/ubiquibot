@@ -1,9 +1,7 @@
 import { PriceConfig } from "../types";
-import { MarkdownItem } from "../types/markdown";
 
 export const DefaultPriceConfig: PriceConfig = {
   baseMultiplier: 1000,
-  issueCreatorMultiplier: 2000,
   timeLabels: [
     {
       name: "Time: <1 Hour",
@@ -53,11 +51,4 @@ export const DefaultPriceConfig: PriceConfig = {
       weight: 5,
     },
   ],
-  commentElementPricing: {
-    [MarkdownItem.Text]: 0.1,
-    [MarkdownItem.Link]: 0.5,
-    [MarkdownItem.List]: 0.5,
-    [MarkdownItem.Code]: 5,
-    [MarkdownItem.Image]: 5,
-  },
 };

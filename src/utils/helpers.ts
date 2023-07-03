@@ -1,5 +1,4 @@
 import { DEFAULT_CHAIN_ID, DefaultPriceConfig } from "../configs";
-import { CommentElementPricing } from "../types";
 import { WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
 export const getChainId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
@@ -19,16 +18,6 @@ export const getBaseMultiplier = (parsedRepo: WideRepoConfig | undefined, parsed
     return Number(parsedOrg["base-multiplier"]);
   } else {
     return Number(DefaultPriceConfig["baseMultiplier"]);
-  }
-};
-
-export const getCreatorMultiplier = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
-  if (parsedRepo && parsedRepo["issue-creator-multiplier"] && !Number.isNaN(Number(parsedRepo["issue-creator-multiplier"]))) {
-    return Number(parsedRepo["issue-creator-multiplier"]);
-  } else if (parsedOrg && parsedOrg["issue-creator-multiplier"] && !Number.isNaN(Number(parsedOrg["issue-creator-multiplier"]))) {
-    return Number(parsedOrg["issue-creator-multiplier"]);
-  } else {
-    return Number(DefaultPriceConfig["issueCreatorMultiplier"]);
   }
 };
 
@@ -52,17 +41,7 @@ export const getPriorityLabels = (parsedRepo: WideRepoConfig | undefined, parsed
   }
 };
 
-export const getCommentItemPrice = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): CommentElementPricing => {
-  if (parsedRepo && parsedRepo["comment-element-pricing"]) {
-    return parsedRepo["comment-element-pricing"];
-  } else if (parsedOrg && parsedOrg["comment-element-pricing"]) {
-    return parsedOrg["comment-element-pricing"];
-  } else {
-    return DefaultPriceConfig["commentElementPricing"];
-  }
-};
-
-export const getAutoPayMode = (parsedRepo?: WideRepoConfig, parsedOrg?: WideOrgConfig): boolean => {
+export const getAutoPayMode = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): boolean => {
   if (parsedRepo && parsedRepo["auto-pay-mode"] && typeof parsedRepo["auto-pay-mode"] === "boolean") {
     return parsedRepo["auto-pay-mode"];
   } else if (parsedOrg && parsedOrg["auto-pay-mode"] && typeof parsedOrg["auto-pay-mode"] === "boolean") {
@@ -82,20 +61,10 @@ export const getAnalyticsMode = (parsedRepo: WideRepoConfig | undefined, parsedO
   }
 };
 
-export const getIncentiveMode = (parsedRepo?: WideRepoConfig, parsedOrg?: WideOrgConfig): boolean => {
-  if (parsedRepo && parsedRepo["incentive-mode"] && typeof parsedRepo["incentive-mode"] === "boolean") {
-    return parsedRepo["incentive-mode"];
-  } else if (parsedOrg && parsedOrg["incentive-mode"] && typeof parsedOrg["incentive-mode"] === "boolean") {
-    return parsedOrg["incentive-mode"];
-  } else {
-    return false;
-  }
-};
-
 export const getBountyHunterMax = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
   if (parsedRepo && parsedRepo["max-concurrent-bounties"] && !Number.isNaN(Number(parsedRepo["max-concurrent-bounties"]))) {
     return Number(parsedRepo["max-concurrent-bounties"]);
-  } else if (parsedOrg && parsedOrg["max-concurrent-bounties"] && !Number.isNaN(Number(parsedOrg["max-concurrent-bounties"]))) {
+  } else if (parsedOrg && parsedOrg["max-concurrent-bounties"] && !Number.isNaN(Number(parsedOrg!["max-concurrent-bounties"]))) {
     return Number(parsedOrg["max-concurrent-bounties"]);
   } else {
     return 2;

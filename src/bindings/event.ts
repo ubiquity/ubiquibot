@@ -17,16 +17,8 @@ export const getBotConfig = () => botConfig;
 let adapters: Adapters = {} as Adapters;
 export const getAdapters = () => adapters;
 
-export type Logger = {
-  info: (msg: string | object, options?: JSON) => void;
-  debug: (msg: string | object, options?: JSON) => void;
-  warn: (msg: string | object, options?: JSON) => void;
-  error: (msg: string | object, options?: JSON) => void;
-};
-let logger: Logger;
-export const getLogger = (): Logger => logger;
-
-const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT as string, GithubEvent.PUSH_EVENT as string];
+let logger: any;
+export const getLogger = () => logger!;
 
 export const bindEvents = async (context: Context): Promise<void> => {
   const { id, name } = context;
@@ -39,26 +31,15 @@ export const bindEvents = async (context: Context): Promise<void> => {
     app: "UbiquiBot",
     level: botConfig.log.level,
   };
-  logger = createLogger(botConfig.log.ingestionKey, options) as Logger;
+  logger = createLogger(botConfig.log.ingestionKey, options);
   if (!logger) {
     return;
   }
-
-  logger.info(
-    `Config loaded! config: ${JSON.stringify({
-      price: botConfig.price,
-      unassign: botConfig.unassign,
-      mode: botConfig.mode,
-      log: botConfig.log,
-    })}`
-  );
+  logger.info(`Config loaded! config: ${JSON.stringify({ price: botConfig.price, unassign: botConfig.unassign, mode: botConfig.mode, log: botConfig.log })}`);
   const allowedEvents = Object.values(GithubEvent) as string[];
-  const eventName = payload.action ? `${name}.${payload.action}` : name; // some events wont have actions as this grows
-
+  const eventName = `${name}.${payload.action}`;
   logger.info(`Started binding events... id: ${id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
-
-  if (!allowedEvents.includes(eventName)) {
-    // just check if its on the watch list
+  if (payload.action && !allowedEvents.includes(eventName)) {
     logger.info(`Skipping the event. reason: not configured`);
     return;
   }
@@ -67,14 +48,14 @@ export const bindEvents = async (context: Context): Promise<void> => {
   logger.info("Creating adapters for supabase, telegram, twitter, etc...");
   adapters = createAdapters(botConfig);
 
-  // Skip validation for installation event and push
-  if (!NO_VALIDATION.includes(eventName)) {
+  // Skip validation for installation event
+  if (eventName !== GithubEvent.INSTALLATION_ADDED_EVENT) {
     // Validate payload
     const validate = ajv.compile(PayloadSchema);
     const valid = validate(payload);
     if (!valid) {
       logger.info("Payload schema validation failed!!!", payload);
-      if (validate.errors) logger.warn(validate.errors);
+      logger.warn(validate.errors!);
       return;
     }
 

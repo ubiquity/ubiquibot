@@ -18,7 +18,7 @@ export const listAvailableCommands = async (body: string) => {
     return;
   }
 
-  if (issue.state == IssueType.CLOSED) {
+  if (issue!.state == IssueType.CLOSED) {
     logger.info("Skipping '/assign', reason: closed ");
     return;
   }

@@ -1,0 +1,13 @@
+{
+  "events": {
+    "config": "",
+    "exit": "",
+    "crash": "",
+    "restart": "clear && printf '\\033[3J'",
+    "start": "clear && printf '\\033[3J'"
+  },
+  "verbose": true,
+  "ignore": ["src/reference"],
+  "ext": "ts",
+  "exec": "yarn start"
+}
