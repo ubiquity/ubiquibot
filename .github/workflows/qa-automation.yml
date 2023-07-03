@@ -4,7 +4,7 @@ on:
   pull_request:
     types:
       - review_requested
-    branches: [development,main]
+    branches: [development]
 
 jobs:
   add-to-project:
@@ -13,6 +13,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Set environment variable with secret
+        run: echo "UBIQUITY_BOUNTY_BOT_APP_ID=${{ secrets.UBIQUITY_BOUNTY_BOT_APP_ID }}" >> $GITHUB_ENV
+
+      - name: Print environment variable
+        run: echo $UBIQUITY_BOUNTY_BOT_APP_ID             
 
       - name: add pr to project
         uses: actions/add-to-project@v0.5.0
