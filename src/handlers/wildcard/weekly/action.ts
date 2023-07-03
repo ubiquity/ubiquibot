@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+//
+// TODO: The above line SHOULD be removed finally by creating types for `any` types
+//
 import path from "path";
 import axios from "axios";
 import Jimp from "jimp";
@@ -6,9 +10,9 @@ import { getBotContext } from "../../../bindings";
 import { telegramPhotoNotifier } from "../../../adapters";
 import { Context } from "probot";
 import { Payload } from "../../../types";
-import { fetchImage } from "../../../utils/webAssets";
+import { fetchImage } from "../../../utils/web-assets";
 import { weeklyConfig } from "../../../configs/weekly";
-import { ProximaNovaRegularBase64 } from "../../../assets/fonts/ProximaNovaRegularB64";
+import { ProximaNovaRegularBase64 } from "../../../assets/fonts/proxima-nova-regular-b64";
 import { ClosedIssueIcon, CommitIcon, MergedPullIcon, OpenedIssueIcon, OpenedPullIcon } from "../../../assets/svgs";
 import { checkRateLimitGit } from "../../../utils";
 
@@ -29,29 +33,31 @@ const fetchEvents = async (context: Context): Promise<any[]> => {
   const perPage = 30;
   while (shouldFetch) {
     try {
-      const { data: pubOrgEvents, headers } = await context.octokit.activity.listPublicOrgEvents({
-        org: payload.organization!.login,
-        per_page: perPage,
-        page: currentPage,
-      });
+      if (payload.organization) {
+        const { data: pubOrgEvents, headers } = await context.octokit.activity.listPublicOrgEvents({
+          org: payload.organization.login,
+          per_page: perPage,
+          page: currentPage,
+        });
 
-      await checkRateLimitGit(headers);
+        await checkRateLimitGit(headers);
 
-      pubOrgEvents.forEach((elem: any) => {
-        const elemTimestamp = new Date(elem.created_at as string).getTime();
-        if (elemTimestamp <= startTimestamp && elemTimestamp >= endTimestamp) {
-          //pass
-          elemList.push(elem);
-        } else if (elemTimestamp > startTimestamp) {
-          //outta range
-          //skip
-        } else {
-          //fail end
-          shouldFetch = false;
-        }
-      });
+        pubOrgEvents.forEach((elem: any) => {
+          const elemTimestamp = new Date(elem.created_at as string).getTime();
+          if (elemTimestamp <= startTimestamp && elemTimestamp >= endTimestamp) {
+            //pass
+            elemList.push(elem);
+          } else if (elemTimestamp > startTimestamp) {
+            //outta range
+            //skip
+          } else {
+            //fail end
+            shouldFetch = false;
+          }
+        });
 
-      currentPage++;
+        currentPage++;
+      }
     } catch (error) {
       shouldFetch = false;
     }
@@ -68,14 +74,14 @@ type SummaryType = {
 };
 
 const processEvents = (JSONList: any[]): SummaryType => {
-  let openedIssues: number = 0;
-  let closedIssues: number = 0;
-  let comments: number = 0;
-  let bountiesUSD: number = 0;
-  let openedPRs: number = 0;
-  let closedPRs: number = 0;
-  let mergedPRs: number = 0;
-  let commits: number = 0;
+  let openedIssues = 0;
+  let closedIssues = 0;
+  let comments = 0;
+  let bountiesUSD = 0;
+  let openedPRs = 0;
+  let closedPRs = 0;
+  let mergedPRs = 0;
+  let commits = 0;
   JSONList.forEach((elem: any) => {
     const { type: eventType } = elem;
     switch (eventType) {
@@ -179,13 +185,13 @@ const htmlImage = async (summaryInfo: SummaryType) => {
       <html>
       <body>
           <style>
-              @font-face { 
+              @font-face {
                 font-family: "ProximaNovaRegular";
                 font-weight: 100 900;
                 font-style: normal italic;
                 src: url(data:application/font-woff;base64,${ProximaNovaRegularBase64});
               }
-              
+
               html {
                   width: 100%;
                   height: 100%;

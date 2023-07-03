@@ -20,3 +20,6 @@ jobs:
 
       - name: Local Build
         run: yarn build
+
+      - name: Lint
+        run: yarn lint
