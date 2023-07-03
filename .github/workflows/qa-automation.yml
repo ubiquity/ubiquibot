@@ -4,7 +4,6 @@ on:
   pull_request:
     types:
       - review_requested
-  push:
     branches: [development]
 
 jobs:
