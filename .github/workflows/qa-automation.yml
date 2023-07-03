@@ -14,7 +14,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        
+
+      - name: Set environment variable with secret
+        run: echo "ADD_TO_PROJECT_PAT=${{ secrets.ADD_TO_PROJECT_PAT }}" >> $GITHUB_ENV
+
+      - name: Print environment variable
+        run: echo $ADD_TO_PROJECT_PAT             
+
+      - name: add pr to project
+        uses: actions/add-to-project@v0.5.0
+        with:
+          project-url: https://github.com/orgs/ubiquity/projects/23
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+
       - name: Create QA Issue
         uses: dacbd/create-issue-action@v1
         with:
@@ -25,10 +37,5 @@ jobs:
           body: |
             Testing pr <a href="${{ github.event.pull_request.html_url }}">${{ github.event.pull_request.number }}</a>
             
-      - name: add pr to project
-        uses: actions/add-to-project@v0.5.0
-        with:
-          project-url: https://github.com/orgs/ubiquity/projects/23
-          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
 
 
