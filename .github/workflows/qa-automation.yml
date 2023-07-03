@@ -8,18 +8,11 @@ on:
 
 jobs:
   add-to-project:
-    if: contains(github.event.pull_request.requested_reviewers.*.login, 'Draeieg')
     name: Add issue to project
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Set environment variable with secret
-        run: echo "ADD_TO_PROJECT_PAT=${{ secrets.ADD_TO_PROJECT_PAT }}" >> $GITHUB_ENV
-
-      - name: Print environment variable
-        run: echo $ADD_TO_PROJECT_PAT             
 
       - name: add pr to project
         uses: actions/add-to-project@v0.5.0
