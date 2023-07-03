@@ -8,6 +8,7 @@ on:
 
 jobs:
   add-to-project:
+    if: contains(github.event.pull_request.requested_reviewers.*.login, 'Draeieg')
     name: Add issue to project
     runs-on: ubuntu-latest
     steps:
@@ -15,12 +16,9 @@ jobs:
         uses: actions/checkout@v3
         
       - name: Create QA Issue
-        env: 
-          ADD_TO_PROJECT_PAT: ${{ secrets.ADD_TO_PROJECT_PAT }}
-        if: contains(github.event.pull_request.requested_reviewers.*.login, 'Draeieg')
         uses: dacbd/create-issue-action@v1
         with:
-          token: $ADD_TO_PROJECT_PAT
+          token: ${{ secrets.ADD_TO_PROJECT_PAT }}
           org: ubiquibot
           repo: staging
           title: QA for ${{ github.event.pull_request.title }}
@@ -28,12 +26,9 @@ jobs:
             Testing pr <a href="${{ github.event.pull_request.html_url }}">${{ github.event.pull_request.number }}</a>
             
       - name: add pr to project
-        env: 
-          ADD_TO_PROJECT_PAT: ${{ secrets.ADD_TO_PROJECT_PAT }}
-        if: contains(github.event.pull_request.requested_reviewers.*.login, 'Draeieg')
         uses: actions/add-to-project@v0.5.0
         with:
           project-url: https://github.com/orgs/ubiquity/projects/23
-          github-token: $ADD_TO_PROJECT_PAT
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
 
 
