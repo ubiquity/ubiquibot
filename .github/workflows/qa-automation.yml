@@ -8,33 +8,26 @@ on:
 
 jobs:
   add-to-project:
+    env:
+      ADD_TO_PROJECT_PAT: ${{ secrets.ADD_TO_PROJECT_PAT }}
     name: Add issue to project
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set environment variable with secret
-        run: echo "UBIQUITY_BOUNTY_BOT_APP_ID=${{ secrets.UBIQUITY_BOUNTY_BOT_APP_ID }}" >> $GITHUB_ENV
-
-      - name: Print environment variable
-        run: echo $UBIQUITY_BOUNTY_BOT_APP_ID             
-
       - name: add pr to project
         uses: actions/add-to-project@v0.5.0
         with:
           project-url: https://github.com/orgs/ubiquity/projects/23
-          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          github-token: ${{ env.ADD_TO_PROJECT_PAT }}
 
       - name: Create QA Issue
         uses: dacbd/create-issue-action@v1
         with:
-          token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          token: ${{ env.ADD_TO_PROJECT_PAT }}
           org: ubiquibot
           repo: staging
           title: QA for ${{ github.event.pull_request.title }}
           body: |
             Testing pr <a href="${{ github.event.pull_request.html_url }}">${{ github.event.pull_request.number }}</a>
-            
-
-
