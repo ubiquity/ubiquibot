@@ -1,38 +1,34 @@
 name: Automate QA
 
 on:
-  pull_request:
+  pull_request_target:
     types:
       - review_requested
-    branches: [development]
+    branches: [development, main]
 
 jobs:
   add-to-project:
+    env:
+      ADD_TO_PROJECT_PAT: ${{ secrets.ADD_TO_PROJECT_PAT }}
     name: Add issue to project
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Authenticate as UbiquiBot
-        uses: tibdex/github-app-token@v1.7.0
-        id: get_installation_token
-        with:
-          app_id: ${{ secrets.UBIQUITY_BOUNTY_BOT_APP_ID }}
-          private_key: ${{ secrets.UBIQUITY_BOUNTY_BOT_PRIVATE_KEY }}
-
-      - name: add pr to project
-        if: contains(github.event.pull_request.requested_reviewers.*.login, 'Draeieg')
+      - name: Add PR to QA project
         uses: actions/add-to-project@v0.5.0
         with:
           project-url: https://github.com/orgs/ubiquity/projects/23
-          github-token: ${{ steps.get_installation_token.outputs.token }}
+          github-token: ${{ env.ADD_TO_PROJECT_PAT }}
 
       - name: Create QA Issue
-        if: contains(github.event.pull_request.requested_reviewers.*.login, 'Draeieg')
         uses: dacbd/create-issue-action@v1
         with:
-          token: ${{ steps.get_installation_token.outputs.token }}
+          token: ${{ env.ADD_TO_PROJECT_PAT }}
           org: ubiquibot
           repo: staging
           title: QA for ${{ github.event.pull_request.title }}
