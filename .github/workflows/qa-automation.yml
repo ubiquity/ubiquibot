@@ -16,9 +16,6 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
       - name: Add PR to QA project
         uses: actions/add-to-project@v0.5.0
         with:
