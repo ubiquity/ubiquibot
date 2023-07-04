@@ -29,7 +29,7 @@ jobs:
         uses: dacbd/create-issue-action@v1
         with:
           token: ${{ env.ADD_TO_PROJECT_PAT }}
-          org: ubiquibot
+          owner: ubiquibot
           repo: staging
           title: QA for ${{ github.event.pull_request.title }}
           body: |
