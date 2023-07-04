@@ -1,4 +1,4 @@
-# The "UbiquiBot"
+# The UbiquiBot
 
 Ubiquity DAO's GitHub Bot to automate DevPool management.
 
