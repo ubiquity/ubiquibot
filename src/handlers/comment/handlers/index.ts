@@ -132,7 +132,7 @@ export const userCommands: UserCommands[] = [
   },
   {
     id: IssueCommentCommands.WALLET,
-    description: `<WALLET_ADDRESS | ENS_NAME>: Register the hunter's wallet address. \n  ex1: /wallet 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \n  ex2: /wallet vitalik.eth\n`,
+    description: `<WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>: Register the hunter's wallet address. \n  Your message to sign is: DevPool\n  You can generate SIGNATURE_HASH at https://etherscan.io/verifiedSignatures\n  ex1: /wallet 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 0x75329f883590507e581cd6dfca62680b6cd12e1f1665db8097f9e642ed70025146b5cf9f777dde90c4a9cbd41500a6bf76bc394fd0b0cae2aab09f7a6f30e3b31b\n  ex2: /wallet vitalik.eth 0x75329f883590507e581cd6dfca62680b6cd12e1f1665db8097f9e642ed70025146b5cf9f777dde90c4a9cbd41500a6bf76bc394fd0b0cae2aab09f7a6f30e3b31b\n`,
     handler: registerWallet,
     callback: commandCallback,
   },
