@@ -15,6 +15,11 @@ export const processors: Record<string, Handler> = {
     action: [issueCreatedCallback],
     post: [nullHandler],
   },
+  [GithubEvent.ISSUES_REOPENED]: {
+    pre: [nullHandler],
+    action: [issueCreatedCallback],
+    post: [nullHandler],
+  },
   [GithubEvent.ISSUES_LABELED]: {
     pre: [validatePriceLabels],
     action: [pricingLabelLogic],

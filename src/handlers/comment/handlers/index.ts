@@ -1,4 +1,4 @@
-import { getBotConfig } from "../../../bindings";
+import { getBotConfig, getLogger } from "../../../bindings";
 import { Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
@@ -9,9 +9,10 @@ import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { setAccess } from "./set-access";
 import { multiplier } from "./multiplier";
-import { addCommentToIssue, createLabel, addLabelToIssue } from "../../../helpers";
+import { addCommentToIssue, createLabel, addLabelToIssue, getAllIssueComments, getTokenSymbol } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
+import { ethers } from "ethers";
 
 export * from "./assign";
 export * from "./wallet";
@@ -75,6 +76,81 @@ export const issueCreatedCallback = async (): Promise<void> => {
     if (priorityLabels.length === 0 && priorityLabelConfigs.length > 0) await createLabel(priorityLabelConfigs[0].name);
     await addLabelToIssue(timeLabelConfigs[0].name);
     await addLabelToIssue(priorityLabelConfigs[0].name);
+    return;
+  } catch (err: unknown) {
+    return await addCommentToIssue(`Error: ${err}`, issue.number);
+  }
+};
+
+/**
+ * Callback for issues reopened - Processor
+ */
+
+export const issueReopenedCallback = async (): Promise<void> => {
+  const { payload: _payload } = getBotContext();
+  const {
+    payout: { rpc, permitBaseUrl },
+  } = getBotConfig();
+  const logger = getLogger();
+  const issue = (_payload as Payload).issue;
+  if (!issue) return;
+  try {
+    // find permit comment from the bot
+    const comments = await getAllIssueComments(issue.number);
+    const permitCommentIdx = comments.findIndex((e) => e.user.type === "Bot" && e.body.includes(permitBaseUrl));
+    if (permitCommentIdx === -1) {
+      logger.error(`Permit comment not found`);
+      return;
+    }
+
+    // extract permit amount and token
+    const permitComment = comments[permitCommentIdx];
+    const claimUrlRegex = new RegExp(`\((${permitBaseUrl}\S+)\)`);
+    const permitUrl = permitComment.body.match(claimUrlRegex);
+    if (!permitUrl || permitUrl.length < 2) {
+      logger.error(`Permit URL not found`);
+      return;
+    }
+    const url = new URL(permitUrl[1]);
+    const claimBase64 = url.searchParams.get("claim");
+    if (!claimBase64) {
+      logger.error(`Permit claim search parameter not found`);
+      return;
+    }
+    let claim;
+    try {
+      claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
+    } catch (err: unknown) {
+      logger.error(`${err}`);
+      return;
+    }
+    const amount = claim.permit.permitted.amount;
+    const formattedAmount = ethers.utils.formatUnits(amount, 18);
+    const token = claim.permit.permitted.token;
+    const tokenSymbol = await getTokenSymbol(token, rpc);
+
+    // find latest assignment before the permit comment
+    const assignmentComment = comments
+      .slice(0, permitCommentIdx)
+      .filter((e) => e.user.type === "Bot" && (e.body.includes("assigned") || e.body.includes("assign")))
+      .reverse();
+    if (assignmentComment.length === 0) {
+      logger.error(`Assignment comment not found`);
+      return;
+    }
+
+    // extract assignee
+    const usernames = assignmentComment[0].body.match(/@\S+/g);
+    if (!usernames || usernames.length < 2) {
+      logger.error(`Assignee not found`);
+      return;
+    }
+    const assignee = usernames[1].substring(1);
+
+    await addCommentToIssue(
+      `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of ${formattedAmount} ${tokenSymbol} will be deducted from your next bounty.`,
+      issue.number
+    );
     return;
   } catch (err: unknown) {
     return await addCommentToIssue(`Error: ${err}`, issue.number);
