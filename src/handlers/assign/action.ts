@@ -75,10 +75,23 @@ export const closePullRequestForAnIssue = async (): Promise<void> => {
   const prs = await getOpenedPullRequestsForAnIssue(payload.issue.number, "");
   if (!prs.length) return;
   logger.info(`Opened prs for this issue: ${JSON.stringify(prs)}`);
+
   let comment = `These linked pull requests are closed: `;
+  let noPullRequestsComment = `Failed To delete these pull requests: `;
+
+  let deleteCount = 0;
   for (let i = 0; i < prs.length; i++) {
-    await closePullRequest(prs[i].number);
+    const deleted = await closePullRequest(prs[i].number);
+    if (!deleted) {
+      noPullRequestsComment += ` <a href="${prs[i]._links.html.href}">#${prs[i].number}</a> `;
+      deleteCount++;
+      continue;
+    }
     comment += ` <a href="${prs[i]._links.html.href}">#${prs[i].number}</a> `;
+  }
+  if (deleteCount) {
+    await addCommentToIssue(noPullRequestsComment, payload.issue.number);
+    return;
   }
   await addCommentToIssue(comment, payload.issue.number);
 };

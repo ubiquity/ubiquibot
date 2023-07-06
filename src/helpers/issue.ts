@@ -281,7 +281,7 @@ export const closePullRequest = async (pull_number: number) => {
   const payload = context.payload as Payload;
   const logger = getLogger();
   try {
-    await getBotContext().octokit.rest.pulls.update({
+    return await getBotContext().octokit.rest.pulls.update({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       pull_number,
@@ -289,6 +289,7 @@ export const closePullRequest = async (pull_number: number) => {
     });
   } catch (e: unknown) {
     logger.debug(`Closing pull requests failed!, reason: ${e}`);
+    return null;
   }
 };
 
