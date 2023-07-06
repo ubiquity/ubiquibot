@@ -1,32 +1,44 @@
-export const tableComment = (deadline: string, wallet: string, multiplier: string, reason: string, bounty: string) => {
+export const tableComment = ({
+  deadline,
+  wallet,
+  multiplier,
+  reason,
+  bounty,
+}: {
+  deadline: string;
+  wallet: string;
+  multiplier: string;
+  reason: string;
+  bounty: string;
+}) => {
   return `
-  <code>
+<code>
 
   <table>
   <tr>
-    <td style="border:1px solid"></td>
-    <td style="border:1px solid"></td>
+    <td></td>
+    <td></td>
   </tr>
   <tr>
-    <td style="border:1px solid">Deadline</td>
-    <td style="border:1px solid">${deadline}</td>
+    <td>Deadline</td>
+    <td>${deadline}</td>
   </tr>
   <tr>
-    <td style="border:1px solid">Registered Wallet</td>
-    <td style="border:1px solid">${wallet}</td>
+    <td>Registered Wallet</td>
+    <td>${wallet}</td>
   </tr>
   <tr>
-    <td style="border:1px solid">Payment Multiplier</td>
-    <td style="border:1px solid">${multiplier}</td>
+    <td>Payment Multiplier</td>
+    <td>${multiplier}</td>
   </tr>
   <tr>
-    <td style="border:1px solid">Multiplier Reason</td>
-    <td style="border:1px solid">${reason}</td>
+    <td>Multiplier Reason</td>
+    <td>${reason}</td>
   </tr>
   <tr>
-    <td style="border:1px solid">Total Bounty</td>
-    <td style="border:1px solid">${bounty}</td>
+    <td>Total Bounty</td>
+    <td>${bounty}</td>
   </tr>
   </table>
-  </code>`;
+</code>`;
 };
