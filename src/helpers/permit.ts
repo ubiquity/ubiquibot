@@ -57,7 +57,7 @@ export const generatePermit2Signature = async (spender: string, amountInEth: str
 
   const base64encodedTxData = Buffer.from(JSON.stringify(txData)).toString("base64");
 
-  const result = `${permitBaseUrl}?claim=${base64encodedTxData}&network=${chainId.toString(10)}`;
+  const result = `${permitBaseUrl}?claim=${base64encodedTxData}&network=${chainId}`;
   logger.info(`Generated permit2 url: ${result}`);
   return result;
 };
