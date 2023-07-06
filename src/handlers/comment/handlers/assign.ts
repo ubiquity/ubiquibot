@@ -90,7 +90,7 @@ export const assign = async (body: string) => {
 
   let wallet_msg, multiplier_msg, reason_msg, bounty_msg;
   const tips_msg = `\nTips:\n
-  - Use /wallet 0x4FDE...BA18 if you want to update your registered payment wallet address ${payload.sender.login}
+  - Use `/wallet 0x4FDE...BA18` if you want to update your registered payment wallet address ${payload.sender.login}
   - Be sure to open a draft pull request as soon as possible to communicate updates on your progress.
   - Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the bounty.`;
   let commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
