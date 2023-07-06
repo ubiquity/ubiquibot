@@ -276,20 +276,21 @@ export const getPullRequests = async (context: Context, state: "open" | "closed"
   }
 };
 
-export const closePullRequest = async (pull_number: number) => {
+export const closePullRequest = async (pull_number: number): Promise<boolean> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
   const logger = getLogger();
   try {
-    return await getBotContext().octokit.rest.pulls.update({
+    const result = await getBotContext().octokit.rest.pulls.update({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       pull_number,
       state: "closed",
     });
+    return result.data.state === "closed";
   } catch (e: unknown) {
     logger.debug(`Closing pull requests failed!, reason: ${e}`);
-    return null;
+    return false;
   }
 };
 
