@@ -2,7 +2,6 @@ import { removeAssignees } from "../../../helpers";
 import { getBotContext, getLogger } from "../../../bindings";
 import { Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
-import { closePullRequestForAnIssue } from "../../assign/action";
 
 export const unassign = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -20,7 +19,7 @@ export const unassign = async (body: string) => {
     return;
   }
 
-  const issue_number = issue!.number;
+  const issue_number = issue.number;
   const _assignees = payload.issue?.assignees;
   const assignees = _assignees ?? [];
   if (assignees.length == 0) return;
@@ -28,7 +27,6 @@ export const unassign = async (body: string) => {
   logger.debug(`Unassigning sender: ${payload.sender.login.toLowerCase()}, assignee: ${assignees[0].login.toLowerCase()}, shouldUnassign: ${shouldUnassign}`);
 
   if (shouldUnassign) {
-    await closePullRequestForAnIssue();
     await removeAssignees(
       issue_number,
       assignees.map((i) => i.login)

@@ -8,6 +8,7 @@ export enum GithubEvent {
   ISSUES_LABELED = "issues.labeled",
   ISSUES_UNLABELED = "issues.unlabeled",
   ISSUES_ASSIGNED = "issues.assigned",
+  ISSUES_UNASSIGNED = "issues.unassigned",
   ISSUES_CLOSED = "issues.closed",
   ISSUES_OPENED = "issues.opened",
 
@@ -214,6 +215,8 @@ const CommitsSchema = Type.Object({
   removed: Type.Array(Type.String()),
   modified: Type.Array(Type.String()),
 });
+
+export type CommitsPayload = Static<typeof CommitsSchema>;
 
 const InstallationSchema = Type.Object({
   id: Type.Number(),
