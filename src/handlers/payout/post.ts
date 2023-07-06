@@ -34,7 +34,7 @@ export const incentivizeComments = async () => {
     return;
   }
 
-  const issueComments = await getAllIssueComments(payload.issue?.number!);
+  const issueComments = await getAllIssueComments(issue.number);
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
@@ -46,11 +46,11 @@ export const incentivizeComments = async () => {
   logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
 
   // The mapping between gh handle and comment with a permit url
-  let reward: Record<string, string> = {};
+  const reward: Record<string, string> = {};
 
   // The mapping between gh handle and amount in ETH
-  let fallbackReward: Record<string, string> = {};
-  let comment: string = "";
+  const fallbackReward: Record<string, string> = {};
+  let comment = "";
   for (const user of Object.keys(issueCommentsByUser)) {
     const comments = issueCommentsByUser[user];
     const commentsByNode = await parseComments(comments, ItemsToExclude);
@@ -99,20 +99,20 @@ export const incentivizeCreatorComment = async () => {
     return;
   }
 
-  const description = await getIssueDescription(payload.issue?.number!);
+  const description = await getIssueDescription(issue.number);
   logger.info(`Getting the issue description done. description: ${description}`);
-  const creator = issue!.user;
+  const creator = issue.user;
   if (creator?.type === UserType.Bot || creator?.login === issue?.assignee) {
     logger.info("Issue creator assigneed himself or Bot created this issue.");
     return;
   }
 
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
-  const result = await generatePermitForComments(creator?.login, [description], issueCreatorMultiplier, commentElementPricing, tokenSymbol, issue!.node_id);
+  const result = await generatePermitForComments(creator?.login, [description], issueCreatorMultiplier, commentElementPricing, tokenSymbol, issue.node_id);
 
   if (result.payoutUrl) {
     logger.info(`Permit url generated for creator. reward: ${result.payoutUrl}`);
-    addCommentToIssue(result.comment, issue!.number);
+    await addCommentToIssue(result.comment, issue.number);
   }
   if (result.amountInETH) {
     logger.info(`Skipping to generate a permit url for missing account. fallback: ${result.amountInETH}`);
@@ -133,7 +133,7 @@ const generatePermitForComments = async (
   logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
   const account = await getWalletAddress(user);
   const amountInETH = ((rewardValue * multiplier) / 1000).toString();
-  let comment: string = "";
+  let comment = "";
   if (account) {
     const payoutUrl = await generatePermit2Signature(account, amountInETH, node_id);
     comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;

@@ -54,7 +54,7 @@ export const handleIssueClosed = async () => {
   }
 
   // TODO: add multiplier to the priceInEth
-  const priceInEth = (+issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4) * multiplier).toString();
+  const priceInEth = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * multiplier).toString();
   if (!recipient || recipient?.trim() === "") {
     logger.info(`Recipient address is missing`);
     return (
@@ -80,7 +80,7 @@ export const handleIssueClosed = async () => {
     logger.info(`Skip to generate a permit url because it has been already posted`);
     return `Permit generation skipped because it was already posted to this issue.`;
   }
-  await deleteLabel(issueDetailed.priceLabel!);
+  await deleteLabel(issueDetailed.priceLabel);
   await addLabelToIssue("Permitted");
   return comment;
 };

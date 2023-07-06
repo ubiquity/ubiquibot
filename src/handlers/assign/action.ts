@@ -9,8 +9,12 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   const config = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
+  if (!payload.issue) {
+    logger.debug(`Empty issue object`);
+    return;
+  }
 
-  logger.info(`Commenting timeline message for issue: ${payload.issue?.number}`);
+  logger.info(`Commenting timeline message for issue: ${payload.issue.number}`);
 
   const _assignees = payload.issue?.assignees;
   const assignees = _assignees ? _assignees?.filter((i) => !exclude_accounts.includes(i.login)) : [];
@@ -59,21 +63,22 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   const commit_msg = `${flattened_assignees} ${deadLinePrefix} ${endDate.toUTCString()}`;
   logger.debug(`Creating an issue comment, commit_msg: ${commit_msg}`);
 
-  await addCommentToIssue(commit_msg, payload.issue!.number);
+  await addCommentToIssue(commit_msg, payload.issue?.number);
 };
 
 export const closePullRequestForAnIssue = async (): Promise<void> => {
   const context = getBotContext();
-  // const config = getBotConfig();
   const logger = getLogger();
-
   const payload = context.payload as Payload;
-  const prs = await getOpenedPullRequestsForAnIssue(payload.issue?.number!, payload.sender.login);
+  if (!payload.issue?.number) return;
+
+  const prs = await getOpenedPullRequestsForAnIssue(payload.issue.number, "");
+  if (!prs.length) return;
   logger.info(`Opened prs for this issue: ${JSON.stringify(prs)}`);
   let comment = `These linked pull requests are closed: `;
   for (let i = 0; i < prs.length; i++) {
     await closePullRequest(prs[i].number);
     comment += ` <a href="${prs[i]._links.html.href}">#${prs[i].number}</a> `;
   }
-  await addCommentToIssue(comment, payload.issue?.number!);
+  await addCommentToIssue(comment, payload.issue.number);
 };

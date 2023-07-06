@@ -14,10 +14,14 @@ export const updateBaseRate = async (context: Context, payload: PushPayload, fil
   // get previous config
   const preFileContent = await getPreviousFileContent(owner, repo, branch, filePath);
 
-  const previousContent = Buffer.from(preFileContent!, "base64").toString();
+  if (!preFileContent) {
+    logger.debug("Getting previous file content failed");
+    return;
+  }
+  const previousContent = Buffer.from(preFileContent, "base64").toString();
   const previousConfig = await parseYAML(previousContent);
 
-  if (!previousConfig["base-multiplier"]) {
+  if (!previousConfig || !previousConfig["base-multiplier"]) {
     logger.debug("No multiplier found in file object");
     return;
   }
