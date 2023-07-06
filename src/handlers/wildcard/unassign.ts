@@ -53,8 +53,6 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   const lastActivity = await lastActivityTime(issue, comments);
   const passedDuration = curTimestamp - lastActivity.getTime();
 
-  console.log(passedDuration, disqualifyTime, passedDuration, followUpTime);
-
   if (passedDuration >= disqualifyTime || passedDuration >= followUpTime) {
     if (passedDuration >= disqualifyTime) {
       logger.info(
