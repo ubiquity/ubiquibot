@@ -1,5 +1,6 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, closePullRequest, getOpenedPullRequestsForAnIssue } from "../../helpers";
+import { convertTimeToSeconds } from "../../helpers/time";
 import { Payload, LabelItem } from "../../types";
 import { deadLinePrefix } from "../shared";
 
@@ -51,7 +52,9 @@ export const commentWithAssignMessage = async (): Promise<void> => {
 
   const sorted = timeLabelsAssigned.sort((a, b) => a.weight - b.weight);
   const targetTimeLabel = sorted[0];
-  const duration = targetTimeLabel.value;
+
+  const parsedTimeLabel = targetTimeLabel.name.replace(/</, "").split(":")?.[1].trim();
+  const duration = convertTimeToSeconds(parsedTimeLabel);
   if (!duration) {
     logger.debug(`Missing configure for timelabel: ${targetTimeLabel.name}`);
     return;
