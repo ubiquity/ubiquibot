@@ -44,10 +44,6 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
     .filter((comment: Comment) => comment.body.includes(askUpdate))
     .sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-  const unassignComments = comments.filter((comment: Comment) => comment.body.includes(unassignComment));
-
-  let previouslyUnassigned = getPreviousUnassignedUsers(unassignComments);
-
   const lastAskTime = askUpdateComments.length > 0 ? new Date(askUpdateComments[0].created_at).getTime() : new Date(issue.created_at).getTime();
   const curTimestamp = new Date().getTime();
   const lastActivity = await lastActivityTime(issue, comments);
@@ -59,11 +55,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
         `Unassigning... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
       );
 
-      // remove assignees from the issue
-      if (checkSameStringAvailability(previouslyUnassigned, assignees as [])) {
-        await removeAssignees(issue.number, assignees);
-      }
-
+      await removeAssignees(issue.number, assignees);
       await addCommentToIssue(`@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
 
       return true;
@@ -84,23 +76,6 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
     }
   }
 
-  return false;
-};
-
-const getPreviousUnassignedUsers = (comments: Comment[]): [] => {
-  const extractedTexts = comments.map((comment) => {
-    const match = comment.body.match(/@([^ ]+)/);
-    return match ? match[1] : null;
-  });
-  return extractedTexts as [];
-};
-
-const checkSameStringAvailability = (array1: [], array2: []) => {
-  for (let i = 0; i < array1.length; i++) {
-    if (array2.includes(array1[i])) {
-      return true;
-    }
-  }
   return false;
 };
 
