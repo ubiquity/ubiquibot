@@ -84,27 +84,6 @@ export const addCommentToIssue = async (msg: string, issue_number: number) => {
   }
 };
 
-export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[]> => {
-  const context = getBotContext();
-  const logger = getLogger();
-  const payload = context.payload as Payload;
-
-  let result: Comment[] = [];
-  try {
-    const response = await context.octokit.rest.issues.listComments({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number,
-    });
-
-    if (response.data) result = response.data as Comment[];
-  } catch (e: unknown) {
-    logger.debug(`Listing issue comments failed!, reason: ${e}`);
-  }
-
-  return result;
-};
-
 export const getIssueDescription = async (issue_number: number): Promise<string> => {
   const context = getBotContext();
   const logger = getLogger();

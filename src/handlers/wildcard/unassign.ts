@@ -2,7 +2,7 @@ import { getBotConfig, getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs/strings";
 import {
   addCommentToIssue,
-  getCommentsOfIssue,
+  getAllIssueComments,
   getCommitsOnPullRequest,
   getOpenedPullRequestsForAnIssue,
   listIssuesForRepo,
@@ -37,15 +37,22 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   logger.info(`Checking the bounty to unassign, issue_number: ${issue.number}`);
   const { unassignComment, askUpdate } = GLOBAL_STRINGS;
   const assignees = issue.assignees.map((i) => i.login);
-  const comments = await getCommentsOfIssue(issue.number);
+  const comments = await getAllIssueComments(issue.number);
   if (!comments || comments.length == 0) return false;
 
   const askUpdateComments = comments
     .filter((comment: Comment) => comment.body.includes(askUpdate))
     .sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  const unassignComments = comments
+    .filter((comment: Comment) => comment.body.includes(unassignComment))
+    .sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  console.log(unassignComments);
+
   const lastAskTime = askUpdateComments.length > 0 ? new Date(askUpdateComments[0].created_at).getTime() : new Date(issue.created_at).getTime();
   const curTimestamp = new Date().getTime();
-  const lastActivity = await lastActivityTime(issue);
+  const lastActivity = await lastActivityTime(issue, comments);
   const passedDuration = curTimestamp - lastActivity.getTime();
 
   if (passedDuration >= disqualifyTime || passedDuration >= followUpTime) {
@@ -55,7 +62,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
       );
       // remove assignees from the issue
       await removeAssignees(issue.number, assignees);
-      await addCommentToIssue(`${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
+      await addCommentToIssue(`@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
 
       return true;
     } else if (passedDuration >= followUpTime) {
@@ -78,14 +85,14 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   return false;
 };
 
-const lastActivityTime = async (issue: Issue): Promise<Date> => {
+const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date> => {
   const logger = getLogger();
   logger.info(`Checking the latest activity for the issue, issue_number: ${issue.number}`);
   const assignees = issue.assignees.map((i) => i.login);
   const activities: Date[] = [new Date(issue.created_at)];
 
   // get last comment on the issue
-  const lastCommentsOfHunterForIssue = (await getCommentsOfIssue(issue.number))
+  const lastCommentsOfHunterForIssue = comments
     .filter((comment) => assignees.includes(comment.user.login))
     .sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -98,7 +105,7 @@ const lastActivityTime = async (issue: Issue): Promise<Date> => {
     const commits = (await getCommitsOnPullRequest(pr.number))
       .filter((it) => it.commit.committer?.date)
       .sort((a, b) => new Date(b.commit.committer?.date ?? 0).getTime() - new Date(a.commit.committer?.date ?? 0).getTime());
-    const prComments = (await getCommentsOfIssue(pr.number))
+    const prComments = (await getAllIssueComments(pr.number))
       .filter((comment) => comment.user.login === assignees[0])
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 

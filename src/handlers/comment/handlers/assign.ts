@@ -1,4 +1,4 @@
-import { addAssignees, getAssignedIssues, getCommentsOfIssue, getAvailableOpenedPullRequests } from "../../../helpers";
+import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
@@ -94,7 +94,7 @@ export const assign = async (body: string) => {
 
   // double check whether the assign message has been already posted or not
   logger.info(`Creating an issue comment: ${commit_msg}`);
-  const issue_comments = await getCommentsOfIssue(issue_number);
+  const issue_comments = await getAllIssueComments(issue_number);
   const comments = issue_comments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latest_comment = comments.length > 0 ? comments[0].body : undefined;
   if (latest_comment && commit_msg != latest_comment) {
