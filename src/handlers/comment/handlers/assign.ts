@@ -1,7 +1,9 @@
 import { addAssignees, getAssignedIssues, getCommentsOfIssue, getAvailableOpenedPullRequests } from "../../../helpers";
+import { addAssignees, getAssignedIssues, getCommentsOfIssue, getAvailableOpenedPullRequests } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
+import { getWalletAddress, getWalletMultiplier, getMultiplierReason } from "../../../adapters/supabase";
 import { getWalletAddress, getWalletMultiplier, getMultiplierReason } from "../../../adapters/supabase";
 import { tableComment } from "./table";
 import { bountyInfo } from "../../wildcard";
@@ -25,12 +27,14 @@ export const assign = async (body: string) => {
   const assignedIssues = await getAssignedIssues(payload.sender.login);
   logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
 
-  const issueNumber = issue.number;
+  const issue_number = issue!.number;
+
   // check for max and enforce max
   if (assignedIssues.length - openedPullRequests.length >= config.assign.bountyHunterMax) {
     return `Too many assigned issues, you have reached your max of ${config.assign.bountyHunterMax}`;
   }
 
+  if (issue.state == IssueType.CLOSED) {
   if (issue.state == IssueType.CLOSED) {
     logger.info("Skipping '/assign', reason: closed ");
     return "Skipping `/assign` since the issue is closed";
