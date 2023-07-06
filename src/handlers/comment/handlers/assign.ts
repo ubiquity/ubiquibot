@@ -79,7 +79,7 @@ export const assign = async (body: string) => {
   const targetTimeLabel = sorted[0];
   const duration = targetTimeLabel.value;
   if (!duration) {
-    logger.info(`Missing configure for timelabel: ${targetTimeLabel.name}`);
+    logger.info(`Missing configure for time label: ${targetTimeLabel.name}`);
     return "Skipping `/assign` since configuration is missing for the following labels";
   }
 
