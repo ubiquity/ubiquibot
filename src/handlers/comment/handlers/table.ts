@@ -1,4 +1,4 @@
-export const tableComment = (deadline: string, wallet: string, multiplier: string, reason: string, bouty: string) => {
+export const tableComment = (deadline: string, wallet: string, multiplier: string, reason: string, bounty: string) => {
   return `
   <code>
 
@@ -25,7 +25,7 @@ export const tableComment = (deadline: string, wallet: string, multiplier: strin
   </tr>
   <tr>
     <td style="border:1px solid">Total Bounty</td>
-    <td style="border:1px solid">${bouty}</td>
+    <td style="border:1px solid">${bounty}</td>
   </tr>
   </table>
   </code>`;
