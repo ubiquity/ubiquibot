@@ -48,12 +48,13 @@ export const handleIssueClosed = async () => {
   const multiplier = await getWalletMultiplier(assignee.login);
 
   if (multiplier === 0) {
-    logger.info(`Skipping to proceed the payment because multiplier is 0`);
-    return "Skipping to proceed the payment because multiplier is 0";
+    const errMsg = "Refusing to generate the payment permit because" + `@${assignee.login}` + "'s payment `multiplier` is `0`";
+    logger.info(errMsg);
+    return errMsg;
   }
 
   // TODO: add multiplier to the priceInEth
-  const priceInEth = (+issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4) * multiplier).toString();
+  const priceInEth = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * multiplier).toString();
   if (!recipient || recipient?.trim() === "") {
     logger.info(`Recipient address is missing`);
     return (
@@ -79,7 +80,7 @@ export const handleIssueClosed = async () => {
     logger.info(`Skip to generate a permit url because it has been already posted`);
     return `Permit generation skipped because it was already posted to this issue.`;
   }
-  await deleteLabel(issueDetailed.priceLabel!);
+  await deleteLabel(issueDetailed.priceLabel);
   await addLabelToIssue("Permitted");
   return comment;
 };

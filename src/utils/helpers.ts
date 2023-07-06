@@ -100,7 +100,7 @@ export const getIncentiveMode = ({ parsedRepo, parsedOrg, parsedDefault }: Confi
 export const getBountyHunterMax = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): number => {
   if (parsedRepo && parsedRepo["max-concurrent-bounties"] && !Number.isNaN(Number(parsedRepo["max-concurrent-bounties"]))) {
     return Number(parsedRepo["max-concurrent-bounties"]);
-  } else if (parsedOrg && parsedOrg["max-concurrent-bounties"] && !Number.isNaN(Number(parsedOrg!["max-concurrent-bounties"]))) {
+  } else if (parsedOrg && parsedOrg["max-concurrent-bounties"] && !Number.isNaN(Number(parsedOrg["max-concurrent-bounties"]))) {
     return Number(parsedOrg["max-concurrent-bounties"]);
   } else {
     return Number(parsedDefault["max-concurrent-bounties"]!);

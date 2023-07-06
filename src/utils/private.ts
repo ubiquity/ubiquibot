@@ -24,18 +24,19 @@ const KEY_PREFIX = "HSK_";
 export const getConfigSuperset = async (context: Context, type: "org" | "repo"): Promise<string | undefined> => {
   try {
     const payload = context.payload as Payload;
-    const repo = type === "org" ? CONFIG_REPO : payload.repository.name!;
-    const owner = type === "org" ? payload.organization?.login! : payload.repository.owner.login!;
+    const repo = type === "org" ? CONFIG_REPO : payload.repository.name;
+    const owner = type === "org" ? payload.organization?.login : payload.repository.owner.login;
+    if (!repo || !owner) return undefined;
     const { data } = await context.octokit.rest.repos.getContent({
       owner,
-      repo: repo,
+      repo,
       path: KEY_PATH,
       mediaType: {
         format: "raw",
       },
     });
     return data as unknown as string;
-  } catch (error: any) {
+  } catch (error: unknown) {
     return undefined;
   }
 };
@@ -59,20 +60,19 @@ export interface WideConfig {
   "comment-element-pricing"?: Record<string, number>;
 }
 
-export interface WideRepoConfig extends WideConfig {}
+export type WideRepoConfig = WideConfig;
 
 export interface WideOrgConfig extends WideConfig {
   "private-key-encrypted"?: string;
 }
 
-export const parseYAML = (data: any): any | undefined => {
+export const parseYAML = (data?: string): WideConfig | undefined => {
   try {
-    const parsedData = YAML.parse(data);
-    if (parsedData !== null) {
-      return parsedData;
-    } else {
-      return undefined;
+    if (data) {
+      const parsedData = YAML.parse(data);
+      return parsedData ?? undefined;
     }
+    return undefined;
   } catch (error) {
     return undefined;
   }
@@ -80,7 +80,7 @@ export const parseYAML = (data: any): any | undefined => {
 
 export const getDefaultConfig = (): WideRepoConfig => {
   const defaultConfig = readFileSync(`${__dirname}/../../ubiquibot-config-default.yml`, "utf8");
-  return parseYAML(defaultConfig);
+  return parseYAML(defaultConfig)!;
 };
 
 export const getPrivateKey = async (cipherText: string): Promise<string | undefined> => {
@@ -102,7 +102,7 @@ export const getPrivateKey = async (cipherText: string): Promise<string | undefi
     let walletPrivateKey: string | undefined = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
     walletPrivateKey = walletPrivateKey.replace(KEY_PREFIX, "");
     return walletPrivateKey;
-  } catch (error: any) {
+  } catch (error: unknown) {
     return undefined;
   }
 };
@@ -118,7 +118,7 @@ export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Prom
       return scalerPub;
     }
     return undefined;
-  } catch (error: any) {
+  } catch (error: unknown) {
     return undefined;
   }
 };

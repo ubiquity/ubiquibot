@@ -3,23 +3,25 @@
   "version": "0.1.2",
   "description": "Enables Ubiquity DevPool automation in your repository.",
   "author": "Ubiquity DAO",
-  "license": "ISC",
-  "homepage": "https://github.com/ubiquity/bounty-bot.git",
+  "license": "MIT",
+  "homepage": "https://github.com/ubiquity/ubiquibot.git",
   "keywords": [
     "probot",
     "github",
     "probot-app"
   ],
   "scripts": {
+    "build:ci": "ncc build src/adapters/github/github-actions.ts -o ./",
+    "build:serverless": "ncc build src/index.ts -o ./",
     "build": "tsc",
-    "build:serverless": "ncc build src/index.ts -o dist",
-    "build:ci": "ncc build adapters/index.ts -o dist && mv ./dist/index.js ./bin",
-    "start": "probot run ./lib/index.js",
-    "start:watch": "node copy.js && nodemon --exec 'yarn start'",
-    "start:serverless": "tsx adapters/index.ts",
-    "format": "prettier --write src",
-    "format:check": "prettier -c src/**/*.ts",
     "clean": "rimraf ./dist ./lib ./node_modules",
+    "format:check": "prettier -c src/**/*.ts",
+    "format": "prettier --write src",
+    "lint": "eslint --ext .ts ./src",
+    "prestart:watch": "ln -s src/assets/images lib/assets/images",
+    "start:serverless": "tsx src/adapters/github/github-actions.ts",
+    "start:watch": "nodemon --exec 'yarn start'",
+    "start": "probot run ./lib/index.js",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -34,6 +36,8 @@
     "@supabase/supabase-js": "^2.4.0",
     "@types/mdast": "^3.0.11",
     "@types/ms": "^0.7.31",
+    "@typescript-eslint/eslint-plugin": "^5.59.11",
+    "@typescript-eslint/parser": "^5.59.11",
     "@uniswap/permit2-sdk": "^1.2.0",
     "@vercel/ncc": "^0.34.0",
     "ajv": "^8.11.2",
@@ -59,10 +63,12 @@
     "yaml": "^2.2.2"
   },
   "devDependencies": {
+    "@types/eslint": "^8.40.2",
     "@types/jest": "^28.1.0",
     "@types/libsodium-wrappers": "^0.7.10",
     "@types/node": "^14.18.37",
     "@types/source-map-support": "^0.5.6",
+    "eslint": "^8.43.0",
     "jest": "^26.6.3",
     "nock": "^13.0.5",
     "rimraf": "3.0.2",
@@ -79,5 +85,17 @@
     "*.{ts,json}": [
       "prettier --write"
     ]
+  },
+  "nodemonConfig": {
+    "events": {
+      "config": "",
+      "exit": "",
+      "crash": "",
+      "restart": "clear && printf '\\033[3J'",
+      "start": "clear && printf '\\033[3J'"
+    },
+    "verbose": true,
+    "ext": "ts",
+    "exec": "yarn start"
   }
 }
