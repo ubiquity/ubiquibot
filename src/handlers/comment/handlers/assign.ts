@@ -83,19 +83,18 @@ export const assign = async (body: string) => {
     return "Skipping `/assign` since configuration is missing for the following labels";
   }
 
-  const curDate = new Date();
-  const curDateInMillisecs = curDate.getTime();
-  const endDate = new Date(curDateInMillisecs + duration * 1000);
-  const deadline_msg = endDate.toUTCString();
+  const startTime = new Date().getTime();
+  const endTime = new Date(startTime + duration * 1000);
+  const deadline = endTime.toUTCString();
 
-  let wallet_msg, multiplier_msg, reason_msg, bounty_msg;
-  const tips_msg = `<h6>Tips:</h6>
+  let setWalletMessage, multiplierMessage, reasonMessage, bountyMessage;
+  const tipsMessage = `<h6>Tips:</h6>
 <ul>
 <li>Use <code>/wallet 0x4FDE...BA18</code> if you want to update your registered payment wallet address @user.</li>
 <li>Be sure to open a draft pull request as soon as possible to communicate updates on your progress.</li>
 <li>Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the bounty.</li>
 <ul>`;
-  let commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
+  let commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`;
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     logger.info(`Adding the assignee: ${payload.sender.login}`);
@@ -112,26 +111,26 @@ export const assign = async (body: string) => {
     const recipient = await getWalletAddress(payload.sender.login);
     if (!recipient) {
       //no wallet found
-      wallet_msg = "Please set your wallet address to use `/wallet 0x4FDE...BA18`";
+      setWalletMessage = "Please set your wallet address to use `/wallet 0x4FDE...BA18`";
     } else {
       //wallet found
-      wallet_msg = recipient;
+      setWalletMessage = recipient;
     }
     const multiplier = await getWalletMultiplier(payload.sender.login);
     if (!multiplier) {
-      multiplier_msg = "1.00";
+      multiplierMessage = "1.00";
     } else {
-      multiplier_msg = multiplier.toFixed(2);
+      multiplierMessage = multiplier.toFixed(2);
     }
     const issueDetailed = bountyInfo(issue);
     if (!issueDetailed.priceLabel) {
-      bounty_msg = `Permit generation skipped since price label is not set`;
+      bountyMessage = `Permit generation skipped since price label is not set`;
     } else {
-      bounty_msg = (+issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4) * multiplier).toString() + " USD";
+      bountyMessage = (+issueDetailed.priceLabel!.substring(7, issueDetailed.priceLabel!.length - 4) * multiplier).toString() + " USD";
     }
     const reason = await getWalletReason(payload.sender.login);
-    reason_msg = reason ?? "";
-    return tableComment(deadline_msg, wallet_msg, multiplier_msg, reason_msg, bounty_msg) + tips_msg;
+    reasonMessage = reason ?? "";
+    return tableComment(deadline, setWalletMessage, multiplierMessage, reasonMessage, bountyMessage) + tipsMessage;
   }
   return;
 };
