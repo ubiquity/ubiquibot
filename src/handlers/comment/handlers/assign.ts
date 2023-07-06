@@ -89,10 +89,12 @@ export const assign = async (body: string) => {
   const deadline_msg = endDate.toUTCString();
 
   let wallet_msg, multiplier_msg, reason_msg, bounty_msg;
-  const tips_msg = `\n###### Tips:\n
-  - Use `/wallet 0x4FDE...BA18` if you want to update your registered payment wallet address ${payload.sender.login}
-  - Be sure to open a draft pull request as soon as possible to communicate updates on your progress.
-  - Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the bounty.`;
+  const tips_msg = `<h6>Tips:</h6>
+<ul>
+<li>Use <code>/wallet 0x4FDE...BA18</code> if you want to update your registered payment wallet address @user.</li>
+<li>Be sure to open a draft pull request as soon as possible to communicate updates on your progress.</li>
+<li>Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the bounty.</li>
+<ul>`;
   let commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
