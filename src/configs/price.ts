@@ -8,27 +8,22 @@ export const DefaultPriceConfig: PriceConfig = {
     {
       name: "Time: <1 Hour",
       weight: 0.125,
-      value: 3600,
     },
     {
       name: "Time: <1 Day",
       weight: 1,
-      value: 3600 * 24,
     },
     {
       name: "Time: <1 Week",
       weight: 2,
-      value: 3600 * 24 * 7,
     },
     {
       name: "Time: <2 Weeks",
       weight: 3,
-      value: 3600 * 24 * 14,
     },
     {
       name: "Time: <1 Month",
       weight: 4,
-      value: 3600 * 24 * 30,
     },
   ],
   priorityLabels: [

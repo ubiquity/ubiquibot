@@ -5,6 +5,7 @@ import { deadLinePrefix } from "../../shared";
 import { getWalletAddress, getWalletMultiplier, getMultiplierReason } from "../../../adapters/supabase";
 import { tableComment } from "./table";
 import { bountyInfo } from "../../wildcard";
+import { convertTimeToSeconds } from "../../../helpers/time";
 
 export const assign = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -71,7 +72,9 @@ export const assign = async (body: string) => {
 
   const sorted = timeLabelsAssigned.sort((a, b) => a.weight - b.weight);
   const targetTimeLabel = sorted[0];
-  const duration = targetTimeLabel.value;
+  // Split The Label and trim the extra space.
+  const parsedTimeLabel = targetTimeLabel.name.replace(/</, "").split(":")?.[1].trim();
+  const duration = convertTimeToSeconds(parsedTimeLabel);
   if (!duration) {
     logger.info(`Missing configure for timelabel: ${targetTimeLabel.name}`);
     return "Skipping `/assign` since configuration is missing for the following labels";
