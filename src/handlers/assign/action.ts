@@ -80,19 +80,19 @@ export const closePullRequestForAnIssue = async (): Promise<void> => {
   let noPullRequestsComment = `Failed To close these pull requests: `;
 
   let deleteCount = 0;
-  for (let i = 0; i < prs.length; i++) {
-    const deleted = await closePullRequest(prs[i].number);
+  for (const pr of prs) {
+    const deleted = await closePullRequest(pr.number);
     if (!deleted) {
-      noPullRequestsComment += ` <a href="${prs[i]._links.html.href}">#${prs[i].number}</a> `;
+      noPullRequestsComment += ` <a href="${pr._links.html.href}">#${pr.number}</a> `;
       continue;
     }
-    comment += ` <a href="${prs[i]._links.html.href}">#${prs[i].number}</a> `;
+    comment += ` <a href="${pr._links.html.href}">#${pr.number}</a> `;
     deleteCount++;
   }
-  if (deleteCount === 0) {
-    // If no PR is closed
-    await addCommentToIssue(noPullRequestsComment, payload.issue.number);
-    return;
-  }
-  await addCommentToIssue(comment, payload.issue.number);
+
+  // Check if All PRs are closed, if not send failed PRs list>
+  deleteCount !== prs.length && (await addCommentToIssue(noPullRequestsComment, payload.issue.number));
+
+  // If Anyone of PR closed send PR closed message
+  deleteCount > 0 && (await addCommentToIssue(comment, payload.issue.number));
 };
