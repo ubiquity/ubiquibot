@@ -8,7 +8,7 @@ export const convertTimeToSeconds = (time: string): number => {
 
   // `ms` doesn't support month conversion, so converting to days from months.
   if (_time.toLowerCase().includes("month")) {
-    _time = "30 Days";
+    _time = "30.4 Days";
   }
 
   const logger = getLogger();
