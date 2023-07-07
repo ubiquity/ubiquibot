@@ -22,7 +22,10 @@
     "start:serverless": "tsx src/adapters/github/github-actions.ts",
     "start:watch": "nodemon --exec 'yarn start'",
     "start": "probot run ./lib/index.js",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "utils:sync-upstream-1": "git fetch upstream",
+    "utils:sync-upstream-2": "git merge upstream/development",
+    "utils:sync-upstream-3": "git push origin development"
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
