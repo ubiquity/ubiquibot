@@ -54,7 +54,7 @@ export const registerWallet = async (body: string) => {
 
   const messageToSign = "DevPool";
   const failedSigLogMsg = `Skipping to register the wallet address because you have not provided a valid SIGNATURE_HASH, SIGNATURE_HASH: ${sigHash}`;
-  const failedSigResponse = `Skipping to register the wallet address because you have not provided a valid SIGNATURE_HASH. \nUse [etherscan](https://etherscan.io/verifiedSignatures) to sign the message \`${messageToSign}\` and register your wallet by appending the signature hash.\n\n**Usage:**\n/wallet <WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>\n\n**Example:**\n/wallet 0x4007CE2083c7F3E18097aeB3A39bb8eC149a341d 0x0830f316c982a7fd4ff050c8fdc1212a8fd92f6bb42b2337b839f2b4e156f05a359ef8f4acd0b57cdedec7874a865ee07076ab2c81dc9f9de28ced55228587f81c`;
+  const failedSigResponse = `Skipping to register the wallet address because you have not provided a valid SIGNATURE_HASH. \nUse [etherscan](https://etherscan.io/verifiedSignatures) to sign the message \`${messageToSign}\` and register your wallet by appending the signature hash.\n\n**Usage:**\n/wallet <WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>\n\n**Example:**\n/wallet 0x16ce4d863eD687455137576da2A0cbaf4f1E8f76 0x0830f316c982a7fd4ff050c8fdc1212a8fd92f6bb42b2337b839f2b4e156f05a359ef8f4acd0b57cdedec7874a865ee07076ab2c81dc9f9de28ced55228587f81c`;
   try {
     //verifyMessage throws an error when some parts(r,s,v) of the signature are correct but some are not
     const isSigHashValid = address && sigHash && ethers.utils.verifyMessage(messageToSign, sigHash) == ethers.utils.getAddress(address);
