@@ -16,15 +16,16 @@ export const handleComment = async (): Promise<void> => {
   }
 
   const body = comment.body;
-  const commands = commentParser(body);
+  const commentedCommands = commentParser(body);
 
-  if (commands.length === 0) {
+  if (commentedCommands.length === 0) {
     await verifyFirstCheck();
     return;
   }
 
-  for (const command of commands) {
-    const userCommand = userCommands.find((i) => i.id == command);
+  const allCommands = userCommands();
+  for (const command of commentedCommands) {
+    const userCommand = allCommands.find((i) => i.id == command);
 
     if (userCommand) {
       const { handler, callback, successComment, failureComment } = userCommand;

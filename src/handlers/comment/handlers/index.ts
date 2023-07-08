@@ -92,48 +92,50 @@ const commandCallback = async (issue_number: number, comment: string) => {
   await addCommentToIssue(comment, issue_number);
 };
 
-export const userCommands: UserCommands[] = [
-  {
-    id: IssueCommentCommands.ASSIGN,
-    description: "Assign the origin sender to the issue automatically.",
-    handler: assign,
-    callback: commandCallback,
-  },
-  {
-    id: IssueCommentCommands.UNASSIGN,
-    description: "Unassign the origin sender from the issue automatically.",
-    handler: unassign,
-    callback: commandCallback,
-  },
-  {
-    handler: listAvailableCommands,
-    id: IssueCommentCommands.HELP,
-    description: "List all available commands.",
-    callback: commandCallback,
-  },
-  // Commented out until Gnosis Safe is integrated (https://github.com/ubiquity/ubiquibot/issues/353)
-  /*{
+export const userCommands = (): UserCommands[] => {
+  return [
+    {
+      id: IssueCommentCommands.ASSIGN,
+      description: "Assign the origin sender to the issue automatically.",
+      handler: assign,
+      callback: commandCallback,
+    },
+    {
+      id: IssueCommentCommands.UNASSIGN,
+      description: "Unassign the origin sender from the issue automatically.",
+      handler: unassign,
+      callback: commandCallback,
+    },
+    {
+      handler: listAvailableCommands,
+      id: IssueCommentCommands.HELP,
+      description: "List all available commands.",
+      callback: commandCallback,
+    },
+    // Commented out until Gnosis Safe is integrated (https://github.com/ubiquity/ubiquibot/issues/353)
+    /*{
     id: IssueCommentCommands.PAYOUT,
     description: "Disable automatic payment for the issue.",
     handler: payout,
     callback: commandCallback,
   },*/
-  {
-    id: IssueCommentCommands.MULTIPLIER,
-    description: `Set bounty multiplier (for treasury)`,
-    handler: multiplier,
-    callback: commandCallback,
-  },
-  {
-    id: IssueCommentCommands.ALLOW,
-    description: `Set access control. (Admin Only)`,
-    handler: setAccess,
-    callback: commandCallback,
-  },
-  {
-    id: IssueCommentCommands.WALLET,
-    description: `<WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>: Register the hunter's wallet address. \n  Your message to sign is: DevPool\n  You can generate SIGNATURE_HASH at https://etherscan.io/verifiedSignatures\n  ex1: /wallet 0x16ce4d863eD687455137576da2A0cbaf4f1E8f76 0xe2a3e34a63f3def2c29605de82225b79e1398190b542be917ef88a8e93ff9dc91bdc3ef9b12ed711550f6d2cbbb50671aa3f14a665b709ec391f3e603d0899a41b\n  ex2: /wallet vitalik.eth 0x75329f883590507e581cd6dfca62680b6cd12e1f1665db8097f9e642ed70025146b5cf9f777dde90c4a9cbd41500a6bf76bc394fd0b0cae2aab09f7a6f30e3b31b\n`,
-    handler: registerWallet,
-    callback: commandCallback,
-  },
-];
+    {
+      id: IssueCommentCommands.MULTIPLIER,
+      description: `Set bounty multiplier (for treasury)`,
+      handler: multiplier,
+      callback: commandCallback,
+    },
+    {
+      id: IssueCommentCommands.ALLOW,
+      description: `Set access control. (Admin Only)`,
+      handler: setAccess,
+      callback: commandCallback,
+    },
+    {
+      id: IssueCommentCommands.WALLET,
+      description: `<WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>: Register the hunter's wallet address. \n  Your message to sign is: DevPool\n  You can generate SIGNATURE_HASH at https://etherscan.io/verifiedSignatures\n  ex1: /wallet 0x16ce4d863eD687455137576da2A0cbaf4f1E8f76 0xe2a3e34a63f3def2c29605de82225b79e1398190b542be917ef88a8e93ff9dc91bdc3ef9b12ed711550f6d2cbbb50671aa3f14a665b709ec391f3e603d0899a41b\n  ex2: /wallet vitalik.eth 0x75329f883590507e581cd6dfca62680b6cd12e1f1665db8097f9e642ed70025146b5cf9f777dde90c4a9cbd41500a6bf76bc394fd0b0cae2aab09f7a6f30e3b31b\n`,
+      handler: registerWallet,
+      callback: commandCallback,
+    },
+  ];
+};
