@@ -1,6 +1,6 @@
 import { createProbot } from "probot";
 import { EmitterWebhookEventName } from "@octokit/webhooks";
-import app from "../../src";
+import app from "../src";
 import { Request, Response } from "@cloudflare/workers-types";
 
 const probot = createProbot();
