@@ -67,6 +67,6 @@
     "pretty": false,
     "skipLibCheck": true
   },
-  "include": ["src/", "functions", ".netlify/functions/webhooks/webhooks.ts"],
+  "include": ["src/", "functions"],
   "compileOnSave": false
 }
