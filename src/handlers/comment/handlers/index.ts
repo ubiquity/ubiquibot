@@ -9,9 +9,10 @@ import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { setAccess } from "./set-access";
 import { multiplier } from "./multiplier";
-import { addCommentToIssue, createLabel, addLabelToIssue } from "../../../helpers";
+import { addCommentToIssue, createLabel, addLabelToIssue, getLabel } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
+import { getTargetPriceLabel } from "../../shared";
 
 export * from "./assign";
 export * from "./wallet";
@@ -75,6 +76,16 @@ export const issueCreatedCallback = async (): Promise<void> => {
     if (priorityLabels.length === 0 && priorityLabelConfigs.length > 0) await createLabel(priorityLabelConfigs[0].name);
     await addLabelToIssue(timeLabelConfigs[0].name);
     await addLabelToIssue(priorityLabelConfigs[0].name);
+
+    const targetPriceLabel = getTargetPriceLabel(timeLabelConfigs[0].name, priorityLabelConfigs[0].name);
+    if (targetPriceLabel) {
+      const exist = await getLabel(targetPriceLabel);
+      if (!exist) {
+        await createLabel(targetPriceLabel, "price");
+      }
+      await addLabelToIssue(targetPriceLabel);
+    }
+
     return;
   } catch (err: unknown) {
     return await addCommentToIssue(`Error: ${err}`, issue.number);
