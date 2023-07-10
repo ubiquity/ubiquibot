@@ -62,6 +62,10 @@ export const SodiumSchema = Type.Object({
   privateKey: Type.String(),
 });
 
+export const WalletSchema = Type.Object({
+  registerWalletWithVerification: Type.Boolean(),
+});
+
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
   price: PriceConfigSchema,
@@ -72,6 +76,7 @@ export const BotConfigSchema = Type.Object({
   mode: ModeSchema,
   assign: AssignSchema,
   sodium: SodiumSchema,
+  wallet: WalletSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;

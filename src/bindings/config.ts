@@ -1,7 +1,13 @@
 import ms from "ms";
 
 import { BotConfig, BotConfigSchema } from "../types";
-import { DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFAULT_PERMIT_BASE_URL } from "../configs";
+import {
+  DEFAULT_BOT_DELAY,
+  DEFAULT_DISQUALIFY_TIME,
+  DEFAULT_FOLLOWUP_TIME,
+  DEFAULT_PERMIT_BASE_URL,
+  DEFAULT_REGISTER_WALLET_WITH_VERIFICATION,
+} from "../configs";
 import { getPayoutConfigByChainId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
@@ -67,6 +73,9 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     sodium: {
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",
       publicKey: publicKey ?? "",
+    },
+    wallet: {
+      registerWalletWithVerification: process.env.REGISTER_WALLET_WITH_VERIFICATION?.toLowerCase() === "true" ?? DEFAULT_REGISTER_WALLET_WITH_VERIFICATION,
     },
   };
 

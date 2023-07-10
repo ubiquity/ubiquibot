@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { upsertWalletAddress } from "../../../adapters/supabase";
-import { getBotContext, getLogger } from "../../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { resolveAddress } from "../../../helpers";
 import { Payload } from "../../../types";
 import { formatEthAddress } from "../../../utils";
@@ -24,6 +24,7 @@ const extractEnsName = (text: string): string | undefined => {
 
 export const registerWallet = async (body: string) => {
   const { payload: _payload } = getBotContext();
+  const config = getBotConfig();
   const logger = getLogger();
   const payload = _payload as Payload;
   const sender = payload.sender.login;
@@ -48,24 +49,26 @@ export const registerWallet = async (body: string) => {
     logger.info(`Resolved address from Ens name: ${ensName}, address: ${address}`);
   }
 
-  const regexForSigHash = /(0x[a-fA-F0-9]{130})/g;
-  const sigHashMatches = body.match(regexForSigHash);
-  const sigHash = sigHashMatches ? sigHashMatches[0] : null;
+  if (config.wallet.registerWalletWithVerification) {
+    const regexForSigHash = /(0x[a-fA-F0-9]{130})/g;
+    const sigHashMatches = body.match(regexForSigHash);
+    const sigHash = sigHashMatches ? sigHashMatches[0] : null;
 
-  const messageToSign = "DevPool";
-  const failedSigLogMsg = `Skipping to register the wallet address because you have not provided a valid SIGNATURE_HASH.`;
-  const failedSigResponse = `Skipping to register the wallet address because you have not provided a valid SIGNATURE_HASH. \nUse [etherscan](https://etherscan.io/verifiedSignatures) to sign the message \`${messageToSign}\` and register your wallet by appending the signature hash.\n\n**Usage:**\n/wallet <WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>\n\n**Example:**\n/wallet 0x16ce4d863eD687455137576da2A0cbaf4f1E8f76 0x0830f316c982a7fd4ff050c8fdc1212a8fd92f6bb42b2337b839f2b4e156f05a359ef8f4acd0b57cdedec7874a865ee07076ab2c81dc9f9de28ced55228587f81c`;
-  try {
-    //verifyMessage throws an error when some parts(r,s,v) of the signature are correct but some are not
-    const isSigHashValid = address && sigHash && ethers.utils.verifyMessage(messageToSign, sigHash) == ethers.utils.getAddress(address);
-    if (!isSigHashValid) {
+    const messageToSign = "DevPool";
+    const failedSigLogMsg = `Skipping to register the wallet address because you have not provided a valid SIGNATURE_HASH.`;
+    const failedSigResponse = `Skipping to register the wallet address because you have not provided a valid SIGNATURE_HASH. \nUse [etherscan](https://etherscan.io/verifiedSignatures) to sign the message \`${messageToSign}\` and register your wallet by appending the signature hash.\n\n**Usage:**\n/wallet <WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>\n\n**Example:**\n/wallet 0x16ce4d863eD687455137576da2A0cbaf4f1E8f76 0x0830f316c982a7fd4ff050c8fdc1212a8fd92f6bb42b2337b839f2b4e156f05a359ef8f4acd0b57cdedec7874a865ee07076ab2c81dc9f9de28ced55228587f81c`;
+    try {
+      //verifyMessage throws an error when some parts(r,s,v) of the signature are correct but some are not
+      const isSigHashValid = address && sigHash && ethers.utils.verifyMessage(messageToSign, sigHash) == ethers.utils.getAddress(address);
+      if (!isSigHashValid) {
+        logger.info(failedSigLogMsg);
+        return failedSigResponse;
+      }
+    } catch (e) {
+      logger.info(`Exception thrown by verifyMessage for /wallet: ${e}`);
       logger.info(failedSigLogMsg);
       return failedSigResponse;
     }
-  } catch (e) {
-    logger.info(`Exception thrown by verifyMessage for /wallet: ${e}`);
-    logger.info(failedSigLogMsg);
-    return failedSigResponse;
   }
 
   if (address) {

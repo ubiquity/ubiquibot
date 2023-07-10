@@ -1,4 +1,3 @@
-import { getBotConfig } from "../../../bindings";
 import { Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
@@ -10,7 +9,7 @@ import { registerWallet } from "./wallet";
 import { setAccess } from "./set-access";
 import { multiplier } from "./multiplier";
 import { addCommentToIssue, createLabel, addLabelToIssue } from "../../../helpers";
-import { getBotContext } from "../../../bindings";
+import { getBotConfig, getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
 
 export * from "./assign";
@@ -93,6 +92,8 @@ const commandCallback = async (issue_number: number, comment: string) => {
 };
 
 export const userCommands = (): UserCommands[] => {
+  const config = getBotConfig();
+
   return [
     {
       id: IssueCommentCommands.ASSIGN,
@@ -133,7 +134,9 @@ export const userCommands = (): UserCommands[] => {
     },
     {
       id: IssueCommentCommands.WALLET,
-      description: `<WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>: Register the hunter's wallet address. \n  Your message to sign is: DevPool\n  You can generate SIGNATURE_HASH at https://etherscan.io/verifiedSignatures\n  ex1: /wallet 0x16ce4d863eD687455137576da2A0cbaf4f1E8f76 0xe2a3e34a63f3def2c29605de82225b79e1398190b542be917ef88a8e93ff9dc91bdc3ef9b12ed711550f6d2cbbb50671aa3f14a665b709ec391f3e603d0899a41b\n  ex2: /wallet vitalik.eth 0x75329f883590507e581cd6dfca62680b6cd12e1f1665db8097f9e642ed70025146b5cf9f777dde90c4a9cbd41500a6bf76bc394fd0b0cae2aab09f7a6f30e3b31b\n`,
+      description: config.wallet.registerWalletWithVerification
+        ? `<WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>: Register the hunter's wallet address. \n  Your message to sign is: DevPool\n  You can generate SIGNATURE_HASH at https://etherscan.io/verifiedSignatures\n  ex1: /wallet 0x16ce4d863eD687455137576da2A0cbaf4f1E8f76 0xe2a3e34a63f3def2c29605de82225b79e1398190b542be917ef88a8e93ff9dc91bdc3ef9b12ed711550f6d2cbbb50671aa3f14a665b709ec391f3e603d0899a41b\n  ex2: /wallet vitalik.eth 0x75329f883590507e581cd6dfca62680b6cd12e1f1665db8097f9e642ed70025146b5cf9f777dde90c4a9cbd41500a6bf76bc394fd0b0cae2aab09f7a6f30e3b31b\n`
+        : `<WALLET_ADDRESS | ENS_NAME>: Register the hunter's wallet address. \n  ex1: /wallet 0x16ce4d863eD687455137576da2A0cbaf4f1E8f76\n  ex2: /wallet vitalik.eth\n`,
       handler: registerWallet,
       callback: commandCallback,
     },
