@@ -1,18 +1,14 @@
 import { createProbot } from "probot";
 import { EmitterWebhookEventName } from "@octokit/webhooks";
 import app from "../../src";
+import { Request, Response } from "@cloudflare/workers-types";
 
 const probot = createProbot();
 const loadingApp = probot.load(app);
 
 export default {
-  /**
-   * @param {Request} request
-   * @param {Record<string, any>} env
-   */
-  async fetch(request: Request, env: Record<string, any>) {
+  async fetch(request: Request) {
     await loadingApp;
-
     const id = request.headers.get("X-GitHub-Delivery") || request.headers.get("x-github-delivery") || "";
     const name = (request.headers.get("X-GitHub-Event") || request.headers.get("x-github-event")) as EmitterWebhookEventName;
     const signature = request.headers.get("X-Hub-Signature-256") || request.headers.get("x-hub-signature-256") || "";
@@ -30,10 +26,12 @@ export default {
       return new Response(`{ "ok": true }`, {
         headers: { "content-type": "application/json" },
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
 
-      return new Response(`{ "error": "${error.message}" }`, {
+      const message = (error as { message: string }).message ?? "";
+
+      return new Response(`{ "error": "${message}" }`, {
         status: 500,
         headers: { "content-type": "application/json" },
       });

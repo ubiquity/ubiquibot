@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
-    "@cloudflare/workers-types": "^4.20230518.0",
+    "@cloudflare/workers-types": "4.20230628.0",
     "@commitlint/cli": "^17.4.3",
     "@commitlint/config-conventional": "^17.4.3",
     "@logdna/logger": "^2.6.6",
