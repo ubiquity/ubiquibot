@@ -12,7 +12,8 @@ import { multiplier } from "./multiplier";
 import { addCommentToIssue, createLabel, addLabelToIssue, getAllIssueComments, getTokenSymbol } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
+import { addPenalty } from "../../../adapters/supabase";
 
 export * from "./assign";
 export * from "./wallet";
@@ -121,13 +122,13 @@ export const issueReopenedCallback = async (): Promise<void> => {
     try {
       claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
     } catch (err: unknown) {
-      logger.error(`${err}`);
+      logger.error(`Error parsing claim: ${err}`);
       return;
     }
-    const amount = claim.permit.permitted.amount;
+    const amount = BigNumber.from(claim.permit.permitted.amount);
     const formattedAmount = ethers.utils.formatUnits(amount, 18);
-    const token = claim.permit.permitted.token;
-    const tokenSymbol = await getTokenSymbol(token, rpc);
+    const tokenAddress = claim.permit.permitted.token;
+    const tokenSymbol = await getTokenSymbol(tokenAddress, rpc);
 
     // find latest assignment before the permit comment
     const assignmentComment = comments
@@ -146,6 +147,16 @@ export const issueReopenedCallback = async (): Promise<void> => {
       return;
     }
     const assignee = usernames[1].substring(1);
+
+    // repo name
+    const repoName = issue.repository_url.split("/").slice(-2)[0];
+
+    // write penalty to db
+    try {
+      await addPenalty(assignee, repoName, tokenAddress, amount);
+    } catch (err) {
+      return;
+    }
 
     await addCommentToIssue(
       `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of ${formattedAmount} ${tokenSymbol} will be deducted from your next bounty.`,

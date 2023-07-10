@@ -2,6 +2,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { getAdapters, getLogger } from "../../../bindings";
 import { Issue, UserProfile } from "../../../types";
 import { Database } from "../types";
+import { BigNumber, BigNumberish } from "ethers";
 
 /**
  * @dev Creates a typescript client which will be used to interact with supabase platform
@@ -294,4 +295,61 @@ export const getMultiplierReason = async (username: string): Promise<string> => 
   const { supabase } = getAdapters();
   const { data } = await supabase.from("wallets").select("reason").eq("user_name", username).single();
   return data?.reason;
+};
+
+export const addPenalty = async (username: string, repoName: string, tokenAddress: string, penalty: BigNumberish): Promise<void> => {
+  const { supabase } = getAdapters();
+  const logger = getLogger();
+
+  const { data, error } = await supabase.rpc("add_penalty", {
+    username: username,
+    repository_name: repoName,
+    token_address: tokenAddress,
+    penalty_amount: penalty.toString(),
+  });
+  logger.debug(`Adding penalty done, { data: ${data}, error: ${error} }`);
+
+  if (error) {
+    throw new Error(`Error adding penalty: ${error.message}`);
+  }
+};
+
+export const getPenalty = async (username: string, repoName: string, tokenAddress: string): Promise<BigNumber> => {
+  const { supabase } = getAdapters();
+  const logger = getLogger();
+
+  const { data, error } = await supabase
+    .from("penalty")
+    .select("amount")
+    .eq("username", username)
+    .eq("repository_name", repoName)
+    .eq("token_address", tokenAddress)
+    .single();
+  logger.debug(`Getting penalty done, { data: ${data}, error: ${error} }`);
+
+  if (error) {
+    throw new Error(`Error getting penalty: ${error.message}`);
+  }
+
+  if (!data) {
+    return BigNumber.from(0);
+  }
+  return BigNumber.from(data.amount);
+};
+
+export const deductPenalty = async (username: string, repoName: string, tokenAddress: string, penalty: BigNumberish): Promise<void> => {
+  const { supabase } = getAdapters();
+  const logger = getLogger();
+
+  const { data, error } = await supabase.rpc("deduct_penalty", {
+    username: username,
+    repository_name: repoName,
+    token_address: tokenAddress,
+    penalty_amount: penalty.toString(),
+  });
+  logger.debug(`Deducting penalty done, { data: ${data}, error: ${error} }`);
+
+  if (error) {
+    throw new Error(`Error deducting penalty: ${error.message}`);
+  }
 };
