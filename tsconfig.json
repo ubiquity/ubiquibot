@@ -67,6 +67,6 @@
     "pretty": false,
     "skipLibCheck": true
   },
-  "include": ["src/", "functions"],
+  "include": ["src/", "serverless"],
   "compileOnSave": false
 }
