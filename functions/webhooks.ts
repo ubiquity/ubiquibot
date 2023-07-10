@@ -3,12 +3,10 @@ import { EmitterWebhookEventName } from "@octokit/webhooks";
 import app from "../src";
 import { Request, Response } from "@cloudflare/workers-types";
 
-const probot = createProbot();
-const loadingApp = probot.load(app);
-
-export default {
+export const worker = {
   async fetch(request: Request) {
-    await loadingApp;
+    const probot = createProbot();
+    await probot.load(app);
     const id = request.headers.get("X-GitHub-Delivery") || request.headers.get("x-github-delivery") || "";
     const name = (request.headers.get("X-GitHub-Event") || request.headers.get("x-github-event")) as EmitterWebhookEventName;
     const signature = request.headers.get("X-Hub-Signature-256") || request.headers.get("x-hub-signature-256") || "";
