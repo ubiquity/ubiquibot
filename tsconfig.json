@@ -67,6 +67,6 @@
     "pretty": false,
     "skipLibCheck": true
   },
-  "include": ["src/", "serverless", "functions/webhooks.ts"],
+  "include": ["src/", "./.cloudflare", "./.netlify"],
   "compileOnSave": false
 }

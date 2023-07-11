@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "build:ci": "ncc build src/adapters/github/github-actions.ts -o ./",
+    "build:cloudflare": "ncc build src/adapters/cloudflare/worker.ts -o ./",
     "build:serverless": "ncc build src/index.ts -o ./",
     "build": "tsc",
     "clean": "rimraf ./dist ./lib ./node_modules",

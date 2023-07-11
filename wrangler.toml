@@ -2,5 +2,5 @@ name = "ubiquibot"
 account_id = "f8d9cac88285c4d654ba305a92e952d6"
 workers_dev = true
 
-main = "./functions/webhooks.ts"
+main = "worker.js"
 node_compat = true
