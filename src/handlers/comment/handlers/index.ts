@@ -72,23 +72,19 @@ export const issueCreatedCallback = async (): Promise<void> => {
     const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
     const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
-    if (timeLabels.length === 0 && timeLabelConfigs.length > 0) await createLabel(timeLabelConfigs[0].name);
-    if (priorityLabels.length === 0 && priorityLabelConfigs.length > 0) await createLabel(priorityLabelConfigs[0].name);
-    await addLabelToIssue(timeLabelConfigs[0].name);
-    await addLabelToIssue(priorityLabelConfigs[0].name);
+    const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : timeLabelConfigs[0].name;
+    const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : priorityLabelConfigs[0].name;
+    if (!timeLabels.length) await addLabelToIssue(minTimeLabel);
+    if (!priorityLabels.length) await addLabelToIssue(minPriorityLabel);
 
-    const targetPriceLabel = getTargetPriceLabel(timeLabelConfigs[0].name, priorityLabelConfigs[0].name);
-    if (targetPriceLabel) {
+    const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
+    if (targetPriceLabel && !labels.map((i) => i.name).includes(targetPriceLabel)) {
       const exist = await getLabel(targetPriceLabel);
-      if (!exist) {
-        await createLabel(targetPriceLabel, "price");
-      }
+      if (!exist) await createLabel(targetPriceLabel, "price");
       await addLabelToIssue(targetPriceLabel);
     }
-
-    return;
   } catch (err: unknown) {
-    return await addCommentToIssue(`Error: ${err}`, issue.number);
+    await addCommentToIssue(`Error: ${err}`, issue.number);
   }
 };
 
