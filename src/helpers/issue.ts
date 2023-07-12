@@ -344,6 +344,18 @@ export const getIssueByNumber = async (context: Context, issue_number: number) =
   }
 };
 
+export const getPullByNumber = async (context: Context, pull_number: number) => {
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  try {
+    const { data: pull } = await context.octokit.rest.pulls.get({ owner: payload.repository.owner.login, repo: payload.repository.name, pull_number });
+    return pull;
+  } catch (error) {
+    logger.debug(`Fetching pull failed!, reason: ${error}`);
+    return;
+  }
+};
+
 // Get issues assigned to a username
 export const getAssignedIssues = async (username: string) => {
   const issuesArr = [];
