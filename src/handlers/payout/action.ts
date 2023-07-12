@@ -5,6 +5,8 @@ import { Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
 
+const TEMPLATE_PAYOUT_URL = "https://pay.ubq.fi?claim";
+
 export const handleIssueClosed = async () => {
   const context = getBotContext();
   const {
@@ -75,7 +77,7 @@ export const handleIssueClosed = async () => {
   const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
   const comments = await getAllIssueComments(issue.number);
   const commentContents = comments.map((i) => i.body);
-  const exist = commentContents.find((content) => content.includes(comment));
+  const exist = commentContents.find((content) => content.includes(TEMPLATE_PAYOUT_URL));
   if (exist) {
     logger.info(`Skip to generate a permit url because it has been already posted`);
     return `Permit generation skipped because it was already posted to this issue.`;
