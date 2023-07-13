@@ -8,24 +8,22 @@ export const handleLabelsAccess = async () => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.issue) return;
+  if (!payload.label?.name) return;
   const sender = payload.sender.login;
-
   const repo = payload.repository;
-
   const permissionLevel = await getUserPermission(sender, context);
-
   // event in plain english
-  let eventName = payload.action === "labeled" ? "add" : "remove";
+  const eventName = payload.action === "labeled" ? "add" : "remove";
+  const labelName = payload.label.name;
 
   // get text before :
   const match = payload.label?.name?.split(":");
-
-  const label_type = match![0]?.toLowerCase();
-
+  if (match.length == 0) return;
+  const label_type = match[0].toLowerCase();
   if (permissionLevel !== "admin") {
     logger.info(`Getting ${label_type} access for ${sender} on ${repo.full_name}`);
     // check permission
-    let accessible = await getAccessLevel(sender, repo.full_name, label_type);
+    const accessible = await getAccessLevel(sender, repo.full_name, label_type);
 
     if (accessible) {
       return true;
@@ -33,13 +31,13 @@ export const handleLabelsAccess = async () => {
 
     if (payload.action === "labeled") {
       // remove the label
-      removeLabel(payload.label?.name!);
+      await removeLabel(labelName);
     } else if (payload.action === "unlabeled") {
       // add the label
-      addLabelToIssue(payload.label?.name!);
+      await addLabelToIssue(labelName);
     }
-    addCommentToIssue(`@${sender}, You are not allowed to ${eventName} ${payload.label?.name!}`, payload.issue.number);
-    logger.info(`@${sender} is not allowed to ${eventName} ${payload.label?.name!}`);
+    await addCommentToIssue(`@${sender}, You are not allowed to ${eventName} ${labelName}`, payload.issue.number);
+    logger.info(`@${sender} is not allowed to ${eventName} ${labelName}`);
     return false;
   }
   return true;

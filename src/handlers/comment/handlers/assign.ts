@@ -91,6 +91,7 @@ export const assign = async (body: string) => {
     <ul>`,
   };
 
+
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     logger.info(`Adding the assignee: ${payload.sender.login}`);
     await addAssignees(issue.number, [payload.sender.login]);

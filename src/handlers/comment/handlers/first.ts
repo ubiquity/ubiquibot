@@ -7,6 +7,7 @@ export const verifyFirstCheck = async (): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
+  if (!payload.issue) return;
 
   try {
     const response = await context.octokit.rest.search.issuesAndPullRequests({
@@ -25,7 +26,7 @@ export const verifyFirstCheck = async (): Promise<void> => {
       if (isFirstComment) {
         //first_comment
         const msg = `${COMMAND_INSTRUCTIONS}\n@${payload.sender.login}`;
-        await addCommentToIssue(msg, payload.issue!.number);
+        await addCommentToIssue(msg, payload.issue.number);
       }
     }
   } catch (error: unknown) {

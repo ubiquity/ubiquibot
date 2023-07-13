@@ -1,13 +1,20 @@
 import { GithubEvent, Handler, ActionHandler } from "../types";
-import { commentWithAssignMessage } from "./assign";
+import { closePullRequestForAnIssue, commentWithAssignMessage } from "./assign";
 import { pricingLabelLogic, validatePriceLabels } from "./pricing";
 import { checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate } from "./wildcard";
 import { nullHandler } from "./shared";
-import { handleComment, issueClosedCallback } from "./comment";
+import { handleComment, issueClosedCallback, issueCreatedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
+import { runOnPush } from "./push";
+import { incentivizeComments, incentivizeCreatorComment } from "./payout";
 
 export const processors: Record<string, Handler> = {
+  [GithubEvent.ISSUES_OPENED]: {
+    pre: [nullHandler],
+    action: [issueCreatedCallback],
+    post: [nullHandler],
+  },
   [GithubEvent.ISSUES_LABELED]: {
     pre: [validatePriceLabels],
     action: [pricingLabelLogic],
@@ -23,6 +30,11 @@ export const processors: Record<string, Handler> = {
     action: [commentWithAssignMessage],
     post: [nullHandler],
   },
+  [GithubEvent.ISSUES_UNASSIGNED]: {
+    pre: [nullHandler],
+    action: [closePullRequestForAnIssue],
+    post: [nullHandler],
+  },
   [GithubEvent.ISSUE_COMMENT_CREATED]: {
     pre: [nullHandler],
     action: [handleComment],
@@ -36,7 +48,7 @@ export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_CLOSED]: {
     pre: [nullHandler],
     action: [issueClosedCallback],
-    post: [nullHandler],
+    post: [incentivizeCreatorComment, incentivizeComments],
   },
   [GithubEvent.PULL_REQUEST_OPENED]: {
     pre: [nullHandler],
@@ -46,6 +58,11 @@ export const processors: Record<string, Handler> = {
   [GithubEvent.INSTALLATION_ADDED_EVENT]: {
     pre: [nullHandler],
     action: [createDevPoolPR],
+    post: [nullHandler],
+  },
+  [GithubEvent.PUSH_EVENT]: {
+    pre: [nullHandler],
+    action: [runOnPush],
     post: [nullHandler],
   },
 };
