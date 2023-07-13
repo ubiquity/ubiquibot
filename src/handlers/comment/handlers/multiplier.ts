@@ -66,11 +66,7 @@ export const multiplier = async (body: string) => {
       }
     }
 
-    logger.info(
-      `Upserting to the wallet table, username: ${username}, bountyMultiplier: ${bountyMultiplier}, reason: ${reason}, matches: ${matches.map((it) =>
-        it.toString()
-      )}`
-    );
+    logger.info(`Upserting to the wallet table, username: ${username}, bountyMultiplier: ${bountyMultiplier}, reason: ${reason}}`);
 
     await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason);
     return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
