@@ -10,12 +10,18 @@ export type LabelItem = Static<typeof LabelItemSchema>;
 const CommentElementPricingSchema = Type.Record(Type.String(), Type.Number());
 export type CommentElementPricing = Static<typeof CommentElementPricingSchema>;
 
+export const DefaultLabelsSchema = Type.Object({
+  global: Type.Array(Type.String()),
+  users: Type.Record(Type.String(), Type.Array(Type.String())),
+});
+
 export const PriceConfigSchema = Type.Object({
   baseMultiplier: Type.Number(),
   issueCreatorMultiplier: Type.Number(),
   timeLabels: Type.Array(LabelItemSchema),
   priorityLabels: Type.Array(LabelItemSchema),
   commentElementPricing: CommentElementPricingSchema,
+  defaultLabels: DefaultLabelsSchema,
 });
 export type PriceConfig = Static<typeof PriceConfigSchema>;
 

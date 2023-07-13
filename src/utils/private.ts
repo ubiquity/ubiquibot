@@ -13,6 +13,7 @@ import {
   getPriorityLabels,
   getTimeLabels,
   getCommentItemPrice,
+  getDefaultLabels,
 } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
@@ -46,6 +47,14 @@ export interface WideLabel {
   value?: number | undefined;
 }
 
+type Label = string;
+type Username = string;
+
+export interface DefaultLabels {
+  global: Label[];
+  users: Record<Username, Label[]>;
+}
+
 export interface WideConfig {
   "chain-id"?: number;
   "base-multiplier"?: number;
@@ -57,6 +66,7 @@ export interface WideConfig {
   "incentive-mode"?: boolean;
   "max-concurrent-bounties"?: number;
   "comment-element-pricing"?: Record<string, number>;
+  "default-labels"?: DefaultLabels;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -137,6 +147,7 @@ export const getWideConfig = async (context: Context) => {
     bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
     incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
     commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
+    defaultLabels: getDefaultLabels(parsedRepo, parsedOrg),
   };
 
   return configData;
