@@ -1,4 +1,5 @@
 import { getBotContext, getLogger } from "../../bindings";
+import { ASSIGN_COMMAND_ENABLED } from "../../configs";
 import { addAssignees, getIssueByNumber, getPullRequests } from "../../helpers";
 import { gitLinkedIssueParser } from "../../helpers/parser";
 import { Payload } from "../../types";
@@ -8,6 +9,8 @@ export const checkPullRequests = async () => {
   const context = getBotContext();
   const logger = getLogger();
   const pulls = await getPullRequests(context);
+
+  if (ASSIGN_COMMAND_ENABLED) return;
 
   if (pulls.length === 0) {
     logger.debug(`No pull requests found at this time`);

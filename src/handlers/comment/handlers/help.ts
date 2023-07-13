@@ -1,5 +1,6 @@
 import { userCommands } from ".";
 import { getBotContext, getLogger } from "../../../bindings";
+import { ASSIGN_COMMAND_ENABLED } from "../../../configs";
 import { IssueType, Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 
@@ -33,6 +34,7 @@ export const generateHelpMenu = () => {
     // if first command, add a new line
     if (command.id === userCommands[0].id) {
       helpMenu += `\n`;
+      if (!ASSIGN_COMMAND_ENABLED) return;
     }
     helpMenu += `- ${command.id}: ${command.description}`;
     // if not last command, add a new line (fixes too much space below)
@@ -41,6 +43,6 @@ export const generateHelpMenu = () => {
     }
   });
 
-  helpMenu += "```";
+  if (!ASSIGN_COMMAND_ENABLED) helpMenu += "```\n***_To assign yourself to this issue, you should open a draft pull request that is linked._***";
   return helpMenu;
 };
