@@ -2,15 +2,13 @@ import { Context } from "probot";
 import { getBotContext, getLogger } from "../bindings";
 import { Comment, IssueType, Payload } from "../types";
 import { checkRateLimitGit } from "../utils";
-import { DEFAULT_TIME_RANGE_FOR_MAX_ISSUE, DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED } from "../configs";
 
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
-  if (!payload.issue) return;
 
-  const labels = payload.issue.labels;
+  const labels = payload.issue!.labels;
   const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));
 
   if (!issuePrices.length) return;
@@ -19,11 +17,11 @@ export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
     await context.octokit.issues.removeLabel({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number: payload.issue.number,
+      issue_number: payload.issue!.number,
       name: issuePrices[0].name.toString(),
     });
   } catch (e: unknown) {
-    logger.debug(`Clearing all price labels failed!, reason: ${e}`);
+    logger.debug(`Clearing all price labels failed!, reason: ${(e as any)?.message}`);
   }
 };
 
@@ -31,24 +29,20 @@ export const addLabelToIssue = async (labelName: string) => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
-  if (!payload.issue) {
-    logger.debug("Issue object is null");
-    return;
-  }
 
   try {
     await context.octokit.issues.addLabels({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number: payload.issue.number,
+      issue_number: payload.issue!.number,
       labels: [labelName],
     });
   } catch (e: unknown) {
-    logger.debug(`Adding a label to issue failed!, reason: ${e}`);
+    logger.debug(`Adding a label to issue failed!, reason: ${(e as any)?.message}`);
   }
 };
 
-export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open", per_page = 30, page = 1) => {
+export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open", per_page: number = 30, page: number = 1) => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -105,32 +99,11 @@ export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[
   return result;
 };
 
-export const getIssueDescription = async (issue_number: number): Promise<string> => {
-  const context = getBotContext();
-  const logger = getLogger();
-  const payload = context.payload as Payload;
-
-  let result = "";
-  try {
-    const response = await context.octokit.rest.issues.get({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: issue_number,
-    });
-
-    await checkRateLimitGit(response?.headers);
-    if (response.data.body) result = response.data.body;
-  } catch (e: unknown) {
-    logger.debug(`Getting issue description failed!, reason: ${e}`);
-  }
-  return result;
-};
-
 export const getAllIssueComments = async (issue_number: number): Promise<Comment[]> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
-  const result: Comment[] = [];
+  let result: Comment[] = [];
   let shouldFetch = true;
   let page_number = 1;
   try {
@@ -147,7 +120,7 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
 
       // Fixing infinite loop here, it keeps looping even when its an empty array
       if (response?.data?.length > 0) {
-        response.data.forEach((item) => result?.push(item as Comment));
+        response.data.forEach((item) => result!.push(item as Comment));
         page_number++;
       } else {
         shouldFetch = false;
@@ -242,16 +215,12 @@ export const removeLabel = async (name: string) => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
-  if (!payload.issue) {
-    logger.debug("Invalid issue object");
-    return;
-  }
 
   try {
     await context.octokit.issues.removeLabel({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number: payload.issue.number,
+      issue_number: payload.issue!.number,
       name: name,
     });
   } catch (e: unknown) {
@@ -276,57 +245,6 @@ export const getPullRequests = async (context: Context, state: "open" | "closed"
   }
 };
 
-export const closePullRequest = async (pull_number: number) => {
-  const context = getBotContext();
-  const payload = context.payload as Payload;
-  const logger = getLogger();
-  try {
-    await getBotContext().octokit.rest.pulls.update({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      pull_number,
-      state: "closed",
-    });
-  } catch (e: unknown) {
-    logger.debug(`Closing pull requests failed!, reason: ${e}`);
-  }
-};
-
-export const getAllPullRequestReviews = async (context: Context, pull_number: number) => {
-  const prArr = [];
-  let fetchDone = false;
-  const perPage = 30;
-  let curPage = 1;
-  while (!fetchDone) {
-    const prs = await getPullRequestReviews(context, pull_number, perPage, curPage);
-
-    // push the objects to array
-    prArr.push(...prs);
-
-    if (prs.length < perPage) fetchDone = true;
-    else curPage++;
-  }
-  return prArr;
-};
-
-export const getPullRequestReviews = async (context: Context, pull_number: number, per_page: number, page: number) => {
-  const logger = getLogger();
-  const payload = context.payload as Payload;
-  try {
-    const { data: reviews } = await context.octokit.rest.pulls.listReviews({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      pull_number,
-      per_page,
-      page,
-    });
-    return reviews;
-  } catch (e: unknown) {
-    logger.debug(`Fetching pull request reviews failed!, reason: ${e}`);
-    return [];
-  }
-};
-
 // Get issues by issue number
 export const getIssueByNumber = async (context: Context, issue_number: number) => {
   const logger = getLogger();
@@ -346,7 +264,7 @@ export const getIssueByNumber = async (context: Context, issue_number: number) =
 
 // Get issues assigned to a username
 export const getAssignedIssues = async (username: string) => {
-  const issuesArr = [];
+  let issuesArr = [];
   let fetchDone = false;
   const perPage = 30;
   let curPage = 1;
@@ -364,62 +282,4 @@ export const getAssignedIssues = async (username: string) => {
   const assigned_issues = issuesArr.filter((issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username);
 
   return assigned_issues;
-};
-
-export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userName: string) => {
-  const pulls = await getOpenedPullRequests(userName);
-
-  return pulls.filter((pull) => {
-    if (!pull.body) return false;
-    const issues = pull.body.match(/#(\d+)/gi);
-
-    if (!issues) return false;
-
-    const linkedIssueNumbers = Array.from(new Set(issues.map((issue) => issue.replace("#", ""))));
-    if (linkedIssueNumbers.indexOf(`${issueNumber}`) !== -1) return true;
-    return false;
-  });
-};
-
-export const getOpenedPullRequests = async (username: string) => {
-  const context = getBotContext();
-  const prs = await getPullRequests(context, "open");
-  return prs.filter((pr) => !pr.draft && (pr.user?.login === username || !username));
-};
-
-export const getCommitsOnPullRequest = async (pullNumber: number) => {
-  const logger = getLogger();
-  const context = getBotContext();
-  const payload = getBotContext().payload as Payload;
-  try {
-    const { data: commits } = await context.octokit.rest.pulls.listCommits({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      pull_number: pullNumber,
-    });
-    return commits;
-  } catch (e: unknown) {
-    logger.debug(`Fetching pull request commits failed!, reason: ${e}`);
-    return [];
-  }
-};
-
-export const getAvailableOpenedPullRequests = async (username: string) => {
-  if (!DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED) return [];
-  const context = getBotContext();
-  const opened_prs = await getOpenedPullRequests(username);
-
-  const result = [];
-
-  for (let i = 0; i < opened_prs.length; i++) {
-    const pr = opened_prs[i];
-    const reviews = await getAllPullRequestReviews(context, pr.number);
-
-    if (reviews.length > 0) result.push(pr);
-
-    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= DEFAULT_TIME_RANGE_FOR_MAX_ISSUE) {
-      result.push(pr);
-    }
-  }
-  return result;
 };

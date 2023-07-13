@@ -2,7 +2,7 @@ import { Input } from "telegraf";
 import { getAdapters, getBotConfig } from "../../../bindings";
 import { TLMessageFormattedPayload, TLMessagePayload, TLPhotoPayload } from "../types/payload";
 
-export function messageFormatter(messagePayload: TLMessagePayload) {
+export const messageFormatter = (messagePayload: TLMessagePayload) => {
   const { action, title, description, id, ref, user } = messagePayload;
   const msgObj =
     `<b>${action}: ${title}</b> ` +
@@ -12,9 +12,9 @@ export function messageFormatter(messagePayload: TLMessagePayload) {
     `<code>${description}</code>`;
 
   return msgObj;
-}
+};
 
-export async function telegramFormattedNotifier(messagePayload: TLMessageFormattedPayload) {
+export const telegramFormattedNotifier = async (messagePayload: TLMessageFormattedPayload) => {
   const {
     telegram: { delay },
   } = getBotConfig();
@@ -30,28 +30,26 @@ export async function telegramFormattedNotifier(messagePayload: TLMessageFormatt
 
     const sendInterval = setInterval(async () => {
       clearInterval(sendInterval);
-      await telegram.sendMessage(chatIds[currentElem], text, {
-        parse_mode: parseMode,
-      });
+      await telegram.sendMessage(chatIds[currentElem], text, { parse_mode: parseMode });
       currentElem++;
       sendHandler();
     }, delay);
   };
   sendHandler();
-}
+};
 
-export async function telegramNotifier(messagePayload: TLMessagePayload) {
+export const telegramNotifier = (messagePayload: TLMessagePayload) => {
   const messageString = messageFormatter(messagePayload);
   const messageObj: TLMessageFormattedPayload = {
     chatIds: messagePayload.chatIds,
     text: messageString,
     parseMode: "HTML",
   };
-  await telegramFormattedNotifier(messageObj);
-}
+  telegramFormattedNotifier(messageObj);
+};
 
-export async function telegramPhotoNotifier(messagePayload: TLPhotoPayload) {
+export const telegramPhotoNotifier = async (messagePayload: TLPhotoPayload) => {
   const { chatId, file, caption } = messagePayload;
   const { telegram } = getAdapters();
   await telegram.sendPhoto(chatId, Input.fromLocalFile(file), { caption: caption, parse_mode: "HTML" });
-}
+};

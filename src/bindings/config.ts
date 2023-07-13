@@ -8,38 +8,23 @@ import { Context } from "probot";
 import { getScalarKey, getWideConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
-  const {
-    privateKey,
-    baseMultiplier,
-    timeLabels,
-    priorityLabels,
-    commentElementPricing,
-    autoPayMode,
-    analyticsMode,
-    bountyHunterMax,
-    incentiveMode,
-    chainId,
-    issueCreatorMultiplier,
-  } = await getWideConfig(context);
-
+  const { privateKey, baseMultiplier, timeLabels, priorityLabels, autoPayMode, analyticsMode, bountyHunterMax, chainId } = await getWideConfig(context);
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
   const { rpc, paymentToken } = getPayoutConfigByChainId(chainId);
 
   const botConfig: BotConfig = {
     log: {
-      level: process.env.LOG_LEVEL || "debug",
+      level: process.env.LOG_LEVEL || "deubg",
       ingestionKey: process.env.LOGDNA_INGESTION_KEY ?? "",
     },
     price: {
-      baseMultiplier,
-      issueCreatorMultiplier,
-      timeLabels,
-      priorityLabels,
-      commentElementPricing,
+      baseMultiplier: baseMultiplier,
+      timeLabels: timeLabels,
+      priorityLabels: priorityLabels,
     },
     payout: {
       chainId: chainId,
-      rpc: rpc,
+      rpc: process.env.RPC_PROVIDER_URL || rpc,
       privateKey: privateKey,
       paymentToken: paymentToken,
       permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
@@ -59,7 +44,6 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     mode: {
       autoPayMode: autoPayMode,
       analyticsMode: analyticsMode,
-      incentiveMode: incentiveMode,
     },
     assign: {
       bountyHunterMax: bountyHunterMax,

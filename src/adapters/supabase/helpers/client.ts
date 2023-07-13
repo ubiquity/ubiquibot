@@ -64,7 +64,7 @@ export type IssueAdditions = {
   completed_at?: number;
 };
 
-const getDbDataFromIssue = (issue: Issue, additions: IssueAdditions) => {
+const getDbDataFromIssue = (issue: Issue, additions: IssueAdditions): any => {
   return {
     issue_number: issue.number,
     issue_url: issue.html_url,
@@ -86,7 +86,7 @@ const getDbDataFromIssue = (issue: Issue, additions: IssueAdditions) => {
 export type UserProfileAdditions = {
   wallet_address?: string;
 };
-const getDbDataFromUserProfile = (userProfile: UserProfile, additions?: UserProfileAdditions) => {
+const getDbDataFromUserProfile = (userProfile: UserProfile, additions?: UserProfileAdditions): any => {
   return {
     user_login: userProfile.login,
     user_type: userProfile.type,
@@ -116,7 +116,7 @@ export const upsertIssue = async (issue: Issue, additions: IssueAdditions): Prom
 
   if (data) {
     const key = data.id as number;
-    await supabase
+    const { data: _data, error: _error } = await supabase
       .from("issues")
       .upsert({ id: key, ...getDbDataFromIssue(issue, additions) })
       .select();
@@ -138,7 +138,7 @@ export const upsertUser = async (user: UserProfile): Promise<void> => {
 
   if (data) {
     const key = data.id as number;
-    await supabase
+    const { data: _data, error: _error } = await supabase
       .from("users")
       .upsert({ id: key, ...getDbDataFromUserProfile(user) })
       .select();
@@ -160,19 +160,14 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
 
   const { data, error } = await supabase.from("wallets").select("user_name").eq("user_name", username).single();
   if (data) {
-    await supabase.from("wallets").upsert({
-      user_name: username,
-      wallet_address: address,
-      updated_at: new Date().toUTCString(),
-    });
+    const { data: _data, error: _error } = await supabase
+      .from("wallets")
+      .upsert({ user_name: username, wallet_address: address, updated_at: new Date().toUTCString() });
     logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
   } else {
-    const { data: _data, error: _error } = await supabase.from("wallets").insert({
-      user_name: username,
-      wallet_address: address,
-      created_at: new Date().toUTCString(),
-      updated_at: new Date().toUTCString(),
-    });
+    const { data: _data, error: _error } = await supabase
+      .from("wallets")
+      .insert({ user_name: username, wallet_address: address, created_at: new Date().toUTCString(), updated_at: new Date().toUTCString() });
     logger.info(`Creating a new wallet_table record done, { data: ${_data}, error: ${_error} }`);
   }
 };
@@ -182,28 +177,20 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
  * @param username The user name you want to upsert a wallet address for
  * @param address The account multiplier
  */
-export const upsertWalletMultiplier = async (username: string, multiplier: string, reason: string): Promise<void> => {
+export const upsertWalletMultiplier = async (username: string, multiplier: string): Promise<void> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
 
   const { data, error } = await supabase.from("wallets").select("user_name").eq("user_name", username).single();
   if (data) {
-    await supabase.from("wallets").upsert({
-      user_name: username,
-      multiplier,
-      reason,
-      updated_at: new Date().toUTCString(),
-    });
+    const { data: _data, error: _error } = await supabase
+      .from("wallets")
+      .upsert({ user_name: username, multiplier: multiplier, updated_at: new Date().toUTCString() });
     logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
   } else {
-    const { data: _data, error: _error } = await supabase.from("wallets").insert({
-      user_name: username,
-      wallet_address: "",
-      multiplier,
-      reason,
-      created_at: new Date().toUTCString(),
-      updated_at: new Date().toUTCString(),
-    });
+    const { data: _data, error: _error } = await supabase
+      .from("wallets")
+      .insert({ user_name: username, wallet_address: "", multiplier: multiplier, created_at: new Date().toUTCString(), updated_at: new Date().toUTCString() });
     logger.info(`Creating a new wallet_table record done, { data: ${_data}, error: ${_error} }`);
   }
 };
@@ -221,15 +208,10 @@ export const upsertAccessControl = async (username: string, repository: string, 
 
   const { data, error } = await supabase.from("access").select("user_name").eq("user_name", username).eq("repository", repository).single();
 
-  const properties = {
-    user_name: username,
-    repository: repository,
-    updated_at: new Date().toUTCString(),
-    [access]: bool,
-  };
+  const properties = { user_name: username, repository: repository, updated_at: new Date().toUTCString(), [access]: bool };
 
   if (data) {
-    await supabase.from("access").upsert(properties);
+    const { data: _data, error: _error } = await supabase.from("access").upsert(properties);
     logger.info(`Upserting an access done, { data: ${data}, error: ${error} }`);
   } else {
     const { data: _data, error: _error } = await supabase.from("access").insert({
@@ -250,13 +232,13 @@ export const getAccessLevel = async (username: string, repository: string, label
 
   const { data } = await supabase.from("access").select("*").eq("user_name", username).eq("repository", repository).single();
 
-  if (!data || !data[`${label_type}_access`]) {
+  if (!data) {
     logger.info(`Access not found on the database`);
     // no access
     return false;
   }
 
-  const accessValues = data[`${label_type}_access`];
+  const accessValues = data![`${label_type}_access`];
 
   return accessValues;
 };
@@ -286,12 +268,5 @@ export const getWalletMultiplier = async (username: string): Promise<number> => 
   const { supabase } = getAdapters();
 
   const { data } = await supabase.from("wallets").select("multiplier").eq("user_name", username).single();
-  if (data?.multiplier == null) return 1;
-  else return data?.multiplier;
-};
-
-export const getMultiplierReason = async (username: string): Promise<string> => {
-  const { supabase } = getAdapters();
-  const { data } = await supabase.from("wallets").select("reason").eq("user_name", username).single();
-  return data?.reason;
+  return data?.multiplier || 1;
 };
