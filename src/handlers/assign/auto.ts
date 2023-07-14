@@ -1,5 +1,4 @@
 import { getBotContext, getLogger } from "../../bindings";
-import { ASSIGN_COMMAND_ENABLED } from "../../configs";
 import { addAssignees, getIssueByNumber, getPullRequests } from "../../helpers";
 import { gitLinkedIssueParser } from "../../helpers/parser";
 import { Payload } from "../../types";
