@@ -77,7 +77,7 @@ export const handleIssueClosed = async () => {
   const commentContents = comments.map((i) => i.body);
   const permitComments = commentContents.filter((content) => content.includes("https://pay.ubq.fi?claim="));
   const exist = permitComments.filter((content) => content.owner == "ubiquibot")
-  if (exist) {
+  if (exist.length) {
     logger.info(`Skip to generate a permit url because it has been already posted`);
     return `Permit generation skipped because it was already posted to this issue.`;
   }
