@@ -43,6 +43,6 @@ export const generateHelpMenu = () => {
     }
   });
 
-  if (!ASSIGN_COMMAND_ENABLED) helpMenu += "```\n***_To assign yourself to this issue, you should open a draft pull request that is linked._***";
+  if (!ASSIGN_COMMAND_ENABLED) helpMenu += "```\n***_To assign yourself to an issue, please open a draft pull request that is linked to it._***";
   return helpMenu;
 };
