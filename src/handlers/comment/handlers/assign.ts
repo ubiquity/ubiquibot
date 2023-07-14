@@ -20,18 +20,14 @@ export const assign = async (body: string) => {
     return "Skipping '/assign' because of no issue instance";
   }
 
-  const opened_prs = await getAvailableOpenedPullRequests(payload.sender.login);
+  const openedPullRequests = await getAvailableOpenedPullRequests(payload.sender.login);
+  logger.info(`Opened Pull Requests with no reviews but over 24 hours have passed: ${JSON.stringify(openedPullRequests)}`);
 
-  logger.info(`Opened Pull Requests with no reviews but over 24 hours have passed: ${JSON.stringify(opened_prs)}`);
-
-  const assigned_issues = await getAssignedIssues(payload.sender.login);
-
+  const assignedIssues = await getAssignedIssues(payload.sender.login);
   logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
 
-  const issue_number = issue.number;
-
   // check for max and enforce max
-  if (assigned_issues.length - opened_prs.length >= config.assign.bountyHunterMax) {
+  if (assignedIssues.length - openedPullRequests.length >= config.assign.bountyHunterMax) {
     return `Too many assigned issues, you have reached your max of ${config.assign.bountyHunterMax}`;
   }
 
@@ -56,10 +52,10 @@ export const assign = async (body: string) => {
   const timeLabelsDefined = config.price.timeLabels;
   const timeLabelsAssigned: LabelItem[] = [];
   for (const _label of labels) {
-    const _label_type = typeof _label;
-    const _label_name = _label_type === "string" ? _label.toString() : _label_type === "object" ? _label.name : "unknown";
+    const _labelType = typeof _label;
+    const _labelName = _labelType === "string" ? _label.toString() : _labelType === "object" ? _label.name : "unknown";
 
-    const timeLabel = timeLabelsDefined.find((item) => item.name === _label_name);
+    const timeLabel = timeLabelsDefined.find((item) => item.name === _labelName);
     if (timeLabel) {
       timeLabelsAssigned.push(timeLabel);
     }
@@ -76,54 +72,49 @@ export const assign = async (body: string) => {
   const parsedTimeLabel = targetTimeLabel.name.replace(/</, "").split(":")?.[1].trim();
   const duration = convertTimeToSeconds(parsedTimeLabel);
   if (!duration) {
-    logger.info(`Missing configure for timelabel: ${targetTimeLabel.name}`);
+    logger.info(`Missing configure for time label: ${targetTimeLabel.name}`);
     return "Skipping `/assign` since configuration is missing for the following labels";
   }
 
-  const curDate = new Date();
-  const curDateInMillisecs = curDate.getTime();
-  const endDate = new Date(curDateInMillisecs + duration * 1000);
-  const deadline_msg = endDate.toUTCString();
+  const startTime = new Date().getTime();
+  const endTime = new Date(startTime + duration * 1000);
 
-  let wallet_msg, multiplier_msg, reason_msg, bounty_msg;
+  const comment = {
+    deadline: endTime.toUTCString(),
+    wallet: (await getWalletAddress(payload.sender.login)) || "Please set your wallet address to use `/wallet 0x4FDE...BA18`",
+    multiplier: "1.00",
+    reason: await getMultiplierReason(payload.sender.login),
+    bounty: `Permit generation skipped since price label is not set`,
+    commit: `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`,
+    tips: `<h6>Tips:</h6>
+    <ul>
+    <li>Use <code>/wallet 0x4FDE...BA18</code> if you want to update your registered payment wallet address @user.</li>
+    <li>Be sure to open a draft pull request as soon as possible to communicate updates on your progress.</li>
+    <li>Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the bounty.</li>
+    <ul>`,
+  };
 
-  const commit_msg = `@${payload.sender.login} ${deadLinePrefix} ${endDate.toUTCString()}`;
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     logger.info(`Adding the assignee: ${payload.sender.login}`);
-    // assign default bounty account to the issue
-    await addAssignees(issue_number, [payload.sender.login]);
+    await addAssignees(issue.number, [payload.sender.login]);
   }
 
   // double check whether the assign message has been already posted or not
-  logger.info(`Creating an issue comment: ${commit_msg}`);
-  const issue_comments = await getCommentsOfIssue(issue_number);
-  const comments = issue_comments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  const latest_comment = comments.length > 0 ? comments[0].body : undefined;
-  if (latest_comment && commit_msg != latest_comment) {
-    const recipient = await getWalletAddress(payload.sender.login);
-    if (!recipient) {
-      //no wallet found
-      wallet_msg = "Please set your wallet address to use `/wallet 0x4FDE...BA18`";
-    } else {
-      //wallet found
-      wallet_msg = recipient;
-    }
+  logger.info(`Creating an issue comment: ${comment.commit}`);
+  const issueComments = await getCommentsOfIssue(issue.number);
+  const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const latestComment = comments.length > 0 ? comments[0].body : undefined;
+  if (latestComment && comment.commit != latestComment) {
     const multiplier = await getWalletMultiplier(payload.sender.login);
-    if (!multiplier) {
-      multiplier_msg = "1.00";
-    } else {
-      multiplier_msg = multiplier.toFixed(2);
+    if (multiplier) {
+      comment.multiplier = multiplier.toFixed(2);
     }
     const issueDetailed = bountyInfo(issue);
-    if (!issueDetailed.priceLabel) {
-      bounty_msg = `Permit generation skipped since price label is not set`;
-    } else {
-      bounty_msg = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * multiplier).toString() + " USD";
+    if (issueDetailed.priceLabel) {
+      comment.bounty = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * multiplier).toString() + " USD";
     }
-    const reason = await getMultiplierReason(payload.sender.login);
-    reason_msg = reason ?? "";
-    return tableComment(deadline_msg, wallet_msg, multiplier_msg, reason_msg, bounty_msg);
+    return tableComment(comment) + comment.tips;
   }
   return;
 };
