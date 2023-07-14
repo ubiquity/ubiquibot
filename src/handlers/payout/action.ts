@@ -1,7 +1,7 @@
 import { getWalletAddress, getWalletMultiplier } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addLabelToIssue, deleteLabel, generatePermit2Signature, getAllIssueComments, getTokenSymbol } from "../../helpers";
-import { Payload, StateReason } from "../../types";
+import {UserType, Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
 
