@@ -1,7 +1,6 @@
 import { createProbot } from "probot";
 import { EmitterWebhookEventName } from "@octokit/webhooks";
 import app from "../..";
-import { Request, Response } from "@cloudflare/workers-types";
 
 export default {
   async fetch(request: Request) {
