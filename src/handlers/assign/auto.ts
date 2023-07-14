@@ -10,8 +10,6 @@ export const checkPullRequests = async () => {
   const logger = getLogger();
   const pulls = await getPullRequests(context);
 
-  if (ASSIGN_COMMAND_ENABLED) return;
-
   if (pulls.length === 0) {
     logger.debug(`No pull requests found at this time`);
     return;
