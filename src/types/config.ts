@@ -30,7 +30,7 @@ export const TelegramBotConfigSchema = Type.Object({
 });
 
 export const PayoutConfigSchema = Type.Object({
-  chainId: Type.Number(),
+  networkId: Type.Number(),
   rpc: Type.String(),
   privateKey: Type.String(),
   paymentToken: Type.String(),

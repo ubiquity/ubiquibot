@@ -2,7 +2,7 @@ import ms from "ms";
 
 import { BotConfig, BotConfigSchema } from "../types";
 import { DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFAULT_PERMIT_BASE_URL } from "../configs";
-import { getPayoutConfigByChainId } from "../helpers";
+import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
 import { getScalarKey, getWideConfig } from "../utils/private";
@@ -18,12 +18,12 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     analyticsMode,
     bountyHunterMax,
     incentiveMode,
-    chainId,
+    networkId,
     issueCreatorMultiplier,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
-  const { rpc, paymentToken } = getPayoutConfigByChainId(chainId);
+  const { rpc, paymentToken } = getPayoutConfigByNetworkId(networkId);
 
   const botConfig: BotConfig = {
     log: {
@@ -38,7 +38,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       commentElementPricing,
     },
     payout: {
-      chainId: chainId,
+      networkId: networkId,
       rpc: rpc,
       privateKey: privateKey,
       paymentToken: paymentToken,
