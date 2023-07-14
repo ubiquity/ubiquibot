@@ -1,6 +1,6 @@
 import { createProbot } from "probot";
 import { EmitterWebhookEventName } from "@octokit/webhooks";
-import app from "../..";
+import app from "../../src";
 
 export default {
   async fetch(request: Request) {

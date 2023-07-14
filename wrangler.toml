@@ -1,7 +1,7 @@
 name = "ubiquibot"
-account_id = "f8d9cac88285c4d654ba305a92e952d6"
+account_id = "84f5ebd30e5caca102add77e020d3be2"
 workers_dev = true
 
-main = "src/adapters/cloudflare/worker.ts"
+main = "functions/webhooks/worker.ts"
 node_compat = true
-compatibility_date = "2023-07-15"
+compatibility_date = "2023-07-14"

@@ -1,9 +1,9 @@
 import axios from "axios";
-import { createWriteStream } from "fs";
+// import { createWriteStream } from "fs";
 
-export const fetchImage = async (url: string): Promise<unknown> => {
-  const dir = "../assets/images/webFlat.png";
-  const writer = createWriteStream(dir);
+export const fetchImage = async (url: string) => {
+  // const dir = "../assets/images/webFlat.png";
+  // const writer = createWriteStream(dir);
 
   const response = await axios({
     url,
@@ -11,10 +11,12 @@ export const fetchImage = async (url: string): Promise<unknown> => {
     responseType: "stream",
   });
 
-  response.data.pipe(writer);
+  console.log("Received data: ", response.data);
 
-  return new Promise((resolve, reject) => {
-    writer.on("finish", resolve);
-    writer.on("error", reject);
-  });
+  // response.data.pipe(writer);
+
+  // return new Promise((resolve, reject) => {
+  //   writer.on("finish", resolve);
+  //   writer.on("error", reject);
+  // });
 };
