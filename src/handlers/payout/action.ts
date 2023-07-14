@@ -74,8 +74,8 @@ export const handleIssueClosed = async () => {
   logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
   const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
   const comments = await getAllIssueComments(issue.number);
-  const commentContents = comments.map((i) => i.body);
-  const permitComments = commentContents.filter((content) => content.includes("https://pay.ubq.fi?claim="));
+  //const commentContents = comments.map((i) => i.body);
+  const permitComments = comments.filter((content) => content.body.includes("https://pay.ubq.fi?claim="));
   const exist = permitComments.filter((content) => content.user.type == "Bot")
   if (exist.length) {
     logger.info(`Skip to generate a permit url because it has been already posted`);
