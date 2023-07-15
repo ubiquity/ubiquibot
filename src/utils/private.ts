@@ -47,7 +47,7 @@ export interface WideLabel {
 }
 
 export interface WideConfig {
-  "network-id"?: number;
+  "evm-network-id"?: number;
   "base-multiplier"?: number;
   "issue-creator-multiplier": number;
   "time-labels"?: WideLabel[];

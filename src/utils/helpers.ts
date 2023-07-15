@@ -3,10 +3,10 @@ import { CommentElementPricing } from "../types";
 import { WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
 export const getNetworkId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
-  if (parsedRepo && parsedRepo["network-id"] && !Number.isNaN(Number(parsedRepo["network-id"]))) {
-    return Number(parsedRepo["network-id"]);
-  } else if (parsedOrg && parsedOrg["network-id"] && !Number.isNaN(Number(parsedOrg["network-id"]))) {
-    return Number(parsedOrg["network-id"]);
+  if (parsedRepo && parsedRepo["evm-network-id"] && !Number.isNaN(Number(parsedRepo["evm-network-id"]))) {
+    return Number(parsedRepo["evm-network-id"]);
+  } else if (parsedOrg && parsedOrg["evm-network-id"] && !Number.isNaN(Number(parsedOrg["evm-network-id"]))) {
+    return Number(parsedOrg["evm-network-id"]);
   } else {
     return DEFAULT_NETWORK_ID;
   }
