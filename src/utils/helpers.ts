@@ -1,4 +1,4 @@
-import { DEFAULT_NETWORK_ID, DefaultPriceConfig } from "../configs";
+import { DEFAULT_EVM_NETWORK_ID, DefaultPriceConfig } from "../configs";
 import { CommentElementPricing } from "../types";
 import { WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
@@ -8,7 +8,7 @@ export const getNetworkId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: 
   } else if (parsedOrg && parsedOrg["evm-network-id"] && !Number.isNaN(Number(parsedOrg["evm-network-id"]))) {
     return Number(parsedOrg["evm-network-id"]);
   } else {
-    return DEFAULT_NETWORK_ID;
+    return DEFAULT_EVM_NETWORK_ID;
   }
 };
 
