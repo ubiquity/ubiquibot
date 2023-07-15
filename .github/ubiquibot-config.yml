@@ -1,5 +1,5 @@
 ---
-evm-network-id: 100
+evm-network-id: 1
 base-multiplier: 1500
 time-labels:
   - name: "Time: <1 Hour"
@@ -30,4 +30,5 @@ priority-labels:
     weight: 5
 auto-pay-mode: true
 analytics-mode: true
-max-concurrent-bounties: 2
+comment-incentives: true
+max-concurrent-assigns: 2
