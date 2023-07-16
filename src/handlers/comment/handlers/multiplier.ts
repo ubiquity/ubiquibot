@@ -49,7 +49,7 @@ export const multiplier = async (body: string) => {
         reason += part.replace(/['"]/g, "") + " ";
       }
     }
-    if (username === "") {
+    if (username === null) {
       // If no @user provided, default to the sender
       username = sender;
     }
