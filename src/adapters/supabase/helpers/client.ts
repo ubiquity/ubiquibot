@@ -301,7 +301,7 @@ export const addPenalty = async (username: string, repoName: string, tokenAddres
   const { supabase } = getAdapters();
   const logger = getLogger();
 
-  const { data, error } = await supabase.rpc("add_penalty", {
+  const { error } = await supabase.rpc("add_penalty", {
     _username: username,
     _repository_name: repoName,
     _token_address: tokenAddress,
@@ -342,7 +342,7 @@ export const removePenalty = async (username: string, repoName: string, tokenAdd
   const { supabase } = getAdapters();
   const logger = getLogger();
 
-  const { data, error } = await supabase.rpc("remove_penalty", {
+  const { error } = await supabase.rpc("remove_penalty", {
     _username: username,
     _repository_name: repoName,
     _network_id: networkId,
