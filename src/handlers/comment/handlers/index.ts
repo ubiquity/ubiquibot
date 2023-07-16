@@ -9,7 +9,7 @@ import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { setAccess } from "./set-access";
 import { multiplier } from "./multiplier";
-import { addCommentToIssue, createLabel, addLabelToIssue } from "../../../helpers";
+import { addCommentToIssue, createLabel, addLabelToIssue, updateCommentOfIssue } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
 
@@ -90,7 +90,11 @@ export const issueCreatedCallback = async (): Promise<void> => {
  */
 const commandCallback = async (payload: Payload, comment: string) => {
   if (payload.issue?.number) {
-    await addCommentToIssue(comment, payload.issue?.number);
+    if (payload.action == "edited") {
+      await updateCommentOfIssue(comment, payload);
+    } else {
+      await addCommentToIssue(comment, payload.issue?.number);
+    }
   }
 };
 
