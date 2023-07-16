@@ -60,8 +60,5 @@ export const DefaultPriceConfig: PriceConfig = {
     [MarkdownItem.Code]: 5,
     [MarkdownItem.Image]: 5,
   },
-  defaultLabels: {
-    global: [],
-    users: {},
-  },
+  defaultLabels: [],
 };

@@ -66,9 +66,6 @@ To test the bot, you can:
 
 `default-labels` are labels that are applied when an issue is created without any time or priority labels.
 
-- `global` are global default labels
-- `users` are user-specific labels that override the global default labels
-
 `auto-pay-mode` can be `true` or `false` that enables or disables automatic payout of bounties when the issue is closed.
 
 `analytics-mode` can be `true` or `false` that enables or disables weekly analytics collection by Ubiquity.

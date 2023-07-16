@@ -1,6 +1,6 @@
 import { DEFAULT_CHAIN_ID, DefaultPriceConfig } from "../configs";
 import { CommentElementPricing } from "../types";
-import { DefaultLabels, WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
+import { WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
 export const getChainId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
   if (parsedRepo && parsedRepo["chain-id"] && !Number.isNaN(Number(parsedRepo["chain-id"]))) {
@@ -102,15 +102,12 @@ export const getBountyHunterMax = (parsedRepo: WideRepoConfig | undefined, parse
   }
 };
 
-export const getDefaultLabels = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): DefaultLabels => {
+export const getDefaultLabels = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): string[] => {
   if (parsedRepo && parsedRepo["default-labels"]) {
     return parsedRepo["default-labels"];
   } else if (parsedOrg && parsedOrg["default-labels"]) {
     return parsedOrg["default-labels"];
   } else {
-    return {
-      global: [],
-      users: {},
-    };
+    return [];
   }
 };

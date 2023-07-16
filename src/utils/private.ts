@@ -47,14 +47,6 @@ export interface WideLabel {
   value?: number | undefined;
 }
 
-type Label = string;
-type Username = string;
-
-export interface DefaultLabels {
-  global: Label[];
-  users: Record<Username, Label[]>;
-}
-
 export interface WideConfig {
   "chain-id"?: number;
   "base-multiplier"?: number;
@@ -66,7 +58,7 @@ export interface WideConfig {
   "incentive-mode"?: boolean;
   "max-concurrent-bounties"?: number;
   "comment-element-pricing"?: Record<string, number>;
-  "default-labels"?: DefaultLabels;
+  "default-labels"?: string[];
 }
 
 export type WideRepoConfig = WideConfig;

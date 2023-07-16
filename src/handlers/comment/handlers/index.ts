@@ -66,15 +66,11 @@ export const issueCreatedCallback = async (): Promise<void> => {
   if (!issue) return;
   const labels = issue.labels;
   try {
-    let defaultLabels = config.price.defaultLabels.global;
-    const userLabels = config.price.defaultLabels.users[issue.user.login];
-    if (userLabels) defaultLabels = userLabels;
-
     const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
     const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
     if (timeLabels.length === 0 && priorityLabels.length === 0) {
-      for (const label of defaultLabels) {
+      for (const label of config.price.defaultLabels) {
         const exists = await getLabel(label);
         if (!exists) await createLabel(label);
         await addLabelToIssue(label);
