@@ -124,27 +124,6 @@ export interface Database {
         };
         Relationships: [];
       };
-      penalty: {
-        Row: {
-          amount: string;
-          repository_name: string;
-          token_address: string;
-          username: string;
-        };
-        Insert: {
-          amount?: string;
-          repository_name: string;
-          token_address: string;
-          username: string;
-        };
-        Update: {
-          amount?: string;
-          repository_name?: string;
-          token_address?: string;
-          username?: string;
-        };
-        Relationships: [];
-      };
       users: {
         Row: {
           bio: string | null;
