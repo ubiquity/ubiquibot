@@ -88,8 +88,10 @@ export const issueCreatedCallback = async (): Promise<void> => {
  * @param issue_number - The issue number
  * @param comment - Comment string
  */
-const commandCallback = async (issue_number: number, comment: string) => {
-  await addCommentToIssue(comment, issue_number);
+const commandCallback = async (payload: Payload, comment: string) => {
+  if (payload.issue?.number) {
+    await addCommentToIssue(comment, payload.issue?.number);
+  }
 };
 
 export const userCommands: UserCommands[] = [

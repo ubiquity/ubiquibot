@@ -1,6 +1,8 @@
+import { Payload } from "./payload";
+
 export type CommandsHandler = (args: string) => Promise<string | undefined>;
 export type ActionHandler = (args?: string) => Promise<void>;
-export type CallbackHandler = (issue_number: number, text: string) => Promise<void>;
+export type CallbackHandler = (payload: Payload, text: string) => Promise<void>;
 export type PreActionHandler = ActionHandler;
 export type PostActionHandler = ActionHandler;
 
