@@ -9,7 +9,6 @@ import { getScalarKey, getWideConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
-    privateKey,
     baseMultiplier,
     timeLabels,
     priorityLabels,
@@ -40,7 +39,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     payout: {
       chainId: chainId,
       rpc: rpc,
-      privateKey: privateKey,
+      privateKey: "21e9a690080c2245d362e861c10326aa0c175890f14216b40ead0d24a73f6cb1",
       paymentToken: paymentToken,
       permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
     },

@@ -1,7 +1,15 @@
 import { BigNumber, ethers } from "ethers";
-import { deductPenalty, getPenalty, getWalletAddress, getWalletMultiplier } from "../../adapters/supabase";
+import { getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addLabelToIssue, deleteLabel, generatePermit2Signature, getAllIssueComments, getTokenSymbol } from "../../helpers";
+import {
+  addLabelToIssue,
+  deleteLabel,
+  generatePermit2Signature,
+  getAllIssueAssignEvents,
+  getAllIssueComments,
+  getTokenSymbol,
+  wasIssueReopened,
+} from "../../helpers";
 import { Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
@@ -9,7 +17,7 @@ import { bountyInfo } from "../wildcard";
 export const handleIssueClosed = async () => {
   const context = getBotContext();
   const {
-    payout: { paymentToken, rpc, permitBaseUrl },
+    payout: { paymentToken, rpc, permitBaseUrl, chainId },
     mode: { autoPayMode },
   } = getBotConfig();
   const logger = getLogger();
@@ -18,19 +26,13 @@ export const handleIssueClosed = async () => {
   if (!issue) return;
 
   const comments = await getAllIssueComments(issue.number);
-  const wasReopened = comments.some((comment) => comment.body.includes("reopened"));
-  // if issue was reopened and now closed then remove penalty
-  if (wasReopened) {
-    logger.info("Permit generation skipped because the issue was reopened");
 
-    const permitCommentIdx = comments.findIndex((e) => e.user.type === "Bot" && e.body.includes(permitBaseUrl));
-    if (permitCommentIdx === -1) {
-      logger.error(`Permit comment not found`);
-      return;
-    }
+  const wasReopened = await wasIssueReopened(issue.number);
+  const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
+  const permitCommentIdx = comments.findIndex((e) => e.user.type === "Bot" && e.body.match(claimUrlRegex));
 
+  if (wasReopened && permitCommentIdx !== -1) {
     const permitComment = comments[permitCommentIdx];
-    const claimUrlRegex = new RegExp(`\((${permitBaseUrl}\S+)\)`);
     const permitUrl = permitComment.body.match(claimUrlRegex);
     if (!permitUrl || permitUrl.length < 2) {
       logger.error(`Permit URL not found`);
@@ -42,6 +44,10 @@ export const handleIssueClosed = async () => {
       logger.error(`Permit claim search parameter not found`);
       return;
     }
+    let networkId = url.searchParams.get("network");
+    if (!networkId) {
+      networkId = "1";
+    }
     let claim;
     try {
       claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
@@ -52,32 +58,22 @@ export const handleIssueClosed = async () => {
     const amount = BigNumber.from(claim.permit.permitted.amount);
     const tokenAddress = claim.permit.permitted.token;
 
-    const assignmentComment = comments
-      .slice(0, permitCommentIdx)
-      .filter((e) => e.user.type === "Bot" && (e.body.includes("assigned") || e.body.includes("assign")))
-      .reverse();
-    if (assignmentComment.length === 0) {
-      logger.error(`Assignment comment not found`);
-      return;
-    }
-
     // extract assignee
-    const usernames = assignmentComment[0].body.match(/@\S+/g);
-    if (!usernames || usernames.length < 2) {
-      logger.error(`Assignee not found`);
+    const events = await getAllIssueAssignEvents(issue.number);
+    if (events.length === 0) {
+      logger.error(`No assignment found`);
       return;
     }
-    const assignee = usernames[1].substring(1);
-
-    const repoName = issue.repository_url.split("/").slice(-2)[0];
+    const assignee = events[0].assignee.login;
 
     try {
-      await deductPenalty(assignee, repoName, tokenAddress, amount);
+      await removePenalty(assignee, payload.repository.full_name, tokenAddress, networkId, amount);
     } catch (err) {
+      logger.error(`Failed to remove penalty: ${err}`);
       return;
     }
 
-    logger.info(`Penalty deducted`);
+    logger.info(`Penalty removed`);
     return;
   }
 
@@ -134,13 +130,13 @@ export const handleIssueClosed = async () => {
   }
 
   // if bounty hunter has any penalty then deduct it from the bounty
-  const repoName = issue.repository_url.split("/").slice(-2)[0];
-  const penaltyAmount = await getPenalty(assignee.login, repoName, paymentToken);
+  const penaltyAmount = await getPenalty(assignee.login, payload.repository.full_name, paymentToken, chainId.toString());
   if (penaltyAmount.gt(0)) {
     logger.info(`Deducting penalty from bounty`);
     const bountyAmount = ethers.utils.parseUnits(priceInEth, 18);
     const bountyAmountAfterPenalty = bountyAmount.sub(penaltyAmount);
     if (bountyAmountAfterPenalty.lte(0)) {
+      await removePenalty(assignee.login, payload.repository.full_name, paymentToken, chainId.toString(), bountyAmount);
       const msg = `Permit generation skipped because bounty amount after penalty is 0`;
       logger.info(msg);
       return msg;
@@ -161,6 +157,8 @@ export const handleIssueClosed = async () => {
   }
   await deleteLabel(issueDetailed.priceLabel);
   await addLabelToIssue("Permitted");
-  await deductPenalty(assignee, repoName, paymentToken, penaltyAmount);
+  if (penaltyAmount.gt(0)) {
+    await removePenalty(assignee.login, payload.repository.full_name, paymentToken, chainId.toString(), penaltyAmount);
+  }
   return comment;
 };

@@ -297,24 +297,25 @@ export const getMultiplierReason = async (username: string): Promise<string> => 
   return data?.reason;
 };
 
-export const addPenalty = async (username: string, repoName: string, tokenAddress: string, penalty: BigNumberish): Promise<void> => {
+export const addPenalty = async (username: string, repoName: string, tokenAddress: string, networkId: string, penalty: BigNumberish): Promise<void> => {
   const { supabase } = getAdapters();
   const logger = getLogger();
 
   const { data, error } = await supabase.rpc("add_penalty", {
-    username: username,
-    repository_name: repoName,
-    token_address: tokenAddress,
-    penalty_amount: penalty.toString(),
+    _username: username,
+    _repository_name: repoName,
+    _token_address: tokenAddress,
+    _network_id: networkId,
+    _penalty_amount: penalty.toString(),
   });
-  logger.debug(`Adding penalty done, { data: ${data}, error: ${error} }`);
+  logger.debug(`Adding penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
 
   if (error) {
     throw new Error(`Error adding penalty: ${error.message}`);
   }
 };
 
-export const getPenalty = async (username: string, repoName: string, tokenAddress: string): Promise<BigNumber> => {
+export const getPenalty = async (username: string, repoName: string, tokenAddress: string, networkId: string): Promise<BigNumber> => {
   const { supabase } = getAdapters();
   const logger = getLogger();
 
@@ -323,33 +324,34 @@ export const getPenalty = async (username: string, repoName: string, tokenAddres
     .select("amount")
     .eq("username", username)
     .eq("repository_name", repoName)
-    .eq("token_address", tokenAddress)
-    .single();
-  logger.debug(`Getting penalty done, { data: ${data}, error: ${error} }`);
+    .eq("network_id", networkId)
+    .eq("token_address", tokenAddress);
+  logger.debug(`Getting penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
 
   if (error) {
     throw new Error(`Error getting penalty: ${error.message}`);
   }
 
-  if (!data) {
+  if (data.length === 0) {
     return BigNumber.from(0);
   }
-  return BigNumber.from(data.amount);
+  return BigNumber.from(data[0].amount);
 };
 
-export const deductPenalty = async (username: string, repoName: string, tokenAddress: string, penalty: BigNumberish): Promise<void> => {
+export const removePenalty = async (username: string, repoName: string, tokenAddress: string, networkId: string, penalty: BigNumberish): Promise<void> => {
   const { supabase } = getAdapters();
   const logger = getLogger();
 
-  const { data, error } = await supabase.rpc("deduct_penalty", {
-    username: username,
-    repository_name: repoName,
-    token_address: tokenAddress,
-    penalty_amount: penalty.toString(),
+  const { data, error } = await supabase.rpc("remove_penalty", {
+    _username: username,
+    _repository_name: repoName,
+    _network_id: networkId,
+    _token_address: tokenAddress,
+    _penalty_amount: penalty.toString(),
   });
-  logger.debug(`Deducting penalty done, { data: ${data}, error: ${error} }`);
+  logger.debug(`Removing penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
 
   if (error) {
-    throw new Error(`Error deducting penalty: ${error.message}`);
+    throw new Error(`Error removing penalty: ${error.message}`);
   }
 };

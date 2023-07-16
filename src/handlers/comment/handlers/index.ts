@@ -9,7 +9,7 @@ import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { setAccess } from "./set-access";
 import { multiplier } from "./multiplier";
-import { addCommentToIssue, createLabel, addLabelToIssue, getAllIssueComments, getTokenSymbol } from "../../../helpers";
+import { addCommentToIssue, createLabel, addLabelToIssue, getAllIssueComments, getTokenSymbol, getAllIssueAssignEvents } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
 import { BigNumber, ethers } from "ethers";
@@ -90,23 +90,23 @@ export const issueCreatedCallback = async (): Promise<void> => {
 export const issueReopenedCallback = async (): Promise<void> => {
   const { payload: _payload } = getBotContext();
   const {
-    payout: { rpc, permitBaseUrl },
+    payout: { rpc, permitBaseUrl, chainId },
   } = getBotConfig();
   const logger = getLogger();
   const issue = (_payload as Payload).issue;
+  const repository = (_payload as Payload).repository;
   if (!issue) return;
   try {
     // find permit comment from the bot
     const comments = await getAllIssueComments(issue.number);
-    const permitCommentIdx = comments.findIndex((e) => e.user.type === "Bot" && e.body.includes(permitBaseUrl));
+    const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
+    const permitCommentIdx = comments.findIndex((e) => e.user.type === "Bot" && e.body.match(claimUrlRegex));
     if (permitCommentIdx === -1) {
-      logger.error(`Permit comment not found`);
       return;
     }
 
     // extract permit amount and token
     const permitComment = comments[permitCommentIdx];
-    const claimUrlRegex = new RegExp(`\((${permitBaseUrl}\S+)\)`);
     const permitUrl = permitComment.body.match(claimUrlRegex);
     if (!permitUrl || permitUrl.length < 2) {
       logger.error(`Permit URL not found`);
@@ -117,6 +117,10 @@ export const issueReopenedCallback = async (): Promise<void> => {
     if (!claimBase64) {
       logger.error(`Permit claim search parameter not found`);
       return;
+    }
+    let networkId = url.searchParams.get("network");
+    if (!networkId) {
+      networkId = "1";
     }
     let claim;
     try {
@@ -131,30 +135,18 @@ export const issueReopenedCallback = async (): Promise<void> => {
     const tokenSymbol = await getTokenSymbol(tokenAddress, rpc);
 
     // find latest assignment before the permit comment
-    const assignmentComment = comments
-      .slice(0, permitCommentIdx)
-      .filter((e) => e.user.type === "Bot" && (e.body.includes("assigned") || e.body.includes("assign")))
-      .reverse();
-    if (assignmentComment.length === 0) {
-      logger.error(`Assignment comment not found`);
+    const events = await getAllIssueAssignEvents(issue.number);
+    if (events.length === 0) {
+      logger.error(`No assignment found`);
       return;
     }
-
-    // extract assignee
-    const usernames = assignmentComment[0].body.match(/@\S+/g);
-    if (!usernames || usernames.length < 2) {
-      logger.error(`Assignee not found`);
-      return;
-    }
-    const assignee = usernames[1].substring(1);
-
-    // repo name
-    const repoName = issue.repository_url.split("/").slice(-2)[0];
+    const assignee = events[0].assignee.login;
 
     // write penalty to db
     try {
-      await addPenalty(assignee, repoName, tokenAddress, amount);
+      await addPenalty(assignee, repository.full_name, tokenAddress, chainId.toString(), amount);
     } catch (err) {
+      logger.error(`Error writing penalty to db: ${err}`);
       return;
     }
 
@@ -162,9 +154,8 @@ export const issueReopenedCallback = async (): Promise<void> => {
       `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of ${formattedAmount} ${tokenSymbol} will be deducted from your next bounty.`,
       issue.number
     );
-    return;
   } catch (err: unknown) {
-    return await addCommentToIssue(`Error: ${err}`, issue.number);
+    await addCommentToIssue(`Error: ${err}`, issue.number);
   }
 };
 

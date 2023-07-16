@@ -1,6 +1,6 @@
 import { Context } from "probot";
 import { getBotContext, getLogger } from "../bindings";
-import { Comment, IssueType, Payload } from "../types";
+import { AssignEvent, Comment, IssueType, Payload } from "../types";
 import { checkRateLimitGit } from "../utils";
 import { DEFAULT_TIME_RANGE_FOR_MAX_ISSUE, DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED } from "../configs";
 
@@ -158,6 +158,73 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
   }
 
   return result;
+};
+
+export const getAllIssueAssignEvents = async (issue_number: number): Promise<AssignEvent[]> => {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
+
+  const result: AssignEvent[] = [];
+  let shouldFetch = true;
+  let page_number = 1;
+  try {
+    while (shouldFetch) {
+      const response = await context.octokit.rest.issues.listEvents({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        issue_number: issue_number,
+        per_page: 100,
+        page: page_number,
+      });
+
+      await checkRateLimitGit(response?.headers);
+
+      // Fixing infinite loop here, it keeps looping even when its an empty array
+      if (response?.data?.length > 0) {
+        response.data.filter((item) => item.event === "assigned").forEach((item) => result?.push(item as AssignEvent));
+        page_number++;
+      } else {
+        shouldFetch = false;
+      }
+    }
+  } catch (e: unknown) {
+    shouldFetch = false;
+  }
+
+  return result.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
+};
+
+export const wasIssueReopened = async (issue_number: number): Promise<boolean> => {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
+
+  let shouldFetch = true;
+  let page_number = 1;
+  try {
+    while (shouldFetch) {
+      const response = await context.octokit.rest.issues.listEvents({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        issue_number: issue_number,
+        per_page: 100,
+        page: page_number,
+      });
+
+      await checkRateLimitGit(response?.headers);
+
+      // Fixing infinite loop here, it keeps looping even when its an empty array
+      if (response?.data?.length > 0) {
+        if (response.data.filter((item) => item.event === "reopened").length > 0) return true;
+        page_number++;
+      } else {
+        shouldFetch = false;
+      }
+    }
+  } catch (e: unknown) {
+    shouldFetch = false;
+  }
+
+  return false;
 };
 
 export const removeAssignees = async (issue_number: number, assignees: string[]): Promise<void> => {
