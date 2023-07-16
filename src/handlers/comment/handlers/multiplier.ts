@@ -42,7 +42,7 @@ export const multiplier = async (body: string) => {
 
     for (const part of matches) {
       if (!isNaN(parseFloat(part))) {
-        bountyMultiplier = parseFloat(part);
+        bountyMultiplier = parseInt(parseFloat(part).toFixed(2));
       } else if (part.startsWith("@")) {
         username = part.substring(1);
       } else {
