@@ -120,7 +120,7 @@ export const userCommands: UserCommands[] = [
   },*/
   {
     id: IssueCommentCommands.MULTIPLIER,
-    description: `Set bounty multiplier (for treasury)`,
+    description: `Set bounty multiplier (for treasury) with a reason. \n  usage: "/wallet @user 0.5 'Multiplier reason'" (parameters can be given in any order)`,
     handler: multiplier,
     callback: commandCallback,
   },
