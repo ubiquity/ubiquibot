@@ -11,6 +11,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
     baseMultiplier,
     timeLabels,
+    privateKey,
     priorityLabels,
     commentElementPricing,
     autoPayMode,
@@ -39,7 +40,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     payout: {
       chainId: chainId,
       rpc: rpc,
-      privateKey: "21e9a690080c2245d362e861c10326aa0c175890f14216b40ead0d24a73f6cb1",
+      privateKey: privateKey,
       paymentToken: paymentToken,
       permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
     },
