@@ -12,6 +12,7 @@ import { multiplier } from "./multiplier";
 import { addCommentToIssue, createLabel, addLabelToIssue } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
+import { GLOBAL_STRINGS } from "../../../configs";
 
 export * from "./assign";
 export * from "./wallet";
@@ -45,8 +46,7 @@ export const issueClosedCallback = async (): Promise<void> => {
   if (!issue) return;
   try {
     const comment = await handleIssueClosed();
-    const promotionCommnet = `\n<h6>If you enjoy the DevPool experience, please follow <a href="https://github.com/ubiquity">Ubiquity on GitHub</a> and star <a href="https://github.com/ubiquity/devpool-directory">this repo</a> to show your support. It helps a lot!</h6>`;
-    if (comment) await addCommentToIssue(comment + promotionCommnet, issue.number);
+    if (comment) await addCommentToIssue(comment + GLOBAL_STRINGS.promotionComment, issue.number);
   } catch (err: unknown) {
     return await addCommentToIssue(`Error: ${err}`, issue.number);
   }
