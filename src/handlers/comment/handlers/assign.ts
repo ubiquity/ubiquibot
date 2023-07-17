@@ -1,10 +1,11 @@
-import { addAssignees, getAssignedIssues, getCommentsOfIssue, getAvailableOpenedPullRequests } from "../../../helpers";
+import { addAssignees, getAssignedIssues, getCommentsOfIssue, getAvailableOpenedPullRequests, addCommentToIssue } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
 import { getWalletAddress, getWalletMultiplier, getMultiplierReason } from "../../../adapters/supabase";
 import { tableComment } from "./table";
 import { bountyInfo } from "../../wildcard";
+import { ASSIGN_COMMAND_ENABLED, GLOBAL_STRINGS } from "../../../configs";
 
 export const assign = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -17,6 +18,12 @@ export const assign = async (body: string) => {
   if (!issue) {
     logger.info(`Skipping '/assign' because of no issue instance`);
     return "Skipping '/assign' because of no issue instance";
+  }
+
+  if (!ASSIGN_COMMAND_ENABLED) {
+    logger.info(`Ignore '/assign' command from user: ASSIGN_COMMAND_ENABLED config is set false`);
+    await addCommentToIssue(GLOBAL_STRINGS.assignCommandDisabledComment, issue.number);
+    return;
   }
 
   const openedPullRequests = await getAvailableOpenedPullRequests(payload.sender.login);
