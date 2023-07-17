@@ -3,5 +3,5 @@ account_id = "84f5ebd30e5caca102add77e020d3be2"
 workers_dev = true
 
 main = "functions/webhooks/worker.ts"
-node_compat = true
+compatibility_flags = [ "nodejs_compat" ]
 compatibility_date = "2023-07-14"
