@@ -3,7 +3,7 @@ import { BigNumber, ethers } from "ethers";
 import { getBotConfig, getLogger } from "../bindings";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 
-const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on all chains
+const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on all networks
 
 /**
  * Generates permit2 signature data with `spender` and `amountInETH`
@@ -15,7 +15,7 @@ const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on
  */
 export const generatePermit2Signature = async (spender: string, amountInEth: string, identifier: string): Promise<string> => {
   const {
-    payout: { chainId, privateKey, permitBaseUrl, rpc, paymentToken },
+    payout: { networkId, privateKey, permitBaseUrl, rpc, paymentToken },
   } = getBotConfig();
   const logger = getLogger();
   const provider = new ethers.providers.JsonRpcProvider(rpc);
@@ -35,7 +35,7 @@ export const generatePermit2Signature = async (spender: string, amountInEth: str
     deadline: MaxUint256,
   };
 
-  const { domain, types, values } = SignatureTransfer.getPermitData(permitTransferFromData, PERMIT2_ADDRESS, chainId);
+  const { domain, types, values } = SignatureTransfer.getPermitData(permitTransferFromData, PERMIT2_ADDRESS, networkId);
 
   const signature = await adminWallet._signTypedData(domain, types, values);
   const txData = {
@@ -57,7 +57,7 @@ export const generatePermit2Signature = async (spender: string, amountInEth: str
 
   const base64encodedTxData = Buffer.from(JSON.stringify(txData)).toString("base64");
 
-  const result = `${permitBaseUrl}?claim=${base64encodedTxData}&network=${chainId}`;
+  const result = `${permitBaseUrl}?claim=${base64encodedTxData}&network=${networkId}`;
   logger.info(`Generated permit2 url: ${result}`);
   return result;
 };
