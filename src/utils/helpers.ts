@@ -82,6 +82,16 @@ export const getAnalyticsMode = (parsedRepo: WideRepoConfig | undefined, parsedO
   }
 };
 
+export const getPromotionComment = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): string => {
+  if (parsedRepo && parsedRepo["promotion-comment"] && typeof parsedRepo["promotion-comment"] === "string") {
+    return parsedRepo["promotion-comment"];
+  } else if (parsedOrg && parsedOrg["promotion-comment"] && typeof parsedOrg["promotion-comment"] === "string") {
+    return parsedOrg["promotion-comment"];
+  } else {
+    return "";
+  }
+};
+
 export const getIncentiveMode = (parsedRepo?: WideRepoConfig, parsedOrg?: WideOrgConfig): boolean => {
   if (parsedRepo && parsedRepo["incentive-mode"] && typeof parsedRepo["incentive-mode"] === "boolean") {
     return parsedRepo["incentive-mode"];

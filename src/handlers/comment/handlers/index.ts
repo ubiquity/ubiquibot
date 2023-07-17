@@ -12,7 +12,6 @@ import { multiplier } from "./multiplier";
 import { addCommentToIssue, createLabel, addLabelToIssue } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
-import { GLOBAL_STRINGS } from "../../../configs";
 
 export * from "./assign";
 export * from "./wallet";
@@ -42,11 +41,12 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
 
 export const issueClosedCallback = async (): Promise<void> => {
   const { payload: _payload } = getBotContext();
+  const { comments } = getBotConfig();
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   try {
     const comment = await handleIssueClosed();
-    if (comment) await addCommentToIssue(comment + GLOBAL_STRINGS.promotionComment, issue.number);
+    if (comment) await addCommentToIssue(comment + comments.promotionComment, issue.number);
   } catch (err: unknown) {
     return await addCommentToIssue(`Error: ${err}`, issue.number);
   }
