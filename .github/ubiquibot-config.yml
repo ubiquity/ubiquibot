@@ -31,3 +31,4 @@ priority-labels:
 auto-pay-mode: true
 analytics-mode: true
 max-concurrent-bounties: 2
+register-wallet-with-verification: false

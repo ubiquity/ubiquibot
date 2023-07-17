@@ -13,6 +13,7 @@ import {
   getPriorityLabels,
   getTimeLabels,
   getCommentItemPrice,
+  getRegisterWalletWithVerification,
 } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
@@ -57,6 +58,7 @@ export interface WideConfig {
   "incentive-mode"?: boolean;
   "max-concurrent-bounties"?: number;
   "comment-element-pricing"?: Record<string, number>;
+  "register-wallet-with-verification"?: boolean;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -137,6 +139,7 @@ export const getWideConfig = async (context: Context) => {
     bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
     incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
     commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
+    registerWalletWithVerification: getRegisterWalletWithVerification(parsedRepo, parsedOrg),
   };
 
   return configData;

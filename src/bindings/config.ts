@@ -1,13 +1,7 @@
 import ms from "ms";
 
 import { BotConfig, BotConfigSchema } from "../types";
-import {
-  DEFAULT_BOT_DELAY,
-  DEFAULT_DISQUALIFY_TIME,
-  DEFAULT_FOLLOWUP_TIME,
-  DEFAULT_PERMIT_BASE_URL,
-  DEFAULT_REGISTER_WALLET_WITH_VERIFICATION,
-} from "../configs";
+import { DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFAULT_PERMIT_BASE_URL } from "../configs";
 import { getPayoutConfigByChainId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
@@ -26,6 +20,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     incentiveMode,
     chainId,
     issueCreatorMultiplier,
+    registerWalletWithVerification,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -75,7 +70,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       publicKey: publicKey ?? "",
     },
     wallet: {
-      registerWalletWithVerification: process.env.REGISTER_WALLET_WITH_VERIFICATION?.toLowerCase() === "true" ?? DEFAULT_REGISTER_WALLET_WITH_VERIFICATION,
+      registerWalletWithVerification: registerWalletWithVerification,
     },
   };
 
