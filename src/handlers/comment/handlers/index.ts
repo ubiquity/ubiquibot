@@ -1,5 +1,5 @@
 import { getBotConfig } from "../../../bindings";
-import { Payload, UserCommands } from "../../../types";
+import { Comment, Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
@@ -88,13 +88,12 @@ export const issueCreatedCallback = async (): Promise<void> => {
  * @param issue_number - The issue number
  * @param comment - Comment string
  */
-const commandCallback = async (payload: Payload, comment: string) => {
-  if (payload.issue?.number) {
-    if (payload.action == "edited") {
-      await updateCommentOfIssue(comment, payload);
-    } else {
-      await addCommentToIssue(comment, payload.issue?.number);
-    }
+
+const commandCallback = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
+  if (action == "edited" && reply_to) {
+    await updateCommentOfIssue(comment, issue_number, reply_to);
+  } else {
+    await addCommentToIssue(comment, issue_number);
   }
 };
 

@@ -84,46 +84,45 @@ export const addCommentToIssue = async (msg: string, issue_number: number) => {
   }
 };
 
-export const updateCommentOfIssue = async (msg: string, payload: Payload) => {
+export const updateCommentOfIssue = async (msg: string, issue_number: number, reply_to: Comment) => {
   const context = getBotContext();
   const logger = getLogger();
+  const payload = context.payload as Payload;
 
-  if (payload.issue) {
-    try {
-      const appResponse = await context.octokit.apps.getAuthenticated();
-      const { name, slug } = appResponse.data;
-      logger.info(`App name/slug ${name}/${slug}`);
+  try {
+    const appResponse = await context.octokit.apps.getAuthenticated();
+    const { name, slug } = appResponse.data;
+    logger.info(`App name/slug ${name}/${slug}`);
 
-      const editCommentBy = `${slug}[bot]`;
-      logger.info(`Bot slug: ${editCommentBy}`);
+    const editCommentBy = `${slug}[bot]`;
+    logger.info(`Bot slug: ${editCommentBy}`);
 
-      const comments = await context.octokit.issues.listComments({
+    const comments = await context.octokit.issues.listComments({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: issue_number,
+      since: reply_to.created_at,
+      per_page: 30,
+    });
+
+    const comment_to_edit = comments.data.find((comment) => {
+      return comment?.user?.login == editCommentBy && comment.id > reply_to.id;
+    });
+
+    if (comment_to_edit) {
+      logger.info(`For comment_id: ${reply_to.id} found comment_to_edit with id: ${comment_to_edit.id}`);
+      await context.octokit.issues.updateComment({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
-        issue_number: payload.issue.number,
-        since: payload.comment?.created_at,
-        per_page: 30,
+        comment_id: comment_to_edit.id,
+        body: msg,
       });
-
-      const comment_to_edit = comments.data.find((comment) => {
-        return comment?.user?.login == editCommentBy && payload.comment?.id && comment.id > payload.comment?.id;
-      });
-
-      if (comment_to_edit) {
-        logger.info(`For comment_id: ${payload.comment?.id} found comment_to_edit with id: ${comment_to_edit.id}`);
-        await context.octokit.issues.updateComment({
-          owner: payload.repository.owner.login,
-          repo: payload.repository.name,
-          comment_id: comment_to_edit.id,
-          body: msg,
-        });
-      } else {
-        logger.info(`Fallingback to add comment. Couldn't find response to edit for comment_id: ${payload.comment?.id}`);
-        await addCommentToIssue(msg, payload.issue.number);
-      }
-    } catch (e: unknown) {
-      logger.debug(`Upading a comment failed!, reason: ${e}`);
+    } else {
+      logger.info(`Falling back to add comment. Couldn't find response to edit for comment_id: ${reply_to.id}`);
+      await addCommentToIssue(msg, issue_number);
     }
+  } catch (e: unknown) {
+    logger.debug(`Upading a comment failed!, reason: ${e}`);
   }
 };
 
