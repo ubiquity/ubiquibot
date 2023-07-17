@@ -49,10 +49,7 @@ export const multiplier = async (body: string) => {
         reason += part.replace(/['"]/g, "") + " ";
       }
     }
-    if (username === null) {
-      // If no @user provided, default to the sender
-      username = sender;
-    }
+    username = username || sender;
     // check if sender is admin or billing_manager
     // passing in context so we don't have to make another request to get the user
     const permissionLevel = await getUserPermission(sender, context);
