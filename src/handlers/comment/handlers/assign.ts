@@ -20,7 +20,7 @@ export const assign = async (body: string) => {
   }
 
   const openedPullRequests = await getAvailableOpenedPullRequests(payload.sender.login);
-  logger.info(`Opened Pull Requests with no reviews but over 24 hours have passed: ${JSON.stringify(openedPullRequests)}`);
+  logger.info(`Opened Pull Requests with approved reviews or with no reviews but over 24 hours have passed: ${JSON.stringify(openedPullRequests)}`);
 
   const assignedIssues = await getAssignedIssues(payload.sender.login);
   logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
@@ -90,7 +90,6 @@ export const assign = async (body: string) => {
     <li>Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the bounty.</li>
     <ul>`,
   };
-
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     logger.info(`Adding the assignee: ${payload.sender.login}`);
