@@ -1,7 +1,7 @@
 import { getWalletAddress, getWalletMultiplier } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addLabelToIssue, deleteLabel, generatePermit2Signature, getAllIssueComments, getTokenSymbol } from "../../helpers";
-import {UserType, Payload, StateReason } from "../../types";
+import { UserType, Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
 
@@ -75,7 +75,7 @@ export const handleIssueClosed = async () => {
   const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
   const comments = await getAllIssueComments(issue.number);
   const permitComments = comments.filter((content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot);
-    if (permitComments.length > 0) {
+  if (permitComments.length > 0) {
     logger.info(`Skip to generate a permit url because it has been already posted`);
     return `Permit generation skipped because it was already posted to this issue.`;
   }
