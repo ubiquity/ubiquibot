@@ -45,11 +45,8 @@ export const issueClosedCallback = async (): Promise<void> => {
   if (!issue) return;
   try {
     const comment = await handleIssueClosed();
-    if (comment) await addCommentToIssue(comment, issue.number);
-    await addCommentToIssue(
-      `If you enjoy the DevPool experience, please follow <a href="https://github.com/ubiquity">Ubiquity on GitHub</a> and star <a href="https://github.com/ubiquity/devpool-directory">this repo</a> to show your support. It helps a lot!`,
-      issue.number
-    );
+    const promotionCommnet = `\n<h6>If you enjoy the DevPool experience, please follow <a href="https://github.com/ubiquity">Ubiquity on GitHub</a> and star <a href="https://github.com/ubiquity/devpool-directory">this repo</a> to show your support. It helps a lot!</h6>`;
+    if (comment) await addCommentToIssue(comment + promotionCommnet, issue.number);
   } catch (err: unknown) {
     return await addCommentToIssue(`Error: ${err}`, issue.number);
   }
