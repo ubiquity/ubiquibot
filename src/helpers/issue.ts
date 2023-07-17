@@ -126,6 +126,14 @@ export const updateCommentOfIssue = async (msg: string, issue_number: number, re
   }
 };
 
+export const upsertCommentToIssue = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
+  if (action == "edited" && reply_to) {
+    await updateCommentOfIssue(comment, issue_number, reply_to);
+  } else {
+    await addCommentToIssue(comment, issue_number);
+  }
+};
+
 export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[]> => {
   const context = getBotContext();
   const logger = getLogger();
