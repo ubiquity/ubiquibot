@@ -1,14 +1,14 @@
-import { DEFAULT_CHAIN_ID, DefaultPriceConfig } from "../configs";
+import { DEFAULT_NETWORK_ID, DefaultPriceConfig } from "../configs";
 import { CommentElementPricing } from "../types";
 import { WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
-export const getChainId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
-  if (parsedRepo && parsedRepo["chain-id"] && !Number.isNaN(Number(parsedRepo["chain-id"]))) {
-    return Number(parsedRepo["chain-id"]);
-  } else if (parsedOrg && parsedOrg["chain-id"] && !Number.isNaN(Number(parsedOrg["chain-id"]))) {
-    return Number(parsedOrg["chain-id"]);
+export const getNetworkId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
+  if (parsedRepo && parsedRepo["evm-network-id"] && !Number.isNaN(Number(parsedRepo["evm-network-id"]))) {
+    return Number(parsedRepo["evm-network-id"]);
+  } else if (parsedOrg && parsedOrg["evm-network-id"] && !Number.isNaN(Number(parsedOrg["evm-network-id"]))) {
+    return Number(parsedOrg["evm-network-id"]);
   } else {
-    return DEFAULT_CHAIN_ID;
+    return DEFAULT_NETWORK_ID;
   }
 };
 
@@ -79,6 +79,16 @@ export const getAnalyticsMode = (parsedRepo: WideRepoConfig | undefined, parsedO
     return parsedOrg["analytics-mode"];
   } else {
     return false;
+  }
+};
+
+export const getPromotionComment = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): string => {
+  if (parsedRepo && parsedRepo["promotion-comment"] && typeof parsedRepo["promotion-comment"] === "string") {
+    return parsedRepo["promotion-comment"];
+  } else if (parsedOrg && parsedOrg["promotion-comment"] && typeof parsedOrg["promotion-comment"] === "string") {
+    return parsedOrg["promotion-comment"];
+  } else {
+    return "";
   }
 };
 

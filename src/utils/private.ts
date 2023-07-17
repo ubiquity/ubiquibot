@@ -9,11 +9,12 @@ import {
   getCreatorMultiplier,
   getBountyHunterMax,
   getIncentiveMode,
-  getChainId,
+  getNetworkId,
   getPriorityLabels,
   getTimeLabels,
   getCommentItemPrice,
   getDefaultLabels,
+  getPromotionComment,
 } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
@@ -48,12 +49,13 @@ export interface WideLabel {
 }
 
 export interface WideConfig {
-  "chain-id"?: number;
+  "evm-network-id"?: number;
   "base-multiplier"?: number;
   "issue-creator-multiplier": number;
   "time-labels"?: WideLabel[];
   "priority-labels"?: WideLabel[];
   "auto-pay-mode"?: boolean;
+  "promotion-comment"?: string;
   "analytics-mode"?: boolean;
   "incentive-mode"?: boolean;
   "max-concurrent-bounties"?: number;
@@ -128,7 +130,7 @@ export const getWideConfig = async (context: Context) => {
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configData = {
-    chainId: getChainId(parsedRepo, parsedOrg),
+    networkId: getNetworkId(parsedRepo, parsedOrg),
     privateKey: privateKeyDecrypted ?? "",
     baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
     issueCreatorMultiplier: getCreatorMultiplier(parsedRepo, parsedOrg),
@@ -140,6 +142,7 @@ export const getWideConfig = async (context: Context) => {
     incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
     commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
     defaultLabels: getDefaultLabels(parsedRepo, parsedOrg),
+    promotionComment: getPromotionComment(parsedRepo, parsedOrg),
   };
 
   return configData;
