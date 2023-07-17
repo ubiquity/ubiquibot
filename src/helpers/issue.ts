@@ -415,7 +415,10 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
     const pr = opened_prs[i];
     const reviews = await getAllPullRequestReviews(context, pr.number);
 
-    if (reviews.length > 0) result.push(pr);
+    if (reviews.length > 0) {
+      const approvedReviews = reviews.find((review) => review.state === "APPROVED");
+      if (approvedReviews) result.push(pr);
+    }
 
     if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= DEFAULT_TIME_RANGE_FOR_MAX_ISSUE) {
       result.push(pr);
