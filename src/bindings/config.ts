@@ -20,6 +20,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     incentiveMode,
     networkId,
     issueCreatorMultiplier,
+    promotionComment,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -36,6 +37,9 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       timeLabels,
       priorityLabels,
       commentElementPricing,
+    },
+    comments: {
+      promotionComment: promotionComment,
     },
     payout: {
       networkId: networkId,
