@@ -109,7 +109,7 @@ export const assign = async (body: string) => {
   const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
-    const multiplier = await getWalletMultiplier(payload.sender.login);
+    const multiplier = await getWalletMultiplier(payload.sender.login, payload.organization);
     if (multiplier) {
       comment.multiplier = multiplier.toFixed(2);
     }

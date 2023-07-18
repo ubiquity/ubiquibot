@@ -45,7 +45,7 @@ export const handleIssueClosed = async () => {
   }
 
   const recipient = await getWalletAddress(assignee.login);
-  const multiplier = await getWalletMultiplier(assignee.login);
+  const multiplier = await getWalletMultiplier(assignee.login, payload.organization);
 
   if (multiplier === 0) {
     const errMsg = "Refusing to generate the payment permit because " + `@${assignee.login}` + "'s payment `multiplier` is `0`";

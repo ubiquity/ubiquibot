@@ -208,6 +208,8 @@ const OrganizationSchema = Type.Object({
   description: Type.Union([Type.String(), Type.Null()]),
 });
 
+export type Organization = Static<typeof OrganizationSchema>
+
 const CommitsSchema = Type.Object({
   id: Type.String(),
   distinct: Type.Boolean(),

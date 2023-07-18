@@ -2,6 +2,8 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { getAdapters, getLogger } from "../../../bindings";
 import { Issue, UserProfile } from "../../../types";
 import { Database } from "../types";
+import { Organization } from "../../../types";
+import { payout } from "../../../handlers";
 
 /**
  * @dev Creates a typescript client which will be used to interact with supabase platform
@@ -182,7 +184,7 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
  * @param username The user name you want to upsert a wallet address for
  * @param address The account multiplier
  */
-export const upsertWalletMultiplier = async (username: string, multiplier: string, reason: string): Promise<void> => {
+export const upsertWalletMultiplier = async (username: string, multiplier: string, reason: string, organization: Organization): Promise<void> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
 
@@ -192,6 +194,7 @@ export const upsertWalletMultiplier = async (username: string, multiplier: strin
       user_name: username,
       multiplier,
       reason,
+      organization,
       updated_at: new Date().toUTCString(),
     });
     logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
@@ -201,6 +204,7 @@ export const upsertWalletMultiplier = async (username: string, multiplier: strin
       wallet_address: "",
       multiplier,
       reason,
+      organization,
       created_at: new Date().toUTCString(),
       updated_at: new Date().toUTCString(),
     });
@@ -282,10 +286,10 @@ export const getWalletAddress = async (username: string): Promise<string | undef
  *
  */
 
-export const getWalletMultiplier = async (username: string): Promise<number> => {
+export const getWalletMultiplier = async (username: string, organization: Organization): Promise<number> => {
   const { supabase } = getAdapters();
 
-  const { data } = await supabase.from("wallets").select("multiplier").eq("user_name", username).single();
+  const { data } = await supabase.from("wallets").select("multiplier").eq("user_name", username).eq("organization", organization).single();
   if (data?.multiplier == null) return 1;
   else return data?.multiplier;
 };
