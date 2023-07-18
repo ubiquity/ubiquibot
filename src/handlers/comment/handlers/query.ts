@@ -7,7 +7,6 @@ export const multiplier = async (body: string) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
-  const repo = payload.repository;
 
   logger.info(`Received '/query' command from user: ${sender}`);
 
