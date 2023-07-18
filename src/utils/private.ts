@@ -9,7 +9,7 @@ import {
   getCreatorMultiplier,
   getBountyHunterMax,
   getIncentiveMode,
-  getChainId,
+  getNetworkId,
   getPriorityLabels,
   getTimeLabels,
   getCommentItemPrice,
@@ -48,7 +48,7 @@ export interface WideLabel {
 }
 
 export interface WideConfig {
-  "chain-id"?: number;
+  "evm-network-id"?: number;
   "base-multiplier"?: number;
   "issue-creator-multiplier": number;
   "time-labels"?: WideLabel[];
@@ -128,7 +128,7 @@ export const getWideConfig = async (context: Context) => {
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configData = {
-    chainId: getChainId(parsedRepo, parsedOrg),
+    networkId: getNetworkId(parsedRepo, parsedOrg),
     privateKey: privateKeyDecrypted ?? "",
     baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
     issueCreatorMultiplier: getCreatorMultiplier(parsedRepo, parsedOrg),

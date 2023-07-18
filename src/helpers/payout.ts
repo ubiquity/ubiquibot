@@ -16,7 +16,7 @@ import { DEFAULT_RPC_ENDPOINT } from "../configs";
 import { PayoutConfigSchema } from "../types";
 
 // available tokens for payouts
-const PAYMENT_TOKEN_PER_CHAIN: Record<string, { rpc: string; token: string }> = {
+const PAYMENT_TOKEN_PER_NETWORK: Record<string, { rpc: string; token: string }> = {
   "1": {
     rpc: DEFAULT_RPC_ENDPOINT,
     token: "0x6B175474E89094C44Da98b954EedeAC495271d0F", // DAI
@@ -27,17 +27,17 @@ const PAYMENT_TOKEN_PER_CHAIN: Record<string, { rpc: string; token: string }> = 
   },
 };
 
-type PayoutConfigPartial = Omit<Static<typeof PayoutConfigSchema>, "chainId" | "privateKey" | "permitBaseUrl">;
+type PayoutConfigPartial = Omit<Static<typeof PayoutConfigSchema>, "networkId" | "privateKey" | "permitBaseUrl">;
 
 /**
- * Returns payout config for a particular chain
- * @param chainId chain id
+ * Returns payout config for a particular network
+ * @param networkId network id
  * @returns RPC URL and payment token
  */
-export const getPayoutConfigByChainId = (chainId: number): PayoutConfigPartial => {
-  const paymentToken = PAYMENT_TOKEN_PER_CHAIN[chainId.toString()];
+export const getPayoutConfigByNetworkId = (networkId: number): PayoutConfigPartial => {
+  const paymentToken = PAYMENT_TOKEN_PER_NETWORK[networkId.toString()];
   if (!paymentToken) {
-    throw new Error(`No config setup for chainId: ${chainId}`);
+    throw new Error(`No config setup for networkId: ${networkId}`);
   }
 
   return {
