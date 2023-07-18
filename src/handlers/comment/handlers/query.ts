@@ -1,9 +1,9 @@
 import { getBotContext, getLogger } from "../../../bindings";
 import { Payload } from "../../../types";
-import { getWalletAddress, getWalletMultiplier } from "../../../adapters/supabase";
-import { supabase } from "../../../../bindings";
+import { getAdapters } from "../../../bindings";
 
 export const query = async (body: string) => {
+  const { supabase } = getAdapters()
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
