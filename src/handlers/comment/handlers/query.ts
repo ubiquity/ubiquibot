@@ -27,7 +27,7 @@ export const query = async (body: string) => {
     if (multiplierError){
       return  `Error retrieving multiplier and wallet address for @${user}`
     }
-    return `@${user}'s wallet address is ${walletAddress} and  multiplier is ${multiplier}`
+    return `@${user}'s wallet address is ${address} and  multiplier is ${multiplier}`
     
   } else {
     logger.error("Invalid body for query command");
