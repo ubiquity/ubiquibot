@@ -2,7 +2,7 @@ import { getBotContext, getLogger } from "../../../bindings";
 import { Payload } from "../../../types";
 import { getWalletAddress, getWalletMultiplier } from "../../../adapters/supabase";
 
-export const multiplier = async (body: string) => {
+export const query = async (body: string) => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -20,8 +20,12 @@ export const multiplier = async (body: string) => {
   const matches = body.match(regex);
   const user = matches?.shift()
   if (user) {
-    const walletAddress = getWalletAddress(user)
-    const multiplier = getWalletMultiplier(user)
+    const { data: multiplierData, error: multiplierError } = await supabase.from('wallets').select('multiplier, address').eq("user_name", user).single();
+    const multiplier = multiplierData ? multiplierData.multiplier : null;
+    const address = multiplierData ? multiplierData.address : null;
+    if (multiplierError){
+      return  `Error retrieving multiplier and wallet address for @${user}`
+    }
     return `@${user}'s wallet address is ${walletAddress} and  multiplier is ${multiplier}`
     
   } else {
