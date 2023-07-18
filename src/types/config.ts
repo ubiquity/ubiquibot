@@ -30,7 +30,7 @@ export const TelegramBotConfigSchema = Type.Object({
 });
 
 export const PayoutConfigSchema = Type.Object({
-  chainId: Type.Number(),
+  networkId: Type.Number(),
   rpc: Type.String(),
   privateKey: Type.String(),
   paymentToken: Type.String(),
@@ -62,6 +62,10 @@ export const SodiumSchema = Type.Object({
   privateKey: Type.String(),
 });
 
+export const CommentsSchema = Type.Object({
+  promotionComment: Type.String(),
+});
+
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
   price: PriceConfigSchema,
@@ -72,6 +76,7 @@ export const BotConfigSchema = Type.Object({
   mode: ModeSchema,
   assign: AssignSchema,
   sodium: SodiumSchema,
+  comments: CommentsSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;

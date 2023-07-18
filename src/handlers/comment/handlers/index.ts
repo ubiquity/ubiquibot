@@ -48,15 +48,12 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
 
 export const issueClosedCallback = async (): Promise<void> => {
   const { payload: _payload } = getBotContext();
+  const { comments } = getBotConfig();
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   try {
     const comment = await handleIssueClosed();
-    if (comment) await addCommentToIssue(comment, issue.number);
-    await addCommentToIssue(
-      `If you enjoy the DevPool experience, please follow <a href="https://github.com/ubiquity">Ubiquity on GitHub</a> and star <a href="https://github.com/ubiquity/devpool-directory">this repo</a> to show your support. It helps a lot!`,
-      issue.number
-    );
+    if (comment) await addCommentToIssue(comment + comments.promotionComment, issue.number);
   } catch (err: unknown) {
     return await addCommentToIssue(`Error: ${err}`, issue.number);
   }
@@ -127,7 +124,7 @@ export const userCommands: UserCommands[] = [
   },*/
   {
     id: IssueCommentCommands.MULTIPLIER,
-    description: `Set bounty multiplier (for treasury)`,
+    description: `Set the bounty payout multiplier for a specific contributor, and provide the reason for why. \n  example usage: "/wallet @user 0.5 'Multiplier reason'"`,
     handler: multiplier,
     callback: commandCallback,
   },
