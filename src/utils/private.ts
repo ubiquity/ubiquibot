@@ -13,6 +13,7 @@ import {
   getPriorityLabels,
   getTimeLabels,
   getCommentItemPrice,
+  getPromotionComment,
 } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
@@ -53,6 +54,7 @@ export interface WideConfig {
   "time-labels"?: WideLabel[];
   "priority-labels"?: WideLabel[];
   "auto-pay-mode"?: boolean;
+  "promotion-comment"?: string;
   "analytics-mode"?: boolean;
   "comment-incentives"?: boolean;
   "max-concurrent-assigns"?: number;
@@ -137,6 +139,7 @@ export const getWideConfig = async (context: Context) => {
     bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
     incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
     commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
+    promotionComment: getPromotionComment(parsedRepo, parsedOrg),
   };
 
   return configData;
