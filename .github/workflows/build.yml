@@ -31,7 +31,7 @@ jobs:
     env:
       SUPABASE_ACCESS_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.PRODUCTION_SUPABASE_ACCESS_TOKEN || secrets.STAGING_SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ github.ref == 'refs/heads/main' && secrets.PRODUCTION_SUPABASE_DB_PASSWORD || secrets.STAGING_SUPABASE_DB_PASSWORD }}
-      PROJECT_ID: ${{ github.ref == 'refs/heads/main' && vars.PRODUCTION_SUPABASE_PROJECT_ID || vars.STAGING_SUPABASE_PROJECT_ID }}
+      PROJECT_ID: ${{ github.ref == 'refs/heads/main' && secrets.PRODUCTION_SUPABASE_PROJECT_ID || secrets.STAGING_SUPABASE_PROJECT_ID }}
 
     steps:
       - name: Checkout repository

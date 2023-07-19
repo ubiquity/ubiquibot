@@ -27,12 +27,19 @@ export * from "./multiplier";
  * @param body - The comment body
  * @returns The list of command names the comment includes
  */
+
 export const commentParser = (body: string): IssueCommentCommands[] => {
-  // TODO: As a starting point, it may be simple but there could be cases for the comment to includes one or more commands
-  // We need to continuously improve to parse even complex comments. Right now, we implement it simply.
-  const commandList = Object.values(IssueCommentCommands) as string[];
-  const result = commandList.filter((command: string) => body.startsWith(command));
-  return result as IssueCommentCommands[];
+  const regex = /^\/(\w+)\b/; // Regex pattern to match the command at the beginning of the body
+
+  const matches = regex.exec(body);
+  if (matches) {
+    const command = matches[0] as IssueCommentCommands;
+    if (Object.values(IssueCommentCommands).includes(command)) {
+      return [command];
+    }
+  }
+
+  return [];
 };
 
 /**
@@ -41,15 +48,12 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
 
 export const issueClosedCallback = async (): Promise<void> => {
   const { payload: _payload } = getBotContext();
+  const { comments } = getBotConfig();
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   try {
     const comment = await handleIssueClosed();
-    if (comment) await addCommentToIssue(comment, issue.number);
-    await addCommentToIssue(
-      `If you enjoy the DevPool experience, please follow <a href="https://github.com/ubiquity">Ubiquity on GitHub</a> and star <a href="https://github.com/ubiquity/devpool-directory">this repo</a> to show your support. It helps a lot!`,
-      issue.number
-    );
+    if (comment) await addCommentToIssue(comment + comments.promotionComment, issue.number);
   } catch (err: unknown) {
     return await addCommentToIssue(`Error: ${err}`, issue.number);
   }
@@ -120,7 +124,7 @@ export const userCommands: UserCommands[] = [
   },*/
   {
     id: IssueCommentCommands.MULTIPLIER,
-    description: `Set bounty multiplier (for treasury)`,
+    description: `Set the bounty payout multiplier for a specific contributor, and provide the reason for why. \n  example usage: "/wallet @user 0.5 'Multiplier reason'"`,
     handler: multiplier,
     callback: commandCallback,
   },
