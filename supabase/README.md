@@ -57,4 +57,4 @@ For more information about arguments, please go through [here](https://supabase.
 
 - `supabase migration new MIGRATION_NAME`: It will create a migration file in supabase/migrations folder.
 - `supabase db push -p PASSWORD`: Update database schema on supabase platform
-- `supabase gen types typescript > src/adapters/supabase/types/database.types.ts --linked`: Generate typescript types from the supabase project linked
+- `supabase gen types typescript > src/adapters/supabase/types/database.ts --linked`: Generate typescript types from the supabase project linked
