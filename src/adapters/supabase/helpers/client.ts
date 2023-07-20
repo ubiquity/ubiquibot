@@ -303,7 +303,7 @@ export const getWalletInfo = async (username: string): Promise<{ multiplier: num
   
   const { data } = await supabase.from('wallets').select('multiplier, address').eq("user_name", username).single();
   if (data?.multiplier == null || data?.address == null) return 1
-  else return {multiplier: data?.multiplier, address: data?.string}
+  else return {multiplier: data?.multiplier, address: data?.address}
 };
 
 
