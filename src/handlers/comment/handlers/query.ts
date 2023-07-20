@@ -1,9 +1,8 @@
+import { getWalletInfo } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
 import { Payload } from "../../../types";
-import { getAdapters } from "../../../bindings";
 
 export const query = async (body: string) => {
-  const { supabase } = getAdapters()
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -19,16 +18,16 @@ export const query = async (body: string) => {
 
   const regex = /\S+\s+@(\S+)/;
   const matches = body.match(regex);
-  const user = matches?.shift()
+  const user = matches?.shift();
+
   if (user) {
-    const { data: multiplierData, error: multiplierError } = await supabase.from('wallets').select('multiplier, address').eq("user_name", user).single();
-    const multiplier = multiplierData ? multiplierData.multiplier : null;
-    const address = multiplierData ? multiplierData.address : null;
-    if (multiplierError){
-      return  `Error retrieving multiplier and wallet address for @${user}`
+    const walletInfo = await getWalletInfo(user);
+    if (typeof walletInfo == 'number'){
+      return  `Error retrieving multiplier and wallet address for @${user}`;
     }
-    return `@${user}'s wallet address is ${address} and  multiplier is ${multiplier}`
-    
+    else {
+      return `@${user}'s wallet address is ${walletInfo?.address} and  multiplier is ${walletInfo?.multiplier}`;
+    }
   } else {
     logger.error("Invalid body for query command");
     return `Invalid syntax for query command \n usage /query @user`;
