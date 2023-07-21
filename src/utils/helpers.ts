@@ -1,6 +1,5 @@
 import { DEFAULT_NETWORK_ID, DefaultPriceConfig } from "../configs";
-import { CommentElementPricing } from "../types";
-import { WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
+import { Incentives, WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
 export const getNetworkId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
   if (parsedRepo && parsedRepo["evm-network-id"] && !Number.isNaN(Number(parsedRepo["evm-network-id"]))) {
@@ -52,13 +51,13 @@ export const getPriorityLabels = (parsedRepo: WideRepoConfig | undefined, parsed
   }
 };
 
-export const getCommentItemPrice = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): CommentElementPricing => {
-  if (parsedRepo && parsedRepo["comment-element-pricing"]) {
-    return parsedRepo["comment-element-pricing"];
-  } else if (parsedOrg && parsedOrg["comment-element-pricing"]) {
-    return parsedOrg["comment-element-pricing"];
+export const getIncentives = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): Incentives => {
+  if (parsedRepo && parsedRepo["incentives"]) {
+    return parsedRepo["incentives"];
+  } else if (parsedOrg && parsedOrg["incentives"]) {
+    return parsedOrg["incentives"];
   } else {
-    return DefaultPriceConfig["commentElementPricing"];
+    return DefaultPriceConfig["incentives"];
   }
 };
 

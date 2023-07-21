@@ -7,15 +7,17 @@ const LabelItemSchema = Type.Object({
 });
 export type LabelItem = Static<typeof LabelItemSchema>;
 
-const CommentElementPricingSchema = Type.Record(Type.String(), Type.Number());
-export type CommentElementPricing = Static<typeof CommentElementPricingSchema>;
+const IncentivesSchema = Type.Object({
+  comment: Type.Record(Type.String(), Type.Number()),
+});
+export type Incentives = Static<typeof IncentivesSchema>;
 
 export const PriceConfigSchema = Type.Object({
   baseMultiplier: Type.Number(),
   issueCreatorMultiplier: Type.Number(),
   timeLabels: Type.Array(LabelItemSchema),
   priorityLabels: Type.Array(LabelItemSchema),
-  commentElementPricing: CommentElementPricingSchema,
+  incentives: IncentivesSchema,
 });
 export type PriceConfig = Static<typeof PriceConfigSchema>;
 

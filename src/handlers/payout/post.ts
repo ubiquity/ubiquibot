@@ -1,9 +1,9 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getIssueDescription, getTokenSymbol, parseComments } from "../../helpers";
-import { MarkdownItem, Payload, UserType, CommentElementPricing } from "../../types";
+import { Incentives, Payload, UserType } from "../../types";
 
-const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
+const ItemsToExclude: string[] = ["blockquote"];
 /**
  * Incentivize the contributors based on their contribution.
  * The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
@@ -12,7 +12,7 @@ export const incentivizeComments = async () => {
   const logger = getLogger();
   const {
     mode: { incentiveMode },
-    price: { baseMultiplier, commentElementPricing },
+    price: { baseMultiplier, incentives },
     payout: { paymentToken, rpc },
   } = getBotConfig();
   if (!incentiveMode) {
@@ -34,13 +34,13 @@ export const incentivizeComments = async () => {
     return;
   }
 
-  const issueComments = await getAllIssueComments(issue.number);
+  const issueComments = await getAllIssueComments(issue.number, "html");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
     if (user.type == UserType.Bot || user.login == assignee) continue;
-    issueCommentsByUser[user.login].push(issueComment.body);
+    issueCommentsByUser[user.login].push(issueComment.body_html);
   }
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
@@ -54,7 +54,7 @@ export const incentivizeComments = async () => {
   for (const user of Object.keys(issueCommentsByUser)) {
     const comments = issueCommentsByUser[user];
     const commentsByNode = await parseComments(comments, ItemsToExclude);
-    const rewardValue = calculateRewardValue(commentsByNode, commentElementPricing);
+    const rewardValue = calculateRewardValue(commentsByNode, incentives);
     logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
     const amountInETH = ((rewardValue * baseMultiplier) / 1000).toString();
@@ -77,7 +77,7 @@ export const incentivizeCreatorComment = async () => {
   const logger = getLogger();
   const {
     mode: { incentiveMode },
-    price: { commentElementPricing, issueCreatorMultiplier },
+    price: { incentives, issueCreatorMultiplier },
     payout: { paymentToken, rpc },
   } = getBotConfig();
   if (!incentiveMode) {
@@ -99,7 +99,7 @@ export const incentivizeCreatorComment = async () => {
     return;
   }
 
-  const description = await getIssueDescription(issue.number);
+  const description = await getIssueDescription(issue.number, "html");
   logger.info(`Getting the issue description done. description: ${description}`);
   const creator = issue.user;
   if (creator?.type === UserType.Bot || creator?.login === issue?.assignee) {
@@ -108,7 +108,7 @@ export const incentivizeCreatorComment = async () => {
   }
 
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
-  const result = await generatePermitForComments(creator?.login, [description], issueCreatorMultiplier, commentElementPricing, tokenSymbol, issue.node_id);
+  const result = await generatePermitForComments(creator?.login, [description], issueCreatorMultiplier, incentives, tokenSymbol, issue.node_id);
 
   if (result.payoutUrl) {
     logger.info(`Permit url generated for creator. reward: ${result.payoutUrl}`);
@@ -123,13 +123,13 @@ const generatePermitForComments = async (
   user: string,
   comments: string[],
   multiplier: number,
-  commentElementPricing: Record<string, number>,
+  incentives: Incentives,
   tokenSymbol: string,
   node_id: string
 ): Promise<{ comment: string; payoutUrl?: string; amountInETH?: string }> => {
   const logger = getLogger();
   const commentsByNode = await parseComments(comments, ItemsToExclude);
-  const rewardValue = calculateRewardValue(commentsByNode, commentElementPricing);
+  const rewardValue = calculateRewardValue(commentsByNode, incentives);
   logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
   const account = await getWalletAddress(user);
   const amountInETH = ((rewardValue * multiplier) / 1000).toString();
@@ -149,12 +149,12 @@ const generatePermitForComments = async (
  * @param commentElementPricing - The basic price table for reward calculation
  * @returns - The reward value
  */
-const calculateRewardValue = (comments: Record<string, string[]>, commentElementPricing: CommentElementPricing): number => {
+const calculateRewardValue = (comments: Record<string, string[]>, incentives: Incentives): number => {
   let sum = 0;
   for (const key of Object.keys(comments)) {
-    const rewardValue = commentElementPricing[key];
+    const rewardValue = incentives.comment[key];
     const value = comments[key];
-    if (key == MarkdownItem.Text || key == MarkdownItem.Paragraph) {
+    if (key == "#text") {
       sum += value.length * rewardValue;
     } else {
       sum += rewardValue;

@@ -13,7 +13,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     baseMultiplier,
     timeLabels,
     priorityLabels,
-    commentElementPricing,
+    incentives,
     autoPayMode,
     analyticsMode,
     bountyHunterMax,
@@ -36,7 +36,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       issueCreatorMultiplier,
       timeLabels,
       priorityLabels,
-      commentElementPricing,
+      incentives,
     },
     comments: {
       promotionComment: promotionComment,

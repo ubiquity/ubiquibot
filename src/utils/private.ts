@@ -12,8 +12,8 @@ import {
   getNetworkId,
   getPriorityLabels,
   getTimeLabels,
-  getCommentItemPrice,
   getPromotionComment,
+  getIncentives,
 } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
@@ -47,6 +47,10 @@ export interface WideLabel {
   value?: number | undefined;
 }
 
+export interface Incentives {
+  comment: Record<string, number>;
+}
+
 export interface WideConfig {
   "evm-network-id"?: number;
   "base-multiplier"?: number;
@@ -58,7 +62,7 @@ export interface WideConfig {
   "analytics-mode"?: boolean;
   "incentive-mode"?: boolean;
   "max-concurrent-bounties"?: number;
-  "comment-element-pricing"?: Record<string, number>;
+  incentives?: Incentives;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -138,7 +142,7 @@ export const getWideConfig = async (context: Context) => {
     analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg),
     bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
     incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
-    commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
+    incentives: getIncentives(parsedRepo, parsedOrg),
     promotionComment: getPromotionComment(parsedRepo, parsedOrg),
   };
 
