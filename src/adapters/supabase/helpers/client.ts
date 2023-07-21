@@ -290,6 +290,23 @@ export const getWalletMultiplier = async (username: string): Promise<number> => 
   else return data?.multiplier;
 };
 
+/**
+ * Queries both the wallet multiplier and address in one request registered previously
+ *
+ * @param username The username you want to find an address for
+ * @returns The Multiplier and ERC-20 Address, returns 1 if not found
+ *
+ */
+
+export const getWalletInfo = async (username: string): Promise<{ multiplier: number | null; address: string | null } | number | undefined> => {
+  const { supabase } = getAdapters();
+  
+  const { data } = await supabase.from('wallets').select('multiplier, address').eq("user_name", username).single();
+  if (data?.multiplier == null || data?.address == null) return 1
+  else return {multiplier: data?.multiplier, address: data?.address}
+};
+
+
 export const getMultiplierReason = async (username: string): Promise<string> => {
   const { supabase } = getAdapters();
   const { data } = await supabase.from("wallets").select("reason").eq("user_name", username).single();
