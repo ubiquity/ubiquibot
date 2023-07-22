@@ -1,0 +1,48 @@
+name: Build
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.16.0"
+
+      - name: Install
+        run: yarn install
+
+      - name: Local Build
+        run: yarn build
+
+      - name: Lint
+        run: yarn lint
+
+  run-migration:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/development')
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ github.ref == 'refs/heads/main' && secrets.PRODUCTION_SUPABASE_ACCESS_TOKEN || secrets.STAGING_SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ github.ref == 'refs/heads/main' && secrets.PRODUCTION_SUPABASE_DB_PASSWORD || secrets.STAGING_SUPABASE_DB_PASSWORD }}
+      PROJECT_ID: ${{ github.ref == 'refs/heads/main' && secrets.PRODUCTION_SUPABASE_PROJECT_ID || secrets.STAGING_SUPABASE_PROJECT_ID }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link Supabase project
+        run: supabase link --project-ref $PROJECT_ID
+
+      - name: Run migrations
+        run: supabase db push

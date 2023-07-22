@@ -1,0 +1,18 @@
+node_modules
+npm-debug.log
+*.pem
+!mock-cert.pem
+.env
+coverage
+lib
+.DS_Store
+dist
+.temp/
+.yarn/cache
+supabase/.branches
+supabase/temp
+# Local Netlify folder
+.netlify
+bin
+.yarn
+.github/workflows/ubiquibot-config.yml
