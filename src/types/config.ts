@@ -16,6 +16,7 @@ export const PriceConfigSchema = Type.Object({
   timeLabels: Type.Array(LabelItemSchema),
   priorityLabels: Type.Array(LabelItemSchema),
   commentElementPricing: CommentElementPricingSchema,
+  defaultLabels: Type.Array(Type.String()),
 });
 export type PriceConfig = Static<typeof PriceConfigSchema>;
 

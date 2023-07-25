@@ -9,7 +9,7 @@ import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { setAccess } from "./set-access";
 import { multiplier } from "./multiplier";
-import { addCommentToIssue, createLabel, addLabelToIssue } from "../../../helpers";
+import { addCommentToIssue, createLabel, addLabelToIssue, getLabel } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
 
@@ -70,16 +70,16 @@ export const issueCreatedCallback = async (): Promise<void> => {
   if (!issue) return;
   const labels = issue.labels;
   try {
-    const timeLabelConfigs = config.price.timeLabels.sort((label1, label2) => label1.weight - label2.weight);
-    const priorityLabelConfigs = config.price.priorityLabels.sort((label1, label2) => label1.weight - label2.weight);
     const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
     const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
-    if (timeLabels.length === 0 && timeLabelConfigs.length > 0) await createLabel(timeLabelConfigs[0].name);
-    if (priorityLabels.length === 0 && priorityLabelConfigs.length > 0) await createLabel(priorityLabelConfigs[0].name);
-    await addLabelToIssue(timeLabelConfigs[0].name);
-    await addLabelToIssue(priorityLabelConfigs[0].name);
-    return;
+    if (timeLabels.length === 0 && priorityLabels.length === 0) {
+      for (const label of config.price.defaultLabels) {
+        const exists = await getLabel(label);
+        if (!exists) await createLabel(label);
+        await addLabelToIssue(label);
+      }
+    }
   } catch (err: unknown) {
     return await addCommentToIssue(`Error: ${err}`, issue.number);
   }

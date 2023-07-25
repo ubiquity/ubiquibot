@@ -28,6 +28,10 @@ priority-labels:
     weight: 4
   - name: "Priority: 4 (Emergency)"
     weight: 5
+default-labels:
+  - "Time: <1 Hour"
+  - "Priority: 0 (Normal)"
+  - "Test"
 auto-pay-mode: true
 analytics-mode: true
 max-concurrent-bounties: 2

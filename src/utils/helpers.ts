@@ -111,3 +111,13 @@ export const getBountyHunterMax = (parsedRepo: WideRepoConfig | undefined, parse
     return 2;
   }
 };
+
+export const getDefaultLabels = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): string[] => {
+  if (parsedRepo && parsedRepo["default-labels"]) {
+    return parsedRepo["default-labels"];
+  } else if (parsedOrg && parsedOrg["default-labels"]) {
+    return parsedOrg["default-labels"];
+  } else {
+    return [];
+  }
+};

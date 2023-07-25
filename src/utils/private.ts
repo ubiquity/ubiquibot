@@ -13,6 +13,7 @@ import {
   getPriorityLabels,
   getTimeLabels,
   getCommentItemPrice,
+  getDefaultLabels,
   getPromotionComment,
 } from "./helpers";
 
@@ -59,6 +60,7 @@ export interface WideConfig {
   "incentive-mode"?: boolean;
   "max-concurrent-bounties"?: number;
   "comment-element-pricing"?: Record<string, number>;
+  "default-labels"?: string[];
 }
 
 export type WideRepoConfig = WideConfig;
@@ -139,6 +141,7 @@ export const getWideConfig = async (context: Context) => {
     bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
     incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
     commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
+    defaultLabels: getDefaultLabels(parsedRepo, parsedOrg),
     promotionComment: getPromotionComment(parsedRepo, parsedOrg),
   };
 
