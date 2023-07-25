@@ -55,7 +55,7 @@ export interface WideConfig {
   "priority-labels"?: WideLabel[];
   "auto-pay-mode"?: boolean;
   "promotion-comment"?: string;
-  "analytics-mode"?: boolean;
+  "disable-analytics"?: boolean;
   "comment-incentives"?: boolean;
   "max-concurrent-assigns"?: number;
   "comment-element-pricing"?: Record<string, number>;

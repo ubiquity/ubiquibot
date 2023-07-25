@@ -73,10 +73,10 @@ export const getAutoPayMode = (parsedRepo?: WideRepoConfig, parsedOrg?: WideOrgC
 };
 
 export const getAnalyticsMode = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): boolean => {
-  if (parsedRepo && parsedRepo["analytics-mode"] && typeof parsedRepo["analytics-mode"] === "boolean") {
-    return parsedRepo["analytics-mode"];
-  } else if (parsedOrg && parsedOrg["analytics-mode"] && typeof parsedOrg["analytics-mode"] === "boolean") {
-    return parsedOrg["analytics-mode"];
+  if (parsedRepo && parsedRepo["disable-analytics"] && typeof parsedRepo["disable-analytics"] === "boolean") {
+    return parsedRepo["disable-analytics"];
+  } else if (parsedOrg && parsedOrg["disable-analytics"] && typeof parsedOrg["disable-analytics"] === "boolean") {
+    return parsedOrg["disable-analytics"];
   } else {
     return false;
   }
