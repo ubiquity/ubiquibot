@@ -129,7 +129,7 @@ export const userCommands: UserCommands[] = [
   },
   {
     id: IssueCommentCommands.WALLET,
-    description: `<WALLET_ADDRESS | ENS_NAME>: Register the hunter's wallet address. \n  ex1: /wallet 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \n  ex2: /wallet vitalik.eth\n`,
+    description: `<WALLET_ADDRESS | ENS_NAME>: Register the hunter's wallet address. \n  ex1: /wallet 0x0000000000000000000000000000000000000000 \n  ex2: /wallet vitalik.eth\n`,
     handler: registerWallet,
     callback: commandCallback,
   },

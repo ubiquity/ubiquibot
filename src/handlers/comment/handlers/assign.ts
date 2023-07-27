@@ -85,14 +85,14 @@ export const assign = async (body: string) => {
 
   const comment = {
     deadline: endTime.toUTCString(),
-    wallet: (await getWalletAddress(payload.sender.login)) || "Please set your wallet address to use `/wallet 0x4FDE...BA18`",
+    wallet: (await getWalletAddress(payload.sender.login)) || "Please set your wallet address to use `/wallet 0x0000000000000000000000000000000000000000`",
     multiplier: "1.00",
     reason: await getMultiplierReason(payload.sender.login),
     bounty: `Permit generation skipped since price label is not set`,
     commit: `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`,
     tips: `<h6>Tips:</h6>
     <ul>
-    <li>Use <code>/wallet 0x4FDE...BA18</code> if you want to update your registered payment wallet address @user.</li>
+    <li>Use <code>/wallet 0x0000000000000000000000000000000000000000</code> if you want to update your registered payment wallet address @user.</li>
     <li>Be sure to open a draft pull request as soon as possible to communicate updates on your progress.</li>
     <li>Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the bounty.</li>
     <ul>`,
