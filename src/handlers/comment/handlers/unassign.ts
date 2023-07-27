@@ -2,7 +2,7 @@ import { removeAssignees } from "../../../helpers";
 import { getBotContext, getLogger } from "../../../bindings";
 import { Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
-import { closePullRequestForAnIssue } from "../../assign/action";
+import { closePullRequestForAnIssue } from "../../assign/index";
 
 export const unassign = async (body: string) => {
   const { payload: _payload } = getBotContext();
