@@ -61,7 +61,7 @@ export const handleIssueClosed = async () => {
       "Please set your wallet address by using the `/wallet` command.\n" +
       "```\n" +
       "/wallet example.eth\n" +
-      "/wallet 0x0000000000000000000000000000000000000000\n" +
+      "/wallet 0x00...000\n" +
       "```\n" +
       "@" +
       assignee.login
