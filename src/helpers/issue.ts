@@ -60,6 +60,8 @@ export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open
     page,
   });
 
+  await checkRateLimitGit(response.headers);
+
   if (response.status === 200) {
     return response.data;
   } else {
