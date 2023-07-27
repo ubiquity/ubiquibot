@@ -84,6 +84,56 @@ export const addCommentToIssue = async (msg: string, issue_number: number) => {
   }
 };
 
+export const updateCommentOfIssue = async (msg: string, issue_number: number, reply_to: Comment) => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+
+  try {
+    const appResponse = await context.octokit.apps.getAuthenticated();
+    const { name, slug } = appResponse.data;
+    logger.info(`App name/slug ${name}/${slug}`);
+
+    const editCommentBy = `${slug}[bot]`;
+    logger.info(`Bot slug: ${editCommentBy}`);
+
+    const comments = await context.octokit.issues.listComments({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: issue_number,
+      since: reply_to.created_at,
+      per_page: 30,
+    });
+
+    const comment_to_edit = comments.data.find((comment) => {
+      return comment?.user?.login == editCommentBy && comment.id > reply_to.id;
+    });
+
+    if (comment_to_edit) {
+      logger.info(`For comment_id: ${reply_to.id} found comment_to_edit with id: ${comment_to_edit.id}`);
+      await context.octokit.issues.updateComment({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        comment_id: comment_to_edit.id,
+        body: msg,
+      });
+    } else {
+      logger.info(`Falling back to add comment. Couldn't find response to edit for comment_id: ${reply_to.id}`);
+      await addCommentToIssue(msg, issue_number);
+    }
+  } catch (e: unknown) {
+    logger.debug(`Upading a comment failed!, reason: ${e}`);
+  }
+};
+
+export const upsertCommentToIssue = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
+  if (action == "edited" && reply_to) {
+    await updateCommentOfIssue(comment, issue_number, reply_to);
+  } else {
+    await addCommentToIssue(comment, issue_number);
+  }
+};
+
 export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[]> => {
   const context = getBotContext();
   const logger = getLogger();
@@ -340,6 +390,18 @@ export const getIssueByNumber = async (context: Context, issue_number: number) =
     return issue;
   } catch (e: unknown) {
     logger.debug(`Fetching issue failed!, reason: ${e}`);
+    return;
+  }
+};
+
+export const getPullByNumber = async (context: Context, pull_number: number) => {
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  try {
+    const { data: pull } = await context.octokit.rest.pulls.get({ owner: payload.repository.owner.login, repo: payload.repository.name, pull_number });
+    return pull;
+  } catch (error) {
+    logger.debug(`Fetching pull failed!, reason: ${error}`);
     return;
   }
 };

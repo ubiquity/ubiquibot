@@ -20,6 +20,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     incentiveMode,
     networkId,
     issueCreatorMultiplier,
+    defaultLabels,
     promotionComment,
   } = await getWideConfig(context);
 
@@ -37,6 +38,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       timeLabels,
       priorityLabels,
       commentElementPricing,
+      defaultLabels,
     },
     comments: {
       promotionComment: promotionComment,

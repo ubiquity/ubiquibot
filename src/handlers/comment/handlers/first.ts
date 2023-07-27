@@ -1,6 +1,6 @@
 import { getBotContext, getLogger } from "../../../bindings";
 import { COMMAND_INSTRUCTIONS } from "../../../configs";
-import { addCommentToIssue } from "../../../helpers";
+import { upsertCommentToIssue } from "../../../helpers";
 import { Payload } from "../../../types";
 
 export const verifyFirstCheck = async (): Promise<void> => {
@@ -26,7 +26,7 @@ export const verifyFirstCheck = async (): Promise<void> => {
       if (isFirstComment) {
         //first_comment
         const msg = `${COMMAND_INSTRUCTIONS}\n@${payload.sender.login}`;
-        await addCommentToIssue(msg, payload.issue.number);
+        await upsertCommentToIssue(payload.issue.number, msg, payload.action, payload.comment);
       }
     }
   } catch (error: unknown) {
