@@ -44,7 +44,7 @@ export const UnassignConfigSchema = Type.Object({
 
 export const ModeSchema = Type.Object({
   autoPayMode: Type.Boolean(),
-  analyticsMode: Type.Boolean(),
+  disableAnalytics: Type.Boolean(),
   incentiveMode: Type.Boolean(),
 });
 
