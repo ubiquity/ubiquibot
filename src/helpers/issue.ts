@@ -84,6 +84,77 @@ export const addCommentToIssue = async (msg: string, issue_number: number) => {
   }
 };
 
+export const updateCommentOfIssue = async (msg: string, issue_number: number, reply_to: Comment) => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+
+  try {
+    const appResponse = await context.octokit.apps.getAuthenticated();
+    const { name, slug } = appResponse.data;
+    logger.info(`App name/slug ${name}/${slug}`);
+
+    const editCommentBy = `${slug}[bot]`;
+    logger.info(`Bot slug: ${editCommentBy}`);
+
+    const comments = await context.octokit.issues.listComments({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: issue_number,
+      since: reply_to.created_at,
+      per_page: 30,
+    });
+
+    const comment_to_edit = comments.data.find((comment) => {
+      return comment?.user?.login == editCommentBy && comment.id > reply_to.id;
+    });
+
+    if (comment_to_edit) {
+      logger.info(`For comment_id: ${reply_to.id} found comment_to_edit with id: ${comment_to_edit.id}`);
+      await context.octokit.issues.updateComment({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        comment_id: comment_to_edit.id,
+        body: msg,
+      });
+    } else {
+      logger.info(`Falling back to add comment. Couldn't find response to edit for comment_id: ${reply_to.id}`);
+      await addCommentToIssue(msg, issue_number);
+    }
+  } catch (e: unknown) {
+    logger.debug(`Upading a comment failed!, reason: ${e}`);
+  }
+};
+
+export const upsertCommentToIssue = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
+  if (action == "edited" && reply_to) {
+    await updateCommentOfIssue(comment, issue_number, reply_to);
+  } else {
+    await addCommentToIssue(comment, issue_number);
+  }
+};
+
+export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[]> => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+
+  let result: Comment[] = [];
+  try {
+    const response = await context.octokit.rest.issues.listComments({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number,
+    });
+
+    if (response.data) result = response.data as Comment[];
+  } catch (e: unknown) {
+    logger.debug(`Listing issue comments failed!, reason: ${e}`);
+  }
+
+  return result;
+};
+
 export const getIssueDescription = async (issue_number: number): Promise<string> => {
   const context = getBotContext();
   const logger = getLogger();
@@ -323,6 +394,18 @@ export const getIssueByNumber = async (context: Context, issue_number: number) =
   }
 };
 
+export const getPullByNumber = async (context: Context, pull_number: number) => {
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  try {
+    const { data: pull } = await context.octokit.rest.pulls.get({ owner: payload.repository.owner.login, repo: payload.repository.name, pull_number });
+    return pull;
+  } catch (error) {
+    logger.debug(`Fetching pull failed!, reason: ${error}`);
+    return;
+  }
+};
+
 // Get issues assigned to a username
 export const getAssignedIssues = async (username: string) => {
   const issuesArr = [];
@@ -394,7 +477,10 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
     const pr = opened_prs[i];
     const reviews = await getAllPullRequestReviews(context, pr.number);
 
-    if (reviews.length > 0) result.push(pr);
+    if (reviews.length > 0) {
+      const approvedReviews = reviews.find((review) => review.state === "APPROVED");
+      if (approvedReviews) result.push(pr);
+    }
 
     if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= DEFAULT_TIME_RANGE_FOR_MAX_ISSUE) {
       result.push(pr);

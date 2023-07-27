@@ -1,5 +1,5 @@
 import { getBotConfig } from "../../../bindings";
-import { Payload, UserCommands } from "../../../types";
+import { Comment, Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
@@ -9,7 +9,7 @@ import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { setAccess } from "./set-access";
 import { multiplier } from "./multiplier";
-import { addCommentToIssue, createLabel, addLabelToIssue } from "../../../helpers";
+import { addCommentToIssue, createLabel, addLabelToIssue, getLabel, upsertCommentToIssue } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
 
@@ -27,12 +27,19 @@ export * from "./multiplier";
  * @param body - The comment body
  * @returns The list of command names the comment includes
  */
+
 export const commentParser = (body: string): IssueCommentCommands[] => {
-  // TODO: As a starting point, it may be simple but there could be cases for the comment to includes one or more commands
-  // We need to continuously improve to parse even complex comments. Right now, we implement it simply.
-  const commandList = Object.values(IssueCommentCommands) as string[];
-  const result = commandList.filter((command: string) => body.startsWith(command));
-  return result as IssueCommentCommands[];
+  const regex = /^\/(\w+)\b/; // Regex pattern to match the command at the beginning of the body
+
+  const matches = regex.exec(body);
+  if (matches) {
+    const command = matches[0] as IssueCommentCommands;
+    if (Object.values(IssueCommentCommands).includes(command)) {
+      return [command];
+    }
+  }
+
+  return [];
 };
 
 /**
@@ -41,15 +48,12 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
 
 export const issueClosedCallback = async (): Promise<void> => {
   const { payload: _payload } = getBotContext();
+  const { comments } = getBotConfig();
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   try {
     const comment = await handleIssueClosed();
-    if (comment) await addCommentToIssue(comment, issue.number);
-    await addCommentToIssue(
-      `If you enjoy the DevPool experience, please follow <a href="https://github.com/ubiquity">Ubiquity on GitHub</a> and star <a href="https://github.com/ubiquity/devpool-directory">this repo</a> to show your support. It helps a lot!`,
-      issue.number
-    );
+    if (comment) await addCommentToIssue(comment + comments.promotionComment, issue.number);
   } catch (err: unknown) {
     return await addCommentToIssue(`Error: ${err}`, issue.number);
   }
@@ -66,16 +70,16 @@ export const issueCreatedCallback = async (): Promise<void> => {
   if (!issue) return;
   const labels = issue.labels;
   try {
-    const timeLabelConfigs = config.price.timeLabels.sort((label1, label2) => label1.weight - label2.weight);
-    const priorityLabelConfigs = config.price.priorityLabels.sort((label1, label2) => label1.weight - label2.weight);
     const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
     const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
-    if (timeLabels.length === 0 && timeLabelConfigs.length > 0) await createLabel(timeLabelConfigs[0].name);
-    if (priorityLabels.length === 0 && priorityLabelConfigs.length > 0) await createLabel(priorityLabelConfigs[0].name);
-    await addLabelToIssue(timeLabelConfigs[0].name);
-    await addLabelToIssue(priorityLabelConfigs[0].name);
-    return;
+    if (timeLabels.length === 0 && priorityLabels.length === 0) {
+      for (const label of config.price.defaultLabels) {
+        const exists = await getLabel(label);
+        if (!exists) await createLabel(label);
+        await addLabelToIssue(label);
+      }
+    }
   } catch (err: unknown) {
     return await addCommentToIssue(`Error: ${err}`, issue.number);
   }
@@ -88,8 +92,9 @@ export const issueCreatedCallback = async (): Promise<void> => {
  * @param issue_number - The issue number
  * @param comment - Comment string
  */
-const commandCallback = async (issue_number: number, comment: string) => {
-  await addCommentToIssue(comment, issue_number);
+
+const commandCallback = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
+  await upsertCommentToIssue(issue_number, comment, action, reply_to);
 };
 
 export const userCommands: UserCommands[] = [
@@ -120,7 +125,7 @@ export const userCommands: UserCommands[] = [
   },*/
   {
     id: IssueCommentCommands.MULTIPLIER,
-    description: `Set bounty multiplier (for treasury)`,
+    description: `Set the bounty payout multiplier for a specific contributor, and provide the reason for why. \n  example usage: "/wallet @user 0.5 'Multiplier reason'"`,
     handler: multiplier,
     callback: commandCallback,
   },
