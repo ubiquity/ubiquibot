@@ -60,11 +60,31 @@ export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open
     page,
   });
 
+  await checkRateLimitGit(response.headers);
+
   if (response.status === 200) {
     return response.data;
   } else {
     return [];
   }
+};
+
+export const listAllIssuesForRepo = async (state: "open" | "closed" | "all" = "open") => {
+  const issuesArr = [];
+  let fetchDone = false;
+  const perPage = 25;
+  let curPage = 1;
+  while (!fetchDone) {
+    const issues = await listIssuesForRepo(state, perPage, curPage);
+
+    // push the objects to array
+    issuesArr.push(...issues);
+
+    if (issues.length < perPage) fetchDone = true;
+    else curPage++;
+  }
+
+  return issuesArr;
 };
 
 export const addCommentToIssue = async (msg: string, issue_number: number) => {

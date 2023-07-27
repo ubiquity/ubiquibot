@@ -6,7 +6,7 @@ import {
   getCommentsOfIssue,
   getCommitsOnPullRequest,
   getOpenedPullRequestsForAnIssue,
-  listIssuesForRepo,
+  listAllIssuesForRepo,
   removeAssignees,
 } from "../../helpers";
 import { Comment, Issue, IssueType } from "../../types";
@@ -21,7 +21,7 @@ export const checkBountiesToUnassign = async () => {
 
   // List all the issues in the repository. It may include `pull_request`
   // because GitHub's REST API v3 considers every pull request an issue
-  const issues_opened = await listIssuesForRepo(IssueType.OPEN);
+  const issues_opened = await listAllIssuesForRepo(IssueType.OPEN);
 
   const assigned_issues = issues_opened.filter((issue) => issue.assignee);
 
