@@ -72,7 +72,7 @@ export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open
 export const listAllIssuesForRepo = async (state: "open" | "closed" | "all" = "open") => {
   const issuesArr = [];
   let fetchDone = false;
-  const perPage = 25;
+  const perPage = 100;
   let curPage = 1;
   while (!fetchDone) {
     const issues = await listIssuesForRepo(state, perPage, curPage);
