@@ -48,6 +48,10 @@ export const registerWallet = async (body: string) => {
   }
 
   if (address) {
+    if (address == "0x0000000000000000000000000000000000000000"){
+      logger.info("Skipping to register a wallet address because user is trying to set their address to null address");
+      return `Cannot set address to null address`
+    }
     await upsertWalletAddress(sender, address);
     return `Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`;
   }
