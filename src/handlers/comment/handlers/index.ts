@@ -1,5 +1,5 @@
 import { getBotConfig } from "../../../bindings";
-import { Payload, UserCommands } from "../../../types";
+import { Comment, Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
@@ -9,7 +9,7 @@ import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { setAccess } from "./set-access";
 import { multiplier } from "./multiplier";
-import { addCommentToIssue, createLabel, addLabelToIssue, getLabel } from "../../../helpers";
+import { addCommentToIssue, createLabel, addLabelToIssue, getLabel, upsertCommentToIssue } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
 
@@ -92,8 +92,9 @@ export const issueCreatedCallback = async (): Promise<void> => {
  * @param issue_number - The issue number
  * @param comment - Comment string
  */
-const commandCallback = async (issue_number: number, comment: string) => {
-  await addCommentToIssue(comment, issue_number);
+
+const commandCallback = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
+  await upsertCommentToIssue(issue_number, comment, action, reply_to);
 };
 
 export const userCommands: UserCommands[] = [
