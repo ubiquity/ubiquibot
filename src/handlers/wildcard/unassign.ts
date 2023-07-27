@@ -1,4 +1,3 @@
-import { bold } from "telegraf/typings/format";
 import { closePullRequestForAnIssue } from "..";
 import { getBotConfig, getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs/strings";
