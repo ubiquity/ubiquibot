@@ -49,7 +49,7 @@ export const multiplier = async (body: string) => {
         reason += part.replace(/['"]/g, "") + " ";
       }
     }
-
+    username = username || sender;
     // check if sender is admin or billing_manager
     // passing in context so we don't have to make another request to get the user
     const permissionLevel = await getUserPermission(sender, context);
@@ -65,6 +65,8 @@ export const multiplier = async (body: string) => {
         return "Insufficient permissions to update the payout multiplier. You are not an `admin` or `billing_manager`";
       }
     }
+
+    logger.info(`Upserting to the wallet table, username: ${username}, bountyMultiplier: ${bountyMultiplier}, reason: ${reason}}`);
 
     await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason);
     return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${

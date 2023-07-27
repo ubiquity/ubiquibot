@@ -1,14 +1,14 @@
-import { DEFAULT_CHAIN_ID, DefaultPriceConfig } from "../configs";
+import { DEFAULT_NETWORK_ID, DefaultPriceConfig } from "../configs";
 import { CommentElementPricing } from "../types";
 import { WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
-export const getChainId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
-  if (parsedRepo && parsedRepo["chain-id"] && !Number.isNaN(Number(parsedRepo["chain-id"]))) {
-    return Number(parsedRepo["chain-id"]);
-  } else if (parsedOrg && parsedOrg["chain-id"] && !Number.isNaN(Number(parsedOrg["chain-id"]))) {
-    return Number(parsedOrg["chain-id"]);
+export const getNetworkId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
+  if (parsedRepo && parsedRepo["evm-network-id"] && !Number.isNaN(Number(parsedRepo["evm-network-id"]))) {
+    return Number(parsedRepo["evm-network-id"]);
+  } else if (parsedOrg && parsedOrg["evm-network-id"] && !Number.isNaN(Number(parsedOrg["evm-network-id"]))) {
+    return Number(parsedOrg["evm-network-id"]);
   } else {
-    return DEFAULT_CHAIN_ID;
+    return DEFAULT_NETWORK_ID;
   }
 };
 
@@ -82,6 +82,16 @@ export const getAnalyticsMode = (parsedRepo: WideRepoConfig | undefined, parsedO
   }
 };
 
+export const getPromotionComment = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): string => {
+  if (parsedRepo && parsedRepo["promotion-comment"] && typeof parsedRepo["promotion-comment"] === "string") {
+    return parsedRepo["promotion-comment"];
+  } else if (parsedOrg && parsedOrg["promotion-comment"] && typeof parsedOrg["promotion-comment"] === "string") {
+    return parsedOrg["promotion-comment"];
+  } else {
+    return "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>";
+  }
+};
+
 export const getIncentiveMode = (parsedRepo?: WideRepoConfig, parsedOrg?: WideOrgConfig): boolean => {
   if (parsedRepo && parsedRepo["incentive-mode"] && typeof parsedRepo["incentive-mode"] === "boolean") {
     return parsedRepo["incentive-mode"];
@@ -99,5 +109,15 @@ export const getBountyHunterMax = (parsedRepo: WideRepoConfig | undefined, parse
     return Number(parsedOrg["max-concurrent-bounties"]);
   } else {
     return 2;
+  }
+};
+
+export const getDefaultLabels = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): string[] => {
+  if (parsedRepo && parsedRepo["default-labels"]) {
+    return parsedRepo["default-labels"];
+  } else if (parsedOrg && parsedOrg["default-labels"]) {
+    return parsedOrg["default-labels"];
+  } else {
+    return [];
   }
 };
