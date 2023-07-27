@@ -135,7 +135,7 @@ export const getWideConfig = async (context: Context) => {
     timeLabels: getTimeLabels(parsedRepo, parsedOrg),
     priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),
     autoPayMode: getAutoPayMode(parsedRepo, parsedOrg),
-    analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg),
+    disableAnalytics: getAnalyticsMode(parsedRepo, parsedOrg),
     bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
     incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
     commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
