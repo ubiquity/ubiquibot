@@ -16,16 +16,16 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     commentElementPricing,
     autoPayMode,
     analyticsMode,
-    bountyHunterMax,
+    maxConcurrentBounties,
     incentiveMode,
-    networkId,
+    evmNetworkId,
     issueCreatorMultiplier,
     defaultLabels,
     promotionComment,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
-  const { rpc, paymentToken } = getPayoutConfigByNetworkId(networkId);
+  const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
 
   const botConfig: BotConfig = {
     log: {
@@ -44,7 +44,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       promotionComment: promotionComment,
     },
     payout: {
-      networkId: networkId,
+      networkId: evmNetworkId,
       rpc: rpc,
       privateKey: privateKey,
       paymentToken: paymentToken,
@@ -68,7 +68,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       incentiveMode: incentiveMode,
     },
     assign: {
-      bountyHunterMax: bountyHunterMax,
+      bountyHunterMax: maxConcurrentBounties,
     },
     sodium: {
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",

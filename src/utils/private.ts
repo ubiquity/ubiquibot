@@ -3,20 +3,7 @@ import YAML from "yaml";
 import { Payload } from "../types";
 import { Context } from "probot";
 import { readFileSync } from "fs";
-import {
-  getAnalyticsMode,
-  getAutoPayMode,
-  getBaseMultiplier,
-  getCreatorMultiplier,
-  getBountyHunterMax,
-  getIncentiveMode,
-  getNetworkId,
-  getPriorityLabels,
-  getTimeLabels,
-  getCommentItemPrice,
-  getDefaultLabels,
-  getPromotionComment,
-} from "./helpers";
+import { getBoolean, getCommentItemPrice, getLabels, getNumber, getString, getStrings } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
 const KEY_PATH = ".github/ubiquibot-config.yml";
@@ -152,19 +139,20 @@ export const getWideConfig = async (context: Context) => {
 
   const configs = { parsedRepo, parsedOrg, parsedDefault };
   const configData = {
-    networkId: getNetworkId(configs),
     privateKey: privateKeyDecrypted ?? "",
-    baseMultiplier: getBaseMultiplier(configs),
-    issueCreatorMultiplier: getCreatorMultiplier(configs),
-    timeLabels: getTimeLabels(configs),
-    priorityLabels: getPriorityLabels(configs),
-    autoPayMode: getAutoPayMode(configs),
-    analyticsMode: getAnalyticsMode(configs),
-    bountyHunterMax: getBountyHunterMax(configs),
-    incentiveMode: getIncentiveMode(configs),
-    commentElementPricing: getCommentItemPrice(configs),
-    defaultLabels: getDefaultLabels(configs),
-    promotionComment: getPromotionComment(configs),
+
+    evmNetworkId: getNumber("evm-network-id", configs),
+    baseMultiplier: getNumber("base-multiplier", configs),
+    issueCreatorMultiplier: getNumber("issue-creator-multiplier", configs),
+    timeLabels: getLabels("time-labels", configs),
+    priorityLabels: getLabels("priority-labels", configs),
+    autoPayMode: getBoolean("auto-pay-mode", configs),
+    analyticsMode: getBoolean("analytics-mode", configs),
+    maxConcurrentBounties: getNumber("max-concurrent-bounties", configs),
+    incentiveMode: getBoolean("incentive-mode", configs),
+    commentElementPricing: getCommentItemPrice("comment-element-pricing", configs),
+    defaultLabels: getStrings("default-labels", configs),
+    promotionComment: getString("promotion-comment", configs),
   };
 
   return configData;
