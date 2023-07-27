@@ -1,5 +1,5 @@
 import { CommentElementPricing } from "../types";
-import { WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
+import { WideLabel, WideOrgConfig, WideRepoConfig, WideConfig } from "./private";
 interface Configs {
   parsedRepo?: WideRepoConfig;
   parsedOrg?: WideOrgConfig;
@@ -12,7 +12,7 @@ export const getNetworkId = ({ parsedRepo, parsedOrg, parsedDefault }: Configs):
   } else if (parsedOrg && parsedOrg["evm-network-id"] && !Number.isNaN(Number(parsedOrg["evm-network-id"]))) {
     return Number(parsedOrg["evm-network-id"]);
   } else {
-    return Number(parsedDefault["evm-network-id"]);
+    return Number(parsedDefault["evm-network-id"]) || WideConfig["evm-network-id"];
   }
 };
 
@@ -22,7 +22,7 @@ export const getBaseMultiplier = ({ parsedRepo, parsedOrg, parsedDefault }: Conf
   } else if (parsedOrg && parsedOrg["base-multiplier"] && !Number.isNaN(Number(parsedOrg["base-multiplier"]))) {
     return Number(parsedOrg["base-multiplier"]);
   } else {
-    return Number(parsedDefault["base-multiplier"]);
+    return Number(parsedDefault["base-multiplier"]) || WideConfig["base-multiplier"];
   }
 };
 
@@ -32,7 +32,7 @@ export const getCreatorMultiplier = ({ parsedRepo, parsedOrg, parsedDefault }: C
   } else if (parsedOrg && parsedOrg["issue-creator-multiplier"] && !Number.isNaN(Number(parsedOrg["issue-creator-multiplier"]))) {
     return Number(parsedOrg["issue-creator-multiplier"]);
   } else {
-    return Number(parsedDefault["issue-creator-multiplier"]);
+    return Number(parsedDefault["issue-creator-multiplier"]) || WideConfig["issue-creator-multiplier"];
   }
 };
 
@@ -42,7 +42,7 @@ export const getTimeLabels = ({ parsedRepo, parsedOrg }: Configs): WideLabel[] =
   } else if (parsedOrg && parsedOrg["time-labels"] && Array.isArray(parsedOrg["time-labels"]) && parsedOrg["time-labels"].length > 0) {
     return parsedOrg["time-labels"];
   } else {
-    return [];
+    return WideConfig["time-labels"]
   }
 };
 
@@ -52,7 +52,7 @@ export const getPriorityLabels = ({ parsedRepo, parsedOrg }: Configs): WideLabel
   } else if (parsedOrg && parsedOrg["priority-labels"] && Array.isArray(parsedOrg["priority-labels"]) && parsedOrg["priority-labels"].length > 0) {
     return parsedOrg["priority-labels"];
   } else {
-    return [];
+    return WideConfig["priority-labels"]
   }
 };
 
@@ -62,7 +62,7 @@ export const getCommentItemPrice = ({ parsedRepo, parsedOrg, parsedDefault }: Co
   } else if (parsedOrg && parsedOrg["comment-element-pricing"]) {
     return parsedOrg["comment-element-pricing"];
   } else {
-    return parsedDefault["comment-element-pricing"];
+    return parsedDefault["comment-element-pricing"] || WideConfig["comment-element-pricing"];
   }
 };
 
@@ -72,7 +72,7 @@ export const getAutoPayMode = ({ parsedRepo, parsedOrg, parsedDefault }: Configs
   } else if (parsedOrg && parsedOrg["auto-pay-mode"] && typeof parsedOrg["auto-pay-mode"] === "boolean") {
     return parsedOrg["auto-pay-mode"];
   } else {
-    return parsedDefault["auto-pay-mode"];
+    return parsedDefault["auto-pay-mode"] || WideConfig["auto-pay-mode"];
   }
 };
 
@@ -82,7 +82,7 @@ export const getAnalyticsMode = ({ parsedRepo, parsedOrg, parsedDefault }: Confi
   } else if (parsedOrg && parsedOrg["analytics-mode"] && typeof parsedOrg["analytics-mode"] === "boolean") {
     return parsedOrg["analytics-mode"];
   } else {
-    return parsedDefault["analytics-mode"];
+    return parsedDefault["analytics-mode"] || WideConfig["analytics-mode"];
   }
 };
 
@@ -92,7 +92,7 @@ export const getPromotionComment = ({ parsedRepo, parsedOrg, parsedDefault }: Co
   } else if (parsedOrg && parsedOrg["promotion-comment"] && typeof parsedOrg["promotion-comment"] === "string") {
     return parsedOrg["promotion-comment"];
   } else {
-    return parsedDefault["promotion-comment"];
+    return parsedDefault["promotion-comment"] || WideConfig["promotion-comment"];
   }
 };
 
@@ -102,7 +102,7 @@ export const getIncentiveMode = ({ parsedRepo, parsedOrg, parsedDefault }: Confi
   } else if (parsedOrg && parsedOrg["incentive-mode"] && typeof parsedOrg["incentive-mode"] === "boolean") {
     return parsedOrg["incentive-mode"];
   } else {
-    return parsedDefault["incentive-mode"];
+    return parsedDefault["incentive-mode"] || WideConfig["incentive-mode"];
   }
 };
 
@@ -112,7 +112,7 @@ export const getBountyHunterMax = ({ parsedRepo, parsedOrg, parsedDefault }: Con
   } else if (parsedOrg && parsedOrg["max-concurrent-bounties"] && !Number.isNaN(Number(parsedOrg["max-concurrent-bounties"]))) {
     return Number(parsedOrg["max-concurrent-bounties"]);
   } else {
-    return Number(parsedDefault["max-concurrent-bounties"]);
+    return Number(parsedDefault["max-concurrent-bounties"]) || WideConfig["max-concurrent-bounties"];
   }
 };
 
@@ -122,6 +122,6 @@ export const getDefaultLabels = ({ parsedRepo, parsedOrg, parsedDefault }: Confi
   } else if (parsedOrg && parsedOrg["default-labels"]) {
     return parsedOrg["default-labels"];
   } else {
-    return parsedDefault["default-labels"];
+    return parsedDefault["default-labels"] || WideConfig["default-labels"];
   }
 };
