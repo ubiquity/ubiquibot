@@ -74,6 +74,6 @@ export const multiplier = async (body: string) => {
     }.`;
   } else {
     logger.error("Invalid body for bountyMultiplier command");
-    return `Invalid syntax for wallet command \n example usage: "/wallet @user 0.5 'Multiplier reason'"`;
+    return `Invalid syntax for wallet command \n example usage: "/multiplier @user 0.5 'Multiplier reason'"`;
   }
 };
