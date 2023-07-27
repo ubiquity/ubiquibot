@@ -30,14 +30,14 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo"):
   }
 };
 
-export interface WideLabel {
+export interface ConfigLabel {
   name: string;
   weight: number;
   value?: number | undefined;
 }
 
 // defaults
-export const WideConfig = {
+export const Config = {
   "evm-network-id": 1,
   "base-multiplier": 0,
   "issue-creator-multiplier": 0,
@@ -54,8 +54,8 @@ export const WideConfig = {
   "evm-network-id": number;
   "base-multiplier": number;
   "issue-creator-multiplier": number;
-  "time-labels": WideLabel[];
-  "priority-labels": WideLabel[];
+  "time-labels": ConfigLabel[];
+  "priority-labels": ConfigLabel[];
   "auto-pay-mode": boolean;
   "promotion-comment": string;
   "analytics-mode": boolean;
@@ -65,13 +65,13 @@ export const WideConfig = {
   "default-labels": string[];
 };
 
-export type WideRepoConfig = typeof WideConfig;
+export type ConfigRepository = typeof Config;
 
-export interface WideOrgConfig extends WideRepoConfig {
+export interface ConfigOrganization extends ConfigRepository {
   "private-key-encrypted"?: string;
 }
 
-export const parseYAML = (data?: string): WideRepoConfig => {
+export const parseYAML = (data?: string): ConfigRepository => {
   try {
     if (data) {
       const parsedData = YAML.parse(data);
@@ -80,10 +80,10 @@ export const parseYAML = (data?: string): WideRepoConfig => {
   } catch (error) {
     console.error(error);
   }
-  return WideConfig;
+  return Config;
 };
 
-export const getDefaultConfig = (): WideRepoConfig => {
+export const getDefaultConfig = (): ConfigRepository => {
   const defaultConfig = readFileSync(`${__dirname}/../../ubiquibot-config-default.yml`, "utf8");
   return parseYAML(defaultConfig);
 };
@@ -128,13 +128,13 @@ export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Prom
   }
 };
 
-export const getWideConfig = async (context: Context) => {
+export const getConfig = async (context: Context) => {
   const orgConfig = await getConfigSuperset(context, "org");
   const repoConfig = await getConfigSuperset(context, "repo");
 
-  const parsedOrg: WideOrgConfig = parseYAML(orgConfig);
-  const parsedRepo: WideRepoConfig = parseYAML(repoConfig);
-  const parsedDefault: WideRepoConfig = getDefaultConfig();
+  const parsedOrg: ConfigOrganization = parseYAML(orgConfig);
+  const parsedRepo: ConfigRepository = parseYAML(repoConfig);
+  const parsedDefault: ConfigRepository = getDefaultConfig();
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configs = { parsedRepo, parsedOrg, parsedDefault };

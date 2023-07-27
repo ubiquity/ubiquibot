@@ -1,9 +1,9 @@
 import { CommentElementPricing } from "../types";
-import { WideLabel, WideOrgConfig, WideRepoConfig, WideConfig } from "./private";
+import { ConfigLabel, ConfigOrganization, ConfigRepository, Config } from "./private";
 interface Configs {
-  parsedRepo?: WideRepoConfig;
-  parsedOrg?: WideOrgConfig;
-  parsedDefault: WideRepoConfig;
+  parsedRepo?: ConfigRepository;
+  parsedOrg?: ConfigOrganization;
+  parsedDefault: ConfigRepository;
 }
 type getsNumber = "evm-network-id" | "base-multiplier" | "issue-creator-multiplier" | "max-concurrent-bounties";
 type getsString = "promotion-comment";
@@ -18,16 +18,16 @@ export const getNumber = (key: getsNumber, { parsedRepo, parsedOrg, parsedDefaul
   } else if (parsedOrg && parsedOrg[key] && !Number.isNaN(Number(parsedOrg[key]))) {
     return Number(parsedOrg[key]);
   } else {
-    return Number(parsedDefault[key] || WideConfig[key]);
+    return Number(parsedDefault[key] || Config[key]);
   }
 };
-export const getLabels = (key: getsLabels, { parsedRepo, parsedOrg }: Configs): WideLabel[] => {
+export const getLabels = (key: getsLabels, { parsedRepo, parsedOrg }: Configs): ConfigLabel[] => {
   if (parsedRepo && parsedRepo[key] && Array.isArray(parsedRepo[key]) && parsedRepo[key].length > 0) {
     return parsedRepo[key];
   } else if (parsedOrg && parsedOrg[key] && Array.isArray(parsedOrg[key]) && parsedOrg[key].length > 0) {
     return parsedOrg[key];
   } else {
-    return WideConfig[key];
+    return Config[key];
   }
 };
 export const getCommentItemPrice = (key: getsCommentElementPricing, { parsedRepo, parsedOrg, parsedDefault }: Configs): CommentElementPricing => {
@@ -36,7 +36,7 @@ export const getCommentItemPrice = (key: getsCommentElementPricing, { parsedRepo
   } else if (parsedOrg && parsedOrg[key]) {
     return parsedOrg[key];
   } else {
-    return parsedDefault[key] || WideConfig[key];
+    return parsedDefault[key] || Config[key];
   }
 };
 export const getBoolean = (key: getsBoolean, { parsedRepo, parsedOrg, parsedDefault }: Configs): boolean => {
@@ -45,7 +45,7 @@ export const getBoolean = (key: getsBoolean, { parsedRepo, parsedOrg, parsedDefa
   } else if (parsedOrg && parsedOrg[key] && typeof parsedOrg[key] === "boolean") {
     return parsedOrg[key];
   } else {
-    return parsedDefault[key] || WideConfig[key];
+    return parsedDefault[key] || Config[key];
   }
 };
 export const getString = (key: getsString, { parsedRepo, parsedOrg, parsedDefault }: Configs): string => {
@@ -54,7 +54,7 @@ export const getString = (key: getsString, { parsedRepo, parsedOrg, parsedDefaul
   } else if (parsedOrg && parsedOrg[key] && typeof parsedOrg[key] === "string") {
     return parsedOrg[key];
   } else {
-    return parsedDefault[key] || WideConfig[key];
+    return parsedDefault[key] || Config[key];
   }
 };
 export const getStrings = (key: getsArrayOfStrings, { parsedRepo, parsedOrg, parsedDefault }: Configs): string[] => {
@@ -63,6 +63,6 @@ export const getStrings = (key: getsArrayOfStrings, { parsedRepo, parsedOrg, par
   } else if (parsedOrg && parsedOrg[key]) {
     return parsedOrg[key];
   } else {
-    return parsedDefault[key] || WideConfig[key];
+    return parsedDefault[key] || Config[key];
   }
 };
