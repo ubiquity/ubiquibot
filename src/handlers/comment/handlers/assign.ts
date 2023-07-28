@@ -1,4 +1,4 @@
-import { addAssignees, getAssignedIssues, getCommentsOfIssue, getAvailableOpenedPullRequests } from "../../../helpers";
+import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments, addCommentToIssue } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
@@ -6,6 +6,7 @@ import { getWalletAddress, getWalletMultiplier, getMultiplierReason } from "../.
 import { tableComment } from "./table";
 import { bountyInfo } from "../../wildcard";
 import { convertTimeToSeconds } from "../../../helpers/time";
+import { ASSIGN_COMMAND_ENABLED, GLOBAL_STRINGS } from "../../../configs";
 
 export const assign = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -20,8 +21,14 @@ export const assign = async (body: string) => {
     return "Skipping '/assign' because of no issue instance";
   }
 
+  if (!ASSIGN_COMMAND_ENABLED) {
+    logger.info(`Ignore '/assign' command from user: ASSIGN_COMMAND_ENABLED config is set false`);
+    await addCommentToIssue(GLOBAL_STRINGS.assignCommandDisabledComment, issue.number);
+    return;
+  }
+
   const openedPullRequests = await getAvailableOpenedPullRequests(payload.sender.login);
-  logger.info(`Opened Pull Requests with no reviews but over 24 hours have passed: ${JSON.stringify(openedPullRequests)}`);
+  logger.info(`Opened Pull Requests with approved reviews or with no reviews but over 24 hours have passed: ${JSON.stringify(openedPullRequests)}`);
 
   const assignedIssues = await getAssignedIssues(payload.sender.login);
   logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
@@ -94,7 +101,6 @@ export const assign = async (body: string) => {
     <ul>`,
   };
 
-
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     logger.info(`Adding the assignee: ${payload.sender.login}`);
     await addAssignees(issue.number, [payload.sender.login]);
@@ -102,7 +108,7 @@ export const assign = async (body: string) => {
 
   // double check whether the assign message has been already posted or not
   logger.info(`Creating an issue comment: ${comment.commit}`);
-  const issueComments = await getCommentsOfIssue(issue.number);
+  const issueComments = await getAllIssueComments(issue.number);
   const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
