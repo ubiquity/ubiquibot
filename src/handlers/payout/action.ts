@@ -50,16 +50,16 @@ export const handleIssueClosed = async () => {
   }
 
   const recipient = await getWalletAddress(assignee.login);
-  const multiplier = await getWalletMultiplier(assignee.login, organization?.id?.toString());
+  const { value } = await getWalletMultiplier(assignee.login, organization?.id?.toString());
 
-  if (multiplier === 0) {
+  if (value === 0) {
     const errMsg = "Refusing to generate the payment permit because " + `@${assignee.login}` + "'s payment `multiplier` is `0`";
     logger.info(errMsg);
     return errMsg;
   }
 
   // TODO: add multiplier to the priceInEth
-  const priceInEth = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * multiplier).toString();
+  const priceInEth = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString();
   if (!recipient || recipient?.trim() === "") {
     logger.info(`Recipient address is missing`);
     return (

@@ -281,12 +281,12 @@ export const getWalletAddress = async (username: string): Promise<string | undef
  *
  */
 
-export const getWalletMultiplier = async (username: string, org_id: string): Promise<number> => {
+export const getWalletMultiplier = async (username: string, org_id: string): Promise<{ value: number; reason: string }> => {
   const { supabase } = getAdapters();
 
-  const { data } = await supabase.from("multiplier").select("value").eq("user_id", `${username}_${org_id}`).single();
-  if (data?.value == null) return 1;
-  else return data?.value;
+  const { data } = await supabase.from("multiplier").select("value, reason").eq("user_id", `${username}_${org_id}`).single();
+  if (data?.value == null) return { value: 1, reason: "" };
+  else return { value: data?.value, reason: data?.reason };
 };
 
 /**
@@ -304,10 +304,4 @@ export const getWalletInfo = async (username: string, org_id: string): Promise<{
   const { data: multiplier } = await supabase.from("multiplier").select("value").eq("user_id", `${username}_${org_id}`).single();
   if (multiplier?.value == null || wallet?.address == null) return 1;
   else return { multiplier: multiplier?.value, address: wallet?.address };
-};
-
-export const getMultiplierReason = async (username: string, org_id: string): Promise<string> => {
-  const { supabase } = getAdapters();
-  const { data } = await supabase.from("multiplier").select("reason").eq("user_id", `${username}_${org_id}`).eq("organization", org_id).single();
-  return data?.reason;
 };
