@@ -6,7 +6,7 @@ import {
   getCommentsOfIssue,
   getCommitsOnPullRequest,
   getOpenedPullRequestsForAnIssue,
-  listIssuesForRepo,
+  listAllIssuesForRepo,
   removeAssignees,
 } from "../../helpers";
 import { Comment, Issue, IssueType } from "../../types";
@@ -21,7 +21,7 @@ export const checkBountiesToUnassign = async () => {
 
   // List all the issues in the repository. It may include `pull_request`
   // because GitHub's REST API v3 considers every pull request an issue
-  const issues_opened = await listIssuesForRepo(IssueType.OPEN);
+  const issues_opened = await listAllIssuesForRepo(IssueType.OPEN);
 
   const assigned_issues = issues_opened.filter((issue) => issue.assignee);
 
@@ -102,7 +102,7 @@ const lastActivityTime = async (issue: Issue): Promise<Date> => {
       .sort((a, b) => new Date(b.commit.committer?.date ?? 0).getTime() - new Date(a.commit.committer?.date ?? 0).getTime());
     const prComments = (await getCommentsOfIssue(pr.number))
       .filter((comment) => comment.user.login === assignees[0])
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     if (commits.length > 0) activities.push(new Date(commits[0].commit.committer?.date ?? 0));
     if (prComments.length > 0) activities.push(new Date(prComments[0].created_at));
