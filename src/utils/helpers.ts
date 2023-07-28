@@ -1,4 +1,4 @@
-import { DEFAULT_NETWORK_ID, DefaultPriceConfig } from "../configs";
+import { DEFAULT_NETWORK_ID, DefaultPriceConfig, DefaultCommandConfig } from "../configs";
 import { CommentElementPricing } from "../types";
 import { CommandObj, WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
@@ -48,7 +48,7 @@ export const getCommandSettings = (parsedRepo: WideRepoConfig | undefined, parse
   } else if (parsedOrg && parsedOrg["command-settings"] && Array.isArray(parsedOrg["command-settings"]) && parsedOrg["command-settings"].length > 0) {
     return parsedOrg["command-settings"];
   } else {
-    return DefaultPriceConfig["commandSettings"];
+    return DefaultCommandConfig;
   }
 };
 

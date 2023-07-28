@@ -15,6 +15,8 @@ import {
   getCommentItemPrice,
   getDefaultLabels,
   getPromotionComment,
+  getAssistivePricing,
+  getCommandSettings,
 } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
@@ -144,6 +146,8 @@ export const getWideConfig = async (context: Context) => {
     timeLabels: getTimeLabels(parsedRepo, parsedOrg),
     priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),
     autoPayMode: getAutoPayMode(parsedRepo, parsedOrg),
+    assistivePricing: getAssistivePricing(parsedRepo, parsedOrg),
+    commandSettings: getCommandSettings(parsedRepo, parsedOrg),
     disableAnalytics: getAnalyticsMode(parsedRepo, parsedOrg),
     bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
     incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),

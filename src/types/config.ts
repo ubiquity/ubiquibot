@@ -21,7 +21,6 @@ export const PriceConfigSchema = Type.Object({
   issueCreatorMultiplier: Type.Number(),
   timeLabels: Type.Array(LabelItemSchema),
   priorityLabels: Type.Array(LabelItemSchema),
-  commandSettings: Type.Array(CommandItemSchema),
   commentElementPricing: CommentElementPricingSchema,
   defaultLabels: Type.Array(Type.String()),
 });
@@ -54,6 +53,7 @@ export const ModeSchema = Type.Object({
   autoPayMode: Type.Boolean(),
   disableAnalytics: Type.Boolean(),
   incentiveMode: Type.Boolean(),
+  assistivePricing: Type.Boolean(),
 });
 
 export const AssignSchema = Type.Object({
@@ -74,6 +74,10 @@ export const CommentsSchema = Type.Object({
   promotionComment: Type.String(),
 });
 
+export const CommandConfigSchema = Type.Array(CommandItemSchema);
+
+export type CommandConfig = Static<typeof CommandConfigSchema>;
+
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
   price: PriceConfigSchema,
@@ -85,6 +89,7 @@ export const BotConfigSchema = Type.Object({
   assign: AssignSchema,
   sodium: SodiumSchema,
   comments: CommentsSchema,
+  command: CommandConfigSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;

@@ -22,6 +22,8 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     issueCreatorMultiplier,
     defaultLabels,
     promotionComment,
+    commandSettings,
+    assistivePricing,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -66,7 +68,9 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       autoPayMode: autoPayMode,
       disableAnalytics: disableAnalytics,
       incentiveMode: incentiveMode,
+      assistivePricing: assistivePricing,
     },
+    command: commandSettings,
     assign: {
       bountyHunterMax: bountyHunterMax,
     },

@@ -1,5 +1,36 @@
-import { PriceConfig } from "../types";
+import { PriceConfig, CommandConfig } from "../types";
 import { MarkdownItem } from "../types/markdown";
+
+export const DefaultCommandConfig: CommandConfig = [
+  {
+    name: "assign",
+    enabled: true,
+  },
+  {
+    name: "unassign",
+    enabled: true,
+  },
+  {
+    name: "wallet",
+    enabled: true,
+  },
+  {
+    name: "payout",
+    enabled: true,
+  },
+  {
+    name: "multiplier",
+    enabled: true,
+  },
+  {
+    name: "query",
+    enabled: true,
+  },
+  {
+    name: "allow",
+    enabled: true,
+  },
+];
 
 export const DefaultPriceConfig: PriceConfig = {
   baseMultiplier: 1000,
@@ -51,36 +82,6 @@ export const DefaultPriceConfig: PriceConfig = {
     {
       name: "Priority: 4 (Emergency)",
       weight: 5,
-    },
-  ],
-  commandSettings: [
-    {
-      name: "assign",
-      enabled: true,
-    },
-    {
-      name: "unassign",
-      enabled: true,
-    },
-    {
-      name: "wallet",
-      enabled: true,
-    },
-    {
-      name: "payout",
-      enabled: true,
-    },
-    {
-      name: "multiplier",
-      enabled: true,
-    },
-    {
-      name: "query",
-      enabled: true,
-    },
-    {
-      name: "allow",
-      enabled: true,
     },
   ],
   commentElementPricing: {

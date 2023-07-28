@@ -1,10 +1,11 @@
-import { getBotContext, getLogger } from "../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { Payload } from "../../types";
 import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCheck } from "./handlers/first";
 
 export const handleComment = async (): Promise<void> => {
   const context = getBotContext();
+  const config = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -27,12 +28,20 @@ export const handleComment = async (): Promise<void> => {
     const userCommand = userCommands.find((i) => i.id == command);
 
     if (userCommand) {
-      const { handler, callback, successComment, failureComment } = userCommand;
+      const { id, handler, callback, successComment, failureComment } = userCommand;
       logger.info(`Running a comment handler: ${handler.name}`);
 
       const { payload: _payload } = getBotContext();
       const issue = (_payload as Payload).issue;
       if (!issue) continue;
+
+      const setting = config.command.find((e) => e.name === id.split("/")[1]);
+
+      if (!setting?.enabled) {
+        logger.info(`Skipping '${id}' because it is disabled on this repo`);
+        await callback(issue.number, `Skipping \`${id}\` because it is disabled on this repo`, payload.action, payload.comment);
+        continue;
+      }
 
       try {
         const response = await handler(body);
