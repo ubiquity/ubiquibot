@@ -15,7 +15,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     priorityLabels,
     commentElementPricing,
     autoPayMode,
-    analyticsMode,
+    disableAnalytics,
     bountyHunterMax,
     incentiveMode,
     networkId,
@@ -64,7 +64,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     mode: {
       autoPayMode: autoPayMode,
-      analyticsMode: analyticsMode,
+      disableAnalytics: disableAnalytics,
       incentiveMode: incentiveMode,
     },
     assign: {
