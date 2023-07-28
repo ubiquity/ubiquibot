@@ -15,11 +15,13 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     priorityLabels,
     commentElementPricing,
     autoPayMode,
-    analyticsMode,
+    disableAnalytics,
     bountyHunterMax,
     incentiveMode,
     networkId,
     issueCreatorMultiplier,
+    defaultLabels,
+    promotionComment,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -36,6 +38,10 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       timeLabels,
       priorityLabels,
       commentElementPricing,
+      defaultLabels,
+    },
+    comments: {
+      promotionComment: promotionComment,
     },
     payout: {
       networkId: networkId,
@@ -58,7 +64,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     mode: {
       autoPayMode: autoPayMode,
-      analyticsMode: analyticsMode,
+      disableAnalytics: disableAnalytics,
       incentiveMode: incentiveMode,
     },
     assign: {

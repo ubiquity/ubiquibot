@@ -49,7 +49,7 @@ export const multiplier = async (body: string) => {
         reason += part.replace(/['"]/g, "") + " ";
       }
     }
-
+    username = username || sender;
     // check if sender is admin or billing_manager
     // passing in context so we don't have to make another request to get the user
     const permissionLevel = await getUserPermission(sender, context);
@@ -74,6 +74,6 @@ export const multiplier = async (body: string) => {
     }.`;
   } else {
     logger.error("Invalid body for bountyMultiplier command");
-    return `Invalid body for bountyMultiplier command`;
+    return `Invalid syntax for wallet command \n example usage: "/multiplier @user 0.5 'Multiplier reason'"`;
   }
 };
