@@ -7,6 +7,7 @@ export const query = async (body: string) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
+  const organization = payload.organization;
 
   logger.info(`Received '/query' command from user: ${sender}`);
 
@@ -16,16 +17,20 @@ export const query = async (body: string) => {
     return;
   }
 
+  if (!organization?.id) {
+    logger.info(`Skipping '/query' because there's no organization details`);
+    return;
+  }
+
   const regex = /\S+\s+@(\S+)/;
   const matches = body.match(regex);
   const user = matches?.shift();
 
   if (user) {
-    const walletInfo = await getWalletInfo(user);
-    if (typeof walletInfo == 'number'){
-      return  `Error retrieving multiplier and wallet address for @${user}`;
-    }
-    else {
+    const walletInfo = await getWalletInfo(user, organization?.id?.toString());
+    if (typeof walletInfo == "number") {
+      return `Error retrieving multiplier and wallet address for @${user}`;
+    } else {
       return `@${user}'s wallet address is ${walletInfo?.address} and  multiplier is ${walletInfo?.multiplier}`;
     }
   } else {

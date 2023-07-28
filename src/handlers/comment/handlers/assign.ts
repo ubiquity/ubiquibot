@@ -1,4 +1,4 @@
-import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments, addCommentToIssue } from "../../../helpers";
+import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
@@ -23,14 +23,13 @@ export const assign = async (body: string) => {
   }
 
   if (!organization?.id) {
-    logger.info(`Skipping '/multiplier' because there's no organization details`);
-    return;
+    logger.info(`Skipping '/assign' because there's no organization details`);
+    return "Skipping '/assign' because of no issue instance";
   }
 
   if (!ASSIGN_COMMAND_ENABLED) {
     logger.info(`Ignore '/assign' command from user: ASSIGN_COMMAND_ENABLED config is set false`);
-    await addCommentToIssue(GLOBAL_STRINGS.assignCommandDisabledComment, issue.number);
-    return;
+    return GLOBAL_STRINGS.assignCommandDisabledComment;
   }
 
   const openedPullRequests = await getAvailableOpenedPullRequests(payload.sender.login);
@@ -94,7 +93,7 @@ export const assign = async (body: string) => {
     deadline: endTime.toUTCString(),
     wallet: (await getWalletAddress(payload.sender.login)) || "Please set your wallet address to use `/wallet 0x4FDE...BA18`",
     multiplier: "1.00",
-    reason: await getMultiplierReason(payload.sender.login),
+    reason: await getMultiplierReason(payload.sender.login, organization?.id?.toString()),
     bounty: `Permit generation skipped since price label is not set`,
     commit: `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`,
     tips: `<h6>Tips:</h6>
@@ -116,7 +115,7 @@ export const assign = async (body: string) => {
   const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
-    const multiplier = await getWalletMultiplier(payload.sender.login, organization?.id);
+    const multiplier = await getWalletMultiplier(payload.sender.login, organization?.id?.toString());
     if (multiplier) {
       comment.multiplier = multiplier.toFixed(2);
     }
