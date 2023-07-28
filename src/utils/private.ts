@@ -3,7 +3,7 @@ import YAML from "yaml";
 import { Payload } from "../types";
 import { Context } from "probot";
 import { readFileSync } from "fs";
-import { getBoolean, getCommentItemPrice, getLabels, getNumber, getString, getStrings } from "./helpers";
+import { fromConfig as config } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
 const KEY_PATH = ".github/ubiquibot-config.yml";
@@ -137,22 +137,27 @@ export const getConfig = async (context: Context) => {
   const parsedDefault: ConfigRepository = getDefaultConfig();
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
-  const configs = { parsedRepo, parsedOrg, parsedDefault };
+  const configs = {
+    parsedRepo,
+    parsedOrg,
+    parsedDefault,
+  };
+
   const configData = {
     privateKey: privateKeyDecrypted ?? "",
 
-    evmNetworkId: getNumber("evm-network-id", configs),
-    baseMultiplier: getNumber("base-multiplier", configs),
-    issueCreatorMultiplier: getNumber("issue-creator-multiplier", configs),
-    timeLabels: getLabels("time-labels", configs),
-    priorityLabels: getLabels("priority-labels", configs),
-    autoPayMode: getBoolean("auto-pay-mode", configs),
-    analyticsMode: getBoolean("analytics-mode", configs),
-    maxConcurrentBounties: getNumber("max-concurrent-bounties", configs),
-    incentiveMode: getBoolean("incentive-mode", configs),
-    commentElementPricing: getCommentItemPrice("comment-element-pricing", configs),
-    defaultLabels: getStrings("default-labels", configs),
-    promotionComment: getString("promotion-comment", configs),
+    evmNetworkId: config.getNumber("evm-network-id", configs),
+    baseMultiplier: config.getNumber("base-multiplier", configs),
+    issueCreatorMultiplier: config.getNumber("issue-creator-multiplier", configs),
+    timeLabels: config.getLabels("time-labels", configs),
+    priorityLabels: config.getLabels("priority-labels", configs),
+    autoPayMode: config.getBoolean("auto-pay-mode", configs),
+    analyticsMode: config.getBoolean("analytics-mode", configs),
+    maxConcurrentBounties: config.getNumber("max-concurrent-bounties", configs),
+    incentiveMode: config.getBoolean("incentive-mode", configs),
+    commentElementPricing: config.getCommentItemPrice("comment-element-pricing", configs),
+    defaultLabels: config.getStrings("default-labels", configs),
+    promotionComment: config.getString("promotion-comment", configs),
   };
 
   return configData;
