@@ -12,7 +12,7 @@ import { incentivizeComments, incentivizeCreatorComment } from "./payout";
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_OPENED]: {
     pre: [nullHandler],
-    action: [issueCreatedCallback],
+    action: [nullHandler], // SHOULD not set `issueCreatedCallback` until the exploit issue resolved.  https://github.com/ubiquity/ubiquibot/issues/535
     post: [nullHandler],
   },
   [GithubEvent.ISSUES_REOPENED]: {

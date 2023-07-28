@@ -109,7 +109,7 @@ export const handleIssueClosed = async () => {
   const multiplier = await getWalletMultiplier(assignee.login);
 
   if (multiplier === 0) {
-    const errMsg = "Refusing to generate the payment permit because" + `@${assignee.login}` + "'s payment `multiplier` is `0`";
+    const errMsg = "Refusing to generate the payment permit because " + `@${assignee.login}` + "'s payment `multiplier` is `0`";
     logger.info(errMsg);
     return errMsg;
   }
@@ -122,7 +122,7 @@ export const handleIssueClosed = async () => {
       "Please set your wallet address by using the `/wallet` command.\n" +
       "```\n" +
       "/wallet example.eth\n" +
-      "/wallet 0xBf...CdA\n" +
+      "/wallet 0x00...000\n" +
       "```\n" +
       "@" +
       assignee.login

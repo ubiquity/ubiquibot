@@ -1,10 +1,11 @@
-import { addAssignees, getAssignedIssues, getCommentsOfIssue, getAvailableOpenedPullRequests } from "../../../helpers";
+import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments, addCommentToIssue } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
 import { getWalletAddress, getWalletMultiplier, getMultiplierReason } from "../../../adapters/supabase";
 import { tableComment } from "./table";
 import { bountyInfo } from "../../wildcard";
+import { ASSIGN_COMMAND_ENABLED, GLOBAL_STRINGS } from "../../../configs";
 
 export const assign = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -19,8 +20,14 @@ export const assign = async (body: string) => {
     return "Skipping '/assign' because of no issue instance";
   }
 
+  if (!ASSIGN_COMMAND_ENABLED) {
+    logger.info(`Ignore '/assign' command from user: ASSIGN_COMMAND_ENABLED config is set false`);
+    await addCommentToIssue(GLOBAL_STRINGS.assignCommandDisabledComment, issue.number);
+    return;
+  }
+
   const openedPullRequests = await getAvailableOpenedPullRequests(payload.sender.login);
-  logger.info(`Opened Pull Requests with no reviews but over 24 hours have passed: ${JSON.stringify(openedPullRequests)}`);
+  logger.info(`Opened Pull Requests with approved reviews or with no reviews but over 24 hours have passed: ${JSON.stringify(openedPullRequests)}`);
 
   const assignedIssues = await getAssignedIssues(payload.sender.login);
   logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
@@ -78,14 +85,14 @@ export const assign = async (body: string) => {
 
   const comment = {
     deadline: endTime.toUTCString(),
-    wallet: (await getWalletAddress(payload.sender.login)) || "Please set your wallet address to use `/wallet 0x4FDE...BA18`",
+    wallet: (await getWalletAddress(payload.sender.login)) || "Please set your wallet address to use `/wallet 0x0000...0000`",
     multiplier: "1.00",
     reason: await getMultiplierReason(payload.sender.login),
     bounty: `Permit generation skipped since price label is not set`,
     commit: `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`,
     tips: `<h6>Tips:</h6>
     <ul>
-    <li>Use <code>/wallet 0x4FDE...BA18</code> if you want to update your registered payment wallet address @user.</li>
+    <li>Use <code>/wallet 0x0000...0000</code> if you want to update your registered payment wallet address @user.</li>
     <li>Be sure to open a draft pull request as soon as possible to communicate updates on your progress.</li>
     <li>Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the bounty.</li>
     <ul>`,
@@ -98,7 +105,7 @@ export const assign = async (body: string) => {
 
   // double check whether the assign message has been already posted or not
   logger.info(`Creating an issue comment: ${comment.commit}`);
-  const issueComments = await getCommentsOfIssue(issue.number);
+  const issueComments = await getAllIssueComments(issue.number);
   const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {

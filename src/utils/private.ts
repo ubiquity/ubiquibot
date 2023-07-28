@@ -9,10 +9,12 @@ import {
   getCreatorMultiplier,
   getBountyHunterMax,
   getIncentiveMode,
-  getChainId,
+  getNetworkId,
   getPriorityLabels,
   getTimeLabels,
   getCommentItemPrice,
+  getDefaultLabels,
+  getPromotionComment,
 } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
@@ -47,16 +49,18 @@ export interface WideLabel {
 }
 
 export interface WideConfig {
-  "chain-id"?: number;
+  "evm-network-id"?: number;
   "base-multiplier"?: number;
   "issue-creator-multiplier": number;
   "time-labels"?: WideLabel[];
   "priority-labels"?: WideLabel[];
   "auto-pay-mode"?: boolean;
-  "analytics-mode"?: boolean;
-  "incentive-mode"?: boolean;
-  "max-concurrent-bounties"?: number;
+  "promotion-comment"?: string;
+  "disable-analytics"?: boolean;
+  "comment-incentives"?: boolean;
+  "max-concurrent-assigns"?: number;
   "comment-element-pricing"?: Record<string, number>;
+  "default-labels"?: string[];
 }
 
 export type WideRepoConfig = WideConfig;
@@ -126,17 +130,19 @@ export const getWideConfig = async (context: Context) => {
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configData = {
-    chainId: getChainId(parsedRepo, parsedOrg),
+    networkId: getNetworkId(parsedRepo, parsedOrg),
     privateKey: privateKeyDecrypted ?? "",
     baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
     issueCreatorMultiplier: getCreatorMultiplier(parsedRepo, parsedOrg),
     timeLabels: getTimeLabels(parsedRepo, parsedOrg),
     priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),
     autoPayMode: getAutoPayMode(parsedRepo, parsedOrg),
-    analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg),
+    disableAnalytics: getAnalyticsMode(parsedRepo, parsedOrg),
     bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
     incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
     commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
+    defaultLabels: getDefaultLabels(parsedRepo, parsedOrg),
+    promotionComment: getPromotionComment(parsedRepo, parsedOrg),
   };
 
   return configData;
