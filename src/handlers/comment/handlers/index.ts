@@ -18,6 +18,7 @@ import {
   getAllIssueAssignEvents,
   upsertCommentToIssue,
   getLabel,
+  getPayoutConfigByNetworkId,
 } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
@@ -103,7 +104,7 @@ export const issueCreatedCallback = async (): Promise<void> => {
 export const issueReopenedCallback = async (): Promise<void> => {
   const { payload: _payload } = getBotContext();
   const {
-    payout: { rpc, permitBaseUrl },
+    payout: { permitBaseUrl },
   } = getBotConfig();
   const logger = getLogger();
   const issue = (_payload as Payload).issue;
@@ -135,6 +136,7 @@ export const issueReopenedCallback = async (): Promise<void> => {
     if (!networkId) {
       networkId = "1";
     }
+    const { rpc } = getPayoutConfigByNetworkId(Number(networkId));
     let claim;
     try {
       claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
