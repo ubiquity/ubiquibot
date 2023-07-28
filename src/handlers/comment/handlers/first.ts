@@ -1,5 +1,5 @@
 import { getBotContext, getLogger } from "../../../bindings";
-import { addCommentToIssue } from "../../../helpers";
+import { upsertCommentToIssue } from "../../../helpers";
 import { Payload } from "../../../types";
 import { generateHelpMenu } from "./help";
 
@@ -26,7 +26,7 @@ export const verifyFirstCheck = async (): Promise<void> => {
       if (isFirstComment) {
         //first_comment
         const msg = `${generateHelpMenu()}\n@${payload.sender.login}`;
-        await addCommentToIssue(msg, payload.issue.number);
+        await upsertCommentToIssue(payload.issue.number, msg, payload.action, payload.comment);
       }
     }
   } catch (error: unknown) {

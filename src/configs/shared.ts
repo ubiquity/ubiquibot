@@ -5,6 +5,7 @@ export const COLORS = {
 export const DEFAULT_BOT_DELAY = 100; // 100ms
 export const DEFAULT_TIME_RANGE_FOR_MAX_ISSUE = 24;
 export const DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED = true;
+export const ASSIGN_COMMAND_ENABLED = true;
 /**
  * ms('2 days')  // 172800000
  * ms('1d')      // 86400000
@@ -22,6 +23,6 @@ export const DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED = true;
 export const DEFAULT_FOLLOWUP_TIME = "4 days"; // 4 days
 export const DEFAULT_DISQUALIFY_TIME = "7 days"; // 7 days
 
-export const DEFAULT_CHAIN_ID = 1; // ethereum
+export const DEFAULT_NETWORK_ID = 1; // ethereum
 export const DEFAULT_RPC_ENDPOINT = "https://rpc-bot.ubq.fi/v1/mainnet";
 export const DEFAULT_PERMIT_BASE_URL = "https://pay.ubq.fi";

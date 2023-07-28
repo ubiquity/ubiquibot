@@ -1,7 +1,7 @@
 import { getWalletAddress, getWalletMultiplier } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addLabelToIssue, deleteLabel, generatePermit2Signature, getAllIssueComments, getTokenSymbol } from "../../helpers";
-import { Payload, StateReason } from "../../types";
+import { UserType, Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
 
@@ -48,7 +48,7 @@ export const handleIssueClosed = async () => {
   const multiplier = await getWalletMultiplier(assignee.login);
 
   if (multiplier === 0) {
-    const errMsg = "Refusing to generate the payment permit because" + `@${assignee.login}` + "'s payment `multiplier` is `0`";
+    const errMsg = "Refusing to generate the payment permit because " + `@${assignee.login}` + "'s payment `multiplier` is `0`";
     logger.info(errMsg);
     return errMsg;
   }
@@ -74,9 +74,8 @@ export const handleIssueClosed = async () => {
   logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
   const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
   const comments = await getAllIssueComments(issue.number);
-  const commentContents = comments.map((i) => i.body);
-  const exist = commentContents.find((content) => content.includes(comment));
-  if (exist) {
+  const permitComments = comments.filter((content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot);
+  if (permitComments.length > 0) {
     logger.info(`Skip to generate a permit url because it has been already posted`);
     return `Permit generation skipped because it was already posted to this issue.`;
   }
