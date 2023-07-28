@@ -62,15 +62,7 @@ export const handleIssueClosed = async () => {
   const priceInEth = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString();
   if (!recipient || recipient?.trim() === "") {
     logger.info(`Recipient address is missing`);
-    return (
-      "Please set your wallet address by using the `/wallet` command.\n" +
-      "```\n" +
-      "/wallet example.eth\n" +
-      "/wallet 0x00...000\n" +
-      "```\n" +
-      "@" +
-      assignee.login
-    );
+    return;
   }
 
   const payoutUrl = await generatePermit2Signature(recipient, priceInEth, issue.node_id);
