@@ -53,6 +53,36 @@ export const DefaultPriceConfig: PriceConfig = {
       weight: 5,
     },
   ],
+  commandSettings: [
+    {
+      name: "assign",
+      enabled: true,
+    },
+    {
+      name: "unassign",
+      enabled: true,
+    },
+    {
+      name: "wallet",
+      enabled: true,
+    },
+    {
+      name: "payout",
+      enabled: true,
+    },
+    {
+      name: "multiplier",
+      enabled: true,
+    },
+    {
+      name: "query",
+      enabled: true,
+    },
+    {
+      name: "allow",
+      enabled: true,
+    },
+  ],
   commentElementPricing: {
     [MarkdownItem.Text]: 0.1,
     [MarkdownItem.Link]: 0.5,

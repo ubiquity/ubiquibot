@@ -1,6 +1,6 @@
 import { DEFAULT_NETWORK_ID, DefaultPriceConfig } from "../configs";
 import { CommentElementPricing } from "../types";
-import { WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
+import { CommandObj, WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
 export const getNetworkId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
   if (parsedRepo && parsedRepo["evm-network-id"] && !Number.isNaN(Number(parsedRepo["evm-network-id"]))) {
@@ -42,6 +42,16 @@ export const getTimeLabels = (parsedRepo: WideRepoConfig | undefined, parsedOrg:
   }
 };
 
+export const getCommandSettings = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): CommandObj[] => {
+  if (parsedRepo && parsedRepo["command-settings"] && Array.isArray(parsedRepo["command-settings"]) && parsedRepo["command-settings"].length > 0) {
+    return parsedRepo["command-settings"];
+  } else if (parsedOrg && parsedOrg["command-settings"] && Array.isArray(parsedOrg["command-settings"]) && parsedOrg["command-settings"].length > 0) {
+    return parsedOrg["command-settings"];
+  } else {
+    return DefaultPriceConfig["commandSettings"];
+  }
+};
+
 export const getPriorityLabels = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): WideLabel[] => {
   if (parsedRepo && parsedRepo["priority-labels"] && Array.isArray(parsedRepo["priority-labels"]) && parsedRepo["priority-labels"].length > 0) {
     return parsedRepo["priority-labels"];
@@ -67,6 +77,16 @@ export const getAutoPayMode = (parsedRepo?: WideRepoConfig, parsedOrg?: WideOrgC
     return parsedRepo["auto-pay-mode"];
   } else if (parsedOrg && parsedOrg["auto-pay-mode"] && typeof parsedOrg["auto-pay-mode"] === "boolean") {
     return parsedOrg["auto-pay-mode"];
+  } else {
+    return true;
+  }
+};
+
+export const getAssistivePricing = (parsedRepo?: WideRepoConfig, parsedOrg?: WideOrgConfig): boolean => {
+  if (parsedRepo && parsedRepo["assistive-pricing"] && typeof parsedRepo["assistive-pricing"] === "boolean") {
+    return parsedRepo["assistive-pricing"];
+  } else if (parsedOrg && parsedOrg["assistive-pricing"] && typeof parsedOrg["assistive-pricing"] === "boolean") {
+    return parsedOrg["assistive-pricing"];
   } else {
     return true;
   }

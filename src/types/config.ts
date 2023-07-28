@@ -7,6 +7,12 @@ const LabelItemSchema = Type.Object({
 });
 export type LabelItem = Static<typeof LabelItemSchema>;
 
+const CommandItemSchema = Type.Object({
+  name: Type.String(),
+  enabled: Type.Boolean(),
+});
+export type CommandItem = Static<typeof CommandItemSchema>;
+
 const CommentElementPricingSchema = Type.Record(Type.String(), Type.Number());
 export type CommentElementPricing = Static<typeof CommentElementPricingSchema>;
 
@@ -15,6 +21,7 @@ export const PriceConfigSchema = Type.Object({
   issueCreatorMultiplier: Type.Number(),
   timeLabels: Type.Array(LabelItemSchema),
   priorityLabels: Type.Array(LabelItemSchema),
+  commandSettings: Type.Array(CommandItemSchema),
   commentElementPricing: CommentElementPricingSchema,
   defaultLabels: Type.Array(Type.String()),
 });
