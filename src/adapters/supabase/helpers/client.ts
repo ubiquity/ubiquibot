@@ -186,11 +186,10 @@ export const upsertWalletMultiplier = async (username: string, multiplier: strin
   const logger = getLogger();
   const { supabase } = getAdapters();
 
-  const { data, error } = await supabase.from("multiplier").select("user_name").eq("user_name", username).eq("organization", org_id).single();
+  const { data, error } = await supabase.from("multiplier").select("user_id").eq("user_id", `${username}_${org_id}`).single();
   if (data) {
     await supabase.from("multiplier").upsert({
-      user_name: username,
-      organization: org_id,
+      user_id: `${username}_${org_id}`,
       value: multiplier,
       reason,
       updated_at: new Date().toUTCString(),
@@ -198,8 +197,7 @@ export const upsertWalletMultiplier = async (username: string, multiplier: strin
     logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
   } else {
     const { data: _data, error: _error } = await supabase.from("multiplier").insert({
-      user_name: username,
-      organization: org_id,
+      user_id: `${username}_${org_id}`,
       value: multiplier,
       reason,
       created_at: new Date().toUTCString(),
@@ -286,7 +284,7 @@ export const getWalletAddress = async (username: string): Promise<string | undef
 export const getWalletMultiplier = async (username: string, org_id: string): Promise<number> => {
   const { supabase } = getAdapters();
 
-  const { data } = await supabase.from("multiplier").select("value").eq("user_name", username).eq("organization", org_id).single();
+  const { data } = await supabase.from("multiplier").select("value").eq("user_id", `${username}_${org_id}`).single();
   if (data?.value == null) return 1;
   else return data?.value;
 };
@@ -303,13 +301,13 @@ export const getWalletInfo = async (username: string, org_id: string): Promise<{
   const { supabase } = getAdapters();
 
   const { data: wallet } = await supabase.from("wallets").select("address").eq("user_name", username).single();
-  const { data: multiplier } = await supabase.from("multiplier").select("value").eq("user_name", username).eq("organization", org_id).single();
+  const { data: multiplier } = await supabase.from("multiplier").select("value").eq("user_id", `${username}_${org_id}`).single();
   if (multiplier?.value == null || wallet?.address == null) return 1;
   else return { multiplier: multiplier?.value, address: wallet?.address };
 };
 
 export const getMultiplierReason = async (username: string, org_id: string): Promise<string> => {
   const { supabase } = getAdapters();
-  const { data } = await supabase.from("multiplier").select("reason").eq("user_name", username).eq("organization", org_id).single();
+  const { data } = await supabase.from("multiplier").select("reason").eq("user_id", `${username}_${org_id}`).eq("organization", org_id).single();
   return data?.reason;
 };
