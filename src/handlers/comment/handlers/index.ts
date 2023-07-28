@@ -164,7 +164,7 @@ export const issueReopenedCallback = async (): Promise<void> => {
     }
 
     await addCommentToIssue(
-      `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of ${formattedAmount} ${tokenSymbol} will be deducted from your next bounty.`,
+      `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of **${formattedAmount} ${tokenSymbol}** will be deducted from your next bounty.`,
       issue.number
     );
   } catch (err: unknown) {
