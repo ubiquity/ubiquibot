@@ -5,7 +5,7 @@ import { resolveAddress } from "../../../helpers";
 import { Payload } from "../../../types";
 import { formatEthAddress } from "../../../utils";
 import { IssueCommentCommands } from "../commands";
-import { AddressZero } from "ethers";
+import { constants } from "ethers";
 // Extracts ensname from raw text.
 const extractEnsName = (text: string): string | undefined => {
   // Define a regular expression to match ENS names
@@ -69,7 +69,7 @@ export const registerWallet = async (body: string) => {
   }
 
   if (address) {
-    if (address == AddressZero) {
+    if (address == constants.AddressZero) {
       logger.info("Skipping to register a wallet address because user is trying to set their address to null address");
       return `Cannot set address to null address`;
     }
