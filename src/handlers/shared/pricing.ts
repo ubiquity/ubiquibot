@@ -4,7 +4,7 @@ export const calculateBountyPrice = (timeValue: number, priorityValue: number, b
   const botConfig = getBotConfig();
   const base = baseValue ?? botConfig.price.baseMultiplier;
   const priority = priorityValue / 10; // floats cause bad math
-  const price = base * timeValue * priority;
+  const price = 1000 * base * timeValue * priority;
   return price;
 };
 
