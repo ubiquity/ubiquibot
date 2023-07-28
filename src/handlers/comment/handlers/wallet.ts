@@ -36,6 +36,9 @@ export const registerWallet = async (body: string) => {
 
   if (!address && !ensName) {
     logger.info("Skipping to register a wallet address because both address/ens doesn't exist");
+    if (config.wallet.registerWalletWithVerification) {
+      return `Please include your wallet or ENS address.\n usage: /wallet 0x0000000000000000000000000000000000000000 0x0830f316c982a7fd4ff050c8fdc1212a8fd92f6bb42b2337b839f2b4e156f05a359ef8f4acd0b57cdedec7874a865ee07076ab2c81dc9f9de28ced55228587f81c`;
+    }
     return `Please include your wallet or ENS address.\n usage: /wallet 0x0000000000000000000000000000000000000000`;
   }
 
