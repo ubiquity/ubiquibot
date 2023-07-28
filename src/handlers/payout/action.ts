@@ -17,7 +17,7 @@ import { bountyInfo } from "../wildcard";
 export const handleIssueClosed = async () => {
   const context = getBotContext();
   const {
-    payout: { paymentToken, rpc, permitBaseUrl, chainId },
+    payout: { paymentToken, rpc, permitBaseUrl, networkId },
     mode: { autoPayMode },
   } = getBotConfig();
   const logger = getLogger();
@@ -130,13 +130,13 @@ export const handleIssueClosed = async () => {
   }
 
   // if bounty hunter has any penalty then deduct it from the bounty
-  const penaltyAmount = await getPenalty(assignee.login, payload.repository.full_name, paymentToken, chainId.toString());
+  const penaltyAmount = await getPenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString());
   if (penaltyAmount.gt(0)) {
     logger.info(`Deducting penalty from bounty`);
     const bountyAmount = ethers.utils.parseUnits(priceInEth, 18);
     const bountyAmountAfterPenalty = bountyAmount.sub(penaltyAmount);
     if (bountyAmountAfterPenalty.lte(0)) {
-      await removePenalty(assignee.login, payload.repository.full_name, paymentToken, chainId.toString(), bountyAmount);
+      await removePenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString(), bountyAmount);
       const msg = `Permit generation skipped because bounty amount after penalty is 0`;
       logger.info(msg);
       return msg;
@@ -157,7 +157,7 @@ export const handleIssueClosed = async () => {
   await deleteLabel(issueDetailed.priceLabel);
   await addLabelToIssue("Permitted");
   if (penaltyAmount.gt(0)) {
-    await removePenalty(assignee.login, payload.repository.full_name, paymentToken, chainId.toString(), penaltyAmount);
+    await removePenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString(), penaltyAmount);
   }
   return comment;
 };
