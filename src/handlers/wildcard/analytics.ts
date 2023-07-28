@@ -43,10 +43,10 @@ export const bountyInfo = (
 export const collectAnalytics = async (): Promise<void> => {
   const logger = getLogger();
   const {
-    mode: { analyticsMode },
+    mode: { disableAnalytics },
   } = getBotConfig();
-  if (!analyticsMode) {
-    logger.info(`Skipping to collect analytics, reason: mode=${analyticsMode}`);
+  if (disableAnalytics) {
+    logger.info(`Skipping to collect analytics, reason: mode=${disableAnalytics}`);
     return;
   }
   logger.info("Collecting analytics information...");

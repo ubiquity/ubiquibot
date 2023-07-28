@@ -1,5 +1,5 @@
 import { getBotConfig } from "../../../bindings";
-import { Payload, UserCommands } from "../../../types";
+import { Comment, Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
@@ -7,9 +7,9 @@ import { listAvailableCommands } from "./help";
 // import { payout } from "./payout";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
-import { setAccess } from "./set-access";
+import { setAccess } from "./allow";
 import { multiplier } from "./multiplier";
-import { addCommentToIssue, createLabel, addLabelToIssue } from "../../../helpers";
+import { addCommentToIssue, createLabel, addLabelToIssue, getLabel, upsertCommentToIssue } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
 
@@ -70,16 +70,16 @@ export const issueCreatedCallback = async (): Promise<void> => {
   if (!issue) return;
   const labels = issue.labels;
   try {
-    const timeLabelConfigs = config.price.timeLabels.sort((label1, label2) => label1.weight - label2.weight);
-    const priorityLabelConfigs = config.price.priorityLabels.sort((label1, label2) => label1.weight - label2.weight);
     const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
     const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
-    if (timeLabels.length === 0 && timeLabelConfigs.length > 0) await createLabel(timeLabelConfigs[0].name);
-    if (priorityLabels.length === 0 && priorityLabelConfigs.length > 0) await createLabel(priorityLabelConfigs[0].name);
-    await addLabelToIssue(timeLabelConfigs[0].name);
-    await addLabelToIssue(priorityLabelConfigs[0].name);
-    return;
+    if (timeLabels.length === 0 && priorityLabels.length === 0) {
+      for (const label of config.price.defaultLabels) {
+        const exists = await getLabel(label);
+        if (!exists) await createLabel(label);
+        await addLabelToIssue(label);
+      }
+    }
   } catch (err: unknown) {
     return await addCommentToIssue(`Error: ${err}`, issue.number);
   }
@@ -92,8 +92,9 @@ export const issueCreatedCallback = async (): Promise<void> => {
  * @param issue_number - The issue number
  * @param comment - Comment string
  */
-const commandCallback = async (issue_number: number, comment: string) => {
-  await addCommentToIssue(comment, issue_number);
+
+const commandCallback = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
+  await upsertCommentToIssue(issue_number, comment, action, reply_to);
 };
 
 export const userCommands: UserCommands[] = [
@@ -136,7 +137,7 @@ export const userCommands: UserCommands[] = [
   },
   {
     id: IssueCommentCommands.WALLET,
-    description: `<WALLET_ADDRESS | ENS_NAME>: Register the hunter's wallet address. \n  ex1: /wallet 0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266 \n  ex2: /wallet vitalik.eth\n`,
+    description: `<WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>: Register the hunter's wallet address. \n  Your message to sign is: DevPool\n  You can generate SIGNATURE_HASH at https://etherscan.io/verifiedSignatures\n  ex1: /wallet 0x0000000000000000000000000000000000000000 0xe2a3e34a63f3def2c29605de82225b79e1398190b542be917ef88a8e93ff9dc91bdc3ef9b12ed711550f6d2cbbb50671aa3f14a665b709ec391f3e603d0899a41b\n`,
     handler: registerWallet,
     callback: commandCallback,
   },
