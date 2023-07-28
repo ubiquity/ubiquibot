@@ -9,12 +9,18 @@ export const multiplier = async (body: string) => {
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
   const repo = payload.repository;
+  const organization = payload.organization;
 
   logger.info(`Received '/multiplier' command from user: ${sender}`);
 
   const issue = payload.issue;
   if (!issue) {
     logger.info(`Skipping '/multiplier' because of no issue instance`);
+    return;
+  }
+
+  if (!organization?.id) {
+    logger.info(`Skipping '/multiplier' because there's no organization details`);
     return;
   }
 
@@ -68,7 +74,7 @@ export const multiplier = async (body: string) => {
 
     logger.info(`Upserting to the wallet table, username: ${username}, bountyMultiplier: ${bountyMultiplier}, reason: ${reason}}`);
 
-    await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason);
+    await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason, organization?.id);
     return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
       reason ? `provided is "${reason}"` : "is not provided"
     }.`;
