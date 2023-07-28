@@ -297,11 +297,12 @@ export const getWalletMultiplier = async (username: string, org_id: string): Pro
  *
  */
 
-export const getWalletInfo = async (username: string, org_id: string): Promise<{ multiplier: number | null; address: string | null } | number | undefined> => {
+export const getWalletInfo = async (username: string, org_id: string): Promise<{ multiplier: number | null; address: string | null }> => {
   const { supabase } = getAdapters();
 
   const { data: wallet } = await supabase.from("wallets").select("address").eq("user_name", username).single();
   const { data: multiplier } = await supabase.from("multiplier").select("value").eq("user_id", `${username}_${org_id}`).single();
-  if (multiplier?.value == null || wallet?.address == null) return 1;
-  else return { multiplier: multiplier?.value, address: wallet?.address };
+  if (multiplier?.value == null) {
+    return { multiplier: 1, address: wallet?.address || "" };
+  } else return { multiplier: multiplier?.value, address: wallet?.address };
 };

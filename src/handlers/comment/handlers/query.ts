@@ -28,7 +28,7 @@ export const query = async (body: string) => {
 
   if (user) {
     const walletInfo = await getWalletInfo(user, organization?.id?.toString());
-    if (typeof walletInfo == "number") {
+    if (!walletInfo.address) {
       return `Error retrieving multiplier and wallet address for @${user}`;
     } else {
       return `@${user}'s wallet address is ${walletInfo?.address} and  multiplier is ${walletInfo?.multiplier}`;
