@@ -3,7 +3,7 @@ import { closePullRequestForAnIssue, commentWithAssignMessage } from "./assign";
 import { pricingLabelLogic, validatePriceLabels } from "./pricing";
 import { checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate } from "./wildcard";
 import { nullHandler } from "./shared";
-import { handleComment, issueClosedCallback, issueCreatedCallback, issueReopenedCallback } from "./comment";
+import { handleComment, issueClosedCallback, issueReopenedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
 import { runOnPush } from "./push";
