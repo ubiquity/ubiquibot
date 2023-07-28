@@ -69,6 +69,13 @@ export const issueCreatedCallback = async (): Promise<void> => {
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   const labels = issue.labels;
+
+  const { assistivePricing } = config.mode;
+
+  if (!assistivePricing) {
+    return;
+  }
+
   try {
     const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
     const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
