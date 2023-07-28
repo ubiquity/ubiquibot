@@ -7,7 +7,7 @@ import { listAvailableCommands } from "./help";
 // import { payout } from "./payout";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
-import { setAccess } from "./set-access";
+import { setAccess } from "./allow";
 import { multiplier } from "./multiplier";
 import { addCommentToIssue, createLabel, addLabelToIssue, getLabel, upsertCommentToIssue } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
