@@ -13,7 +13,6 @@ import { addCommentToIssue, createLabel, addLabelToIssue } from "../../../helper
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
 import { query } from "./query";
-import { callback } from "telegraf/typings/button";
 
 export * from "./assign";
 export * from "./wallet";
