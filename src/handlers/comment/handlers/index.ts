@@ -12,6 +12,8 @@ import { multiplier } from "./multiplier";
 import { addCommentToIssue, createLabel, addLabelToIssue } from "../../../helpers";
 import { getBotContext } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
+import { query } from "./query";
+import { callback } from "telegraf/typings/button";
 
 export * from "./assign";
 export * from "./wallet";
@@ -19,6 +21,7 @@ export * from "./unassign";
 export * from "./payout";
 export * from "./help";
 export * from "./multiplier";
+export * from "./query";
 
 /**
  * Parses the comment body and figure out the command name a user wants
@@ -122,6 +125,12 @@ export const userCommands: UserCommands[] = [
     handler: payout,
     callback: commandCallback,
   },*/
+  {
+    id: IssueCommentCommands.QUERY,
+    description: `Comments the users multiplier and address`,
+    handler: query,
+    callback: commandCallback,
+  },
   {
     id: IssueCommentCommands.MULTIPLIER,
     description: `Set the bounty payout multiplier for a specific contributor, and provide the reason for why. \n  example usage: "/wallet @user 0.5 'Multiplier reason'"`,
