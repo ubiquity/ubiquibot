@@ -15,11 +15,12 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     priorityLabels,
     incentives,
     autoPayMode,
-    analyticsMode,
+    disableAnalytics,
     bountyHunterMax,
     incentiveMode,
     networkId,
     issueCreatorMultiplier,
+    defaultLabels,
     promotionComment,
   } = await getWideConfig(context);
 
@@ -37,6 +38,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       timeLabels,
       priorityLabels,
       incentives,
+      defaultLabels,
     },
     comments: {
       promotionComment: promotionComment,
@@ -62,7 +64,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     mode: {
       autoPayMode: autoPayMode,
-      analyticsMode: analyticsMode,
+      disableAnalytics: disableAnalytics,
       incentiveMode: incentiveMode,
     },
     assign: {

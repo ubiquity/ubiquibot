@@ -26,6 +26,7 @@ export const PriceConfigSchema = Type.Object({
   timeLabels: Type.Array(LabelItemSchema),
   priorityLabels: Type.Array(LabelItemSchema),
   incentives: IncentivesSchema,
+  defaultLabels: Type.Array(Type.String()),
 });
 export type PriceConfig = Static<typeof PriceConfigSchema>;
 
@@ -54,7 +55,7 @@ export const UnassignConfigSchema = Type.Object({
 
 export const ModeSchema = Type.Object({
   autoPayMode: Type.Boolean(),
-  analyticsMode: Type.Boolean(),
+  disableAnalytics: Type.Boolean(),
   incentiveMode: Type.Boolean(),
 });
 

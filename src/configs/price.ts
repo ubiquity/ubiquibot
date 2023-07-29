@@ -62,4 +62,5 @@ export const DefaultPriceConfig: PriceConfig = {
       },
     },
   },
+  defaultLabels: [],
 };
