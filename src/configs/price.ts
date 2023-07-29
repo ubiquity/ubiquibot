@@ -54,7 +54,12 @@ export const DefaultPriceConfig: PriceConfig = {
   ],
   incentives: {
     comment: {
-      li: 0.1,
+      elements: {
+        li: 1,
+      },
+      totals: {
+        word: 0.1,
+      },
     },
   },
 };

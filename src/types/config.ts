@@ -7,8 +7,16 @@ const LabelItemSchema = Type.Object({
 });
 export type LabelItem = Static<typeof LabelItemSchema>;
 
+const CommentIncentivesSchema = Type.Object({
+  elements: Type.Record(Type.String(), Type.Number()),
+  totals: Type.Object({
+    word: Type.Number(),
+  }),
+});
+export type CommentIncentives = Static<typeof CommentIncentivesSchema>;
+
 const IncentivesSchema = Type.Object({
-  comment: Type.Record(Type.String(), Type.Number()),
+  comment: CommentIncentivesSchema,
 });
 export type Incentives = Static<typeof IncentivesSchema>;
 

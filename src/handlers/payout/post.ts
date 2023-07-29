@@ -146,17 +146,26 @@ const generatePermitForComments = async (
  * @dev Calculates the reward values for a given comments. We'll improve the formula whenever we get the better one.
  *
  * @param comments - The comments to calculate the reward for
- * @param commentElementPricing - The basic price table for reward calculation
+ * @param incentives - The basic price table for reward calculation
  * @returns - The reward value
  */
 const calculateRewardValue = (comments: Record<string, string[]>, incentives: Incentives): number => {
   let sum = 0;
   for (const key of Object.keys(comments)) {
-    const rewardValue = incentives.comment[key];
     const value = comments[key];
+
+    // if it's a text node calculate word count and multiply with the reward value
     if (key == "#text") {
-      sum += value.length * rewardValue;
+      const wordReward = incentives.comment.totals.word;
+      if (!wordReward) {
+        continue;
+      }
+      sum += value.map((str) => str.trim().split(" ").length).reduce((totalWords, wordCount) => totalWords + wordCount, 0) * wordReward;
     } else {
+      const rewardValue = incentives.comment.elements[key];
+      if (!rewardValue) {
+        continue;
+      }
       sum += rewardValue;
     }
   }

@@ -47,8 +47,15 @@ export interface WideLabel {
   value?: number | undefined;
 }
 
+export interface CommentIncentives {
+  elements: Record<string, number>;
+  totals: {
+    word: number;
+  };
+}
+
 export interface Incentives {
-  comment: Record<string, number>;
+  comment: CommentIncentives;
 }
 
 export interface WideConfig {
