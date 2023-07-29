@@ -1,4 +1,4 @@
-import { addAssignees, getAssignedIssues, getCommentsOfIssue, getAvailableOpenedPullRequests, addCommentToIssue } from "../../../helpers";
+import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments, addCommentToIssue } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType } from "../../../types";
 import { deadLinePrefix } from "../../shared";
@@ -85,14 +85,14 @@ export const assign = async (body: string) => {
 
   const comment = {
     deadline: endTime.toUTCString().replace("GMT","UTC"),
-    wallet: (await getWalletAddress(payload.sender.login)) || "Please set your wallet address to use `/wallet 0x4FDE...BA18`",
+    wallet: (await getWalletAddress(payload.sender.login)) || "Please set your wallet address to use `/wallet 0x0000...0000`",
     multiplier: "1.00",
     reason: await getMultiplierReason(payload.sender.login),
     bounty: `Permit generation skipped since price label is not set`,
     commit: `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`,
     tips: `<h6>Tips:</h6>
     <ul>
-    <li>Use <code>/wallet 0x4FDE...BA18</code> if you want to update your registered payment wallet address @user.</li>
+    <li>Use <code>/wallet 0x0000...0000</code> if you want to update your registered payment wallet address @user.</li>
     <li>Be sure to open a draft pull request as soon as possible to communicate updates on your progress.</li>
     <li>Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the bounty.</li>
     <ul>`,
@@ -105,7 +105,7 @@ export const assign = async (body: string) => {
 
   // double check whether the assign message has been already posted or not
   logger.info(`Creating an issue comment: ${comment.commit}`);
-  const issueComments = await getCommentsOfIssue(issue.number);
+  const issueComments = await getAllIssueComments(issue.number);
   const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {

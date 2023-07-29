@@ -8,7 +8,7 @@ export const createDevPoolPR = async () => {
   const payload = context.payload as Payload;
 
   const devPoolOwner = "ubiquity";
-  const devPoolRepo = "devpool";
+  const devPoolRepo = "devpool-directory";
 
   if (!payload.repositories_added) {
     return;
