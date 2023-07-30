@@ -309,5 +309,5 @@ export const getWalletInfo = async (username: string): Promise<{ multiplier: num
 export const getMultiplierReason = async (username: string): Promise<string> => {
   const { supabase } = getAdapters();
   const { data } = await supabase.from("wallets").select("reason").eq("user_name", username).single();
-  return data?.reason;
+  return data?.reason || "N/A";
 };
