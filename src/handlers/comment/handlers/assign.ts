@@ -84,7 +84,7 @@ export const assign = async (body: string) => {
   const endTime = new Date(startTime + duration * 1000);
 
   const comment = {
-    deadline: endTime.toUTCString().replace("GMT","UTC"),
+    deadline: endTime.toUTCString().replace("GMT", "UTC"),
     wallet: (await getWalletAddress(payload.sender.login)) || "Please set your wallet address to use `/wallet 0x0000...0000`",
     multiplier: "1.00",
     reason: await getMultiplierReason(payload.sender.login),
