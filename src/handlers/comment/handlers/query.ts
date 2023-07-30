@@ -22,13 +22,13 @@ export const query = async (body: string) => {
     return;
   }
 
-  const regex = /\/query @([A-Za-z0-9_]+)/gm;
+  const regex = /^\/query\s@(\w+)$/;
   const matches = body.match(regex);
   const user = matches?.[1];
 
   if (user) {
     const walletInfo = await getWalletInfo(user, organization?.id?.toString());
-    if (typeof walletInfo == "number") {
+    if (!walletInfo?.address) {
       return `Error retrieving multiplier and wallet address for @${user}`;
     } else {
       return `@${user}'s wallet address is ${walletInfo?.address} and  multiplier is ${walletInfo?.multiplier}`;
