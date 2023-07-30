@@ -4,31 +4,31 @@ import { MarkdownItem } from "../types/markdown";
 export const DefaultCommandConfig: CommandConfig = [
   {
     name: "assign",
-    enabled: true,
+    enabled: false,
   },
   {
     name: "unassign",
-    enabled: true,
+    enabled: false,
   },
   {
     name: "wallet",
-    enabled: true,
+    enabled: false,
   },
   {
     name: "payout",
-    enabled: true,
+    enabled: false,
   },
   {
     name: "multiplier",
-    enabled: true,
+    enabled: false,
   },
   {
     name: "query",
-    enabled: true,
+    enabled: false,
   },
   {
     name: "allow",
-    enabled: true,
+    enabled: false,
   },
 ];
 

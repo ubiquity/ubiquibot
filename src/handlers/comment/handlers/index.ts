@@ -1,4 +1,4 @@
-import { getBotConfig } from "../../../bindings";
+import { getBotConfig, getLogger } from "../../../bindings";
 import { Comment, Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
@@ -64,6 +64,7 @@ export const issueClosedCallback = async (): Promise<void> => {
  */
 
 export const issueCreatedCallback = async (): Promise<void> => {
+  const logger = getLogger();
   const { payload: _payload } = getBotContext();
   const config = getBotConfig();
   const issue = (_payload as Payload).issue;
@@ -73,6 +74,7 @@ export const issueCreatedCallback = async (): Promise<void> => {
   const { assistivePricing } = config.mode;
 
   if (!assistivePricing) {
+    logger.info("Skipping adding label to issue because assistive pricing is disabled");
     return;
   }
 
