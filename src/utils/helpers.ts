@@ -13,10 +13,10 @@ export const getNetworkId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: 
 };
 
 export const getBaseMultiplier = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
-  if (parsedRepo && parsedRepo["base-multiplier"] && !Number.isNaN(Number(parsedRepo["base-multiplier"]))) {
-    return Number(parsedRepo["base-multiplier"]);
-  } else if (parsedOrg && parsedOrg["base-multiplier"] && !Number.isNaN(Number(parsedOrg["base-multiplier"]))) {
-    return Number(parsedOrg["base-multiplier"]);
+  if (parsedRepo && parsedRepo["price-multiplier"] && !Number.isNaN(Number(parsedRepo["price-multiplier"]))) {
+    return Number(parsedRepo["price-multiplier"]);
+  } else if (parsedOrg && parsedOrg["price-multiplier"] && !Number.isNaN(Number(parsedOrg["price-multiplier"]))) {
+    return Number(parsedOrg["price-multiplier"]);
   } else {
     return Number(DefaultPriceConfig["baseMultiplier"]);
   }

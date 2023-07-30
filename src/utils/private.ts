@@ -57,7 +57,7 @@ export interface CommandObj {
 
 export interface WideConfig {
   "evm-network-id"?: number;
-  "base-multiplier"?: number;
+  "price-multiplier"?: number;
   "issue-creator-multiplier": number;
   "time-labels"?: WideLabel[];
   "priority-labels"?: WideLabel[];
