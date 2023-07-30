@@ -286,8 +286,8 @@ export const getWalletMultiplier = async (username: string): Promise<number> => 
   const { supabase } = getAdapters();
 
   const { data } = await supabase.from("wallets").select("multiplier").eq("user_name", username).single();
-  if (data?.multiplier == null) return 1;
-  else return data?.multiplier;
+  if (!data?.multiplier) return 1;
+  return data.multiplier;
 };
 
 /**
