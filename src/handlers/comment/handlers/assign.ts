@@ -94,7 +94,7 @@ export const assign = async (body: string) => {
   const multiplier = value?.toFixed(2) || "1.00";
 
   const comment = {
-    deadline: endTime.toUTCString(),
+    deadline: endTime.toUTCString().replace("GMT","UTC"),
     wallet: (await getWalletAddress(payload.sender.login)) || "Please set your wallet address to use `/wallet 0x0000...0000`",
     multiplier,
     reason,
