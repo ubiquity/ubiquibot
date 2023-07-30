@@ -1,6 +1,6 @@
 ---
 evm-network-id: 100
-base-multiplier: 1500
+price-multiplier: 1.5
 time-labels:
   - name: "Time: <1 Hour"
     weight: 0.125
