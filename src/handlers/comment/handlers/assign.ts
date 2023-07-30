@@ -110,9 +110,9 @@ export const assign = async (body: string) => {
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
     const multiplier = await getWalletMultiplier(payload.sender.login);
-    if (multiplier) {
-      comment.multiplier = multiplier.toFixed(2);
-    }
+
+    comment.multiplier = multiplier.toFixed(2);
+
     const issueDetailed = bountyInfo(issue);
     if (issueDetailed.priceLabel) {
       comment.bounty = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * multiplier).toString() + " USD";
