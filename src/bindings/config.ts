@@ -9,9 +9,9 @@ import { getScalarKey, getWideConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
-    privateKey,
     baseMultiplier,
     timeLabels,
+    privateKey,
     priorityLabels,
     commentElementPricing,
     autoPayMode,
