@@ -1,6 +1,6 @@
 import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments, addCommentToIssue } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
-import { Payload, LabelItem, Comment, IssueType } from "../../../types";
+import { Payload, LabelItem, Comment, IssueType, Issue } from "../../../types";
 import { deadLinePrefix } from "../../shared";
 import { getWalletAddress, getWalletMultiplier, getMultiplierReason } from "../../../adapters/supabase";
 import { tableComment } from "./table";
@@ -106,28 +106,32 @@ export const assign = async (body: string) => {
   const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
-    const multiplierRaw = await getWalletMultiplier(payload.sender.login);
-    const multiplierReason = await getMultiplierReason(payload.sender.login);
-    let multiplier, reason, bounty;
-    if (multiplierRaw == 1) {
-      if (multiplierReason) {
-        multiplier = multiplierRaw.toFixed(2);
-        reason = multiplierReason;
-      } else {
-        // nothing to show about multiplier
-        // leaving empty block here for clarity
-      }
-    } else {
-      multiplier = multiplierRaw.toFixed(2);
-      reason = multiplierReason;
-      bounty = `Permit generation skipped since price label is not set`;
-      const issueDetailed = bountyInfo(issue);
-      if (issueDetailed.priceLabel) {
-        bounty = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * multiplierRaw).toString() + " USD";
-      }
-    }
-
+    const { multiplier, reason, bounty } = await getMultiplierInfoToDisplay(payload.sender.login, issue);
     return tableComment({ ...comment, multiplier, reason, bounty }) + comment.tips;
   }
   return;
+};
+
+const getMultiplierInfoToDisplay = async (senderLogin: string, issue: Issue) => {
+  const multiplierRaw = await getWalletMultiplier(senderLogin);
+  const multiplierReason = await getMultiplierReason(senderLogin);
+  let multiplier, reason, bounty;
+  if (multiplierRaw == 1) {
+    if (multiplierReason) {
+      multiplier = multiplierRaw.toFixed(2);
+      reason = multiplierReason;
+    } else {
+      // default mode: normal bounty hunter with default multiplier 1 and no reason
+      // nothing to show about multiplier
+    }
+  } else {
+    multiplier = multiplierRaw.toFixed(2);
+    reason = multiplierReason;
+    bounty = `Permit generation skipped since price label is not set`;
+    const issueDetailed = bountyInfo(issue);
+    if (issueDetailed.priceLabel) {
+      bounty = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * multiplierRaw).toString() + " USD";
+    }
+  }
+  return { multiplier, reason, bounty };
 };
