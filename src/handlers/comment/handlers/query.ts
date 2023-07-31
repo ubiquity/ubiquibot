@@ -18,8 +18,8 @@ export const query = async (body: string) => {
   }
 
   if (!organization?.id) {
-    logger.info(`Skipping '/assign' because the bot is not running on an organizational repository`);
-    return "Skipping '/assign' because the bot is not running on an organizational repository";
+    logger.info(`Skipping '/query' because the bot is not running on an organizational repository`);
+    return "Skipping '/query' because the bot is not running on an organizational repository";
   }
 
   const regex = /^\/query\s@(\w+)$/;
