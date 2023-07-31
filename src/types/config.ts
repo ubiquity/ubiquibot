@@ -67,6 +67,10 @@ export const CommentsSchema = Type.Object({
   promotionComment: Type.String(),
 });
 
+export const WalletSchema = Type.Object({
+  registerWalletWithVerification: Type.Boolean(),
+});
+
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
   price: PriceConfigSchema,
@@ -78,6 +82,7 @@ export const BotConfigSchema = Type.Object({
   assign: AssignSchema,
   sodium: SodiumSchema,
   comments: CommentsSchema,
+  wallet: WalletSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;

@@ -1,6 +1,15 @@
-import { getWalletAddress, getWalletMultiplier } from "../../adapters/supabase";
+import { BigNumber, ethers } from "ethers";
+import { getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addLabelToIssue, deleteLabel, generatePermit2Signature, getAllIssueComments, getTokenSymbol } from "../../helpers";
+import {
+  addLabelToIssue,
+  deleteLabel,
+  generatePermit2Signature,
+  getAllIssueAssignEvents,
+  getAllIssueComments,
+  getTokenSymbol,
+  wasIssueReopened,
+} from "../../helpers";
 import { UserType, Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
@@ -8,7 +17,7 @@ import { bountyInfo } from "../wildcard";
 export const handleIssueClosed = async () => {
   const context = getBotContext();
   const {
-    payout: { paymentToken, rpc },
+    payout: { paymentToken, rpc, permitBaseUrl, networkId },
     mode: { autoPayMode },
   } = getBotConfig();
   const logger = getLogger();
@@ -18,6 +27,58 @@ export const handleIssueClosed = async () => {
   if (!issue) return;
 
   if (!organization?.id) {
+    return;
+  }
+
+  const comments = await getAllIssueComments(issue.number);
+
+  const wasReopened = await wasIssueReopened(issue.number);
+  const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
+  const permitCommentIdx = comments.findIndex((e) => e.user.type === "Bot" && e.body.match(claimUrlRegex));
+
+  if (wasReopened && permitCommentIdx !== -1) {
+    const permitComment = comments[permitCommentIdx];
+    const permitUrl = permitComment.body.match(claimUrlRegex);
+    if (!permitUrl || permitUrl.length < 2) {
+      logger.error(`Permit URL not found`);
+      return;
+    }
+    const url = new URL(permitUrl[1]);
+    const claimBase64 = url.searchParams.get("claim");
+    if (!claimBase64) {
+      logger.error(`Permit claim search parameter not found`);
+      return;
+    }
+    let networkId = url.searchParams.get("network");
+    if (!networkId) {
+      networkId = "1";
+    }
+    let claim;
+    try {
+      claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
+    } catch (err: unknown) {
+      logger.error(`${err}`);
+      return;
+    }
+    const amount = BigNumber.from(claim.permit.permitted.amount);
+    const tokenAddress = claim.permit.permitted.token;
+
+    // extract assignee
+    const events = await getAllIssueAssignEvents(issue.number);
+    if (events.length === 0) {
+      logger.error(`No assignment found`);
+      return;
+    }
+    const assignee = events[0].assignee.login;
+
+    try {
+      await removePenalty(assignee, payload.repository.full_name, tokenAddress, networkId, amount);
+    } catch (err) {
+      logger.error(`Failed to remove penalty: ${err}`);
+      return;
+    }
+
+    logger.info(`Penalty removed`);
     return;
   }
 
@@ -59,10 +120,25 @@ export const handleIssueClosed = async () => {
   }
 
   // TODO: add multiplier to the priceInEth
-  const priceInEth = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString();
+  let priceInEth = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString();
   if (!recipient || recipient?.trim() === "") {
     logger.info(`Recipient address is missing`);
     return;
+  }
+
+  // if bounty hunter has any penalty then deduct it from the bounty
+  const penaltyAmount = await getPenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString());
+  if (penaltyAmount.gt(0)) {
+    logger.info(`Deducting penalty from bounty`);
+    const bountyAmount = ethers.utils.parseUnits(priceInEth, 18);
+    const bountyAmountAfterPenalty = bountyAmount.sub(penaltyAmount);
+    if (bountyAmountAfterPenalty.lte(0)) {
+      await removePenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString(), bountyAmount);
+      const msg = `Permit generation skipped because bounty amount after penalty is 0`;
+      logger.info(msg);
+      return msg;
+    }
+    priceInEth = ethers.utils.formatUnits(bountyAmountAfterPenalty, 18);
   }
 
   const payoutUrl = await generatePermit2Signature(recipient, priceInEth, issue.node_id);
@@ -70,7 +146,6 @@ export const handleIssueClosed = async () => {
   const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
   logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
   const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
-  const comments = await getAllIssueComments(issue.number);
   const permitComments = comments.filter((content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot);
   if (permitComments.length > 0) {
     logger.info(`Skip to generate a permit url because it has been already posted`);
@@ -78,5 +153,8 @@ export const handleIssueClosed = async () => {
   }
   await deleteLabel(issueDetailed.priceLabel);
   await addLabelToIssue("Permitted");
+  if (penaltyAmount.gt(0)) {
+    await removePenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString(), penaltyAmount);
+  }
   return comment;
 };

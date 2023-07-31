@@ -2,6 +2,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { getAdapters, getLogger } from "../../../bindings";
 import { Issue, UserProfile } from "../../../types";
 import { Database } from "../types";
+import { BigNumber, BigNumberish } from "ethers";
 
 /**
  * @dev Creates a typescript client which will be used to interact with supabase platform
@@ -305,4 +306,63 @@ export const getWalletInfo = async (username: string, org_id: string): Promise<{
   if (multiplier?.value == null) {
     return { multiplier: 1, address: wallet?.wallet_address || "" };
   } else return { multiplier: multiplier?.value, address: wallet?.wallet_address };
+};
+
+export const addPenalty = async (username: string, repoName: string, tokenAddress: string, networkId: string, penalty: BigNumberish): Promise<void> => {
+  const { supabase } = getAdapters();
+  const logger = getLogger();
+
+  const { error } = await supabase.rpc("add_penalty", {
+    _username: username,
+    _repository_name: repoName,
+    _token_address: tokenAddress,
+    _network_id: networkId,
+    _penalty_amount: penalty.toString(),
+  });
+  logger.debug(`Adding penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
+
+  if (error) {
+    throw new Error(`Error adding penalty: ${error.message}`);
+  }
+};
+
+export const getPenalty = async (username: string, repoName: string, tokenAddress: string, networkId: string): Promise<BigNumber> => {
+  const { supabase } = getAdapters();
+  const logger = getLogger();
+
+  const { data, error } = await supabase
+    .from("penalty")
+    .select("amount")
+    .eq("username", username)
+    .eq("repository_name", repoName)
+    .eq("network_id", networkId)
+    .eq("token_address", tokenAddress);
+  logger.debug(`Getting penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
+
+  if (error) {
+    throw new Error(`Error getting penalty: ${error.message}`);
+  }
+
+  if (data.length === 0) {
+    return BigNumber.from(0);
+  }
+  return BigNumber.from(data[0].amount);
+};
+
+export const removePenalty = async (username: string, repoName: string, tokenAddress: string, networkId: string, penalty: BigNumberish): Promise<void> => {
+  const { supabase } = getAdapters();
+  const logger = getLogger();
+
+  const { error } = await supabase.rpc("remove_penalty", {
+    _username: username,
+    _repository_name: repoName,
+    _network_id: networkId,
+    _token_address: tokenAddress,
+    _penalty_amount: penalty.toString(),
+  });
+  logger.debug(`Removing penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
+
+  if (error) {
+    throw new Error(`Error removing penalty: ${error.message}`);
+  }
 };
