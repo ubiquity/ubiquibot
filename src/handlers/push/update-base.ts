@@ -21,12 +21,12 @@ export const updateBaseRate = async (context: Context, payload: PushPayload, fil
   const previousContent = Buffer.from(preFileContent, "base64").toString();
   const previousConfig = await parseYAML(previousContent);
 
-  if (!previousConfig || !previousConfig["base-multiplier"]) {
+  if (!previousConfig || !previousConfig["price-multiplier"]) {
     logger.debug("No multiplier found in file object");
     return;
   }
 
-  const previousBaseRate = previousConfig["base-multiplier"];
+  const previousBaseRate = previousConfig["price-multiplier"];
 
   // fetch all labels
   const repoLabels = await listLabelsForRepo();

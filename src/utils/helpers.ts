@@ -13,10 +13,10 @@ export const getNetworkId = (parsedRepo: WideRepoConfig | undefined, parsedOrg: 
 };
 
 export const getBaseMultiplier = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): number => {
-  if (parsedRepo && parsedRepo["base-multiplier"] && !Number.isNaN(Number(parsedRepo["base-multiplier"]))) {
-    return Number(parsedRepo["base-multiplier"]);
-  } else if (parsedOrg && parsedOrg["base-multiplier"] && !Number.isNaN(Number(parsedOrg["base-multiplier"]))) {
-    return Number(parsedOrg["base-multiplier"]);
+  if (parsedRepo && parsedRepo["price-multiplier"] && !Number.isNaN(Number(parsedRepo["price-multiplier"]))) {
+    return Number(parsedRepo["price-multiplier"]);
+  } else if (parsedOrg && parsedOrg["price-multiplier"] && !Number.isNaN(Number(parsedOrg["price-multiplier"]))) {
+    return Number(parsedOrg["price-multiplier"]);
   } else {
     return Number(DefaultPriceConfig["baseMultiplier"]);
   }
@@ -119,5 +119,15 @@ export const getDefaultLabels = (parsedRepo: WideRepoConfig | undefined, parsedO
     return parsedOrg["default-labels"];
   } else {
     return [];
+  }
+};
+
+export const getRegisterWalletWithVerification = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): boolean => {
+  if (parsedRepo && parsedRepo["register-wallet-with-verification"] && typeof parsedRepo["register-wallet-with-verification"] === "boolean") {
+    return Boolean(parsedRepo["register-wallet-with-verification"]);
+  } else if (parsedOrg && parsedOrg["register-wallet-with-verification"] && typeof parsedOrg["register-wallet-with-verification"] === "boolean") {
+    return Boolean(parsedOrg["register-wallet-with-verification"]);
+  } else {
+    return false;
   }
 };
