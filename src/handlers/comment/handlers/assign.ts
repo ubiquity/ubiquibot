@@ -23,8 +23,8 @@ export const assign = async (body: string) => {
   }
 
   if (!organization?.id) {
-    logger.info(`Skipping '/assign' because there's no organization details`);
-    return "Skipping '/assign' because of no issue instance";
+    logger.info(`Skipping '/assign' because the bot is not running on an organizational repository`);
+    return "Skipping '/assign' because the bot is not running on an organizational repository";
   }
 
   if (!ASSIGN_COMMAND_ENABLED) {

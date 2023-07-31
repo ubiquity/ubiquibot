@@ -14,12 +14,12 @@ export const query = async (body: string) => {
   const issue = payload.issue;
   if (!issue) {
     logger.info(`Skipping '/query' because of no issue instance`);
-    return;
+    return `Skipping '/query' because of no issue instance`;
   }
 
   if (!organization?.id) {
-    logger.info(`Skipping '/query' because there's no organization details`);
-    return;
+    logger.info(`Skipping '/assign' because the bot is not running on an organizational repository`);
+    return "Skipping '/assign' because the bot is not running on an organizational repository";
   }
 
   const regex = /^\/query\s@(\w+)$/;
