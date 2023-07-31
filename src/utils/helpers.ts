@@ -121,3 +121,13 @@ export const getDefaultLabels = (parsedRepo: WideRepoConfig | undefined, parsedO
     return [];
   }
 };
+
+export const getRegisterWalletWithVerification = (parsedRepo: WideRepoConfig | undefined, parsedOrg: WideOrgConfig | undefined): boolean => {
+  if (parsedRepo && parsedRepo["register-wallet-with-verification"] && typeof parsedRepo["register-wallet-with-verification"] === "boolean") {
+    return Boolean(parsedRepo["register-wallet-with-verification"]);
+  } else if (parsedOrg && parsedOrg["register-wallet-with-verification"] && typeof parsedOrg["register-wallet-with-verification"] === "boolean") {
+    return Boolean(parsedOrg["register-wallet-with-verification"]);
+  } else {
+    return false;
+  }
+};

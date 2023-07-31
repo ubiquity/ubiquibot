@@ -15,6 +15,7 @@ import {
   getCommentItemPrice,
   getDefaultLabels,
   getPromotionComment,
+  getRegisterWalletWithVerification,
 } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
@@ -61,6 +62,7 @@ export interface WideConfig {
   "max-concurrent-assigns"?: number;
   "comment-element-pricing"?: Record<string, number>;
   "default-labels"?: string[];
+  "register-wallet-with-verification"?: boolean;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -143,6 +145,7 @@ export const getWideConfig = async (context: Context) => {
     commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
     defaultLabels: getDefaultLabels(parsedRepo, parsedOrg),
     promotionComment: getPromotionComment(parsedRepo, parsedOrg),
+    registerWalletWithVerification: getRegisterWalletWithVerification(parsedRepo, parsedOrg),
   };
 
   return configData;
