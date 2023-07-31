@@ -86,9 +86,6 @@ export const assign = async (body: string) => {
   const comment = {
     deadline: endTime.toUTCString().replace("GMT", "UTC"),
     wallet: (await getWalletAddress(payload.sender.login)) || "Please set your wallet address to use `/wallet 0x0000...0000`",
-    multiplier: "1.00",
-    reason: await getMultiplierReason(payload.sender.login),
-    bounty: `Permit generation skipped since price label is not set`,
     commit: `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`,
     tips: `<h6>Tips:</h6>
     <ul>
@@ -109,15 +106,28 @@ export const assign = async (body: string) => {
   const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
-    const multiplier = await getWalletMultiplier(payload.sender.login);
-
-    comment.multiplier = multiplier.toFixed(2);
-
-    const issueDetailed = bountyInfo(issue);
-    if (issueDetailed.priceLabel) {
-      comment.bounty = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * multiplier).toString() + " USD";
+    const multiplierRaw = await getWalletMultiplier(payload.sender.login);
+    const multiplierReason = await getMultiplierReason(payload.sender.login);
+    let multiplier, reason, bounty;
+    if (multiplierRaw == 1) {
+      if (multiplierReason) {
+        multiplier = multiplierRaw.toFixed(2);
+        reason = multiplierReason;
+      } else {
+        // nothing to show about multiplier
+        // leaving empty block here for clarity
+      }
+    } else {
+      multiplier = multiplierRaw.toFixed(2);
+      reason = multiplierReason;
+      bounty = `Permit generation skipped since price label is not set`;
+      const issueDetailed = bountyInfo(issue);
+      if (issueDetailed.priceLabel) {
+        bounty = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * multiplierRaw).toString() + " USD";
+      }
     }
-    return tableComment(comment) + comment.tips;
+
+    return tableComment({ ...comment, multiplier, reason, bounty }) + comment.tips;
   }
   return;
 };
