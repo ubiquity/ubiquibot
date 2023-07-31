@@ -65,17 +65,18 @@ export const multiplier = async (body: string) => {
         return "Insufficient permissions to update the payout multiplier. You are not an `admin` or `billing_manager`";
       }
     }
-    // check to see if the multiplier that is set is more than 1
-    if (bountyMultiplier > 1) {
-      logger.info(`User ${sender} Cannot set a multiplier more than 1`);
-      return "Cannot set a multiplier more than 1";
-    }
     logger.info(`Upserting to the wallet table, username: ${username}, bountyMultiplier: ${bountyMultiplier}, reason: ${reason}}`);
 
     await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason);
-    return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
-      reason ? `provided is "${reason}"` : "is not provided"
-    }.`;
+    if (bountyMultiplier <= 1) {
+      return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
+        reason ? `provided is "${reason}"` : "is not provided"
+      }. Please note that this feature is designed to reduce the multiplier value.`;
+    } else {
+      return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
+        reason ? `provided is "${reason}"` : "is not provided"
+      }.`;
+    }
   } else {
     logger.error("Invalid body for bountyMultiplier command");
     return `Invalid body for bountyMultiplier command`;
