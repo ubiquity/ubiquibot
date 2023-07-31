@@ -77,6 +77,9 @@ export const CommentsSchema = Type.Object({
 export const CommandConfigSchema = Type.Array(CommandItemSchema);
 
 export type CommandConfig = Static<typeof CommandConfigSchema>;
+export const WalletSchema = Type.Object({
+  registerWalletWithVerification: Type.Boolean(),
+});
 
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
@@ -90,6 +93,7 @@ export const BotConfigSchema = Type.Object({
   sodium: SodiumSchema,
   comments: CommentsSchema,
   command: CommandConfigSchema,
+  wallet: WalletSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;

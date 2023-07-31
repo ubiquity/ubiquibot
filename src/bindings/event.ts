@@ -50,6 +50,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
       unassign: botConfig.unassign,
       mode: botConfig.mode,
       log: botConfig.log,
+      wallet: botConfig.wallet,
     })}`
   );
   const allowedEvents = Object.values(GithubEvent) as string[];
