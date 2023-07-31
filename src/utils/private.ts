@@ -10,10 +10,13 @@ import {
   getCreatorMultiplier,
   getBountyHunterMax,
   getIncentiveMode,
-  getChainId,
+  getNetworkId,
   getPriorityLabels,
   getTimeLabels,
   getCommentItemPrice,
+  getDefaultLabels,
+  getPromotionComment,
+  getRegisterWalletWithVerification,
 } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
@@ -48,16 +51,19 @@ export interface WideLabel {
 }
 
 export interface WideConfig {
-  "chain-id"?: number;
-  "base-multiplier"?: number;
+  "evm-network-id"?: number;
+  "price-multiplier"?: number;
   "issue-creator-multiplier": number;
   "time-labels"?: WideLabel[];
   "priority-labels"?: WideLabel[];
   "auto-pay-mode"?: boolean;
-  "analytics-mode"?: boolean;
-  "incentive-mode"?: boolean;
-  "max-concurrent-bounties"?: number;
+  "promotion-comment"?: string;
+  "disable-analytics"?: boolean;
+  "comment-incentives"?: boolean;
+  "max-concurrent-assigns"?: number;
   "comment-element-pricing"?: Record<string, number>;
+  "default-labels"?: string[];
+  "register-wallet-with-verification"?: boolean;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -80,7 +86,7 @@ export const parseYAML = (data?: string): WideConfig | undefined => {
 
 export const getDefaultConfig = (): WideRepoConfig => {
   const defaultConfig = readFileSync(`${__dirname}/../../ubiquibot-config-default.yml`, "utf8");
-  return parseYAML(defaultConfig)!;
+  return parseYAML(defaultConfig) as WideRepoConfig;
 };
 
 export const getPrivateKey = async (cipherText: string): Promise<string | undefined> => {
@@ -134,17 +140,20 @@ export const getWideConfig = async (context: Context) => {
 
   const configs = { parsedRepo, parsedOrg, parsedDefault };
   const configData = {
-    chainId: getChainId(configs),
+    networkId: getNetworkId(configs),
     privateKey: privateKeyDecrypted ?? "",
     baseMultiplier: getBaseMultiplier(configs),
     issueCreatorMultiplier: getCreatorMultiplier(configs),
     timeLabels: getTimeLabels(configs),
     priorityLabels: getPriorityLabels(configs),
     autoPayMode: getAutoPayMode(configs),
-    analyticsMode: getAnalyticsMode(configs),
+    disableAnalytics: getAnalyticsMode(configs),
     bountyHunterMax: getBountyHunterMax(configs),
     incentiveMode: getIncentiveMode(configs),
     commentElementPricing: getCommentItemPrice(configs),
+    defaultLabels: getDefaultLabels(configs),
+    promotionComment: getPromotionComment(configs),
+    registerWalletWithVerification: getRegisterWalletWithVerification(configs),
   };
 
   return configData;
