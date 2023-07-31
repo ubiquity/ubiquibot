@@ -46,7 +46,7 @@ export const multiplier = async (body: string) => {
       } else if (part.startsWith("@")) {
         username = part.substring(1);
       } else {
-        reason += part.replace(/['"]/g, "") + " ";
+        reason += part.replace(/['"]/g, "");
       }
     }
     username = username || sender;
