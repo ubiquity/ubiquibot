@@ -2,6 +2,7 @@ import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
 import { Payload } from "../types";
 import { Context } from "probot";
+import { readFileSync } from "fs";
 import {
   getAnalyticsMode,
   getAutoPayMode,
@@ -9,10 +10,13 @@ import {
   getCreatorMultiplier,
   getBountyHunterMax,
   getIncentiveMode,
-  getChainId,
+  getNetworkId,
   getPriorityLabels,
   getTimeLabels,
   getCommentItemPrice,
+  getDefaultLabels,
+  getPromotionComment,
+  getRegisterWalletWithVerification,
 } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
@@ -47,16 +51,19 @@ export interface WideLabel {
 }
 
 export interface WideConfig {
-  "chain-id"?: number;
-  "base-multiplier"?: number;
+  "evm-network-id"?: number;
+  "price-multiplier"?: number;
   "issue-creator-multiplier": number;
   "time-labels"?: WideLabel[];
   "priority-labels"?: WideLabel[];
   "auto-pay-mode"?: boolean;
-  "analytics-mode"?: boolean;
-  "incentive-mode"?: boolean;
-  "max-concurrent-bounties"?: number;
+  "promotion-comment"?: string;
+  "disable-analytics"?: boolean;
+  "comment-incentives"?: boolean;
+  "max-concurrent-assigns"?: number;
   "comment-element-pricing"?: Record<string, number>;
+  "default-labels"?: string[];
+  "register-wallet-with-verification"?: boolean;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -65,16 +72,21 @@ export interface WideOrgConfig extends WideConfig {
   "private-key-encrypted"?: string;
 }
 
-export const parseYAML = async (data?: string): Promise<WideConfig | undefined> => {
+export const parseYAML = (data?: string): WideConfig | undefined => {
   try {
     if (data) {
-      const parsedData = await YAML.parse(data);
+      const parsedData = YAML.parse(data);
       return parsedData ?? undefined;
     }
     return undefined;
   } catch (error) {
     return undefined;
   }
+};
+
+export const getDefaultConfig = (): WideRepoConfig => {
+  const defaultConfig = readFileSync(`${__dirname}/../../ubiquibot-config-default.yml`, "utf8");
+  return parseYAML(defaultConfig) as WideRepoConfig;
 };
 
 export const getPrivateKey = async (cipherText: string): Promise<string | undefined> => {
@@ -121,22 +133,27 @@ export const getWideConfig = async (context: Context) => {
   const orgConfig = await getConfigSuperset(context, "org");
   const repoConfig = await getConfigSuperset(context, "repo");
 
-  const parsedOrg: WideOrgConfig | undefined = await parseYAML(orgConfig);
-  const parsedRepo: WideRepoConfig | undefined = await parseYAML(repoConfig);
+  const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
+  const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
+  const parsedDefault: WideRepoConfig = getDefaultConfig();
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
+  const configs = { parsedRepo, parsedOrg, parsedDefault };
   const configData = {
-    chainId: getChainId(parsedRepo, parsedOrg),
+    networkId: getNetworkId(configs),
     privateKey: privateKeyDecrypted ?? "",
-    baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
-    issueCreatorMultiplier: getCreatorMultiplier(parsedRepo, parsedOrg),
-    timeLabels: getTimeLabels(parsedRepo, parsedOrg),
-    priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),
-    autoPayMode: getAutoPayMode(parsedRepo, parsedOrg),
-    analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg),
-    bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
-    incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
-    commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
+    baseMultiplier: getBaseMultiplier(configs),
+    issueCreatorMultiplier: getCreatorMultiplier(configs),
+    timeLabels: getTimeLabels(configs),
+    priorityLabels: getPriorityLabels(configs),
+    autoPayMode: getAutoPayMode(configs),
+    disableAnalytics: getAnalyticsMode(configs),
+    bountyHunterMax: getBountyHunterMax(configs),
+    incentiveMode: getIncentiveMode(configs),
+    commentElementPricing: getCommentItemPrice(configs),
+    defaultLabels: getDefaultLabels(configs),
+    promotionComment: getPromotionComment(configs),
+    registerWalletWithVerification: getRegisterWalletWithVerification(configs),
   };
 
   return configData;
