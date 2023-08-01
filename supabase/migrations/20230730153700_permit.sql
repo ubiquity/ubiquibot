@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS permits (
     nonce text NOT NULL,
     deadline text NOT NULL,
     signature text NOT NULL,
-    wallet_owner_address text NOT NULL,
-)
+    wallet_owner_address text NOT NULL
+);
