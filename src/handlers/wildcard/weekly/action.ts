@@ -3,6 +3,7 @@
 // TODO: The above line SHOULD be removed finally by creating types for `any` types
 //
 import path from "path";
+import fs from "fs";
 import axios from "axios";
 import Jimp from "jimp";
 import nodeHtmlToImage from "node-html-to-image";
@@ -33,31 +34,43 @@ const fetchEvents = async (context: Context): Promise<any[]> => {
   const perPage = 30;
   while (shouldFetch) {
     try {
+      let pubOrgEvents, headers;
       if (payload.organization) {
-        const { data: pubOrgEvents, headers } = await context.octokit.activity.listPublicOrgEvents({
+        const events = await context.octokit.activity.listPublicOrgEvents({
           org: payload.organization.login,
           per_page: perPage,
           page: currentPage,
         });
-
-        await checkRateLimitGit(headers);
-
-        pubOrgEvents.forEach((elem: any) => {
-          const elemTimestamp = new Date(elem.created_at as string).getTime();
-          if (elemTimestamp <= startTimestamp && elemTimestamp >= endTimestamp) {
-            //pass
-            elemList.push(elem);
-          } else if (elemTimestamp > startTimestamp) {
-            //outta range
-            //skip
-          } else {
-            //fail end
-            shouldFetch = false;
-          }
+        pubOrgEvents = events.data;
+        headers = events.headers;
+      } else {
+        const events = await context.octokit.activity.listRepoEvents({
+          owner: payload.repository.owner.login,
+          repo: payload.repository.name,
+          per_page: perPage,
+          page: currentPage,
         });
-
-        currentPage++;
+        pubOrgEvents = events.data;
+        headers = events.headers;
       }
+
+      await checkRateLimitGit(headers);
+
+      pubOrgEvents.forEach((elem: any) => {
+        const elemTimestamp = new Date(elem.created_at as string).getTime();
+        if (elemTimestamp <= startTimestamp && elemTimestamp >= endTimestamp) {
+          //pass
+          elemList.push(elem);
+        } else if (elemTimestamp > startTimestamp) {
+          //outta range
+          //skip
+        } else {
+          //fail end
+          shouldFetch = false;
+        }
+      });
+
+      currentPage++;
     } catch (error) {
       shouldFetch = false;
     }
@@ -284,6 +297,7 @@ const htmlImage = async (summaryInfo: SummaryType) => {
     `;
   };
 
+  createDirectoryIfNotExists(IMG_PATH);
   await nodeHtmlToImage({
     output: `${IMG_PATH}/pmg.png`,
     html: await wrapElement(summaryInfo),
@@ -293,6 +307,21 @@ const htmlImage = async (summaryInfo: SummaryType) => {
       defaultViewport: { width: 2048, height: 1024 },
     },
   });
+};
+
+const createDirectoryIfNotExists = (directoryPath: string) => {
+  const normalizedPath = path.normalize(directoryPath);
+  const directories = normalizedPath.split(path.sep);
+
+  let currentPath = "";
+
+  for (const directory of directories) {
+    currentPath += directory + path.sep;
+
+    if (!fs.existsSync(currentPath)) {
+      fs.mkdirSync(currentPath);
+    }
+  }
 };
 
 const getFlatImage = async (): Promise<string> => {
