@@ -2,6 +2,7 @@ import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getIssueDescription, getTokenSymbol, parseComments } from "../../helpers";
 import { Incentives, Payload, UserType } from "../../types";
+import { commentParser } from "../comment";
 
 const ItemsToExclude: string[] = ["blockquote"];
 /**
@@ -21,12 +22,12 @@ export const incentivizeComments = async () => {
   }
   const context = getBotContext();
   const payload = context.payload as Payload;
-  const org = payload.organization?.login;
   const issue = payload.issue;
-  if (!issue || !org) {
-    logger.info(`Incomplete payload. issue: ${issue}, org: ${org}`);
+  if (!issue) {
+    logger.info(`Incomplete payload. issue: ${issue}`);
     return;
   }
+
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
@@ -34,12 +35,24 @@ export const incentivizeComments = async () => {
     return;
   }
 
-  const issueComments = await getAllIssueComments(issue.number, "html");
+  const issueComments = await getAllIssueComments(issue.number, "full");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
     if (user.type == UserType.Bot || user.login == assignee) continue;
+    const commands = commentParser(issueComment.body);
+    if (commands.length > 0) {
+      logger.info(`Skipping to parse the comment because it contains commands. comment: ${JSON.stringify(issueComment)}`);
+      continue;
+    }
+    if (!issueComment.body_html) {
+      logger.info(`Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(issueComment)}`);
+      continue;
+    }
+    if (!issueCommentsByUser[user.login]) {
+      issueCommentsByUser[user.login] = [];
+    }
     issueCommentsByUser[user.login].push(issueComment.body_html);
   }
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
@@ -55,6 +68,10 @@ export const incentivizeComments = async () => {
     const comments = issueCommentsByUser[user];
     const commentsByNode = await parseComments(comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, incentives);
+    if (rewardValue === 0) {
+      logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`);
+      continue;
+    }
     logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
     const amountInETH = ((rewardValue * baseMultiplier) / 1000).toString();
@@ -86,13 +103,13 @@ export const incentivizeCreatorComment = async () => {
   }
   const context = getBotContext();
   const payload = context.payload as Payload;
-  const org = payload.organization?.login;
   const issue = payload.issue;
-  if (!issue || !org) {
-    logger.info(`Incomplete payload. issue: ${issue}, org: ${org}`);
+  if (!issue) {
+    logger.info(`Incomplete payload. issue: ${issue}`);
     return;
   }
-  const assignees = issue?.assignees ?? [];
+
+  const assignees = issue.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
     logger.info("Skipping payment permit generation because `assignee` is `undefined`.");
@@ -100,15 +117,19 @@ export const incentivizeCreatorComment = async () => {
   }
 
   const description = await getIssueDescription(issue.number, "html");
+  if (!description) {
+    logger.info(`Skipping to generate a permit url because issue description is empty. description: ${description}`);
+    return;
+  }
   logger.info(`Getting the issue description done. description: ${description}`);
   const creator = issue.user;
-  if (creator?.type === UserType.Bot || creator?.login === issue?.assignee) {
+  if (creator.type === UserType.Bot || creator.login === issue.assignee) {
     logger.info("Issue creator assigneed himself or Bot created this issue.");
     return;
   }
 
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
-  const result = await generatePermitForComments(creator?.login, [description], issueCreatorMultiplier, incentives, tokenSymbol, issue.node_id);
+  const result = await generatePermitForComments(creator.login, [description], issueCreatorMultiplier, incentives, tokenSymbol, issue.node_id);
 
   if (result.payoutUrl) {
     logger.info(`Permit url generated for creator. reward: ${result.payoutUrl}`);
@@ -130,6 +151,10 @@ const generatePermitForComments = async (
   const logger = getLogger();
   const commentsByNode = await parseComments(comments, ItemsToExclude);
   const rewardValue = calculateRewardValue(commentsByNode, incentives);
+  if (rewardValue === 0) {
+    logger.info(`No reward for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+    return { comment: "" };
+  }
   logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
   const account = await getWalletAddress(user);
   const amountInETH = ((rewardValue * multiplier) / 1000).toString();

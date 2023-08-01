@@ -192,18 +192,16 @@ export const getIssueDescription = async (issue_number: number, format: "raw" | 
     });
 
     await checkRateLimitGit(response?.headers);
-    if (response.data.body) {
-      switch (format) {
-        case "raw":
-          result = response.data.body;
-          break;
-        case "html":
-          result = response.data.body_html ?? "";
-          break;
-        case "text":
-          result = response.data.body_text ?? "";
-          break;
-      }
+    switch (format) {
+      case "raw":
+        result = response.data.body ?? "";
+        break;
+      case "html":
+        result = response.data.body_html ?? "";
+        break;
+      case "text":
+        result = response.data.body_text ?? "";
+        break;
     }
   } catch (e: unknown) {
     logger.debug(`Getting issue description failed!, reason: ${e}`);
