@@ -2,6 +2,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { getAdapters, getLogger } from "../../../bindings";
 import { Issue, UserProfile } from "../../../types";
 import { Database } from "../types";
+import { InsertPermit, Permit } from "../../../helpers";
 
 /**
  * @dev Creates a typescript client which will be used to interact with supabase platform
@@ -300,15 +301,69 @@ export const getWalletMultiplier = async (username: string): Promise<number> => 
 
 export const getWalletInfo = async (username: string): Promise<{ multiplier: number | null; address: string | null } | number | undefined> => {
   const { supabase } = getAdapters();
-  
-  const { data } = await supabase.from('wallets').select('multiplier, address').eq("user_name", username).single();
-  if (data?.multiplier == null || data?.address == null) return 1
-  else return {multiplier: data?.multiplier, address: data?.address}
-};
 
+  const { data } = await supabase.from("wallets").select("multiplier, address").eq("user_name", username).single();
+  if (data?.multiplier == null || data?.address == null) return 1;
+  else return { multiplier: data?.multiplier, address: data?.address };
+};
 
 export const getMultiplierReason = async (username: string): Promise<string> => {
   const { supabase } = getAdapters();
   const { data } = await supabase.from("wallets").select("reason").eq("user_name", username).single();
   return data?.reason;
+};
+
+const getDbDataFromPermit = (permit: InsertPermit): Record<string, unknown> => {
+  return {
+    organization_id: permit.organizationId,
+    repository_id: permit.repositoryId,
+    issue_id: permit.issueId,
+    network_id: permit.networkId,
+    bounty_hunter_id: permit.bountyHunterId,
+    token_address: permit.tokenAddress,
+    payout_amount: permit.payoutAmount,
+    bounty_hunter_address: permit.bountyHunterAddress,
+    nonce: permit.nonce,
+    deadline: permit.deadline,
+    signature: permit.signature,
+    wallet_owner_address: permit.walletOwnerAddress,
+  };
+};
+
+const getPermitFromDbData = (data: Record<string, unknown>): Permit => {
+  return {
+    id: data.id,
+    createdAt: new Date(Date.parse(data.created_at as string)),
+    organizationId: data.organization_id,
+    repositoryId: data.repository_i,
+    issueId: data.issue_id,
+    networkId: data.network_id,
+    bountyHunterId: data.bounty_hunter_id,
+    tokenAddress: data.token_address,
+    payoutAmount: data.payout_amount,
+    bountyHunterAddress: data.bounty_hunter_address,
+    nonce: data.nonce,
+    deadline: data.deadline,
+    signature: data.signature,
+    walletOwnerAddress: data.wallet_owner_address,
+  } as Permit;
+};
+
+export const savePermit = async (permit: InsertPermit): Promise<Permit> => {
+  const { supabase } = getAdapters();
+  const { data, error } = await supabase
+    .from("permits")
+    .insert({
+      ...getDbDataFromPermit(permit),
+      created_at: new Date().toISOString(),
+      id: undefined, // id is auto-generated
+    })
+    .select();
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!data || data.length === 0) {
+    throw new Error("No data returned");
+  }
+  return getPermitFromDbData(data[0]);
 };
