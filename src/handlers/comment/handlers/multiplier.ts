@@ -9,7 +9,9 @@ export const multiplier = async (body: string) => {
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
   const repo = payload.repository;
-  const organization = payload.organization;
+  const { repository, organization } = payload;
+
+  const id = organization?.id || repository?.id; // repository?.id as fallback
 
   logger.info(`Received '/multiplier' command from user: ${sender}`);
 
@@ -17,11 +19,6 @@ export const multiplier = async (body: string) => {
   if (!issue) {
     logger.info(`Skipping '/multiplier' because of no issue instance`);
     return `Skipping '/multiplier' because of no issue instance`;
-  }
-
-  if (!organization?.id) {
-    logger.info(`Skipping '/multiplier' because the bot is not running on an organizational repository`);
-    return "Skipping '/multiplier' because the bot is not running on an organizational repository";
   }
 
   const regex = /(".*?"|[^"\s]+)(?=\s*|\s*$)/g;
@@ -74,7 +71,7 @@ export const multiplier = async (body: string) => {
 
     logger.info(`Upserting to the wallet table, username: ${username}, bountyMultiplier: ${bountyMultiplier}, reason: ${reason}}`);
 
-    await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason, organization?.id?.toString());
+    await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason, id?.toString());
     return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
       reason ? `provided is "${reason}"` : "is not provided"
     }.`;

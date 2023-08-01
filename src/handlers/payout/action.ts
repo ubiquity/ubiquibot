@@ -23,12 +23,11 @@ export const handleIssueClosed = async () => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   const issue = payload.issue;
-  const organization = payload.organization;
-  if (!issue) return;
+  const { repository, organization } = payload;
 
-  if (!organization?.id) {
-    return;
-  }
+  const id = organization?.id || repository?.id; // repository?.id as fallback
+
+  if (!issue) return;
 
   const comments = await getAllIssueComments(issue.number);
 
@@ -111,7 +110,7 @@ export const handleIssueClosed = async () => {
   }
 
   const recipient = await getWalletAddress(assignee.login);
-  const { value } = await getWalletMultiplier(assignee.login, organization?.id?.toString());
+  const { value } = await getWalletMultiplier(assignee.login, id?.toString());
 
   if (value === 0) {
     const errMsg = "Refusing to generate the payment permit because " + `@${assignee.login}` + "'s payment `multiplier` is `0`";

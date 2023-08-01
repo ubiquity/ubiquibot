@@ -13,18 +13,15 @@ export const assign = async (body: string) => {
   const config = getBotConfig();
 
   const payload = _payload as Payload;
-  const organization = payload.organization;
+  const { repository, organization } = payload;
+
+  const id = organization?.id || repository?.id; // repository?.id as fallback
 
   logger.info(`Received '/assign' command from user: ${payload.sender.login}, body: ${body}`);
   const issue = (_payload as Payload).issue;
   if (!issue) {
     logger.info(`Skipping '/assign' because of no issue instance`);
     return "Skipping '/assign' because of no issue instance";
-  }
-
-  if (!organization?.id) {
-    logger.info(`Skipping '/assign' because the bot is not running on an organizational repository`);
-    return "Skipping '/assign' because the bot is not running on an organizational repository";
   }
 
   if (!ASSIGN_COMMAND_ENABLED) {
@@ -89,7 +86,7 @@ export const assign = async (body: string) => {
   const startTime = new Date().getTime();
   const endTime = new Date(startTime + duration * 1000);
 
-  const { reason, value } = await getWalletMultiplier(payload.sender.login, organization?.id?.toString());
+  const { reason, value } = await getWalletMultiplier(payload.sender.login, id?.toString());
 
   const multiplier = value?.toFixed(2) || "1.00";
 
