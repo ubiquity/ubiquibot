@@ -1,6 +1,7 @@
 ---
-evm-network-id: 100
-price-multiplier: 1.5
+evm-network-id: 1
+price-multiplier: 1000
+issue-creator-multiplier: 2000
 time-labels:
   - name: "Time: <1 Hour"
     weight: 0.125
@@ -28,23 +29,16 @@ priority-labels:
     weight: 4
   - name: "Priority: 4 (Emergency)"
     weight: 5
-default-labels:
-  - "Time: <1 Hour"
-  - "Priority: 0 (Normal)"
-  - "Test"
 auto-pay-mode: true
-comment-incentives: true
-max-concurrent-bounties: 2
+disable-analytics: true
+comment-incentives: false
+max-concurrent-assigns: 2
+comment-element-pricing:
+  text: 0.1
+  link: 0.5
+  list: 0.5
+  code: 5
+  image: 5
+default-labels: []
 promotion-comment: "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>"
-incentives:
-  comment:
-    elements:
-      code: 5
-      img: 5
-      h1: 1
-      li: 0.5
-      a: 0.5
-      blockquote: 0
-    totals:
-      word: 0.1
 register-wallet-with-verification: false

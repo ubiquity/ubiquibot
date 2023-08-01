@@ -11,6 +11,7 @@ export enum GithubEvent {
   ISSUES_UNASSIGNED = "issues.unassigned",
   ISSUES_CLOSED = "issues.closed",
   ISSUES_OPENED = "issues.opened",
+  ISSUES_REOPENED = "issues.reopened",
 
   // issue_comment
   ISSUE_COMMENT_CREATED = "issue_comment.created",
@@ -239,6 +240,21 @@ export const CommentSchema = Type.Object({
 });
 
 export type Comment = Static<typeof CommentSchema>;
+
+export const AssignEventSchema = Type.Object({
+  url: Type.String(),
+  id: Type.Number(),
+  node_id: Type.String(),
+  event: Type.String(),
+  commit_id: Type.String(),
+  commit_url: Type.String(),
+  created_at: Type.String({ format: "date-time" }),
+  actor: UserSchema,
+  assignee: UserSchema,
+  assigner: UserSchema,
+});
+
+export type AssignEvent = Static<typeof AssignEventSchema>;
 
 export const PayloadSchema = Type.Object({
   action: Type.String(),

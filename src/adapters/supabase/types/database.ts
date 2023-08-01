@@ -240,7 +240,24 @@ export interface Database {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      add_penalty: {
+        Args: {
+          username: string;
+          repository_name: string;
+          token_address: string;
+          penalty_amount: string;
+        };
+        Returns: string;
+      };
+      deduct_penalty: {
+        Args: {
+          username: string;
+          repository_name: string;
+          token_address: string;
+          penalty_amount: string;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       issue_status: "READY_TO_START" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
