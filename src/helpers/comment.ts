@@ -16,7 +16,7 @@ const traverse = (result: Record<string, string[]>, node: Node, itemsToExclude: 
     result[node.nodeName] = [];
   }
 
-  result[node.nodeName].push(node.value ?? "");
+  result[node.nodeName].push(node.value?.trim() ?? "");
 
   if (node.childNodes && node.childNodes.length > 0) {
     node.childNodes.forEach((child) => traverse(result, child, itemsToExclude));
@@ -31,6 +31,11 @@ export const parseComments = (comments: string[], itemsToExclude: string[]): Rec
   for (const comment of comments) {
     const fragment = parse5.parseFragment(comment);
     traverse(result, fragment as Node, itemsToExclude);
+  }
+
+  // remove empty values
+  if (result["#text"]) {
+    result["#text"] = result["#text"].filter((str) => str.length > 0);
   }
 
   return result;
