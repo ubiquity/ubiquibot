@@ -2,7 +2,6 @@ import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
 import { Payload } from "../types";
 import { Context } from "probot";
-import { readFileSync } from "fs";
 import {
   getAnalyticsMode,
   getAutoPayMode,
@@ -23,7 +22,6 @@ import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
-const DEFAULT_CONFIG_PATH = "/ubiquibot-config-default.yml";
 const KEY_NAME = "private-key-encrypted";
 const KEY_PREFIX = "HSK_";
 
