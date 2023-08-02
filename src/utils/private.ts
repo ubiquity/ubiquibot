@@ -85,7 +85,7 @@ export const parseYAML = (data?: string): WideConfig | undefined => {
 };
 
 export const getDefaultConfig = (): WideRepoConfig => {
-  const defaultConfig = readFileSync(`${__dirname}/../../../ubiquibot-config-default.yml`, "utf8");
+  const defaultConfig = readFileSync(`${__dirname}/../../ubiquibot-config-default.yml`, "utf8");
   return parseYAML(defaultConfig) as WideRepoConfig;
 };
 
