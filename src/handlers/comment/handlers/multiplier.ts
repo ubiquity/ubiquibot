@@ -71,7 +71,7 @@ export const multiplier = async (body: string) => {
     logger.info(`Upserting to the wallet table, username: ${username}, bountyMultiplier: ${bountyMultiplier}, reason: ${reason}}`);
 
     await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason, id?.toString());
-    if (bountyMultiplier <= 1) {
+    if (bountyMultiplier > 1) {
       return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
         reason ? `provided is "${reason}"` : "is not provided"
       }. This feature is designed to limit the contributor's compensation for any bounty on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a bounty multiplier above 1?`;
