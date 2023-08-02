@@ -7,7 +7,7 @@ import fs from "fs";
 import axios from "axios";
 import Jimp from "jimp";
 import nodeHtmlToImage from "node-html-to-image";
-import { getBotContext } from "../../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { telegramPhotoNotifier } from "../../../adapters";
 import { Context } from "probot";
 import { Payload } from "../../../types";
@@ -352,6 +352,14 @@ const compositeImage = async () => {
 };
 
 const processTelegram = async (caption: string) => {
+  const {
+    telegram: { token },
+  } = getBotConfig();
+  const logger = getLogger();
+  if (token === "") {
+    logger.info("Telegram token is empty");
+    return;
+  }
   await telegramPhotoNotifier({
     chatId: "-1000000", //should update with a valid one
     file: `${IMG_PATH}/fmg.png`,
