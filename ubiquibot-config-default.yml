@@ -1,6 +1,6 @@
 ---
-evm-network-id: 1
-price-multiplier: 1000
+evm-network-id: 100
+price-multiplier: 1.5
 issue-creator-multiplier: 2000
 time-labels:
   - name: "Time: <1 Hour"
@@ -29,6 +29,10 @@ priority-labels:
     weight: 4
   - name: "Priority: 4 (Emergency)"
     weight: 5
+default-labels:
+  - "Time: <1 Hour"
+  - "Priority: 0 (Normal)"
+  - "Test"
 auto-pay-mode: true
 disable-analytics: true
 comment-incentives: false
