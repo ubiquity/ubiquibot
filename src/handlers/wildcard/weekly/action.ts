@@ -6,7 +6,7 @@ import path from "path";
 import axios from "axios";
 import Jimp from "jimp";
 import nodeHtmlToImage from "node-html-to-image";
-import { getBotContext } from "../../../bindings";
+import { getBotConfig, getBotContext } from "../../../bindings";
 import { telegramPhotoNotifier } from "../../../adapters";
 import { Context } from "probot";
 import { Payload } from "../../../types";
@@ -341,5 +341,12 @@ export const run = async () => {
   const dataPadded = await fetchSummary(repository);
   await htmlImage(summaryInfo);
   await compositeImage();
-  await processTelegram(dataPadded);
+
+  const { telegram } = getBotConfig();
+  if (telegram.token) {
+    await processTelegram(dataPadded);
+  } else {
+    const log = context.log;
+    log.info("Skipping processTelegram because no token was set.");
+  }
 };
