@@ -67,7 +67,7 @@ export const getCommentItemPrice = ({ parsedRepo, parsedOrg, parsedDefault }: Co
   }
 };
 
-export const getPaymentPermitMaxPrice = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): number => {
+export const getAutoPayMode = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): number => {
   if (parsedRepo && parsedRepo["payment-permit-max-price"] && typeof parsedRepo["payment-permit-max-price"] === "boolean") {
     return Number(parsedRepo["payment-permit-max-price"]);
   } else if (parsedOrg && parsedOrg["payment-permit-max-price"] && typeof parsedOrg["payment-permit-max-price"] === "boolean") {
