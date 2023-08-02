@@ -4,7 +4,7 @@ import { Payload } from "../types";
 import { Context } from "probot";
 import {
   getAnalyticsMode,
-  getAutoPayMode,
+  getPaymentPermitMaxPrice,
   getBaseMultiplier,
   getCreatorMultiplier,
   getBountyHunterMax,
@@ -57,7 +57,7 @@ export interface WideConfig {
   "issue-creator-multiplier": number;
   "time-labels"?: WideLabel[];
   "priority-labels"?: WideLabel[];
-  "auto-pay-mode"?: boolean;
+  "payment-permit-max-price"?: number;
   "promotion-comment"?: string;
   "disable-analytics"?: boolean;
   "comment-incentives"?: boolean;
@@ -142,7 +142,7 @@ export const getWideConfig = async (context: Context) => {
     issueCreatorMultiplier: getCreatorMultiplier(configs),
     timeLabels: getTimeLabels(configs),
     priorityLabels: getPriorityLabels(configs),
-    autoPayMode: getAutoPayMode(configs),
+    paymentPermitMaxPrice: getPaymentPermitMaxPrice(configs),
     disableAnalytics: getAnalyticsMode(configs),
     bountyHunterMax: getBountyHunterMax(configs),
     incentiveMode: getIncentiveMode(configs),

@@ -18,7 +18,7 @@ export const handleIssueClosed = async () => {
   const context = getBotContext();
   const {
     payout: { paymentToken, rpc, permitBaseUrl, networkId },
-    mode: { autoPayMode },
+    mode: { paymentPermitMaxPrice },
   } = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -87,9 +87,9 @@ export const handleIssueClosed = async () => {
   }
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
-  if (!autoPayMode) {
-    logger.info(`Skipping to generate permit2 url, reason: { autoPayMode: ${autoPayMode}}`);
-    return `Permit generation skipped since autoPayMode is disabled`;
+  if (!paymentPermitMaxPrice) {
+    logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
+    return `Permit generation skipped since paymentPermitMaxPrice is 0`;
   }
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
@@ -120,6 +120,10 @@ export const handleIssueClosed = async () => {
 
   // TODO: add multiplier to the priceInEth
   let priceInEth = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString();
+  if (parseInt(priceInEth) > paymentPermitMaxPrice) {
+    logger.info("Skipping to proceed the payment because bounty payout is higher than paymentPermitMaxPrice");
+    return `Permit generation skipped since issue's bounty is higher than ${paymentPermitMaxPrice}`;
+  }
   if (!recipient || recipient?.trim() === "") {
     logger.info(`Recipient address is missing`);
     return;
