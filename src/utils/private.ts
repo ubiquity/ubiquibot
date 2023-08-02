@@ -20,11 +20,12 @@ import {
 } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
-const KEY_PATH = ".github/ubiquibot-config.yml";
+const CONFIG_PATH = ".github/ubiquibot-config.yml";
+const DEFAULT_CONFIG_PATH = "./ubiquibot-config-default.yml";
 const KEY_NAME = "private-key-encrypted";
 const KEY_PREFIX = "HSK_";
 
-export const getConfigSuperset = async (context: Context, type: "org" | "repo"): Promise<string | undefined> => {
+export const getConfigSuperset = async (context: Context, type: "org" | "repo", filePath: string): Promise<string | undefined> => {
   try {
     const payload = context.payload as Payload;
     const repo = type === "org" ? CONFIG_REPO : payload.repository.name;
@@ -33,7 +34,7 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo"):
     const { data } = await context.octokit.rest.repos.getContent({
       owner,
       repo,
-      path: KEY_PATH,
+      path: filePath,
       mediaType: {
         format: "raw",
       },
@@ -130,12 +131,16 @@ export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Prom
 };
 
 export const getWideConfig = async (context: Context) => {
-  const orgConfig = await getConfigSuperset(context, "org");
-  const repoConfig = await getConfigSuperset(context, "repo");
+  const orgConfig = await getConfigSuperset(context, "org", CONFIG_PATH);
+  const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
 
   const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
   const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
-  const parsedDefault: WideRepoConfig = getDefaultConfig();
+  const defaultConfig = await getConfigSuperset(context, "repo", DEFAULT_CONFIG_PATH);
+  const parsedDefault: WideRepoConfig | undefined = parseYAML(defaultConfig);
+  if (!parsedDefault) {
+    throw new Error("Default configuration missing!");
+  }
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configs = { parsedRepo, parsedOrg, parsedDefault };
