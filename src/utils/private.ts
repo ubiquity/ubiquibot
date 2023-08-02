@@ -2,7 +2,6 @@ import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
 import { Payload } from "../types";
 import { Context } from "probot";
-import { readFileSync } from "fs";
 import {
   getAnalyticsMode,
   getAutoPayMode,
@@ -19,12 +18,14 @@ import {
   getRegisterWalletWithVerification,
 } from "./helpers";
 
+import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
+
 const CONFIG_REPO = "ubiquibot-config";
-const KEY_PATH = ".github/ubiquibot-config.yml";
+const CONFIG_PATH = ".github/ubiquibot-config.yml";
 const KEY_NAME = "private-key-encrypted";
 const KEY_PREFIX = "HSK_";
 
-export const getConfigSuperset = async (context: Context, type: "org" | "repo"): Promise<string | undefined> => {
+export const getConfigSuperset = async (context: Context, type: "org" | "repo", filePath: string): Promise<string | undefined> => {
   try {
     const payload = context.payload as Payload;
     const repo = type === "org" ? CONFIG_REPO : payload.repository.name;
@@ -33,7 +34,7 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo"):
     const { data } = await context.octokit.rest.repos.getContent({
       owner,
       repo,
-      path: KEY_PATH,
+      path: filePath,
       mediaType: {
         format: "raw",
       },
@@ -84,11 +85,6 @@ export const parseYAML = (data?: string): WideConfig | undefined => {
   }
 };
 
-export const getDefaultConfig = (): WideRepoConfig => {
-  const defaultConfig = readFileSync(`${__dirname}/../../ubiquibot-config-default.yml`, "utf8");
-  return parseYAML(defaultConfig) as WideRepoConfig;
-};
-
 export const getPrivateKey = async (cipherText: string): Promise<string | undefined> => {
   try {
     await _sodium.ready;
@@ -130,12 +126,12 @@ export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Prom
 };
 
 export const getWideConfig = async (context: Context) => {
-  const orgConfig = await getConfigSuperset(context, "org");
-  const repoConfig = await getConfigSuperset(context, "repo");
+  const orgConfig = await getConfigSuperset(context, "org", CONFIG_PATH);
+  const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
 
   const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
   const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
-  const parsedDefault: WideRepoConfig = getDefaultConfig();
+  const parsedDefault: WideRepoConfig = DEFAULT_CONFIG_JSON;
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configs = { parsedRepo, parsedOrg, parsedDefault };
