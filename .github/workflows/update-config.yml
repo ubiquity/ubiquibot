@@ -27,12 +27,15 @@ jobs:
         run: |
           # set up jq script
           jq_script='                                                                                             
-            .[$new_param] = .[$old_param] |
-            del(.[$old_param])
+          if has($old_param) then
+            .[$new_param] = .[$old_param] | del(.[$old_param])
+          else
+            .
+          end
           '
 
-          #urls=$(curl -sSL https://raw.githubusercontent.com/ubiquity/devpool-directory/development/projects.json | jq -r '.urls[]')
-          urls="https://github.com/EtherealGlow/ubiquibot-pr-qa"
+          urls=$(curl -sSL https://raw.githubusercontent.com/ubiquity/devpool-directory/development/projects.json | jq -r '.urls[]')
+          #urls="https://github.com/EtherealGlow/ubiquibot-pr-qa"
 
           for url in $urls
           do
