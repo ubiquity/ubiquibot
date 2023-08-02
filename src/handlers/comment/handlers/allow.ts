@@ -50,6 +50,6 @@ export const setAccess = async (body: string) => {
     return `Updated access for @${username} successfully!\t Access: **${accessType}** for "${repo.full_name}"`;
   } else {
     logger.error("Invalid body for allow command");
-    return `Invalid body for allow command`;
+    return `Invalid syntax for allow \n usage: '/allow set-(access type) @user true|false' \n  ex-1 /allow set-multiplier @user false`;
   }
 };

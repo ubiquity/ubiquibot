@@ -9,18 +9,20 @@ import { getScalarKey, getWideConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
-    privateKey,
     baseMultiplier,
     timeLabels,
+    privateKey,
     priorityLabels,
     commentElementPricing,
     autoPayMode,
-    analyticsMode,
+    disableAnalytics,
     bountyHunterMax,
     incentiveMode,
     networkId,
     issueCreatorMultiplier,
+    defaultLabels,
     promotionComment,
+    registerWalletWithVerification,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -37,6 +39,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       timeLabels,
       priorityLabels,
       commentElementPricing,
+      defaultLabels,
     },
     comments: {
       promotionComment: promotionComment,
@@ -62,7 +65,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     mode: {
       autoPayMode: autoPayMode,
-      analyticsMode: analyticsMode,
+      disableAnalytics: disableAnalytics,
       incentiveMode: incentiveMode,
     },
     assign: {
@@ -71,6 +74,9 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     sodium: {
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",
       publicKey: publicKey ?? "",
+    },
+    wallet: {
+      registerWalletWithVerification: registerWalletWithVerification,
     },
   };
 
