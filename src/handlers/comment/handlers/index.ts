@@ -201,13 +201,13 @@ export const userCommands = (): UserCommands[] => {
 
   return [
     {
-      id: IssueCommentCommands.ASSIGN,
+      id: IssueCommentCommands.START,
       description: "Assign the origin sender to the issue automatically.",
       handler: assign,
       callback: commandCallback,
     },
     {
-      id: IssueCommentCommands.UNASSIGN,
+      id: IssueCommentCommands.STOP,
       description: "Unassign the origin sender from the issue automatically.",
       handler: unassign,
       callback: commandCallback,
