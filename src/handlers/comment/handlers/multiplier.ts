@@ -68,13 +68,18 @@ export const multiplier = async (body: string) => {
         return "Insufficient permissions to update the payout multiplier. You are not an `admin` or `billing_manager`";
       }
     }
-
     logger.info(`Upserting to the wallet table, username: ${username}, bountyMultiplier: ${bountyMultiplier}, reason: ${reason}}`);
 
     await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason, id?.toString());
-    return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
-      reason ? `provided is "${reason}"` : "is not provided"
-    }.`;
+    if (bountyMultiplier > 1) {
+      return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
+        reason ? `provided is "${reason}"` : "is not provided"
+      }. This feature is designed to limit the contributor's compensation for any bounty on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a bounty multiplier above 1?`;
+    } else {
+      return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
+        reason ? `provided is "${reason}"` : "is not provided"
+      }.`;
+    }
   } else {
     logger.error("Invalid body for bountyMultiplier command");
     return `Invalid syntax for wallet command \n example usage: "/multiplier @user 0.5 'Multiplier reason'"`;
