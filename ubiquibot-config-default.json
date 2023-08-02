@@ -53,11 +53,11 @@
   ],
   "command-settings": [
     {
-      "name": "assign",
+      "name": "start",
       "enabled": false
     },
     {
-      "name": "unassign",
+      "name": "stop",
       "enabled": false
     },
     {
