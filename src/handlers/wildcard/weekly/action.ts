@@ -57,6 +57,8 @@ const fetchEvents = async (context: Context): Promise<any[]> => {
         });
 
         currentPage++;
+      } else {
+        shouldFetch = false;
       }
     } catch (error) {
       shouldFetch = false;
