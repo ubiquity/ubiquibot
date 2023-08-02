@@ -38,8 +38,6 @@ export const handleComment = async (): Promise<void> => {
 
       const feature = config.command.find((e) => e.name === id.split("/")[1]);
 
-      await callback(issue.number, `v2: Test`, payload.action, payload.comment);
-
       if (!feature?.enabled && id !== "/help") {
         logger.info(`Skipping '${id}' because it is disabled on this repo`);
         await callback(issue.number, `Skipping \`${id}\` because it is disabled on this repo`, payload.action, payload.comment);
