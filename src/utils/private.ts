@@ -19,9 +19,11 @@ import {
   getRegisterWalletWithVerification,
 } from "./helpers";
 
+import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
+
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
-const DEFAULT_CONFIG_PATH = ".github/ubiquibot-config-default.yml";
+const DEFAULT_CONFIG_PATH = "/ubiquibot-config-default.yml";
 const KEY_NAME = "private-key-encrypted";
 const KEY_PREFIX = "HSK_";
 
@@ -85,11 +87,6 @@ export const parseYAML = (data?: string): WideConfig | undefined => {
   }
 };
 
-export const getDefaultConfig = (): WideRepoConfig => {
-  const defaultConfig = readFileSync(`${__dirname}/../../ubiquibot-config-default.yml`, "utf8");
-  return parseYAML(defaultConfig) as WideRepoConfig;
-};
-
 export const getPrivateKey = async (cipherText: string): Promise<string | undefined> => {
   try {
     await _sodium.ready;
@@ -136,11 +133,7 @@ export const getWideConfig = async (context: Context) => {
 
   const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
   const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
-  const defaultConfig = await getConfigSuperset(context, "repo", DEFAULT_CONFIG_PATH);
-  const parsedDefault: WideRepoConfig | undefined = parseYAML(defaultConfig);
-  if (!parsedDefault) {
-    throw new Error("Default configuration missing!");
-  }
+  const parsedDefault: WideRepoConfig = DEFAULT_CONFIG_JSON;
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configs = { parsedRepo, parsedOrg, parsedDefault };
