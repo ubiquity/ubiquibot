@@ -21,7 +21,7 @@ import {
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
-const DEFAULT_CONFIG_PATH = "./ubiquibot-config-default.yml";
+const DEFAULT_CONFIG_PATH = ".github/ubiquibot-config-default.yml";
 const KEY_NAME = "private-key-encrypted";
 const KEY_PREFIX = "HSK_";
 
