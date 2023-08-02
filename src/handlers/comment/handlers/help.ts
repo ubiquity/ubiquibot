@@ -20,7 +20,7 @@ export const listAvailableCommands = async (body: string) => {
   }
 
   if (issue.state == IssueType.CLOSED) {
-    logger.info("Skipping '/assign', reason: closed ");
+    logger.info("Skipping '/start', reason: closed ");
     return;
   }
 
