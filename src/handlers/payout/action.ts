@@ -14,6 +14,7 @@ import {
 import { UserType, Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
+import { isParentIssue } from "../pricing";
 
 export const handleIssueClosed = async () => {
   const context = getBotContext();
@@ -92,6 +93,12 @@ export const handleIssueClosed = async () => {
     logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
     return `Permit generation skipped since paymentPermitMaxPrice is 0`;
   }
+
+  if (isParentIssue(issue.body)) {
+    logger.info("Skipping to proceed the payment because its parent issue");
+    return `Permit generation skipped since the issue is identified as parent issue`;
+  }
+
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
     logger.info(`Skipping... its not a bounty`);
