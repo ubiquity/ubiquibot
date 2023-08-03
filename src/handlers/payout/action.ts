@@ -8,6 +8,7 @@ import {
   getAllIssueAssignEvents,
   getAllIssueComments,
   getTokenSymbol,
+  savePermitToDB,
   wasIssueReopened,
 } from "../../helpers";
 import { UserType, Payload, StateReason } from "../../types";
@@ -140,7 +141,7 @@ export const handleIssueClosed = async () => {
     priceInEth = ethers.utils.formatUnits(bountyAmountAfterPenalty, 18);
   }
 
-  const payoutUrl = await generatePermit2Signature(recipient, priceInEth, issue.node_id);
+  const { txData, payoutUrl } = await generatePermit2Signature(recipient, priceInEth, issue.node_id);
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
   logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
@@ -152,6 +153,7 @@ export const handleIssueClosed = async () => {
   }
   await deleteLabel(issueDetailed.priceLabel);
   await addLabelToIssue("Permitted");
+  await savePermitToDB(assignee.id, txData);
   if (penaltyAmount.gt(0)) {
     await removePenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString(), penaltyAmount);
   }
