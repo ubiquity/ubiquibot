@@ -3,6 +3,7 @@ import { getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import {
   addLabelToIssue,
+  clearAllPriceLabelsOnIssue,
   deleteLabel,
   generatePermit2Signature,
   getAllIssueAssignEvents,
@@ -94,6 +95,7 @@ export const handleIssueClosed = async () => {
   }
 
   if (isParentIssue(issue.body)) {
+    await clearAllPriceLabelsOnIssue();
     logger.info("Skipping to proceed the payment because its parent issue");
     return `Permit generation skipped since the issue is identified as parent issue`;
   }
