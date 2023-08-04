@@ -43,9 +43,9 @@ jobs:
             .
           end
           '
-        
-          urls=$(curl -sSL https://raw.githubusercontent.com/ubiquity/devpool-directory/development/projects.json | jq -r '.urls[]')
-          #urls="https://github.com/EtherealGlow/ubiquibot-pr-qa"
+
+          #urls=$(curl -sSL https://raw.githubusercontent.com/ubiquity/devpool-directory/development/projects.json | jq -r '.urls[]')
+          urls="https://github.com/EtherealGlow/ubiquibot-pr-qa"
 
           for url in $urls
           do
@@ -60,6 +60,8 @@ jobs:
             # make a branch to update config #
             git branch update
             git checkout update
+
+            curl -sSL https://raw.githubusercontent.com/ubiquity/ubiquibot/development/ubiquibot-config-default.json > default.json
 
             declare -A param_mapping=(
               ["evm-network-id"]="network-id chain-id"
@@ -81,8 +83,8 @@ jobs:
                 mv ubiquibot-config-default ubiquibot-config-default.json
               done
             done
-
-            git add .
+            
+            git add ubiquibot-config-default.json
             git commit -m "build: use latest ubiquibot config setup"
             git remote set-url origin https://${{ secrets.PAT_TOKEN }}@github.com/$ownerName/$repoName.git
             git push -f origin update
