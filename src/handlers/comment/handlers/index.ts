@@ -24,6 +24,7 @@ import {
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
 import { query } from "./query";
+import { autoPay } from "./payout";
 
 export * from "./assign";
 export * from "./wallet";
@@ -216,6 +217,12 @@ export const userCommands = (): UserCommands[] => {
     handler: payout,
     callback: commandCallback,
   },*/
+    {
+      id: IssueCommentCommands.AUTOPAY,
+      description: "Disable/enable autopay for an certain issue",
+      handler: autoPay,
+      callback: commandCallback,
+    },
     {
       id: IssueCommentCommands.QUERY,
       description: `Comments the users multiplier and address`,

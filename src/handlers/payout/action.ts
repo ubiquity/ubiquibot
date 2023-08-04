@@ -14,6 +14,7 @@ import {
 import { UserType, Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
+import { GLOBAL_STRINGS } from "../../configs";
 
 export const handleIssueClosed = async () => {
   const context = getBotContext();
@@ -88,6 +89,22 @@ export const handleIssueClosed = async () => {
   }
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
+
+  for (const botComment of comments.filter((cmt) => cmt.user.type === "Bot").reverse()) {
+    const botCommentBody = botComment.body;
+    if (botCommentBody.includes(GLOBAL_STRINGS.autopaycomment)) {
+      const pattern = /\*\*(\w+)\*\*/;
+      const res = botCommentBody.match(pattern);
+      if (res) {
+        if (res[1] === "false") {
+          logger.info(`Skipping to generate permit2 url, reason: autoPayMode for this issue: false`);
+          return `Permit generation skipped since autoPayMode for **THIS ISSUE** is disabled`;
+        }
+        return;
+      }
+    }
+  }
+
   if (!autoPayMode) {
     logger.info(`Skipping to generate permit2 url, reason: { autoPayMode: ${autoPayMode}}`);
     return `Permit generation skipped since autoPayMode is disabled`;
