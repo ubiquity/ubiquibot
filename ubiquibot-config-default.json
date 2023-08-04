@@ -1,4 +1,6 @@
 {
+  "evm-network-id": 100,
+  "price-multiplier": 1.5,
   "issue-creator-multiplier": 2000,
   "time-labels": [
     {
@@ -62,7 +64,5 @@
     "image": 5
   },
   "promotion-comment": "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>",
-  "register-wallet-with-verification": false,
-  "evm-network-id": "100",
-  "price-multiplier": 1.5
+  "register-wallet-with-verification": false
 }
