@@ -20,24 +20,24 @@ export const tableComment = ({
     <td></td>
   </tr>
   <tr>
-    <td>Deadline</td>
-    <td>${deadline}</td>
+    <td>\`Deadline\`</td>
+    <td>\`${deadline}\`</tt></td>
   </tr>
   <tr>
-    <td>Registered Wallet</td>
-    <td>${wallet}</td>
+    <td>\`Registered Wallet\`</td>
+    <td>\`${wallet}\`</td>
   </tr>
   <tr>
-    <td>Payment Multiplier</td>
-    <td>${multiplier}</td>
+    <td>\`Payment Multiplier\`</td>
+    <td>\`${multiplier}\`</td>
   </tr>
   <tr>
-    <td>Multiplier Reason</td>
-    <td>${reason}</td>
+    <td>\`Multiplier Reason\`</td>
+    <td>\`${reason}\`</td>
   </tr>
   <tr>
-    <td>Total Bounty</td>
-    <td>${bounty}</td>
+    <td>\`Total Bounty\`</td>
+    <td>\`${bounty}\`</td>
   </tr>
   </table>
 </code>`;
