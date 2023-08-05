@@ -85,7 +85,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
   }
 
   if (botConfig.payout.privateKey == "") {
-    botConfig.mode.autoPayMode = false;
+    throw new Error("Permit generation skipped because wallet private key is not set");
   }
 
   const validate = ajv.compile(BotConfigSchema);
