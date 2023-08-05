@@ -13,7 +13,8 @@
   "scripts": {
     "build:ci": "ncc build src/adapters/github/github-actions.ts -o ./",
     "build:serverless": "ncc build src/index.ts -o ./",
-    "build": "tsc && copyfiles src/assets/images/* lib/",
+    "build": "tsc",
+    "postbuild": "copyfiles src/assets/images/* lib/",
     "clean": "rimraf ./dist ./lib ./node_modules",
     "format:check": "prettier -c src/**/*.ts",
     "format": "prettier --write src",
