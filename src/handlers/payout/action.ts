@@ -18,7 +18,7 @@ import { bountyInfo } from "../wildcard";
 export const handleIssueClosed = async () => {
   const context = getBotContext();
   const {
-    payout: { paymentToken, rpc, permitBaseUrl, networkId },
+    payout: { paymentToken, rpc, permitBaseUrl, networkId, privateKey },
     mode: { autoPayMode },
   } = getBotConfig();
   const logger = getLogger();
@@ -81,12 +81,14 @@ export const handleIssueClosed = async () => {
     logger.info(`Penalty removed`);
     return;
   }
-
+  if (privateKey == "") {
+    logger.info("Permit generation skipped because wallet private key is not set");
+    return "Permit generation skipped because wallet private key is not set";
+  }
   if (issue.state_reason !== StateReason.COMPLETED) {
     logger.info("Permit generation skipped because the issue was not closed as completed");
     return "Permit generation skipped because the issue was not closed as completed";
   }
-
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
   if (!autoPayMode) {
     logger.info(`Skipping to generate permit2 url, reason: { autoPayMode: ${autoPayMode}}`);

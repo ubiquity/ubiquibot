@@ -84,10 +84,6 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     throw new Error("LogDNA ingestion key missing");
   }
 
-  if (botConfig.payout.privateKey == "") {
-    throw new Error("Permit generation skipped because wallet private key is not set");
-  }
-
   const validate = ajv.compile(BotConfigSchema);
   const valid = validate(botConfig);
   if (!valid) {
