@@ -83,7 +83,7 @@
   ],
   "default-labels": ["Time: <1 Hour", "Priority: 0 (Normal)", "Test"],
   "assistive-pricing": false,
-  "auto-pay-mode": true,
+  "auto-pay-mode": false,
   "comment-incentives": false,
   "max-concurrent-assigns": 2,
   "comment-element-pricing": {
