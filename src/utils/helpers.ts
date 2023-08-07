@@ -1,5 +1,5 @@
 import { CommentElementPricing } from "../types";
-import { WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
+import { CommandObj, WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
 interface Configs {
   parsedRepo?: WideRepoConfig;
@@ -47,6 +47,16 @@ export const getTimeLabels = ({ parsedRepo, parsedOrg, parsedDefault }: Configs)
   }
 };
 
+export const getCommandSettings = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): CommandObj[] => {
+  if (parsedRepo && parsedRepo["command-settings"] && Array.isArray(parsedRepo["command-settings"]) && parsedRepo["command-settings"].length > 0) {
+    return parsedRepo["command-settings"];
+  } else if (parsedOrg && parsedOrg["command-settings"] && Array.isArray(parsedOrg["command-settings"]) && parsedOrg["command-settings"].length > 0) {
+    return parsedOrg["command-settings"];
+  } else {
+    return parsedDefault["command-settings"] as CommandObj[];
+  }
+};
+
 export const getPriorityLabels = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): WideLabel[] => {
   if (parsedRepo && parsedRepo["priority-labels"] !== undefined && Array.isArray(parsedRepo["priority-labels"]) && parsedRepo["priority-labels"].length > 0) {
     return parsedRepo["priority-labels"];
@@ -72,13 +82,23 @@ export const getCommentItemPrice = ({ parsedRepo, parsedOrg, parsedDefault }: Co
   }
 };
 
-export const getAutoPayMode = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): boolean => {
-  if (parsedRepo && parsedRepo["auto-pay-mode"] !== undefined && typeof parsedRepo["auto-pay-mode"] === "boolean") {
-    return parsedRepo["auto-pay-mode"];
-  } else if (parsedOrg && parsedOrg["auto-pay-mode"] !== undefined && typeof parsedOrg["auto-pay-mode"] === "boolean") {
-    return parsedOrg["auto-pay-mode"];
+export const getPaymentPermitMaxPrice = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): number => {
+  if (parsedRepo && parsedRepo["payment-permit-max-price"] && typeof parsedRepo["payment-permit-max-price"] === "number") {
+    return Number(parsedRepo["payment-permit-max-price"]);
+  } else if (parsedOrg && parsedOrg["payment-permit-max-price"] && typeof parsedOrg["payment-permit-max-price"] === "number") {
+    return Number(parsedOrg["payment-permit-max-price"]);
   } else {
-    return parsedDefault["auto-pay-mode"] as boolean;
+    return Number(parsedDefault["payment-permit-max-price"]);
+  }
+};
+
+export const getAssistivePricing = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): boolean => {
+  if (parsedRepo && parsedRepo["assistive-pricing"] && typeof parsedRepo["assistive-pricing"] === "boolean") {
+    return parsedRepo["assistive-pricing"];
+  } else if (parsedOrg && parsedOrg["assistive-pricing"] && typeof parsedOrg["assistive-pricing"] === "boolean") {
+    return parsedOrg["assistive-pricing"];
+  } else {
+    return parsedDefault["assistive-pricing"] as boolean;
   }
 };
 
