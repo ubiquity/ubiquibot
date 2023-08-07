@@ -14,7 +14,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     privateKey,
     priorityLabels,
     commentElementPricing,
-    autoPayMode,
+    paymentPermitMaxPrice,
     disableAnalytics,
     bountyHunterMax,
     incentiveMode,
@@ -22,6 +22,8 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     issueCreatorMultiplier,
     defaultLabels,
     promotionComment,
+    commandSettings,
+    assistivePricing,
     registerWalletWithVerification,
   } = await getWideConfig(context);
 
@@ -64,10 +66,12 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
     mode: {
-      autoPayMode: autoPayMode,
+      paymentPermitMaxPrice: paymentPermitMaxPrice,
       disableAnalytics: disableAnalytics,
       incentiveMode: incentiveMode,
+      assistivePricing: assistivePricing,
     },
+    command: commandSettings,
     assign: {
       bountyHunterMax: bountyHunterMax,
     },
@@ -82,6 +86,10 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
 
   if (botConfig.log.ingestionKey == "") {
     throw new Error("LogDNA ingestion key missing");
+  }
+
+  if (botConfig.payout.privateKey == "") {
+    botConfig.mode.paymentPermitMaxPrice = 0;
   }
 
   const validate = ajv.compile(BotConfigSchema);
