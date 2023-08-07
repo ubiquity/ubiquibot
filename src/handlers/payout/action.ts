@@ -111,9 +111,9 @@ export const handleIssueClosed = async () => {
     }
   }
 
-  if (!autoPayMode) {
-    logger.info(`Skipping to generate permit2 url, reason: { autoPayMode: ${autoPayMode}}`);
-    return `Permit generation skipped since autoPayMode is disabled`;
+  if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
+    logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
+    return `Permit generation skipped since paymentPermitMaxPrice is 0`;
   }
 
   if (isParentIssue(issue.body)) {
