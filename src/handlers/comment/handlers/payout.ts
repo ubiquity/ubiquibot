@@ -55,7 +55,7 @@ export const autoPay = async (body: string) => {
 
   if (res) {
     const userPermission = await getUserPermission(payload.sender.login, context);
-    if (userPermission !== "admin") {
+    if (userPermission !== "admin" && userPermission !== "billing_manager") {
       return "Permission required to set autopay mode.";
     }
     if (res.length > 1) {
