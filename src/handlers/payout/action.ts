@@ -37,7 +37,7 @@ export const handleIssueClosed = async () => {
 
   const wasReopened = await wasIssueReopened(issue.number);
   const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
-  const permitCommentIdx = comments.findIndex((e) => e.user.type === "Bot" && e.body.match(claimUrlRegex));
+  const permitCommentIdx = comments.findIndex((e) => e.user.type === UserType.Bot && e.body.match(claimUrlRegex));
 
   if (wasReopened && permitCommentIdx !== -1) {
     const permitComment = comments[permitCommentIdx];
