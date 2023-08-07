@@ -72,8 +72,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
         );
       } else
         await addCommentToIssue(
-          `${askUpdate} @${assignees[0]}? If you would like to release the bounty back to the DevPool, please comment \`
-          \` \nLast activity time: ${lastActivity}`,
+          `${askUpdate} @${assignees[0]}? If you would like to release the bounty back to the DevPool, please comment \`/stop\` \nLast activity time: ${lastActivity}`,
           issue.number
         );
     }

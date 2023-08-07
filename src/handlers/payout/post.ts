@@ -59,7 +59,7 @@ export const incentivizeComments = async () => {
     const account = await getWalletAddress(user);
     const amountInETH = ((rewardValue * baseMultiplier) / 1000).toString();
     if (account) {
-      const payoutUrl = await generatePermit2Signature(account, amountInETH, issue.node_id);
+      const { payoutUrl } = await generatePermit2Signature(account, amountInETH, issue.node_id);
       comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
       reward[user] = payoutUrl;
     } else {
@@ -135,7 +135,7 @@ const generatePermitForComments = async (
   const amountInETH = ((rewardValue * multiplier) / 1000).toString();
   let comment = "";
   if (account) {
-    const payoutUrl = await generatePermit2Signature(account, amountInETH, node_id);
+    const { payoutUrl } = await generatePermit2Signature(account, amountInETH, node_id);
     comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
     return { comment, payoutUrl };
   } else {
