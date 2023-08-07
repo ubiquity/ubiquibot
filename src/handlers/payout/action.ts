@@ -87,7 +87,7 @@ export const handleIssueClosed = async () => {
   }
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
-  if (!paymentPermitMaxPrice) {
+  if (paymentPermitMaxPrice == 0) {
     logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
     return `Permit generation skipped since paymentPermitMaxPrice is 0`;
   }
