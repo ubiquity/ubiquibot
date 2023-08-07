@@ -96,7 +96,7 @@ export const handleIssueClosed = async () => {
     return `Permit generation skipped since paymentPermitMaxPrice is 0`;
   }
 
-  for (const botComment of comments.filter((cmt) => cmt.user.type === "Bot").reverse()) {
+  for (const botComment of comments.filter((cmt) => cmt.user.type === UserType.Bot).reverse()) {
     const botCommentBody = botComment.body;
     if (botCommentBody.includes(GLOBAL_STRINGS.autopaycomment)) {
       const pattern = /\*\*(\w+)\*\*/;
