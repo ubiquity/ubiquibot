@@ -22,7 +22,7 @@
     "prestart:watch": "ln -s src/assets/images lib/assets/images",
     "start:serverless": "tsx src/adapters/github/github-actions.ts",
     "start:watch": "nodemon --exec 'yarn start'",
-    "start": "probot run ./lib/index.js",
+    "start": "probot run ./lib/src/index.js",
     "prepare": "husky install"
   },
   "dependencies": {
