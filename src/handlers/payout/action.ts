@@ -91,7 +91,21 @@ export const handleIssueClosed = async () => {
   }
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
-  if (paymentPermitMaxPrice == 0) {
+  for (const botComment of comments.filter((cmt) => cmt.user.type === UserType.Bot).reverse()) {
+    const botCommentBody = botComment.body;
+    if (botCommentBody.includes(GLOBAL_STRINGS.autopaycomment)) {
+      const pattern = /\*\*(\w+)\*\*/;
+      const res = botCommentBody.match(pattern);
+      if (res) {
+        if (res[1] === "false") {
+          logger.info(`Skipping to generate permit2 url, reason: autoPayMode for this issue: false`);
+          return `Permit generation skipped since autoPayMode for **THIS ISSUE** is disabled`;
+        }
+      }
+    }
+  }
+
+  if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
     logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
     return `Permit generation skipped since paymentPermitMaxPrice is 0`;
   }
