@@ -6,7 +6,7 @@ import path from "path";
 import axios from "axios";
 import Jimp from "jimp";
 import nodeHtmlToImage from "node-html-to-image";
-import { getBotContext } from "../../../bindings";
+import { getBotConfig, getBotContext } from "../../../bindings";
 import { telegramPhotoNotifier } from "../../../adapters";
 import { Context } from "probot";
 import { Payload } from "../../../types";
@@ -33,31 +33,41 @@ const fetchEvents = async (context: Context): Promise<any[]> => {
   const perPage = 30;
   while (shouldFetch) {
     try {
+      let events;
       if (payload.organization) {
-        const { data: pubOrgEvents, headers } = await context.octokit.activity.listPublicOrgEvents({
+        events = await context.octokit.activity.listPublicOrgEvents({
           org: payload.organization.login,
           per_page: perPage,
           page: currentPage,
         });
-
-        await checkRateLimitGit(headers);
-
-        pubOrgEvents.forEach((elem: any) => {
-          const elemTimestamp = new Date(elem.created_at as string).getTime();
-          if (elemTimestamp <= startTimestamp && elemTimestamp >= endTimestamp) {
-            //pass
-            elemList.push(elem);
-          } else if (elemTimestamp > startTimestamp) {
-            //outta range
-            //skip
-          } else {
-            //fail end
-            shouldFetch = false;
-          }
+      } else {
+        events = await context.octokit.activity.listRepoEvents({
+          owner: payload.repository.owner.login,
+          repo: payload.repository.name,
+          per_page: perPage,
+          page: currentPage,
         });
-
-        currentPage++;
       }
+      const pubEvents = events.data;
+      const headers = events.headers;
+
+      await checkRateLimitGit(headers);
+
+      pubEvents.forEach((elem: any) => {
+        const elemTimestamp = new Date(elem.created_at as string).getTime();
+        if (elemTimestamp <= startTimestamp && elemTimestamp >= endTimestamp) {
+          //pass
+          elemList.push(elem);
+        } else if (elemTimestamp > startTimestamp) {
+          //outta range
+          //skip
+        } else {
+          //fail end
+          shouldFetch = false;
+        }
+      });
+
+      currentPage++;
     } catch (error) {
       shouldFetch = false;
     }
@@ -339,5 +349,12 @@ export const run = async () => {
   const dataPadded = await fetchSummary(repository);
   await htmlImage(summaryInfo);
   await compositeImage();
-  await processTelegram(dataPadded);
+
+  const { telegram } = getBotConfig();
+  if (telegram.token) {
+    await processTelegram(dataPadded);
+  } else {
+    const log = context.log;
+    log.info("Skipping processTelegram because no token was set.");
+  }
 };

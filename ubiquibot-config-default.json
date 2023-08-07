@@ -51,9 +51,39 @@
       "weight": 5
     }
   ],
-  "default-labels": ["Time: <1 Hour", "Priority: 0 (Normal)", "Test"],
-  "auto-pay-mode": true,
-  "disable-analytics": true,
+  "command-settings": [
+    {
+      "name": "start",
+      "enabled": false
+    },
+    {
+      "name": "stop",
+      "enabled": false
+    },
+    {
+      "name": "wallet",
+      "enabled": false
+    },
+    {
+      "name": "payout",
+      "enabled": false
+    },
+    {
+      "name": "multiplier",
+      "enabled": false
+    },
+    {
+      "name": "query",
+      "enabled": false
+    },
+    {
+      "name": "allow",
+      "enabled": false
+    }
+  ],
+  "default-labels": [],
+  "assistive-pricing": false,
+  "payment-permit-max-price": 1000,
   "comment-incentives": false,
   "max-concurrent-assigns": 2,
   "comment-element-pricing": {

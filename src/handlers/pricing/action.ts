@@ -24,6 +24,7 @@ export const pricingLabelLogic = async (): Promise<void> => {
     return;
   }
 
+  const { assistivePricing } = config.mode;
   const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
   const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
@@ -39,7 +40,8 @@ export const pricingLabelLogic = async (): Promise<void> => {
       await clearAllPriceLabelsOnIssue();
 
       const exist = await getLabel(targetPriceLabel);
-      if (!exist) {
+
+      if (assistivePricing && !exist) {
         logger.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
         await createLabel(targetPriceLabel, "price");
       }
