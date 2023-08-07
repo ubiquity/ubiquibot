@@ -3,7 +3,6 @@ import { getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import {
   addLabelToIssue,
-  clearAllPriceLabelsOnIssue,
   deleteLabel,
   generatePermit2Signature,
   getAllIssueAssignEvents,
@@ -15,7 +14,6 @@ import {
 import { UserType, Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
-import { isParentIssue } from "../pricing";
 import { GLOBAL_STRINGS } from "../../configs";
 
 export const handleIssueClosed = async () => {
@@ -114,12 +112,6 @@ export const handleIssueClosed = async () => {
   if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
     logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
     return `Permit generation skipped since paymentPermitMaxPrice is 0`;
-  }
-
-  if (isParentIssue(issue.body)) {
-    await clearAllPriceLabelsOnIssue();
-    logger.info("Skipping to proceed the payment because its parent issue");
-    return `Permit generation skipped since the issue is identified as parent issue`;
   }
 
   const issueDetailed = bountyInfo(issue);
