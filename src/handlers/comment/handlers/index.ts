@@ -228,7 +228,7 @@ export const userCommands = (): UserCommands[] => {
   },*/
     {
       id: IssueCommentCommands.AUTOPAY,
-      description: "Disable/enable autopay for an certain issue",
+      description: "Disable/enable autopay for a certain issue",
       handler: autoPay,
       callback: commandCallback,
     },
