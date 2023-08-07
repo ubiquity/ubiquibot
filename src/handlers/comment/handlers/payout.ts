@@ -62,5 +62,5 @@ export const autoPay = async (body: string) => {
       return `${GLOBAL_STRINGS.autopaycomment} **${res[1]}**`;
     }
   }
-  return "Invalid body for autopay command: e.g. /autopay true|false";
+  return "Invalid body for autopay command: e.g. /autopay false";
 };
