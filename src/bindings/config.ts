@@ -14,7 +14,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     privateKey,
     priorityLabels,
     commentElementPricing,
-    autoPayMode,
+    paymentPermitMaxPrice,
     disableAnalytics,
     bountyHunterMax,
     incentiveMode,
@@ -66,7 +66,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
     mode: {
-      autoPayMode: autoPayMode,
+      paymentPermitMaxPrice: paymentPermitMaxPrice,
       disableAnalytics: disableAnalytics,
       incentiveMode: incentiveMode,
       assistivePricing: assistivePricing,
@@ -89,7 +89,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
   }
 
   if (botConfig.payout.privateKey == "") {
-    botConfig.mode.autoPayMode = false;
+    botConfig.mode.paymentPermitMaxPrice = 0;
   }
 
   const validate = ajv.compile(BotConfigSchema);

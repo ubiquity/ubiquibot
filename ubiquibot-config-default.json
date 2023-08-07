@@ -83,7 +83,7 @@
   ],
   "default-labels": [],
   "assistive-pricing": false,
-  "auto-pay-mode": false,
+  "payment-permit-max-price": 1000,
   "comment-incentives": false,
   "max-concurrent-assigns": 2,
   "comment-element-pricing": {
