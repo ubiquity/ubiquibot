@@ -88,10 +88,6 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     throw new Error("LogDNA ingestion key missing");
   }
 
-  if (botConfig.payout.privateKey == "") {
-    botConfig.mode.paymentPermitMaxPrice = 0;
-  }
-
   const validate = ajv.compile(BotConfigSchema);
   const valid = validate(botConfig);
   if (!valid) {
