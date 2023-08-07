@@ -58,7 +58,7 @@ export const autoPay = async (body: string) => {
     if (userPermission !== "admin") {
       return "Permission required to set autopay mode.";
     }
-    if (res) {
+    if (res.length > 1) {
       return `${GLOBAL_STRINGS.autopaycomment} **${res[1]}**`;
     }
   }
