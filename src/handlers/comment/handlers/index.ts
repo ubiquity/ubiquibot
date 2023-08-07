@@ -77,11 +77,20 @@ export const issueClosedCallback = async (): Promise<void> => {
  */
 
 export const issueCreatedCallback = async (): Promise<void> => {
+  const logger = getLogger();
   const { payload: _payload } = getBotContext();
   const config = getBotConfig();
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   const labels = issue.labels;
+
+  const { assistivePricing } = config.mode;
+
+  if (!assistivePricing) {
+    logger.info("Skipping adding label to issue because assistive pricing is disabled");
+    return;
+  }
+
   try {
     const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
     const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));

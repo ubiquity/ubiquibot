@@ -22,6 +22,8 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     issueCreatorMultiplier,
     defaultLabels,
     promotionComment,
+    commandSettings,
+    assistivePricing,
     registerWalletWithVerification,
   } = await getWideConfig(context);
 
@@ -67,7 +69,9 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       autoPayMode: autoPayMode,
       disableAnalytics: disableAnalytics,
       incentiveMode: incentiveMode,
+      assistivePricing: assistivePricing,
     },
+    command: commandSettings,
     assign: {
       bountyHunterMax: bountyHunterMax,
     },

@@ -15,6 +15,8 @@ import {
   getCommentItemPrice,
   getDefaultLabels,
   getPromotionComment,
+  getAssistivePricing,
+  getCommandSettings,
   getRegisterWalletWithVerification,
 } from "./helpers";
 
@@ -51,16 +53,23 @@ export interface WideLabel {
   value?: number | undefined;
 }
 
+export interface CommandObj {
+  name: string;
+  enabled: boolean;
+}
+
 export interface WideConfig {
   "evm-network-id"?: number;
   "price-multiplier"?: number;
   "issue-creator-multiplier": number;
   "time-labels"?: WideLabel[];
   "priority-labels"?: WideLabel[];
+  "command-settings"?: CommandObj[];
   "auto-pay-mode"?: boolean;
   "promotion-comment"?: string;
   "disable-analytics"?: boolean;
   "comment-incentives"?: boolean;
+  "assistive-pricing"?: boolean;
   "max-concurrent-assigns"?: number;
   "comment-element-pricing"?: Record<string, number>;
   "default-labels"?: string[];
@@ -138,6 +147,8 @@ export const getWideConfig = async (context: Context) => {
   const configData = {
     networkId: getNetworkId(configs),
     privateKey: privateKeyDecrypted ?? "",
+    assistivePricing: getAssistivePricing(configs),
+    commandSettings: getCommandSettings(configs),
     baseMultiplier: getBaseMultiplier(configs),
     issueCreatorMultiplier: getCreatorMultiplier(configs),
     timeLabels: getTimeLabels(configs),
