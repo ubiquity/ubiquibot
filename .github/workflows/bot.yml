@@ -75,9 +75,9 @@ jobs:
         id: UbiquiBot
         env:
           GITHUB_TOKEN: ${{steps.get_installation_token.outputs.token}}
-          LOGDNA_INGESTION_KEY: '53239bc82c0a1a156e32f943d4995656'
-          SUPABASE_URL: 'https://yymbokdvicqbgzutuiwt.supabase.co'
-          SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5bWJva2R2aWNxYmd6dXR1aXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODUxMTIwMzcsImV4cCI6MjAwMDY4ODAzN30.A9r4j_hlHu79HLlFY4FStPdgEc-I5SiD-MX7YGKdWyo'
+          LOGDNA_INGESTION_KEY: '14a9fa930ba11523faeadf487b8f2e92'
+          SUPABASE_URL: 'https://kijkzcjchgrxckpvyjny.supabase.co'
+          SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtpamt6Y2pjaGdyeGNrcHZ5am55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTEwNzc4NDIsImV4cCI6MjAwNjY1Mzg0Mn0.l1WeqHaYUvS9WVPY3El9ROMHFqqdwoLSI_DiFOR9jc0'
           X25519_PRIVATE_KEY: 'QCDb30UHUkwJAGhLWC-R2N0PiEbd4vQY6qH2Wloybyo'
           FOLLOW_UP_TIME: '4 days'
           DISQUALIFY_TIME: '7 days'
