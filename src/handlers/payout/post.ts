@@ -132,7 +132,7 @@ const generatePermitForComments = async (
   const rewardValue = calculateRewardValue(commentsByNode, commentElementPricing);
   logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
   const account = await getWalletAddress(user);
-  const amountInETH = ((rewardValue * multiplier) / 1000).toString();
+  const amountInETH = (rewardValue * multiplier).toString();
   let comment = "";
   if (account) {
     const { payoutUrl } = await generatePermit2Signature(account, amountInETH, node_id);
