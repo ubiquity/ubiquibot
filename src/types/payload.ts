@@ -98,7 +98,6 @@ const IssueSchema = Type.Object({
   html_url: Type.String(),
   id: Type.Number(),
   node_id: Type.String(),
-  body: Type.String(),
   number: Type.Number(),
   title: Type.String(),
   user: UserSchema,

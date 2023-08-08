@@ -12,12 +12,6 @@ export const pricingLabelLogic = async (): Promise<void> => {
   if (!payload.issue) return;
   const labels = payload.issue.labels;
 
-  if (isParentIssue(payload.issue.body)) {
-    logger.error("Identified as parent issue. Disabling price label.");
-    await clearAllPriceLabelsOnIssue();
-    return;
-  }
-
   const valid = await handleLabelsAccess();
 
   if (!valid) {
@@ -51,9 +45,4 @@ export const pricingLabelLogic = async (): Promise<void> => {
     await clearAllPriceLabelsOnIssue();
     logger.info(`Skipping action...`);
   }
-};
-
-export const isParentIssue = (body: string) => {
-  const parentPattern = /-\s+\[( |x)\]\s+#\d+/;
-  return body.match(parentPattern);
 };
