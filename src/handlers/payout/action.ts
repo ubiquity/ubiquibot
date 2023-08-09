@@ -102,7 +102,7 @@ export const handleIssueClosed = async () => {
       if (res) {
         if (res[1] === "false") {
           logger.info(`Skipping to generate permit2 url, reason: autoPayMode for this issue: false`);
-          return `Permit generation skipped since autoPayMode for **THIS ISSUE** is disabled`;
+          return `Permit generation skipped since automatic payment for this issue is disabled.`;
         }
         return;
       }
