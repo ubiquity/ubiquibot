@@ -1,6 +1,7 @@
 name: Pull Request Action
 permissions: write-all
 on:
+  push:
   workflow_dispatch:
 
 env:
@@ -25,8 +26,6 @@ jobs:
           sudo chmod +x /usr/bin/yq
       - name: Update Config Params and Create Pull Requests
         run: |
-
-
           urls=$(curl -sSL https://raw.githubusercontent.com/ubiquity/devpool-directory/development/projects.json | jq -r '.urls[]')
 
           for url in $urls
@@ -60,16 +59,20 @@ jobs:
               for old_param in $old_params
               do
                 # only update param if the old ones exist
-                exist=$(yq "has(\"$old_param\")" .github/ubiquibot-config.yml)
-                if $exist; then
+                exist_old_param=$(yq "has(\"$old_param\")" .github/ubiquibot-config.yml)
+                if $exist_old_param; then
                     yq ".$new_param = .$old_param | del(.$old_param)" .github/ubiquibot-config.yml > temp.yml
                     mv temp.yml .github/ubiquibot-config.yml
                 fi 
               done
               # if new param still doesent exist add default from ubiquibot-config-default.json
-              def_val=$(jq -r ".[\"$new_param\"]" ubiquibot-config-default.json)
-              yq ".$new_param=$def_val" .github/ubiquibot-config.yml > temp.yml
-              mv temp.yml .github/ubiquibot-config.yml
+              exist_new_param=$(yq "has(\"$new_param\")" .github/ubiquibot-config.yml)
+              if ! $exist_new_param; then
+                echo adding
+                def_val=$(jq -r ".[\"$new_param\"]" ubiquibot-config-default.json)
+                yq ".$new_param=$def_val" .github/ubiquibot-config.yml > temp.yml
+                mv temp.yml .github/ubiquibot-config.yml
+              fi
             done
             
             git add .github/ubiquibot-config.yml
