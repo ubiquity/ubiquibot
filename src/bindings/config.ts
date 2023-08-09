@@ -9,12 +9,12 @@ import { getScalarKey, getWideConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
-    privateKey,
     baseMultiplier,
     timeLabels,
+    privateKey,
     priorityLabels,
     commentElementPricing,
-    autoPayMode,
+    paymentPermitMaxPrice,
     disableAnalytics,
     bountyHunterMax,
     incentiveMode,
@@ -22,6 +22,9 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     issueCreatorMultiplier,
     defaultLabels,
     promotionComment,
+    commandSettings,
+    assistivePricing,
+    registerWalletWithVerification,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -63,16 +66,21 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
     mode: {
-      autoPayMode: autoPayMode,
+      paymentPermitMaxPrice: paymentPermitMaxPrice,
       disableAnalytics: disableAnalytics,
       incentiveMode: incentiveMode,
+      assistivePricing: assistivePricing,
     },
+    command: commandSettings,
     assign: {
       bountyHunterMax: bountyHunterMax,
     },
     sodium: {
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",
       publicKey: publicKey ?? "",
+    },
+    wallet: {
+      registerWalletWithVerification: registerWalletWithVerification,
     },
   };
 
@@ -81,7 +89,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
   }
 
   if (botConfig.payout.privateKey == "") {
-    botConfig.mode.autoPayMode = false;
+    botConfig.mode.paymentPermitMaxPrice = 0;
   }
 
   const validate = ajv.compile(BotConfigSchema);

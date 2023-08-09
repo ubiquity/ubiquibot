@@ -7,6 +7,12 @@ const LabelItemSchema = Type.Object({
 });
 export type LabelItem = Static<typeof LabelItemSchema>;
 
+const CommandItemSchema = Type.Object({
+  name: Type.String(),
+  enabled: Type.Boolean(),
+});
+export type CommandItem = Static<typeof CommandItemSchema>;
+
 const CommentElementPricingSchema = Type.Record(Type.String(), Type.Number());
 export type CommentElementPricing = Static<typeof CommentElementPricingSchema>;
 
@@ -44,9 +50,10 @@ export const UnassignConfigSchema = Type.Object({
 });
 
 export const ModeSchema = Type.Object({
-  autoPayMode: Type.Boolean(),
+  paymentPermitMaxPrice: Type.Number(),
   disableAnalytics: Type.Boolean(),
   incentiveMode: Type.Boolean(),
+  assistivePricing: Type.Boolean(),
 });
 
 export const AssignSchema = Type.Object({
@@ -67,6 +74,13 @@ export const CommentsSchema = Type.Object({
   promotionComment: Type.String(),
 });
 
+export const CommandConfigSchema = Type.Array(CommandItemSchema);
+
+export type CommandConfig = Static<typeof CommandConfigSchema>;
+export const WalletSchema = Type.Object({
+  registerWalletWithVerification: Type.Boolean(),
+});
+
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
   price: PriceConfigSchema,
@@ -78,6 +92,8 @@ export const BotConfigSchema = Type.Object({
   assign: AssignSchema,
   sodium: SodiumSchema,
   comments: CommentsSchema,
+  command: CommandConfigSchema,
+  wallet: WalletSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;

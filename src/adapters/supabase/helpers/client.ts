@@ -2,6 +2,8 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { getAdapters, getLogger } from "../../../bindings";
 import { Issue, UserProfile } from "../../../types";
 import { Database } from "../types";
+import { InsertPermit, Permit } from "../../../helpers";
+import { BigNumber, BigNumberish } from "ethers";
 
 /**
  * @dev Creates a typescript client which will be used to interact with supabase platform
@@ -178,33 +180,32 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
 };
 
 /**
- * Performs an UPSERT on the wallet table.
+ * Performs an UPSERT on the multiplier table.
  * @param username The user name you want to upsert a wallet address for
  * @param address The account multiplier
  */
-export const upsertWalletMultiplier = async (username: string, multiplier: string, reason: string): Promise<void> => {
+export const upsertWalletMultiplier = async (username: string, multiplier: string, reason: string, org_id: string): Promise<void> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
 
-  const { data, error } = await supabase.from("wallets").select("user_name").eq("user_name", username).single();
+  const { data, error } = await supabase.from("multiplier").select("user_id").eq("user_id", `${username}_${org_id}`).single();
   if (data) {
-    await supabase.from("wallets").upsert({
-      user_name: username,
-      multiplier,
+    await supabase.from("multiplier").upsert({
+      user_id: `${username}_${org_id}`,
+      value: multiplier,
       reason,
       updated_at: new Date().toUTCString(),
     });
     logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
   } else {
-    const { data: _data, error: _error } = await supabase.from("wallets").insert({
-      user_name: username,
-      wallet_address: "",
-      multiplier,
+    const { data: _data, error: _error } = await supabase.from("multiplier").insert({
+      user_id: `${username}_${org_id}`,
+      value: multiplier,
       reason,
       created_at: new Date().toUTCString(),
       updated_at: new Date().toUTCString(),
     });
-    logger.info(`Creating a new wallet_table record done, { data: ${_data}, error: ${_error} }`);
+    logger.info(`Creating a new multiplier_table record done, { data: ${_data}, error: ${_error} }`);
   }
 };
 
@@ -282,12 +283,12 @@ export const getWalletAddress = async (username: string): Promise<string | undef
  *
  */
 
-export const getWalletMultiplier = async (username: string): Promise<number> => {
+export const getWalletMultiplier = async (username: string, org_id: string): Promise<{ value: number; reason: string }> => {
   const { supabase } = getAdapters();
 
-  const { data } = await supabase.from("wallets").select("multiplier").eq("user_name", username).single();
-  if (data?.multiplier == null) return 1;
-  else return data?.multiplier;
+  const { data } = await supabase.from("multiplier").select("value, reason").eq("user_id", `${username}_${org_id}`).single();
+  if (data?.value == null) return { value: 1, reason: "" };
+  else return { value: data?.value, reason: data?.reason };
 };
 
 /**
@@ -298,17 +299,126 @@ export const getWalletMultiplier = async (username: string): Promise<number> => 
  *
  */
 
-export const getWalletInfo = async (username: string): Promise<{ multiplier: number | null; address: string | null } | number | undefined> => {
+export const getWalletInfo = async (username: string, org_id: string): Promise<{ multiplier: number | null; address: string | null }> => {
   const { supabase } = getAdapters();
-  
-  const { data } = await supabase.from('wallets').select('multiplier, address').eq("user_name", username).single();
-  if (data?.multiplier == null || data?.address == null) return 1
-  else return {multiplier: data?.multiplier, address: data?.address}
+
+  const { data: wallet } = await supabase.from("wallets").select("wallet_address").eq("user_name", username).single();
+  const { data: multiplier } = await supabase.from("multiplier").select("value").eq("user_id", `${username}_${org_id}`).single();
+  if (multiplier?.value == null) {
+    return { multiplier: 1, address: wallet?.wallet_address || "" };
+  } else return { multiplier: multiplier?.value, address: wallet?.wallet_address };
 };
 
-
-export const getMultiplierReason = async (username: string): Promise<string> => {
+export const addPenalty = async (username: string, repoName: string, tokenAddress: string, networkId: string, penalty: BigNumberish): Promise<void> => {
   const { supabase } = getAdapters();
-  const { data } = await supabase.from("wallets").select("reason").eq("user_name", username).single();
-  return data?.reason;
+  const logger = getLogger();
+
+  const { error } = await supabase.rpc("add_penalty", {
+    _username: username,
+    _repository_name: repoName,
+    _token_address: tokenAddress,
+    _network_id: networkId,
+    _penalty_amount: penalty.toString(),
+  });
+  logger.debug(`Adding penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
+
+  if (error) {
+    throw new Error(`Error adding penalty: ${error.message}`);
+  }
+};
+
+export const getPenalty = async (username: string, repoName: string, tokenAddress: string, networkId: string): Promise<BigNumber> => {
+  const { supabase } = getAdapters();
+  const logger = getLogger();
+
+  const { data, error } = await supabase
+    .from("penalty")
+    .select("amount")
+    .eq("username", username)
+    .eq("repository_name", repoName)
+    .eq("network_id", networkId)
+    .eq("token_address", tokenAddress);
+  logger.debug(`Getting penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
+
+  if (error) {
+    throw new Error(`Error getting penalty: ${error.message}`);
+  }
+
+  if (data.length === 0) {
+    return BigNumber.from(0);
+  }
+  return BigNumber.from(data[0].amount);
+};
+
+export const removePenalty = async (username: string, repoName: string, tokenAddress: string, networkId: string, penalty: BigNumberish): Promise<void> => {
+  const { supabase } = getAdapters();
+  const logger = getLogger();
+
+  const { error } = await supabase.rpc("remove_penalty", {
+    _username: username,
+    _repository_name: repoName,
+    _network_id: networkId,
+    _token_address: tokenAddress,
+    _penalty_amount: penalty.toString(),
+  });
+  logger.debug(`Removing penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
+
+  if (error) {
+    throw new Error(`Error removing penalty: ${error.message}`);
+  }
+};
+
+const getDbDataFromPermit = (permit: InsertPermit): Record<string, unknown> => {
+  return {
+    organization_id: permit.organizationId,
+    repository_id: permit.repositoryId,
+    issue_id: permit.issueId,
+    network_id: permit.networkId,
+    bounty_hunter_id: permit.bountyHunterId,
+    token_address: permit.tokenAddress,
+    payout_amount: permit.payoutAmount,
+    bounty_hunter_address: permit.bountyHunterAddress,
+    nonce: permit.nonce,
+    deadline: permit.deadline,
+    signature: permit.signature,
+    wallet_owner_address: permit.walletOwnerAddress,
+  };
+};
+
+const getPermitFromDbData = (data: Record<string, unknown>): Permit => {
+  return {
+    id: data.id,
+    createdAt: new Date(Date.parse(data.created_at as string)),
+    organizationId: data.organization_id,
+    repositoryId: data.repository_i,
+    issueId: data.issue_id,
+    networkId: data.network_id,
+    bountyHunterId: data.bounty_hunter_id,
+    tokenAddress: data.token_address,
+    payoutAmount: data.payout_amount,
+    bountyHunterAddress: data.bounty_hunter_address,
+    nonce: data.nonce,
+    deadline: data.deadline,
+    signature: data.signature,
+    walletOwnerAddress: data.wallet_owner_address,
+  } as Permit;
+};
+
+export const savePermit = async (permit: InsertPermit): Promise<Permit> => {
+  const { supabase } = getAdapters();
+  const { data, error } = await supabase
+    .from("permits")
+    .insert({
+      ...getDbDataFromPermit(permit),
+      created_at: new Date().toISOString(),
+      id: undefined, // id is auto-generated
+    })
+    .select();
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!data || data.length === 0) {
+    throw new Error("No data returned");
+  }
+  return getPermitFromDbData(data[0]);
 };

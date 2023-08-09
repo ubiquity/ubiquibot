@@ -7,25 +7,27 @@ export const query = async (body: string) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
+  const { repository, organization } = payload;
+
+  const id = organization?.id || repository?.id; // repository?.id as fallback
 
   logger.info(`Received '/query' command from user: ${sender}`);
 
   const issue = payload.issue;
   if (!issue) {
     logger.info(`Skipping '/query' because of no issue instance`);
-    return;
+    return `Skipping '/query' because of no issue instance`;
   }
 
-  const regex = /\S+\s+@(\S+)/;
+  const regex = /^\/query\s@(\w+)$/;
   const matches = body.match(regex);
-  const user = matches?.shift();
+  const user = matches?.[1];
 
   if (user) {
-    const walletInfo = await getWalletInfo(user);
-    if (typeof walletInfo == 'number'){
-      return  `Error retrieving multiplier and wallet address for @${user}`;
-    }
-    else {
+    const walletInfo = await getWalletInfo(user, id?.toString());
+    if (!walletInfo?.address) {
+      return `Error retrieving multiplier and wallet address for @${user}`;
+    } else {
       return `@${user}'s wallet address is ${walletInfo?.address} and  multiplier is ${walletInfo?.multiplier}`;
     }
   } else {

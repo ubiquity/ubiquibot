@@ -1,6 +1,6 @@
 import { Context } from "probot";
 import { getBotContext, getLogger } from "../bindings";
-import { Comment, IssueType, Payload } from "../types";
+import { AssignEvent, Comment, IssueType, Payload } from "../types";
 import { checkRateLimitGit } from "../utils";
 import { DEFAULT_TIME_RANGE_FOR_MAX_ISSUE, DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED } from "../configs";
 
@@ -230,6 +230,73 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
   return result;
 };
 
+export const getAllIssueAssignEvents = async (issue_number: number): Promise<AssignEvent[]> => {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
+
+  const result: AssignEvent[] = [];
+  let shouldFetch = true;
+  let page_number = 1;
+  try {
+    while (shouldFetch) {
+      const response = await context.octokit.rest.issues.listEvents({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        issue_number: issue_number,
+        per_page: 100,
+        page: page_number,
+      });
+
+      await checkRateLimitGit(response?.headers);
+
+      // Fixing infinite loop here, it keeps looping even when its an empty array
+      if (response?.data?.length > 0) {
+        response.data.filter((item) => item.event === "assigned").forEach((item) => result?.push(item as AssignEvent));
+        page_number++;
+      } else {
+        shouldFetch = false;
+      }
+    }
+  } catch (e: unknown) {
+    shouldFetch = false;
+  }
+
+  return result.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
+};
+
+export const wasIssueReopened = async (issue_number: number): Promise<boolean> => {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
+
+  let shouldFetch = true;
+  let page_number = 1;
+  try {
+    while (shouldFetch) {
+      const response = await context.octokit.rest.issues.listEvents({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        issue_number: issue_number,
+        per_page: 100,
+        page: page_number,
+      });
+
+      await checkRateLimitGit(response?.headers);
+
+      // Fixing infinite loop here, it keeps looping even when its an empty array
+      if (response?.data?.length > 0) {
+        if (response.data.filter((item) => item.event === "reopened").length > 0) return true;
+        page_number++;
+      } else {
+        shouldFetch = false;
+      }
+    }
+  } catch (e: unknown) {
+    shouldFetch = false;
+  }
+
+  return false;
+};
+
 export const removeAssignees = async (issue_number: number, assignees: string[]): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
@@ -329,8 +396,24 @@ export const removeLabel = async (name: string) => {
   }
 };
 
+export const getAllPullRequests = async (context: Context, state: "open" | "closed" | "all" = "open") => {
+  const prArr = [];
+  let fetchDone = false;
+  const perPage = 100;
+  let curPage = 1;
+  while (!fetchDone) {
+    const prs = await getPullRequests(context, state, perPage, curPage);
+
+    // push the objects to array
+    prArr.push(...prs);
+
+    if (prs.length < perPage) fetchDone = true;
+    else curPage++;
+  }
+  return prArr;
+};
 // Use `context.octokit.rest` to get the pull requests for the repository
-export const getPullRequests = async (context: Context, state: "open" | "closed" | "all" = "open") => {
+export const getPullRequests = async (context: Context, state: "open" | "closed" | "all" = "open", per_page: number, page: number) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   try {
@@ -338,6 +421,8 @@ export const getPullRequests = async (context: Context, state: "open" | "closed"
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       state,
+      per_page,
+      page,
     });
     return pulls;
   } catch (e: unknown) {
@@ -465,7 +550,7 @@ export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userN
 
 export const getOpenedPullRequests = async (username: string) => {
   const context = getBotContext();
-  const prs = await getPullRequests(context, "open");
+  const prs = await getAllPullRequests(context, "open");
   return prs.filter((pr) => !pr.draft && (pr.user?.login === username || !username));
 };
 

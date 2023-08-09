@@ -1,10 +1,12 @@
-import { getBotContext, getLogger } from "../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { Payload } from "../../types";
+import { IssueCommentCommands } from "./commands";
 import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCheck } from "./handlers/first";
 
 export const handleComment = async (): Promise<void> => {
   const context = getBotContext();
+  const config = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -16,23 +18,32 @@ export const handleComment = async (): Promise<void> => {
   }
 
   const body = comment.body;
-  const commands = commentParser(body);
+  const commentedCommands = commentParser(body);
 
-  if (commands.length === 0) {
+  if (commentedCommands.length === 0) {
     await verifyFirstCheck();
     return;
   }
 
-  for (const command of commands) {
-    const userCommand = userCommands.find((i) => i.id == command);
+  const allCommands = userCommands();
+  for (const command of commentedCommands) {
+    const userCommand = allCommands.find((i) => i.id == command);
 
     if (userCommand) {
-      const { handler, callback, successComment, failureComment } = userCommand;
+      const { id, handler, callback, successComment, failureComment } = userCommand;
       logger.info(`Running a comment handler: ${handler.name}`);
 
       const { payload: _payload } = getBotContext();
       const issue = (_payload as Payload).issue;
       if (!issue) continue;
+
+      const feature = config.command.find((e) => e.name === id.split("/")[1]);
+
+      if (!feature?.enabled && id !== IssueCommentCommands.HELP) {
+        logger.info(`Skipping '${id}' because it is disabled on this repo`);
+        await callback(issue.number, `Skipping \`${id}\` because it is disabled on this repo`, payload.action, payload.comment);
+        continue;
+      }
 
       try {
         const response = await handler(body);
