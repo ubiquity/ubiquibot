@@ -91,7 +91,7 @@ export const handleIssueClosed = async () => {
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
   for (const botComment of comments.filter((cmt) => cmt.user.type === UserType.Bot).reverse()) {
     const botCommentBody = botComment.body;
-    if (botCommentBody.includes(GLOBAL_STRINGS.autopaycomment)) {
+    if (botCommentBody.includes(GLOBAL_STRINGS.autopayComment)) {
       const pattern = /\*\*(\w+)\*\*/;
       const res = botCommentBody.match(pattern);
       if (res) {

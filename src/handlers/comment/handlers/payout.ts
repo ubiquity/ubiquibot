@@ -59,7 +59,7 @@ export const autoPay = async (body: string) => {
       return "You must be an `admin` or `billing_manager` to toggle automatic payments for completed issues.";
     }
     if (res.length > 1) {
-      return `${GLOBAL_STRINGS.autopaycomment} **${res[1]}**`;
+      return `${GLOBAL_STRINGS.autopayComment} **${res[1]}**`;
     }
   }
   return "Invalid body for autopay command: e.g. /autopay false";
