@@ -47,6 +47,37 @@ To test the bot, you can:
 2. Add a time label, ex: `Time: <1 Day`
 3. At this point the bot should add a price label.
 
+## Configuration
+
+`chain-id` is ID of the EVM-compatible network that will be used for payouts.
+
+`base-multiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = base-multiplier * time-label-weight * priority-label-weight / 10`
+
+`time-labels` are labels for marking the time limit of the bounty:
+
+- `name` is a human-readable name
+- `weight` is a number that will be used to calculate the bounty price
+- `value` is number of seconds that corresponds to the time limit of the bounty
+
+`priority-labels` are labels for marking the priority of the bounty:
+
+- `name` is a human-readable name
+- `weight` is a number that will be used to calculate the bounty price
+
+`default-labels` are labels that are applied when an issue is created without any time or priority labels.
+
+`auto-pay-mode` can be `true` or `false` that enables or disables automatic payout of bounties when the issue is closed.
+
+`analytics-mode` can be `true` or `false` that enables or disables weekly analytics collection by Ubiquity.
+
+`incentive-mode` can be `true` or `false` that enables or disables comment incentives. These are comments in the issue by either the creator of the bounty or other users.
+
+`issue-creator-multiplier` is a number that defines a base multiplier for calculating incentive reward for the creator of the issue.
+
+`comment-element-pricing` defines how much is a part of the comment worth. For example `text: 0.1` means that any text in the comment will be multiplied by 0.1
+
+`max-concurrent-bounties` is the maximum number of bounties that can be assigned to a bounty hunter at once. This excludes bounties with pending pull request reviews.
+
 ## How to run locally
 
 1. Create a new project at [Supabase](https://supabase.com/). Add `Project URL` and `API Key` to the `.env` file:

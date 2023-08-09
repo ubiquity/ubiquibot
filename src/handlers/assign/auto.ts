@@ -1,5 +1,5 @@
 import { getBotContext, getLogger } from "../../bindings";
-import { addAssignees, getIssueByNumber, getPullRequests } from "../../helpers";
+import { addAssignees, getAllPullRequests, getIssueByNumber, getPullByNumber } from "../../helpers";
 import { gitLinkedIssueParser } from "../../helpers/parser";
 import { Payload } from "../../types";
 
@@ -7,7 +7,7 @@ import { Payload } from "../../types";
 export const checkPullRequests = async () => {
   const context = getBotContext();
   const logger = getLogger();
-  const pulls = await getPullRequests(context);
+  const pulls = await getAllPullRequests(context);
 
   if (pulls.length === 0) {
     logger.debug(`No pull requests found at this time`);
@@ -26,6 +26,14 @@ export const checkPullRequests = async () => {
 
     // if pullRequestLinked is empty, continue
     if (pullRequestLinked == "" || !pull.user) {
+      continue;
+    }
+
+    const connectedPull = await getPullByNumber(context, pull.number);
+
+    // Newly created PULL (draft or direct) pull does have same `created_at` and `updated_at`.
+    if (connectedPull?.created_at !== connectedPull?.updated_at) {
+      logger.debug("It's an updated Pull Request, reverting");
       continue;
     }
 

@@ -9,13 +9,16 @@ export const multiplier = async (body: string) => {
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
   const repo = payload.repository;
+  const { repository, organization } = payload;
+
+  const id = organization?.id || repository?.id; // repository?.id as fallback
 
   logger.info(`Received '/multiplier' command from user: ${sender}`);
 
   const issue = payload.issue;
   if (!issue) {
     logger.info(`Skipping '/multiplier' because of no issue instance`);
-    return;
+    return `Skipping '/multiplier' because of no issue instance`;
   }
 
   const regex = /(".*?"|[^"\s]+)(?=\s*|\s*$)/g;
@@ -46,10 +49,10 @@ export const multiplier = async (body: string) => {
       } else if (part.startsWith("@")) {
         username = part.substring(1);
       } else {
-        reason += part.replace(/['"]/g, "") + " ";
+        reason += part.replace(/['"]/g, "");
       }
     }
-
+    username = username || sender;
     // check if sender is admin or billing_manager
     // passing in context so we don't have to make another request to get the user
     const permissionLevel = await getUserPermission(sender, context);
@@ -65,13 +68,20 @@ export const multiplier = async (body: string) => {
         return "Insufficient permissions to update the payout multiplier. You are not an `admin` or `billing_manager`";
       }
     }
+    logger.info(`Upserting to the wallet table, username: ${username}, bountyMultiplier: ${bountyMultiplier}, reason: ${reason}}`);
 
-    await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason);
-    return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
-      reason ? `provided is "${reason}"` : "is not provided"
-    }.`;
+    await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason, id?.toString());
+    if (bountyMultiplier > 1) {
+      return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
+        reason ? `provided is "${reason}"` : "is not provided"
+      }. This feature is designed to limit the contributor's compensation for any bounty on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a bounty multiplier above 1?`;
+    } else {
+      return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
+        reason ? `provided is "${reason}"` : "is not provided"
+      }.`;
+    }
   } else {
     logger.error("Invalid body for bountyMultiplier command");
-    return `Invalid body for bountyMultiplier command`;
+    return `Invalid syntax for wallet command \n example usage: "/multiplier @user 0.5 'Multiplier reason'"`;
   }
 };

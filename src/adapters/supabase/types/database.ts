@@ -1,4 +1,4 @@
-export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export interface Database {
   graphql_public: {
@@ -11,10 +11,10 @@ export interface Database {
     Functions: {
       graphql: {
         Args: {
-          operationName: string;
-          query: string;
-          variables: Json;
-          extensions: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+          extensions?: Json;
         };
         Returns: Json;
       };
@@ -22,9 +22,45 @@ export interface Database {
     Enums: {
       [_ in never]: never;
     };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
   public: {
     Tables: {
+      access: {
+        Row: {
+          created_at: string | null;
+          multiplier_access: boolean | null;
+          price_access: boolean | null;
+          priority_access: boolean | null;
+          repository: string | null;
+          time_access: boolean | null;
+          updated_at: string | null;
+          user_name: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          multiplier_access?: boolean | null;
+          price_access?: boolean | null;
+          priority_access?: boolean | null;
+          repository?: string | null;
+          time_access?: boolean | null;
+          updated_at?: string | null;
+          user_name: string;
+        };
+        Update: {
+          created_at?: string | null;
+          multiplier_access?: boolean | null;
+          price_access?: boolean | null;
+          priority_access?: boolean | null;
+          repository?: string | null;
+          time_access?: boolean | null;
+          updated_at?: string | null;
+          user_name?: string;
+        };
+        Relationships: [];
+      };
       issues: {
         Row: {
           assignees: string[] | null;
@@ -86,6 +122,7 @@ export interface Database {
           txhash?: string[] | null;
           updated_at?: string | null;
         };
+        Relationships: [];
       };
       users: {
         Row: {
@@ -154,43 +191,89 @@ export interface Database {
           user_type?: string | null;
           wallet_address?: string | null;
         };
+        Relationships: [];
       };
       wallets: {
         Row: {
           created_at: string | null;
+          multiplier: number | null;
+          reason: string | null;
           updated_at: string | null;
           user_name: string;
           wallet_address: string | null;
         };
         Insert: {
           created_at?: string | null;
+          multiplier?: number | null;
+          reason?: string | null;
           updated_at?: string | null;
           user_name: string;
           wallet_address?: string | null;
         };
         Update: {
           created_at?: string | null;
+          multiplier?: number | null;
+          reason?: string | null;
           updated_at?: string | null;
           user_name?: string;
           wallet_address?: string | null;
         };
+        Relationships: [];
+      };
+      weekly: {
+        Row: {
+          created_at: string | null;
+          last_time: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          last_time?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          last_time?: string | null;
+        };
+        Relationships: [];
       };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      add_penalty: {
+        Args: {
+          username: string;
+          repository_name: string;
+          token_address: string;
+          penalty_amount: string;
+        };
+        Returns: string;
+      };
+      deduct_penalty: {
+        Args: {
+          username: string;
+          repository_name: string;
+          token_address: string;
+          penalty_amount: string;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       issue_status: "READY_TO_START" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
   storage: {
     Tables: {
       buckets: {
         Row: {
+          allowed_mime_types: string[] | null;
+          avif_autodetection: boolean | null;
           created_at: string | null;
+          file_size_limit: number | null;
           id: string;
           name: string;
           owner: string | null;
@@ -198,7 +281,10 @@ export interface Database {
           updated_at: string | null;
         };
         Insert: {
+          allowed_mime_types?: string[] | null;
+          avif_autodetection?: boolean | null;
           created_at?: string | null;
+          file_size_limit?: number | null;
           id: string;
           name: string;
           owner?: string | null;
@@ -206,13 +292,24 @@ export interface Database {
           updated_at?: string | null;
         };
         Update: {
+          allowed_mime_types?: string[] | null;
+          avif_autodetection?: boolean | null;
           created_at?: string | null;
+          file_size_limit?: number | null;
           id?: string;
           name?: string;
           owner?: string | null;
           public?: boolean | null;
           updated_at?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "buckets_owner_fkey";
+            columns: ["owner"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       migrations: {
         Row: {
@@ -233,6 +330,7 @@ export interface Database {
           id?: number;
           name?: string;
         };
+        Relationships: [];
       };
       objects: {
         Row: {
@@ -245,6 +343,7 @@ export interface Database {
           owner: string | null;
           path_tokens: string[] | null;
           updated_at: string | null;
+          version: string | null;
         };
         Insert: {
           bucket_id?: string | null;
@@ -256,6 +355,7 @@ export interface Database {
           owner?: string | null;
           path_tokens?: string[] | null;
           updated_at?: string | null;
+          version?: string | null;
         };
         Update: {
           bucket_id?: string | null;
@@ -267,39 +367,72 @@ export interface Database {
           owner?: string | null;
           path_tokens?: string[] | null;
           updated_at?: string | null;
+          version?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "objects_bucketId_fkey";
+            columns: ["bucket_id"];
+            referencedRelation: "buckets";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "objects_owner_fkey";
+            columns: ["owner"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      can_insert_object: {
+        Args: {
+          bucketid: string;
+          name: string;
+          owner: string;
+          metadata: Json;
+        };
+        Returns: undefined;
+      };
       extension: {
-        Args: { name: string };
+        Args: {
+          name: string;
+        };
         Returns: string;
       };
       filename: {
-        Args: { name: string };
+        Args: {
+          name: string;
+        };
         Returns: string;
       };
       foldername: {
-        Args: { name: string };
-        Returns: string[];
+        Args: {
+          name: string;
+        };
+        Returns: unknown;
       };
       get_size_by_bucket: {
         Args: Record<PropertyKey, never>;
-        Returns: { size: number; bucket_id: string }[];
+        Returns: {
+          size: number;
+          bucket_id: string;
+        }[];
       };
       search: {
         Args: {
           prefix: string;
           bucketname: string;
-          limits: number;
-          levels: number;
-          offsets: number;
-          search: string;
-          sortcolumn: string;
-          sortorder: string;
+          limits?: number;
+          levels?: number;
+          offsets?: number;
+          search?: string;
+          sortcolumn?: string;
+          sortorder?: string;
         };
         Returns: {
           name: string;
@@ -312,6 +445,9 @@ export interface Database {
       };
     };
     Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
       [_ in never]: never;
     };
   };
