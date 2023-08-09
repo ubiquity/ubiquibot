@@ -92,6 +92,7 @@ export const handleIssueClosed = async () => {
     logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
     return `Permit generation skipped since paymentPermitMaxPrice is 0`;
   }
+
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
     logger.info(`Skipping... its not a bounty`);
