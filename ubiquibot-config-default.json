@@ -86,7 +86,7 @@
   "disable-analytics": false,
   "payment-permit-max-price": 1000,
   "comment-incentives": false,
-  "max-concurrent-assigns": 2,
+  "max-concurrent-assigns": 9007199254740991, // Number.MAX_SAFE_INTEGER
   "comment-element-pricing": {
     "text": 0.1,
     "link": 0.5,
