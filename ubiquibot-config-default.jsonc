@@ -84,7 +84,7 @@
   "default-labels": [],
   "assistive-pricing": false,
   "disable-analytics": false,
-  "payment-permit-max-price": 1000,
+  "payment-permit-max-price": 9007199254740991, /* Number.MAX_SAFE_INTEGER */
   "comment-incentives": false,
   "max-concurrent-assigns": 9007199254740991, /* Number.MAX_SAFE_INTEGER */
   "comment-element-pricing": {
