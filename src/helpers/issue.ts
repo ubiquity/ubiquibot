@@ -396,8 +396,24 @@ export const removeLabel = async (name: string) => {
   }
 };
 
+export const getAllPullRequests = async (context: Context, state: "open" | "closed" | "all" = "open") => {
+  const prArr = [];
+  let fetchDone = false;
+  const perPage = 100;
+  let curPage = 1;
+  while (!fetchDone) {
+    const prs = await getPullRequests(context, state, perPage, curPage);
+
+    // push the objects to array
+    prArr.push(...prs);
+
+    if (prs.length < perPage) fetchDone = true;
+    else curPage++;
+  }
+  return prArr;
+};
 // Use `context.octokit.rest` to get the pull requests for the repository
-export const getPullRequests = async (context: Context, state: "open" | "closed" | "all" = "open") => {
+export const getPullRequests = async (context: Context, state: "open" | "closed" | "all" = "open", per_page: number, page: number) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   try {
@@ -405,6 +421,8 @@ export const getPullRequests = async (context: Context, state: "open" | "closed"
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       state,
+      per_page,
+      page,
     });
     return pulls;
   } catch (e: unknown) {
@@ -532,7 +550,7 @@ export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userN
 
 export const getOpenedPullRequests = async (username: string) => {
   const context = getBotContext();
-  const prs = await getPullRequests(context, "open");
+  const prs = await getAllPullRequests(context, "open");
   return prs.filter((pr) => !pr.draft && (pr.user?.login === username || !username));
 };
 
