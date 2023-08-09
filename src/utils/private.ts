@@ -20,12 +20,13 @@ import {
   getRegisterWalletWithVerification,
 } from "./helpers";
 
-import fs from 'fs';
-import { parse } from 'comment-json';
+import fs from "fs";
+import stripJsonComments from "strip-json-comments";
 
-const configPath = '../../ubiquibot-config-default.jsonc';
-const configFile = fs.readFileSync(configPath, 'utf8');
-const DEFAULT_CONFIG_JSON = parse(configFile);
+const configPath = "../../ubiquibot-config-default.jsonc";
+const configFile = fs.readFileSync(configPath, "utf8");
+const configString = stripJsonComments(configFile);
+const DEFAULT_CONFIG_JSON = JSON.parse(configString);
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
