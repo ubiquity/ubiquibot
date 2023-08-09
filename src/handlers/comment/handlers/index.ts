@@ -25,6 +25,7 @@ import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
 import { query } from "./query";
 import { autoPay } from "./payout";
+import { getTargetPriceLabel } from "../../shared";
 
 export * from "./assign";
 export * from "./wallet";
@@ -96,8 +97,8 @@ export const issueCreatedCallback = async (): Promise<void> => {
     const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
     const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
-    const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : timeLabelConfigs[0].name;
-    const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : priorityLabelConfigs[0].name;
+    const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : config.price.defaultLabels[0];
+    const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : config.price.defaultLabels[1];
     if (!timeLabels.length) await addLabelToIssue(minTimeLabel);
     if (!priorityLabels.length) await addLabelToIssue(minPriorityLabel);
 
