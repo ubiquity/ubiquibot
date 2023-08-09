@@ -56,7 +56,7 @@ export const autoPay = async (body: string) => {
   if (res) {
     const userPermission = await getUserPermission(payload.sender.login, context);
     if (userPermission !== "admin" && userPermission !== "billing_manager") {
-      return "Permission required to set autopay mode.";
+      return "You must be an `admin` or `billing_manager` to toggle automatic payments for completed issues.";
     }
     if (res.length > 1) {
       return `${GLOBAL_STRINGS.autopaycomment} **${res[1]}**`;
