@@ -20,7 +20,12 @@ import {
   getRegisterWalletWithVerification,
 } from "./helpers";
 
-import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
+import fs from 'fs';
+import { parse } from 'comment-json';
+
+const configPath = '../../ubiquibot-config-default.jsonc';
+const configFile = fs.readFileSync(configPath, 'utf8');
+const DEFAULT_CONFIG_JSON = parse(configFile);
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
