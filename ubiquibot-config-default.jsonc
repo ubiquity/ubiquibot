@@ -2,8 +2,8 @@
   "evm-network-id": 100,
   "price-multiplier": 1,
   "issue-creator-multiplier": 1000,
-  "payment-permit-max-price": 9007199254740991 /* Number.MAX_SAFE_INTEGER */,
-  "max-concurrent-assigns": 9007199254740991 /* Number.MAX_SAFE_INTEGER */,
+  "payment-permit-max-price": 9007199254740991, // Number.MAX_SAFE_INTEGER
+  "max-concurrent-assigns": 9007199254740991, // Number.MAX_SAFE_INTEGER
   "assistive-pricing": false,
   "disable-analytics": false,
   "comment-incentives": false,
@@ -90,10 +90,38 @@
     }
   ],
   "comment-element-pricing": {
-    "text": 0,
-    "link": 0,
-    "list": 0,
+    // https://github.com/syntax-tree/mdast#nodes
+    "blockquote": 0,
+    "break": 0,
     "code": 0,
-    "image": 0
+    "definition": 0,
+    "emphasis": 0,
+    "heading": 0,
+    "html": 0,
+    "image": 0,
+    "imageReference": 0,
+    "inlineCode": 0,
+    "link": 0,
+    "linkReference": 0,
+    "list": 0,
+    "listItem": 0,
+    "paragraph": 0,
+    "root": 0,
+    "strong": 0, // Also includes italics, unfortunately https://github.com/syntax-tree/mdast#strong
+    "text": 0,
+    "thematicBreak": 0,
+    // https://github.com/syntax-tree/mdast#gfm
+    "delete": 0,
+    "footnoteDefinition": 0,
+    "footnoteReference": 0,
+    "table": 0,
+    "tableCell": 0,
+    "tableRow": 0,
+    "alignType": 0,
+    "flowContent": 0,
+    "listContent": 0,
+    "phrasingContent": 0,
+    "rowContent": 0,
+    "tableContent": 0
   }
 }
