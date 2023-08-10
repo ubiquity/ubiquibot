@@ -6,6 +6,7 @@ import { getWalletAddress, getWalletMultiplier } from "../../../adapters/supabas
 import { tableComment } from "./table";
 import { bountyInfo } from "../../wildcard";
 import { ASSIGN_COMMAND_ENABLED, GLOBAL_STRINGS } from "../../../configs";
+import { isParentIssue } from "../../pricing";
 
 export const assign = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -27,6 +28,11 @@ export const assign = async (body: string) => {
   if (!ASSIGN_COMMAND_ENABLED) {
     logger.info(`Ignore '/start' command from user: ASSIGN_COMMAND_ENABLED config is set false`);
     return GLOBAL_STRINGS.assignCommandDisabledComment;
+  }
+
+  if (isParentIssue(issue.body)) {
+    logger.info(`Ignore '/start' command from user: identified as parent issue`);
+    return GLOBAL_STRINGS.ignorStartCommandForParentIssuesComment;
   }
 
   const openedPullRequests = await getAvailableOpenedPullRequests(payload.sender.login);

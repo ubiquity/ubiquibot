@@ -1,5 +1,6 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel } from "../../helpers";
+import { GLOBAL_STRINGS } from "../../configs";
+import { addCommentToIssue, addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel } from "../../helpers";
 import { Payload } from "../../types";
 import { handleLabelsAccess } from "../access";
 import { getTargetPriceLabel } from "../shared";
@@ -11,12 +12,6 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const payload = context.payload as Payload;
   if (!payload.issue) return;
   const labels = payload.issue.labels;
-
-  if (isParentIssue(payload.issue.body)) {
-    logger.error("Identified as parent issue. Disabling price label.");
-    await clearAllPriceLabelsOnIssue();
-    return;
-  }
 
   const valid = await handleLabelsAccess();
 
@@ -35,6 +30,14 @@ export const pricingLabelLogic = async (): Promise<void> => {
     if (labels.map((i) => i.name).includes(targetPriceLabel)) {
       logger.info(`Skipping... already exists`);
     } else {
+      logger.info(`Checking if the issue is parent`);
+      if (isParentIssue(payload.issue.body)) {
+        logger.error("Identified as parent issue. Disabling price label.");
+        await clearAllPriceLabelsOnIssue();
+        await addCommentToIssue(GLOBAL_STRINGS.skipPriceLabelGenerationComment, payload.issue.number);
+        return;
+      }
+
       logger.info(`Adding price label to issue`);
       await clearAllPriceLabelsOnIssue();
 
