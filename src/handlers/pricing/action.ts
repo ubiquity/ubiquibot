@@ -55,3 +55,8 @@ export const pricingLabelLogic = async (): Promise<void> => {
     logger.info(`Skipping action...`);
   }
 };
+
+export const isParentIssue = (body: string) => {
+  const parentPattern = /-\s+\[( |x)\]\s+#\d+/;
+  return body.match(parentPattern);
+};

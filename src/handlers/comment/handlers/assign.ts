@@ -32,7 +32,7 @@ export const assign = async (body: string) => {
 
   if (isParentIssue(issue.body)) {
     logger.info(`Ignore '/start' command from user: identified as parent issue`);
-    return GLOBAL_STRINGS.ignorStartCommandForParentIssuesComment;
+    return GLOBAL_STRINGS.ignoreStartCommandForParentIssueComment;
   }
 
   const openedPullRequests = await getAvailableOpenedPullRequests(payload.sender.login);
