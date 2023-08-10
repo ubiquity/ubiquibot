@@ -13,16 +13,24 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      - name: Set up Git
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-
       - name: Install jq and yq
         run: |
           sudo apt-get -y install jq
           sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
           sudo chmod +x /usr/bin/yq
+
+      - name: Authenticate SSH 
+        uses: webfactory/ssh-agent@v0.4.0 
+        with: 
+          ssh-private-key: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }} 
+        env: 
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true 
+   
+      - name: Commit and Push Changes 
+        run: | 
+          git config --local user.email "UbiquiBot[dev]@github.com" 
+          git config --local user.name "UbiquiBot[dev]" 
+
       - name: Update Config Params and Create Pull Requests
         run: |
           urls=$(curl -sSL https://raw.githubusercontent.com/ubiquity/devpool-directory/development/projects.json | jq -r '.urls[]')
@@ -76,8 +84,9 @@ jobs:
             
             git add .github/ubiquibot-config.yml
             git commit -m "build: use latest ubiquibot config setup"
-            git remote set-url origin https://${{ secrets.PAT_TOKEN }}@github.com/$ownerName/$repoName.git
-            git push -f origin update
+            git remote set-url origin git@github.com:$ownerName/$repoName.git
+            git push git@github.com:${{github.repository}}.git update
+                       
             curl -L \
             -X POST \
             -H "Accept: application/vnd.github+json" \
