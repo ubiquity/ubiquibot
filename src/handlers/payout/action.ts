@@ -90,7 +90,7 @@ export const handleIssueClosed = async () => {
     return "Permit generation skipped because the issue was not closed as completed";
   }
 
-  logger.info(`Checking if the issue is parent`);
+  logger.info(`Checking if the issue is a parent issue.`);
   if (isParentIssue(issue.body)) {
     logger.error("Permit generation skipped since the issue is identified as parent issue.");
     await clearAllPriceLabelsOnIssue();
