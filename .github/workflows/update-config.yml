@@ -12,6 +12,11 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
+      
+      - name: Set up git
+        run: |
+          git config --global user.email "UbiquiBot[dev]@github.com" 
+          git config --global user.name "UbiquiBot[dev]" 
 
       - name: Install jq and yq
         run: |
@@ -22,7 +27,7 @@ jobs:
       - name: Authenticate SSH 
         uses: webfactory/ssh-agent@v0.4.0 
         with: 
-          ssh-private-key: ${{ secrets.UBIQUITY_BOUNTY_BOT_DEV_PRIVATE_KEY_OPENSSH }} 
+          ssh-private-key: ${{ secrets.ssh }} 
         env: 
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true 
    
@@ -33,7 +38,7 @@ jobs:
 
       - name: Update Config Params and Create Pull Requests
         run: |
-          urls=$(curl -sSL https://raw.githubusercontent.com/ubiquity/devpool-directory/development/projects.json | jq -r '.urls[]')
+         urls=$(curl -sSL https://raw.githubusercontent.com/ubiquity/devpool-directory/development/projects.json | jq -r '.urls[]')
 
           for url in $urls
           do
@@ -85,7 +90,7 @@ jobs:
             git add .github/ubiquibot-config.yml
             git commit -m "build: use latest ubiquibot config setup"
             git remote set-url origin git@github.com:$ownerName/$repoName.git
-            git push git@github.com:${{github.repository}}.git update
+            git push -f git@github.com:${{github.repository}}.git update
                        
             curl -L \
             -X POST \
