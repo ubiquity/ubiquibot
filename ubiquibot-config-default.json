@@ -79,6 +79,10 @@
     {
       "name": "allow",
       "enabled": false
+    },
+    {
+      "name": "autopay",
+      "enabled": false
     }
   ],
   "default-labels": [],

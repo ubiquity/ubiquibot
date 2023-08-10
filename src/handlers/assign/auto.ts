@@ -1,5 +1,5 @@
 import { getBotContext, getLogger } from "../../bindings";
-import { addAssignees, getIssueByNumber, getPullByNumber, getPullRequests } from "../../helpers";
+import { addAssignees, getAllPullRequests, getIssueByNumber, getPullByNumber } from "../../helpers";
 import { gitLinkedIssueParser } from "../../helpers/parser";
 import { Payload } from "../../types";
 
@@ -7,7 +7,7 @@ import { Payload } from "../../types";
 export const checkPullRequests = async () => {
   const context = getBotContext();
   const logger = getLogger();
-  const pulls = await getPullRequests(context);
+  const pulls = await getAllPullRequests(context);
 
   if (pulls.length === 0) {
     logger.debug(`No pull requests found at this time`);
