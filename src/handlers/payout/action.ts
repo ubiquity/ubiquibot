@@ -3,6 +3,7 @@ import { getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import {
   addLabelToIssue,
+  clearAllPriceLabelsOnIssue,
   deleteLabel,
   generatePermit2Signature,
   getAllIssueAssignEvents,
@@ -92,6 +93,7 @@ export const handleIssueClosed = async () => {
   logger.info(`Checking if the issue is parent`);
   if (isParentIssue(issue.body)) {
     logger.error("Permit generation skipped since the issue is identified as parent issue.");
+    await clearAllPriceLabelsOnIssue();
     return "Permit generation skipped since the issue is identified as parent issue.";
   }
 
