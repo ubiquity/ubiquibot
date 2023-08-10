@@ -3,24 +3,24 @@ import { getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import {
   addLabelToIssue,
-  clearAllPriceLabelsOnIssue,
   deleteLabel,
   generatePermit2Signature,
   getAllIssueAssignEvents,
   getAllIssueComments,
   getTokenSymbol,
+  savePermitToDB,
   wasIssueReopened,
 } from "../../helpers";
 import { UserType, Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
-import { isParentIssue } from "../pricing";
+import { GLOBAL_STRINGS } from "../../configs";
 
 export const handleIssueClosed = async () => {
   const context = getBotContext();
   const {
     payout: { paymentToken, rpc, permitBaseUrl, networkId },
-    mode: { autoPayMode },
+    mode: { paymentPermitMaxPrice },
   } = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -35,7 +35,7 @@ export const handleIssueClosed = async () => {
 
   const wasReopened = await wasIssueReopened(issue.number);
   const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
-  const permitCommentIdx = comments.findIndex((e) => e.user.type === "Bot" && e.body.match(claimUrlRegex));
+  const permitCommentIdx = comments.findIndex((e) => e.user.type === UserType.Bot && e.body.match(claimUrlRegex));
 
   if (wasReopened && permitCommentIdx !== -1) {
     const permitComment = comments[permitCommentIdx];
@@ -89,15 +89,24 @@ export const handleIssueClosed = async () => {
   }
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
-  if (!autoPayMode) {
-    logger.info(`Skipping to generate permit2 url, reason: { autoPayMode: ${autoPayMode}}`);
-    return `Permit generation skipped since autoPayMode is disabled`;
+  for (const botComment of comments.filter((cmt) => cmt.user.type === UserType.Bot).reverse()) {
+    const botCommentBody = botComment.body;
+    if (botCommentBody.includes(GLOBAL_STRINGS.autopayComment)) {
+      const pattern = /\*\*(\w+)\*\*/;
+      const res = botCommentBody.match(pattern);
+      if (res) {
+        if (res[1] === "false") {
+          logger.info(`Skipping to generate permit2 url, reason: autoPayMode for this issue: false`);
+          return `Permit generation skipped since automatic payment for this issue is disabled.`;
+        }
+        break;
+      }
+    }
   }
 
-  if (isParentIssue(issue.body)) {
-    await clearAllPriceLabelsOnIssue();
-    logger.info("Skipping to proceed the payment because its parent issue");
-    return `Permit generation skipped since the issue is identified as parent issue`;
+  if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
+    logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
+    return `Permit generation skipped since paymentPermitMaxPrice is 0`;
   }
 
   const issueDetailed = bountyInfo(issue);
@@ -129,6 +138,10 @@ export const handleIssueClosed = async () => {
 
   // TODO: add multiplier to the priceInEth
   let priceInEth = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString();
+  if (parseInt(priceInEth) > paymentPermitMaxPrice) {
+    logger.info("Skipping to proceed the payment because bounty payout is higher than paymentPermitMaxPrice");
+    return `Permit generation skipped since issue's bounty is higher than ${paymentPermitMaxPrice}`;
+  }
   if (!recipient || recipient?.trim() === "") {
     logger.info(`Recipient address is missing`);
     return;
@@ -149,7 +162,7 @@ export const handleIssueClosed = async () => {
     priceInEth = ethers.utils.formatUnits(bountyAmountAfterPenalty, 18);
   }
 
-  const payoutUrl = await generatePermit2Signature(recipient, priceInEth, issue.node_id);
+  const { txData, payoutUrl } = await generatePermit2Signature(recipient, priceInEth, issue.node_id);
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
   logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
@@ -161,6 +174,7 @@ export const handleIssueClosed = async () => {
   }
   await deleteLabel(issueDetailed.priceLabel);
   await addLabelToIssue("Permitted");
+  await savePermitToDB(assignee.id, txData);
   if (penaltyAmount.gt(0)) {
     await removePenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString(), penaltyAmount);
   }

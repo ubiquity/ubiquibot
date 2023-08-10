@@ -24,6 +24,7 @@ import {
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
 import { query } from "./query";
+import { autoPay } from "./payout";
 
 export * from "./assign";
 export * from "./wallet";
@@ -77,11 +78,20 @@ export const issueClosedCallback = async (): Promise<void> => {
  */
 
 export const issueCreatedCallback = async (): Promise<void> => {
+  const logger = getLogger();
   const { payload: _payload } = getBotContext();
   const config = getBotConfig();
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   const labels = issue.labels;
+
+  const { assistivePricing } = config.mode;
+
+  if (!assistivePricing) {
+    logger.info("Skipping adding label to issue because assistive pricing is disabled");
+    return;
+  }
+
   try {
     const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
     const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
@@ -216,6 +226,12 @@ export const userCommands = (): UserCommands[] => {
     handler: payout,
     callback: commandCallback,
   },*/
+    {
+      id: IssueCommentCommands.AUTOPAY,
+      description: "Toggle automatic payment for the completion of the current issue.",
+      handler: autoPay,
+      callback: commandCallback,
+    },
     {
       id: IssueCommentCommands.QUERY,
       description: `Comments the users multiplier and address`,

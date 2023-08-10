@@ -1,6 +1,6 @@
 import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
-import { Payload, LabelItem, Comment, IssueType } from "../../../types";
+import { Payload, LabelItem, Comment, IssueType, Issue } from "../../../types";
 import { deadLinePrefix } from "../../shared";
 import { getWalletAddress, getWalletMultiplier } from "../../../adapters/supabase";
 import { tableComment } from "./table";
@@ -92,16 +92,9 @@ export const assign = async (body: string) => {
   const startTime = new Date().getTime();
   const endTime = new Date(startTime + duration * 1000);
 
-  const { reason, value } = await getWalletMultiplier(payload.sender.login, id?.toString());
-
-  const multiplier = value?.toFixed(2) || "1.00";
-
   const comment = {
     deadline: endTime.toUTCString().replace("GMT", "UTC"),
     wallet: (await getWalletAddress(payload.sender.login)) || "Please set your wallet address to use `/wallet 0x0000...0000`",
-    multiplier,
-    reason,
-    bounty: `Permit generation skipped since price label is not set`,
     commit: `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`,
     tips: `<h6>Tips:</h6>
     <ul>
@@ -122,11 +115,35 @@ export const assign = async (body: string) => {
   const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
-    const issueDetailed = bountyInfo(issue);
-    if (issueDetailed.priceLabel) {
-      comment.bounty = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString() + " USD";
-    }
-    return tableComment(comment) + comment.tips;
+    const { multiplier, reason, bounty } = await getMultiplierInfoToDisplay(payload.sender.login, id?.toString(), issue);
+    return tableComment({ ...comment, multiplier, reason, bounty }) + comment.tips;
   }
   return;
+};
+
+const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, issue: Issue) => {
+  const { reason, value } = await getWalletMultiplier(senderLogin, org_id);
+
+  const multiplier = value?.toFixed(2) || "1.00";
+
+  let _multiplierToDisplay, _reasonToDisplay, _bountyToDisplay;
+
+  if (value == 1) {
+    if (reason) {
+      _multiplierToDisplay = multiplier;
+      _reasonToDisplay = reason;
+    } else {
+      // default mode: normal bounty hunter with default multiplier 1 and no reason
+      // nothing to show about multiplier
+    }
+  } else {
+    _multiplierToDisplay = multiplier;
+    _reasonToDisplay = reason;
+    _bountyToDisplay = `Permit generation skipped since price label is not set`;
+    const issueDetailed = bountyInfo(issue);
+    if (issueDetailed.priceLabel) {
+      _bountyToDisplay = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString() + " USD";
+    }
+  }
+  return { multiplier: _multiplierToDisplay, reason: _reasonToDisplay, bounty: _bountyToDisplay };
 };
