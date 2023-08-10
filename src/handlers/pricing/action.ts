@@ -13,6 +13,16 @@ export const pricingLabelLogic = async (): Promise<void> => {
   if (!payload.issue) return;
   const labels = payload.issue.labels;
 
+  logger.info(`Checking if the issue is parent`);
+  if (isParentIssue(payload.issue.body)) {
+    logger.error("Identified as parent issue. Disabling price label.");
+    const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));
+    if (issuePrices.length) {
+      await addCommentToIssue(GLOBAL_STRINGS.skipPriceLabelGenerationComment, payload.issue.number);
+      await clearAllPriceLabelsOnIssue();
+    }
+    return;
+  }
   const valid = await handleLabelsAccess();
 
   if (!valid) {
@@ -31,14 +41,6 @@ export const pricingLabelLogic = async (): Promise<void> => {
     if (labels.map((i) => i.name).includes(targetPriceLabel)) {
       logger.info(`Skipping... already exists`);
     } else {
-      logger.info(`Checking if the issue is parent`);
-      if (isParentIssue(payload.issue.body)) {
-        logger.error("Identified as parent issue. Disabling price label.");
-        await clearAllPriceLabelsOnIssue();
-        await addCommentToIssue(GLOBAL_STRINGS.skipPriceLabelGenerationComment, payload.issue.number);
-        return;
-      }
-
       logger.info(`Adding price label to issue`);
       await clearAllPriceLabelsOnIssue();
 
