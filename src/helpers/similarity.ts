@@ -9,7 +9,6 @@ export const findDuplicateOne = async () => {
   const issues = await listAllIssuesForRepo("all");
   issues.shift();
   const importantWords = await extractImportantWords();
-  console.log(importantWords);
   const wordCount = importantWords.length;
   for (const iss of issues) {
     if (iss.body) {
