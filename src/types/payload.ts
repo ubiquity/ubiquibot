@@ -112,6 +112,7 @@ const IssueSchema = Type.Object({
   updated_at: Type.String({ format: "date-time" }),
   closed_at: Type.Any(),
   author_association: Type.String(),
+  body: Type.String(),
 });
 export type Issue = Static<typeof IssueSchema>;
 
