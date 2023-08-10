@@ -39,7 +39,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
     return;
   }
 
-  logger.save(
+  logger.info(
     `Config loaded! config: ${JSON.stringify({
       price: botConfig.price,
       unassign: botConfig.unassign,

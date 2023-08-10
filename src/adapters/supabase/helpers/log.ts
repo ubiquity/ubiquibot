@@ -9,12 +9,12 @@ export class GitHubLogger {
     this.app = app;
   }
 
-  async save(logMessage: string) {
+  private async save(logMessage: string | object, errorType: string, errorPayload?: string | object) {
     const context = getBotContext();
 
     const payload = context.payload as Payload;
 
-    console.log(payload, logMessage);
+    console.log(payload, logMessage, errorType, this.app, errorPayload);
 
     // try {
     //     const { data, error } = await this.supabase
@@ -39,6 +39,22 @@ export class GitHubLogger {
     // } catch (error: any) {
     //     console.error('An error occurred:', error.message);
     // }
+  }
+
+  info(message: string | object, errorPayload?: string | object) {
+    this.save(message, `info`, errorPayload);
+  }
+
+  warn(message: string | object, errorPayload?: string | object) {
+    this.save(message, `warn`, errorPayload);
+  }
+
+  debug(message: string | object, errorPayload?: string | object) {
+    this.save(message, `debug`, errorPayload);
+  }
+
+  error(message: string | object, errorPayload?: string | object) {
+    this.save(message, `error`, errorPayload);
   }
 
   async get() {
