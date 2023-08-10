@@ -61,8 +61,7 @@ export const AssignSchema = Type.Object({
 });
 
 export const LogConfigSchema = Type.Object({
-  level: Type.String(),
-  ingestionKey: Type.String(),
+  logEnvironment: Type.String(),
 });
 
 export const SodiumSchema = Type.Object({

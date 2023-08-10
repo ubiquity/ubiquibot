@@ -34,7 +34,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
     // level: botConfig.log.level,
   };
 
-  logger = new GitHubLogger(options.app);
+  logger = new GitHubLogger(options.app, botConfig.log.logEnvironment); // contributors will see logs in console while on development env
   if (!logger) {
     return;
   }

@@ -4,9 +4,11 @@ import { Payload } from "../../../types";
 export class GitHubLogger {
   private supabase = getAdapters().supabase;
   private app;
+  private logEnvironment;
 
-  constructor(app: string) {
+  constructor(app: string, logEnvironment: string) {
     this.app = app;
+    this.logEnvironment = logEnvironment;
   }
 
   private async save(logMessage: string | object, errorType: string, errorPayload?: string | object) {
@@ -14,7 +16,7 @@ export class GitHubLogger {
 
     const payload = context.payload as Payload;
 
-    console.log(payload, logMessage, errorType, this.app, errorPayload);
+    console.log(logMessage, errorType, this.app, errorPayload);
 
     // try {
     //     const { data, error } = await this.supabase

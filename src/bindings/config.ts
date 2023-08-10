@@ -32,8 +32,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
 
   const botConfig: BotConfig = {
     log: {
-      level: process.env.LOG_LEVEL || "debug",
-      ingestionKey: process.env.LOGDNA_INGESTION_KEY ?? "",
+      logEnvironment: process.env.LOG_ENVIRONMENT || "production",
     },
     price: {
       baseMultiplier,
@@ -83,10 +82,6 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       registerWalletWithVerification: registerWalletWithVerification,
     },
   };
-
-  if (botConfig.log.ingestionKey == "") {
-    throw new Error("LogDNA ingestion key missing");
-  }
 
   if (botConfig.payout.privateKey == "") {
     botConfig.mode.paymentPermitMaxPrice = 0;
