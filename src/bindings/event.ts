@@ -1,5 +1,4 @@
 import { Context } from "probot";
-import { createLogger } from "@logdna/logger";
 import { createAdapters } from "../adapters";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
@@ -7,6 +6,7 @@ import { BotConfig, GithubEvent, Payload, PayloadSchema } from "../types";
 import { Adapters } from "../types/adapters";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
+import { GitHubLogger } from "../adapters/supabase";
 
 let botContext: Context = {} as Context;
 export const getBotContext = () => botContext;
@@ -17,14 +17,8 @@ export const getBotConfig = () => botConfig;
 let adapters: Adapters = {} as Adapters;
 export const getAdapters = () => adapters;
 
-export type Logger = {
-  info: (msg: string | object, options?: JSON) => void;
-  debug: (msg: string | object, options?: JSON) => void;
-  warn: (msg: string | object, options?: JSON) => void;
-  error: (msg: string | object, options?: JSON) => void;
-};
-let logger: Logger;
-export const getLogger = (): Logger => logger;
+let logger: GitHubLogger;
+export const getLogger = (): GitHubLogger => logger;
 
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT as string, GithubEvent.PUSH_EVENT as string];
 
@@ -37,14 +31,15 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   const options = {
     app: "UbiquiBot",
-    level: botConfig.log.level,
+    // level: botConfig.log.level,
   };
-  logger = createLogger(botConfig.log.ingestionKey, options) as Logger;
+
+  logger = new GitHubLogger(options.app);
   if (!logger) {
     return;
   }
 
-  logger.info(
+  logger.save(
     `Config loaded! config: ${JSON.stringify({
       price: botConfig.price,
       unassign: botConfig.unassign,
