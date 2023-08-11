@@ -13,6 +13,7 @@ import {
 import { UserType, Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
+import Decimal from "decimal.js";
 
 export const handleIssueClosed = async () => {
   const context = getBotContext();
@@ -115,22 +116,21 @@ export const handleIssueClosed = async () => {
     return;
   }
 
-  const { value } = await getWalletMultiplier(assignee.login, id?.toString());
+  const { value: multiplier } = await getWalletMultiplier(assignee.login, id?.toString());
 
-  if (value === 0) {
+  if (multiplier === 0) {
     const errMsg = "Refusing to generate the payment permit because " + `@${assignee.login}` + "'s payment `multiplier` is `0`";
     logger.info(errMsg);
     return errMsg;
   }
 
-  // TODO: add multiplier to the priceInEth
-  let priceInEth = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString();
+  let priceInEth = new Decimal(issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4)).mul(multiplier);
 
   // if bounty hunter has any penalty then deduct it from the bounty
   const penaltyAmount = await getPenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString());
   if (penaltyAmount.gt(0)) {
     logger.info(`Deducting penalty from bounty`);
-    const bountyAmount = ethers.utils.parseUnits(priceInEth, 18);
+    const bountyAmount = ethers.utils.parseUnits(priceInEth.toString(), 18);
     const bountyAmountAfterPenalty = bountyAmount.sub(penaltyAmount);
     if (bountyAmountAfterPenalty.lte(0)) {
       await removePenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString(), bountyAmount);
@@ -138,7 +138,7 @@ export const handleIssueClosed = async () => {
       logger.info(msg);
       return msg;
     }
-    priceInEth = ethers.utils.formatUnits(bountyAmountAfterPenalty, 18);
+    priceInEth = new Decimal(ethers.utils.formatUnits(bountyAmountAfterPenalty, 18));
   }
 
   const payoutUrl = await generatePermit2Signature(recipient, priceInEth, issue.node_id);

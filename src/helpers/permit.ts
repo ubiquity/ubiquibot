@@ -2,6 +2,7 @@ import { MaxUint256, PermitTransferFrom, SignatureTransfer } from "@uniswap/perm
 import { BigNumber, ethers } from "ethers";
 import { getBotConfig, getLogger } from "../bindings";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
+import Decimal from "decimal.js";
 
 const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on all networks
 
@@ -13,7 +14,7 @@ const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on
  *
  * @returns Permit2 url including base64 encocded data
  */
-export const generatePermit2Signature = async (spender: string, amountInEth: string, identifier: string): Promise<string> => {
+export const generatePermit2Signature = async (spender: string, amountInEth: Decimal, identifier: string): Promise<string> => {
   const {
     payout: { networkId, privateKey, permitBaseUrl, rpc, paymentToken },
   } = getBotConfig();
@@ -26,7 +27,7 @@ export const generatePermit2Signature = async (spender: string, amountInEth: str
       // token we are permitting to be transferred
       token: paymentToken,
       // amount we are permitting to be transferred
-      amount: ethers.utils.parseUnits(amountInEth, 18),
+      amount: ethers.utils.parseUnits(amountInEth.toString(), 18),
     },
     // who can transfer the tokens
     spender: spender,

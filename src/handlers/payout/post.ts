@@ -3,6 +3,7 @@ import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getIssueDescription, getTokenSymbol, parseComments } from "../../helpers";
 import { Incentives, Payload, UserType } from "../../types";
 import { commentParser } from "../comment";
+import Decimal from "decimal.js";
 
 const ItemsToExclude: string[] = ["blockquote"];
 /**
@@ -62,19 +63,19 @@ export const incentivizeComments = async () => {
   const reward: Record<string, string> = {};
 
   // The mapping between gh handle and amount in ETH
-  const fallbackReward: Record<string, string> = {};
+  const fallbackReward: Record<string, Decimal> = {};
   let comment = "";
   for (const user of Object.keys(issueCommentsByUser)) {
     const comments = issueCommentsByUser[user];
     const commentsByNode = await parseComments(comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, incentives);
-    if (rewardValue === 0) {
+    if (rewardValue.equals(0)) {
       logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`);
       continue;
     }
     logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
-    const amountInETH = ((rewardValue * baseMultiplier) / 1000).toFixed(2);
+    const amountInETH = rewardValue.mul(baseMultiplier).div(1000);
     if (account) {
       const payoutUrl = await generatePermit2Signature(account, amountInETH, issue.node_id);
       comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
@@ -147,17 +148,17 @@ const generatePermitForComments = async (
   incentives: Incentives,
   tokenSymbol: string,
   node_id: string
-): Promise<{ comment: string; payoutUrl?: string; amountInETH?: string }> => {
+): Promise<{ comment: string; payoutUrl?: string; amountInETH?: Decimal }> => {
   const logger = getLogger();
   const commentsByNode = await parseComments(comments, ItemsToExclude);
   const rewardValue = calculateRewardValue(commentsByNode, incentives);
-  if (rewardValue === 0) {
+  if (rewardValue.equals(0)) {
     logger.info(`No reward for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     return { comment: "" };
   }
   logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
   const account = await getWalletAddress(user);
-  const amountInETH = ((rewardValue * multiplier) / 1000).toFixed(2);
+  const amountInETH = rewardValue.mul(multiplier).div(1000);
   let comment = "";
   if (account) {
     const payoutUrl = await generatePermit2Signature(account, amountInETH, node_id);
@@ -174,24 +175,26 @@ const generatePermitForComments = async (
  * @param incentives - The basic price table for reward calculation
  * @returns - The reward value
  */
-const calculateRewardValue = (comments: Record<string, string[]>, incentives: Incentives): number => {
-  let sum = 0;
+const calculateRewardValue = (comments: Record<string, string[]>, incentives: Incentives): Decimal => {
+  let sum = new Decimal(0);
   for (const key of Object.keys(comments)) {
     const value = comments[key];
 
     // if it's a text node calculate word count and multiply with the reward value
     if (key == "#text") {
-      const wordReward = incentives.comment.totals.word;
-      if (!wordReward) {
+      if (!incentives.comment.totals.word) {
         continue;
       }
-      sum += value.map((str) => str.trim().split(" ").length).reduce((totalWords, wordCount) => totalWords + wordCount, 0) * wordReward;
+      const wordReward = new Decimal(incentives.comment.totals.word);
+      const reward = wordReward.mul(value.map((str) => str.trim().split(" ").length).reduce((totalWords, wordCount) => totalWords + wordCount, 0));
+      sum = sum.add(reward);
     } else {
-      const rewardValue = incentives.comment.elements[key];
-      if (!rewardValue) {
+      if (!incentives.comment.elements[key]) {
         continue;
       }
-      sum += rewardValue;
+      const rewardValue = new Decimal(incentives.comment.elements[key]);
+      const reward = rewardValue.mul(value.length);
+      sum = sum.add(reward);
     }
   }
 
