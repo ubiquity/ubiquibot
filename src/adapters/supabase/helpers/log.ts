@@ -133,7 +133,11 @@ export class GitHubLogger {
       logMessage = JSON.stringify(logMessage);
     }
 
-    this.addToQueue({ repo, org, commentId, issueNumber, logMessage, errorType, timestamp });
+    this.addToQueue({ repo, org, commentId, issueNumber, logMessage, errorType, timestamp })
+      .then(() => {})
+      .catch(() => {
+        console.log("Error adding logs to queue");
+      });
 
     if (this.logEnvironment === "development") {
       console.log(this.app, logMessage, errorPayload);
