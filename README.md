@@ -146,21 +146,21 @@ When using as a github app the flow is the following:
 5. Describe carefully the steps taken to get the feature working, this way our team can easily verify
 6. Link that QA issue to the pull request as indicated on the template before requesting a review
 
-## Payments Permits locally
+## Payments Permits in a local instance
 
-For payment to work in your local setup, ubiquibot must be setup in a github organization. It will not work for a ubiquibot instance setup in a personal account. Once, you have an ubiquibot instance working in an organization, follow steps given below:
+For payment to work in your local setup, ubiquibot must be set up in a Github organization. It will not work for a ubiquibot instance set up in a personal account. Once, you have an ubiquibot instance working in an organization, follow the steps given below:
 
-- Create a new private repository in your github organization with name `ubiquibot-config`
-- Add ubiquibot to `ubiquibot-config` repository.
-- Creata a file `.github/ubiquibot-config.yml` in it. Fill the file with contents from [this file](https://github.com/ubiquity/ubiquibot/blob/development/.github/ubiquibot-config.yml).
-- Go to https://pay.ubq.fi/keygen and generate X25519 public/private key pair. Fill private key of your wallet's address in `PLAIN_TEXT` field and click `Encrypt`.
-- Copy the `CIPHER_TEXT` and append it to your repo `ubiquibot-config/.github/ubiquibot-config.yml` as
+1. Create a new private repository in your Github organization with name `ubiquibot-config`
+2. Add your ubiquibot app to `ubiquibot-config` repository.
+3. Create a file `.github/ubiquibot-config.yml` in it. Fill the file with contents from [this file](https://github.com/ubiquity/ubiquibot/blob/development/.github/ubiquibot-config.yml).
+4. Go to https://pay.ubq.fi/keygen and generate X25519 public/private key pair. Fill private key of your wallet's address in `PLAIN_TEXT` field and click `Encrypt`.
+5. Copy the `CIPHER_TEXT` and append it to your repo `ubiquibot-config/.github/ubiquibot-config.yml` as
 
-  `private-key-encrypted: "PASTE_YOUR_CIPHER_TEXT_HERE"`
+   `private-key-encrypted: "PASTE_YOUR_CIPHER_TEXT_HERE"`
 
-- Copy the `x25519_PRIVATE_KEY` and append it in your local ubiquibot repositry `.env` file as
+6. Copy the `x25519_PRIVATE_KEY` and append it in your local ubiquibot repository `.env` file as
 
-  `x25519_PRIVATE_KEY=PASTE_YOUR_x25519_PRIVATE_KEY_HERE`
+   `x25519_PRIVATE_KEY=PASTE_YOUR_x25519_PRIVATE_KEY_HERE`
 
 ## How to create a new release
 
