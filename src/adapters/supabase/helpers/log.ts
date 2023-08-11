@@ -1,11 +1,23 @@
 import { getAdapters, getBotContext } from "../../../bindings";
 import { Payload } from "../../../types";
+import { getOrgAndRepoFromPath } from "../../../utils/private";
+import { v4 as uuidv4 } from "uuid";
+
+interface Log {
+  repo: string;
+  org: string;
+  commentId: number;
+  issueNumber: number;
+  logMessage: string;
+  errorType: string;
+  timestamp: number;
+}
 
 export class GitHubLogger {
   private supabase = getAdapters().supabase;
   private app;
   private logEnvironment;
-  private logQueue: any[] = []; // Your log queue
+  private logQueue: Log[] = []; // Your log queue
   private maxConcurrency = 5; // Maximum concurrent requests
   private retryLimit = 3; // Maximum number of retries
   private retryDelay = 1000; // Delay between retries in milliseconds
@@ -16,12 +28,31 @@ export class GitHubLogger {
     this.logEnvironment = logEnvironment;
   }
 
-  async sendLogsToSupabase(logs: any) {
-    // Implement your logic to send logs to Supabase API here
-    console.log(logs);
+  async sendLogsToSupabase({ repo, org, commentId, issueNumber, logMessage, errorType, timestamp }: Log) {
+    try {
+      const { error } = await this.supabase.from("log_entries").insert([
+        {
+          id: uuidv4(),
+          repo_name: repo,
+          type: errorType,
+          org_name: org,
+          comment_id: commentId,
+          log_message: logMessage,
+          issue_number: issueNumber,
+          timestamp,
+        },
+      ]);
+
+      if (error) {
+        console.error("Error logging to Supabase:", error.message);
+        return;
+      }
+    } catch (error: any) {
+      console.error("An error occurred:", error.message);
+    }
   }
 
-  async processLogs(log: any) {
+  async processLogs(log: Log) {
     try {
       await this.sendLogsToSupabase(log);
       console.log("Log sent successfully:", log);
@@ -31,7 +62,7 @@ export class GitHubLogger {
     }
   }
 
-  async retryLog(log: any, retryCount = 0) {
+  async retryLog(log: Log, retryCount = 0) {
     if (retryCount >= this.retryLimit) {
       console.error("Max retry limit reached for log:", log);
       return;
@@ -58,7 +89,7 @@ export class GitHubLogger {
     }
   }
 
-  async throttle(fn: any) {
+  async throttle(fn: Function) {
     if (this.throttleCount >= this.maxConcurrency) {
       return;
     }
@@ -69,50 +100,35 @@ export class GitHubLogger {
     } finally {
       this.throttleCount--;
       if (this.logQueue.length > 0) {
-        this.throttle(this.processLogQueue.bind(this));
+        await this.throttle(this.processLogQueue.bind(this));
       }
     }
   }
 
-  addToQueue(log: any) {
+  async addToQueue(log: any) {
     this.logQueue.push(log);
     if (this.throttleCount < this.maxConcurrency) {
-      this.throttle(this.processLogQueue.bind(this));
+      await this.throttle(this.processLogQueue.bind(this));
     }
   }
 
-  private async save(logMessage: string | object, errorType: string, errorPayload?: string | object) {
+  private save(logMessage: string | object, errorType: string, errorPayload?: string | object) {
     const context = getBotContext();
     const payload = context.payload as Payload;
     const timestamp = Date.now();
 
-    //this.addToQueue(logMessage)
+    const { comment, issue, repository } = payload;
+    const commentId = comment?.id;
+    const issueNumber = issue?.number;
+    const repoFullName = repository?.full_name;
 
-    console.log(payload, logMessage, errorType, this.app, errorPayload, timestamp, this.logEnvironment);
+    const { org, repo } = getOrgAndRepoFromPath(repoFullName);
 
-    // try {
-    //     const { data, error } = await this.supabase
-    //     .from('log_entries')
-    //     .insert([
-    //         {
-    //             repo_name: repoName,
-    //             org_name: orgName,
-    //             node_id: nodeID,
-    //             comment_id: commentID,
-    //             log_message: logMessage,
-    //             timestamp: new Date(),
-    //         },
-    //     ]);
+    this.addToQueue({ repo, org, commentId, issueNumber, logMessage, errorType, timestamp });
 
-    //     if (error) {
-    //         console.error('Error logging to Supabase:', error.message);
-    //         return;
-    //     }
-
-    //     console.log('Log entry inserted into Supabase:', data);
-    // } catch (error: any) {
-    //     console.error('An error occurred:', error.message);
-    // }
+    if (this.logEnvironment === "development") {
+      console.log(this.app, logMessage, errorPayload);
+    }
   }
 
   info(message: string | object, errorPayload?: string | object) {
@@ -141,8 +157,15 @@ export class GitHubLogger {
       }
 
       return data;
-    } catch (error: any) {
-      console.error("An error occurred:", error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        // 👉️ err is type Error here
+        console.error("An error occurred:", error.message);
+
+        return;
+      }
+
+      console.log("Unexpected error", error);
       return [];
     }
   }
