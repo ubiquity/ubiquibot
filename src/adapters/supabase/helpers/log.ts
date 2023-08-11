@@ -91,7 +91,7 @@ export class GitHubLogger {
     }
   }
 
-  async throttle(fn: Function) {
+  async throttle(fn: () => void) {
     if (this.throttleCount >= this.maxConcurrency) {
       return;
     }
