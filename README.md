@@ -10,7 +10,7 @@ Ubiquity DAO's GitHub Bot to automate DevPool management.
 git clone https://github.com/ubiquity/ubiquibot.git
 cd ubiquibot
 yarn
-yarn tsc
+yarn build
 yarn start:watch
 ```
 
@@ -45,7 +45,8 @@ To test the bot, you can:
 
 1. Create a new issue
 2. Add a time label, ex: `Time: <1 Day`
-3. At this point the bot should add a price label.
+3. Add a priority label, ex: `Priority: 0 (Normal)`
+4. At this point the bot should add a price label.
 
 ## Configuration
 
@@ -108,7 +109,7 @@ DISQUALIFY_TIME="7 days" // 7 days
 
 4. `yarn install`
 5. Open 2 terminal instances:
-   - in one instance run `yarn tsc --watch` (compiles the Typescript code)
+   - in one instance run `yarn build --watch` (compiles the Typescript code)
    - in another instance run `yarn start:watch` (runs the bot locally)
 6. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
 
@@ -119,7 +120,8 @@ You can, for example:
 
 1. Create a new issue
 2. Add a time label, ex: `Time: <1 Day`
-3. At this point the bot should add a price label, you should see event logs in one of your opened terminals
+3. Add a priority label, ex: `Priority: 0 (Normal)`
+4. At this point the bot should add a price label, you should see event logs in one of your opened terminals
 
 ## How it works
 
@@ -139,9 +141,10 @@ When using as a github app the flow is the following:
 
 1. Fork the ubiquibot repo and install the [ubiquibot-qa app](https://github.com/apps/ubiquibot-qa) on the forked repository.
 2. Enable github action running on the forked repo and allow `issues` on the settings tab.
-3. Create a [QA issue](https://github.com/ubiquibot/staging/issues/21) similar to this where you show the feature working in the forked repo
-4. Describe carefully the steps taken to get the feature working, this way our team can easily verify
-5. Link that QA issue to the pull request as indicated on the template before requesting a review
+3. ubiquibot-qa bot is a deployment of your fork's `development` branch. Make sure the changes you are testing are present in your fork's `development` branch.
+4. Create a [QA issue](https://github.com/ubiquibot/staging/issues/21) similar to this where you show the feature working in the forked repo
+5. Describe carefully the steps taken to get the feature working, this way our team can easily verify
+6. Link that QA issue to the pull request as indicated on the template before requesting a review
 
 ## How to create a new release
 
