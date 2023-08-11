@@ -24,6 +24,8 @@ import {
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
 import { query } from "./query";
+import { autoPay } from "./payout";
+import { getTargetPriceLabel } from "../../shared";
 
 export * from "./assign";
 export * from "./wallet";
@@ -77,24 +79,37 @@ export const issueClosedCallback = async (): Promise<void> => {
  */
 
 export const issueCreatedCallback = async (): Promise<void> => {
+  const logger = getLogger();
   const { payload: _payload } = getBotContext();
   const config = getBotConfig();
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   const labels = issue.labels;
+
+  const { assistivePricing } = config.mode;
+
+  if (!assistivePricing) {
+    logger.info("Skipping adding label to issue because assistive pricing is disabled");
+    return;
+  }
+
   try {
     const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
     const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
-    if (timeLabels.length === 0 && priorityLabels.length === 0) {
-      for (const label of config.price.defaultLabels) {
-        const exists = await getLabel(label);
-        if (!exists) await createLabel(label);
-        await addLabelToIssue(label);
-      }
+    const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : config.price.defaultLabels[0];
+    const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : config.price.defaultLabels[1];
+    if (!timeLabels.length) await addLabelToIssue(minTimeLabel);
+    if (!priorityLabels.length) await addLabelToIssue(minPriorityLabel);
+
+    const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
+    if (targetPriceLabel && !labels.map((i) => i.name).includes(targetPriceLabel)) {
+      const exist = await getLabel(targetPriceLabel);
+      if (!exist) await createLabel(targetPriceLabel, "price");
+      await addLabelToIssue(targetPriceLabel);
     }
   } catch (err: unknown) {
-    return await addCommentToIssue(`Error: ${err}`, issue.number);
+    await addCommentToIssue(`Error: ${err}`, issue.number);
   }
 };
 
@@ -192,13 +207,13 @@ export const userCommands = (): UserCommands[] => {
 
   return [
     {
-      id: IssueCommentCommands.ASSIGN,
+      id: IssueCommentCommands.START,
       description: "Assign the origin sender to the issue automatically.",
       handler: assign,
       callback: commandCallback,
     },
     {
-      id: IssueCommentCommands.UNASSIGN,
+      id: IssueCommentCommands.STOP,
       description: "Unassign the origin sender from the issue automatically.",
       handler: unassign,
       callback: commandCallback,
@@ -216,6 +231,12 @@ export const userCommands = (): UserCommands[] => {
     handler: payout,
     callback: commandCallback,
   },*/
+    {
+      id: IssueCommentCommands.AUTOPAY,
+      description: "Toggle automatic payment for the completion of the current issue.",
+      handler: autoPay,
+      callback: commandCallback,
+    },
     {
       id: IssueCommentCommands.QUERY,
       description: `Comments the users multiplier and address`,

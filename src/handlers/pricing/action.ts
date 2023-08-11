@@ -1,5 +1,6 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel } from "../../helpers";
+import { GLOBAL_STRINGS } from "../../configs";
+import { addCommentToIssue, addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel } from "../../helpers";
 import { Payload } from "../../types";
 import { handleLabelsAccess } from "../access";
 import { getTargetPriceLabel } from "../shared";
@@ -12,12 +13,23 @@ export const pricingLabelLogic = async (): Promise<void> => {
   if (!payload.issue) return;
   const labels = payload.issue.labels;
 
+  logger.info(`Checking if the issue is a parent issue.`);
+  if (isParentIssue(payload.issue.body)) {
+    logger.error("Identified as parent issue. Disabling price label.");
+    const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));
+    if (issuePrices.length) {
+      await addCommentToIssue(GLOBAL_STRINGS.skipPriceLabelGenerationComment, payload.issue.number);
+      await clearAllPriceLabelsOnIssue();
+    }
+    return;
+  }
   const valid = await handleLabelsAccess();
 
   if (!valid) {
     return;
   }
 
+  const { assistivePricing } = config.mode;
   const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
   const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
@@ -33,7 +45,8 @@ export const pricingLabelLogic = async (): Promise<void> => {
       await clearAllPriceLabelsOnIssue();
 
       const exist = await getLabel(targetPriceLabel);
-      if (!exist) {
+
+      if (assistivePricing && !exist) {
         logger.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
         await createLabel(targetPriceLabel, "price");
       }
@@ -43,4 +56,9 @@ export const pricingLabelLogic = async (): Promise<void> => {
     await clearAllPriceLabelsOnIssue();
     logger.info(`Skipping action...`);
   }
+};
+
+export const isParentIssue = (body: string) => {
+  const parentPattern = /-\s+\[( |x)\]\s+#\d+/;
+  return body.match(parentPattern);
 };

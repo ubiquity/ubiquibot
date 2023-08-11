@@ -20,6 +20,12 @@ const IncentivesSchema = Type.Object({
 });
 export type Incentives = Static<typeof IncentivesSchema>;
 
+const CommandItemSchema = Type.Object({
+  name: Type.String(),
+  enabled: Type.Boolean(),
+});
+export type CommandItem = Static<typeof CommandItemSchema>;
+
 export const PriceConfigSchema = Type.Object({
   baseMultiplier: Type.Number(),
   issueCreatorMultiplier: Type.Number(),
@@ -54,9 +60,10 @@ export const UnassignConfigSchema = Type.Object({
 });
 
 export const ModeSchema = Type.Object({
-  autoPayMode: Type.Boolean(),
+  paymentPermitMaxPrice: Type.Number(),
   disableAnalytics: Type.Boolean(),
   incentiveMode: Type.Boolean(),
+  assistivePricing: Type.Boolean(),
 });
 
 export const AssignSchema = Type.Object({
@@ -77,6 +84,9 @@ export const CommentsSchema = Type.Object({
   promotionComment: Type.String(),
 });
 
+export const CommandConfigSchema = Type.Array(CommandItemSchema);
+
+export type CommandConfig = Static<typeof CommandConfigSchema>;
 export const WalletSchema = Type.Object({
   registerWalletWithVerification: Type.Boolean(),
 });
@@ -92,6 +102,7 @@ export const BotConfigSchema = Type.Object({
   assign: AssignSchema,
   sodium: SodiumSchema,
   comments: CommentsSchema,
+  command: CommandConfigSchema,
   wallet: WalletSchema,
 });
 
