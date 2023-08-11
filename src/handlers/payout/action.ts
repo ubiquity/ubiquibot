@@ -3,6 +3,7 @@ import { getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import {
   addLabelToIssue,
+  clearAllPriceLabelsOnIssue,
   deleteLabel,
   generatePermit2Signature,
   getAllIssueAssignEvents,
@@ -15,6 +16,7 @@ import { UserType, Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
 import { GLOBAL_STRINGS } from "../../configs";
+import { isParentIssue } from "../pricing";
 
 export const handleIssueClosed = async () => {
   const context = getBotContext();
@@ -90,6 +92,14 @@ export const handleIssueClosed = async () => {
     logger.info("Permit generation skipped because the issue was not closed as completed");
     return "Permit generation skipped because the issue was not closed as completed";
   }
+
+  logger.info(`Checking if the issue is a parent issue.`);
+  if (isParentIssue(issue.body)) {
+    logger.error("Permit generation skipped since the issue is identified as parent issue.");
+    await clearAllPriceLabelsOnIssue();
+    return "Permit generation skipped since the issue is identified as parent issue.";
+  }
+
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
   for (const botComment of comments.filter((cmt) => cmt.user.type === UserType.Bot).reverse()) {
     const botCommentBody = botComment.body;
