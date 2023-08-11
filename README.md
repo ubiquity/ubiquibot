@@ -50,9 +50,9 @@ To test the bot, you can:
 
 ## Configuration
 
-`chain-id` is ID of the EVM-compatible network that will be used for payouts.
+`evm-network-id` is ID of the EVM-compatible network that will be used for payouts.
 
-`base-multiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = base-multiplier * time-label-weight * priority-label-weight / 10`
+`price-multiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = price-multiplier * time-label-weight * priority-label-weight / 10`
 
 `time-labels` are labels for marking the time limit of the bounty:
 
@@ -65,19 +65,30 @@ To test the bot, you can:
 - `name` is a human-readable name
 - `weight` is a number that will be used to calculate the bounty price
 
+`command-settings` are setting to enable or disable a command
+
+- `name` is the name of the command
+- `enabled` is a `true` or `false` value to enable or disable a command
+
 `default-labels` are labels that are applied when an issue is created without any time or priority labels.
 
-`auto-pay-mode` can be `true` or `false` that enables or disables automatic payout of bounties when the issue is closed.
+`assistive-pricing` to create a new pricing label if it doesn't exist. Can be `true` or `false`.
 
-`analytics-mode` can be `true` or `false` that enables or disables weekly analytics collection by Ubiquity.
+`disable-analytics` can be `true` or `false` that disables or enables weekly analytics collection by Ubiquity.
 
-`incentive-mode` can be `true` or `false` that enables or disables comment incentives. These are comments in the issue by either the creator of the bounty or other users.
+`payment-permit-max-price` sets the amount for automatic payout of bounties when the issue is closed
+
+`comment-incentives` can be `true` or `false` that enable or disable comment incentives. These are comments in the issue by either the creator of the bounty or other users.
 
 `issue-creator-multiplier` is a number that defines a base multiplier for calculating incentive reward for the creator of the issue.
 
 `comment-element-pricing` defines how much is a part of the comment worth. For example `text: 0.1` means that any text in the comment will be multiplied by 0.1
 
-`max-concurrent-bounties` is the maximum number of bounties that can be assigned to a bounty hunter at once. This excludes bounties with pending pull request reviews.
+`max-concurrent-assigns` is the maximum number of bounties that can be assigned to a bounty hunter at once. This excludes bounties with pending pull request reviews.
+
+`register-wallet-with-verification` can be `true` or `false`. If enabled, it requires a signed message to set wallet address. This prevents users from setting wallet address from centralized exchanges.
+
+`promotion-comment` is a comment that is appended to issue comment when a payment permit is generated.
 
 ## How to run locally
 
@@ -148,7 +159,7 @@ When using as a github app the flow is the following:
 
 ## Payments Permits in a local instance
 
-For payment to work in your local setup, ubiquibot must be set up in a Github organization. It will not work for a ubiquibot instance set up in a personal account. Once, you have an ubiquibot instance working in an organization, follow the steps given below:
+For payment to work in your local instance, ubiquibot must be set up in a Github organization. It will not work for a ubiquibot instance set up in a personal account. Once, you have an ubiquibot instance working in an organization, follow the steps given below:
 
 1. Create a new private repository in your Github organization with name `ubiquibot-config`
 2. Add your ubiquibot app to `ubiquibot-config` repository.
