@@ -4,10 +4,10 @@ import { getOrgAndRepoFromPath } from "../../../utils/private";
 import { v4 as uuidv4 } from "uuid";
 
 interface Log {
-  repo: string;
-  org: string;
-  commentId: number;
-  issueNumber: number;
+  repo: string | null;
+  org: string | null;
+  commentId: number | undefined;
+  issueNumber: number | undefined;
   logMessage: string;
   errorType: string;
   timestamp: number;
@@ -47,8 +47,10 @@ export class GitHubLogger {
         console.error("Error logging to Supabase:", error.message);
         return;
       }
-    } catch (error: any) {
-      console.error("An error occurred:", error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("An error occurred:", error.message);
+      }
     }
   }
 
@@ -105,7 +107,7 @@ export class GitHubLogger {
     }
   }
 
-  async addToQueue(log: any) {
+  async addToQueue(log: Log) {
     this.logQueue.push(log);
     if (this.throttleCount < this.maxConcurrency) {
       await this.throttle(this.processLogQueue.bind(this));
@@ -123,6 +125,13 @@ export class GitHubLogger {
     const repoFullName = repository?.full_name;
 
     const { org, repo } = getOrgAndRepoFromPath(repoFullName);
+
+    if (!logMessage) return;
+
+    if (typeof logMessage === "object") {
+      // pass log as json stringified
+      logMessage = JSON.stringify(logMessage);
+    }
 
     this.addToQueue({ repo, org, commentId, issueNumber, logMessage, errorType, timestamp });
 
