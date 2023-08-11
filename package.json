@@ -29,7 +29,6 @@
     "@actions/core": "^1.10.0",
     "@commitlint/cli": "^17.4.3",
     "@commitlint/config-conventional": "^17.4.3",
-    "@logdna/logger": "^2.6.6",
     "@netlify/functions": "^1.4.0",
     "@probot/adapter-aws-lambda-serverless": "^3.0.2",
     "@probot/adapter-github-actions": "^3.1.3",
