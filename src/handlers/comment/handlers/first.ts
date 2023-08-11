@@ -1,12 +1,13 @@
 import { getBotContext, getLogger } from "../../../bindings";
-import { COMMAND_INSTRUCTIONS } from "../../../configs";
-import { addCommentToIssue } from "../../../helpers";
+import { upsertCommentToIssue } from "../../../helpers";
 import { Payload } from "../../../types";
+import { generateHelpMenu } from "./help";
 
 export const verifyFirstCheck = async (): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
+  if (!payload.issue) return;
 
   try {
     const response = await context.octokit.rest.search.issuesAndPullRequests({
@@ -24,8 +25,8 @@ export const verifyFirstCheck = async (): Promise<void> => {
       const isFirstComment = resp.data.filter((item) => item.user?.login === payload.sender.login).length === 1;
       if (isFirstComment) {
         //first_comment
-        const msg = `${COMMAND_INSTRUCTIONS}\n@${payload.sender.login}`;
-        await addCommentToIssue(msg, payload.issue!.number);
+        const msg = `${generateHelpMenu()}\n@${payload.sender.login}`;
+        await upsertCommentToIssue(payload.issue.number, msg, payload.action, payload.comment);
       }
     }
   } catch (error: unknown) {

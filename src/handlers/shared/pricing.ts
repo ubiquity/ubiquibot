@@ -4,7 +4,7 @@ export const calculateBountyPrice = (timeValue: number, priorityValue: number, b
   const botConfig = getBotConfig();
   const base = baseValue ?? botConfig.price.baseMultiplier;
   const priority = priorityValue / 10; // floats cause bad math
-  const price = base * timeValue * priority;
+  const price = 1000 * base * timeValue * priority;
   return price;
 };
 
@@ -12,10 +12,12 @@ export const getTargetPriceLabel = (timeLabel: string | undefined, priorityLabel
   const botConfig = getBotConfig();
   let targetPriceLabel: string | undefined = undefined;
   if (timeLabel && priorityLabel) {
-    const timeWeight = botConfig.price.timeLabels.find((item) => item.name === timeLabel)!.weight;
-    const priorityWeight = botConfig.price.priorityLabels.find((item) => item.name === priorityLabel)!.weight;
-    const bountyPrice = calculateBountyPrice(timeWeight, priorityWeight);
-    targetPriceLabel = `Price: ${bountyPrice} USD`;
+    const timeWeight = botConfig.price.timeLabels.find((item) => item.name === timeLabel)?.weight;
+    const priorityWeight = botConfig.price.priorityLabels.find((item) => item.name === priorityLabel)?.weight;
+    if (timeWeight && priorityWeight) {
+      const bountyPrice = calculateBountyPrice(timeWeight, priorityWeight);
+      targetPriceLabel = `Price: ${bountyPrice} USD`;
+    }
   }
   return targetPriceLabel;
 };

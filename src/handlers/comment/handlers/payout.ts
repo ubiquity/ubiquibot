@@ -2,7 +2,8 @@ import { getBotContext, getLogger } from "../../../bindings";
 import { Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { handleIssueClosed } from "../../payout";
-import { getAllIssueComments } from "../../../helpers";
+import { getAllIssueComments, getUserPermission } from "../../../helpers";
+import { GLOBAL_STRINGS } from "../../../configs";
 
 export const payout = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -27,7 +28,7 @@ export const payout = async (body: string) => {
   }
 
   const IssueComments = await getAllIssueComments(issue.number);
-  if (IssueComments.length == 0) {
+  if (IssueComments.length === 0) {
     return `Permit generation failed due to internal GitHub Error`;
   }
 
@@ -37,6 +38,29 @@ export const payout = async (body: string) => {
     return;
   }
 
-  let response = await handleIssueClosed();
+  const response = await handleIssueClosed();
   return response;
+};
+
+export const autoPay = async (body: string) => {
+  const context = getBotContext();
+  const _payload = context.payload;
+  const logger = getLogger();
+
+  const payload = _payload as Payload;
+  logger.info(`Received '/autopay' command from user: ${payload.sender.login}`);
+
+  const pattern = /^\/autopay (true|false)$/;
+  const res = body.match(pattern);
+
+  if (res) {
+    const userPermission = await getUserPermission(payload.sender.login, context);
+    if (userPermission !== "admin" && userPermission !== "billing_manager") {
+      return "You must be an `admin` or `billing_manager` to toggle automatic payments for completed issues.";
+    }
+    if (res.length > 1) {
+      return `${GLOBAL_STRINGS.autopayComment} **${res[1]}**`;
+    }
+  }
+  return "Invalid body for autopay command: e.g. /autopay false";
 };

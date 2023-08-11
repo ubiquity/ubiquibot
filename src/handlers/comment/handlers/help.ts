@@ -1,5 +1,6 @@
 import { userCommands } from ".";
 import { getBotContext, getLogger } from "../../../bindings";
+import { ASSIGN_COMMAND_ENABLED } from "../../../configs";
 import { IssueType, Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 
@@ -18,8 +19,8 @@ export const listAvailableCommands = async (body: string) => {
     return;
   }
 
-  if (issue!.state == IssueType.CLOSED) {
-    logger.info("Skipping '/assign', reason: closed ");
+  if (issue.state == IssueType.CLOSED) {
+    logger.info("Skipping '/start', reason: closed ");
     return;
   }
 
@@ -28,19 +29,20 @@ export const listAvailableCommands = async (body: string) => {
 
 export const generateHelpMenu = () => {
   let helpMenu = "### Available commands\n```";
-
-  userCommands.map((command) => {
+  const commands = userCommands();
+  commands.map((command) => {
     // if first command, add a new line
-    if (command.id === userCommands[0].id) {
+    if (command.id === commands[0].id) {
       helpMenu += `\n`;
+      if (!ASSIGN_COMMAND_ENABLED) return;
     }
     helpMenu += `- ${command.id}: ${command.description}`;
     // if not last command, add a new line (fixes too much space below)
-    if (command.id !== userCommands[userCommands.length - 1].id) {
+    if (command.id !== commands[commands.length - 1].id) {
       helpMenu += `\n`;
     }
   });
 
-  helpMenu += "```";
+  if (!ASSIGN_COMMAND_ENABLED) helpMenu += "```\n***_To assign yourself to an issue, please open a draft pull request that is linked to it._***";
   return helpMenu;
 };

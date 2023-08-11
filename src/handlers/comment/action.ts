@@ -1,10 +1,12 @@
-import { getBotContext, getLogger } from "../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { Payload } from "../../types";
+import { IssueCommentCommands } from "./commands";
 import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCheck } from "./handlers/first";
 
 export const handleComment = async (): Promise<void> => {
   const context = getBotContext();
+  const config = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -16,34 +18,43 @@ export const handleComment = async (): Promise<void> => {
   }
 
   const body = comment.body;
-  const commands = commentParser(body);
+  const commentedCommands = commentParser(body);
 
-  if (commands.length === 0) {
+  if (commentedCommands.length === 0) {
     await verifyFirstCheck();
     return;
   }
 
-  for (const command of commands) {
-    const userCommand = userCommands.find((i) => i.id == command);
+  const allCommands = userCommands();
+  for (const command of commentedCommands) {
+    const userCommand = allCommands.find((i) => i.id == command);
 
     if (userCommand) {
-      const { handler, callback, successComment, failureComment } = userCommand;
+      const { id, handler, callback, successComment, failureComment } = userCommand;
       logger.info(`Running a comment handler: ${handler.name}`);
 
       const { payload: _payload } = getBotContext();
       const issue = (_payload as Payload).issue;
+      if (!issue) continue;
+
+      const feature = config.command.find((e) => e.name === id.split("/")[1]);
+
+      if (!feature?.enabled && id !== IssueCommentCommands.HELP) {
+        logger.info(`Skipping '${id}' because it is disabled on this repo`);
+        await callback(issue.number, `Skipping \`${id}\` because it is disabled on this repo`, payload.action, payload.comment);
+        continue;
+      }
 
       try {
-        let response = await handler(body);
-        if (response || successComment) {
-          return callback(issue!.number, response! || successComment!);
-        }
-      } catch (err: any) {
+        const response = await handler(body);
+        const callbackComment = response ?? successComment ?? "";
+        if (callbackComment) await callback(issue.number, callbackComment, payload.action, payload.comment);
+      } catch (err: unknown) {
         // Use failureComment for failed command if it is available
         if (failureComment) {
-          return callback(issue!.number, failureComment!);
+          await callback(issue.number, failureComment, payload.action, payload.comment);
         }
-        return callback(issue!.number, "Error: " + err.message);
+        await callback(issue.number, `Error: ${err}`, payload.action, payload.comment);
       }
     } else {
       logger.info(`Skipping for a command: ${command}`);

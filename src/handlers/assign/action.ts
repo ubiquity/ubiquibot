@@ -1,5 +1,5 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue } from "../../helpers";
+import { addCommentToIssue, closePullRequest, getOpenedPullRequestsForAnIssue } from "../../helpers";
 import { Payload, LabelItem } from "../../types";
 import { deadLinePrefix } from "../shared";
 
@@ -9,8 +9,12 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   const config = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
+  if (!payload.issue) {
+    logger.debug(`Empty issue object`);
+    return;
+  }
 
-  logger.info(`Commenting timeline message for issue: ${payload.issue?.number}`);
+  logger.info(`Commenting timeline message for issue: ${payload.issue.number}`);
 
   const _assignees = payload.issue?.assignees;
   const assignees = _assignees ? _assignees?.filter((i) => !exclude_accounts.includes(i.login)) : [];
@@ -56,8 +60,25 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   const curDate = new Date();
   const curDateInMillisecs = curDate.getTime();
   const endDate = new Date(curDateInMillisecs + duration * 1000);
-  const commit_msg = `${flattened_assignees} ${deadLinePrefix} ${endDate.toUTCString()}`;
+  const commit_msg = `${flattened_assignees} ${deadLinePrefix} ${endDate.toUTCString().replace("GMT", "UTC")}`;
   logger.debug(`Creating an issue comment, commit_msg: ${commit_msg}`);
 
-  await addCommentToIssue(commit_msg, payload.issue!.number);
+  await addCommentToIssue(commit_msg, payload.issue?.number);
+};
+
+export const closePullRequestForAnIssue = async (): Promise<void> => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  if (!payload.issue?.number) return;
+
+  const prs = await getOpenedPullRequestsForAnIssue(payload.issue.number, "");
+  if (!prs.length) return;
+  logger.info(`Opened prs for this issue: ${JSON.stringify(prs)}`);
+  let comment = `These linked pull requests are closed: `;
+  for (let i = 0; i < prs.length; i++) {
+    await closePullRequest(prs[i].number);
+    comment += ` <a href="${prs[i]._links.html.href}">#${prs[i].number}</a> `;
+  }
+  await addCommentToIssue(comment, payload.issue.number);
 };

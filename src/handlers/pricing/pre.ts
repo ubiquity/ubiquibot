@@ -10,6 +10,13 @@ export const validatePriceLabels = async (): Promise<void> => {
   const config = getBotConfig();
   const logger = getLogger();
 
+  const { assistivePricing } = config.mode;
+
+  if (!assistivePricing) {
+    logger.info(`Assistive Pricing is disabled`);
+    return;
+  }
+
   const timeLabels = config.price.timeLabels.map((i) => i.name);
   const priorityLabels = config.price.priorityLabels.map((i) => i.name);
   const aiLabels: string[] = [];
@@ -28,7 +35,7 @@ export const validatePriceLabels = async (): Promise<void> => {
   const repoLabels = await listLabelsForRepo();
 
   // Get the missing labels
-  const missingLabels = neededLabels.filter((label) => !repoLabels.includes(label));
+  const missingLabels = neededLabels.filter((label) => !repoLabels.map((i) => i.name).includes(label));
 
   // Create missing labels
   if (missingLabels.length > 0) {

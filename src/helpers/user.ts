@@ -1,11 +1,12 @@
 import { getBotContext, getLogger } from "../bindings";
+import { User } from "../types";
 
 /**
  * @dev Gets the publicly available information about `username`
  *
  * @param username The username you're getting information for
  */
-export const getUser = async (username: string): Promise<any> => {
+export const getUser = async (username: string): Promise<User | undefined> => {
   const context = getBotContext();
   const logger = getLogger();
 
@@ -14,7 +15,7 @@ export const getUser = async (username: string): Promise<any> => {
       username,
     });
 
-    if (res.status === 200) return res.data;
+    if (res.status === 200) return res.data as User;
     else {
       logger.debug(`Unsatisfied response { status: ${res.status}, data: ${res.data}`);
     }

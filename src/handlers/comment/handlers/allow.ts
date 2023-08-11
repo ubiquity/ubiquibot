@@ -29,8 +29,8 @@ export const setAccess = async (body: string) => {
 
     // Check if access control demand is valid
     if (!validAccessString.includes(accessType)) {
-      logger.info(`Access Control setup for ${accessType} doesn't exist`);
-      return `Access Control setup for ${accessType} doesn't exist`;
+      logger.info(`Access control setting for ${accessType} does not exist.`);
+      return `Access control setting for ${accessType} does not exist.`;
     }
 
     // check if sender is admin
@@ -39,8 +39,8 @@ export const setAccess = async (body: string) => {
 
     // if sender is not admin, return
     if (permissionLevel !== "admin") {
-      logger.info(`User ${sender} is not an admin or billing_manager`);
-      return `Oops!, You are not an admin or billing_manager`;
+      logger.info(`User ${sender} is not an admin`);
+      return `You are not an admin and do not have the required permissions to access this function.`;
     }
 
     // convert accessType to valid table
@@ -50,6 +50,6 @@ export const setAccess = async (body: string) => {
     return `Updated access for @${username} successfully!\t Access: **${accessType}** for "${repo.full_name}"`;
   } else {
     logger.error("Invalid body for allow command");
-    return `Invalid body for allow command`;
+    return `Invalid syntax for allow \n usage: '/allow set-(access type) @user true|false' \n  ex-1 /allow set-multiplier @user false`;
   }
 };

@@ -30,6 +30,10 @@ const traverse = (node: MdastNode, itemsToExclude: string[]): Record<string, str
 
 export const parseComments = async (comments: string[], itemsToExclude: string[]): Promise<Record<string, string[]>> => {
   const logger = getLogger();
+  const { fromMarkdown } = await import("mdast-util-from-markdown");
+  const { gfmFromMarkdown } = await import("mdast-util-gfm");
+  const { gfm } = await import("micromark-extension-gfm");
+
   const result: Record<string, string[]> = {};
   const turndown = new TurndownService();
   for (const comment of comments) {

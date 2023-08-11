@@ -8,7 +8,10 @@ export enum GithubEvent {
   ISSUES_LABELED = "issues.labeled",
   ISSUES_UNLABELED = "issues.unlabeled",
   ISSUES_ASSIGNED = "issues.assigned",
+  ISSUES_UNASSIGNED = "issues.unassigned",
   ISSUES_CLOSED = "issues.closed",
+  ISSUES_OPENED = "issues.opened",
+  ISSUES_REOPENED = "issues.reopened",
 
   // issue_comment
   ISSUE_COMMENT_CREATED = "issue_comment.created",
@@ -19,6 +22,9 @@ export enum GithubEvent {
 
   // installation event
   INSTALLATION_ADDED_EVENT = "installation_repositories.added",
+
+  // push event
+  PUSH_EVENT = "push",
 }
 
 export enum UserType {
@@ -91,6 +97,7 @@ const IssueSchema = Type.Object({
   events_url: Type.String(),
   html_url: Type.String(),
   id: Type.Number(),
+  body: Type.String(),
   node_id: Type.String(),
   number: Type.Number(),
   title: Type.String(),
@@ -203,6 +210,16 @@ const OrganizationSchema = Type.Object({
   description: Type.Union([Type.String(), Type.Null()]),
 });
 
+const CommitsSchema = Type.Object({
+  id: Type.String(),
+  distinct: Type.Boolean(),
+  added: Type.Array(Type.String()),
+  removed: Type.Array(Type.String()),
+  modified: Type.Array(Type.String()),
+});
+
+export type CommitsPayload = Static<typeof CommitsSchema>;
+
 const InstallationSchema = Type.Object({
   id: Type.Number(),
   node_id: Type.String(),
@@ -223,6 +240,21 @@ export const CommentSchema = Type.Object({
 
 export type Comment = Static<typeof CommentSchema>;
 
+export const AssignEventSchema = Type.Object({
+  url: Type.String(),
+  id: Type.Number(),
+  node_id: Type.String(),
+  event: Type.String(),
+  commit_id: Type.String(),
+  commit_url: Type.String(),
+  created_at: Type.String({ format: "date-time" }),
+  actor: UserSchema,
+  assignee: UserSchema,
+  assigner: UserSchema,
+});
+
+export type AssignEvent = Static<typeof AssignEventSchema>;
+
 export const PayloadSchema = Type.Object({
   action: Type.String(),
   issue: Type.Optional(IssueSchema),
@@ -236,6 +268,23 @@ export const PayloadSchema = Type.Object({
 });
 
 export type Payload = Static<typeof PayloadSchema>;
+
+export const PushSchema = Type.Object({
+  ref: Type.String(),
+  action: Type.String(),
+  before: Type.String(),
+  after: Type.String(),
+  repository: RepositorySchema,
+  sender: UserSchema,
+  created: Type.Boolean(),
+  deleted: Type.Boolean(),
+  forced: Type.Boolean(),
+  commits: Type.Array(CommitsSchema),
+  head_commit: CommitsSchema,
+  installation: Type.Optional(InstallationSchema),
+});
+
+export type PushPayload = Static<typeof PushSchema>;
 
 export const GithubContentSchema = Type.Object({
   type: Type.String(),

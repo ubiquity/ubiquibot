@@ -4,35 +4,45 @@ import { Payload } from "../types";
 import { Context } from "probot";
 import {
   getAnalyticsMode,
-  getAutoPayMode,
+  getPaymentPermitMaxPrice,
   getBaseMultiplier,
+  getCreatorMultiplier,
   getBountyHunterMax,
   getIncentiveMode,
-  getChainId,
+  getNetworkId,
   getPriorityLabels,
   getTimeLabels,
   getCommentItemPrice,
+  getDefaultLabels,
+  getPromotionComment,
+  getAssistivePricing,
+  getCommandSettings,
+  getRegisterWalletWithVerification,
 } from "./helpers";
 
+import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
+
 const CONFIG_REPO = "ubiquibot-config";
-const KEY_PATH = ".github/ubiquibot-config.yml";
+const CONFIG_PATH = ".github/ubiquibot-config.yml";
 const KEY_NAME = "private-key-encrypted";
 const KEY_PREFIX = "HSK_";
 
-export const getConfigSuperset = async (context: Context, type: "org" | "repo"): Promise<string | undefined> => {
+export const getConfigSuperset = async (context: Context, type: "org" | "repo", filePath: string): Promise<string | undefined> => {
   try {
     const payload = context.payload as Payload;
-    const repo = type === "org" ? CONFIG_REPO : payload.repository.name!;
+    const repo = type === "org" ? CONFIG_REPO : payload.repository.name;
+    const owner = type === "org" ? payload.organization?.login : payload.repository.owner.login;
+    if (!repo || !owner) return undefined;
     const { data } = await context.octokit.rest.repos.getContent({
-      owner: payload.organization?.login!,
-      repo: repo,
-      path: KEY_PATH,
+      owner,
+      repo,
+      path: filePath,
       mediaType: {
         format: "raw",
       },
     });
     return data as unknown as string;
-  } catch (error: any) {
+  } catch (error: unknown) {
     return undefined;
   }
 };
@@ -43,32 +53,42 @@ export interface WideLabel {
   value?: number | undefined;
 }
 
-export interface WideConfig {
-  "chain-id"?: number;
-  "base-multiplier"?: number;
-  "time-labels"?: WideLabel[];
-  "priority-labels"?: WideLabel[];
-  "auto-pay-mode"?: boolean;
-  "analytics-mode"?: boolean;
-  "incentive-mode"?: boolean;
-  "max-concurrent-bounties"?: number;
-  "comment-element-pricing"?: Record<string, number>;
+export interface CommandObj {
+  name: string;
+  enabled: boolean;
 }
 
-export interface WideRepoConfig extends WideConfig {}
+export interface WideConfig {
+  "evm-network-id"?: number;
+  "price-multiplier"?: number;
+  "issue-creator-multiplier": number;
+  "time-labels"?: WideLabel[];
+  "priority-labels"?: WideLabel[];
+  "payment-permit-max-price"?: number;
+  "command-settings"?: CommandObj[];
+  "promotion-comment"?: string;
+  "disable-analytics"?: boolean;
+  "comment-incentives"?: boolean;
+  "assistive-pricing"?: boolean;
+  "max-concurrent-assigns"?: number;
+  "comment-element-pricing"?: Record<string, number>;
+  "default-labels"?: string[];
+  "register-wallet-with-verification"?: boolean;
+}
+
+export type WideRepoConfig = WideConfig;
 
 export interface WideOrgConfig extends WideConfig {
   "private-key-encrypted"?: string;
 }
 
-export const parseYAML = async (data: any): Promise<any | undefined> => {
+export const parseYAML = (data?: string): WideConfig | undefined => {
   try {
-    const parsedData = await YAML.parse(data);
-    if (parsedData !== null) {
-      return parsedData;
-    } else {
-      return undefined;
+    if (data) {
+      const parsedData = YAML.parse(data);
+      return parsedData ?? undefined;
     }
+    return undefined;
   } catch (error) {
     return undefined;
   }
@@ -93,7 +113,7 @@ export const getPrivateKey = async (cipherText: string): Promise<string | undefi
     let walletPrivateKey: string | undefined = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
     walletPrivateKey = walletPrivateKey.replace(KEY_PREFIX, "");
     return walletPrivateKey;
-  } catch (error: any) {
+  } catch (error: unknown) {
     return undefined;
   }
 };
@@ -109,30 +129,38 @@ export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Prom
       return scalerPub;
     }
     return undefined;
-  } catch (error: any) {
+  } catch (error: unknown) {
     return undefined;
   }
 };
 
 export const getWideConfig = async (context: Context) => {
-  const orgConfig = await getConfigSuperset(context, "org");
-  const repoConfig = await getConfigSuperset(context, "repo");
+  const orgConfig = await getConfigSuperset(context, "org", CONFIG_PATH);
+  const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
 
-  const parsedOrg: WideOrgConfig | undefined = await parseYAML(orgConfig);
-  const parsedRepo: WideRepoConfig | undefined = await parseYAML(repoConfig);
+  const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
+  const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
+  const parsedDefault: WideRepoConfig = DEFAULT_CONFIG_JSON;
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
+  const configs = { parsedRepo, parsedOrg, parsedDefault };
   const configData = {
-    chainId: getChainId(parsedRepo, parsedOrg),
+    networkId: getNetworkId(configs),
     privateKey: privateKeyDecrypted ?? "",
-    baseMultiplier: getBaseMultiplier(parsedRepo, parsedOrg),
-    timeLabels: getTimeLabels(parsedRepo, parsedOrg),
-    priorityLabels: getPriorityLabels(parsedRepo, parsedOrg),
-    autoPayMode: getAutoPayMode(parsedRepo, parsedOrg),
-    analyticsMode: getAnalyticsMode(parsedRepo, parsedOrg),
-    bountyHunterMax: getBountyHunterMax(parsedRepo, parsedOrg),
-    incentiveMode: getIncentiveMode(parsedRepo, parsedOrg),
-    commentElementPricing: getCommentItemPrice(parsedRepo, parsedOrg),
+    assistivePricing: getAssistivePricing(configs),
+    commandSettings: getCommandSettings(configs),
+    baseMultiplier: getBaseMultiplier(configs),
+    issueCreatorMultiplier: getCreatorMultiplier(configs),
+    timeLabels: getTimeLabels(configs),
+    priorityLabels: getPriorityLabels(configs),
+    paymentPermitMaxPrice: getPaymentPermitMaxPrice(configs),
+    disableAnalytics: getAnalyticsMode(configs),
+    bountyHunterMax: getBountyHunterMax(configs),
+    incentiveMode: getIncentiveMode(configs),
+    commentElementPricing: getCommentItemPrice(configs),
+    defaultLabels: getDefaultLabels(configs),
+    promotionComment: getPromotionComment(configs),
+    registerWalletWithVerification: getRegisterWalletWithVerification(configs),
   };
 
   return configData;
