@@ -134,7 +134,9 @@ export class GitHubLogger {
     }
 
     this.addToQueue({ repo, org, commentId, issueNumber, logMessage, errorType, timestamp })
-      .then(() => {})
+      .then(() => {
+        return;
+      })
       .catch(() => {
         console.log("Error adding logs to queue");
       });
