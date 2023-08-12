@@ -19,7 +19,7 @@ export const query = async (body: string) => {
     return `Skipping '/query' because of no issue instance`;
   }
 
-  const regex = /(?<=\/query @)\w+/g;
+  const regex = /(?<=\/query @)\w+/g
   const matches = body.match(regex);
   const user = matches?.[1];
 
