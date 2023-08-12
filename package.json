@@ -60,7 +60,6 @@
     "nodemon": "^2.0.19",
     "prettier": "^2.7.1",
     "probot": "^12.2.4",
-    "strip-json-comments": "^5.0.1",
     "telegraf": "^4.11.2",
     "tsx": "^3.12.7",
     "yaml": "^2.2.2"

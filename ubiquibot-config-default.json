@@ -2,8 +2,8 @@
   "evm-network-id": 100,
   "price-multiplier": 1,
   "issue-creator-multiplier": 1000,
-  "payment-permit-max-price": 9007199254740991, // Number.MAX_SAFE_INTEGER
-  "max-concurrent-assigns": 9007199254740991, // Number.MAX_SAFE_INTEGER
+  "payment-permit-max-price": 9007199254740991,
+  "max-concurrent-assigns": 9007199254740991,
   "assistive-pricing": false,
   "disable-analytics": false,
   "comment-incentives": false,
@@ -90,7 +90,6 @@
     }
   ],
   "comment-element-pricing": {
-    /* https://github.com/syntax-tree/mdast#nodes */
     "blockquote": 0,
     "break": 0,
     "code": 0,
@@ -107,10 +106,9 @@
     "listItem": 0,
     "paragraph": 0,
     "root": 0,
-    "strong": 0, // Also includes italics, unfortunately https://github.com/syntax-tree/mdast#strong
+    "strong": 0,
     "text": 0,
     "thematicBreak": 0,
-    /* https://github.com/syntax-tree/mdast#gfm */
     "delete": 0,
     "footnoteDefinition": 0,
     "footnoteReference": 0,
