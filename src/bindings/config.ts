@@ -25,6 +25,9 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     commandSettings,
     assistivePricing,
     registerWalletWithVerification,
+    firstTimeContributorHeader,
+    firstTimeContributorHelpMenu,
+    firstTimeContributorFooter,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -81,6 +84,11 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     wallet: {
       registerWalletWithVerification: registerWalletWithVerification,
+    },
+    first: {
+      firstTimeContributorHeader: firstTimeContributorHeader,
+      firstTimeContributorHelpMenu: firstTimeContributorHelpMenu,
+      firstTimeContributorFooter: firstTimeContributorFooter,
     },
   };
 

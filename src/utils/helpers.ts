@@ -162,7 +162,7 @@ export const getRegisterWalletWithVerification = ({ parsedRepo, parsedOrg, parse
   }
 };
 
-export const getFirstTimeContributorHeader = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): String => {
+export const getFirstTimeContributorHeader = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): string => {
   if (parsedRepo && parsedRepo["first-time-contributor-header"] !== undefined && typeof parsedRepo["first-time-contributor-header"] === "string") {
     return String(parsedRepo["first-time-contributor-header"]);
   } else if (parsedOrg && parsedOrg["first-time-contributor-header"] !== undefined && typeof parsedOrg["first-time-contributor-header"] === "string") {
@@ -182,7 +182,7 @@ export const getFirstTimeContributorHelpMenu = ({ parsedRepo, parsedOrg, parsedD
   }
 };
 
-export const getFirstTimeContributorFooter = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): String => {
+export const getFirstTimeContributorFooter = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): string => {
   if (parsedRepo && parsedRepo["first-time-contributor-footer"] !== undefined && typeof parsedRepo["first-time-contributor-header"] === "string") {
     return String(parsedRepo["first-time-contributor-footer"]);
   } else if (parsedOrg && parsedOrg["first-time-contributor-footer"] !== undefined && typeof parsedOrg["first-time-contributor-header"] === "string") {
