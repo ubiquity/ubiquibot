@@ -87,6 +87,10 @@
     {
       "name": "allow",
       "enabled": false
+    },
+    {
+      "name": "autopay",
+      "enabled": false
     }
   ],
   "comment-element-pricing": {

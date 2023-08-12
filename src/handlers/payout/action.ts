@@ -3,6 +3,7 @@ import { getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import {
   addLabelToIssue,
+  clearAllPriceLabelsOnIssue,
   deleteLabel,
   generatePermit2Signature,
   getAllIssueAssignEvents,
@@ -14,6 +15,8 @@ import {
 import { UserType, Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
+import { GLOBAL_STRINGS } from "../../configs";
+import { isParentIssue } from "../pricing";
 
 export const handleIssueClosed = async () => {
   const context = getBotContext();
@@ -34,7 +37,7 @@ export const handleIssueClosed = async () => {
 
   const wasReopened = await wasIssueReopened(issue.number);
   const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
-  const permitCommentIdx = comments.findIndex((e) => e.user.type === "Bot" && e.body.match(claimUrlRegex));
+  const permitCommentIdx = comments.findIndex((e) => e.user.type === UserType.Bot && e.body.match(claimUrlRegex));
 
   if (wasReopened && permitCommentIdx !== -1) {
     const permitComment = comments[permitCommentIdx];
@@ -87,11 +90,34 @@ export const handleIssueClosed = async () => {
     return "Permit generation skipped because the issue was not closed as completed";
   }
 
+  logger.info(`Checking if the issue is a parent issue.`);
+  if (issue.body && isParentIssue(issue.body)) {
+    logger.error("Permit generation skipped since the issue is identified as parent issue.");
+    await clearAllPriceLabelsOnIssue();
+    return "Permit generation skipped since the issue is identified as parent issue.";
+  }
+
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
-  if (paymentPermitMaxPrice == 0) {
+  for (const botComment of comments.filter((cmt) => cmt.user.type === UserType.Bot).reverse()) {
+    const botCommentBody = botComment.body;
+    if (botCommentBody.includes(GLOBAL_STRINGS.autopayComment)) {
+      const pattern = /\*\*(\w+)\*\*/;
+      const res = botCommentBody.match(pattern);
+      if (res) {
+        if (res[1] === "false") {
+          logger.info(`Skipping to generate permit2 url, reason: autoPayMode for this issue: false`);
+          return `Permit generation skipped since automatic payment for this issue is disabled.`;
+        }
+        break;
+      }
+    }
+  }
+
+  if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
     logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
     return `Permit generation skipped since paymentPermitMaxPrice is 0`;
   }
+
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
     logger.info(`Skipping... its not a bounty`);
