@@ -64,7 +64,7 @@ export const incentivizeComments = async () => {
 
   // The mapping between gh handle and amount in ETH
   const fallbackReward: Record<string, Decimal> = {};
-  let comment = "";
+  let comment = `#### Conversation Rewards\n`;
   for (const user of Object.keys(issueCommentsByUser)) {
     const comments = issueCommentsByUser[user];
     const commentsByNode = await parseComments(comments, ItemsToExclude);
@@ -159,7 +159,7 @@ const generatePermitForComments = async (
   logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
   const account = await getWalletAddress(user);
   const amountInETH = rewardValue.mul(multiplier).div(1000);
-  let comment = "";
+  let comment = `#### Task Creator Reward\n`;
   if (account) {
     const { payoutUrl } = await generatePermit2Signature(account, amountInETH, node_id);
     comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;

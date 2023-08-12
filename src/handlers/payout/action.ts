@@ -176,7 +176,8 @@ export const handleIssueClosed = async () => {
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
   logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
-  const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
+  const comment =
+    `#### Task Assignee Reward\n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
   const permitComments = comments.filter((content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot);
   if (permitComments.length > 0) {
     logger.info(`Skip to generate a permit url because it has been already posted`);
