@@ -13,7 +13,7 @@ import { BigNumber, BigNumberish } from "ethers";
  * @returns - The supabase client
  */
 export const supabase = (url: string, key: string): SupabaseClient => {
-  return createClient<Database>(url, key);
+  return createClient<Database>(url, key, { auth: { persistSession: false } });
 };
 
 /**
