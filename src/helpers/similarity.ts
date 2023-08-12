@@ -1,6 +1,8 @@
 import { getBotContext, getLogger } from "../bindings";
-import { Payload, Choices } from "../types";
+import { Payload } from "../types";
 import axios from "axios";
+import { ajv } from "../utils";
+import { Static, Type } from "@sinclair/typebox";
 
 export const countIncludedWords = (inputString: string, words: string[]): number => {
   const body = inputString.toLocaleLowerCase();
@@ -21,6 +23,20 @@ export const extractImportantWords = async (): Promise<string[]> => {
   const res = await getAnswerFromChatGPT(`'Issue title: "${issue.title}"\nIssue body: "${issue.body}"'`);
   return res.split("#");
 };
+
+const ChatMessageSchema = Type.Object({
+  content: Type.String(),
+});
+
+const ChoiceSchema = Type.Object({
+  message: ChatMessageSchema,
+});
+
+const ChoicesSchema = Type.Object({
+  choices: Type.Array(ChoiceSchema),
+});
+
+type Choices = Static<typeof ChoicesSchema>;
 
 export const getAnswerFromChatGPT = async (prompt: string): Promise<string> => {
   const logger = getLogger();
@@ -57,6 +73,11 @@ export const getAnswerFromChatGPT = async (prompt: string): Promise<string> => {
   try {
     const response = await axios(config);
     const data: Choices = response.data;
+    const validate = ajv.compile(ChoicesSchema);
+    const valid = validate(data);
+    if (!valid) {
+      throw new Error("Error occured from OpenAI");
+    }
     const { choices: choice } = data;
     if (choice.length <= 0) {
       return "";
