@@ -18,6 +18,9 @@ import {
   getAssistivePricing,
   getCommandSettings,
   getRegisterWalletWithVerification,
+  getFirstTimeContributorHeader,
+  getFirstTimeContributorHelpMenu,
+  getFirstTimeContributorFooter,
 } from "./helpers";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
@@ -74,6 +77,9 @@ export interface WideConfig {
   "comment-element-pricing"?: Record<string, number>;
   "default-labels"?: string[];
   "register-wallet-with-verification"?: boolean;
+  "first-time-contributor-header"?: string;
+  "first-time-contributor-help-menu"?: boolean;
+  "first-time-contributor-footer"?: string;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -161,6 +167,9 @@ export const getWideConfig = async (context: Context) => {
     defaultLabels: getDefaultLabels(configs),
     promotionComment: getPromotionComment(configs),
     registerWalletWithVerification: getRegisterWalletWithVerification(configs),
+    firstTimeContributorHeader: getFirstTimeContributorHeader(configs),
+    firstTimeContributorHelpMenu: getFirstTimeContributorHelpMenu(configs),
+    firstTimeContributorFooter: getFirstTimeContributorFooter(configs),
   };
 
   return configData;

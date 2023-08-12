@@ -1,4 +1,4 @@
-import { getBotContext, getLogger } from "../../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { upsertCommentToIssue } from "../../../helpers";
 import { Payload } from "../../../types";
 import { generateHelpMenu } from "./help";
@@ -7,6 +7,10 @@ export const verifyFirstCheck = async (): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
+  const {
+    first: { firstTimeContributorHeader, firstTimeContributorHelpMenu, firstTimeContributorFooter },
+  } = getBotConfig();
+  let msg = "";
   if (!payload.issue) return;
 
   try {
@@ -25,7 +29,15 @@ export const verifyFirstCheck = async (): Promise<void> => {
       const isFirstComment = resp.data.filter((item) => item.user?.login === payload.sender.login).length === 1;
       if (isFirstComment) {
         //first_comment
-        const msg = `${generateHelpMenu()}\n@${payload.sender.login}`;
+        if (firstTimeContributorHeader) {
+          msg += `${firstTimeContributorHeader}\n`;
+        }
+        if (firstTimeContributorHelpMenu) {
+          msg += `${generateHelpMenu()}\n@${payload.sender.login}\n`;
+        }
+        if (firstTimeContributorFooter) {
+          msg += `${firstTimeContributorFooter}`;
+        }
         await upsertCommentToIssue(payload.issue.number, msg, payload.action, payload.comment);
       }
     }

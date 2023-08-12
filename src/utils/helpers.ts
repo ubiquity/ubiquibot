@@ -161,3 +161,33 @@ export const getRegisterWalletWithVerification = ({ parsedRepo, parsedOrg, parse
     return Boolean(parsedDefault["register-wallet-with-verification"]);
   }
 };
+
+export const getFirstTimeContributorHeader = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): String => {
+  if (parsedRepo && parsedRepo["first-time-contributor-header"] !== undefined && typeof parsedRepo["first-time-contributor-header"] === "string") {
+    return String(parsedRepo["first-time-contributor-header"]);
+  } else if (parsedOrg && parsedOrg["first-time-contributor-header"] !== undefined && typeof parsedOrg["first-time-contributor-header"] === "string") {
+    return String(parsedOrg["first-time-contributor-header"]);
+  } else {
+    return String(parsedDefault["first-time-contributor-header"]);
+  }
+};
+
+export const getFirstTimeContributorHelpMenu = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): boolean => {
+  if (parsedRepo && parsedRepo["first-time-contributor-help-menu"] !== undefined && typeof parsedRepo["first-time-contributor-help-menu"] === "boolean") {
+    return Boolean(parsedRepo["first-time-contributor-help-menu"]);
+  } else if (parsedOrg && parsedOrg["first-time-contributor-help-menu"] !== undefined && typeof parsedOrg["first-time-contributor-help-menu"] === "boolean") {
+    return Boolean(parsedOrg["first-time-contributor-help-menu"]);
+  } else {
+    return Boolean(parsedDefault["first-time-contributor-help-menu"]);
+  }
+};
+
+export const getFirstTimeContributorFooter = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): String => {
+  if (parsedRepo && parsedRepo["first-time-contributor-footer"] !== undefined && typeof parsedRepo["first-time-contributor-header"] === "string") {
+    return String(parsedRepo["first-time-contributor-footer"]);
+  } else if (parsedOrg && parsedOrg["first-time-contributor-footer"] !== undefined && typeof parsedOrg["first-time-contributor-header"] === "string") {
+    return String(parsedOrg["first-time-contributor-footer"]);
+  } else {
+    return String(parsedDefault["first-time-contributor-footer"]);
+  }
+};

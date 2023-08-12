@@ -56,6 +56,12 @@ export const ModeSchema = Type.Object({
   assistivePricing: Type.Boolean(),
 });
 
+export const FirstTimeConfigSchema = Type.Object({
+  firstTimeContributorHeader: Type.String(),
+  firstTimeContributorHelpMenu: Type.Boolean(),
+  firstTimeContributorFooter: Type.String(),
+});
+
 export const AssignSchema = Type.Object({
   bountyHunterMax: Type.Number(),
 });
@@ -94,6 +100,7 @@ export const BotConfigSchema = Type.Object({
   comments: CommentsSchema,
   command: CommandConfigSchema,
   wallet: WalletSchema,
+  first: FirstTimeConfigSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;
