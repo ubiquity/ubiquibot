@@ -97,7 +97,7 @@ const IssueSchema = Type.Object({
   events_url: Type.String(),
   html_url: Type.String(),
   id: Type.Number(),
-  body: Type.Optional(Type.String()),
+  body: Type.Any(),
   node_id: Type.String(),
   number: Type.Number(),
   title: Type.String(),
