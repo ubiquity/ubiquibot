@@ -48,7 +48,13 @@ export const addLabelToIssue = async (labelName: string) => {
   }
 };
 
-export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open", per_page = 30, page = 1, sort: "created" | "updated" | "comments" = "created", direction: "desc" | "asc" = "desc") => {
+export const listIssuesForRepo = async (
+  state: "open" | "closed" | "all" = "open",
+  per_page = 30,
+  page = 1,
+  sort: "created" | "updated" | "comments" = "created",
+  direction: "desc" | "asc" = "desc"
+) => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -59,7 +65,7 @@ export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open
     per_page,
     page,
     sort,
-    direction
+    direction,
   });
 
   await checkRateLimitGit(response.headers);

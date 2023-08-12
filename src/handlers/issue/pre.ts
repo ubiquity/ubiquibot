@@ -1,5 +1,4 @@
 import { extractImportantWords, countIncludedWords, upsertCommentToIssue, listIssuesForRepo } from "../../helpers";
-import { getBotConfig } from "../../bindings";
 import { getBotContext } from "../../bindings";
 import { Payload } from "../../types";
 
@@ -8,9 +7,6 @@ export const findDuplicateOne = async () => {
   const issue = (_payload as Payload).issue;
 
   if (!issue?.body) return;
-  const {
-    similarity: { threshold },
-  } = getBotConfig();
   const importantWords = await extractImportantWords();
   const wordCount = importantWords.length;
   let fetchDone = false;
@@ -21,7 +17,7 @@ export const findDuplicateOne = async () => {
     for (const iss of issues) {
       if (iss.body && iss.number != issue.number) {
         const probability = (countIncludedWords(iss.body, importantWords) * 100.0) / wordCount;
-        if (probability > (threshold || 80)) {
+        if (probability > parseInt(process.env.SIMILARITY_THRESHOLD || "80")) {
           if (issue.number) {
             await upsertCommentToIssue(issue.number, `Similar issue (${iss.title}) found at ${iss.html_url}.\nSimilarity is about ${probability}%`, "created");
             return;
