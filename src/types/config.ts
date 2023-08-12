@@ -81,6 +81,12 @@ export const WalletSchema = Type.Object({
   registerWalletWithVerification: Type.Boolean(),
 });
 
+export const SimilaritySchema = Type.Object({
+  threshold: Type.Number(),
+  openaiSystemPrompt: Type.String(),
+  openaiUserPrompt: Type.String(),
+});
+
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
   price: PriceConfigSchema,
@@ -94,6 +100,7 @@ export const BotConfigSchema = Type.Object({
   comments: CommentsSchema,
   command: CommandConfigSchema,
   wallet: WalletSchema,
+  similarity: SimilaritySchema
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;
