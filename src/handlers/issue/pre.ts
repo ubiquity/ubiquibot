@@ -12,10 +12,12 @@ export const findDuplicateOne = async () => {
   let fetchDone = false;
   const perPage = 10;
   let curPage = 1;
+  issue;
+
   while (!fetchDone) {
     const issues = await listIssuesForRepo("all", perPage, curPage, "created", "asc");
     for (const iss of issues) {
-      if (iss.body && iss.number != issue.number) {
+      if (iss.body && iss.number != issue.number && !iss.pull_request) {
         const probability = (countIncludedWords(iss.body, importantWords) * 100.0) / wordCount;
         if (probability > parseInt(process.env.SIMILARITY_THRESHOLD || "80")) {
           if (issue.number) {
