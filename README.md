@@ -74,7 +74,12 @@ To test the bot, you can:
 
 `issue-creator-multiplier` is a number that defines a base multiplier for calculating incentive reward for the creator of the issue.
 
-`comment-element-pricing` defines how much is a part of the comment worth. For example `text: 0.1` means that any text in the comment will be multiplied by 0.1
+`incentives` defines incentive rewards:
+
+- `comment` defines comment rewards:
+  - `elements` defines reward value for HTML elements such as `p`, `img`, `a`.
+  - `totals`:
+    - `word` defines reward for each word in the comment
 
 `max-concurrent-bounties` is the maximum number of bounties that can be assigned to a bounty hunter at once. This excludes bounties with pending pull request reviews.
 
