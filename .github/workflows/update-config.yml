@@ -15,7 +15,7 @@ jobs:
       
       - name: Set up git
         run: |
-          git config --global user.email "UbiquiBot[dev]@github.com" 
+          git config --global user.email "UbiquiBot[bot]@github.com" 
           git config --global user.name "UbiquiBot[dev]" 
 
       - name: Install jq and yq
