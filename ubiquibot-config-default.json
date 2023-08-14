@@ -1,7 +1,7 @@
 {
   "evm-network-id": 100,
   "price-multiplier": 1,
-  "issue-creator-multiplier": 1,
+  "issue-creator-multiplier": 2,
   "payment-permit-max-price": 9007199254740991,
   "max-concurrent-assigns": 9007199254740991,
   "assistive-pricing": false,
