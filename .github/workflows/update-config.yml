@@ -13,22 +13,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
       
-      - name: Set up git
-        run: |
-          git config --global user.email "UbiquiBot[dev]@github.com" 
-          git config --global user.name "UbiquiBot[dev]" 
-
       - name: Install jq and yq
         run: |
           sudo apt-get -y install jq
           sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
           sudo chmod +x /usr/bin/yq
 
-
-      - name: Commit and Push Changes 
-        run: | 
-          git config --local user.email "UbiquiBot[dev]@github.com" 
-          git config --local user.name "UbiquiBot[dev]" 
 
       - name: Update Config Params and Create Pull Requests
         run: |
