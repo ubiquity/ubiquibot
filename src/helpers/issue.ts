@@ -1,6 +1,6 @@
 import { Context } from "probot";
 import { getBotContext, getLogger } from "../bindings";
-import { AssignEvent, Comment, IssueType, Payload } from "../types";
+import { AssignEvent, Comment, IssueType, Payload, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
 import { DEFAULT_TIME_RANGE_FOR_MAX_ISSUE, DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED } from "../configs";
 
@@ -147,7 +147,8 @@ export const updateCommentOfIssue = async (msg: string, issue_number: number, re
 };
 
 export const upsertCommentToIssue = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
-  if (action == "edited" && reply_to) {
+  const checkLastComment = await checkIfLastCommentIsBot(issue_number);
+  if (action == "edited" && reply_to && !checkLastComment) {
     await updateCommentOfIssue(comment, issue_number, reply_to);
   } else {
     await addCommentToIssue(comment, issue_number);
@@ -592,4 +593,11 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
     }
   }
   return result;
+};
+
+export const checkIfLastCommentIsBot = async (issue_number: number) => {
+  const comments = await getAllIssueComments(issue_number);
+  const lastComment = comments.pop();
+  if(!lastComment) return false;
+  return lastComment.user.type === UserType.Bot
 };
