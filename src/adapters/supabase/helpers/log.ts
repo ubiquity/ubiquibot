@@ -122,7 +122,7 @@ export class GitHubLogger {
   }
 
   private save(logMessage: string | object, errorType: number, errorPayload?: string | object) {
-    if (errorType > this.maxLevel) return; // only return errors lower than max level
+    if (errorType >= this.maxLevel) return; // only return errors lower than max level
 
     const context = getBotContext();
     const payload = context.payload as Payload;
