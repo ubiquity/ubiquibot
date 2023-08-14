@@ -90,6 +90,7 @@ export type UserProfileAdditions = {
 };
 const getDbDataFromUserProfile = (userProfile: UserProfile, additions?: UserProfileAdditions) => {
   return {
+    user_id: userProfile.id,
     user_login: userProfile.login,
     user_type: userProfile.type,
     user_name: userProfile.name,

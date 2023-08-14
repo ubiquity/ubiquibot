@@ -6,6 +6,7 @@ CREATE TYPE issue_status AS ENUM (
 );
 
 CREATE TABLE users (
+    user_id bigint NOT NULL,
     user_login character varying(255) NOT NULL PRIMARY KEY,
     user_type character varying(255),
     user_name character varying(255) NOT NULL,

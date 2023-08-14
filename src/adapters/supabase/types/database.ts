@@ -145,6 +145,7 @@ export interface Database {
           user_login: string;
           user_name: string;
           user_type: string | null;
+          user_id: number;
           wallet_address: string | null;
         };
         Insert: {
@@ -167,6 +168,7 @@ export interface Database {
           user_login: string;
           user_name: string;
           user_type?: string | null;
+          user_id: number;
           wallet_address?: string | null;
         };
         Update: {
@@ -189,6 +191,7 @@ export interface Database {
           user_login?: string;
           user_name?: string;
           user_type?: string | null;
+          user_id: number;
           wallet_address?: string | null;
         };
         Relationships: [];
