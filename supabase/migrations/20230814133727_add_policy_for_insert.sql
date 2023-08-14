@@ -1,5 +1,6 @@
-CREATE POLICY "Anon users can insert a new record" 
-ON permits FOR insert
+CREATE POLICY insert_policy
+ON permits 
+AS permissive
+FOR insert
 TO anon
-USING (true)
 WITH CHECK (true)
