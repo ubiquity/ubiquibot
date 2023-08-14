@@ -12,29 +12,29 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
-
-      - name: Set up Git
+      
+      - name: Set up git
         run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
+          git config --global user.email "UbiquiBot[dev]@github.com" 
+          git config --global user.name "UbiquiBot[dev]" 
 
       - name: Install jq and yq
         run: |
           sudo apt-get -y install jq
           sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
           sudo chmod +x /usr/bin/yq
+
+
+      - name: Commit and Push Changes 
+        run: | 
+          git config --local user.email "UbiquiBot[dev]@github.com" 
+          git config --local user.name "UbiquiBot[dev]" 
+
       - name: Update Config Params and Create Pull Requests
         run: |
-          # set up jq script
-          jq_script='                                                                                             
-            .[$new_param] = .[$old_param] |
-            del(.[$old_param])
-          '
+         urls=$(curl -sSL https://raw.githubusercontent.com/ubiquity/devpool-directory/development/projects.json | jq -r '.urls[]')
 
-          #urls=$(curl -sSL https://raw.githubusercontent.com/ubiquity/devpool-directory/development/projects.json | jq -r '.urls[]')
-          urls="https://github.com/EtherealGlow/ubiquibot-pr-qa"
-
-          for url in $urls
+         for url in $urls
           do
             repoName=$(basename $url)
             ownerName=$(echo $url | awk -F/ '{print $(NF-1)}')
@@ -48,30 +48,47 @@ jobs:
             git branch update
             git checkout update
 
-            ### update configs ###
-            # The configurations update code goes here
+            curl -sSL https://raw.githubusercontent.com/ubiquity/ubiquibot/development/ubiquibot-config-default.json > default.json
+
 
             declare -A param_mapping=(
               ["evm-network-id"]="network-id chain-id"
               ["price-multiplier"]="base-multiplier"
               #add more configs as needed
             )
-
+            
+            ### update configs ###
             # Iterate over the mapping and perform updates using sed
             for new_param in "${!param_mapping[@]}"
             do
               old_params="${param_mapping[$new_param]}"
               for old_param in $old_params
               do
-                jq --arg old_param "$old_param" --arg new_param "$new_param" "$jq_script" ubiquibot-config-default.json > ubiquibot-config-default
-                mv ubiquibot-config-default ubiquibot-config-default.json
+                # only update param if the old ones exist
+                exist_old_param=$(yq "has(\"$old_param\")" .github/ubiquibot-config.yml)
+                if $exist_old_param; then
+                    yq ".$new_param = .$old_param | del(.$old_param)" .github/ubiquibot-config.yml > temp.yml
+                    mv temp.yml .github/ubiquibot-config.yml
+                fi 
               done
+              # if new param still doesent exist add default from ubiquibot-config-default.json
+              exist_new_param=$(yq "has(\"$new_param\")" .github/ubiquibot-config.yml)
+              if ! $exist_new_param; then
+                echo adding
+                def_val=$(jq -r ".[\"$new_param\"]" ubiquibot-config-default.json)
+                yq ".$new_param=$def_val" .github/ubiquibot-config.yml > temp.yml
+                mv temp.yml .github/ubiquibot-config.yml
+              fi
             done
 
-            git add .
+            git config user.email "113181824+UbiquiBot[bot]@users.noreply.github.com" 
+            git config user.name "UbiquiBot[bot]"   
+
+            git add .github/ubiquibot-config.yml
             git commit -m "build: use latest ubiquibot config setup"
             git remote set-url origin https://${{ secrets.PAT_TOKEN }}@github.com/$ownerName/$repoName.git
             git push -f origin update
+                       
             curl -L \
             -X POST \
             -H "Accept: application/vnd.github+json" \
@@ -83,7 +100,5 @@ jobs:
              "base": "'"$defaultBranch"'",
              "head": "update"
              }'
-
-
             cd ..
           done
