@@ -1,20 +1,29 @@
 import { getAdapters, getBotContext } from "../../../bindings";
 import { Payload } from "../../../types";
 import { getOrgAndRepoFromPath } from "../../../utils/private";
-import { v4 as uuidv4 } from "uuid";
-
 interface Log {
   repo: string | null;
   org: string | null;
   commentId: number | undefined;
   issueNumber: number | undefined;
   logMessage: string;
-  errorType: string;
-  timestamp: number;
+  errorType: levels;
+  timestamp: string;
+}
+
+export enum levels {
+  error = 0,
+  warn = 1,
+  info = 2,
+  http = 3,
+  verbose = 4,
+  debug = 5,
+  silly = 6,
 }
 
 export class GitHubLogger {
   private supabase = getAdapters().supabase;
+  private maxLevel;
   private app;
   private logEnvironment;
   private logQueue: Log[] = []; // Your log queue
@@ -23,18 +32,18 @@ export class GitHubLogger {
   private retryDelay = 1000; // Delay between retries in milliseconds
   private throttleCount = 0;
 
-  constructor(app: string, logEnvironment: string) {
+  constructor(app: string, logEnvironment: string, maxLevel: keyof typeof levels) {
     this.app = app;
     this.logEnvironment = logEnvironment;
+    this.maxLevel = levels[maxLevel];
   }
 
   async sendLogsToSupabase({ repo, org, commentId, issueNumber, logMessage, errorType, timestamp }: Log) {
     try {
       const { error } = await this.supabase.from("log_entries").insert([
         {
-          id: uuidv4(),
           repo_name: repo,
-          type: errorType,
+          level: errorType,
           org_name: org,
           comment_id: commentId,
           log_message: logMessage,
@@ -57,7 +66,6 @@ export class GitHubLogger {
   async processLogs(log: Log) {
     try {
       await this.sendLogsToSupabase(log);
-      console.log("Log sent successfully:", log);
     } catch (error) {
       console.error("Error sending log, retrying:", error);
       await this.retryLog(log);
@@ -74,7 +82,6 @@ export class GitHubLogger {
 
     try {
       await this.sendLogsToSupabase(log);
-      console.log("Log sent successfully (after retry):", log);
     } catch (error) {
       console.error("Error sending log (after retry):", error);
       await this.retryLog(log, retryCount + 1);
@@ -114,10 +121,12 @@ export class GitHubLogger {
     }
   }
 
-  private save(logMessage: string | object, errorType: string, errorPayload?: string | object) {
+  private save(logMessage: string | object, errorType: number, errorPayload?: string | object) {
+    if (errorType > this.maxLevel) return; // only return errors lower than max level
+
     const context = getBotContext();
     const payload = context.payload as Payload;
-    const timestamp = Date.now();
+    const timestamp = new Date().toUTCString();
 
     const { comment, issue, repository } = payload;
     const commentId = comment?.id;
@@ -147,19 +156,19 @@ export class GitHubLogger {
   }
 
   info(message: string | object, errorPayload?: string | object) {
-    this.save(message, `info`, errorPayload);
+    this.save(message, levels.info, errorPayload);
   }
 
   warn(message: string | object, errorPayload?: string | object) {
-    this.save(message, `warn`, errorPayload);
+    this.save(message, levels.warn, errorPayload);
   }
 
   debug(message: string | object, errorPayload?: string | object) {
-    this.save(message, `debug`, errorPayload);
+    this.save(message, levels.debug, errorPayload);
   }
 
   error(message: string | object, errorPayload?: string | object) {
-    this.save(message, `error`, errorPayload);
+    this.save(message, levels.error, errorPayload);
   }
 
   async get() {

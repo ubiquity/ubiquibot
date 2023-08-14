@@ -33,6 +33,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const botConfig: BotConfig = {
     log: {
       logEnvironment: process.env.LOG_ENVIRONMENT || "production",
+      level: process.env.LOG_LEVEL || "debug",
     },
     price: {
       baseMultiplier,

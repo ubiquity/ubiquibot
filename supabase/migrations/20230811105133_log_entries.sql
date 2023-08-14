@@ -1,12 +1,12 @@
 CREATE TABLE log_entries (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id SERIAL PRIMARY KEY,
   repo_name TEXT,
   org_name TEXT,
   comment_id INT,
   issue_number INT,
   log_message TEXT,
-  type TEXT,
-  timestamp BIGINT
+  level INT,
+  timestamp TIMESTAMPTZ DEFAULT current_timestamp
 );
 
-ALTER TABLE log_entries ENABLE ROW LEVEL SECURITY;
+CREATE INDEX idx_timestamp ON log_entries (timestamp);
