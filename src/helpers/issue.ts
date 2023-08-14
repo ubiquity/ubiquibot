@@ -598,6 +598,6 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
 export const checkIfLastCommentIsBot = async (issue_number: number) => {
   const comments = await getAllIssueComments(issue_number);
   const lastComment = comments.pop();
-  if(!lastComment) return false;
-  return lastComment.user.type === UserType.Bot
+  if (!lastComment) return false;
+  return lastComment.user.type === UserType.Bot;
 };
