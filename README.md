@@ -23,6 +23,19 @@ yarn start:watch
 - `LOGDNA_INGESTION_KEY`: Get it from [Memzo](https://app.mezmo.com/) by creating an account, adding an organization, and copying the ingestion key on the next screen.
 - `FOLLOWUP_TIME`: (optional) Set a custom follow-up time (default: 4 days).
 - `DISQUALIFY_TIME`: (optional) Set a custom disqualify time (default: 7 days).
+- `OPENAI_API_HOST`: (optional) Set OpenAI host url (default: https://api.openai.com).
+- `OPENAI_API_KEY`: Set OpenAI key.
+- `CHATGPT_SYSTEM_PROMPT_FOR_IMPORTANT_WORDS`: (optional) Set a custom system prompt for finding important words 
+(default: "I need your help to find duplicate issues on my GitHub repository. For context, the entire strategy is the following:\n\n1. A new issue is posted\n2. We ask you to extract a word list of the most \"important\" (i.e. unique adjectives?) words.\n3. We search the repository for all issues with the important words.\n4. We go from highest issue number (most recent) and read the issue description.\n5. If >80% confidence that it's a redundant issue, stop the search and link back to it with a warning saying that it's likely to be a duplicate.\nRight now, we are on step 2.\nPlease separate the words by # so I can parse them easily. Please answer simply as I only need the important words.").
+- `CHATGPT_USER_PROMPT_FOR_IMPORTANT_WORDS`: (optional) Set a custom user prompt for finding important words 
+(default: "I need your help to find duplicate issues on my GitHub repository. For context, the entire strategy is the following:\n\n1. A new issue is posted\n2. We ask you to extract a word list of the most \"important\" (i.e. unique adjectives?) words.\n3. We search the repository for all issues with the important words.\n4. We go from highest issue number (most recent) and read the issue description.\n5. If >80% confidence that it's a redundant issue, stop the search and link back to it with a warning saying that it's likely to be a duplicate.\nRight now, we are on step 2.\nPlease separate the words by # so I can parse them easily. Please answer simply as I only need the important words.").
+- `CHATGPT_SYSTEM_PROMPT_FOR_MEASURE_SIMILARITY`: (optional) Set a custom system prompt for measuring similarity 
+(default: "You are a 'similarity measurer'. You need to measure possibility of 2 given contexts will be the same. You don't have to give unnecessary things and only have to give the percent in number. (e.g. 30%)").
+- `CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY`: (optional) Set a custom user prompt for measuring similarity 
+(default: "I have two github issues.\n%first%\nand\n%second%\nPlease give me the possibility of the 2 issues are the same content.\n Give me in number format and add % after the number.\nDo not tell other things since I only need the number.").
+- `SIMILARITY_THRESHOLD`: (optional) Set similarity threshold (default: 80).
+- `MEASURE_SIMILARITY_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for measuring similarity (default: 0).
+- `IMPORTANT_WORDS_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for finding important words (default: 0).
 
 `APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for internal developers to use.
 If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically generated when you install the app on your repository.
