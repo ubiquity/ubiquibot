@@ -1,9 +1,10 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getIssueDescription, getTokenSymbol, parseComments } from "../../helpers";
-import { Incentives, Payload, UserType } from "../../types";
+import { Incentives, Payload, StateReason, UserType } from "../../types";
 import { commentParser } from "../comment";
 import Decimal from "decimal.js";
+import { bountyInfo } from "../wildcard";
 
 const ItemsToExclude: string[] = ["blockquote"];
 /**
@@ -13,7 +14,7 @@ const ItemsToExclude: string[] = ["blockquote"];
 export const incentivizeComments = async () => {
   const logger = getLogger();
   const {
-    mode: { incentiveMode },
+    mode: { incentiveMode, paymentPermitMaxPrice },
     price: { baseMultiplier, incentives },
     payout: { paymentToken, rpc },
   } = getBotConfig();
@@ -29,10 +30,33 @@ export const incentivizeComments = async () => {
     return;
   }
 
+  if (issue.state_reason !== StateReason.COMPLETED) {
+    logger.info("incentivizeComments: comment incentives skipped because the issue was not closed as completed");
+    return;
+  }
+
+  if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
+    logger.info(`incentivizeComments: skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
+    return;
+  }
+
+  const issueDetailed = bountyInfo(issue);
+  if (!issueDetailed.isBounty) {
+    logger.info(`incentivizeComments: its not a bounty`);
+    return;
+  }
+
+  const comments = await getAllIssueComments(issue.number);
+  const permitComments = comments.filter((content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot);
+  if (permitComments.length > 0) {
+    logger.info(`incentivizeComments: skip to generate a permit url because it has been already posted`);
+    return;
+  }
+
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
-    logger.info("Skipping payment permit generation because `assignee` is `undefined`.");
+    logger.info("incentivizeComments: skipping payment permit generation because `assignee` is `undefined`.");
     return;
   }
 
@@ -94,7 +118,7 @@ export const incentivizeComments = async () => {
 export const incentivizeCreatorComment = async () => {
   const logger = getLogger();
   const {
-    mode: { incentiveMode },
+    mode: { incentiveMode, paymentPermitMaxPrice },
     price: { incentives, issueCreatorMultiplier },
     payout: { paymentToken, rpc },
   } = getBotConfig();
@@ -110,10 +134,33 @@ export const incentivizeCreatorComment = async () => {
     return;
   }
 
+  if (issue.state_reason !== StateReason.COMPLETED) {
+    logger.info("incentivizeCreatorComment: comment incentives skipped because the issue was not closed as completed");
+    return;
+  }
+
+  if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
+    logger.info(`incentivizeCreatorComment: skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
+    return;
+  }
+
+  const issueDetailed = bountyInfo(issue);
+  if (!issueDetailed.isBounty) {
+    logger.info(`incentivizeCreatorComment: its not a bounty`);
+    return;
+  }
+
+  const comments = await getAllIssueComments(issue.number);
+  const permitComments = comments.filter((content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot);
+  if (permitComments.length > 0) {
+    logger.info(`incentivizeCreatorComment: skip to generate a permit url because it has been already posted`);
+    return;
+  }
+
   const assignees = issue.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
-    logger.info("Skipping payment permit generation because `assignee` is `undefined`.");
+    logger.info("incentivizeCreatorComment: skipping payment permit generation because `assignee` is `undefined`.");
     return;
   }
 
