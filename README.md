@@ -183,3 +183,20 @@ Bounty bot is built using the [probot](https://probot.github.io/) framework so i
 |
 ├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/utils">utils</a> A set of utility functions
 </pre>
+
+## Default Config Notes (`ubiquibot-config-default.json`)
+
+We can't use a `jsonc` file due to limitations with Netlify. Here is a snippet of some values with notes next to them.
+
+```jsonc
+{
+  "payment-permit-max-price": 9007199254740991, // Number.MAX_SAFE_INTEGER
+  "max-concurrent-assigns": 9007199254740991, // Number.MAX_SAFE_INTEGER
+  "comment-element-pricing": {
+    /* https://github.com/syntax-tree/mdast#nodes */
+    "strong": 0 // Also includes italics, unfortunately https://github.com/syntax-tree/mdast#strong
+    /* https://github.com/syntax-tree/mdast#gfm */
+
+  }
+}
+```

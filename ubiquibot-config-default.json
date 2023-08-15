@@ -1,7 +1,15 @@
 {
   "evm-network-id": 100,
-  "price-multiplier": 1.5,
-  "issue-creator-multiplier": 2000,
+  "price-multiplier": 1,
+  "issue-creator-multiplier": 1000,
+  "payment-permit-max-price": 9007199254740991,
+  "max-concurrent-assigns": 9007199254740991,
+  "assistive-pricing": false,
+  "disable-analytics": false,
+  "comment-incentives": false,
+  "register-wallet-with-verification": false,
+  "promotion-comment": "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>",
+  "default-labels": [],
   "time-labels": [
     {
       "name": "Time: <1 Hour",
@@ -85,12 +93,6 @@
       "enabled": false
     }
   ],
-  "default-labels": [],
-  "assistive-pricing": false,
-  "disable-analytics": false,
-  "payment-permit-max-price": 1000,
-  "comment-incentives": false,
-  "max-concurrent-assigns": 2,
   "incentives": {
     "comment": {
       "elements": {},
@@ -98,7 +100,5 @@
         "word": 0
       }
     }
-  },
-  "promotion-comment": "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>",
-  "register-wallet-with-verification": false
+  }
 }
