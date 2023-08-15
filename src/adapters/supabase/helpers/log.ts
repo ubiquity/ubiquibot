@@ -1,4 +1,4 @@
-import { getAdapters, getBotContext } from "../../../bindings";
+import { getAdapters, getBotContext, Logger } from "../../../bindings";
 import { Payload } from "../../../types";
 import { getOrgAndRepoFromPath } from "../../../utils/private";
 interface Log {
@@ -21,7 +21,7 @@ export enum levels {
   silly = 6,
 }
 
-export class GitHubLogger {
+export class GitHubLogger implements Logger {
   private supabase = getAdapters().supabase;
   private maxLevel;
   private app;
