@@ -13,7 +13,7 @@ import { BigNumber, BigNumberish } from "ethers";
  * @returns - The supabase client
  */
 export const supabase = (url: string, key: string): SupabaseClient => {
-  return createClient<Database>(url, key);
+  return createClient<Database>(url, key, { auth: { persistSession: false } });
 };
 
 /**
@@ -175,7 +175,7 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
       created_at: new Date().toUTCString(),
       updated_at: new Date().toUTCString(),
     });
-    logger.info(`Creating a new wallet_table record done, { data: ${_data}, error: ${_error} }`);
+    logger.info(`Creating a new wallet_table record done, { error: ${_error?.message} }`);
   }
 };
 
