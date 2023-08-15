@@ -114,18 +114,30 @@ const getDbDataFromUserProfile = (userProfile: UserProfile, additions?: UserProf
 export const upsertIssue = async (issue: Issue, additions: IssueAdditions): Promise<void> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
-  const { data, error } = await supabase.from("issues").select("id").eq("issue_number", issue.number).single();
+  const { data, error } = await supabase.from("issues").select("id").eq("issue_number", issue.number);
+  if (error) {
+    logger.error(`Checking issue failed, error: ${JSON.stringify(error)}`);
+    throw new Error(`Checking issue failed, error: ${JSON.stringify(error)}`);
+  }
 
-  if (data) {
-    const key = data.id as number;
-    await supabase
+  if (data && data.length > 0) {
+    const key = data[0].id as number;
+    const { data: _data, error: _error } = await supabase
       .from("issues")
       .upsert({ id: key, ...getDbDataFromIssue(issue, additions) })
       .select();
-    logger.info(`Upserting an issue done, data: ${data}, error: ${error}`);
+    if (_error) {
+      logger.error(`Upserting an issue failed, error: ${JSON.stringify(_error)}`);
+      throw new Error(`Upserting an issue failed, error: ${JSON.stringify(_error)}`);
+    }
+    logger.info(`Upserting an issue done, { data: ${_data}, error: ${_error}`);
   } else if (error) {
     const { data: _data, error: _error } = await supabase.from("issues").insert(getDbDataFromIssue(issue, additions));
-    logger.info(`Creating a new issue done, { data: ${_data}, error: ${_error}`);
+    if (_error) {
+      logger.error(`Creating a new issue record failed, error: ${JSON.stringify(_error)}`);
+      throw new Error(`Creating a new issue record failed, error: ${JSON.stringify(_error)}`);
+    }
+    logger.info(`Creating a new issue record done, { data: ${_data}, error: ${_error}`);
   }
 };
 
@@ -136,18 +148,30 @@ export const upsertIssue = async (issue: Issue, additions: IssueAdditions): Prom
 export const upsertUser = async (user: UserProfile): Promise<void> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
-  const { data, error } = await supabase.from("users").select("id").eq("user_login", user.login).single();
+  const { data, error } = await supabase.from("users").select("id").eq("user_login", user.login);
+  if (error) {
+    logger.error(`Checking user failed, error: ${JSON.stringify(error)}`);
+    throw new Error(`Checking user failed, error: ${JSON.stringify(error)}`);
+  }
 
-  if (data) {
-    const key = data.id as number;
-    await supabase
+  if (data && data.length > 0) {
+    const key = data[0].id as number;
+    const { data: _data, error: _error } = await supabase
       .from("users")
       .upsert({ id: key, ...getDbDataFromUserProfile(user) })
       .select();
-    logger.info(`Upserting an user done", { data: ${data}, error: ${error} }`);
+    if (_error) {
+      logger.error(`Upserting a user failed, error: ${JSON.stringify(_error)}`);
+      throw new Error(`Upserting a user failed, error: ${JSON.stringify(_error)}`);
+    }
+    logger.info(`Upserting a user done, { data: ${JSON.stringify(_data)} }`);
   } else if (error) {
     const { data: _data, error: _error } = await supabase.from("users").insert(getDbDataFromUserProfile(user));
-    logger.info(`Creating a new user done", { data: ${_data}, error: ${_error} }`);
+    if (_error) {
+      logger.error(`Creating a new user record failed, error: ${JSON.stringify(_error)}`);
+      throw new Error(`Creating a new user record failed, error: ${JSON.stringify(_error)}`);
+    }
+    logger.info(`Creating a new user record done, { data: ${JSON.stringify(_data)} }`);
   }
 };
 
@@ -160,14 +184,23 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
   const logger = getLogger();
   const { supabase } = getAdapters();
 
-  const { data, error } = await supabase.from("wallets").select("user_name").eq("user_name", username).single();
-  if (data) {
-    await supabase.from("wallets").upsert({
+  const { data, error } = await supabase.from("wallets").select("user_name").eq("user_name", username);
+  if (error) {
+    logger.error(`Checking wallet address failed, error: ${JSON.stringify(error)}`);
+    throw new Error(`Checking wallet address failed, error: ${JSON.stringify(error)}`);
+  }
+
+  if (data && data.length > 0) {
+    const { data: _data, error: _error } = await supabase.from("wallets").upsert({
       user_name: username,
       wallet_address: address,
       updated_at: new Date().toUTCString(),
     });
-    logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
+    if (_error) {
+      logger.error(`Upserting a wallet address failed, error: ${JSON.stringify(_error)}`);
+      throw new Error(`Upserting a wallet address failed, error: ${JSON.stringify(_error)}`);
+    }
+    logger.info(`Upserting a wallet address done, { data: ${JSON.stringify(_data)} }`);
   } else {
     const { data: _data, error: _error } = await supabase.from("wallets").insert({
       user_name: username,
@@ -175,7 +208,11 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
       created_at: new Date().toUTCString(),
       updated_at: new Date().toUTCString(),
     });
-    logger.info(`Creating a new wallet_table record done, { error: ${_error?.message} }`);
+    if (_error) {
+      logger.error(`Creating a new wallet_table record failed, error: ${JSON.stringify(_error)}`);
+      throw new Error(`Creating a new wallet_table record failed, error: ${JSON.stringify(_error)}`);
+    }
+    logger.info(`Creating a new wallet_table record done, { data: ${JSON.stringify(_data)} }`);
   }
 };
 
@@ -188,15 +225,24 @@ export const upsertWalletMultiplier = async (username: string, multiplier: strin
   const logger = getLogger();
   const { supabase } = getAdapters();
 
-  const { data, error } = await supabase.from("multiplier").select("user_id").eq("user_id", `${username}_${org_id}`).single();
-  if (data) {
-    await supabase.from("multiplier").upsert({
+  const { data, error } = await supabase.from("multiplier").select("user_id").eq("user_id", `${username}_${org_id}`);
+  if (error) {
+    logger.error(`Checking wallet multiplier failed, error: ${JSON.stringify(error)}`);
+    throw new Error(`Checking wallet multiplier failed, error: ${JSON.stringify(error)}`);
+  }
+
+  if (data && data.length > 0) {
+    const { data: _data, error: _error } = await supabase.from("multiplier").upsert({
       user_id: `${username}_${org_id}`,
       value: multiplier,
       reason,
       updated_at: new Date().toUTCString(),
     });
-    logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
+    if (_error) {
+      logger.error(`Upserting a wallet multiplier failed, error: ${JSON.stringify(_error)}`);
+      throw new Error(`Upserting a wallet multiplier failed, error: ${JSON.stringify(_error)}`);
+    }
+    logger.info(`Upserting a wallet multiplier done, { data: ${JSON.stringify(_data)} }`);
   } else {
     const { data: _data, error: _error } = await supabase.from("multiplier").insert({
       user_id: `${username}_${org_id}`,
@@ -205,7 +251,11 @@ export const upsertWalletMultiplier = async (username: string, multiplier: strin
       created_at: new Date().toUTCString(),
       updated_at: new Date().toUTCString(),
     });
-    logger.info(`Creating a new multiplier_table record done, { data: ${_data}, error: ${_error} }`);
+    if (_error) {
+      logger.error(`Creating a new multiplier record failed, error: ${JSON.stringify(_error)}`);
+      throw new Error(`Creating a new multiplier record failed, error: ${JSON.stringify(_error)}`);
+    }
+    logger.info(`Creating a new multiplier record done, { data: ${JSON.stringify(_data)} }`);
   }
 };
 
@@ -220,7 +270,11 @@ export const upsertAccessControl = async (username: string, repository: string, 
   const logger = getLogger();
   const { supabase } = getAdapters();
 
-  const { data, error } = await supabase.from("access").select("user_name").eq("user_name", username).eq("repository", repository).single();
+  const { data, error } = await supabase.from("access").select("user_name").eq("user_name", username).eq("repository", repository);
+  if (error) {
+    logger.error(`Checking access control failed, error: ${JSON.stringify(error)}`);
+    throw new Error(`Checking access control failed, error: ${JSON.stringify(error)}`);
+  }
 
   const properties = {
     user_name: username,
@@ -229,9 +283,13 @@ export const upsertAccessControl = async (username: string, repository: string, 
     [access]: bool,
   };
 
-  if (data) {
-    await supabase.from("access").upsert(properties);
-    logger.info(`Upserting an access done, { data: ${data}, error: ${error} }`);
+  if (data && data.length > 0) {
+    const { data: _data, error: _error } = await supabase.from("access").upsert(properties);
+    if (_error) {
+      logger.error(`Upserting a access control failed, error: ${JSON.stringify(_error)}`);
+      throw new Error(`Upserting a access control failed, error: ${JSON.stringify(_error)}`);
+    }
+    logger.info(`Upserting a access control done, { data: ${JSON.stringify(_data)} }`);
   } else {
     const { data: _data, error: _error } = await supabase.from("access").insert({
       created_at: new Date().toUTCString(),
@@ -241,7 +299,11 @@ export const upsertAccessControl = async (username: string, repository: string, 
       priority_access: false,
       ...properties,
     });
-    logger.info(`Creating a new access record done, { data: ${_data}, error: ${_error} }`);
+    if (_error) {
+      logger.error(`Creating a new access control record failed, error: ${JSON.stringify(_error)}`);
+      throw new Error(`Creating a new access control record failed, error: ${JSON.stringify(_error)}`);
+    }
+    logger.info(`Creating a new access control record done, { data: ${JSON.stringify(_data)} }`);
   }
 };
 

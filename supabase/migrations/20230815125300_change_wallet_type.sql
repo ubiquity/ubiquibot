@@ -1,0 +1,1 @@
+ALTER TABLE wallets ALTER COLUMN wallet_address TYPE text;
