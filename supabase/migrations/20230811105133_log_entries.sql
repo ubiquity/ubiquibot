@@ -1,4 +1,4 @@
-CREATE TABLE log_entries (
+CREATE TABLE logs (
   id SERIAL PRIMARY KEY,
   repo_name TEXT,
   org_name TEXT,
