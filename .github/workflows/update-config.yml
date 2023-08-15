@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+  GH_TOKEN: ${{ secrets.UPDATE_CONFIG_PAT }}
 
 jobs:
   build:
@@ -79,7 +79,7 @@ jobs:
             
             git add .github/ubiquibot-config.yml
             git commit -m "build: use latest ubiquibot config setup"
-            git remote set-url origin https://${{ secrets.PAT_TOKEN }}@github.com/$ownerName/$repoName.git
+            git remote set-url origin https://${{ secrets.UPDATE_CONFIG_PAT }}@github.com/$ownerName/$repoName.git
             git push -f origin update
                        
             curl -L \
