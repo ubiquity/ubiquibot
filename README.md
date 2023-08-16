@@ -171,9 +171,9 @@ For payment to work in your local instance, ubiquibot must be set up in a Github
 
    `private-key-encrypted: "PASTE_YOUR_CIPHER_TEXT_HERE"`
 
-6. Copy the `x25519_PRIVATE_KEY` and append it in your local ubiquibot repository `.env` file as
+6. Copy the `X25519_PRIVATE_KEY` and append it in your local ubiquibot repository `.env` file as
 
-   `x25519_PRIVATE_KEY=PASTE_YOUR_x25519_PRIVATE_KEY_HERE`
+   `X25519_PRIVATE_KEY=PASTE_YOUR_X25519_PRIVATE_KEY_HERE`
 
 ## How to create a new release
 
