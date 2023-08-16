@@ -57,7 +57,7 @@ export const incentivizeComments = async () => {
     const rewardValue = calculateRewardValue(commentsByNode, commentElementPricing);
     logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
-    const amountInETH = ((rewardValue * baseMultiplier) / 1000).toString();
+    const amountInETH = (rewardValue * baseMultiplier).toString();
     if (account) {
       const { payoutUrl } = await generatePermit2Signature(account, amountInETH, issue.node_id);
       comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
