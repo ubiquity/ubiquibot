@@ -40,7 +40,7 @@ export class GitHubLogger implements Logger {
 
   async sendLogsToSupabase({ repo, org, commentId, issueNumber, logMessage, errorType, timestamp }: Log) {
     try {
-      const { error } = await this.supabase.from("log_entries").insert([
+      const { error } = await this.supabase.from("logs").insert([
         {
           repo_name: repo,
           level: errorType,
@@ -173,7 +173,7 @@ export class GitHubLogger implements Logger {
 
   async get() {
     try {
-      const { data, error } = await this.supabase.from("log_entries").select("*");
+      const { data, error } = await this.supabase.from("logs").select("*");
 
       if (error) {
         console.error("Error retrieving logs from Supabase:", error.message);
