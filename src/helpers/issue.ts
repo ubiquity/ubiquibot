@@ -314,6 +314,48 @@ export const removeAssignees = async (issue_number: number, assignees: string[])
   }
 };
 
+export const checkUserPermissionForRepoAndOrg = async (username: string, context: Context): Promise<boolean> => {
+  const permissionForRepo = await checkUserPermissionForRepo(username, context);
+  const permissionForOrg = await checkUserPermissionForOrg(username, context);
+
+  return permissionForOrg || permissionForRepo;
+};
+
+export const checkUserPermissionForRepo = async (username: string, context: Context): Promise<boolean> => {
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+
+  try {
+    const res = await context.octokit.rest.repos.checkCollaborator({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      username,
+    });
+
+    return res.status === 204;
+  } catch (e: unknown) {
+    logger.debug(`Checking if user permisson for repo failed!, reason: ${e}`);
+    return false;
+  }
+};
+
+export const checkUserPermissionForOrg = async (username: string, context: Context): Promise<boolean> => {
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  if (!payload.organization) return false;
+
+  try {
+    await context.octokit.rest.orgs.checkMembershipForUser({
+      org: payload.organization.login,
+      username,
+    });
+    return true;
+  } catch (e: unknown) {
+    logger.debug(`Checking if user permisson for repo failed!, reason: ${e}`);
+    return false;
+  }
+};
+
 export const getUserPermission = async (username: string, context: Context): Promise<string> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
