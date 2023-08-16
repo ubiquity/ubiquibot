@@ -148,18 +148,14 @@ export const upsertIssue = async (issue: Issue, additions: IssueAdditions): Prom
 export const upsertUser = async (user: UserProfile): Promise<void> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
-  const { data, error } = await supabase.from("users").select("id").eq("user_login", user.login);
+  const { data, error } = await supabase.from("users").select("user_login").eq("user_login", user.login);
   if (error) {
     logger.error(`Checking user failed, error: ${JSON.stringify(error)}`);
     throw new Error(`Checking user failed, error: ${JSON.stringify(error)}`);
   }
 
   if (data && data.length > 0) {
-    const key = data[0].id as number;
-    const { data: _data, error: _error } = await supabase
-      .from("users")
-      .upsert({ id: key, ...getDbDataFromUserProfile(user) })
-      .select();
+    const { data: _data, error: _error } = await supabase.from("users").upsert(getDbDataFromUserProfile(user)).select();
     if (_error) {
       logger.error(`Upserting a user failed, error: ${JSON.stringify(_error)}`);
       throw new Error(`Upserting a user failed, error: ${JSON.stringify(_error)}`);
