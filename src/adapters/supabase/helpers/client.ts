@@ -33,25 +33,45 @@ export const getMaxIssueNumber = async (): Promise<number> => {
 /**
  * @dev Gets the last weekly update timestamp
  */
-export const getLastWeeklyTime = async (): Promise<number> => {
+export const getLastWeeklyTime = async (): Promise<Date | undefined> => {
   const { supabase } = getAdapters();
 
   const { data } = await supabase.from("weekly").select("last_time").limit(1).single();
   if (data) {
-    return Number(data.last_time);
+    return new Date(data.last_time);
   } else {
-    return 0;
+    return undefined;
   }
 };
 
 /**
  * @dev Updates the last weekly update timestamp
  */
-export const updateLastWeeklyTime = async (time: number): Promise<void> => {
+export const updateLastWeeklyTime = async (time: Date): Promise<void> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
-  const { data, error } = await supabase.from("weekly").update({ last_time: time });
-  logger.info(`Updating last time is done, data: ${data}, error: ${error}`);
+
+  const { data, error } = await supabase.from("weekly").select("last_time");
+  if (error) {
+    logger.error(`Checking last time failed, error: ${JSON.stringify(error)}`);
+    throw new Error(`Checking last time failed, error: ${JSON.stringify(error)}`);
+  }
+
+  if (data && data.length > 0) {
+    const { data, error } = await supabase.from("weekly").update({ last_time: time.toUTCString() }).neq("last_time", time.toUTCString());
+    if (error) {
+      logger.error(`Updating last time failed, error: ${JSON.stringify(error)}`);
+      throw new Error(`Updating last time failed, error: ${JSON.stringify(error)}`);
+    }
+    logger.info(`Updating last time is done, data: ${data}`);
+  } else {
+    const { data, error } = await supabase.from("weekly").insert({ last_time: time.toUTCString() });
+    if (error) {
+      logger.error(`Creating last time failed, error: ${JSON.stringify(error)}`);
+      throw new Error(`Creating last time failed, error: ${JSON.stringify(error)}`);
+    }
+    logger.info(`Creating last time is done, data: ${data}`);
+  }
   return;
 };
 
