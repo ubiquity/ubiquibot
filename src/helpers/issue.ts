@@ -351,7 +351,7 @@ export const checkUserPermissionForOrg = async (username: string, context: Conte
     });
     return true;
   } catch (e: unknown) {
-    logger.debug(`Checking if user permisson for repo failed!, reason: ${e}`);
+    logger.error(`Checking if user permisson for repo failed!, reason: ${e}`);
     return false;
   }
 };
