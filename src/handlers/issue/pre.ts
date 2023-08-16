@@ -26,8 +26,8 @@ export const findDuplicateOne = async () => {
         });
         if (response.data.items.length > 0) {
           for (const result of response.data.items) {
-            if (!result.body) return;
-            if (result.id === issue.id) return;
+            if (!result.body) continue;
+            if (result.id === issue.id) continue;
             const similarity = await measureSimilarity(
               `Issue title: ${issue.title}\nIssue content: ${issue.body}`,
               `Issue title: ${result.title}\nIssue content: ${result.body}`

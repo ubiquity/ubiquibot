@@ -1,7 +1,8 @@
 import { getLogger } from "../bindings";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { ajv } from "../utils";
 import { Static, Type } from "@sinclair/typebox";
+import { backOff } from "exponential-backoff";
 
 export const extractImportantWords = async (content: string): Promise<string[]> => {
   const res = await getAnswerFromChatGPT(
@@ -80,7 +81,13 @@ export const getAnswerFromChatGPT = async (systemPrompt: string, userPrompt: str
     data: body,
   };
   try {
-    const response = await axios(config);
+    const response = await backOff(() => axios(config), {
+      startingDelay: 6000,
+      retry: (e: AxiosError) => {
+        if (e.response && e.response.status === 429) return true;
+        return false;
+      },
+    });
     const data: Choices = response.data;
     const validate = ajv.compile(ChoicesSchema);
     const valid = validate(data);
