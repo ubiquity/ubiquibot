@@ -334,7 +334,7 @@ export const checkUserPermissionForRepo = async (username: string, context: Cont
 
     return res.status === 204;
   } catch (e: unknown) {
-    logger.debug(`Checking if user permisson for repo failed!, reason: ${e}`);
+    logger.error(`Checking if user permisson for repo failed!, reason: ${e}`);
     return false;
   }
 };
