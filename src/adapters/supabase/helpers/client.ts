@@ -112,7 +112,7 @@ const getDbDataFromUserProfile = (userProfile: UserProfile, additions?: UserProf
   return {
     user_login: userProfile.login,
     user_type: userProfile.type,
-    user_name: userProfile.name,
+    user_name: userProfile.name ?? userProfile.login,
     company: userProfile.company,
     blog: userProfile.blog,
     user_location: userProfile.location,
@@ -151,7 +151,7 @@ export const upsertIssue = async (issue: Issue, additions: IssueAdditions): Prom
       throw new Error(`Upserting an issue failed, error: ${JSON.stringify(_error)}`);
     }
     logger.info(`Upserting an issue done, { data: ${_data}, error: ${_error}`);
-  } else if (error) {
+  } else {
     const { data: _data, error: _error } = await supabase.from("issues").insert(getDbDataFromIssue(issue, additions));
     if (_error) {
       logger.error(`Creating a new issue record failed, error: ${JSON.stringify(_error)}`);
@@ -181,7 +181,7 @@ export const upsertUser = async (user: UserProfile): Promise<void> => {
       throw new Error(`Upserting a user failed, error: ${JSON.stringify(_error)}`);
     }
     logger.info(`Upserting a user done, { data: ${JSON.stringify(_data)} }`);
-  } else if (error) {
+  } else {
     const { data: _data, error: _error } = await supabase.from("users").insert(getDbDataFromUserProfile(user));
     if (_error) {
       logger.error(`Creating a new user record failed, error: ${JSON.stringify(_error)}`);
