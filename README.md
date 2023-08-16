@@ -150,6 +150,8 @@ When using as a github app the flow is the following:
 
 ## How to QA any additions to the bot
 
+You can perform a QA using your local instance of ubiquibot, or ubiquibot-qa app. The following steps describe how you can perform a QA using ubiquibot-qa.
+
 1. Fork the ubiquibot repo and install the [ubiquibot-qa app](https://github.com/apps/ubiquibot-qa) on the forked repository.
 2. Enable github action running on the forked repo and allow `issues` on the settings tab.
 3. ubiquibot-qa bot is a deployment of your fork's `development` branch. Make sure the changes you are testing are present in your fork's `development` branch.
