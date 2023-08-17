@@ -30,7 +30,7 @@ export const assign = async (body: string) => {
     return GLOBAL_STRINGS.assignCommandDisabledComment;
   }
 
-  if (isParentIssue(issue.body)) {
+  if (issue.body && isParentIssue(issue.body)) {
     logger.info(`Ignore '/start' command from user: identified as parent issue`);
     return GLOBAL_STRINGS.ignoreStartCommandForParentIssueComment;
   }

@@ -14,7 +14,7 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const labels = payload.issue.labels;
 
   logger.info(`Checking if the issue is a parent issue.`);
-  if (isParentIssue(payload.issue.body)) {
+  if (payload.issue.body && isParentIssue(payload.issue.body)) {
     logger.error("Identified as parent issue. Disabling price label.");
     const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));
     if (issuePrices.length) {
