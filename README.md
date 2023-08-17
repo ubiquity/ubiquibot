@@ -148,17 +148,6 @@ When using as a github app the flow is the following:
 4. Event details are sent to your deployed bot instance (to a webhook URL that was set in github app's settings)
 5. The bot handles the event
 
-## How to QA any additions to the bot
-
-You can perform a QA using your local instance of ubiquibot, or ubiquibot-qa app. The following steps describe how you can perform a QA using ubiquibot-qa.
-
-1. Fork the ubiquibot repo and install the [ubiquibot-qa app](https://github.com/apps/ubiquibot-qa) on the forked repository.
-2. Enable github action running on the forked repo and allow `issues` on the settings tab.
-3. ubiquibot-qa bot is a deployment of your fork's `development` branch. Make sure the changes you are testing are present in your fork's `development` branch.
-4. Create a [QA issue](https://github.com/ubiquibot/staging/issues/21) similar to this where you show the feature working in the forked repo
-5. Describe carefully the steps taken to get the feature working, this way our team can easily verify
-6. Link that QA issue to the pull request as indicated on the template before requesting a review
-
 ## Payments Permits in a local instance
 
 For payment to work in your local instance, ubiquibot must be set up in a Github organization. It will not work for a ubiquibot instance set up in a personal account. Once, you have an ubiquibot instance working in an organization, follow the steps given below:
@@ -174,6 +163,16 @@ For payment to work in your local instance, ubiquibot must be set up in a Github
 6. Copy the `X25519_PRIVATE_KEY` and append it in your local ubiquibot repository `.env` file as
 
    `X25519_PRIVATE_KEY=PASTE_YOUR_X25519_PRIVATE_KEY_HERE`
+
+## How to QA any additions to the bot
+
+Make sure you have your local instance of ubiquibot running.
+
+1. Fork the ubiquibot repo and add your local instance of ubiquibot to the forked repository.
+2. Enable Github action running on the forked repo and allow `issues` on the settings tab.
+3. Create a [QA issue](https://github.com/ubiquibot/staging/issues/21) similar to this where you show the feature working in the forked repo
+4. Describe carefully the steps taken to get the feature working, this way our team can easily verify
+5. Link that QA issue to the pull request as indicated on the template before requesting a review
 
 ## How to create a new release
 
