@@ -349,8 +349,7 @@ export const checkUserPermissionForOrg = async (username: string, context: Conte
       org: payload.organization.login,
       username,
     });
-    // @ts-expect-error This looks like a bug in octokit. (https://github.com/octokit/rest.js/issues/188)
-    return res.status === 204;
+    return true;
   } catch (e: unknown) {
     logger.error(`Checking if user permisson for org failed!, reason: ${e}`);
     return false;
