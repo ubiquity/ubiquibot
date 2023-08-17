@@ -76,7 +76,7 @@ To test the bot, you can:
 
 `disable-analytics` can be `true` or `false` that disables or enables weekly analytics collection by Ubiquity.
 
-`payment-permit-max-price` sets the amount for automatic payout of bounties when the issue is closed
+`payment-permit-max-price` sets the max amount for automatic payout of bounties when the issue is closed
 
 `comment-incentives` can be `true` or `false` that enable or disable comment incentives. These are comments in the issue by either the creator of the bounty or other users.
 
