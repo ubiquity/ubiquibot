@@ -1,7 +1,15 @@
 {
   "evm-network-id": 100,
-  "price-multiplier": 1.5,
-  "issue-creator-multiplier": 2000,
+  "price-multiplier": 1,
+  "issue-creator-multiplier": 1000,
+  "payment-permit-max-price": 9007199254740991,
+  "max-concurrent-assigns": 9007199254740991,
+  "assistive-pricing": false,
+  "disable-analytics": false,
+  "comment-incentives": false,
+  "register-wallet-with-verification": false,
+  "promotion-comment": "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>",
+  "default-labels": [],
   "time-labels": [
     {
       "name": "Time: <1 Hour",
@@ -51,18 +59,71 @@
       "weight": 5
     }
   ],
-  "default-labels": ["Time: <1 Hour", "Priority: 0 (Normal)", "Test"],
-  "auto-pay-mode": true,
-  "disable-analytics": true,
-  "comment-incentives": false,
-  "max-concurrent-assigns": 2,
+  "command-settings": [
+    {
+      "name": "start",
+      "enabled": false
+    },
+    {
+      "name": "stop",
+      "enabled": false
+    },
+    {
+      "name": "wallet",
+      "enabled": false
+    },
+    {
+      "name": "payout",
+      "enabled": false
+    },
+    {
+      "name": "multiplier",
+      "enabled": false
+    },
+    {
+      "name": "query",
+      "enabled": false
+    },
+    {
+      "name": "allow",
+      "enabled": false
+    },
+    {
+      "name": "autopay",
+      "enabled": false
+    }
+  ],
   "comment-element-pricing": {
-    "text": 0.1,
-    "link": 0.5,
-    "list": 0.5,
-    "code": 5,
-    "image": 5
-  },
-  "promotion-comment": "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>",
-  "register-wallet-with-verification": false
+    "blockquote": 0,
+    "break": 0,
+    "code": 0,
+    "definition": 0,
+    "emphasis": 0,
+    "heading": 0,
+    "html": 0,
+    "image": 0,
+    "imageReference": 0,
+    "inlineCode": 0,
+    "link": 0,
+    "linkReference": 0,
+    "list": 0,
+    "listItem": 0,
+    "paragraph": 0,
+    "root": 0,
+    "strong": 0,
+    "text": 0,
+    "thematicBreak": 0,
+    "delete": 0,
+    "footnoteDefinition": 0,
+    "footnoteReference": 0,
+    "table": 0,
+    "tableCell": 0,
+    "tableRow": 0,
+    "alignType": 0,
+    "flowContent": 0,
+    "listContent": 0,
+    "phrasingContent": 0,
+    "rowContent": 0,
+    "tableContent": 0
+  }
 }

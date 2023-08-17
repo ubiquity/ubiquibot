@@ -9,4 +9,5 @@ export enum IssueCommentCommands {
   // Access Controls
 
   ALLOW = "/allow",
+  AUTOPAY = "/autopay",
 }
