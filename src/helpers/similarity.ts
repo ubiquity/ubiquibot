@@ -23,7 +23,7 @@ export const measureSimilarity = async (first: string, second: string): Promise<
     `
       ${(
         process.env.CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY ||
-        'I have two github issues and I need to measure the possibility of the 2 issues are the same content (I need to parse the % so other contents are not needed and give me only the number in %).\n Give me in number format and add % after the number.\nDo not tell other things since I only need the number (e.g. 30%). Here are two issues:\n 1. "%first%"\n2. "%second%"'
+        'I have two github issues and I need to measure the possibility of the 2 issues are the same content (I need to parse the % so other contents are not needed and give me only the number in %).\n Give me in number format and add % after the number.\nDo not tell other things since I only need the number (e.g. 85%). Here are two issues:\n 1. "%first%"\n2. "%second%"'
       )
         .replace("%first%", first)
         .replace("%second%", second)}`,
