@@ -102,6 +102,10 @@ export const incentivizeComments = async () => {
     logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
     const amountInETH = rewardValue.mul(baseMultiplier).div(1000);
+    if (amountInETH.gt(paymentPermitMaxPrice)) {
+      logger.info(`Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
+      continue;
+    }
     if (account) {
       const { payoutUrl } = await generatePermit2Signature(account, amountInETH, issue.node_id);
       comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
@@ -181,7 +185,15 @@ export const incentivizeCreatorComment = async () => {
   }
 
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
-  const result = await generatePermitForComments(creator.login, [description], issueCreatorMultiplier, incentives, tokenSymbol, issue.node_id);
+  const result = await generatePermitForComments(
+    creator.login,
+    [description],
+    issueCreatorMultiplier,
+    incentives,
+    tokenSymbol,
+    issue.node_id,
+    paymentPermitMaxPrice
+  );
 
   if (result.payoutUrl) {
     logger.info(`Permit url generated for creator. reward: ${result.payoutUrl}`);
@@ -198,7 +210,8 @@ const generatePermitForComments = async (
   multiplier: number,
   incentives: Incentives,
   tokenSymbol: string,
-  node_id: string
+  node_id: string,
+  paymentPermitMaxPrice: number
 ): Promise<{ comment: string; payoutUrl?: string; amountInETH?: Decimal }> => {
   const logger = getLogger();
   const commentsByNode = await parseComments(comments, ItemsToExclude);
@@ -210,6 +223,10 @@ const generatePermitForComments = async (
   logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
   const account = await getWalletAddress(user);
   const amountInETH = rewardValue.mul(multiplier).div(1000);
+  if (amountInETH.gt(paymentPermitMaxPrice)) {
+    logger.info(`Skipping issue creator reward for user ${user} because reward is higher than payment permit max price`);
+    return { comment: "" };
+  }
   let comment = `#### Task Creator Reward\n`;
   if (account) {
     const { payoutUrl } = await generatePermit2Signature(account, amountInETH, node_id);
