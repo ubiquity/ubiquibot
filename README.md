@@ -76,7 +76,7 @@ To test the bot, you can:
 
 `disable-analytics` can be `true` or `false` that disables or enables weekly analytics collection by Ubiquity.
 
-`payment-permit-max-price` sets the max amount for automatic payout of bounties when the issue is closed
+`payment-permit-max-price` sets the max amount for automatic payout of bounties when the issue is closed.
 
 `comment-incentives` can be `true` or `false` that enable or disable comment incentives. These are payments generated for comments in the issue by contributors, excluding the assignee.
 
@@ -170,9 +170,9 @@ Make sure you have your local instance of ubiquibot running.
 
 1. Fork the ubiquibot repo and add your local instance of ubiquibot to the forked repository.
 2. Enable Github action running on the forked repo and allow `issues` on the settings tab.
-3. Create a [QA issue](https://github.com/ubiquibot/staging/issues/21) similar to this where you show the feature working in the forked repo
-4. Describe carefully the steps taken to get the feature working, this way our team can easily verify
-5. Link that QA issue to the pull request as indicated on the template before requesting a review
+3. Create a [QA issue](https://github.com/ubiquibot/staging/issues/21) similar to this where you show the feature working in the forked repo.
+4. Describe carefully the steps taken to get the feature working, this way our team can easily verify.
+5. Link that QA issue to the pull request as indicated on the template before requesting a review.
 
 ## How to create a new release
 
@@ -222,7 +222,6 @@ We can't use a `jsonc` file due to limitations with Netlify. Here is a snippet o
     /* https://github.com/syntax-tree/mdast#nodes */
     "strong": 0 // Also includes italics, unfortunately https://github.com/syntax-tree/mdast#strong
     /* https://github.com/syntax-tree/mdast#gfm */
-
   }
 }
 ```
