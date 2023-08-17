@@ -1,6 +1,6 @@
 import { getMaxIssueNumber, upsertIssue, upsertUser } from "../../adapters/supabase";
 import { getBotConfig, getLogger } from "../../bindings";
-import { listIssuesForRepo, getUser } from "../../helpers";
+import { listIssuesForRepo, getUser, calculateWeight } from "../../helpers";
 import { Issue, IssueType, User, UserProfile } from "../../types";
 import { getTargetPriceLabel } from "../shared";
 
@@ -24,8 +24,8 @@ export const bountyInfo = (
 
   const isBounty = timeLabels.length > 0 && priorityLabels.length > 0;
 
-  const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : undefined;
-  const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : undefined;
+  const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
+  const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
 
   const priceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
 

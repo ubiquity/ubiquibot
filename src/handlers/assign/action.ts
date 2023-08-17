@@ -1,5 +1,5 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue, closePullRequest, getOpenedPullRequestsForAnIssue } from "../../helpers";
+import { addCommentToIssue, closePullRequest, getOpenedPullRequestsForAnIssue, calculateWeight } from "../../helpers";
 import { Payload, LabelItem } from "../../types";
 import { deadLinePrefix } from "../shared";
 
@@ -49,7 +49,7 @@ export const commentWithAssignMessage = async (): Promise<void> => {
     return;
   }
 
-  const sorted = timeLabelsAssigned.sort((a, b) => a.weight - b.weight);
+  const sorted = timeLabelsAssigned.sort((a, b) => calculateWeight(a) - calculateWeight(b));
   const targetTimeLabel = sorted[0];
   const duration = targetTimeLabel.value;
   if (!duration) {

@@ -2,7 +2,6 @@ import { Static, Type } from "@sinclair/typebox";
 
 const LabelItemSchema = Type.Object({
   name: Type.String(),
-  weight: Type.Number(),
   value: Type.Optional(Type.Number()),
 });
 export type LabelItem = Static<typeof LabelItemSchema>;
