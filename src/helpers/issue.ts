@@ -345,11 +345,12 @@ export const checkUserPermissionForOrg = async (username: string, context: Conte
   if (!payload.organization) return false;
 
   try {
-    await context.octokit.rest.orgs.checkMembershipForUser({
+    const res = await context.octokit.rest.orgs.checkMembershipForUser({
       org: payload.organization.login,
       username,
     });
-    return true;
+    // @ts-expect-error This looks like a bug in octokit. (https://github.com/octokit/rest.js/issues/188)
+    return res.status === 204;
   } catch (e: unknown) {
     logger.debug(`Checking if user permisson for repo failed!, reason: ${e}`);
     return false;
