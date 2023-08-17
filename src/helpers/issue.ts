@@ -345,7 +345,7 @@ export const checkUserPermissionForOrg = async (username: string, context: Conte
   if (!payload.organization) return false;
 
   try {
-    const res = await context.octokit.rest.orgs.checkMembershipForUser({
+    await context.octokit.rest.orgs.checkMembershipForUser({
       org: payload.organization.login,
       username,
     });
