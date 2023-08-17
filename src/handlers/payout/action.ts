@@ -3,6 +3,7 @@ import { getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import {
   addLabelToIssue,
+  checkUserPermissionForRepoAndOrg,
   clearAllPriceLabelsOnIssue,
   deleteLabel,
   generatePermit2Signature,
@@ -33,6 +34,10 @@ export const handleIssueClosed = async () => {
   const id = organization?.id || repository?.id; // repository?.id as fallback
 
   if (!issue) return;
+
+  const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
+
+  if (!userHasPermission) return "Permit generation skipped because this issue has been closed by an external contributor.";
 
   const comments = await getAllIssueComments(issue.number);
 
