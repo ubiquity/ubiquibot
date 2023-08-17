@@ -47,7 +47,9 @@ export const incentivizeComments = async () => {
   }
 
   const comments = await getAllIssueComments(issue.number);
-  const permitComments = comments.filter((content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot);
+  const permitComments = comments.filter(
+    (content) => content.body.includes("Conversation Rewards") && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
+  );
   if (permitComments.length > 0) {
     logger.info(`incentivizeComments: skip to generate a permit url because it has been already posted`);
     return;
@@ -151,7 +153,9 @@ export const incentivizeCreatorComment = async () => {
   }
 
   const comments = await getAllIssueComments(issue.number);
-  const permitComments = comments.filter((content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot);
+  const permitComments = comments.filter(
+    (content) => content.body.includes("Task Creator Reward") && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
+  );
   if (permitComments.length > 0) {
     logger.info(`incentivizeCreatorComment: skip to generate a permit url because it has been already posted`);
     return;
