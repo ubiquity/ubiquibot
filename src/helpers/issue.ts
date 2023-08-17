@@ -334,7 +334,7 @@ export const checkUserPermissionForRepo = async (username: string, context: Cont
 
     return res.status === 204;
   } catch (e: unknown) {
-    logger.debug(`Checking if user permisson for repo failed!, reason: ${e}`);
+    logger.error(`Checking if user permisson for repo failed!, reason: ${e}`);
     return false;
   }
 };
@@ -352,7 +352,7 @@ export const checkUserPermissionForOrg = async (username: string, context: Conte
     // @ts-expect-error This looks like a bug in octokit. (https://github.com/octokit/rest.js/issues/188)
     return res.status === 204;
   } catch (e: unknown) {
-    logger.debug(`Checking if user permisson for repo failed!, reason: ${e}`);
+    logger.error(`Checking if user permisson for repo failed!, reason: ${e}`);
     return false;
   }
 };

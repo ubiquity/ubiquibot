@@ -36,7 +36,7 @@ export const handleIssueClosed = async () => {
 
   const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
 
-  if (!userHasPermission) return "Permit generation skipped because this issue isn't closed by a team member.";
+  if (!userHasPermission) return "Permit generation skipped because this issue has been closed by an external contributor.";
 
   const comments = await getAllIssueComments(issue.number);
 
