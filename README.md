@@ -52,7 +52,7 @@ To test the bot, you can:
 
 `evm-network-id` is ID of the EVM-compatible network that will be used for payouts.
 
-`price-multiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = price-multiplier * time-label-weight * priority-label-weight / 10`
+`price-multiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = price-multiplier * time-label-weight * priority-label-weight / 100`
 
 `time-labels` are labels for marking the time limit of the bounty:
 
@@ -80,9 +80,9 @@ To test the bot, you can:
 
 `comment-incentives` can be `true` or `false` that enable or disable comment incentives. These are comments in the issue by either the creator of the bounty or other users.
 
-`issue-creator-multiplier` is a number that defines a base multiplier for calculating incentive reward for the creator of the issue.
+`issue-creator-multiplier` is a number that defines a base multiplier for calculating incentive for the creator of the issue.
 
-`comment-element-pricing` defines how much is a part of the comment worth. For example `text: 0.1` means that any text in the comment will be multiplied by 0.1
+`comment-element-pricing` defines how much is a part of the comment worth. For example `text: 0.1` means that any text in the comment will add 0.1
 
 `max-concurrent-assigns` is the maximum number of bounties that can be assigned to a bounty hunter at once. This excludes bounties with pending pull request reviews.
 
