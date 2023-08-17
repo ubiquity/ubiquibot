@@ -88,7 +88,7 @@ To test the bot, you can:
 
 `register-wallet-with-verification` can be `true` or `false`. If enabled, it requires a signed message to set wallet address. This prevents users from setting wallet address from centralized exchanges, which would make payments impossible to claim.
 
-`promotion-comment` is a comment that is appended to issue comment when a payment permit is generated.
+`promotion-comment` is a message that is appended to the payment permit comment.
 
 ## How to run locally
 
