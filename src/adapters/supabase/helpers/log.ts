@@ -27,10 +27,11 @@ export class GitHubLogger implements Logger {
   private app;
   private logEnvironment;
   private logQueue: Log[] = []; // Your log queue
-  private maxConcurrency = 5; // Maximum concurrent requests
-  private retryLimit = 3; // Maximum number of retries
+  private maxConcurrency = 6; // Maximum concurrent requests
   private retryDelay = 1000; // Delay between retries in milliseconds
   private throttleCount = 0;
+
+  private retryLimit = process.env.LOG_RETRY || 0; // Retries disabled by default
 
   constructor(app: string, logEnvironment: string, maxLevel: keyof typeof levels) {
     this.app = app;
@@ -68,7 +69,7 @@ export class GitHubLogger implements Logger {
       await this.sendLogsToSupabase(log);
     } catch (error) {
       console.error("Error sending log, retrying:", error);
-      await this.retryLog(log);
+      return this.retryLimit > 0 ? await this.retryLog(log) : null;
     }
   }
 
