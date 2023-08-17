@@ -6,31 +6,30 @@ import { backOff } from "exponential-backoff";
 
 export const extractImportantWords = async (content: string): Promise<string[]> => {
   const res = await getAnswerFromChatGPT(
-    `${
-      process.env.CHATGPT_SYSTEM_PROMPT_FOR_IMPORTANT_WORDS ||
-      "You are an 'important words finder'. You need to find important words from given context. You only have to give important words from given context and you have to separate the words by #"
-    }`,
+    '',
     `${
       process.env.CHATGPT_USER_PROMPT_FOR_IMPORTANT_WORDS ||
-      "I need your help to find duplicate issues on my GitHub repository. For context, the entire strategy is the following:\n\n1. A new issue is posted\n2. We ask you to extract a word list of the most \"important\" (i.e. unique adjectives?) words.\n3. We search the repository for all issues with the important words.\n4. We go from highest issue number (most recent) and read the issue description.\n5. If >80% confidence that it's a redundant issue, stop the search and link back to it with a warning saying that it's likely to be a duplicate.\nRight now, we are on step 2.\n"
+      "I need your help to find important words (e.g. unique adjectives) from github issue below and I want to parse them easily so please separate them using #(No other contexts needed). Please separate the words by # so I can parse them easily. Please answer simply as I only need the important words. Here is the issue content.\n"
     } '${content}'`,
     parseFloat(process.env.IMPORTANT_WORDS_AI_TEMPERATURE || "0")
   );
-  return res.split("#");
+  console.log(res);
+  return res.split(/[,# ]/);
 };
 
 export const measureSimilarity = async (first: string, second: string): Promise<number> => {
   const res = await getAnswerFromChatGPT(
-    `${process.env.CHATGPT_SYSTEM_PROMPT_FOR_MEASURE_SIMILARITY || "You are a 'similarity measurer'. Give percent in number. (e.g. 30%)"}`,
+    '',
     `
       ${(
         process.env.CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY ||
-        'I have two github issues.\nOne is "%first"%\nand\nother is "%second"%Please give me the possibility of the 2 issues are the same content.\n Give me in number format and add % after the number.\nDo not tell other things since I only need the number.'
+        'I have two github issues and I need to measure the possibility of the 2 issues are the same content (I need to parse the % so other contents are not needed and give me only the number in %).\n Give me in number format and add % after the number.\nDo not tell other things since I only need the number (e.g. 30%). Here are two issues:\n 1. "%first%"\n2. "%second%"'
       )
         .replace("%first%", first)
         .replace("%second%", second)}`,
     parseFloat(process.env.MEASURE_SIMILARITY_AI_TEMPERATURE || "0")
   );
+  console.log(res);
   const percent = res.split("%")[0].split(" ").pop();
   if (!percent) {
     return 0;

@@ -10,11 +10,11 @@ export const findDuplicateOne = async () => {
 
   if (!issue?.body) return;
   const importantWords = await extractImportantWords(`Issue title: ${issue.title}\nIssue content: ${issue.body}`);
-  let fetchDone = false;
   const perPage = 10;
   let curPage = 1;
 
   for (const importantWord of importantWords) {
+    let fetchDone = false;
     try {
       while (!fetchDone) {
         const response = await context.octokit.rest.search.issuesAndPullRequests({
