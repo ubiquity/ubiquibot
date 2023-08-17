@@ -349,7 +349,7 @@ export const checkUserPermissionForOrg = async (username: string, context: Conte
       org: payload.organization.login,
       username,
     });
-    // skipping status check due to type error of checkMembershipForUser function o octokit
+    // skipping status check due to type error of checkMembershipForUser function of octokit
     return true;
   } catch (e: unknown) {
     logger.error(`Checking if user permisson for org failed!, reason: ${e}`);
