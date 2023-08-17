@@ -86,7 +86,7 @@ To test the bot, you can:
 
 `max-concurrent-assigns` is the maximum number of bounties that can be assigned to a bounty hunter at once. This excludes bounties with pending pull request reviews.
 
-`register-wallet-with-verification` can be `true` or `false`. If enabled, it requires a signed message to set wallet address. This prevents users from setting wallet address from centralized exchanges.
+`register-wallet-with-verification` can be `true` or `false`. If enabled, it requires a signed message to set wallet address. This prevents users from setting wallet address from centralized exchanges, which would make payments impossible to claim.
 
 `promotion-comment` is a comment that is appended to issue comment when a payment permit is generated.
 
