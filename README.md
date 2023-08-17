@@ -78,7 +78,7 @@ To test the bot, you can:
 
 `payment-permit-max-price` sets the max amount for automatic payout of bounties when the issue is closed
 
-`comment-incentives` can be `true` or `false` that enable or disable comment incentives. These are comments in the issue by either the creator of the bounty or other users.
+`comment-incentives` can be `true` or `false` that enable or disable comment incentives. These are payments generated for comments in the issue by contributors, excluding the assignee.
 
 `issue-creator-multiplier` is a number that defines a base multiplier for calculating incentive for the creator of the issue.
 
