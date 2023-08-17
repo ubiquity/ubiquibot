@@ -19,6 +19,7 @@ jobs:
           sudo apt-get -y install jq
           sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
           sudo chmod +x /usr/bin/yq
+      
       - name: Get UbiquiBot Token
         uses: tibdex/github-app-token@v1.7.0
         id: get_installation_token
@@ -28,9 +29,9 @@ jobs:
 
       - name: Update Config Params and Create Pull Requests
         run: |
-         urls="https://github.com/EtherealGlow/ubiquibot-pr-qa"
+          urls=$(curl -sSL https://raw.githubusercontent.com/ubiquity/devpool-directory/development/projects.json | jq -r '.urls[]')
          
-         for url in $urls
+          for url in $urls
           do
             repoName=$(basename $url)
             ownerName=$(echo $url | awk -F/ '{print $(NF-1)}')
