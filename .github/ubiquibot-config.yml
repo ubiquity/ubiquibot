@@ -12,14 +12,14 @@ time-labels:
   - name: "Time: <1 Week"
     value: 604800
 priority-labels:
-  - name: "Priority: 0 (Normal)"
-  - name: "Priority: 1 (Medium)"
-  - name: "Priority: 2 (High)"
-  - name: "Priority: 3 (Urgent)"
-  - name: "Priority: 4 (Emergency)"
+  - name: "Priority: 1 (Normal)"
+  - name: "Priority: 2 (Medium)"
+  - name: "Priority: 3 (High)"
+  - name: "Priority: 4 (Urgent)"
+  - name: "Priority: 5 (Emergency)"
 default-labels:
   - "Time: <1 Hour"
-  - "Priority: 0 (Normal)"
+  - "Priority: 1 (Normal)"
 payment-permit-max-price: 1000
 comment-incentives: true
 max-concurrent-bounties: 2

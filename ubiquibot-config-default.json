@@ -34,19 +34,19 @@
   ],
   "priority-labels": [
     {
-      "name": "Priority: 0 (Normal)"
+      "name": "Priority: 1 (Normal)"
     },
     {
-      "name": "Priority: 1 (Medium)"
+      "name": "Priority: 2 (Medium)"
     },
     {
-      "name": "Priority: 2 (High)"
+      "name": "Priority: 3 (High)"
     },
     {
-      "name": "Priority: 3 (Urgent)"
+      "name": "Priority: 4 (Urgent)"
     },
     {
-      "name": "Priority: 4 (Emergency)"
+      "name": "Priority: 5 (Emergency)"
     }
   ],
   "command-settings": [
