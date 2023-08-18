@@ -7,10 +7,14 @@
     "skipLibCheck": false,
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
     "moduleResolution": "Node",
-    "types": ["@cloudflare/workers-types"],
-    "outDir": "functions"
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "types": ["@cloudflare/workers-types"]
   },
-  "include": ["./functions-ts"]
+  "include": ["./functions"]
 }
