@@ -28,9 +28,7 @@ export const findDuplicateOne = async () => {
           for (const result of response.data.items) {
             if (!result.body) continue;
             if (result.id === issue.id) continue;
-            const similarity = await measureSimilarity(
-              issue, result as Issue
-            );
+            const similarity = await measureSimilarity(issue, result as Issue);
             if (similarity > parseInt(process.env.SIMILARITY_THRESHOLD || "80")) {
               await upsertCommentToIssue(
                 issue.number,

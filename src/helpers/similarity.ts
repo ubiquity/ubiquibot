@@ -97,6 +97,7 @@ export const getAnswerFromChatGPT = async (systemPrompt: string, userPrompt: str
     }
     const { choices: choice } = data;
     if (choice.length <= 0) {
+      logger.error(`No result from OpenAI`);
       return "";
     }
     const answer = choice[0].message.content;
