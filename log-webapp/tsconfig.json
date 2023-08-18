@@ -10,7 +10,7 @@
     "module": "ESNext",
     "moduleResolution": "Node",
     "types": ["@cloudflare/workers-types"],
-    "outDir": "functions"
+    "outDir": "_functions"
   },
-  "include": ["./functions-ts"]
+  "include": ["functions"]
 }
