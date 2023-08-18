@@ -9,8 +9,22 @@
 </head>
 
 <body>
+    <div id="logs"></div>
     <script>
-        fetch('/handler')
+        const logsDiv = document.getElementById('logs');
+
+        const socket = new WebSocket('wss://realtime-logger-app.logger-web-apps.pages.dev/log-engine');
+
+        socket.onmessage = (event) =>
+        {
+            const payload = JSON.parse(event.data);
+            console.log(payload, event.data)
+        };
+
+        socket.onclose = () =>
+        {
+            console.log('Socket closed');
+        };
     </script>
 </body>
 
