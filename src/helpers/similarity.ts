@@ -31,7 +31,7 @@ export const measureSimilarity = async (first: Issue, second: Issue): Promise<nu
     parseFloat(process.env.MEASURE_SIMILARITY_AI_TEMPERATURE || "0")
   );
   const matches = res.match(/\d+/);
-  const percent = matches && matches.length > 0 ? parseInt(matches[0]) : 0;
+  const percent = matches && matches.length > 0 ? (parseInt(matches[0]) || 0) : 0;
   return percent;
 };
 
