@@ -1,3 +1,5 @@
+import timestring from "timestring";
+
 import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType, Issue } from "../../../types";
@@ -83,7 +85,7 @@ export const assign = async (body: string) => {
 
   const sorted = timeLabelsAssigned.sort((a, b) => a.weight - b.weight);
   const targetTimeLabel = sorted[0];
-  const duration = targetTimeLabel.value;
+  const duration = timestring(targetTimeLabel.name);
   if (!duration) {
     logger.info(`Missing configure for time label: ${targetTimeLabel.name}`);
     return "Skipping `/start` since configuration is missing for the following labels";

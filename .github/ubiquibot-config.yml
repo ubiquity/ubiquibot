@@ -3,19 +3,14 @@ price-multiplier: 1.5
 time-labels:
   - name: "Time: <1 Hour"
     weight: 0.125
-    value: 3600
   - name: "Time: <2 Hours"
     weight: 0.25
-    value: 7200
   - name: "Time: <4 Hours"
     weight: 0.5
-    value: 14400
   - name: "Time: <1 Day"
     weight: 1
-    value: 86400
   - name: "Time: <1 Week"
     weight: 2
-    value: 604800
 priority-labels:
   - name: "Priority: 0 (Normal)"
     weight: 1
