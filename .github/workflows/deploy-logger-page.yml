@@ -7,11 +7,12 @@ on:
       - completed
 
 jobs:
-  deploy-to-cloudflare:
-    name: Deploy to Cloudflare Worker
-    runs-on: ubuntu-22.04
+  publish:
+    runs-on: ubuntu-latest
     permissions:
       contents: read
+      deployments: write
+    name: Deploy to Cloudflare Worker
 
     steps:
       - name: Checkout repository
