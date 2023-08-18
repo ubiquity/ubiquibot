@@ -31,12 +31,13 @@ export class GitHubLogger implements Logger {
   private retryDelay = 1000; // Delay between retries in milliseconds
   private throttleCount = 0;
 
-  private retryLimit = process.env.LOG_RETRY || 0; // Retries disabled by default
+  private retryLimit = 0; // Retries disabled by default
 
-  constructor(app: string, logEnvironment: string, maxLevel: keyof typeof levels) {
+  constructor(app: string, logEnvironment: string, maxLevel: keyof typeof levels, retryLimit: number) {
     this.app = app;
     this.logEnvironment = logEnvironment;
     this.maxLevel = levels[maxLevel];
+    this.retryLimit = retryLimit;
   }
 
   async sendLogsToSupabase({ repo, org, commentId, issueNumber, logMessage, errorType, timestamp }: Log) {

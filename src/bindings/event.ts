@@ -41,7 +41,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
     // level: botConfig.log.level,
   };
 
-  logger = new GitHubLogger(options.app, botConfig.log.logEnvironment, botConfig.log.level as keyof typeof levels); // contributors will see logs in console while on development env
+  logger = new GitHubLogger(options.app, botConfig.log.logEnvironment, botConfig.log.level as keyof typeof levels, botConfig.log.retryLimit); // contributors will see logs in console while on development env
   if (!logger) {
     return;
   }
