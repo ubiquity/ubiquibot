@@ -52,7 +52,7 @@ To test the bot, you can:
 
 `evm-network-id` is ID of the EVM-compatible network that will be used for payouts.
 
-`price-multiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = price-multiplier * time-label-weight * priority-label-weight / 100`
+`price-multiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = price-multiplier * time-label-weight * priority-label-weight * 100`
 
 `time-labels` are labels for marking the time limit of the bounty:
 
