@@ -1,4 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
+import { Level } from "../adapters/supabase";
 
 const LabelItemSchema = Type.Object({
   name: Type.String(),
@@ -62,7 +63,7 @@ export const AssignSchema = Type.Object({
 
 export const LogConfigSchema = Type.Object({
   logEnvironment: Type.String(),
-  level: Type.String(),
+  level: Type.Enum(Level),
   retryLimit: Type.Number(),
 });
 

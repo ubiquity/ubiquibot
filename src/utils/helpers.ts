@@ -1,3 +1,4 @@
+import { Level } from "../adapters/supabase";
 import { CommentElementPricing } from "../types";
 import { CommandObj, WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
@@ -6,6 +7,27 @@ interface Configs {
   parsedOrg?: WideOrgConfig;
   parsedDefault: WideRepoConfig;
 }
+
+export const getNumericLevel = (level: Level) => {
+  switch (level) {
+    case Level.ERROR:
+      return 1;
+    case Level.WARN:
+      return 2;
+    case Level.INFO:
+      return 3;
+    case Level.HTTP:
+      return 4;
+    case Level.VERBOSE:
+      return 5;
+    case Level.DEBUG:
+      return 6;
+    case Level.SILLY:
+      return 7;
+    default:
+      return -1; // Invalid level
+  }
+};
 
 export const getNetworkId = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): number => {
   if (parsedRepo && parsedRepo["evm-network-id"] !== undefined && !Number.isNaN(Number(parsedRepo["evm-network-id"]))) {

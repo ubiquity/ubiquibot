@@ -1,5 +1,6 @@
 import { getAdapters, getBotContext, Logger } from "../../../bindings";
 import { Payload } from "../../../types";
+import { getNumericLevel } from "../../../utils/helpers";
 import { getOrgAndRepoFromPath } from "../../../utils/private";
 interface Log {
   repo: string | null;
@@ -7,18 +8,18 @@ interface Log {
   commentId: number | undefined;
   issueNumber: number | undefined;
   logMessage: string;
-  errorType: levels;
+  level: Level;
   timestamp: string;
 }
 
-export enum levels {
-  error = 0,
-  warn = 1,
-  info = 2,
-  http = 3,
-  verbose = 4,
-  debug = 5,
-  silly = 6,
+export enum Level {
+  ERROR = "error",
+  WARN = "warn",
+  INFO = "info",
+  HTTP = "http",
+  VERBOSE = "verbose",
+  DEBUG = "debug",
+  SILLY = "silly",
 }
 
 export class GitHubLogger implements Logger {
@@ -32,39 +33,35 @@ export class GitHubLogger implements Logger {
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
 
-  constructor(app: string, logEnvironment: string, maxLevel: keyof typeof levels, retryLimit: number) {
+  constructor(app: string, logEnvironment: string, maxLevel: Level, retryLimit: number) {
     this.app = app;
     this.logEnvironment = logEnvironment;
-    this.maxLevel = levels[maxLevel];
+    this.maxLevel = getNumericLevel(maxLevel);
     this.retryLimit = retryLimit;
   }
 
-  async sendLogsToSupabase({ repo, org, commentId, issueNumber, logMessage, errorType, timestamp }: Log) {
-    try {
-      const { error } = await this.supabase.from("logs").insert([
-        {
-          repo_name: repo,
-          level: errorType,
-          org_name: org,
-          comment_id: commentId,
-          log_message: logMessage,
-          issue_number: issueNumber,
-          timestamp,
-        },
-      ]);
+  async sendLogsToSupabase({ repo, org, commentId, issueNumber, logMessage, level, timestamp }: Log) {
+    const { error } = await this.supabase.from("logs").insert([
+      {
+        repo_name: repo,
+        level: getNumericLevel(level),
+        org_name: org,
+        comment_id: commentId,
+        log_message: logMessage,
+        issue_number: issueNumber,
+        timestamp,
+      },
+    ]);
 
-      if (error) {
-        console.error("Error logging to Supabase:", error.message);
-        return;
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error("An error occurred:", error.message);
-      }
+    if (error) {
+      console.error("Error logging to Supabase:", error.message);
+      return;
     }
   }
 
   async processLogs(log: Log) {
+    if (!this.supabase) return;
+
     try {
       await this.sendLogsToSupabase(log);
     } catch (error) {
@@ -122,8 +119,8 @@ export class GitHubLogger implements Logger {
     }
   }
 
-  private save(logMessage: string | object, errorType: number, errorPayload?: string | object) {
-    if (errorType > this.maxLevel) return; // only return errors lower than max level
+  private save(logMessage: string | object, level: Level, errorPayload?: string | object) {
+    if (getNumericLevel(level) > this.maxLevel) return; // only return errors lower than max level
 
     const context = getBotContext();
     const payload = context.payload as Payload;
@@ -143,7 +140,7 @@ export class GitHubLogger implements Logger {
       logMessage = JSON.stringify(logMessage);
     }
 
-    this.addToQueue({ repo, org, commentId, issueNumber, logMessage, errorType, timestamp })
+    this.addToQueue({ repo, org, commentId, issueNumber, logMessage, level, timestamp })
       .then(() => {
         return;
       })
@@ -157,19 +154,19 @@ export class GitHubLogger implements Logger {
   }
 
   info(message: string | object, errorPayload?: string | object) {
-    this.save(message, levels.info, errorPayload);
+    this.save(message, Level.INFO, errorPayload);
   }
 
   warn(message: string | object, errorPayload?: string | object) {
-    this.save(message, levels.warn, errorPayload);
+    this.save(message, Level.WARN, errorPayload);
   }
 
   debug(message: string | object, errorPayload?: string | object) {
-    this.save(message, levels.debug, errorPayload);
+    this.save(message, Level.DEBUG, errorPayload);
   }
 
   error(message: string | object, errorPayload?: string | object) {
-    this.save(message, levels.error, errorPayload);
+    this.save(message, Level.ERROR, errorPayload);
   }
 
   async get() {

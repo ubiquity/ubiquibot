@@ -6,6 +6,7 @@ import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
 import { getScalarKey, getWideConfig } from "../utils/private";
+import { Level } from "../adapters/supabase";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
@@ -33,7 +34,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const botConfig: BotConfig = {
     log: {
       logEnvironment: process.env.LOG_ENVIRONMENT || "production",
-      level: process.env.LOG_LEVEL || "debug",
+      level: (process.env.LOG_LEVEL as Level) || Level.DEBUG,
       retryLimit: Number(process.env.LOG_RETRY) || 0,
     },
     price: {
