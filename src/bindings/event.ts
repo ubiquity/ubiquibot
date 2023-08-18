@@ -36,6 +36,8 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   botConfig = await loadConfig(context);
 
+  adapters = createAdapters(botConfig);
+
   const options = {
     app: "UbiquiBot",
     // level: botConfig.log.level,
@@ -45,6 +47,9 @@ export const bindEvents = async (context: Context): Promise<void> => {
   if (!logger) {
     return;
   }
+
+  // Create adapters for telegram, supabase, twitter, discord, etc
+  logger.info("Creating adapters for supabase, telegram, twitter, etc...");
 
   logger.info(
     `Config loaded! config: ${JSON.stringify({
@@ -65,10 +70,6 @@ export const bindEvents = async (context: Context): Promise<void> => {
     logger.info(`Skipping the event. reason: not configured`);
     return;
   }
-
-  // Create adapters for telegram, supabase, twitter, discord, etc
-  logger.info("Creating adapters for supabase, telegram, twitter, etc...");
-  adapters = createAdapters(botConfig);
 
   // Skip validation for installation event and push
   if (!NO_VALIDATION.includes(eventName)) {

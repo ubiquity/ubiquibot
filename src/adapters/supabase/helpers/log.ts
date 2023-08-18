@@ -23,7 +23,7 @@ export enum Level {
 }
 
 export class GitHubLogger implements Logger {
-  private supabase = getAdapters().supabase;
+  private supabase;
   private maxLevel;
   private app;
   private logEnvironment;
@@ -38,6 +38,7 @@ export class GitHubLogger implements Logger {
     this.logEnvironment = logEnvironment;
     this.maxLevel = getNumericLevel(maxLevel);
     this.retryLimit = retryLimit;
+    this.supabase = getAdapters().supabase;
   }
 
   async sendLogsToSupabase({ repo, org, commentId, issueNumber, logMessage, level, timestamp }: Log) {
@@ -60,8 +61,6 @@ export class GitHubLogger implements Logger {
   }
 
   async processLogs(log: Log) {
-    if (!this.supabase) return;
-
     try {
       await this.sendLogsToSupabase(log);
     } catch (error) {
@@ -96,26 +95,28 @@ export class GitHubLogger implements Logger {
     }
   }
 
-  async throttle() {
+  async throttle(fn: () => void) {
     if (this.throttleCount >= this.maxConcurrency) {
       return;
     }
 
     this.throttleCount++;
     try {
-      await this.processLogQueue.bind(this);
+      await fn();
     } finally {
       this.throttleCount--;
       if (this.logQueue.length > 0) {
-        await this.throttle();
+        await this.throttle(this.processLogQueue.bind(this));
       }
     }
   }
 
   async addToQueue(log: Log) {
     this.logQueue.push(log);
-    if (this.throttleCount < this.maxConcurrency) {
-      await this.throttle();
+    if (this.supabase) {
+      if (this.throttleCount < this.maxConcurrency) {
+        await this.throttle(this.processLogQueue.bind(this));
+      }
     }
   }
 
@@ -149,7 +150,7 @@ export class GitHubLogger implements Logger {
       });
 
     if (this.logEnvironment === "development") {
-      console.log(this.app, logMessage, errorPayload);
+      console.log(this.app, logMessage, errorPayload, level, repo, org, commentId, issueNumber);
     }
   }
 
