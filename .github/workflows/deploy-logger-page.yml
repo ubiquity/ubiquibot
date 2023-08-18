@@ -1,10 +1,14 @@
 name: Deploy Log Web App to Cloudflare Pages
 
+# on:
+#   workflow_run:
+#     workflows: ["Conventional Commits"]
+#     types:
+#       - completed
+
 on:
-  workflow_run:
-    workflows: ["Conventional Commits"]
-    types:
-      - completed
+  push:
+  pull_request:
 
 jobs:
   publish:
