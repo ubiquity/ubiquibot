@@ -30,7 +30,6 @@ export class GitHubLogger implements Logger {
   private maxConcurrency = 6; // Maximum concurrent requests
   private retryDelay = 1000; // Delay between retries in milliseconds
   private throttleCount = 0;
-
   private retryLimit = 0; // Retries disabled by default
 
   constructor(app: string, logEnvironment: string, maxLevel: keyof typeof levels, retryLimit: number) {
