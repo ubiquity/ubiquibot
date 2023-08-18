@@ -95,28 +95,26 @@ export class GitHubLogger implements Logger {
     }
   }
 
-  async throttle(fn: () => void) {
+  async throttle() {
     if (this.throttleCount >= this.maxConcurrency) {
       return;
     }
 
     this.throttleCount++;
     try {
-      await fn();
+      await this.processLogQueue();
     } finally {
       this.throttleCount--;
       if (this.logQueue.length > 0) {
-        await this.throttle(this.processLogQueue.bind(this));
+        await this.throttle();
       }
     }
   }
 
   async addToQueue(log: Log) {
     this.logQueue.push(log);
-    if (this.supabase) {
-      if (this.throttleCount < this.maxConcurrency) {
-        await this.throttle(this.processLogQueue.bind(this));
-      }
+    if (this.throttleCount < this.maxConcurrency) {
+      await this.throttle();
     }
   }
 
