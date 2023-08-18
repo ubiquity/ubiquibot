@@ -6,20 +6,20 @@ import { backOff } from "exponential-backoff";
 
 export const extractImportantWords = async (content: string): Promise<string[]> => {
   const res = await getAnswerFromChatGPT(
-    '',
+    "",
     `${
       process.env.CHATGPT_USER_PROMPT_FOR_IMPORTANT_WORDS ||
       "I need your help to find important words (e.g. unique adjectives) from github issue below and I want to parse them easily so please separate them using #(No other contexts needed). Please separate the words by # so I can parse them easily. Please answer simply as I only need the important words. Here is the issue content.\n"
     } '${content}'`,
     parseFloat(process.env.IMPORTANT_WORDS_AI_TEMPERATURE || "0")
   );
-  console.log(res);
+  if (res === "") return [];
   return res.split(/[,# ]/);
 };
 
 export const measureSimilarity = async (first: string, second: string): Promise<number> => {
   const res = await getAnswerFromChatGPT(
-    '',
+    "",
     `
       ${(
         process.env.CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY ||
@@ -29,12 +29,12 @@ export const measureSimilarity = async (first: string, second: string): Promise<
         .replace("%second%", second)}`,
     parseFloat(process.env.MEASURE_SIMILARITY_AI_TEMPERATURE || "0")
   );
-  console.log(res);
-  const percent = res.split("%")[0].split(" ").pop();
+  const matches = res.match(/\d+/);
+  const percent = matches && matches.length > 0 ? parseInt(matches[0]) : 0;
   if (!percent) {
     return 0;
   } else {
-    return parseFloat(percent);
+    return percent;
   }
 };
 
@@ -100,7 +100,7 @@ export const getAnswerFromChatGPT = async (systemPrompt: string, userPrompt: str
     const answer = choice[0].message.content;
     return answer;
   } catch (error) {
-    logger.debug(`Getting response from ChatGPT failed: ${error}`);
+    logger.error(`Getting response from ChatGPT failed: ${error}`);
     return "";
   }
 };
