@@ -24,7 +24,7 @@ export const calculateWeight = (label: LabelItem | undefined): number => {
   if (!label) return 0;
   const matches = label.name.match(/\d+/);
   const number = matches && matches.length > 0 ? parseInt(matches[0]) : 0;
-  if (label.name.split(":")[0] === "Priority") return number;
+  if (label.name.toLowerCase().includes("priority")) return number;
   if (label.name.includes("Hour")) return number * 0.125;
   if (label.name.includes("Day")) return 1 + (number - 1) * 0.25;
   if (label.name.includes("Week")) return number + 1;
