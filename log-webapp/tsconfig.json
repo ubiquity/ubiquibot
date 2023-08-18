@@ -9,10 +9,10 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "amd",
+    "module": "ESNext",
     "moduleResolution": "Node",
     "types": ["@cloudflare/workers-types"],
-    "outFile": "./_worker.js"
+    "outDir": ""
   },
   "include": ["./_worker.ts"]
 }
