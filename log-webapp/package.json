@@ -1,0 +1,11 @@
+{
+  "name": "cf-pages-functions",
+  "version": "0.0.0",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^3.2.0",
+    "typescript": "^4.3.2"
+  }
+}
