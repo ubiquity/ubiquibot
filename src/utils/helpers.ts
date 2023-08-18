@@ -11,19 +11,19 @@ interface Configs {
 export const getNumericLevel = (level: Level) => {
   switch (level) {
     case Level.ERROR:
-      return 1;
+      return 0;
     case Level.WARN:
-      return 2;
+      return 1;
     case Level.INFO:
-      return 3;
+      return 2;
     case Level.HTTP:
-      return 4;
+      return 3;
     case Level.VERBOSE:
-      return 5;
+      return 4;
     case Level.DEBUG:
-      return 6;
+      return 5;
     case Level.SILLY:
-      return 7;
+      return 6;
     default:
       return -1; // Invalid level
   }
