@@ -1,9 +1,9 @@
 import { extractImportantWords, upsertCommentToIssue, measureSimilarity } from "../../helpers";
-import { getBotContext } from "../../bindings";
+import { getBotContext, getLogger } from "../../bindings";
 import { Issue, Payload } from "../../types";
-import { logger } from "ethers";
 
 export const findDuplicateOne = async () => {
+  const logger = getLogger();
   const context = getBotContext();
   const payload = context.payload as Payload;
   const issue = payload.issue;
@@ -43,7 +43,7 @@ export const findDuplicateOne = async () => {
         else curPage++;
       }
     } catch (e: unknown) {
-      logger.debug(`Could not find any issues, reason: ${e}`);
+      logger.error(`Could not find any issues, reason: ${e}`);
     }
   }
 };

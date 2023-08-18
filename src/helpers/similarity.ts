@@ -32,11 +32,7 @@ export const measureSimilarity = async (first: Issue, second: Issue): Promise<nu
   );
   const matches = res.match(/\d+/);
   const percent = matches && matches.length > 0 ? parseInt(matches[0]) : 0;
-  if (!percent) {
-    return 0;
-  } else {
-    return percent;
-  }
+  return percent;
 };
 
 const ChatMessageSchema = Type.Object({
