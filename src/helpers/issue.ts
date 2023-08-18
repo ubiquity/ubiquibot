@@ -317,8 +317,9 @@ export const removeAssignees = async (issue_number: number, assignees: string[])
 export const checkUserPermissionForRepoAndOrg = async (username: string, context: Context): Promise<boolean> => {
   const permissionForRepo = await checkUserPermissionForRepo(username, context);
   const permissionForOrg = await checkUserPermissionForOrg(username, context);
+  const userPermission = await getUserPermission(username, context);
 
-  return permissionForOrg || permissionForRepo;
+  return permissionForOrg || permissionForRepo || userPermission === "admin" || userPermission === "billing_manager";
 };
 
 export const checkUserPermissionForRepo = async (username: string, context: Context): Promise<boolean> => {
