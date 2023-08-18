@@ -27,9 +27,6 @@ jobs:
         with:
           node-version: "20.3.0"
 
-      - name: Build TypeScript
-        run: cd ./log-webapp && npm install && npm run build
-
       - name: Publish to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
