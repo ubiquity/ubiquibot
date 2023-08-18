@@ -1,17 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
-
-interface Env {
-  ASSETS: Fetcher;
-  SUPABASE_KEY: string;
-  SUPABASE_URL: string;
-}
+import { streamLogs } from "./src/logHandler";
+import { Env } from "./types/global";
 
 export default {
   async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
     if (url.pathname === "/log-engine") {
-      // TODO: Add your custom /api/* logic here.
-      return new Response(env.SUPABASE_KEY);
+      // Respond to the original request with a WebSocket URL
+      return streamLogs(env, request);
     }
     // Otherwise, serve the static assets.
     // Without this, the Worker will error and no assets will be served.

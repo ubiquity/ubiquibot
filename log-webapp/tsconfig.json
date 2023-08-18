@@ -14,5 +14,5 @@
     "types": ["@cloudflare/workers-types"],
     "outDir": ""
   },
-  "include": ["./_worker.ts"]
+  "include": ["./_worker.ts", "./src", "./types"]
 }
