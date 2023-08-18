@@ -1,6 +1,6 @@
 import { extractImportantWords, upsertCommentToIssue, measureSimilarity } from "../../helpers";
 import { getBotContext } from "../../bindings";
-import { Payload } from "../../types";
+import { Issue, Payload } from "../../types";
 import { logger } from "ethers";
 
 export const findDuplicateOne = async () => {
@@ -9,7 +9,7 @@ export const findDuplicateOne = async () => {
   const issue = payload.issue;
 
   if (!issue?.body) return;
-  const importantWords = await extractImportantWords(`Issue title: ${issue.title}\nIssue content: ${issue.body}`);
+  const importantWords = await extractImportantWords(issue);
   const perPage = 10;
   let curPage = 1;
 
@@ -29,8 +29,7 @@ export const findDuplicateOne = async () => {
             if (!result.body) continue;
             if (result.id === issue.id) continue;
             const similarity = await measureSimilarity(
-              `Issue title: ${issue.title}\nIssue content: ${issue.body}`,
-              `Issue title: ${result.title}\nIssue content: ${result.body}`
+              issue, result as Issue
             );
             if (similarity > parseInt(process.env.SIMILARITY_THRESHOLD || "80")) {
               await upsertCommentToIssue(

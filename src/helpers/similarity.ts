@@ -3,21 +3,22 @@ import axios, { AxiosError } from "axios";
 import { ajv } from "../utils";
 import { Static, Type } from "@sinclair/typebox";
 import { backOff } from "exponential-backoff";
+import { Issue } from "../types";
 
-export const extractImportantWords = async (content: string): Promise<string[]> => {
+export const extractImportantWords = async (issue: Issue): Promise<string[]> => {
   const res = await getAnswerFromChatGPT(
     "",
     `${
       process.env.CHATGPT_USER_PROMPT_FOR_IMPORTANT_WORDS ||
       "I need your help to find important words (e.g. unique adjectives) from github issue below and I want to parse them easily so please separate them using #(No other contexts needed). Please separate the words by # so I can parse them easily. Please answer simply as I only need the important words. Here is the issue content.\n"
-    } '${content}'`,
+    } '${`Issue title: ${issue.title}\nIssue content: ${issue.body}`}'`,
     parseFloat(process.env.IMPORTANT_WORDS_AI_TEMPERATURE || "0")
   );
   if (res === "") return [];
   return res.split(/[,# ]/);
 };
 
-export const measureSimilarity = async (first: string, second: string): Promise<number> => {
+export const measureSimilarity = async (first: Issue, second: Issue): Promise<number> => {
   const res = await getAnswerFromChatGPT(
     "",
     `
@@ -25,8 +26,8 @@ export const measureSimilarity = async (first: string, second: string): Promise<
         process.env.CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY ||
         'I have two github issues and I need to measure the possibility of the 2 issues are the same content (I need to parse the % so other contents are not needed and give me only the number in %).\n Give me in number format and add % after the number.\nDo not tell other things since I only need the number (e.g. 85%). Here are two issues:\n 1. "%first%"\n2. "%second%"'
       )
-        .replace("%first%", first)
-        .replace("%second%", second)}`,
+        .replace("%first%", `Issue title: ${first.title}\nIssue content: ${first.body}`)
+        .replace("%second%", `Issue title: ${second.title}\nIssue content: ${second.body}`)}`,
     parseFloat(process.env.MEASURE_SIMILARITY_AI_TEMPERATURE || "0")
   );
   const matches = res.match(/\d+/);
@@ -92,7 +93,7 @@ export const getAnswerFromChatGPT = async (systemPrompt: string, userPrompt: str
     const valid = validate(data);
     if (!valid) {
       logger.error(`Error occured from OpenAI`);
-      throw new Error("Error occured from OpenAI");
+      return "";
     }
     const { choices: choice } = data;
     if (choice.length <= 0) {
