@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Env } from "../types/global";
 
 export const streamLogs = async (env: Env, server: WebSocket) => {
+  const supabaseClient = createClient(env.SUPABASE_URL, env.SUPABASE_KEY);
   try {
     server.accept();
 
@@ -9,8 +10,6 @@ export const streamLogs = async (env: Env, server: WebSocket) => {
       console.log(message.data);
       server.send(message.data);
     });
-
-    const supabaseClient = createClient(env.SUPABASE_URL, env.SUPABASE_KEY);
 
     const channel = supabaseClient
       .channel("table-db-changes")
@@ -22,7 +21,7 @@ export const streamLogs = async (env: Env, server: WebSocket) => {
           table: "logs",
         },
         (payload) => {
-          server.send(JSON.stringify(payload));
+          server.send(JSON.stringify(payload.new));
           console.log(payload);
         }
       )
