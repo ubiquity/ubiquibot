@@ -6,32 +6,31 @@ export const streamLogs = async (env: Env, server: WebSocket) => {
   try {
     server.accept();
 
-    const channel = supabaseClient
-      .channel("table-db-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "logs",
-        },
-        (payload) => {
-          server.send(JSON.stringify(payload.new));
-          console.log(payload);
-        }
-      )
-      .subscribe();
-
     server.addEventListener("message", async (message) => {
       console.log(message.data);
       server.send(message.data);
+      const channel = supabaseClient
+        .channel("table-db-changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "logs",
+          },
+          (payload) => {
+            server.send(JSON.stringify(payload.new));
+            console.log(payload);
+          }
+        )
+        .subscribe();
       server.send(`${env.SUPABASE_URL}, ${env.SUPABASE_KEY}`);
       server.send(channel.state);
     });
 
-    server.addEventListener("close", () => {
-      channel.unsubscribe();
-    });
+    // server.addEventListener("close", () => {
+    //   channel.unsubscribe();
+    // });
   } catch (e) {
     console.log("Error", e);
   }
