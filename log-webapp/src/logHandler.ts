@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { Env } from "../types/global";
+import { WebSocketServer } from "ws";
 
 export const streamLogs = async (env: Env, request: Request) => {
   try {
@@ -9,15 +10,17 @@ export const streamLogs = async (env: Env, request: Request) => {
       return new Response("Expected Upgrade: websocket", { status: 426 });
     }
 
-    const webSocketPair = new WebSocketPair();
-    const [client, server] = Object.values(webSocketPair);
+    const wss = new WebSocketServer({ port: 8080 });
 
-    server.accept();
-    server.addEventListener("message", (event) => {
-      server.send(event.data);
+    wss.on("connection", function connection(ws) {
+      ws.on("message", function message(data) {
+        console.log("received: %s", data);
+      });
+
+      ws.send("something");
     });
 
-    const supabaseClient = createClient(env.SUPABASE_KEY, env.SUPABASE_URL);
+    // const supabaseClient = createClient(env.SUPABASE_KEY, env.SUPABASE_URL);
 
     // const channel = supabaseClient
     //   .channel("table-db-changes")
@@ -35,11 +38,6 @@ export const streamLogs = async (env: Env, request: Request) => {
     // server.addEventListener("close", () => {
     //   channel.unsubscribe();
     // });
-
-    return new Response(null, {
-      status: 101,
-      webSocket: client,
-    });
   } catch (e) {
     console.log(e);
   }
