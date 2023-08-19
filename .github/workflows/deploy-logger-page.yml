@@ -1,4 +1,4 @@
-name: Deploy Log Web App to Cloudflare Pages
+name: Deploy Log Web App to Cloudflare Worker
 
 # on:
 #   workflow_run:
@@ -27,15 +27,11 @@ jobs:
         with:
           node-version: "20.3.0"
 
-      - name: Build TypeScript
-        run: cd ./log-webapp && npm install && npm run build
+      - name: Publish to Cloudflare Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          echo "$SUPABASE_URL" | wrangler secret put SUPABASE_URL
+          echo "$SUPABASE_KEY" | wrangler secret put SUPABASE_KEY
 
-      - name: Publish to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
-          directory: ${{ secrets.LOGGER_WEB_APP_DIRECTORY }}
-          # Enable Wrangler v3
-          wranglerVersion: "3"
+          cd ./log-app && yarn deploy

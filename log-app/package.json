@@ -1,0 +1,17 @@
+{
+  "name": "log-app",
+  "version": "0.0.0",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20230814.0",
+    "typescript": "^5.1.6",
+    "wrangler": "3.4.0"
+  },
+  "private": true,
+  "scripts": {
+    "start": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.32.0"
+  }
+}
