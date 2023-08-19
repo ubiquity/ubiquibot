@@ -19,22 +19,22 @@ export const streamLogs = async (env: Env, request: Request) => {
 
     const supabaseClient = createClient(env.SUPABASE_KEY, env.SUPABASE_URL);
 
-    const channel = supabaseClient
-      .channel("table-db-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "logs",
-        },
-        (payload) => server.send(JSON.stringify(payload))
-      )
-      .subscribe();
+    // const channel = supabaseClient
+    //   .channel("table-db-changes")
+    //   .on(
+    //     "postgres_changes",
+    //     {
+    //       event: "INSERT",
+    //       schema: "public",
+    //       table: "logs",
+    //     },
+    //     (payload) => server.send(JSON.stringify(payload))
+    //   )
+    //   .subscribe();
 
-    server.addEventListener("close", () => {
-      channel.unsubscribe();
-    });
+    // server.addEventListener("close", () => {
+    //   channel.unsubscribe();
+    // });
 
     return new Response(null, {
       status: 101,
