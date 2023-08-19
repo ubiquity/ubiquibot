@@ -10,7 +10,7 @@ export const streamLogs = async (env: Env, server: WebSocket) => {
       server.send(message.data);
     });
 
-    const supabaseClient = createClient(env.SUPABASE_KEY, env.SUPABASE_URL);
+    const supabaseClient = createClient(env.SUPABASE_URL, env.SUPABASE_KEY);
 
     const channel = supabaseClient
       .channel("table-db-changes")
@@ -21,7 +21,10 @@ export const streamLogs = async (env: Env, server: WebSocket) => {
           schema: "public",
           table: "logs",
         },
-        (payload) => server.send(JSON.stringify(payload))
+        (payload) => {
+          server.send(JSON.stringify(payload));
+          console.log(payload);
+        }
       )
       .subscribe();
 
@@ -29,6 +32,6 @@ export const streamLogs = async (env: Env, server: WebSocket) => {
       channel.unsubscribe();
     });
   } catch (e) {
-    console.log(e);
+    console.log("Error", e);
   }
 };
