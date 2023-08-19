@@ -27,6 +27,12 @@ jobs:
         with:
           node-version: "20.3.0"
 
+      - name: Yarn Install
+        run: yarn install
+
+      - name: Wrangler Install
+        run: npm install -g wrangler
+
       - name: Publish to Cloudflare Worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
