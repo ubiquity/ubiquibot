@@ -13,18 +13,30 @@
     <script>
         const logsDiv = document.getElementById('logs');
 
-        const socket = new WebSocket('wss://realtime-logger-app.logger-web-apps.pages.dev/log-engine');
+        const websocket = new WebSocket('wss://realtime-logger-app.logger-web-apps.pages.dev/log-engine');
 
-        socket.onmessage = (event) =>
+        websocket.addEventListener("open", () =>
         {
-            const payload = JSON.parse(event.data);
-            console.log(payload, event.data)
-        };
+            console.log('Opened websocket')
+        })
 
-        socket.onclose = () =>
+        websocket.addEventListener("message", message =>
         {
-            console.log('Socket closed');
-        };
+            console.log(message)
+        })
+
+        websocket.addEventListener("close", message =>
+        {
+            console.log("Closed websocket")
+        })
+
+        websocket.addEventListener("error", message =>
+        {
+            console.log("Something went wrong with the WebSocket")
+        })
+
+        // Close WebSocket connection at a later point
+        const closeConnection = () => websocket.close()
     </script>
 </body>
 

@@ -6,7 +6,8 @@ export const streamLogs = async (env: Env, server: WebSocket) => {
     server.accept();
 
     server.addEventListener("message", async (message) => {
-      console.log(message);
+      console.log(message.data);
+      server.send(message.data);
     });
 
     const supabaseClient = createClient(env.SUPABASE_KEY, env.SUPABASE_URL);
