@@ -37,7 +37,6 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
+          cd ./log-app && yarn deploy
           echo "$SUPABASE_URL" | wrangler secret put SUPABASE_URL
           echo "$SUPABASE_KEY" | wrangler secret put SUPABASE_KEY
-
-          cd ./log-app && yarn deploy --name ubiquit-log-app
