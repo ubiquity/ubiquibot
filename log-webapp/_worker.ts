@@ -1,13 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
 import { streamLogs } from "./src/logHandler";
 import { Env } from "./types/global";
 
 export default {
   async fetch(request: Request, env: Env) {
-    const supabaseClient = createClient(env.SUPABASE_URL, env.SUPABASE_KEY);
-
     const url = new URL(request.url);
-
     if (url.pathname === "/log-engine") {
       // TODO: Add your custom /api/* logic here.
       const upgradeHeader = request.headers.get("Upgrade");
@@ -17,28 +13,7 @@ export default {
 
       const [client, server] = Object.values(new WebSocketPair());
 
-      server.accept();
-
-      server.addEventListener("message", async (message) => {
-        console.log(message.data);
-        server.send(message.data);
-
-        supabaseClient
-          .channel("table-db-changes")
-          .on(
-            "postgres_changes",
-            {
-              event: "INSERT",
-              schema: "public",
-              table: "logs",
-            },
-            (payload) => {
-              server.send(JSON.stringify(payload.new));
-              console.log(payload);
-            }
-          )
-          .subscribe();
-      });
+      await streamLogs(env, server);
 
       return new Response(null, {
         status: 101,
