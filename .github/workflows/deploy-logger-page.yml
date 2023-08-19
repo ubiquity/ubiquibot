@@ -40,4 +40,4 @@ jobs:
           echo "$SUPABASE_URL" | wrangler secret put SUPABASE_URL
           echo "$SUPABASE_KEY" | wrangler secret put SUPABASE_KEY
 
-          cd ./log-app && yarn deploy
+          cd ./log-app && yarn deploy --name ubiquit-log-app
