@@ -6,11 +6,6 @@ export const streamLogs = async (env: Env, server: WebSocket) => {
   try {
     server.accept();
 
-    server.addEventListener("message", async (message) => {
-      console.log(message.data);
-      server.send(message.data);
-    });
-
     const channel = supabaseClient
       .channel("table-db-changes")
       .on(
@@ -26,6 +21,13 @@ export const streamLogs = async (env: Env, server: WebSocket) => {
         }
       )
       .subscribe();
+
+    server.addEventListener("message", async (message) => {
+      console.log(message.data);
+      server.send(message.data);
+      server.send(`${env.SUPABASE_URL}, ${env.SUPABASE_KEY}`);
+      server.send(channel.state);
+    });
 
     server.addEventListener("close", () => {
       channel.unsubscribe();
