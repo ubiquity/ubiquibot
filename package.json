@@ -89,7 +89,7 @@
     "*.{ts,json}": [
       "prettier --write"
     ],
-    "*.{js,ts,json,md,yml}": [
+    "src/**.{ts,json}": [
       "cspell --config .cspell.json"
     ]
   },

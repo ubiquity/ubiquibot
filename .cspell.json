@@ -1,7 +1,7 @@
 {
+  "useGitignore": true,
   "version": "0.2",
   "language": "en",
-  "ignorePaths": [],
   "words": [
     "autodetection",
     "autopay",
@@ -53,8 +53,5 @@
     "URLSAFE",
     "vitalik",
     "WXDAI"
-  ],
-  "files": ["src/**.ts"],
-  "flagWords": [],
-  "useGitignore": true
+  ]
 }
