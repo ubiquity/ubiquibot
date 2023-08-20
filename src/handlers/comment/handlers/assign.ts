@@ -39,11 +39,11 @@ export const assign = async (body: string) => {
   logger.info(`Opened Pull Requests with approved reviews or with no reviews but over 24 hours have passed: ${JSON.stringify(openedPullRequests)}`);
 
   const assignedIssues = await getAssignedIssues(payload.sender.login);
-  logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
+  logger.info(`Max issue allowed is ${config.assign.maxConcurrentBounties}`);
 
   // check for max and enforce max
-  if (assignedIssues.length - openedPullRequests.length >= config.assign.bountyHunterMax) {
-    return `Too many assigned issues, you have reached your max of ${config.assign.bountyHunterMax}`;
+  if (assignedIssues.length - openedPullRequests.length >= config.assign.maxConcurrentBounties) {
+    return `Too many assigned issues, you have reached your max of ${config.assign.maxConcurrentBounties}`;
   }
 
   if (issue.state == IssueType.CLOSED) {

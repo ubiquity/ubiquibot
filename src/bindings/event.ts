@@ -44,15 +44,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
     return;
   }
 
-  logger.info(
-    `Config loaded! config: ${JSON.stringify({
-      price: botConfig.price,
-      unassign: botConfig.unassign,
-      mode: botConfig.mode,
-      log: botConfig.log,
-      wallet: botConfig.wallet,
-    })}`
-  );
+  logger.info(`Config loaded! config: ${JSON.stringify(botConfig)}`);
   const allowedEvents = Object.values(GithubEvent) as string[];
   const eventName = payload.action ? `${name}.${payload.action}` : name; // some events wont have actions as this grows
 
@@ -74,7 +66,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
     const validate = ajv.compile(PayloadSchema);
     const valid = validate(payload);
     if (!valid) {
-      logger.info("Payload schema validation failed!!!", payload);
+      logger.info("Payload schema validation failed!", payload);
       if (validate.errors) logger.warn(validate.errors);
       return;
     }

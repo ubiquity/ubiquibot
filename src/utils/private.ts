@@ -145,7 +145,7 @@ export const getWideConfig = async (context: Context) => {
 
   const configs = { parsedRepo, parsedOrg, parsedDefault };
   const configData = {
-    networkId: getNetworkId(configs),
+    evmNetworkId: getNetworkId(configs),
     privateKey: privateKeyDecrypted ?? "",
     assistivePricing: getAssistivePricing(configs),
     commandSettings: getCommandSettings(configs),
@@ -155,7 +155,7 @@ export const getWideConfig = async (context: Context) => {
     priorityLabels: getPriorityLabels(configs),
     paymentPermitMaxPrice: getPaymentPermitMaxPrice(configs),
     disableAnalytics: getAnalyticsMode(configs),
-    bountyHunterMax: getBountyHunterMax(configs),
+    maxConcurrentBounties: getBountyHunterMax(configs),
     incentiveMode: getIncentiveMode(configs),
     commentElementPricing: getCommentItemPrice(configs),
     defaultLabels: getDefaultLabels(configs),

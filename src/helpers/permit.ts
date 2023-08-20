@@ -13,7 +13,7 @@ export type Permit = {
   organizationId: number | null;
   repositoryId: number;
   issueId: number;
-  networkId: number;
+  evmNetworkId: number;
   bountyHunterId: number;
   bountyHunterAddress: string;
   tokenAddress: string;
@@ -53,7 +53,7 @@ type TxData = {
  */
 export const generatePermit2Signature = async (spender: string, amountInEth: string, identifier: string): Promise<{ txData: TxData; payoutUrl: string }> => {
   const {
-    payout: { networkId, privateKey, permitBaseUrl, rpc, paymentToken },
+    payout: { evmNetworkId, privateKey, permitBaseUrl, rpc, paymentToken },
   } = getBotConfig();
   const logger = getLogger();
   const provider = new ethers.providers.JsonRpcProvider(rpc);
@@ -73,7 +73,7 @@ export const generatePermit2Signature = async (spender: string, amountInEth: str
     deadline: MaxUint256,
   };
 
-  const { domain, types, values } = SignatureTransfer.getPermitData(permitTransferFromData, PERMIT2_ADDRESS, networkId);
+  const { domain, types, values } = SignatureTransfer.getPermitData(permitTransferFromData, PERMIT2_ADDRESS, evmNetworkId);
 
   const signature = await adminWallet._signTypedData(domain, types, values);
   const txData: TxData = {
@@ -95,7 +95,7 @@ export const generatePermit2Signature = async (spender: string, amountInEth: str
 
   const base64encodedTxData = Buffer.from(JSON.stringify(txData)).toString("base64");
 
-  const payoutUrl = `${permitBaseUrl}?claim=${base64encodedTxData}&network=${networkId}`;
+  const payoutUrl = `${permitBaseUrl}?claim=${base64encodedTxData}&network=${evmNetworkId}`;
   logger.info(`Generated permit2 url: ${payoutUrl}`);
   return { txData, payoutUrl };
 };
@@ -114,13 +114,13 @@ export const savePermitToDB = async (bountyHunterId: number, txData: TxData): Pr
   }
 
   const { payout } = getBotConfig();
-  const { networkId } = payout;
+  const { evmNetworkId } = payout;
 
   const permit: InsertPermit = {
     organizationId: organization?.id ?? null,
     repositoryId: repository?.id,
     issueId: issue?.id,
-    networkId: networkId,
+    evmNetworkId: evmNetworkId,
     bountyHunterId: bountyHunterId,
     tokenAddress: txData.permit.permitted.token,
     payoutAmount: txData.permit.permitted.amount,

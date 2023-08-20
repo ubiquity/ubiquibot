@@ -37,7 +37,7 @@ export const TelegramBotConfigSchema = Type.Object({
 });
 
 export const PayoutConfigSchema = Type.Object({
-  networkId: Type.Number(),
+  evmNetworkId: Type.Number(),
   rpc: Type.String(),
   privateKey: Type.String(),
   paymentToken: Type.String(),
@@ -57,7 +57,7 @@ export const ModeSchema = Type.Object({
 });
 
 export const AssignSchema = Type.Object({
-  bountyHunterMax: Type.Number(),
+  maxConcurrentBounties: Type.Number(),
 });
 
 export const LogConfigSchema = Type.Object({

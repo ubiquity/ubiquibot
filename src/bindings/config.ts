@@ -5,7 +5,7 @@ import { DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFA
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
-import { getScalarKey, getWideConfig } from "../utils/private";
+import { getScalarKey, getWideConfig as getConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
@@ -16,19 +16,19 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     commentElementPricing,
     paymentPermitMaxPrice,
     disableAnalytics,
-    bountyHunterMax,
+    maxConcurrentBounties,
     incentiveMode,
-    networkId,
+    evmNetworkId,
     issueCreatorMultiplier,
     defaultLabels,
     promotionComment,
     commandSettings,
     assistivePricing,
     registerWalletWithVerification,
-  } = await getWideConfig(context);
+  } = await getConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
-  const { rpc, paymentToken } = getPayoutConfigByNetworkId(networkId);
+  const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
 
   const botConfig: BotConfig = {
     log: {
@@ -47,7 +47,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       promotionComment: promotionComment,
     },
     payout: {
-      networkId: networkId,
+      evmNetworkId: evmNetworkId,
       rpc: rpc,
       privateKey: privateKey,
       paymentToken: paymentToken,
@@ -73,7 +73,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     command: commandSettings,
     assign: {
-      bountyHunterMax: bountyHunterMax,
+      maxConcurrentBounties: maxConcurrentBounties,
     },
     sodium: {
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",

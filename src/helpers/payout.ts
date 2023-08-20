@@ -27,17 +27,17 @@ const PAYMENT_TOKEN_PER_NETWORK: Record<string, { rpc: string; token: string }> 
   },
 };
 
-type PayoutConfigPartial = Omit<Static<typeof PayoutConfigSchema>, "networkId" | "privateKey" | "permitBaseUrl">;
+type PayoutConfigPartial = Omit<Static<typeof PayoutConfigSchema>, "evmNetworkId" | "privateKey" | "permitBaseUrl">;
 
 /**
  * Returns payout config for a particular network
- * @param networkId network id
+ * @param evmNetworkId network id
  * @returns RPC URL and payment token
  */
-export const getPayoutConfigByNetworkId = (networkId: number): PayoutConfigPartial => {
-  const paymentToken = PAYMENT_TOKEN_PER_NETWORK[networkId.toString()];
+export const getPayoutConfigByNetworkId = (evmNetworkId: number): PayoutConfigPartial => {
+  const paymentToken = PAYMENT_TOKEN_PER_NETWORK[evmNetworkId.toString()];
   if (!paymentToken) {
-    throw new Error(`No config setup for networkId: ${networkId}`);
+    throw new Error(`No config setup for evmNetworkId: ${evmNetworkId}`);
   }
 
   return {
