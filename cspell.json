@@ -3,6 +3,7 @@
   "language": "en",
   "ignorePaths": ["node_modules", "build", "path/to/ignored/file.js"],
   "words": [
+    "autodetection",
     "autopay",
     "AUTOPAY",
     "bucketid",

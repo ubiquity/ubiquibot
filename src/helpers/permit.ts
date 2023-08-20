@@ -49,7 +49,7 @@ type TxData = {
  * @param spender The recipient address we're going to send tokens
  * @param amountInETH The token amount in ETH
  *
- * @returns Permit2 url including base64 encocded data
+ * @returns Permit2 url including base64 encoded data
  */
 export const generatePermit2Signature = async (spender: string, amountInEth: string, identifier: string): Promise<{ txData: TxData; payoutUrl: string }> => {
   const {

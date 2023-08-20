@@ -103,7 +103,7 @@ export const incentivizeCreatorComment = async () => {
   logger.info(`Getting the issue description done. description: ${description}`);
   const creator = issue.user;
   if (creator?.type === UserType.Bot || creator?.login === issue?.assignee) {
-    logger.info("Issue creator assigneed himself or Bot created this issue.");
+    logger.info("Issue creator assigned himself or Bot created this issue.");
     return;
   }
 
