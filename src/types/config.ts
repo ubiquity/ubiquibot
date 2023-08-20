@@ -17,7 +17,7 @@ const CommentElementPricingSchema = Type.Record(Type.String(), Type.Number());
 
 import DEFAULT_JSON_CONFIG from "../../ubiquibot-config-default.json";
 
-export type CommentElementPricing = {
+export type CommentElementPricingConfiguration = {
   [key in keyof (typeof DEFAULT_JSON_CONFIG)["comment-element-pricing"]]: number;
 };
 

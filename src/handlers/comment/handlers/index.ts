@@ -203,8 +203,6 @@ const commandCallback = async (issue_number: number, comment: string, action: st
 };
 
 export const userCommands = (): UserCommands[] => {
-  const config = getBotConfig();
-
   return [
     {
       id: IssueCommentCommands.START,

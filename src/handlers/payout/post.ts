@@ -2,7 +2,7 @@ import DEFAULT_CONFIG_JSON from "../../../ubiquibot-config-default.json";
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getIssueDescription, getTokenSymbol, parseComments } from "../../helpers";
-import { CommentElementPricing, MarkdownItem, Payload, UserType } from "../../types";
+import { CommentElementPricingConfiguration, MarkdownItem, Payload, UserType } from "../../types";
 
 const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
 /**
@@ -149,7 +149,7 @@ const generatePermitForComments = async (
  * @param commentElementPricing - The basic price table for reward calculation
  * @returns - The reward value
  */
-const calculateRewardValue = (comments: Record<string, string[]>, commentElementPricing: CommentElementPricing): number => {
+const calculateRewardValue = (comments: Record<string, string[]>, commentElementPricing: CommentElementPricingConfiguration): number => {
   let sum = 0;
   for (const key of Object.keys(comments)) {
     const rewardValue = commentElementPricing[key];
