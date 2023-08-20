@@ -40,7 +40,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       issueCreatorMultiplier,
       timeLabels: timeLabels ?? [],
       priorityLabels: priorityLabels ?? [],
-      commentElementPricing: commentElementPricing,
+      commentElementPricing: commentElementPricing || {},
       defaultLabels: defaultLabels ?? [],
     },
     comments: {
