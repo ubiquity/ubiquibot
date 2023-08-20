@@ -169,13 +169,13 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
     });
     logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
   } else {
-    const { data: _data, error: _error } = await supabase.from("wallets").insert({
+    const { error } = await supabase.from("wallets").insert({
       user_name: username,
       wallet_address: address,
       created_at: new Date().toUTCString(),
       updated_at: new Date().toUTCString(),
     });
-    logger.info(`Creating a new wallet_table record done, { error: ${_error?.message} }`);
+    logger.info(`Creating a new wallet_table record done, { error: ${error?.message} }`);
   }
 };
 
