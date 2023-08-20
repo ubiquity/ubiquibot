@@ -1,4 +1,4 @@
-import { CommentElementPricing } from "../types";
+import { CommentElementPricingConfiguration } from "../types";
 import { CommandsConfiguration, Label, OrganizationConfiguration, RepositoryConfiguration } from "./private";
 
 interface AllConfigs {
@@ -25,42 +25,35 @@ type getsCommandSetting = "command-settings";
 type getsLabels = "time-labels" | "priority-labels";
 
 export const fromConfig = {
-  getNumber: function getNumberFromConfig(key: getsNumber, { repository, organization, fallback: defaultConfiguration }: AllConfigs): number {
+  getNumber: function getNumberFromConfig(key: getsNumber, { repository, organization, fallback }: AllConfigs): number {
     if (repository && repository[key] && !Number.isNaN(repository[key])) {
       return Number(repository[key]);
     } else if (organization && organization[key] && !Number.isNaN(organization[key])) {
       return Number(organization[key]);
     } else {
       console.error(`config parser: "${key}" from imported configs failed to parse as Number`);
-      return Number(defaultConfiguration[key]);
+      return Number(fallback[key]);
     }
   },
-  getLabels: function getLabelsFromConfig(key: getsLabels, { repository, organization, fallback: defaultConfiguration }: AllConfigs): Label[] | undefined {
+  getLabels: function getLabelsFromConfig(key: getsLabels, { repository, organization, fallback }: AllConfigs): Label[] | undefined {
     if (repository && repository[key] && Array.isArray(repository[key]) && (repository[key] as []).length > 0) {
       return repository[key];
     } else if (organization && organization[key] && Array.isArray(organization[key]) && (organization[key] as []).length > 0) {
       return organization[key];
     } else {
       console.error(`config parser: "${key}" from imported configs failed to parse as Labels`);
-      return defaultConfiguration[key];
+      return fallback[key];
     }
   },
   getCommentItemPrice: function getCommentItemPriceFromConfig(
     key: getsCommentElementPricing,
-    { repository, organization, fallback: defaultConfiguration }: AllConfigs
-  ): CommentElementPricing | undefined {
-    if (repository && repository[key]) {
-      return repository[key];
-    } else if (organization && organization[key]) {
-      return organization[key];
-    } else {
-      console.error(`config parser: "${key}" from imported configs failed to parse as CommentItemPrice`);
-      return defaultConfiguration[key];
-    }
+    { repository, organization, fallback }: AllConfigs
+  ): CommentElementPricingConfiguration | undefined {
+    return { ...fallback, ...organization, ...repository }[key];
   },
   getCommandSettings: function getCommandSettingsFromConfig(
     key: getsCommandSetting,
-    { repository, organization, fallback: defaultConfiguration }: AllConfigs
+    { repository, organization, fallback }: AllConfigs
   ): CommandsConfiguration[] | undefined {
     if (repository && repository[key]) {
       return repository[key];
@@ -68,40 +61,37 @@ export const fromConfig = {
       return organization[key];
     } else {
       console.error(`config parser: "${key}" from imported configs failed to parse as CommandSettings`);
-      return defaultConfiguration[key];
+      return fallback[key];
     }
   },
-  getBoolean: function getBooleanFromConfig(key: getsBoolean, { repository, organization, fallback: defaultConfiguration }: AllConfigs): boolean | undefined {
+  getBoolean: function getBooleanFromConfig(key: getsBoolean, { repository, organization, fallback }: AllConfigs): boolean | undefined {
     if (repository && repository[key] && typeof repository[key] === "boolean") {
       return repository[key];
     } else if (organization && organization[key] && typeof organization[key] === "boolean") {
       return organization[key];
     } else {
       console.error(`config parser: "${key}" from imported configs failed to parse as Boolean`);
-      return defaultConfiguration[key];
+      return fallback[key];
     }
   },
-  getString: function getStringFromConfig(key: getsString, { repository, organization, fallback: defaultConfiguration }: AllConfigs): string | undefined {
+  getString: function getStringFromConfig(key: getsString, { repository, organization, fallback }: AllConfigs): string | undefined {
     if (repository && repository[key] && typeof repository[key] === "string") {
       return repository[key];
     } else if (organization && organization[key] && typeof organization[key] === "string") {
       return organization[key];
     } else {
       console.error(`config parser: "${key}" from imported configs failed to parse as String`);
-      return defaultConfiguration[key];
+      return fallback[key];
     }
   },
-  getStrings: function getStringsFromConfig(
-    key: getsArrayOfStrings,
-    { repository, organization, fallback: defaultConfiguration }: AllConfigs
-  ): string[] | undefined {
+  getStrings: function getStringsFromConfig(key: getsArrayOfStrings, { repository, organization, fallback }: AllConfigs): string[] | undefined {
     if (repository && repository[key]) {
       return repository[key];
     } else if (organization && organization[key]) {
       return organization[key];
     } else {
       console.error(`config parser: "${key}" from imported configs failed to parse as Strings`);
-      return defaultConfiguration[key];
+      return fallback[key];
     }
   },
 };
