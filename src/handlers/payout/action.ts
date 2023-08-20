@@ -3,6 +3,8 @@ import { getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import {
   addLabelToIssue,
+  checkUserPermissionForRepoAndOrg,
+  clearAllPriceLabelsOnIssue,
   deleteLabel,
   generatePermit2Signature,
   getAllIssueAssignEvents,
@@ -15,6 +17,7 @@ import { UserType, Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
 import { GLOBAL_STRINGS } from "../../configs";
+import { isParentIssue } from "../pricing";
 
 export const handleIssueClosed = async () => {
   const context = getBotContext();
@@ -30,6 +33,10 @@ export const handleIssueClosed = async () => {
   const id = organization?.id || repository?.id; // repository?.id as fallback
 
   if (!issue) return;
+
+  const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
+
+  if (!userHasPermission) return "Permit generation skipped because this issue has been closed by an external contributor.";
 
   const comments = await getAllIssueComments(issue.number);
 
@@ -86,6 +93,13 @@ export const handleIssueClosed = async () => {
   if (issue.state_reason !== StateReason.COMPLETED) {
     logger.info("Permit generation skipped because the issue was not closed as completed");
     return "Permit generation skipped because the issue was not closed as completed";
+  }
+
+  logger.info(`Checking if the issue is a parent issue.`);
+  if (issue.body && isParentIssue(issue.body)) {
+    logger.error("Permit generation skipped since the issue is identified as parent issue.");
+    await clearAllPriceLabelsOnIssue();
+    return "Permit generation skipped since the issue is identified as parent issue.";
   }
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
