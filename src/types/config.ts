@@ -14,7 +14,12 @@ const CommandItemSchema = Type.Object({
 export type CommandItem = Static<typeof CommandItemSchema>;
 
 const CommentElementPricingSchema = Type.Record(Type.String(), Type.Number());
-export type CommentElementPricing = Static<typeof CommentElementPricingSchema>;
+
+import DEFAULT_JSON_CONFIG from "../../ubiquibot-config-default.json";
+
+export type CommentElementPricing = {
+  [key in keyof (typeof DEFAULT_JSON_CONFIG)["comment-element-pricing"]]: number;
+};
 
 export const PriceConfigSchema = Type.Object({
   baseMultiplier: Type.Number(),
