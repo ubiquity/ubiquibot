@@ -2,7 +2,7 @@ import axios from "axios";
 import { createWriteStream } from "fs";
 
 export const fetchImage = async (url: string): Promise<unknown> => {
-  const dir = "../assets/images/webFlat.png";
+  const dir = "../assets/images/flat.png";
   const writer = createWriteStream(dir);
 
   const response = await axios({
