@@ -90,7 +90,7 @@
       "prettier --write"
     ],
     "src/**.{ts,json}": [
-      "cspell --config .cspell.json"
+      "cspell"
     ]
   },
   "nodemonConfig": {
