@@ -2,96 +2,95 @@ import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
 import { Payload } from "../types";
 import { Context } from "probot";
-import {
-  getAnalyticsMode,
-  getPaymentPermitMaxPrice,
-  getBaseMultiplier,
-  getCreatorMultiplier,
-  getBountyHunterMax,
-  getIncentiveMode,
-  getNetworkId,
-  getPriorityLabels,
-  getTimeLabels,
-  getCommentItemPrice,
-  getDefaultLabels,
-  getPromotionComment,
-  getAssistivePricing,
-  getCommandSettings,
-  getRegisterWalletWithVerification,
-} from "./helpers";
+import { fromConfig as config } from "./helpers";
+import { DefaultConfiguration, RepositoryConfiguration, OrganizationConfiguration, ImportedConfigurations } from "./private.d";
 
-import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
+// const CONFIGURATION_PATH = "ubiquibot-config";
+const CONFIGURATION_PATH = ".github/ubiquibot.yml";
+const PRIVATE_KEY_NAME = "private-key-encrypted";
+const PRIVATE_KEY_PREFIX = "HSK_";
 
-const CONFIG_REPO = "ubiquibot-config";
-const CONFIG_PATH = ".github/ubiquibot-config.yml";
-const KEY_NAME = "private-key-encrypted";
-const KEY_PREFIX = "HSK_";
+// defaults
+export const defaultConfiguration = {
+  "evm-network-id": 1,
+  "base-multiplier": 0,
+  "issue-creator-multiplier": 0,
+  "time-labels": [],
+  "priority-labels": [],
+  "auto-pay-mode": false,
+  "promotion-comment": `<h6>If you enjoy the DevPool experience, please follow <a href="https://github.com/ubiquity">Ubiquity on GitHub</a> and star <a href="https://github.com/ubiquity/devpool-directory">this repo</a> to show your support. It helps a lot!</h6>`,
+  "analytics-mode": true,
+  "incentive-mode": false,
+  "max-concurrent-bounties": 0,
+  "comment-element-pricing": {},
+  "default-labels": [],
+} as DefaultConfiguration;
 
-export const getConfigSuperset = async (context: Context, type: "org" | "repo", filePath: string): Promise<string | undefined> => {
+// async function loadConfigurations(context: Context) {
+
+//    const params: {
+//     owner: "ubiquity";
+//     repo: "ubiquibot";
+//     path: ".github/config.yml";
+//   } = context.repo({
+//     path: CONFIGURATION_PATH as ".github/config.yml", // bad typing
+//   });
+
+//   const { data } = await context.octokit.rest.repos.getContent({
+//     owner: params.owner,
+//     repo: params.repo,
+//     path: CONFIGURATION_PATH,
+//     mediaType: {
+//       format: "raw",
+//     },
+//   });
+
+//   return data;
+// }
+
+export const getConfigSuperset = async (context: Context, type: "org"): Promise<string | undefined> => {
+  const payload = context.payload as Payload;
+  let repositoryName = payload.repository.name;
+  let ownerLogin = payload.repository.owner.login;
+
+  if (type === "org") {
+    repositoryName = `.github`;
+    const login = payload.organization?.login;
+    if (login) {
+      ownerLogin = login;
+    }
+  }
+
+  if (!repositoryName || !ownerLogin) {
+    return undefined;
+  }
+
   try {
-    const payload = context.payload as Payload;
-    const repo = type === "org" ? CONFIG_REPO : payload.repository.name;
-    const owner = type === "org" ? payload.organization?.login : payload.repository.owner.login;
-    if (!repo || !owner) return undefined;
     const { data } = await context.octokit.rest.repos.getContent({
-      owner,
-      repo,
-      path: filePath,
+      owner: ownerLogin,
+      repo: repositoryName,
+      path: CONFIGURATION_PATH,
       mediaType: {
         format: "raw",
       },
     });
     return data as unknown as string;
   } catch (error: unknown) {
+    console.error(error);
     return undefined;
   }
 };
 
-export interface WideLabel {
-  name: string;
-  weight: number;
-  value?: number | undefined;
-}
-
-export interface CommandObj {
-  name: string;
-  enabled: boolean;
-}
-
-export interface WideConfig {
-  "evm-network-id"?: number;
-  "price-multiplier"?: number;
-  "issue-creator-multiplier": number;
-  "time-labels"?: WideLabel[];
-  "priority-labels"?: WideLabel[];
-  "payment-permit-max-price"?: number;
-  "command-settings"?: CommandObj[];
-  "promotion-comment"?: string;
-  "disable-analytics"?: boolean;
-  "comment-incentives"?: boolean;
-  "assistive-pricing"?: boolean;
-  "max-concurrent-assigns"?: number;
-  "comment-element-pricing"?: Record<string, number>;
-  "default-labels"?: string[];
-  "register-wallet-with-verification"?: boolean;
-}
-
-export type WideRepoConfig = WideConfig;
-
-export interface WideOrgConfig extends WideConfig {
-  "private-key-encrypted"?: string;
-}
-
-export const parseYAML = (data?: string): WideConfig | undefined => {
+export const parseYAML = (data?: string): RepositoryConfiguration => {
   try {
     if (data) {
       const parsedData = YAML.parse(data);
-      return parsedData ?? undefined;
+      return parsedData;
     }
-    return undefined;
   } catch (error) {
-    return undefined;
+    console.error(error);
   }
+  return defaultConfiguration;
 };
 
 export const getPrivateKey = async (cipherText: string): Promise<string | undefined> => {
@@ -111,7 +110,7 @@ export const getPrivateKey = async (cipherText: string): Promise<string | undefi
     const binCipher = sodium.from_base64(cipherText, sodium.base64_variants.URLSAFE_NO_PADDING);
 
     let walletPrivateKey: string | undefined = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
-    walletPrivateKey = walletPrivateKey.replace(KEY_PREFIX, "");
+    walletPrivateKey = walletPrivateKey.replace(PRIVATE_KEY_PREFIX, "");
     return walletPrivateKey;
   } catch (error: unknown) {
     return undefined;
@@ -134,33 +133,30 @@ export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Prom
   }
 };
 
-export const getWideConfig = async (context: Context) => {
-  const orgConfig = await getConfigSuperset(context, "org", CONFIG_PATH);
-  const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
+export const getConfig = async (context: Context) => {
+  const _organization = await getConfigSuperset(context, "org");
+  const organization: OrganizationConfiguration = parseYAML(_organization);
 
-  const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
-  const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
-  const parsedDefault: WideRepoConfig = DEFAULT_CONFIG_JSON;
-  const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
+  const _repository = await getConfigSuperset(context, "repo");
+  const repository: RepositoryConfiguration = parseYAML(_repository);
 
-  const configs = { parsedRepo, parsedOrg, parsedDefault };
+  const configs = { repository, organization } as ImportedConfigurations;
+
   const configData = {
-    evmNetworkId: getNetworkId(configs),
-    privateKey: privateKeyDecrypted ?? "",
-    assistivePricing: getAssistivePricing(configs),
-    commandSettings: getCommandSettings(configs),
-    baseMultiplier: getBaseMultiplier(configs),
-    issueCreatorMultiplier: getCreatorMultiplier(configs),
-    timeLabels: getTimeLabels(configs),
-    priorityLabels: getPriorityLabels(configs),
-    paymentPermitMaxPrice: getPaymentPermitMaxPrice(configs),
-    disableAnalytics: getAnalyticsMode(configs),
-    maxConcurrentBounties: getBountyHunterMax(configs),
-    incentiveMode: getIncentiveMode(configs),
-    commentElementPricing: getCommentItemPrice(configs),
-    defaultLabels: getDefaultLabels(configs),
-    promotionComment: getPromotionComment(configs),
-    registerWalletWithVerification: getRegisterWalletWithVerification(configs),
+    privateKey: organization && organization[PRIVATE_KEY_NAME] ? await getPrivateKey(organization[PRIVATE_KEY_NAME]) : "",
+
+    evmNetworkId: config.getNumber("evm-network-id", configs),
+    baseMultiplier: config.getNumber("base-multiplier", configs),
+    issueCreatorMultiplier: config.getNumber("issue-creator-multiplier", configs),
+    timeLabels: config.getLabels("time-labels", configs),
+    priorityLabels: config.getLabels("priority-labels", configs),
+    autoPayMode: config.getBoolean("auto-pay-mode", configs),
+    analyticsMode: config.getBoolean("analytics-mode", configs),
+    maxConcurrentBounties: config.getNumber("max-concurrent-bounties", configs),
+    incentiveMode: config.getBoolean("incentive-mode", configs),
+    commentElementPricing: config.getCommentItemPrice("comment-element-pricing", configs),
+    defaultLabels: config.getStrings("default-labels", configs),
+    promotionComment: config.getString("promotion-comment", configs),
   };
 
   return configData;
