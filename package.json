@@ -23,7 +23,8 @@
     "start:serverless": "tsx src/adapters/github/github-actions.ts",
     "start:watch": "nodemon --exec 'yarn start'",
     "start": "probot run ./lib/src/index.js",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "utils:cspell": "cspell --config .cspell.json 'src/**/*.{js,ts,json,md,yml}'"
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
@@ -45,6 +46,7 @@
     "ajv-formats": "^2.1.1",
     "axios": "^1.3.2",
     "copyfiles": "^2.4.1",
+    "cspell": "^7.0.0",
     "ethers": "^5.7.2",
     "husky": "^8.0.2",
     "jimp": "^0.22.4",
