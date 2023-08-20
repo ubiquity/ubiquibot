@@ -1,7 +1,8 @@
+import DEFAULT_CONFIG_JSON from "../../../ubiquibot-config-default.json";
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getIssueDescription, getTokenSymbol, parseComments } from "../../helpers";
-import { MarkdownItem, Payload, UserType, CommentElementPricing } from "../../types";
+import { CommentElementPricing, MarkdownItem, Payload, UserType } from "../../types";
 
 const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
 /**
@@ -118,12 +119,11 @@ export const incentivizeCreatorComment = async () => {
     logger.info(`Skipping to generate a permit url for missing account. fallback: ${result.amountInETH}`);
   }
 };
-
 const generatePermitForComments = async (
   user: string,
   comments: string[],
   multiplier: number,
-  commentElementPricing: Record<string, number>,
+  commentElementPricing: Record<keyof (typeof DEFAULT_CONFIG_JSON)["comment-element-pricing"], number>,
   tokenSymbol: string,
   node_id: string
 ): Promise<{ comment: string; payoutUrl?: string; amountInETH?: string }> => {

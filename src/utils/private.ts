@@ -2,25 +2,9 @@ import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
 import { Payload } from "../types";
 import { Context } from "probot";
-import {
-  getAnalyticsMode,
-  getPaymentPermitMaxPrice,
-  getBaseMultiplier,
-  getCreatorMultiplier,
-  getBountyHunterMax,
-  getIncentiveMode,
-  getNetworkId,
-  getPriorityLabels,
-  getTimeLabels,
-  getCommentItemPrice,
-  getDefaultLabels,
-  getPromotionComment,
-  getAssistivePricing,
-  getCommandSettings,
-  getRegisterWalletWithVerification,
-} from "./helpers";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
+import { fromConfig as config } from "./helpers";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
@@ -47,42 +31,43 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo", 
   }
 };
 
-export interface WideLabel {
+export interface Label {
   name: string;
   weight: number;
   value?: number | undefined;
 }
 
-export interface CommandObj {
+export interface CommandsConfiguration {
   name: string;
   enabled: boolean;
 }
 
-export interface WideConfig {
+export type RepositoryConfiguration = {
+  "auto-pay-mode"?: boolean;
+  "analytics-mode"?: boolean;
+  "incentive-mode"?: boolean;
   "evm-network-id"?: number;
   "price-multiplier"?: number;
-  "issue-creator-multiplier": number;
-  "time-labels"?: WideLabel[];
-  "priority-labels"?: WideLabel[];
+  "issue-creator-multiplier"?: number;
+  "time-labels"?: Label[];
+  "priority-labels"?: Label[];
   "payment-permit-max-price"?: number;
-  "command-settings"?: CommandObj[];
+  "command-settings"?: CommandsConfiguration[];
   "promotion-comment"?: string;
   "disable-analytics"?: boolean;
   "comment-incentives"?: boolean;
   "assistive-pricing"?: boolean;
   "max-concurrent-assigns"?: number;
-  "comment-element-pricing"?: Record<string, number>;
+  "comment-element-pricing"?: Record<keyof (typeof DEFAULT_CONFIG_JSON)["comment-element-pricing"], number>;
   "default-labels"?: string[];
   "register-wallet-with-verification"?: boolean;
-}
-
-export type WideRepoConfig = WideConfig;
-
-export interface WideOrgConfig extends WideConfig {
+  "base-multiplier"?: number;
+};
+export interface OrganizationConfiguration extends RepositoryConfiguration {
   "private-key-encrypted"?: string;
 }
 
-export const parseYAML = (data?: string): WideConfig | undefined => {
+export const parseYAML = (data?: string): RepositoryConfiguration | undefined => {
   try {
     if (data) {
       const parsedData = YAML.parse(data);
@@ -134,34 +119,47 @@ export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Prom
   }
 };
 
-export const getWideConfig = async (context: Context) => {
+export const getAllConfigs = async (context: Context) => {
   const orgConfig = await getConfigSuperset(context, "org", CONFIG_PATH);
   const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
 
-  const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
-  const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
-  const parsedDefault: WideRepoConfig = DEFAULT_CONFIG_JSON;
+  const parsedOrg: OrganizationConfiguration | undefined = parseYAML(orgConfig);
+  const parsedRepo: RepositoryConfiguration | undefined = parseYAML(repoConfig);
+  const parsedDefault: RepositoryConfiguration = DEFAULT_CONFIG_JSON;
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
-  const configs = { parsedRepo, parsedOrg, parsedDefault };
+  const configs = {
+    repository: parsedRepo,
+    organization: parsedOrg,
+    fallback: parsedDefault,
+  };
+
   const configData = {
-    evmNetworkId: getNetworkId(configs),
+    // privateKey: organization && organization[PRIVATE_KEY_NAME] ? await getPrivateKey(organization[PRIVATE_KEY_NAME]) : "",
     privateKey: privateKeyDecrypted ?? "",
-    assistivePricing: getAssistivePricing(configs),
-    commandSettings: getCommandSettings(configs),
-    baseMultiplier: getBaseMultiplier(configs),
-    issueCreatorMultiplier: getCreatorMultiplier(configs),
-    timeLabels: getTimeLabels(configs),
-    priorityLabels: getPriorityLabels(configs),
-    paymentPermitMaxPrice: getPaymentPermitMaxPrice(configs),
-    disableAnalytics: getAnalyticsMode(configs),
-    maxConcurrentBounties: getBountyHunterMax(configs),
-    incentiveMode: getIncentiveMode(configs),
-    commentElementPricing: getCommentItemPrice(configs),
-    defaultLabels: getDefaultLabels(configs),
-    promotionComment: getPromotionComment(configs),
-    registerWalletWithVerification: getRegisterWalletWithVerification(configs),
+
+    evmNetworkId: config.getNumber("evm-network-id", configs),
+    assistivePricing: config.getBoolean("assistive-pricing", configs),
+    commandSettings: config.getCommandSettings("command-settings", configs),
+    baseMultiplier: config.getNumber("base-multiplier", configs),
+    issueCreatorMultiplier: config.getNumber("issue-creator-multiplier", configs),
+    timeLabels: config.getLabels("time-labels", configs),
+    priorityLabels: config.getLabels("priority-labels", configs),
+    paymentPermitMaxPrice: config.getNumber("payment-permit-max-price", configs),
+    disableAnalytics: config.getBoolean("disable-analytics", configs),
+    maxConcurrentAssigns: config.getNumber("max-concurrent-assigns", configs),
+    incentiveMode: config.getBoolean("incentive-mode", configs),
+    commentElementPricing: config.getCommentItemPrice("comment-element-pricing", configs),
+    defaultLabels: config.getStrings("default-labels", configs),
+    promotionComment: config.getString("promotion-comment", configs),
+    registerWalletWithVerification: config.getBoolean("register-wallet-with-verification", configs),
   };
 
   return configData;
 };
+
+// {
+//   repository: RepositoryConfiguration | undefined;
+//   organization: OrganizationConfiguration | undefined;
+//   defaultConfiguration: RepositoryConfiguration;
+// }

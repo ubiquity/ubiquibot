@@ -57,7 +57,7 @@ export const ModeSchema = Type.Object({
 });
 
 export const AssignSchema = Type.Object({
-  maxConcurrentBounties: Type.Number(),
+  maxConcurrentAssigns: Type.Number(),
 });
 
 export const LogConfigSchema = Type.Object({

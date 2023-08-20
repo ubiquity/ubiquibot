@@ -5,7 +5,7 @@ import { DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFA
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
-import { getScalarKey, getWideConfig as getConfig } from "../utils/private";
+import { getScalarKey, getAllConfigs as getConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
@@ -16,7 +16,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     commentElementPricing,
     paymentPermitMaxPrice,
     disableAnalytics,
-    maxConcurrentBounties,
+    maxConcurrentAssigns,
     incentiveMode,
     evmNetworkId,
     issueCreatorMultiplier,
@@ -38,13 +38,13 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     price: {
       baseMultiplier,
       issueCreatorMultiplier,
-      timeLabels,
-      priorityLabels,
-      commentElementPricing,
-      defaultLabels,
+      timeLabels: timeLabels ?? [],
+      priorityLabels: priorityLabels ?? [],
+      commentElementPricing: commentElementPricing ?? [{ name: "", price: 0 }],
+      defaultLabels: defaultLabels ?? [],
     },
     comments: {
-      promotionComment: promotionComment,
+      promotionComment: promotionComment ?? "",
     },
     payout: {
       evmNetworkId: evmNetworkId,
@@ -67,20 +67,20 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     mode: {
       paymentPermitMaxPrice: paymentPermitMaxPrice,
-      disableAnalytics: disableAnalytics,
-      incentiveMode: incentiveMode,
-      assistivePricing: assistivePricing,
+      disableAnalytics: disableAnalytics ?? false,
+      incentiveMode: incentiveMode ?? false,
+      assistivePricing: assistivePricing ?? false,
     },
-    command: commandSettings,
+    command: commandSettings ?? [{ name: "", enabled: false }],
     assign: {
-      maxConcurrentBounties: maxConcurrentBounties,
+      maxConcurrentAssigns: maxConcurrentAssigns,
     },
     sodium: {
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",
       publicKey: publicKey ?? "",
     },
     wallet: {
-      registerWalletWithVerification: registerWalletWithVerification,
+      registerWalletWithVerification: registerWalletWithVerification ?? false,
     },
   };
 
