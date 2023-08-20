@@ -27,44 +27,8 @@ export interface Env {
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    const supabaseClient = createClient(env.SUPABASE_URL, env.SUPABASE_KEY);
-    const upgradeHeader = request.headers.get("Upgrade");
-    if (!upgradeHeader || upgradeHeader !== "websocket") {
-      return new Response("Expected Upgrade: websocket", { status: 426 });
-    }
-
-    const webSocketPair = new WebSocketPair();
-    const [client, server] = Object.values(webSocketPair);
-
-    server.accept();
-
-    const channel = supabaseClient
-      .channel("table-db-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "logs",
-        },
-        (payload) => {
-          server.send(JSON.stringify(payload.new));
-          console.log(payload);
-        }
-      )
-      .subscribe((status) => {
-        server.send(status);
-      });
-
-    server.addEventListener("message", (event) => {
-      console.log(event.data);
-      server.send(`${env.SUPABASE_URL}, ${env.SUPABASE_KEY}`);
-      server.send(channel.state);
-    });
-
-    return new Response(null, {
-      status: 101,
-      webSocket: client,
+    return new Response("", {
+      status: 200,
     });
   },
 };

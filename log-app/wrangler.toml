@@ -2,3 +2,9 @@ name = "log-app"
 main = "src/index.ts"
 compatibility_date = "2023-08-19"
 account_id = "f1d77fc5d4e2a77d0937f1445d34585a"
+
+compatibility_flags = [ "nodejs_compat" ]
+
+[vars]
+SUPABASE_URL = "https://qzfjblxdroqrmlheoajw.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6ZmpibHhkcm9xcm1saGVvYWp3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY4MDg1MzAzMywiZXhwIjoxOTk2NDI5MDMzfQ.2Wrs8OjRGIlYUmvUqTdykrdd7ybsvBb0Nrjmjzz0tDw"
