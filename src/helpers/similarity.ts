@@ -22,12 +22,10 @@ export const measureSimilarity = async (first: Issue, second: Issue): Promise<nu
   const res = await getAnswerFromChatGPT(
     "",
     `
-      ${(
+      ${
         process.env.CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY ||
-        'I have two github issues and I need to measure the possibility of the 2 issues are the same content (I need to parse the % so other contents are not needed and give me only the number in %).\n Give me in number format and add % after the number.\nDo not tell other things since I only need the number (e.g. 85%). Here are two issues:\n 1. "%first%"\n2. "%second%"'
-      )
-        .replace("%first%", `Issue title: ${first.title}\nIssue content: ${first.body}`)
-        .replace("%second%", `Issue title: ${second.title}\nIssue content: ${second.body}`)}`,
+        `I have two github issues and I need to measure the possibility of the 2 issues are the same content (I need to parse the % so other contents are not needed and give me only the number in %).\n Give me in number format and add % after the number.\nDo not tell other things since I only need the number (e.g. 85%). Here are two issues:\n 1. "Issue title: ${first.title}\nIssue content: ${first.body}"\n2. "Issue title: ${second.title}\nIssue content: ${second.body}"`
+      }`,
     parseFloat(process.env.MEASURE_SIMILARITY_AI_TEMPERATURE || "0")
   );
   const matches = res.match(/\d+/);
