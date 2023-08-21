@@ -10,7 +10,7 @@ Ubiquity DAO's GitHub Bot to automate DevPool management.
 git clone https://github.com/ubiquity/ubiquibot.git
 cd ubiquibot
 yarn
-yarn tsc
+yarn build
 yarn start:watch
 ```
 
@@ -54,13 +54,14 @@ To test the bot, you can:
 
 1. Create a new issue
 2. Add a time label, ex: `Time: <1 Day`
-3. At this point the bot should add a price label.
+3. Add a priority label, ex: `Priority: 0 (Normal)`
+4. At this point the bot should add a price label.
 
 ## Configuration
 
-`chain-id` is ID of the EVM-compatible network that will be used for payouts.
+`evm-network-id` is ID of the EVM-compatible network that will be used for payouts.
 
-`base-multiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = base-multiplier * time-label-weight * priority-label-weight / 10`
+`price-multiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = price-multiplier * time-label-weight * priority-label-weight * 100`
 
 `time-labels` are labels for marking the time limit of the bounty:
 
@@ -73,19 +74,30 @@ To test the bot, you can:
 - `name` is a human-readable name
 - `weight` is a number that will be used to calculate the bounty price
 
+`command-settings` are setting to enable or disable a command
+
+- `name` is the name of the command
+- `enabled` is a `true` or `false` value to enable or disable a command
+
 `default-labels` are labels that are applied when an issue is created without any time or priority labels.
 
-`auto-pay-mode` can be `true` or `false` that enables or disables automatic payout of bounties when the issue is closed.
+`assistive-pricing` to create a new pricing label if it doesn't exist. Can be `true` or `false`.
 
-`analytics-mode` can be `true` or `false` that enables or disables weekly analytics collection by Ubiquity.
+`disable-analytics` can be `true` or `false` that disables or enables weekly analytics collection by Ubiquity.
 
-`incentive-mode` can be `true` or `false` that enables or disables comment incentives. These are comments in the issue by either the creator of the bounty or other users.
+`payment-permit-max-price` sets the max amount for automatic payout of bounties when the issue is closed.
 
-`issue-creator-multiplier` is a number that defines a base multiplier for calculating incentive reward for the creator of the issue.
+`comment-incentives` can be `true` or `false` that enable or disable comment incentives. These are payments generated for comments in the issue by contributors, excluding the assignee.
 
-`comment-element-pricing` defines how much is a part of the comment worth. For example `text: 0.1` means that any text in the comment will be multiplied by 0.1
+`issue-creator-multiplier` is a number that defines a base multiplier for calculating incentive for the creator of the issue.
 
-`max-concurrent-bounties` is the maximum number of bounties that can be assigned to a bounty hunter at once. This excludes bounties with pending pull request reviews.
+`comment-element-pricing` defines how much is a part of the comment worth. For example `text: 0.1` means that any text in the comment will add 0.1
+
+`max-concurrent-assigns` is the maximum number of bounties that can be assigned to a bounty hunter at once. This excludes bounties with delayed or approved pull request reviews.
+
+`register-wallet-with-verification` can be `true` or `false`. If enabled, it requires a signed message to set wallet address. This prevents users from setting wallet address from centralized exchanges, which would make payments impossible to claim.
+
+`promotion-comment` is a message that is appended to the payment permit comment.
 
 ## How to run locally
 
@@ -117,7 +129,7 @@ DISQUALIFY_TIME="7 days" // 7 days
 
 4. `yarn install`
 5. Open 2 terminal instances:
-   - in one instance run `yarn tsc --watch` (compiles the Typescript code)
+   - in one instance run `yarn build --watch` (compiles the Typescript code)
    - in another instance run `yarn start:watch` (runs the bot locally)
 6. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
 
@@ -128,7 +140,8 @@ You can, for example:
 
 1. Create a new issue
 2. Add a time label, ex: `Time: <1 Day`
-3. At this point the bot should add a price label, you should see event logs in one of your opened terminals
+3. Add a priority label, ex: `Priority: 0 (Normal)`
+4. At this point the bot should add a price label, you should see event logs in one of your opened terminals
 
 ## How it works
 
@@ -144,13 +157,31 @@ When using as a github app the flow is the following:
 4. Event details are sent to your deployed bot instance (to a webhook URL that was set in github app's settings)
 5. The bot handles the event
 
+## Payments Permits in a local instance
+
+For payment to work in your local instance, ubiquibot must be set up in a Github organization. It will not work for a ubiquibot instance set up in a personal account. Once, you have an ubiquibot instance working in an organization, follow the steps given below:
+
+1. Create a new private repository in your Github organization with name `ubiquibot-config`
+2. Add your ubiquibot app to `ubiquibot-config` repository.
+3. Create a file `.github/ubiquibot-config.yml` in it. Fill the file with contents from [this file](https://github.com/ubiquity/ubiquibot/blob/development/.github/ubiquibot-config.yml).
+4. Go to https://pay.ubq.fi/keygen and generate X25519 public/private key pair. Fill private key of your wallet's address in `PLAIN_TEXT` field and click `Encrypt`.
+5. Copy the `CIPHER_TEXT` and append it to your repo `ubiquibot-config/.github/ubiquibot-config.yml` as
+
+   `private-key-encrypted: "PASTE_YOUR_CIPHER_TEXT_HERE"`
+
+6. Copy the `X25519_PRIVATE_KEY` and append it in your local ubiquibot repository `.env` file as
+
+   `X25519_PRIVATE_KEY=PASTE_YOUR_X25519_PRIVATE_KEY_HERE`
+
 ## How to QA any additions to the bot
 
-1. Fork the ubiquibot repo and install the [ubiquibot-qa app](https://github.com/apps/ubiquibot-qa) on the forked repository.
-2. Enable github action running on the forked repo and allow `issues` on the settings tab.
-3. Create a [QA issue](https://github.com/ubiquibot/staging/issues/21) similar to this where you show the feature working in the forked repo
-4. Describe carefully the steps taken to get the feature working, this way our team can easily verify
-5. Link that QA issue to the pull request as indicated on the template before requesting a review
+Make sure you have your local instance of ubiquibot running.
+
+1. Fork the ubiquibot repo and add your local instance of ubiquibot to the forked repository.
+2. Enable Github action running on the forked repo and allow `issues` on the settings tab.
+3. Create a [QA issue](https://github.com/ubiquibot/staging/issues/21) similar to this where you show the feature working in the forked repo.
+4. Describe carefully the steps taken to get the feature working, this way our team can easily verify.
+5. Link that QA issue to the pull request as indicated on the template before requesting a review.
 
 ## How to create a new release
 
@@ -200,7 +231,6 @@ We can't use a `jsonc` file due to limitations with Netlify. Here is a snippet o
     /* https://github.com/syntax-tree/mdast#nodes */
     "strong": 0 // Also includes italics, unfortunately https://github.com/syntax-tree/mdast#strong
     /* https://github.com/syntax-tree/mdast#gfm */
-
   }
 }
 ```
