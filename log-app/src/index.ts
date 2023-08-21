@@ -7,7 +7,7 @@
  *
  * Learn more at https://developers.cloudflare.com/workers/
  */
-import { createClient } from "@supabase/supabase-js";
+import { CustomRealtimeClient, RealtimeConfig } from "./websocket";
 
 export interface Env {
   SUPABASE_KEY: string;
@@ -27,8 +27,32 @@ export interface Env {
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    return new Response("", {
-      status: 200,
+    const config: RealtimeConfig = {
+      schema: "public",
+      table: "logs",
+      event: "INSERT",
+    };
+
+    const upgradeHeader = request.headers.get("Upgrade");
+    if (!upgradeHeader || upgradeHeader !== "websocket") {
+      return new Response("Expected Upgrade: websocket", { status: 426 });
+    }
+
+    const webSocketPair = new WebSocketPair();
+    const [client, server] = Object.values(webSocketPair);
+
+    server.accept();
+
+    server.addEventListener("message", (event) => {
+      console.log(event.data);
+
+      // const realtimeClient = new CustomRealtimeClient(env.SUPABASE_URL, env.SUPABASE_KEY, config);
+      // realtimeClient.subscribeToChanges();
+    });
+
+    return new Response(null, {
+      status: 101,
+      webSocket: client,
     });
   },
 };

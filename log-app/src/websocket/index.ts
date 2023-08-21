@@ -1,13 +1,11 @@
-import * as WebSocket from "ws";
-
-interface RealtimeConfig {
+export interface RealtimeConfig {
   schema: string;
   table: string;
   event: string;
 }
 
 export class CustomRealtimeClient {
-  private socket: WebSocket | null = null;
+  private socket: WebSocket = new WebSocket("");
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private heartbeatInterval: NodeJS.Timeout | null = null;
 
@@ -15,27 +13,28 @@ export class CustomRealtimeClient {
 
   private connect() {
     const socketUrl = `wss://${this.supabaseUrl}/realtime/v1/websocket?apikey=${this.supabaseApiKey}&vsn=1.0.0`;
+    console.log(socketUrl);
     this.socket = new WebSocket(socketUrl);
 
-    this.socket.onopen = () => {
+    this.socket.addEventListener("open", (event) => {
       console.log("WebSocket connection opened");
       this.subscribe();
       this.startHeartbeat();
-    };
+    });
 
-    this.socket.onmessage = (event) => {
+    this.socket.addEventListener("message", (event) => {
       const data = JSON.parse(event.data.toString());
       console.log("Received message:", data);
-    };
+    });
 
-    this.socket.onclose = (event) => {
+    this.socket.addEventListener("close", (event) => {
       console.log("WebSocket connection closed:", event);
       this.reconnect();
-    };
+    });
 
-    this.socket.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
+    this.socket.addEventListener("error", (event) => {
+      console.error("WebSocket error:", event.error);
+    });
   }
 
   private subscribe() {
