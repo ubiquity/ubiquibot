@@ -1,6 +1,0 @@
-name = "log-app"
-main = "src/index.ts"
-compatibility_date = "2023-08-19"
-account_id = "f1d77fc5d4e2a77d0937f1445d34585a"
-
-compatibility_flags = [ "nodejs_compat" ]

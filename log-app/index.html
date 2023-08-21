@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="logs"></div>
+    <script>
+        const logsDiv = document.getElementById('logs');
+
+        const websocket = new WebSocket('wss://realtime-logger-app.logger-web-apps.pages.dev/log-engine');
+
+        websocket.addEventListener("open", () =>
+        {
+            console.log('Opened websocket')
+        })
+
+        websocket.addEventListener("message", message =>
+        {
+            console.log(message)
+        })
+
+        websocket.addEventListener("close", message =>
+        {
+            console.log("Closed websocket")
+        })
+
+        websocket.addEventListener("error", message =>
+        {
+            console.log("Something went wrong with the WebSocket")
+        })
+
+        // Close WebSocket connection at a later point
+        const closeConnection = () => websocket.close()
+    </script>
+</body>
+
+</html>
