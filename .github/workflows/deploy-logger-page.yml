@@ -27,16 +27,15 @@ jobs:
         with:
           node-version: "20.3.0"
 
-      - name: Yarn Install
-        run: yarn install
+      - name: Build TypeScript
+        run: cd ./log-app && npm install && npm run build
 
-      - name: Wrangler Install
-        run: npm install -g wrangler
-
-      - name: Publish to Cloudflare Worker
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: |
-          cd ./log-app && yarn deploy
-          echo "$SUPABASE_URL" | wrangler secret put SUPABASE_URL
-          echo "$SUPABASE_KEY" | wrangler secret put SUPABASE_KEY
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+          directory: ${{ secrets.LOGGER_WEB_APP_DIRECTORY }}
+          # Enable Wrangler v3
+          wranglerVersion: "3"
