@@ -5,15 +5,15 @@ export interface RealtimeConfig {
 }
 
 export class CustomRealtimeClient {
-  private socket: WebSocket = new WebSocket("");
+  private socket: WebSocket | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private heartbeatInterval: NodeJS.Timeout | null = null;
 
-  constructor(private supabaseUrl: string, private supabaseApiKey: string, private config: RealtimeConfig) {}
+  constructor(private supabaseUrl: string, private supabaseApiKey: string, private config: RealtimeConfig, private server: WebSocket) {}
 
   private connect() {
     const socketUrl = `wss://${this.supabaseUrl}/realtime/v1/websocket?apikey=${this.supabaseApiKey}&vsn=1.0.0`;
-    console.log(socketUrl);
+
     this.socket = new WebSocket(socketUrl);
 
     this.socket.addEventListener("open", (event) => {
@@ -24,6 +24,7 @@ export class CustomRealtimeClient {
 
     this.socket.addEventListener("message", (event) => {
       const data = JSON.parse(event.data.toString());
+      this.server.send(event.data.toString());
       console.log("Received message:", data);
     });
 
@@ -79,6 +80,10 @@ export class CustomRealtimeClient {
       this.reconnectTimeout = null;
       this.connect();
     }, 5000); // Reconnect after 5 seconds
+  }
+
+  public closeChannel() {
+    this.socket?.close();
   }
 
   public subscribeToChanges() {

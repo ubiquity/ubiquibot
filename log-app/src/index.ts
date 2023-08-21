@@ -45,9 +45,14 @@ export default {
 
     server.addEventListener("message", (event) => {
       console.log(event.data);
+      server.send(event.data);
+    });
 
-      // const realtimeClient = new CustomRealtimeClient(env.SUPABASE_URL, env.SUPABASE_KEY, config);
-      // realtimeClient.subscribeToChanges();
+    const realtimeClient = new CustomRealtimeClient(env.SUPABASE_URL, env.SUPABASE_KEY, config, server);
+    realtimeClient.subscribeToChanges();
+
+    server.addEventListener("close", (event) => {
+      realtimeClient.closeChannel();
     });
 
     return new Response(null, {
