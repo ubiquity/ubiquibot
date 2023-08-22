@@ -324,7 +324,14 @@ export const getWalletInfo = async (username: string, org_id: string): Promise<{
   } else return { multiplier: multiplier?.value, address: wallet?.wallet_address };
 };
 
-export const addPenalty = async (username: string, repoName: string, tokenAddress: string, networkId: string, penalty: BigNumberish, user_id: Number): Promise<void> => {
+export const addPenalty = async (
+  username: string,
+  repoName: string,
+  tokenAddress: string,
+  networkId: string,
+  penalty: BigNumberish,
+  user_id: Number
+): Promise<void> => {
   const { supabase } = getAdapters();
   const logger = getLogger();
 
