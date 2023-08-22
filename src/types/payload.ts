@@ -237,6 +237,8 @@ export const CommentSchema = Type.Object({
   updated_at: Type.String({ format: "date-time" }),
   author_association: Type.String(),
   body: Type.String(),
+  body_html: Type.Optional(Type.String()),
+  body_text: Type.Optional(Type.String()),
 });
 
 export type Comment = Static<typeof CommentSchema>;
