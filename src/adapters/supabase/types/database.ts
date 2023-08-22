@@ -39,7 +39,7 @@ export interface Database {
           updated_at: string | null;
           user_name: string;
           user_id: string;
-          repository_id: Number;
+          repository_id: number;
         };
         Insert: {
           created_at?: string | null;
@@ -51,7 +51,7 @@ export interface Database {
           updated_at?: string | null;
           user_name: string;
           user_id: string;
-          repository_id: Number;
+          repository_id: number;
         };
         Update: {
           created_at?: string | null;
@@ -63,7 +63,7 @@ export interface Database {
           updated_at?: string | null;
           user_name?: string;
           user_id: string;
-          repository_id: Number;
+          repository_id: number;
         };
         Relationships: [];
       };
@@ -256,7 +256,7 @@ export interface Database {
           token_address: string;
           penalty_amount: string;
           user_id: string;
-          repository_id: Number;
+          repository_id: number;
         };
         Returns: string;
       };
@@ -267,7 +267,7 @@ export interface Database {
           token_address: string;
           penalty_amount: string;
           user_id: string;
-          repository_id: Number;
+          repository_id: number;
         };
         Returns: string;
       };

@@ -157,7 +157,7 @@ export const upsertUser = async (user: UserProfile): Promise<void> => {
  * @param username The user name you want to upsert a wallet address for
  * @param address The account address
  */
-export const upsertWalletAddress = async (username: string, address: string, user_id: Number): Promise<void> => {
+export const upsertWalletAddress = async (username: string, address: string, user_id: number): Promise<void> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
 
@@ -231,7 +231,7 @@ export const upsertWalletMultiplier = async (username: string, multiplier: strin
  * @param access Access granting
  * @param bool Disabling or enabling
  */
-export const upsertAccessControl = async (username: string, repository: string, access: string, bool: boolean, user_id: Number): Promise<void> => {
+export const upsertAccessControl = async (username: string, repository: string, access: string, bool: boolean, user_id: number): Promise<void> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
 
@@ -330,7 +330,7 @@ export const addPenalty = async (
   tokenAddress: string,
   networkId: string,
   penalty: BigNumberish,
-  user_id: Number
+  user_id: number
 ): Promise<void> => {
   const { supabase } = getAdapters();
   const logger = getLogger();
@@ -350,7 +350,7 @@ export const addPenalty = async (
   }
 };
 
-export const getPenalty = async (user_id: Number, repoName: string, tokenAddress: string, networkId: string): Promise<BigNumber> => {
+export const getPenalty = async (user_id: number, repoName: string, tokenAddress: string, networkId: string): Promise<BigNumber> => {
   const { supabase } = getAdapters();
   const logger = getLogger();
 
@@ -373,7 +373,7 @@ export const getPenalty = async (user_id: Number, repoName: string, tokenAddress
   return BigNumber.from(data[0].amount);
 };
 
-export const removePenalty = async (user_id: Number, repoName: string, tokenAddress: string, networkId: string, penalty: BigNumberish): Promise<void> => {
+export const removePenalty = async (user_id: number, repoName: string, tokenAddress: string, networkId: string, penalty: BigNumberish): Promise<void> => {
   const { supabase } = getAdapters();
   const logger = getLogger();
 
