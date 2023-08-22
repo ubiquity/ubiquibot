@@ -83,6 +83,7 @@ const UserProfileSchema = Type.Intersect([
     following: Type.Number(),
     created_at: Type.String(),
     updated_at: Type.String(),
+    user_id: Type.Number(),
   }),
 ]);
 

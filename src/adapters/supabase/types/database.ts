@@ -38,6 +38,8 @@ export interface Database {
           time_access: boolean | null;
           updated_at: string | null;
           user_name: string;
+          user_id: string;
+          repository_id: Number;
         };
         Insert: {
           created_at?: string | null;
@@ -48,6 +50,8 @@ export interface Database {
           time_access?: boolean | null;
           updated_at?: string | null;
           user_name: string;
+          user_id: string;
+          repository_id: Number;
         };
         Update: {
           created_at?: string | null;
@@ -58,6 +62,8 @@ export interface Database {
           time_access?: boolean | null;
           updated_at?: string | null;
           user_name?: string;
+          user_id: string;
+          repository_id: Number;
         };
         Relationships: [];
       };
@@ -201,6 +207,7 @@ export interface Database {
           updated_at: string | null;
           user_name: string;
           wallet_address: string | null;
+          user_id: string;
         };
         Insert: {
           created_at?: string | null;
@@ -209,6 +216,7 @@ export interface Database {
           updated_at?: string | null;
           user_name: string;
           wallet_address?: string | null;
+          user_id: string;
         };
         Update: {
           created_at?: string | null;
@@ -217,6 +225,7 @@ export interface Database {
           updated_at?: string | null;
           user_name?: string;
           wallet_address?: string | null;
+          user_id: string;
         };
         Relationships: [];
       };
@@ -246,6 +255,8 @@ export interface Database {
           repository_name: string;
           token_address: string;
           penalty_amount: string;
+          user_id: string;
+          repository_id: Number;
         };
         Returns: string;
       };
@@ -255,6 +266,8 @@ export interface Database {
           repository_name: string;
           token_address: string;
           penalty_amount: string;
+          user_id: string;
+          repository_id: Number;
         };
         Returns: string;
       };

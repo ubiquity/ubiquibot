@@ -8,6 +8,7 @@ export const setAccess = async (body: string) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
+  const user_id = payload.sender.id;
 
   const validAccessString = ["priority", "time", "price", "multiplier"];
 
@@ -46,7 +47,7 @@ export const setAccess = async (body: string) => {
     // convert accessType to valid table
     const tableName = `${accessType}_access`;
 
-    await upsertAccessControl(username, repo.full_name, tableName, bool === "true");
+    await upsertAccessControl(username, repo.full_name, tableName, bool === "true", user_id);
     return `Updated access for @${username} successfully!\t Access: **${accessType}** for "${repo.full_name}"`;
   } else {
     logger.error("Invalid body for allow command");

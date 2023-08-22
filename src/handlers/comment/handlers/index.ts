@@ -172,10 +172,11 @@ export const issueReopenedCallback = async (): Promise<void> => {
       return;
     }
     const assignee = events[0].assignee.login;
+    const user_id = events[0].assignee.id;
 
     // write penalty to db
     try {
-      await addPenalty(assignee, repository.full_name, tokenAddress, networkId.toString(), amount);
+      await addPenalty(assignee, repository.full_name, tokenAddress, networkId.toString(), amount, user_id);
     } catch (err) {
       logger.error(`Error writing penalty to db: ${err}`);
       return;

@@ -28,6 +28,7 @@ export const registerWallet = async (body: string) => {
   const logger = getLogger();
   const payload = _payload as Payload;
   const sender = payload.sender.login;
+  const user_id = payload.sender.id;
   const regexForAddress = /(0x[a-fA-F0-9]{40})/g;
   const addressMatches = body.match(regexForAddress);
   let address = addressMatches ? addressMatches[0] : null;
@@ -79,7 +80,7 @@ export const registerWallet = async (body: string) => {
       logger.info("Skipping to register a wallet address because user is trying to set their address to null address");
       return `Cannot set address to null address`;
     }
-    await upsertWalletAddress(sender, address);
+    await upsertWalletAddress(sender, address, user_id);
     return `Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`;
   }
 
