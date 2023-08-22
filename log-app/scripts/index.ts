@@ -37,6 +37,7 @@ const updateLogTable = () => {
         <td><a href="${commentUrl}">Comment - ${log.comment_id}</a></td>
     `;
     logBody.appendChild(row);
+    let logCell = document.getElementsByClassName("log-cell");
     if (validJson) {
       // show modal button for valid json row
       const showMoreButton = document.getElementById(`button_${classId}`) as HTMLButtonElement;
@@ -46,6 +47,8 @@ const updateLogTable = () => {
         }
       });
     }
+    // scroll to last added data
+    logCell[logCell.length - 1].scrollIntoView();
   });
 };
 
