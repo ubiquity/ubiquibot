@@ -1,43 +1,45 @@
+import { containsValidJson, createGitHubCommentURL, generateRandomId, getLevelString } from "./helpers/utils";
 import { Logs } from "./types/log";
-
-enum Level {
-  ERROR = "error",
-  WARN = "warn",
-  INFO = "info",
-  HTTP = "http",
-  VERBOSE = "verbose",
-  DEBUG = "debug",
-  SILLY = "silly",
-}
-
-const createGitHubCommentURL = (orgName: string, repoName: string, issueNumber: number, commentId: number) => {
-  return `https://github.com/${orgName}/${repoName}/issues/${issueNumber}#issuecomment-${commentId}`;
-};
-
-const getLevelString = (level: number) => {
-  switch (level) {
-    case 0:
-      return Level.ERROR;
-    case 1:
-      return Level.WARN;
-    case 2:
-      return Level.INFO;
-    case 3:
-      return Level.HTTP;
-    case 4:
-      return Level.VERBOSE;
-    case 5:
-      return Level.DEBUG;
-    case 6:
-      return Level.SILLY;
-    default:
-      return -1; // Invalid level
-  }
-};
 
 const filterSelect = document.getElementById("filter") as unknown as HTMLSelectElement;
 const clearButton = document.getElementById("clear") as HTMLButtonElement;
 const logBody = document.getElementById("log-body") as HTMLDivElement;
+
+const jsonModal = document.getElementById("json-modal") as HTMLDivElement;
+const closeModalButton = document.getElementById("close-modal") as HTMLButtonElement;
+const jsonContent = document.getElementById("json-content") as HTMLDivElement;
+
+const openJsonModal = (validJson) => {
+  jsonContent.textContent = validJson;
+
+  jsonModal.style.display = "block";
+};
+
+const updateLogTable = () => {
+  const selectedFilter = filterSelect.value;
+  const filteredLogs = selectedFilter === "all" ? logs : logs.filter((log) => getLevelString(log.level) === selectedFilter);
+
+  logBody.innerHTML = "";
+  filteredLogs.forEach((log) => {
+    const classId = generateRandomId(10);
+    const commentUrl = createGitHubCommentURL(log.org_name, log.repo_name, log.issue_number, log.comment_id);
+    const row = document.createElement("tr");
+    const [validJson, match, beforeText] = containsValidJson(log.log_message);
+    const showMoreButton = document.getElementById(`button_${classId}`) as HTMLButtonElement;
+    showMoreButton.addEventListener("click", () => {
+      if (validJson) {
+        openJsonModal(match);
+      }
+    });
+    row.innerHTML = `
+        ${validJson ? `<td>${beforeText} - <button id="button_${classId}">Show JSON</button></td>` : `<td>${log.log_message}</td>`}
+        <td>${getLevelString(log.level)}</td>
+        <td>${log.timestamp}</td>
+        <td><a href="${commentUrl}">Comment - ${log.comment_id}</a></td>
+    `;
+    logBody.appendChild(row);
+  });
+};
 
 let logs: Logs[] = [];
 
@@ -71,23 +73,15 @@ clearButton.addEventListener("click", () => {
   updateLogTable();
 });
 
-const updateLogTable = () => {
-  const selectedFilter = filterSelect.value;
-  const filteredLogs = selectedFilter === "all" ? logs : logs.filter((log) => getLevelString(log.level) === selectedFilter);
+closeModalButton.addEventListener("click", () => {
+  jsonModal.style.display = "none";
+});
 
-  logBody.innerHTML = "";
-  filteredLogs.forEach((log) => {
-    const commentUrl = createGitHubCommentURL(log.org_name, log.repo_name, log.issue_number, log.comment_id);
-    const row = document.createElement("tr");
-    row.innerHTML = `
-        <td>${log.log_message}</td>
-        <td>${getLevelString(log.level)}</td>
-        <td>${log.timestamp}</td>
-        <td><a href="${commentUrl}">Comment - ${log.comment_id}</a></td>
-    `;
-    logBody.appendChild(row);
-  });
-};
+window.addEventListener("click", (event) => {
+  if (event.target === jsonModal) {
+    jsonModal.style.display = "none";
+  }
+});
 
 // Initial update
 updateLogTable();

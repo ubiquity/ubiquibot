@@ -1,15 +1,15 @@
 {
   "compilerOptions": {
-    "target": "ES6",
     "useDefineForClassFields": true,
-    "lib": ["DOM"],
     "allowJs": false,
     "esModuleInterop": true,
     "module": "CommonJS",
     "allowSyntheticDefaultImports": true,
     "strict": false,
     "forceConsistentCasingInFileNames": true,
-    "outDir": ""
+    "target": "esnext" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
+    "lib": ["esnext", "dom", "dom.iterable"] /* Specify a set of bundled library declaration files that describe the target runtime environment. */
   },
-  "include": ["./", "index.js"]
+  "include": ["./helpers", "./index.ts"],
+  "exclude": ["./esbuild.ts", "./esbuild-config.ts"]
 }
