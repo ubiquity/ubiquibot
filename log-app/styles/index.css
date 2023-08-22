@@ -12,7 +12,9 @@ body {
     padding: 8px;
     text-align: left;
     max-width: 476px;
+    /* Adjust the maximum width as needed */
     overflow: auto;
+    /* Allow scrolling if the content is too long */
     white-space: pre-wrap;
 }
 
@@ -30,9 +32,6 @@ body {
     border: 1px solid #ccc;
     padding: 10px;
     text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     color: black;
 }
 
