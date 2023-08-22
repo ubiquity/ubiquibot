@@ -13,21 +13,25 @@
         <select id="filter">
             <option value="all">All</option>
             <option value="error">Error</option>
+            <option value="warn">Warning</option>
             <option value="info">Info</option>
-            <option value="warning">Warning</option>
+            <option value="verbose">Verbose</option>
+            <option value="debug">Debug</option>
         </select>
         <button id="clear">Clear</button>
         <table id="log-table">
             <thead>
                 <tr>
-                    <th>Timestamp</th>
-                    <th>Level</th>
                     <th>Message</th>
+                    <th>Level</th>
+                    <th>Timestamp</th>
+                    <th>Comment URL</th>
                 </tr>
             </thead>
             <tbody id="log-body"></tbody>
         </table>
     </div>
+    <script>var exports = {};</script>
     <script src="./scripts/index.js"></script>
 </body>
 

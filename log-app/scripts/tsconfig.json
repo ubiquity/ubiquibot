@@ -1,17 +1,15 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES6",
     "useDefineForClassFields": true,
     "lib": ["DOM"],
     "allowJs": false,
-    "skipLibCheck": true,
-    "esModuleInterop": false,
+    "esModuleInterop": true,
+    "module": "CommonJS",
     "allowSyntheticDefaultImports": true,
-    "strict": true,
+    "strict": false,
     "forceConsistentCasingInFileNames": true,
-    "module": "ESNext",
-    "moduleResolution": "Node",
     "outDir": ""
   },
-  "include": ["./"]
+  "include": ["./", "index.js"]
 }
