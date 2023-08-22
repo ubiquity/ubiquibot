@@ -1,7 +1,7 @@
 import { getLevelString } from "./helpers/utils";
 import { Logs } from "./types/log";
 
-const filterSelect = document.getElementById("filter") as HTMLSelectElement;
+const filterSelect = document.getElementById("filter") as unknown as HTMLSelectElement;
 const clearButton = document.getElementById("clear") as HTMLButtonElement;
 const logBody = document.getElementById("log-body") as HTMLDivElement;
 

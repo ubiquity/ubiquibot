@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "useDefineForClassFields": true,
-    "lib": ["ESNext"],
+    "lib": ["DOM"],
     "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": false,
@@ -14,5 +14,5 @@
     "types": ["@cloudflare/workers-types", "node"],
     "outDir": ""
   },
-  "include": ["./_worker.ts", "./src", "./types"]
+  "include": ["./scripts"]
 }
