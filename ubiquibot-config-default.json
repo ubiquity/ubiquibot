@@ -12,24 +12,19 @@
   "default-labels": [],
   "time-labels": [
     {
-      "name": "Time: <1 Hour",
-      "value": 3600
+      "name": "Time: <1 Hour"
     },
     {
-      "name": "Time: <1 Day",
-      "value": 86400
+      "name": "Time: <1 Day"
     },
     {
-      "name": "Time: <1 Week",
-      "value": 604800
+      "name": "Time: <1 Week"
     },
     {
-      "name": "Time: <2 Weeks",
-      "value": 1209600
+      "name": "Time: <2 Weeks"
     },
     {
-      "name": "Time: <1 Month",
-      "value": 2592000
+      "name": "Time: <1 Month"
     }
   ],
   "priority-labels": [

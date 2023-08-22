@@ -1,5 +1,5 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue, closePullRequest, getOpenedPullRequestsForAnIssue, calculateWeight } from "../../helpers";
+import { addCommentToIssue, closePullRequest, getOpenedPullRequestsForAnIssue, calculateWeight, calculateDuration } from "../../helpers";
 import { Payload, LabelItem } from "../../types";
 import { deadLinePrefix } from "../shared";
 
@@ -51,7 +51,7 @@ export const commentWithAssignMessage = async (): Promise<void> => {
 
   const sorted = timeLabelsAssigned.sort((a, b) => calculateWeight(a) - calculateWeight(b));
   const targetTimeLabel = sorted[0];
-  const duration = targetTimeLabel.value;
+  const duration = calculateDuration(targetTimeLabel);
   if (!duration) {
     logger.debug(`Missing configure for timelabel: ${targetTimeLabel.name}`);
     return;

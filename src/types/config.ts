@@ -3,7 +3,6 @@ import { Level } from "../adapters/supabase";
 
 const LabelItemSchema = Type.Object({
   name: Type.String(),
-  value: Type.Optional(Type.Number()),
 });
 export type LabelItem = Static<typeof LabelItemSchema>;
 
