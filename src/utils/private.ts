@@ -93,6 +93,18 @@ export const parseYAML = (data?: string): WideConfig | undefined => {
   }
 };
 
+export const getOrgAndRepoFromPath = (path: string) => {
+  const parts = path.split("/");
+
+  if (parts.length !== 2) {
+    return { org: null, repo: null };
+  }
+
+  const [org, repo] = parts;
+
+  return { org, repo };
+};
+
 export const getPrivateKey = async (cipherText: string): Promise<string | undefined> => {
   try {
     await _sodium.ready;
