@@ -1,9 +1,12 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getIssueDescription, getTokenSymbol, parseComments } from "../../helpers";
-import { MarkdownItem, Payload, UserType, CommentElementPricing } from "../../types";
+import { Incentives, Payload, StateReason, UserType } from "../../types";
+import { commentParser } from "../comment";
+import Decimal from "decimal.js";
+import { bountyInfo } from "../wildcard";
 
-const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
+const ItemsToExclude: string[] = ["blockquote"];
 /**
  * Incentivize the contributors based on their contribution.
  * The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
@@ -11,8 +14,8 @@ const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
 export const incentivizeComments = async () => {
   const logger = getLogger();
   const {
-    mode: { incentiveMode },
-    price: { baseMultiplier, commentElementPricing },
+    mode: { incentiveMode, paymentPermitMaxPrice },
+    price: { baseMultiplier, incentives },
     payout: { paymentToken, rpc },
   } = getBotConfig();
   if (!incentiveMode) {
@@ -21,26 +24,63 @@ export const incentivizeComments = async () => {
   }
   const context = getBotContext();
   const payload = context.payload as Payload;
-  const org = payload.organization?.login;
   const issue = payload.issue;
-  if (!issue || !org) {
-    logger.info(`Incomplete payload. issue: ${issue}, org: ${org}`);
-    return;
-  }
-  const assignees = issue?.assignees ?? [];
-  const assignee = assignees.length > 0 ? assignees[0] : undefined;
-  if (!assignee) {
-    logger.info("Skipping payment permit generation because `assignee` is `undefined`.");
+  if (!issue) {
+    logger.info(`Incomplete payload. issue: ${issue}`);
     return;
   }
 
-  const issueComments = await getAllIssueComments(issue.number);
+  if (issue.state_reason !== StateReason.COMPLETED) {
+    logger.info("incentivizeComments: comment incentives skipped because the issue was not closed as completed");
+    return;
+  }
+
+  if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
+    logger.info(`incentivizeComments: skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
+    return;
+  }
+
+  const issueDetailed = bountyInfo(issue);
+  if (!issueDetailed.isBounty) {
+    logger.info(`incentivizeComments: its not a bounty`);
+    return;
+  }
+
+  const comments = await getAllIssueComments(issue.number);
+  const permitComments = comments.filter(
+    (content) => content.body.includes("Conversation Rewards") && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
+  );
+  if (permitComments.length > 0) {
+    logger.info(`incentivizeComments: skip to generate a permit url because it has been already posted`);
+    return;
+  }
+
+  const assignees = issue?.assignees ?? [];
+  const assignee = assignees.length > 0 ? assignees[0] : undefined;
+  if (!assignee) {
+    logger.info("incentivizeComments: skipping payment permit generation because `assignee` is `undefined`.");
+    return;
+  }
+
+  const issueComments = await getAllIssueComments(issue.number, "full");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
     if (user.type == UserType.Bot || user.login == assignee) continue;
-    issueCommentsByUser[user.login].push(issueComment.body);
+    const commands = commentParser(issueComment.body);
+    if (commands.length > 0) {
+      logger.info(`Skipping to parse the comment because it contains commands. comment: ${JSON.stringify(issueComment)}`);
+      continue;
+    }
+    if (!issueComment.body_html) {
+      logger.info(`Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(issueComment)}`);
+      continue;
+    }
+    if (!issueCommentsByUser[user.login]) {
+      issueCommentsByUser[user.login] = [];
+    }
+    issueCommentsByUser[user.login].push(issueComment.body_html);
   }
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
@@ -49,15 +89,23 @@ export const incentivizeComments = async () => {
   const reward: Record<string, string> = {};
 
   // The mapping between gh handle and amount in ETH
-  const fallbackReward: Record<string, string> = {};
-  let comment = "";
+  const fallbackReward: Record<string, Decimal> = {};
+  let comment = `#### Conversation Rewards\n`;
   for (const user of Object.keys(issueCommentsByUser)) {
     const comments = issueCommentsByUser[user];
     const commentsByNode = await parseComments(comments, ItemsToExclude);
-    const rewardValue = calculateRewardValue(commentsByNode, commentElementPricing);
+    const rewardValue = calculateRewardValue(commentsByNode, incentives);
+    if (rewardValue.equals(0)) {
+      logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`);
+      continue;
+    }
     logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
-    const amountInETH = (rewardValue * baseMultiplier).toString();
+    const amountInETH = rewardValue.mul(baseMultiplier);
+    if (amountInETH.gt(paymentPermitMaxPrice)) {
+      logger.info(`Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
+      continue;
+    }
     if (account) {
       const { payoutUrl } = await generatePermit2Signature(account, amountInETH, issue.node_id);
       comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
@@ -76,8 +124,8 @@ export const incentivizeComments = async () => {
 export const incentivizeCreatorComment = async () => {
   const logger = getLogger();
   const {
-    mode: { incentiveMode },
-    price: { commentElementPricing, issueCreatorMultiplier },
+    mode: { incentiveMode, paymentPermitMaxPrice },
+    price: { incentives, issueCreatorMultiplier },
     payout: { paymentToken, rpc },
   } = getBotConfig();
   if (!incentiveMode) {
@@ -86,29 +134,66 @@ export const incentivizeCreatorComment = async () => {
   }
   const context = getBotContext();
   const payload = context.payload as Payload;
-  const org = payload.organization?.login;
   const issue = payload.issue;
-  if (!issue || !org) {
-    logger.info(`Incomplete payload. issue: ${issue}, org: ${org}`);
-    return;
-  }
-  const assignees = issue?.assignees ?? [];
-  const assignee = assignees.length > 0 ? assignees[0] : undefined;
-  if (!assignee) {
-    logger.info("Skipping payment permit generation because `assignee` is `undefined`.");
+  if (!issue) {
+    logger.info(`Incomplete payload. issue: ${issue}`);
     return;
   }
 
-  const description = await getIssueDescription(issue.number);
+  if (issue.state_reason !== StateReason.COMPLETED) {
+    logger.info("incentivizeCreatorComment: comment incentives skipped because the issue was not closed as completed");
+    return;
+  }
+
+  if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
+    logger.info(`incentivizeCreatorComment: skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
+    return;
+  }
+
+  const issueDetailed = bountyInfo(issue);
+  if (!issueDetailed.isBounty) {
+    logger.info(`incentivizeCreatorComment: its not a bounty`);
+    return;
+  }
+
+  const comments = await getAllIssueComments(issue.number);
+  const permitComments = comments.filter(
+    (content) => content.body.includes("Task Creator Reward") && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
+  );
+  if (permitComments.length > 0) {
+    logger.info(`incentivizeCreatorComment: skip to generate a permit url because it has been already posted`);
+    return;
+  }
+
+  const assignees = issue.assignees ?? [];
+  const assignee = assignees.length > 0 ? assignees[0] : undefined;
+  if (!assignee) {
+    logger.info("incentivizeCreatorComment: skipping payment permit generation because `assignee` is `undefined`.");
+    return;
+  }
+
+  const description = await getIssueDescription(issue.number, "html");
+  if (!description) {
+    logger.info(`Skipping to generate a permit url because issue description is empty. description: ${description}`);
+    return;
+  }
   logger.info(`Getting the issue description done. description: ${description}`);
   const creator = issue.user;
-  if (creator?.type === UserType.Bot || creator?.login === issue?.assignee) {
+  if (creator.type === UserType.Bot || creator.login === issue.assignee) {
     logger.info("Issue creator assigneed himself or Bot created this issue.");
     return;
   }
 
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
-  const result = await generatePermitForComments(creator?.login, [description], issueCreatorMultiplier, commentElementPricing, tokenSymbol, issue.node_id);
+  const result = await generatePermitForComments(
+    creator.login,
+    [description],
+    issueCreatorMultiplier,
+    incentives,
+    tokenSymbol,
+    issue.node_id,
+    paymentPermitMaxPrice
+  );
 
   if (result.payoutUrl) {
     logger.info(`Permit url generated for creator. reward: ${result.payoutUrl}`);
@@ -123,17 +208,26 @@ const generatePermitForComments = async (
   user: string,
   comments: string[],
   multiplier: number,
-  commentElementPricing: Record<string, number>,
+  incentives: Incentives,
   tokenSymbol: string,
-  node_id: string
-): Promise<{ comment: string; payoutUrl?: string; amountInETH?: string }> => {
+  node_id: string,
+  paymentPermitMaxPrice: number
+): Promise<{ comment: string; payoutUrl?: string; amountInETH?: Decimal }> => {
   const logger = getLogger();
   const commentsByNode = await parseComments(comments, ItemsToExclude);
-  const rewardValue = calculateRewardValue(commentsByNode, commentElementPricing);
+  const rewardValue = calculateRewardValue(commentsByNode, incentives);
+  if (rewardValue.equals(0)) {
+    logger.info(`No reward for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+    return { comment: "" };
+  }
   logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
   const account = await getWalletAddress(user);
-  const amountInETH = (rewardValue * multiplier).toString();
-  let comment = "";
+  const amountInETH = rewardValue.mul(multiplier);
+  if (amountInETH.gt(paymentPermitMaxPrice)) {
+    logger.info(`Skipping issue creator reward for user ${user} because reward is higher than payment permit max price`);
+    return { comment: "" };
+  }
+  let comment = `#### Task Creator Reward\n`;
   if (account) {
     const { payoutUrl } = await generatePermit2Signature(account, amountInETH, node_id);
     comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
@@ -146,18 +240,29 @@ const generatePermitForComments = async (
  * @dev Calculates the reward values for a given comments. We'll improve the formula whenever we get the better one.
  *
  * @param comments - The comments to calculate the reward for
- * @param commentElementPricing - The basic price table for reward calculation
+ * @param incentives - The basic price table for reward calculation
  * @returns - The reward value
  */
-const calculateRewardValue = (comments: Record<string, string[]>, commentElementPricing: CommentElementPricing): number => {
-  let sum = 0;
+const calculateRewardValue = (comments: Record<string, string[]>, incentives: Incentives): Decimal => {
+  let sum = new Decimal(0);
   for (const key of Object.keys(comments)) {
-    const rewardValue = commentElementPricing[key];
     const value = comments[key];
-    if (key == MarkdownItem.Text || key == MarkdownItem.Paragraph) {
-      sum += value.length * rewardValue;
+
+    // if it's a text node calculate word count and multiply with the reward value
+    if (key == "#text") {
+      if (!incentives.comment.totals.word) {
+        continue;
+      }
+      const wordReward = new Decimal(incentives.comment.totals.word);
+      const reward = wordReward.mul(value.map((str) => str.trim().split(" ").length).reduce((totalWords, wordCount) => totalWords + wordCount, 0));
+      sum = sum.add(reward);
     } else {
-      sum += rewardValue;
+      if (!incentives.comment.elements[key]) {
+        continue;
+      }
+      const rewardValue = new Decimal(incentives.comment.elements[key]);
+      const reward = rewardValue.mul(value.length);
+      sum = sum.add(reward);
     }
   }
 
