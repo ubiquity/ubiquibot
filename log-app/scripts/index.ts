@@ -1,6 +1,7 @@
 import { containsValidJson, createGitHubCommentURL, generateRandomId, getLevelString } from "./helpers/utils";
 import { Logs } from "./types/log";
 import { createClient } from "@supabase/supabase-js";
+import { SUPABASE_URL, SUPABASE_KEY } from "./constants/index";
 
 const filterSelect = document.getElementById("filter") as unknown as HTMLSelectElement;
 const clearButton = document.getElementById("clear") as HTMLButtonElement;
@@ -54,10 +55,7 @@ const updateLogTable = () => {
 
 let logs: Logs[] = [];
 
-const supabaseClient = createClient(
-  "https://qzfjblxdroqrmlheoajw.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6ZmpibHhkcm9xcm1saGVvYWp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODA4NTMwMzMsImV4cCI6MTk5NjQyOTAzM30.BM_qkpX-egNdiMc0PDO_34bIaXHB7ewnr2k4U2hGFMM"
-);
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const channel = supabaseClient
   .channel("table-db-changes")

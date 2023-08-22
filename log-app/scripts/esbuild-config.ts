@@ -1,5 +1,5 @@
 import esbuild from "esbuild";
-const typescriptEntries = ["scripts/helpers/utils.ts", "scripts/index.ts"];
+const typescriptEntries = ["scripts/helpers/utils.ts", "scripts/index.ts", "scripts/constants/index.ts"];
 export const entries = [...typescriptEntries];
 
 export let esBuildContext = {

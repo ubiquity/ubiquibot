@@ -10,6 +10,6 @@
     "target": "esnext" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
     "lib": ["esnext", "dom", "dom.iterable"] /* Specify a set of bundled library declaration files that describe the target runtime environment. */
   },
-  "include": ["./helpers", "./index.ts"],
+  "include": ["./helpers", "./constants", "./index.ts"],
   "exclude": ["./esbuild.ts", "./esbuild-config.ts"]
 }
