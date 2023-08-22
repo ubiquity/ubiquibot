@@ -12,7 +12,7 @@ const jsonContent = document.getElementById("json-content") as HTMLDivElement;
 const openJsonModal = (validJson) => {
   jsonContent.textContent = validJson;
 
-  jsonModal.style.display = "block";
+  jsonModal.style.display = "flex";
 };
 
 const updateLogTable = () => {
@@ -25,12 +25,6 @@ const updateLogTable = () => {
     const commentUrl = createGitHubCommentURL(log.org_name, log.repo_name, log.issue_number, log.comment_id);
     const row = document.createElement("tr");
     const [validJson, match, beforeText] = containsValidJson(log.log_message);
-    const showMoreButton = document.getElementById(`button_${classId}`) as HTMLButtonElement;
-    showMoreButton.addEventListener("click", () => {
-      if (validJson) {
-        openJsonModal(match);
-      }
-    });
     row.innerHTML = `
         ${validJson ? `<td>${beforeText} - <button id="button_${classId}">Show JSON</button></td>` : `<td>${log.log_message}</td>`}
         <td>${getLevelString(log.level)}</td>
@@ -38,6 +32,15 @@ const updateLogTable = () => {
         <td><a href="${commentUrl}">Comment - ${log.comment_id}</a></td>
     `;
     logBody.appendChild(row);
+    if (validJson) {
+      // show modal button for valid json row
+      const showMoreButton = document.getElementById(`button_${classId}`) as HTMLButtonElement;
+      showMoreButton.addEventListener("click", () => {
+        if (validJson) {
+          openJsonModal(JSON.stringify(JSON.parse(match), null, 2)); // properly formatted json
+        }
+      });
+    }
   });
 };
 
