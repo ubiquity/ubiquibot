@@ -2,7 +2,7 @@
   "name": "cf-pages-functions",
   "version": "0.0.0",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc && tsc -p ./scripts/tsconfig.json"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^3.2.0",

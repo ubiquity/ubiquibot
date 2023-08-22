@@ -11,8 +11,7 @@
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
     "moduleResolution": "Node",
-    "types": ["@cloudflare/workers-types", "node"],
     "outDir": ""
   },
-  "include": ["./scripts"]
+  "include": ["./"]
 }
