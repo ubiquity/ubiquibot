@@ -34,5 +34,16 @@ payment-permit-max-price: 1000
 comment-incentives: true
 max-concurrent-bounties: 2
 promotion-comment: "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>"
+incentives:
+  comment:
+    elements:
+      code: 5
+      img: 5
+      h1: 1
+      li: 0.5
+      a: 0.5
+      blockquote: 0
+    totals:
+      word: 0.1
 register-wallet-with-verification: false
 assistive-pricing: true
