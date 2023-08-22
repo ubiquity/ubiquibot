@@ -4,7 +4,7 @@ body {
 
 .log-container {
     margin: 20px auto;
-    width: 80%;
+    width: 95%;
 }
 
 .log-cell {
@@ -12,28 +12,97 @@ body {
     padding: 8px;
     text-align: left;
     max-width: 476px;
-    /* Adjust the maximum width as needed */
     overflow: auto;
-    /* Allow scrolling if the content is too long */
     white-space: pre-wrap;
 }
 
-table {
-    width: 100%;
+#log-table {
+    margin: 20px auto;
+    width: 95%;
     border-collapse: collapse;
     border: 1px solid #ccc;
+    margin-top: 20px;
+    table-layout: fixed;
 }
 
-th,
-td {
+#log-table th,
+#log-table td {
     border: 1px solid #ccc;
-    padding: 8px;
+    padding: 10px;
     text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: black;
+}
+
+#log-table th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+#log-body {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+table {
+    border-collapse: collapse;
+    width: 600px;
+}
+
+td,
+th {
+    padding: 10px;
+    text-align: left;
+    margin: 0;
+    color: black;
+}
+
+tbody tr:nth-child(2n) {
+    background-color: #eee;
+}
+
+th {
+    position: sticky;
+    top: 0;
+    background-color: #333;
+    color: white;
 }
 
 select,
 button {
     margin-right: 10px;
+}
+
+#filter {
+    font-family: Arial, sans-serif;
+    padding: 8px 24px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+#filter:hover {
+    border-color: #999;
+}
+
+/* Styling for button element */
+#clear {
+    font-family: Arial, sans-serif;
+    padding: 8px 12px;
+    background-color: #007bff;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#clear:hover {
+    background-color: #0056b3;
 }
 
 /* Modal styles */
