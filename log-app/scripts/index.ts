@@ -1,5 +1,6 @@
 import { containsValidJson, createGitHubCommentURL, generateRandomId, getLevelString } from "./helpers/utils";
 import { Logs } from "./types/log";
+import { createClient } from "@supabase/supabase-js";
 
 const filterSelect = document.getElementById("filter") as unknown as HTMLSelectElement;
 const clearButton = document.getElementById("clear") as HTMLButtonElement;
@@ -50,30 +51,33 @@ const updateLogTable = () => {
 
 let logs: Logs[] = [];
 
-const websocket = new WebSocket(`wss://${window.location.host}/log-engine`);
+const supabaseClient = createClient(
+  "https://qzfjblxdroqrmlheoajw.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6ZmpibHhkcm9xcm1saGVvYWp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODA4NTMwMzMsImV4cCI6MTk5NjQyOTAzM30.BM_qkpX-egNdiMc0PDO_34bIaXHB7ewnr2k4U2hGFMM"
+);
 
-websocket.addEventListener("message", (event) => {
-  const logEntry = JSON.parse(event.data);
-  if (logEntry?.event && logEntry?.event !== "postgres_changes") return;
-  if (logEntry.payload?.data?.type !== "INSERT") return;
-  logs.push(logEntry.payload.data.record);
+const channel = supabaseClient
+  .channel("table-db-changes")
+  .on(
+    "postgres_changes",
+    {
+      event: "INSERT",
+      schema: "public",
+      table: "logs",
+    },
+    (payload) => handlePayload(payload)
+  )
+  .subscribe();
+
+const handlePayload = (logEntry) => {
+  if (logEntry?.eventType !== "INSERT") return;
+  logs.push(logEntry.new);
   updateLogTable();
-});
+};
 
 filterSelect.addEventListener("change", () => {
   updateLogTable();
 });
-
-websocket.addEventListener("close", (message) => {
-  console.log("Closed websocket");
-});
-
-websocket.addEventListener("error", (message) => {
-  console.log("Something went wrong with the WebSocket");
-});
-
-// Close WebSocket connection at a later point
-const closeConnection = () => websocket.close();
 
 clearButton.addEventListener("click", () => {
   logs = [];
