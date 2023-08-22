@@ -96,10 +96,9 @@ export const getAnswerFromChatGPT = async (systemPrompt: string, userPrompt: str
       return "";
     }
     const answer = choice[0].message.content;
-    console.log(answer);
+    logger.debug(answer);
     return answer;
   } catch (error) {
-    console.log(error);
     logger.error(`Getting response from ChatGPT failed: ${error}`);
     return "";
   }
