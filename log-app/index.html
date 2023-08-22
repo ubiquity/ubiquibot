@@ -3,41 +3,32 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Log Viewer</title>
+    <link rel="stylesheet" href="./styles/index.css">
 </head>
 
 <body>
-    <div id="logs"></div>
-    <script>
-        const logsDiv = document.getElementById('logs');
-
-        const websocket = new WebSocket('wss://realtime-logger-app.logger-web-apps.pages.dev/log-engine');
-
-        websocket.addEventListener("open", () =>
-        {
-            console.log('Opened websocket')
-        })
-
-        websocket.addEventListener("message", message =>
-        {
-            console.log(message)
-        })
-
-        websocket.addEventListener("close", message =>
-        {
-            console.log("Closed websocket")
-        })
-
-        websocket.addEventListener("error", message =>
-        {
-            console.log("Something went wrong with the WebSocket")
-        })
-
-        // Close WebSocket connection at a later point
-        const closeConnection = () => websocket.close()
-    </script>
+    <div class="log-container">
+        <select id="filter">
+            <option value="all">All</option>
+            <option value="error">Error</option>
+            <option value="info">Info</option>
+            <option value="warning">Warning</option>
+        </select>
+        <button id="clear">Clear</button>
+        <table id="log-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Level</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody id="log-body"></tbody>
+        </table>
+    </div>
+    <script src="./scripts/index.js"></script>
 </body>
 
 </html>
