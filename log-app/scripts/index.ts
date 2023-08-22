@@ -26,7 +26,11 @@ const updateLogTable = () => {
     const row = document.createElement("tr");
     const [validJson, match, beforeText] = containsValidJson(log.log_message);
     row.innerHTML = `
-        ${validJson ? `<td>${beforeText} - <button id="button_${classId}">Show JSON</button></td>` : `<td>${log.log_message}</td>`}
+        ${
+          validJson
+            ? `<td class="log-cell">${beforeText} - <button id="button_${classId}">Show JSON</button></td>`
+            : `<td class="log-cell">${log.log_message}</td>`
+        }
         <td>${getLevelString(log.level)}</td>
         <td>${log.timestamp}</td>
         <td><a href="${commentUrl}">Comment - ${log.comment_id}</a></td>
