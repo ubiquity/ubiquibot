@@ -1,3 +1,4 @@
 {
-  "rootDir": "lib/"
+  "rootDir": "lib/",
+  "maxConcurrency": 1
 }
