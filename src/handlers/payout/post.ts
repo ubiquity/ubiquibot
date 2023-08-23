@@ -21,7 +21,7 @@ const ItemsToExclude: string[] = ["blockquote"];
  * Incentivize the contributors based on their contribution.
  * The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
  */
-export const incentivizeComments = async () => {
+export async function incentivizeComments() {
   const logger = getLogger();
   const {
     mode: { incentiveMode, paymentPermitMaxPrice },
@@ -129,7 +129,7 @@ export const incentivizeComments = async () => {
   logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
 
   await addCommentToIssue(comment, issue.number);
-};
+}
 
 export async function incentivizePullRequestReviews() {
   const logger = getLogger();
