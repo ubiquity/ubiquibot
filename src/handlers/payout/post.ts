@@ -131,7 +131,7 @@ export const incentivizeComments = async () => {
   await addCommentToIssue(comment, issue.number);
 };
 
-export const incentivizePullRequestReviews = async () => {
+export async function incentivizePullRequestReviews() {
   const logger = getLogger();
   const {
     mode: { incentiveMode, paymentPermitMaxPrice },
@@ -261,7 +261,7 @@ export const incentivizePullRequestReviews = async () => {
   logger.info(`incentivizePullRequestReviews: Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
 
   await addCommentToIssue(comment, issue.number);
-};
+}
 
 export const incentivizeCreatorComment = async () => {
   const logger = getLogger();
