@@ -7,7 +7,7 @@ import { handleComment, issueClosedCallback, issueReopenedCallback } from "./com
 import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
 import { runOnPush } from "./push";
-import { incentivizeComments, incentivizeCreatorComment } from "./payout";
+import { incentivizeComments, incentivizeCreatorComment, incentivizePullRequestReviews } from "./payout";
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_OPENED]: {
@@ -53,7 +53,7 @@ export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_CLOSED]: {
     pre: [nullHandler],
     action: [issueClosedCallback],
-    post: [incentivizeCreatorComment, incentivizeComments],
+    post: [incentivizeCreatorComment, incentivizeComments, incentivizePullRequestReviews],
   },
   [GithubEvent.PULL_REQUEST_OPENED]: {
     pre: [nullHandler],
