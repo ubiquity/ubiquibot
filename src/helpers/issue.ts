@@ -142,15 +142,7 @@ export const updateCommentOfIssue = async (msg: string, issue_number: number, re
       await addCommentToIssue(msg, issue_number);
     }
   } catch (e: unknown) {
-    logger.debug(`Upading a comment failed!, reason: ${e}`);
-  }
-};
-
-export const upsertCommentToIssue = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
-  if (action == "edited" && reply_to) {
-    await updateCommentOfIssue(comment, issue_number, reply_to);
-  } else {
-    await addCommentToIssue(comment, issue_number);
+    logger.debug(`Updating a comment failed!, reason: ${e}`);
   }
 };
 
@@ -244,6 +236,30 @@ export const getAllIssueComments = async (issue_number: number, format: "raw" | 
   }
 
   return result;
+};
+
+export const upsertCommentToIssue = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  const issueComments = await getAllIssueComments(issue_number);
+  const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const latestComment = comments.length > 0 ? comments[0] : undefined;
+
+  const latestIsBot = latestComment?.user?.login === "ubqbot[bot]";
+
+  if (latestIsBot) {
+    logger.info(`Latest comment is from bot`);
+    await context.octokit.issues.updateComment({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      comment_id: latestComment?.id,
+      body: `${comment} \n\n Edited.`,
+    });
+  } else {
+    logger.info(`Latest comment is not from bot`);
+    await addCommentToIssue(comment, issue_number);
+  }
 };
 
 export const getAllIssueAssignEvents = async (issue_number: number): Promise<AssignEvent[]> => {
