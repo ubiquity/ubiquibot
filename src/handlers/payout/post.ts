@@ -151,24 +151,24 @@ export const incentivizePullRequestReviews = async () => {
   }
 
   if (issue.state_reason !== StateReason.COMPLETED) {
-    logger.info("incentivizeComments: comment incentives skipped because the issue was not closed as completed");
+    logger.info("incentivizePullRequestReviews: comment incentives skipped because the issue was not closed as completed");
     // return;
   }
 
   if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
-    logger.info(`incentivizeComments: skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
+    logger.info(`incentivizePullRequestReviews: skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
     // return;
   }
 
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
-    logger.info(`incentivizeComments: its not a bounty`);
+    logger.info(`incentivizePullRequestReviews: its not a bounty`);
     // return;
   }
 
   const pulls = await getAllPullRequests(context, "closed");
   if (pulls.length === 0) {
-    logger.debug(`No pull requests found at this time`);
+    logger.debug(`incentivizePullRequestReviews: No pull requests found at this time`);
     return;
   }
 
@@ -188,7 +188,7 @@ export const incentivizePullRequestReviews = async () => {
   }
 
   if (!linkedPull) {
-    logger.debug(`No linked pull requests found`);
+    logger.debug(`incentivizePullRequestReviews: No linked pull requests found`);
     return;
   }
 
@@ -216,7 +216,7 @@ export const incentivizePullRequestReviews = async () => {
     if (!user) continue;
     if (user.type == UserType.Bot || user.login == assignee) continue;
     if (!review.body) {
-      logger.info(`Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(review)}`);
+      logger.info(`incentivizePullRequestReviews: Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(review)}`);
       continue;
     }
     if (!prReviewsByUser[user.login]) {
@@ -225,7 +225,7 @@ export const incentivizePullRequestReviews = async () => {
     prReviewsByUser[user.login].push(review.body);
   }
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
-  logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(prReviewsByUser)}`);
+  logger.info(`incentivizePullRequestReviews: Filtering by the user type done. commentsByUser: ${JSON.stringify(prReviewsByUser)}`);
 
   // The mapping between gh handle and comment with a permit url
   const reward: Record<string, string> = {};
@@ -238,14 +238,14 @@ export const incentivizePullRequestReviews = async () => {
     const commentsByNode = await parseComments(comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, incentives);
     if (rewardValue.equals(0)) {
-      logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`);
+      logger.info(`incentivizePullRequestReviews: Skipping to generate a permit url because the reward value is 0. user: ${user}`);
       continue;
     }
-    logger.info(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+    logger.info(`incentivizePullRequestReviews: Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
     const amountInETH = rewardValue.mul(baseMultiplier).div(1000);
     if (amountInETH.gt(paymentPermitMaxPrice)) {
-      logger.info(`Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
+      logger.info(`incentivizePullRequestReviews: Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
       continue;
     }
     if (account) {
@@ -257,8 +257,8 @@ export const incentivizePullRequestReviews = async () => {
     }
   }
 
-  logger.info(`Permit url generated for contributors. reward: ${JSON.stringify(reward)}`);
-  logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
+  logger.info(`incentivizePullRequestReviews: Permit url generated for pull request reviewers. reward: ${JSON.stringify(reward)}`);
+  logger.info(`incentivizePullRequestReviews: Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
 
   await addCommentToIssue(comment, issue.number);
 };
