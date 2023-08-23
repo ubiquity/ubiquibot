@@ -7,6 +7,7 @@ import { listAvailableCommands } from "./help";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { setAccess } from "./allow";
+import { ask } from "./ask";
 import { multiplier } from "./multiplier";
 import { BigNumber, ethers } from "ethers";
 import { addPenalty } from "../../../adapters/supabase";
@@ -34,6 +35,7 @@ export * from "./payout";
 export * from "./help";
 export * from "./multiplier";
 export * from "./query";
+export * from "./ask";
 
 /**
  * Parses the comment body and figure out the command name a user wants
@@ -241,6 +243,12 @@ export const userCommands = (): UserCommands[] => {
       id: IssueCommentCommands.QUERY,
       description: `Comments the users multiplier and address`,
       handler: query,
+      callback: commandCallback,
+    },
+    {
+      id: IssueCommentCommands.ASK,
+      description: `Ask a technical question to the Ubiquity AI. \n  example usage: "/ask How do I do X?"`,
+      handler: ask,
       callback: commandCallback,
     },
     {

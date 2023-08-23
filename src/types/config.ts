@@ -86,6 +86,10 @@ export const CommentsSchema = Type.Object({
   promotionComment: Type.String(),
 });
 
+export const AskSchema = Type.Object({
+  apiKey: Type.String(),
+});
+
 export const CommandConfigSchema = Type.Array(CommandItemSchema);
 
 export type CommandConfig = Static<typeof CommandConfigSchema>;
@@ -106,6 +110,7 @@ export const BotConfigSchema = Type.Object({
   comments: CommentsSchema,
   command: CommandConfigSchema,
   wallet: WalletSchema,
+  ask: AskSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;

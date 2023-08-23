@@ -84,6 +84,9 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     wallet: {
       registerWalletWithVerification: registerWalletWithVerification,
     },
+    ask: {
+      apiKey: process.env.OPENAI_API_KEY ?? "",
+    },
   };
 
   if (botConfig.payout.privateKey == "") {

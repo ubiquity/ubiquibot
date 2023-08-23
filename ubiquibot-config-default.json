@@ -85,6 +85,10 @@
       "enabled": false
     },
     {
+      "name": "ask",
+      "enabled": true
+    },
+    {
       "name": "allow",
       "enabled": false
     },
