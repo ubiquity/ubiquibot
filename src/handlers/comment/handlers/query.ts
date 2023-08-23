@@ -1,5 +1,6 @@
 import { getWalletInfo } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
+import { getUser } from "../../../helpers";
 import { Payload } from "../../../types";
 
 export const query = async (body: string) => {
@@ -22,9 +23,11 @@ export const query = async (body: string) => {
   const regex = /^\/query\s+@([\w-]+)\s*$/;
   const matches = body.match(regex);
   const user = matches?.[1];
+  getUser;
 
   if (user) {
-    const walletInfo = await getWalletInfo(user, id?.toString());
+    const { id: user_id } = (await getUser(user)) ?? {};
+    const walletInfo = await getWalletInfo(user, id?.toString(), user_id || 0);
     if (!walletInfo?.address) {
       return `Error retrieving multiplier and wallet address for @${user}`;
     } else {

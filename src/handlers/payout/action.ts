@@ -163,7 +163,7 @@ export const handleIssueClosed = async () => {
   }
 
   // if bounty hunter has any penalty then deduct it from the bounty
-  const penaltyAmount = await getPenalty(assignee.id, payload.repository.full_name, paymentToken, networkId.toString());
+  const penaltyAmount = await getPenalty(assignee.id, assignee.login, payload.repository.full_name, paymentToken, networkId.toString());
   if (penaltyAmount.gt(0)) {
     logger.info(`Deducting penalty from bounty`);
     const bountyAmount = ethers.utils.parseUnits(priceInEth.toString(), 18);
