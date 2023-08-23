@@ -25,19 +25,19 @@ export const gitIssueParser = async ({ owner, repo, issue_number }: GitParser): 
   }
 };
 
-export const gitLinkedIssueParser = async ({ owner, repo, issue_number }: GitParser): Promise<string> => {
+export const gitLinkedIssueParser = async ({ owner, repo, issue_number: pull_number }: GitParser): Promise<string> => {
   try {
-    const { data } = await axios.get(`https://github.com/${owner}/${repo}/pull/${issue_number}`);
+    const { data } = await axios.get(`https://github.com/${owner}/${repo}/pull/${pull_number}`);
     const dom = parse(data);
     const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
-    const linkedPRs = devForm.querySelectorAll(".my-1");
+    const linkedIssues = devForm.querySelectorAll(".my-1");
 
-    if (linkedPRs.length === 0) {
+    if (linkedIssues.length === 0) {
       return "";
     }
 
-    const prUrl = linkedPRs[0].querySelector("a")?.attrs?.href || "";
-    return prUrl;
+    const issueUrl = linkedIssues[0].querySelector("a")?.attrs?.href || "";
+    return issueUrl;
   } catch (error) {
     return "";
   }
