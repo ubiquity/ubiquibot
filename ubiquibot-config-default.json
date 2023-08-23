@@ -93,37 +93,12 @@
       "enabled": false
     }
   ],
-  "comment-element-pricing": {
-    "blockquote": 0,
-    "break": 0,
-    "code": 0,
-    "definition": 0,
-    "emphasis": 0,
-    "heading": 0,
-    "html": 0,
-    "image": 0,
-    "imageReference": 0,
-    "inlineCode": 0,
-    "link": 0,
-    "linkReference": 0,
-    "list": 0,
-    "listItem": 0,
-    "paragraph": 0,
-    "root": 0,
-    "strong": 0,
-    "text": 0,
-    "thematicBreak": 0,
-    "delete": 0,
-    "footnoteDefinition": 0,
-    "footnoteReference": 0,
-    "table": 0,
-    "tableCell": 0,
-    "tableRow": 0,
-    "alignType": 0,
-    "flowContent": 0,
-    "listContent": 0,
-    "phrasingContent": 0,
-    "rowContent": 0,
-    "tableContent": 0
+  "incentives": {
+    "comment": {
+      "elements": {},
+      "totals": {
+        "word": 0
+      }
+    }
   }
 }
