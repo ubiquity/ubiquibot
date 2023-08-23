@@ -6,21 +6,31 @@ const LabelItemSchema = Type.Object({
 });
 export type LabelItem = Static<typeof LabelItemSchema>;
 
+const CommentIncentivesSchema = Type.Object({
+  elements: Type.Record(Type.String(), Type.Number()),
+  totals: Type.Object({
+    word: Type.Number(),
+  }),
+});
+export type CommentIncentives = Static<typeof CommentIncentivesSchema>;
+
+const IncentivesSchema = Type.Object({
+  comment: CommentIncentivesSchema,
+});
+export type Incentives = Static<typeof IncentivesSchema>;
+
 const CommandItemSchema = Type.Object({
   name: Type.String(),
   enabled: Type.Boolean(),
 });
 export type CommandItem = Static<typeof CommandItemSchema>;
 
-const CommentElementPricingSchema = Type.Record(Type.String(), Type.Number());
-export type CommentElementPricing = Static<typeof CommentElementPricingSchema>;
-
 export const PriceConfigSchema = Type.Object({
   baseMultiplier: Type.Number(),
   issueCreatorMultiplier: Type.Number(),
   timeLabels: Type.Array(LabelItemSchema),
   priorityLabels: Type.Array(LabelItemSchema),
-  commentElementPricing: CommentElementPricingSchema,
+  incentives: IncentivesSchema,
   defaultLabels: Type.Array(Type.String()),
 });
 export type PriceConfig = Static<typeof PriceConfigSchema>;
