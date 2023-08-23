@@ -2,15 +2,10 @@ evm-network-id: 100
 price-multiplier: 1.5
 time-labels:
   - name: "Time: <1 Hour"
-    value: 3600
   - name: "Time: <2 Hours"
-    value: 7200
   - name: "Time: <4 Hours"
-    value: 14400
   - name: "Time: <1 Day"
-    value: 86400
   - name: "Time: <1 Week"
-    value: 604800
 priority-labels:
   - name: "Priority: 1 (Normal)"
   - name: "Priority: 2 (Medium)"
