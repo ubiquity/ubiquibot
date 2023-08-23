@@ -6,6 +6,7 @@ import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
 import { getScalarKey, getWideConfig } from "../utils/private";
+import { Level } from "../adapters/supabase";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
@@ -13,7 +14,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     timeLabels,
     privateKey,
     priorityLabels,
-    commentElementPricing,
+    incentives,
     paymentPermitMaxPrice,
     disableAnalytics,
     bountyHunterMax,
@@ -32,15 +33,16 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
 
   const botConfig: BotConfig = {
     log: {
-      level: process.env.LOG_LEVEL || "debug",
-      ingestionKey: process.env.LOGDNA_INGESTION_KEY ?? "",
+      logEnvironment: process.env.LOG_ENVIRONMENT || "production",
+      level: (process.env.LOG_LEVEL as Level) || Level.DEBUG,
+      retryLimit: Number(process.env.LOG_RETRY) || 0,
     },
     price: {
       baseMultiplier,
       issueCreatorMultiplier,
       timeLabels,
       priorityLabels,
-      commentElementPricing,
+      incentives,
       defaultLabels,
     },
     comments: {
@@ -83,10 +85,6 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       registerWalletWithVerification: registerWalletWithVerification,
     },
   };
-
-  if (botConfig.log.ingestionKey == "") {
-    throw new Error("LogDNA ingestion key missing");
-  }
 
   if (botConfig.payout.privateKey == "") {
     botConfig.mode.paymentPermitMaxPrice = 0;

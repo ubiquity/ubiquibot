@@ -1,44 +1,41 @@
-type MdastNode = {
-  type: string;
-  value: string;
-  children: MdastNode[];
-};
-const cachedResult: Record<string, string[]> = {};
-const traverse = (node: MdastNode, itemsToExclude: string[]): Record<string, string[]> => {
-  if (!cachedResult[node.type]) {
-    cachedResult[node.type] = [];
-  }
+import * as parse5 from "parse5";
 
-  if (!itemsToExclude.includes(node.type)) {
-    // skip pushing if the node type has been excluded
-    cachedResult[node.type].push(node.value);
-  } else if (node.children.length > 0) {
-    node.children.forEach((child) => traverse(child, itemsToExclude));
-  }
-
-  return cachedResult;
+type Node = {
+  nodeName: string;
+  tagName?: string;
+  value?: string;
+  childNodes?: Node[];
 };
 
-export const parseComments = async (comments: string[], itemsToExclude: string[]): Promise<Record<string, string[]>> => {
-  const { fromMarkdown } = await import("mdast-util-from-markdown");
-  const { gfmFromMarkdown } = await import("mdast-util-gfm");
-  const { gfm } = await import("micromark-extension-gfm");
+const traverse = (result: Record<string, string[]>, node: Node, itemsToExclude: string[]): Record<string, string[]> => {
+  if (itemsToExclude.includes(node.nodeName)) {
+    return result;
+  }
 
+  if (!result[node.nodeName]) {
+    result[node.nodeName] = [];
+  }
+
+  result[node.nodeName].push(node.value?.trim() ?? "");
+
+  if (node.childNodes && node.childNodes.length > 0) {
+    node.childNodes.forEach((child) => traverse(result, child, itemsToExclude));
+  }
+
+  return result;
+};
+
+export const parseComments = (comments: string[], itemsToExclude: string[]): Record<string, string[]> => {
   const result: Record<string, string[]> = {};
-  for (const comment of comments) {
-    const tree = fromMarkdown(comment, {
-      extensions: [gfm()],
-      mdastExtensions: [gfmFromMarkdown()],
-    });
 
-    const parsedContent = traverse(tree as MdastNode, itemsToExclude);
-    for (const key of Object.keys(parsedContent)) {
-      if (Object.keys(result).includes(key)) {
-        result[key].push(...parsedContent[key]);
-      } else {
-        result[key] = parsedContent[key];
-      }
-    }
+  for (const comment of comments) {
+    const fragment = parse5.parseFragment(comment);
+    traverse(result, fragment as Node, itemsToExclude);
+  }
+
+  // remove empty values
+  if (result["#text"]) {
+    result["#text"] = result["#text"].filter((str) => str.length > 0);
   }
 
   return result;
