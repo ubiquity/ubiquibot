@@ -5,6 +5,7 @@ import { bindEvents } from "../src/bindings";
 import { GithubEvent, Issue } from "../src/types";
 import { Octokit } from "octokit";
 import "dotenv/config";
+import { setTimeout } from "timers";
 
 let server: Server;
 let octokit: Octokit;
@@ -31,7 +32,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await server.stop();
-});
+}, 10000);
 
 const waitForNWebhooks = (n: number) =>
   new Promise<void>((resolve, reject) => {
@@ -44,7 +45,7 @@ const waitForNWebhooks = (n: number) =>
       i += 1;
       if (i == n) {
         clearTimeout(timer);
-        resolve();
+        setTimeout(resolve, 1000);
       }
     });
   });
@@ -86,6 +87,15 @@ describe("commmands test", () => {
 
     await waitForNWebhooks(1);
   }, 10000);
+
+  afterAll(async () => {
+    await octokit.rest.issues.update({
+      owner,
+      repo,
+      issue_number: issue.number,
+      state: "closed",
+    });
+  });
 
   test("/wallet correct address", async () => {
     const newWallet = "0x82AcFE58e0a6bE7100874831aBC56Ee13e2149e7";
@@ -163,4 +173,167 @@ describe("commmands test", () => {
     const lastComment = await getLastComment(issue.number);
     expect(lastComment.body?.includes("Available commands")).toBe(true);
   }, 10000);
+
+  test("/start and /stop", async () => {
+    await octokit.rest.issues.update({
+      owner,
+      repo,
+      issue_number: issue.number,
+      state: "closed",
+    });
+    await waitForNWebhooks(2);
+
+    let lastComment = await getLastComment(issue.number);
+    expect(lastComment.body?.includes("Permit generation skipped since this issue didn't qualify as bounty")).toBe(true);
+
+    await octokit.rest.issues.update({
+      owner,
+      repo,
+      issue_number: issue.number,
+      state: "open",
+    });
+    await waitForNWebhooks(1);
+
+    try {
+      console.log("creating time label");
+      await octokit.rest.issues.createLabel({
+        owner,
+        repo,
+        name: "Time: <1 Hour",
+      });
+      console.log("created priority label");
+    } catch (err) {
+      expect(err).toBeDefined();
+    } finally {
+      console.log("adding time label");
+      await octokit.rest.issues.addLabels({
+        owner,
+        repo,
+        issue_number: issue.number,
+        labels: ["Time: <1 Hour"],
+      });
+      console.log("added time label");
+      await waitForNWebhooks(1);
+    }
+
+    try {
+      console.log("creating priority label");
+      await octokit.rest.issues.createLabel({
+        owner,
+        repo,
+        name: "Priority: 0 (Normal)",
+      });
+      console.log("created priority label");
+    } catch (err) {
+      expect(err).toBeDefined();
+    } finally {
+      console.log("adding priority label");
+      await octokit.rest.issues.addLabels({
+        owner,
+        repo,
+        issue_number: issue.number,
+        labels: ["Priority: 0 (Normal)"],
+      });
+      console.log("added priority label");
+      await waitForNWebhooks(2);
+    }
+
+    await octokit.rest.issues.update({
+      owner,
+      repo,
+      issue_number: issue.number,
+      state: "closed",
+    });
+    await waitForNWebhooks(2);
+
+    lastComment = await getLastComment(issue.number);
+    expect(lastComment.body?.includes("Permit generation skipped since assignee is undefined")).toBe(true);
+
+    await octokit.rest.issues.update({
+      owner,
+      repo,
+      issue_number: issue.number,
+      state: "open",
+    });
+    await waitForNWebhooks(1);
+
+    await createComment(issue.number, `/autopay false`);
+    await waitForNWebhooks(2);
+
+    lastComment = await getLastComment(issue.number);
+    expect(lastComment.body?.includes("Automatic payment for this issue is enabled: **false**")).toBe(true);
+
+    await createComment(issue.number, `/start`);
+    await waitForNWebhooks(2);
+
+    lastComment = await getLastComment(issue.number);
+    const lastCommentBody = lastComment.body?.toLowerCase();
+    console.log(lastCommentBody);
+    expect(lastCommentBody?.includes("deadline")).toBe(true);
+    expect(lastCommentBody?.includes("registered wallet")).toBe(true);
+    expect(lastCommentBody?.includes("payment multiplier")).toBe(true);
+    expect(lastCommentBody?.includes("multiplier reason")).toBe(true);
+
+    await createComment(issue.number, `/stop`);
+    await waitForNWebhooks(2);
+
+    lastComment = await getLastComment(issue.number);
+    expect(lastComment.body?.includes("You have been unassigned from the bounty")).toBe(true);
+
+    await createComment(issue.number, `/start`);
+    await waitForNWebhooks(2);
+
+    await octokit.rest.issues.update({
+      owner,
+      repo,
+      issue_number: issue.number,
+      state: "closed",
+    });
+    await waitForNWebhooks(2);
+
+    lastComment = await getLastComment(issue.number);
+    expect(lastComment.body?.includes("Permit generation skipped since automatic payment for this issue is disabled.")).toBe(true);
+
+    await octokit.rest.issues.update({
+      owner,
+      repo,
+      issue_number: issue.number,
+      state: "open",
+    });
+    await waitForNWebhooks(1);
+
+    await createComment(issue.number, `/autopay true`);
+    await waitForNWebhooks(2);
+
+    lastComment = await getLastComment(issue.number);
+    expect(lastComment.body?.includes("Automatic payment for this issue is enabled: **true**")).toBe(true);
+
+    await octokit.rest.issues.update({
+      owner,
+      repo,
+      issue_number: issue.number,
+      state: "closed",
+      state_reason: "not_planned",
+    });
+    await waitForNWebhooks(2);
+
+    lastComment = await getLastComment(issue.number);
+    expect(lastComment.body?.includes("Permit generation skipped because the issue was not closed as completed")).toBe(true);
+
+    await octokit.rest.issues.update({
+      owner,
+      repo,
+      issue_number: issue.number,
+      state: "open",
+    });
+    await waitForNWebhooks(1);
+
+    await octokit.rest.issues.update({
+      owner,
+      repo,
+      issue_number: issue.number,
+      state: "closed",
+    });
+    await waitForNWebhooks(2);
+  }, 120000);
 });
