@@ -178,7 +178,7 @@ export const incentivizePullRequestReviews = async () => {
     const pullRequestLinked = await gitLinkedIssueParser({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number: pull.number,
+      pull_number: pull.number,
     });
     const linkedIssueNumber = pullRequestLinked.substring(pullRequestLinked.lastIndexOf("/") + 1);
     if (linkedIssueNumber === issue.number.toString()) {
@@ -208,7 +208,7 @@ export const incentivizePullRequestReviews = async () => {
     return;
   }
 
-  const prReviews = await getAllPullRequestReviews(context, linkedPull.number);
+  const prReviews = await getAllPullRequestReviews(context, linkedPull.number, "full");
   logger.info(`Getting the PR reviews done. comments: ${JSON.stringify(prReviews)}`);
   const prReviewsByUser: Record<string, string[]> = {};
   for (const review of prReviews) {
