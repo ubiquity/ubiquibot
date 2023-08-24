@@ -35,7 +35,7 @@ export const incentivizeComments = async () => {
     return;
   }
 
-  if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
+  if (!paymentPermitMaxPrice) {
     logger.info(`incentivizeComments: skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
     return;
   }
