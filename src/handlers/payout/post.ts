@@ -215,14 +215,14 @@ export const incentivizePullRequestReviews = async () => {
     const user = review.user;
     if (!user) continue;
     if (user.type == UserType.Bot || user.login == assignee) continue;
-    if (!review.body) {
+    if (!review.body_html) {
       logger.info(`incentivizePullRequestReviews: Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(review)}`);
       continue;
     }
     if (!prReviewsByUser[user.login]) {
       prReviewsByUser[user.login] = [];
     }
-    prReviewsByUser[user.login].push(review.body);
+    prReviewsByUser[user.login].push(review.body_html);
   }
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   logger.info(`incentivizePullRequestReviews: Filtering by the user type done. commentsByUser: ${JSON.stringify(prReviewsByUser)}`);

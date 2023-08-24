@@ -4,7 +4,8 @@ import { HTMLElement, parse } from "node-html-parser";
 interface GitParser {
   owner: string;
   repo: string;
-  issue_number: number;
+  issue_number?: number;
+  pull_number?: number;
 }
 
 export const gitIssueParser = async ({ owner, repo, issue_number }: GitParser): Promise<boolean> => {
@@ -25,7 +26,7 @@ export const gitIssueParser = async ({ owner, repo, issue_number }: GitParser): 
   }
 };
 
-export const gitLinkedIssueParser = async ({ owner, repo, issue_number: pull_number }: GitParser): Promise<string> => {
+export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitParser): Promise<string> => {
   try {
     const { data } = await axios.get(`https://github.com/${owner}/${repo}/pull/${pull_number}`);
     const dom = parse(data);
