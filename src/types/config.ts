@@ -47,6 +47,8 @@ export const PayoutConfigSchema = Type.Object({
 export const UnassignConfigSchema = Type.Object({
   followUpTime: Type.Number(),
   disqualifyTime: Type.Number(),
+  defaultTimeRangeForMaxIssue: Type.Number(),
+  defaultTimeRangeForMaxIssueEnabled: Type.Boolean(),
 });
 
 export const ModeSchema = Type.Object({
@@ -74,11 +76,6 @@ export const CommentsSchema = Type.Object({
   promotionComment: Type.String(),
 });
 
-export const TimeRangeSchema = Type.Object({
-  DEFAULT_TIME_RANGE_FOR_MAX_ISSUE: Type.Number(),
-  DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED: Type.Boolean(),
-});
-
 export const CommandConfigSchema = Type.Array(CommandItemSchema);
 
 export type CommandConfig = Static<typeof CommandConfigSchema>;
@@ -99,7 +96,6 @@ export const BotConfigSchema = Type.Object({
   comments: CommentsSchema,
   command: CommandConfigSchema,
   wallet: WalletSchema,
-  time: TimeRangeSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;

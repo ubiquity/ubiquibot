@@ -618,7 +618,7 @@ export const getCommitsOnPullRequest = async (pullNumber: number) => {
 export const getAvailableOpenedPullRequests = async (username: string) => {
   const context = getBotContext();
   const botConfig = await loadConfig(context);
-  if (!botConfig.time.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED) return [];
+  if (!botConfig.unassign.defaultTimeRangeForMaxIssueEnabled) return [];
 
   const opened_prs = await getOpenedPullRequests(username);
 
@@ -635,7 +635,7 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
 
     if (
       reviews.length === 0 &&
-      (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= botConfig.time.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE
+      (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= botConfig.unassign.defaultTimeRangeForMaxIssue
     ) {
       result.push(pr);
     }
