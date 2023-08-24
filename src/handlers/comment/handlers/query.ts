@@ -23,7 +23,6 @@ export const query = async (body: string) => {
   const regex = /^\/query\s+@([\w-]+)\s*$/;
   const matches = body.match(regex);
   const user = matches?.[1];
-  getUser;
 
   if (user) {
     const { id: user_id } = (await getUser(user)) ?? {};
