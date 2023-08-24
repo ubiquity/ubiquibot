@@ -1,12 +1,12 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getIssueDescription, getTokenSymbol, parseComments } from "../../helpers";
-import { Incentives, Payload, StateReason, UserType } from "../../types";
+import { Incentives, MarkdownItem, Payload, StateReason, UserType } from "../../types";
 import { commentParser } from "../comment";
 import Decimal from "decimal.js";
 import { bountyInfo } from "../wildcard";
 
-const ItemsToExclude: string[] = ["blockquote"];
+const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
 /**
  * Incentivize the contributors based on their contribution.
  * The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
