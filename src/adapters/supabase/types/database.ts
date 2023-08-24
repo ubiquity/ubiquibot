@@ -34,11 +34,9 @@ export interface Database {
           multiplier_access: boolean | null;
           price_access: boolean | null;
           priority_access: boolean | null;
-          repository: string | null;
           time_access: boolean | null;
           updated_at: string | null;
-          user_name: string;
-          user_id: string;
+          user_id: number;
           repository_id: number;
         };
         Insert: {
@@ -46,11 +44,9 @@ export interface Database {
           multiplier_access?: boolean | null;
           price_access?: boolean | null;
           priority_access?: boolean | null;
-          repository?: string | null;
           time_access?: boolean | null;
           updated_at?: string | null;
-          user_name: string;
-          user_id: string;
+          user_id: number;
           repository_id: number;
         };
         Update: {
@@ -58,11 +54,9 @@ export interface Database {
           multiplier_access?: boolean | null;
           price_access?: boolean | null;
           priority_access?: boolean | null;
-          repository?: string | null;
           time_access?: boolean | null;
           updated_at?: string | null;
-          user_name?: string;
-          user_id: string;
+          user_id: number;
           repository_id: number;
         };
         Relationships: [];
@@ -149,9 +143,9 @@ export interface Database {
           updated_at: string | null;
           user_location: string | null;
           user_login: string;
-          user_name: string;
           user_type: string | null;
           wallet_address: string | null;
+          user_id: number;
         };
         Insert: {
           bio?: string | null;
@@ -171,7 +165,7 @@ export interface Database {
           updated_at?: string | null;
           user_location?: string | null;
           user_login: string;
-          user_name: string;
+          user_id: number;
           user_type?: string | null;
           wallet_address?: string | null;
         };
@@ -193,7 +187,7 @@ export interface Database {
           updated_at?: string | null;
           user_location?: string | null;
           user_login?: string;
-          user_name?: string;
+          user_id: number;
           user_type?: string | null;
           wallet_address?: string | null;
         };
@@ -205,27 +199,24 @@ export interface Database {
           multiplier: number | null;
           reason: string | null;
           updated_at: string | null;
-          user_name: string;
           wallet_address: string | null;
-          user_id: string;
+          user_id: number;
         };
         Insert: {
           created_at?: string | null;
           multiplier?: number | null;
           reason?: string | null;
           updated_at?: string | null;
-          user_name: string;
           wallet_address?: string | null;
-          user_id: string;
+          user_id: number;
         };
         Update: {
           created_at?: string | null;
           multiplier?: number | null;
           reason?: string | null;
           updated_at?: string | null;
-          user_name?: string;
           wallet_address?: string | null;
-          user_id: string;
+          user_id: number;
         };
         Relationships: [];
       };
@@ -251,22 +242,18 @@ export interface Database {
     Functions: {
       add_penalty: {
         Args: {
-          username: string;
-          repository_name: string;
           token_address: string;
           penalty_amount: string;
-          user_id: string;
+          user_id: number;
           repository_id: number;
         };
         Returns: string;
       };
       deduct_penalty: {
         Args: {
-          username: string;
-          repository_name: string;
           token_address: string;
           penalty_amount: string;
-          user_id: string;
+          user_id: number;
           repository_id: number;
         };
         Returns: string;

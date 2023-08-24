@@ -65,6 +65,7 @@ export const incentivizeComments = async () => {
   const issueComments = await getAllIssueComments(issue.number, "full");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, string[]> = {};
+  const userIDByName: Record<string, number> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
     if (user.type == UserType.Bot || user.login == assignee) continue;
@@ -79,6 +80,7 @@ export const incentivizeComments = async () => {
     }
     if (!issueCommentsByUser[user.login]) {
       issueCommentsByUser[user.login] = [];
+      userIDByName[user.login] = user.id;
     }
     issueCommentsByUser[user.login].push(issueComment.body_html);
   }
@@ -100,7 +102,7 @@ export const incentivizeComments = async () => {
       continue;
     }
     logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
-    const account = await getWalletAddress(user);
+    const account = await getWalletAddress(userIDByName[user]);
     const amountInETH = rewardValue.mul(baseMultiplier).div(1000);
     if (amountInETH.gt(paymentPermitMaxPrice)) {
       logger.info(`Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
@@ -187,6 +189,7 @@ export const incentivizeCreatorComment = async () => {
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const result = await generatePermitForComments(
     creator.login,
+    creator.id,
     [description],
     issueCreatorMultiplier,
     incentives,
@@ -206,6 +209,7 @@ export const incentivizeCreatorComment = async () => {
 
 const generatePermitForComments = async (
   user: string,
+  user_id: number,
   comments: string[],
   multiplier: number,
   incentives: Incentives,
@@ -221,7 +225,7 @@ const generatePermitForComments = async (
     return { comment: "" };
   }
   logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
-  const account = await getWalletAddress(user);
+  const account = await getWalletAddress(user_id);
   const amountInETH = rewardValue.mul(multiplier).div(1000);
   if (amountInETH.gt(paymentPermitMaxPrice)) {
     logger.info(`Skipping issue creator reward for user ${user} because reward is higher than payment permit max price`);

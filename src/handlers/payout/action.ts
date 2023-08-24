@@ -81,7 +81,7 @@ export const handleIssueClosed = async () => {
     const assignee = events[0].assignee.id;
 
     try {
-      await removePenalty(assignee, payload.repository.full_name, tokenAddress, networkId, amount);
+      await removePenalty(assignee, payload.repository.id, tokenAddress, networkId, amount);
     } catch (err) {
       logger.error(`Failed to remove penalty: ${err}`);
       return;
@@ -163,13 +163,13 @@ export const handleIssueClosed = async () => {
   }
 
   // if bounty hunter has any penalty then deduct it from the bounty
-  const penaltyAmount = await getPenalty(assignee.id, assignee.login, payload.repository.full_name, paymentToken, networkId.toString());
+  const penaltyAmount = await getPenalty(assignee.id, payload.repository.id, paymentToken, networkId.toString());
   if (penaltyAmount.gt(0)) {
     logger.info(`Deducting penalty from bounty`);
     const bountyAmount = ethers.utils.parseUnits(priceInEth.toString(), 18);
     const bountyAmountAfterPenalty = bountyAmount.sub(penaltyAmount);
     if (bountyAmountAfterPenalty.lte(0)) {
-      await removePenalty(assignee.id, payload.repository.full_name, paymentToken, networkId.toString(), bountyAmount);
+      await removePenalty(assignee.id, payload.repository.id, paymentToken, networkId.toString(), bountyAmount);
       const msg = `Permit generation skipped because bounty amount after penalty is 0`;
       logger.info(msg);
       return msg;
@@ -192,7 +192,7 @@ export const handleIssueClosed = async () => {
   await addLabelToIssue("Permitted");
   await savePermitToDB(assignee.id, txData);
   if (penaltyAmount.gt(0)) {
-    await removePenalty(assignee.id, payload.repository.full_name, paymentToken, networkId.toString(), penaltyAmount);
+    await removePenalty(assignee.id, payload.repository.id, paymentToken, networkId.toString(), penaltyAmount);
   }
   return comment;
 };

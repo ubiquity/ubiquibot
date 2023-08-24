@@ -176,7 +176,7 @@ export const issueReopenedCallback = async (): Promise<void> => {
 
     // write penalty to db
     try {
-      await addPenalty(assignee, repository.full_name, tokenAddress, networkId.toString(), amount, user_id);
+      await addPenalty(tokenAddress, networkId.toString(), amount, user_id, repository.id);
     } catch (err) {
       logger.error(`Error writing penalty to db: ${err}`);
       return;

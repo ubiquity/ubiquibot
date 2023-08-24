@@ -94,7 +94,7 @@ export const assign = async (body: string) => {
 
   const comment = {
     deadline: endTime.toUTCString().replace("GMT", "UTC"),
-    wallet: (await getWalletAddress(payload.sender.login)) || "Please set your wallet address to use `/wallet 0x0000...0000`",
+    wallet: (await getWalletAddress(payload.sender.id)) || "Please set your wallet address to use `/wallet 0x0000...0000`",
     commit: `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`,
     tips: `<h6>Tips:</h6>
     <ul>

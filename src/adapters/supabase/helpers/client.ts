@@ -157,18 +157,17 @@ export const upsertUser = async (user: UserProfile): Promise<void> => {
  * @param username The user name you want to upsert a wallet address for
  * @param address The account address
  */
-export const upsertWalletAddress = async (username: string, address: string, user_id: number): Promise<void> => {
+export const upsertWalletAddress = async (address: string, user_id: number): Promise<void> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
 
-  const { data, error } = await supabase.from("wallets").select("user_name").eq("user_id", user_id);
+  const { data, error } = await supabase.from("wallets").select("user_id").eq("user_id", user_id);
   if (error) {
     logger.error(`Checking wallet address failed, error: ${JSON.stringify(error)}`);
     throw new Error(`Checking wallet address failed, error: ${JSON.stringify(error)}`);
   }
   if (data && data.length > 0) {
     const { data: _data, error: _error } = await supabase.from("wallets").upsert({
-      user_name: username,
       wallet_address: address,
       user_id: user_id,
       updated_at: new Date().toUTCString(),
@@ -180,7 +179,6 @@ export const upsertWalletAddress = async (username: string, address: string, use
     logger.info(`Upserting a wallet address done, { data: ${JSON.stringify(_data)} }`);
   } else {
     const { data: _data, error: _error } = await supabase.from("wallets").insert({
-      user_name: username,
       user_id: user_id,
       wallet_address: address,
       created_at: new Date().toUTCString(),
@@ -231,26 +229,17 @@ export const upsertWalletMultiplier = async (username: string, multiplier: strin
  * @param access Access granting
  * @param bool Disabling or enabling
  */
-export const upsertAccessControl = async (
-  username: string,
-  repository: string,
-  access: string,
-  bool: boolean,
-  user_id: number,
-  repo_id: number
-): Promise<void> => {
+export const upsertAccessControl = async (access: string, bool: boolean, user_id: number, repository_id: number): Promise<void> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
 
-  const { data, error } = await supabase.from("access").select("user_name").eq("user_id", user_id).eq("repo_id", repo_id).single();
+  const { data, error } = await supabase.from("access").select("user_id").eq("user_id", user_id).eq("repository_id", repository_id).single();
 
   const properties = {
-    repository: repository,
     updated_at: new Date().toUTCString(),
     [access]: bool,
     user_id: user_id,
-    repo_id: repo_id,
-    user_name: username,
+    repository_id: repository_id,
   };
 
   if (data) {
@@ -269,11 +258,11 @@ export const upsertAccessControl = async (
   }
 };
 
-export const getAccessLevel = async (username: string, repository: string, label_type: string): Promise<boolean> => {
+export const getAccessLevel = async (user_id: number, repository_id: number, label_type: string): Promise<boolean> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
 
-  const { data } = await supabase.from("access").select("*").eq("username", username).eq("repository", repository).single();
+  const { data } = await supabase.from("access").select("*").eq("user_id", user_id).eq("repository_id", repository_id).single();
 
   if (!data || !data[`${label_type}_access`]) {
     logger.info(`Access not found on the database`);
@@ -289,13 +278,13 @@ export const getAccessLevel = async (username: string, repository: string, label
 /**
  * Queries the wallet address registered previously
  *
- * @param username The username you want to find an address for
+ * @param user_id The user_id you want to find an address for
  * @returns The ERC20 address
  */
-export const getWalletAddress = async (username: string): Promise<string | undefined> => {
+export const getWalletAddress = async (user_id: number): Promise<string | undefined> => {
   const { supabase } = getAdapters();
 
-  const { data } = await supabase.from("wallets").select("wallet_address").eq("user_name", username).single();
+  const { data } = await supabase.from("wallets").select("wallet_address").eq("user_id", user_id).single();
   return data?.wallet_address;
 };
 
@@ -326,34 +315,23 @@ export const getWalletMultiplier = async (username: string, org_id: string): Pro
 export const getWalletInfo = async (username: string, org_id: string, user_id: number): Promise<{ multiplier: number | null; address: string | null }> => {
   const { supabase } = getAdapters();
 
-  const { data: wallet } = await supabase.from("wallets").select("wallet_address, user_name").eq("user_id", user_id).single();
-  if (wallet && wallet.user_name !== username) {
-    await updateUsername(user_id, username, "wallets");
-  }
+  const { data: wallet } = await supabase.from("wallets").select("wallet_address").eq("user_id", user_id).single();
   const { data: multiplier } = await supabase.from("multiplier").select("value").eq("user_id", `${username}_${org_id}`).single();
   if (multiplier?.value == null) {
     return { multiplier: 1, address: wallet?.wallet_address || "" };
   } else return { multiplier: multiplier?.value, address: wallet?.wallet_address };
 };
 
-export const addPenalty = async (
-  username: string,
-  repoName: string,
-  tokenAddress: string,
-  networkId: string,
-  penalty: BigNumberish,
-  user_id: number
-): Promise<void> => {
+export const addPenalty = async (tokenAddress: string, networkId: string, penalty: BigNumberish, user_id: number, repository_id: number): Promise<void> => {
   const { supabase } = getAdapters();
   const logger = getLogger();
 
   const { error } = await supabase.rpc("add_penalty", {
-    _username: username,
-    _repository_name: repoName,
     _token_address: tokenAddress,
     _network_id: networkId,
     _penalty_amount: penalty.toString(),
     _user_id: user_id,
+    _repository_id: repository_id,
   });
   logger.debug(`Adding penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
 
@@ -362,20 +340,18 @@ export const addPenalty = async (
   }
 };
 
-export const getPenalty = async (user_id: number, user_name: string, repoName: string, tokenAddress: string, networkId: string): Promise<BigNumber> => {
+export const getPenalty = async (user_id: number, repository_id: number, tokenAddress: string, networkId: string): Promise<BigNumber> => {
   const { supabase } = getAdapters();
   const logger = getLogger();
 
   const { data, error } = await supabase
     .from("penalty")
-    .select("amount,user_name")
+    .select("amount")
     .eq("user_id", user_id)
-    .eq("repository_name", repoName)
+    .eq("repository_id", repository_id)
     .eq("network_id", networkId)
     .eq("token_address", tokenAddress);
   logger.debug(`Getting penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
-
-  await updateUsername(user_id, user_name, "penalty");
 
   if (error) {
     throw new Error(`Error getting penalty: ${error.message}`);
@@ -387,13 +363,13 @@ export const getPenalty = async (user_id: number, user_name: string, repoName: s
   return BigNumber.from(data[0].amount);
 };
 
-export const removePenalty = async (user_id: number, repoName: string, tokenAddress: string, networkId: string, penalty: BigNumberish): Promise<void> => {
+export const removePenalty = async (user_id: number, repository_id: number, tokenAddress: string, networkId: string, penalty: BigNumberish): Promise<void> => {
   const { supabase } = getAdapters();
   const logger = getLogger();
 
   const { error } = await supabase.rpc("remove_penalty", {
     _user_id: user_id,
-    _repository_name: repoName,
+    _repository_id: repository_id,
     _network_id: networkId,
     _token_address: tokenAddress,
     _penalty_amount: penalty.toString(),
@@ -458,13 +434,4 @@ export const savePermit = async (permit: InsertPermit): Promise<Permit> => {
     throw new Error("No data returned");
   }
   return getPermitFromDbData(data[0]);
-};
-
-export const updateUsername = async (user_id: number, user_name: string, table_name: string) => {
-  const { supabase } = getAdapters();
-  const logger = getLogger();
-  const { error } = await supabase.from(table_name).update({ user_name }).eq("user_id", user_id).select("");
-  if (error) {
-    logger.error(`Error occured while updating user name: ${error.message}`);
-  }
 };

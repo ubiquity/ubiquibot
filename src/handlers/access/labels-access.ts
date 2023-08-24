@@ -23,7 +23,7 @@ export const handleLabelsAccess = async () => {
   if (permissionLevel !== "admin") {
     logger.info(`Getting ${label_type} access for ${sender} on ${repo.full_name}`);
     // check permission
-    const accessible = await getAccessLevel(sender, repo.full_name, label_type);
+    const accessible = await getAccessLevel(payload.sender.id, repo.id, label_type);
 
     if (accessible) {
       return true;
