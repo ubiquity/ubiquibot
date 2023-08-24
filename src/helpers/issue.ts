@@ -333,8 +333,9 @@ export const removeAssignees = async (issue_number: number, assignees: string[])
 export const checkUserPermissionForRepoAndOrg = async (username: string, context: Context): Promise<boolean> => {
   const permissionForRepo = await checkUserPermissionForRepo(username, context);
   const permissionForOrg = await checkUserPermissionForOrg(username, context);
+  const userPermission = await getUserPermission(username, context);
 
-  return permissionForOrg || permissionForRepo;
+  return permissionForOrg || permissionForRepo || userPermission === "admin" || userPermission === "billing_manager";
 };
 
 export const checkUserPermissionForRepo = async (username: string, context: Context): Promise<boolean> => {
@@ -361,12 +362,12 @@ export const checkUserPermissionForOrg = async (username: string, context: Conte
   if (!payload.organization) return false;
 
   try {
-    const res = await context.octokit.rest.orgs.checkMembershipForUser({
+    await context.octokit.rest.orgs.checkMembershipForUser({
       org: payload.organization.login,
       username,
     });
-    // @ts-expect-error This looks like a bug in octokit. (https://github.com/octokit/rest.js/issues/188)
-    return res.status === 204;
+    // skipping status check due to type error of checkMembershipForUser function of octokit
+    return true;
   } catch (e: unknown) {
     logger.error(`Checking if user permisson for org failed!, reason: ${e}`);
     return false;

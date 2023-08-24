@@ -11,12 +11,12 @@ import {
   parseComments,
 } from "../../helpers";
 import { gitLinkedIssueParser } from "../../helpers/parser";
-import { Incentives, Payload, StateReason, UserType } from "../../types";
+import { Incentives, MarkdownItem, Payload, StateReason, UserType } from "../../types";
 import { commentParser } from "../comment";
 import Decimal from "decimal.js";
 import { bountyInfo } from "../wildcard";
 
-const ItemsToExclude: string[] = ["blockquote"];
+const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
 /**
  * Incentivize the contributors based on their contribution.
  * The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
@@ -45,7 +45,7 @@ export const incentivizeComments = async () => {
     return;
   }
 
-  if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
+  if (!paymentPermitMaxPrice) {
     logger.info(`incentivizeComments: skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
     return;
   }
