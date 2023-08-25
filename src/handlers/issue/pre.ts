@@ -10,6 +10,7 @@ export const findDuplicateOne = async () => {
 
   if (!issue?.body) return;
   const importantWords = await extractImportantWords(issue);
+  await upsertCommentToIssue(issue.number, importantWords.join(","), "created");
   const perPage = 10;
   let curPage = 1;
 
