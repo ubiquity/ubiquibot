@@ -1,5 +1,5 @@
 {
-  "exclude": ["src/reference", "functions/**/*"],
+  "exclude": ["src/reference"],
   "compilerOptions": {
     /* Basic Options */
     "incremental": true /* Enable incremental compilation */,
