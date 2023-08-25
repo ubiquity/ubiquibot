@@ -102,11 +102,10 @@ export const ask = async (body: string) => {
       if (action == "issue") {
         const isItThisIssue = issue.number == Number(actionNumber);
         if (isItThisIssue) {
-          // replace commentID with actual comment
+          // replace commentID with actual comment if it lives on this issue
           initQContext = await replaceCommentIDWithBody(Number(commentID), comments);
         } else {
           // find the matching comment in whatever issue it is in
-
           const allComments = await getAllIssueComments(Number(actionNumber));
           const matchingComment = await replaceCommentIDWithBody(Number(commentID), allComments);
 
@@ -138,6 +137,10 @@ export const ask = async (body: string) => {
       }
     }
 
+    // TODO: remove or refactor as this is useless as asked will always be > 0
+    // TODO: refactor to use the new PromptTemplate
+    // TODO: Handle multiple exchanges on by same user across multiple comments
+    // TODO: Currently grabbing all AI comments, need to distinguish which Q&As belong to the current interaction as there could be multiple interactions regarding different subjects.
     senderAskedQuestions = comments.filter((content) => content.user.login == sender && content.body.startsWith(`/ask`));
     // has this sender asked any questions on this issue before?
     if (senderAskedQuestions.length > 0) {
@@ -150,20 +153,21 @@ export const ask = async (body: string) => {
         }
       });
 
+      // Push the original context and system message to the chat history
       chatHistory.push(
-        {
-          role: "system",
-          content: "Original Question: " + initQContext,
-          name: sender,
-        } as CreateChatCompletionRequestMessage,
         {
           role: "system",
           content: sysMsg,
           name: "UbiquityAI",
+        } as CreateChatCompletionRequestMessage,
+        {
+          role: "system",
+          content: "Original Question: " + initQContext,
+          name: sender,
         } as CreateChatCompletionRequestMessage
       );
 
-      // add their new question to the chat history
+      // Push the rest of the chat history to the chat history
       for (let i = 0; i < senderAskedQuestions.length; i++) {
         const answeredYet = !senderAnsweredQuestions;
 
