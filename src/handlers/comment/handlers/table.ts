@@ -4,20 +4,21 @@ export const tableComment = ({
   multiplier,
   reason,
   bounty,
+  isBountyStale,
 }: {
   deadline: string;
   wallet: string;
   multiplier?: string;
   reason?: string;
   bounty?: string;
+  isBountyStale?: boolean;
 }) => {
   return `
 <code>
-
   <table>
   <tr>
-    <td></td>
-    <td></td>
+  <td>Ready to begin?</td>
+  ${!isBountyStale ? `<td>You can start right away!</td>` : `<td>Please wait for confirmation first.</td>`}
   </tr>
   <tr>
     <td>Deadline</td>

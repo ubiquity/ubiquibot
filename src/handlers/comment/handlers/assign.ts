@@ -18,8 +18,11 @@ export const assign = async (body: string) => {
 
   const id = organization?.id || repository?.id; // repository?.id as fallback
 
+  const staleBounty = config.assign.staleBountyTime;
+
   logger.info(`Received '/start' command from user: ${payload.sender.login}, body: ${body}`);
   const issue = (_payload as Payload).issue;
+
   if (!issue) {
     logger.info(`Skipping '/start' because of no issue instance`);
     return "Skipping '/start' because of no issue instance";
@@ -109,6 +112,8 @@ export const assign = async (body: string) => {
     await addAssignees(issue.number, [payload.sender.login]);
   }
 
+  const isBountyStale = new Date().getTime() - new Date(issue.created_at).getTime() > staleBounty;
+
   // double check whether the assign message has been already posted or not
   logger.info(`Creating an issue comment: ${comment.commit}`);
   const issueComments = await getAllIssueComments(issue.number);
@@ -116,7 +121,7 @@ export const assign = async (body: string) => {
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
     const { multiplier, reason, bounty } = await getMultiplierInfoToDisplay(payload.sender.login, id?.toString(), issue);
-    return tableComment({ ...comment, multiplier, reason, bounty }) + comment.tips;
+    return tableComment({ ...comment, multiplier, reason, bounty, isBountyStale }) + comment.tips;
   }
   return;
 };
