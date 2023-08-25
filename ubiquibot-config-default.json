@@ -95,7 +95,23 @@
   ],
   "incentives": {
     "comment": {
-      "elements": {},
+      "elements": {
+        "h1": 0,
+        "h2": 0,
+        "h3": 0,
+        "h4": 0,
+        "h5": 0,
+        "h6": 0,
+        "a": 0,
+        "ul": 0,
+        "li": 0,
+        "p": 0,
+        "img": 0,
+        "code": 0,
+        "table": 0,
+        "td": 0,
+        "tr": 0
+      },
       "totals": {
         "word": 0
       }
