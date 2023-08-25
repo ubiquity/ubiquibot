@@ -47,6 +47,7 @@
     "husky": "^8.0.2",
     "jimp": "^0.22.4",
     "js-yaml": "^4.1.0",
+    "langchain": "^0.0.134",
     "libsodium-wrappers": "^0.7.11",
     "lint-staged": "^13.1.0",
     "ms": "^2.1.3",
