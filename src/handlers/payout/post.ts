@@ -5,12 +5,11 @@ import {
   generatePermit2Signature,
   getAllIssueComments,
   getAllPullRequestReviews,
-  getAllPullRequests,
   getIssueDescription,
   getTokenSymbol,
   parseComments,
 } from "../../helpers";
-import { gitLinkedIssueParser } from "../../helpers/parser";
+import { gitLinkedPrParser } from "../../helpers/parser";
 import { Incentives, MarkdownItem, Payload, StateReason, UserType } from "../../types";
 import { commentParser } from "../comment";
 import Decimal from "decimal.js";
@@ -140,7 +139,7 @@ export const incentivizePullRequestReviews = async () => {
   } = getBotConfig();
   if (!incentiveMode) {
     logger.info(`No incentive mode. skipping to process`);
-    // return;
+    return;
   }
   const context = getBotContext();
   const payload = context.payload as Payload;
@@ -152,45 +151,28 @@ export const incentivizePullRequestReviews = async () => {
 
   if (issue.state_reason !== StateReason.COMPLETED) {
     logger.info("incentivizePullRequestReviews: comment incentives skipped because the issue was not closed as completed");
-    // return;
+    return;
   }
 
   if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
     logger.info(`incentivizePullRequestReviews: skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
-    // return;
+    return;
   }
 
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
     logger.info(`incentivizePullRequestReviews: its not a bounty`);
-    // return;
-  }
-
-  const pulls = await getAllPullRequests(context, "closed");
-  if (pulls.length === 0) {
-    logger.debug(`incentivizePullRequestReviews: No pull requests found at this time`);
     return;
   }
 
-  let linkedPull;
+  const pullRequestLinked = await gitLinkedPrParser({ owner: payload.repository.owner.login, repo: payload.repository.name, issue_number: issue.number });
 
-  for (const pull of pulls) {
-    const pullRequestLinked = await gitLinkedIssueParser({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      pull_number: pull.number,
-    });
-    const linkedIssueNumber = pullRequestLinked.substring(pullRequestLinked.lastIndexOf("/") + 1);
-    if (linkedIssueNumber === issue.number.toString()) {
-      linkedPull = pull;
-      break;
-    }
-  }
-
-  if (!linkedPull) {
+  if (pullRequestLinked === "") {
     logger.debug(`incentivizePullRequestReviews: No linked pull requests found`);
     return;
   }
+
+  const linkedPullNumber = pullRequestLinked.substring(pullRequestLinked.lastIndexOf("/") + 1);
 
   const comments = await getAllIssueComments(issue.number);
   const permitComments = comments.filter(
@@ -208,7 +190,7 @@ export const incentivizePullRequestReviews = async () => {
     return;
   }
 
-  const prReviews = await getAllPullRequestReviews(context, linkedPull.number, "full");
+  const prReviews = await getAllPullRequestReviews(context, Number(linkedPullNumber), "full");
   logger.info(`Getting the PR reviews done. comments: ${JSON.stringify(prReviews)}`);
   const prReviewsByUser: Record<string, string[]> = {};
   for (const review of prReviews) {
@@ -243,7 +225,7 @@ export const incentivizePullRequestReviews = async () => {
     }
     logger.info(`incentivizePullRequestReviews: Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
-    const amountInETH = rewardValue.mul(baseMultiplier).div(1000);
+    const amountInETH = rewardValue.mul(baseMultiplier);
     if (amountInETH.gt(paymentPermitMaxPrice)) {
       logger.info(`incentivizePullRequestReviews: Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
       continue;
