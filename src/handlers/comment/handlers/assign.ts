@@ -7,6 +7,7 @@ import { tableComment } from "./table";
 import { bountyInfo } from "../../wildcard";
 import { ASSIGN_COMMAND_ENABLED, GLOBAL_STRINGS } from "../../../configs";
 import { isParentIssue } from "../../pricing";
+import ms from "ms";
 
 export const assign = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -113,6 +114,7 @@ export const assign = async (body: string) => {
   }
 
   const isBountyStale = new Date().getTime() - new Date(issue.created_at).getTime() > staleBounty;
+  const days = Math.floor((new Date().getTime() - new Date(issue.created_at).getTime()) / (1000 * 60 * 60 * 24));
 
   // double check whether the assign message has been already posted or not
   logger.info(`Creating an issue comment: ${comment.commit}`);
@@ -121,7 +123,7 @@ export const assign = async (body: string) => {
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
     const { multiplier, reason, bounty } = await getMultiplierInfoToDisplay(payload.sender.login, id?.toString(), issue);
-    return tableComment({ ...comment, multiplier, reason, bounty, isBountyStale }) + comment.tips;
+    return tableComment({ ...comment, multiplier, reason, bounty, isBountyStale, days }) + comment.tips;
   }
   return;
 };

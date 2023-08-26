@@ -62,35 +62,40 @@
   "command-settings": [
     {
       "name": "start",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "stop",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "wallet",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "payout",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "multiplier",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "query",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "allow",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "autopay",
-      "enabled": false
+      "enabled": true
+    },
+    {
+      "name": "assign",
+      "enabled": true,
+      "staleBountyTime": 120000
     }
   ],
   "incentives": {

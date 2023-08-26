@@ -1,7 +1,7 @@
 import ms from "ms";
 
 import { BotConfig, BotConfigSchema } from "../types";
-import { DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFAULT_PERMIT_BASE_URL } from "../configs";
+import { DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFAULT_PERMIT_BASE_URL, STALE_BOUNTY_TIME } from "../configs";
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
@@ -76,7 +76,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     command: commandSettings,
     assign: {
       bountyHunterMax: bountyHunterMax,
-      staleBountyTime: ms(process.env.STALE_BOUNTY_TIME || "30d"),
+      staleBountyTime: ms(STALE_BOUNTY_TIME),
     },
     sodium: {
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",

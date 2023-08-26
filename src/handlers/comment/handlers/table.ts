@@ -5,6 +5,7 @@ export const tableComment = ({
   reason,
   bounty,
   isBountyStale,
+  days,
 }: {
   deadline: string;
   wallet: string;
@@ -12,13 +13,14 @@ export const tableComment = ({
   reason?: string;
   bounty?: string;
   isBountyStale?: boolean;
+  days?: number;
 }) => {
   return `
 <code>
   <table>
   <tr>
   <td>Ready to begin?</td>
-  ${!isBountyStale ? `<td>You can start right away!</td>` : `<td>Please wait for confirmation first.</td>`}
+  ${!isBountyStale ? `<td>You can start right away!</td>` : `<td>This task was created over ${days} days ago. Please verify that it is still current.</td>`}
   </tr>
   <tr>
     <td>Deadline</td>
