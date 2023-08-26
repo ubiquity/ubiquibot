@@ -58,6 +58,8 @@ export const PayoutConfigSchema = Type.Object({
 export const UnassignConfigSchema = Type.Object({
   followUpTime: Type.Number(),
   disqualifyTime: Type.Number(),
+  timeRangeForMaxIssue: Type.Number(),
+  timeRangeForMaxIssueEnabled: Type.Boolean(),
 });
 
 export const ModeSchema = Type.Object({

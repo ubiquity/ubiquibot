@@ -1,13 +1,13 @@
 import { Context } from "probot";
-import { getBotContext, getLogger } from "../bindings";
+import { getBotContext, getLogger, loadConfig } from "../bindings";
 import { AssignEvent, Comment, IssueType, Payload } from "../types";
 import { checkRateLimitGit } from "../utils";
-import { DEFAULT_TIME_RANGE_FOR_MAX_ISSUE, DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED } from "../configs";
 
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
+
   if (!payload.issue) return;
 
   const labels = payload.issue.labels;
@@ -632,8 +632,10 @@ export const getCommitsOnPullRequest = async (pullNumber: number) => {
 };
 
 export const getAvailableOpenedPullRequests = async (username: string) => {
-  if (!DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED) return [];
   const context = getBotContext();
+  const botConfig = await loadConfig(context);
+  if (!botConfig.unassign.timeRangeForMaxIssueEnabled) return [];
+
   const opened_prs = await getOpenedPullRequests(username);
 
   const result = [];
@@ -647,7 +649,7 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
       if (approvedReviews) result.push(pr);
     }
 
-    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= DEFAULT_TIME_RANGE_FOR_MAX_ISSUE) {
+    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= botConfig.unassign.timeRangeForMaxIssue) {
       result.push(pr);
     }
   }
