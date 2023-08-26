@@ -115,7 +115,8 @@
         "blockquote": 0,
         "em": 0,
         "strong": 0,
-        "hr": 0
+        "hr": 0,
+        "del": 0
       },
       "totals": {
         "word": 0
