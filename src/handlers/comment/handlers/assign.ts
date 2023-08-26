@@ -20,8 +20,6 @@ export const assign = async (body: string) => {
 
   const staleBounty = config.assign.staleBountyTime;
 
-  console.log("staleBounty", staleBounty);
-
   logger.info(`Received '/start' command from user: ${payload.sender.login}, body: ${body}`);
   const issue = (_payload as Payload).issue;
 
