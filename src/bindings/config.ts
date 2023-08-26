@@ -61,10 +61,10 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
     },
     unassign: {
-      defaultTimeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE
+      timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE
         ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE)
         : DEFAULT_TIME_RANGE_FOR_MAX_ISSUE,
-      defaultTimeRangeForMaxIssueEnabled: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED
+      timeRangeForMaxIssueEnabled: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED
         ? process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED == "true"
         : DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED,
       followUpTime: ms(process.env.FOLLOW_UP_TIME || DEFAULT_FOLLOWUP_TIME),

@@ -47,8 +47,8 @@ export const PayoutConfigSchema = Type.Object({
 export const UnassignConfigSchema = Type.Object({
   followUpTime: Type.Number(),
   disqualifyTime: Type.Number(),
-  defaultTimeRangeForMaxIssue: Type.Number(),
-  defaultTimeRangeForMaxIssueEnabled: Type.Boolean(),
+  timeRangeForMaxIssue: Type.Number(),
+  timeRangeForMaxIssueEnabled: Type.Boolean(),
 });
 
 export const ModeSchema = Type.Object({
