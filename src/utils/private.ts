@@ -12,9 +12,9 @@ import {
   getNetworkId,
   getPriorityLabels,
   getTimeLabels,
-  getCommentItemPrice,
   getDefaultLabels,
   getPromotionComment,
+  getIncentives,
   getAssistivePricing,
   getCommandSettings,
   getRegisterWalletWithVerification,
@@ -53,6 +53,17 @@ export interface WideLabel {
   value?: number | undefined;
 }
 
+export interface CommentIncentives {
+  elements: Record<string, number>;
+  totals: {
+    word: number;
+  };
+}
+
+export interface Incentives {
+  comment: CommentIncentives;
+}
+
 export interface CommandObj {
   name: string;
   enabled: boolean;
@@ -71,7 +82,7 @@ export interface WideConfig {
   "comment-incentives"?: boolean;
   "assistive-pricing"?: boolean;
   "max-concurrent-assigns"?: number;
-  "comment-element-pricing"?: Record<string, number>;
+  incentives?: Incentives;
   "default-labels"?: string[];
   "register-wallet-with-verification"?: boolean;
 }
@@ -92,6 +103,18 @@ export const parseYAML = (data?: string): WideConfig | undefined => {
   } catch (error) {
     return undefined;
   }
+};
+
+export const getOrgAndRepoFromPath = (path: string) => {
+  const parts = path.split("/");
+
+  if (parts.length !== 2) {
+    return { org: null, repo: null };
+  }
+
+  const [org, repo] = parts;
+
+  return { org, repo };
 };
 
 export const getPrivateKey = async (cipherText: string): Promise<string | undefined> => {
@@ -157,7 +180,7 @@ export const getWideConfig = async (context: Context) => {
     disableAnalytics: getAnalyticsMode(configs),
     bountyHunterMax: getBountyHunterMax(configs),
     incentiveMode: getIncentiveMode(configs),
-    commentElementPricing: getCommentItemPrice(configs),
+    incentives: getIncentives(configs),
     defaultLabels: getDefaultLabels(configs),
     promotionComment: getPromotionComment(configs),
     registerWalletWithVerification: getRegisterWalletWithVerification(configs),

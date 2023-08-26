@@ -160,14 +160,23 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
   const logger = getLogger();
   const { supabase } = getAdapters();
 
-  const { data, error } = await supabase.from("wallets").select("user_name").eq("user_name", username).single();
-  if (data) {
-    await supabase.from("wallets").upsert({
+  const { data, error } = await supabase.from("wallets").select("user_name").eq("user_name", username);
+  if (error) {
+    logger.error(`Checking wallet address failed, error: ${JSON.stringify(error)}`);
+    throw new Error(`Checking wallet address failed, error: ${JSON.stringify(error)}`);
+  }
+
+  if (data && data.length > 0) {
+    const { data: _data, error: _error } = await supabase.from("wallets").upsert({
       user_name: username,
       wallet_address: address,
       updated_at: new Date().toUTCString(),
     });
-    logger.info(`Upserting a wallet address done, { data: ${data}, error: ${error} }`);
+    if (_error) {
+      logger.error(`Upserting a wallet address failed, error: ${JSON.stringify(_error)}`);
+      throw new Error(`Upserting a wallet address failed, error: ${JSON.stringify(_error)}`);
+    }
+    logger.info(`Upserting a wallet address done, { data: ${JSON.stringify(_data)} }`);
   } else {
     const { data: _data, error: _error } = await supabase.from("wallets").insert({
       user_name: username,
@@ -175,7 +184,11 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
       created_at: new Date().toUTCString(),
       updated_at: new Date().toUTCString(),
     });
-    logger.info(`Creating a new wallet_table record done, { data: ${_data}, error: ${_error?.message} }`);
+    if (_error) {
+      logger.error(`Creating a new wallet_table record failed, error: ${JSON.stringify(_error)}`);
+      throw new Error(`Creating a new wallet_table record failed, error: ${JSON.stringify(_error)}`);
+    }
+    logger.info(`Creating a new wallet_table record done, { data: ${JSON.stringify(_data)} }`);
   }
 };
 

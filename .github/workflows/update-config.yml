@@ -1,0 +1,98 @@
+name: Pull Request Action
+permissions: write-all
+on:
+  workflow_dispatch:
+
+env:
+  GH_TOKEN: ${{ secrets.ADD_TO_PROJECT_PAT }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Install jq and yq
+        run: |
+          sudo apt-get -y install jq
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+      
+      - name: Get UbiquiBot Token
+        uses: tibdex/github-app-token@v1.7.0
+        id: get_installation_token
+        with:
+          app_id: ${{ secrets.UBIQUITY_BOUNTY_BOT_APP_ID }}
+          private_key: ${{ secrets.UBIQUITY_BOUNTY_BOT_PRIVATE_KEY }}
+
+      - name: Update Config Params and Create Pull Requests
+        run: |
+          urls=$(curl -sSL https://raw.githubusercontent.com/ubiquity/devpool-directory/development/projects.json | jq -r '.urls[]')
+         
+          for url in $urls
+          do
+            repoName=$(basename $url)
+            ownerName=$(echo $url | awk -F/ '{print $(NF-1)}')
+            
+            git clone $url $repoName
+            cd $repoName
+            defaultBranch=$(git branch --show-current)
+            
+            # make a branch to update config #
+            git branch update
+            git checkout update
+            
+            curl -sSL https://raw.githubusercontent.com/ubiquity/ubiquibot/development/ubiquibot-config-default.json > default.json
+            declare -A param_mapping=(
+              ["evm-network-id"]="network-id chain-id"
+              ["price-multiplier"]="base-multiplier"
+              #add more configs as needed
+            )
+            
+            ### update configs ###
+            # Iterate over the mapping and perform updates using sed
+            for new_param in "${!param_mapping[@]}"
+            do
+              old_params="${param_mapping[$new_param]}"
+              for old_param in $old_params
+              do
+                # only update param if the old ones exist
+                exist_old_param=$(yq "has(\"$old_param\")" .github/ubiquibot-config.yml)
+                if $exist_old_param; then
+                    yq ".$new_param = .$old_param | del(.$old_param)" .github/ubiquibot-config.yml > temp.yml
+                    mv temp.yml .github/ubiquibot-config.yml
+                fi 
+              done
+              # if new param still doesent exist add default from ubiquibot-config-default.json
+              exist_new_param=$(yq "has(\"$new_param\")" .github/ubiquibot-config.yml)
+              if ! $exist_new_param; then
+                echo adding
+                def_val=$(jq -r ".[\"$new_param\"]" ubiquibot-config-default.json)
+                yq ".$new_param=$def_val" .github/ubiquibot-config.yml > temp.yml
+                mv temp.yml .github/ubiquibot-config.yml
+              fi
+            done
+            
+            git config user.email "113181824+UbiquiBot[bot]@users.noreply.github.com" 
+            git config user.name "UbiquiBot[bot]"   
+            
+            git add .github/ubiquibot-config.yml
+            git commit -m "build: use latest ubiquibot config setup"
+            git remote set-url origin https://${{ secrets.ADD_TO_PROJECT_PAT }}@github.com/$ownerName/$repoName.git
+            git push -f origin update
+                       
+            curl -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ steps.get_installation_token.outputs.token }}"\
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+             https://api.github.com/repos/$ownerName/$repoName/pulls \
+            -d '{
+             "title": "build: use latest ubiquibot config setup",
+             "base": "'"$defaultBranch"'",
+             "head": "update"
+             }'
+            cd ..
+          done
