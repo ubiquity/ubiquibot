@@ -22,7 +22,7 @@ export const ASSIGN_COMMAND_ENABLED = true;
  */
 export const DEFAULT_FOLLOWUP_TIME = "4 days"; // 4 days
 export const DEFAULT_DISQUALIFY_TIME = "7 days"; // 7 days
-export const STALE_BOUNTY_TIME = "30d"; // 2 minutes
+export const STALE_BOUNTY_TIME = "30d"; // 30 days
 
 export const DEFAULT_NETWORK_ID = 1; // ethereum
 export const DEFAULT_RPC_ENDPOINT = "https://rpc-bot.ubq.fi/v1/mainnet";

@@ -21,6 +21,7 @@ import {
 } from "./helpers";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
+import { STALE_BOUNTY_TIME } from "../configs";
 import ms from "ms";
 
 const CONFIG_REPO = "ubiquibot-config";
@@ -83,6 +84,7 @@ export interface WideConfig {
   "comment-incentives"?: boolean;
   "assistive-pricing"?: boolean;
   "max-concurrent-assigns"?: number;
+  "stale-bounty-time"?: string;
   incentives?: Incentives;
   "default-labels"?: string[];
   "register-wallet-with-verification"?: boolean;
@@ -185,6 +187,7 @@ export const getWideConfig = async (context: Context) => {
     defaultLabels: getDefaultLabels(configs),
     promotionComment: getPromotionComment(configs),
     registerWalletWithVerification: getRegisterWalletWithVerification(configs),
+    staleBountyTime: parsedDefault["stale-bounty-time"] == "0" ? ms(STALE_BOUNTY_TIME) : parsedDefault["stale-bounty-time"],
   };
 
   return configData;

@@ -7,7 +7,6 @@ import { tableComment } from "./table";
 import { bountyInfo } from "../../wildcard";
 import { ASSIGN_COMMAND_ENABLED, GLOBAL_STRINGS } from "../../../configs";
 import { isParentIssue } from "../../pricing";
-import ms from "ms";
 
 export const assign = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -20,6 +19,8 @@ export const assign = async (body: string) => {
   const id = organization?.id || repository?.id; // repository?.id as fallback
 
   const staleBounty = config.assign.staleBountyTime;
+
+  console.log("staleBounty", staleBounty);
 
   logger.info(`Received '/start' command from user: ${payload.sender.login}, body: ${body}`);
   const issue = (_payload as Payload).issue;
