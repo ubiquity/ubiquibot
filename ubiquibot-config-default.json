@@ -110,7 +110,12 @@
         "code": 0,
         "table": 0,
         "td": 0,
-        "tr": 0
+        "tr": 0,
+        "br": 0,
+        "blockquote": 0,
+        "em": 0,
+        "strong": 0,
+        "hr": 0
       },
       "totals": {
         "word": 0
