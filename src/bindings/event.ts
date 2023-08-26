@@ -1,5 +1,4 @@
 import { Context } from "probot";
-import { createLogger } from "@logdna/logger";
 import { createAdapters } from "../adapters";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
@@ -7,6 +6,7 @@ import { BotConfig, GithubEvent, Payload, PayloadSchema } from "../types";
 import { Adapters } from "../types/adapters";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
+import { GitHubLogger } from "../adapters/supabase";
 
 let botContext: Context = {} as Context;
 export const getBotContext = () => botContext;
@@ -23,6 +23,7 @@ export type Logger = {
   warn: (msg: string | object, options?: JSON) => void;
   error: (msg: string | object, options?: JSON) => void;
 };
+
 let logger: Logger;
 export const getLogger = (): Logger => logger;
 
@@ -35,14 +36,20 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   botConfig = await loadConfig(context);
 
+  adapters = createAdapters(botConfig);
+
   const options = {
     app: "UbiquiBot",
-    level: botConfig.log.level,
+    // level: botConfig.log.level,
   };
-  logger = createLogger(botConfig.log.ingestionKey, options) as Logger;
+
+  logger = new GitHubLogger(options.app, botConfig.log.logEnvironment, botConfig.log.level, botConfig.log.retryLimit); // contributors will see logs in console while on development env
   if (!logger) {
     return;
   }
+
+  // Create adapters for telegram, supabase, twitter, discord, etc
+  logger.info("Creating adapters for supabase, telegram, twitter, etc...");
 
   logger.info(
     `Config loaded! config: ${JSON.stringify({
@@ -63,10 +70,6 @@ export const bindEvents = async (context: Context): Promise<void> => {
     logger.info(`Skipping the event. reason: not configured`);
     return;
   }
-
-  // Create adapters for telegram, supabase, twitter, discord, etc
-  logger.info("Creating adapters for supabase, telegram, twitter, etc...");
-  adapters = createAdapters(botConfig);
 
   // Skip validation for installation event and push
   if (!NO_VALIDATION.includes(eventName)) {
@@ -112,8 +115,8 @@ export const bindEvents = async (context: Context): Promise<void> => {
     await postAction();
   }
 
-  // Skip wildcard handlers for installation event
-  if (eventName !== GithubEvent.INSTALLATION_ADDED_EVENT) {
+  // Skip wildcard handlers for installation event and push event
+  if (eventName !== GithubEvent.INSTALLATION_ADDED_EVENT && eventName !== GithubEvent.PUSH_EVENT) {
     // Run wildcard handlers
     logger.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
     for (const wildcardProcessor of wildcardProcessors) {
