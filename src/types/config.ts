@@ -3,8 +3,6 @@ import { Level } from "../adapters/supabase";
 
 const LabelItemSchema = Type.Object({
   name: Type.String(),
-  weight: Type.Number(),
-  value: Type.Optional(Type.Number()),
 });
 export type LabelItem = Static<typeof LabelItemSchema>;
 
@@ -58,6 +56,8 @@ export const PayoutConfigSchema = Type.Object({
 export const UnassignConfigSchema = Type.Object({
   followUpTime: Type.Number(),
   disqualifyTime: Type.Number(),
+  timeRangeForMaxIssue: Type.Number(),
+  timeRangeForMaxIssueEnabled: Type.Boolean(),
 });
 
 export const ModeSchema = Type.Object({

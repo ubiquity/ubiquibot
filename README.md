@@ -57,13 +57,11 @@ To test the bot, you can:
 `time-labels` are labels for marking the time limit of the bounty:
 
 - `name` is a human-readable name
-- `weight` is a number that will be used to calculate the bounty price
 - `value` is number of seconds that corresponds to the time limit of the bounty
 
 `priority-labels` are labels for marking the priority of the bounty:
 
 - `name` is a human-readable name
-- `weight` is a number that will be used to calculate the bounty price
 
 `command-settings` are setting to enable or disable a command
 
