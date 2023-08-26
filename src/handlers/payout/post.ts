@@ -62,7 +62,7 @@ export const incentivizeComments = async () => {
     return;
   }
 
-  const issueComments = await getAllIssueComments(issue.number, "full");
+  const issueComments = await getAllIssueComments(issue.number, "raw");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
