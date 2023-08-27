@@ -7,6 +7,11 @@ import { BasePromptTemplate, PromptTemplate } from "langchain";
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 
+interface StreamlinedComment {
+  login: string;
+  body: string;
+}
+
 const openAI = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -18,17 +23,8 @@ Whenever possible, include relevant examples to clarify your explanations and ma
 Feel free to refer to relevant documentation or resources to provide the most accurate and up-to-date information. \n
 When referring to external resources, ensure proper attribution by providing links and acknowledging the original authors. \n
 If you're unsure about an answer, it's better to admit it than to provide incorrect information. State that you don't have the required information. \n
-For questions that require additional information, ask the user to provide more details. \n
-When answering a follow-up question, refer to the original question to provide context and add an index. \n
-
-
-ALWAYS REPLY IN THE FOLLOWING FORMAT: "{User: {User}} \n {Answer #(index): {Answer}}"\n\n
+If you require additional information, ask the user to provide more details. \n
 `;
-
-async function replaceCommentIDWithBody(commentID: number, comments: any[]): Promise<string | undefined> {
-  const matchingComment = comments.find((comment) => comment.id === commentID);
-  return matchingComment ? matchingComment.body : undefined;
-}
 
 export const askGPT = async (question: string, chatHistory: CreateChatCompletionRequestMessage[]) => {
   const logger = getLogger();
@@ -71,88 +67,58 @@ export const ask = async (body: string) => {
     return `This command can only be used on issues`;
   }
 
-  const regex = /^\/ask\s([\w-]+)\s(issue|pull)\s(\d+)\s(\d+)\s"(.+)"$/;
+  const regex = /^\/ask\s([\w-]+)\s(\d+)\s(\d+)\s"(.+)"$/;
 
   const matches = body.match(regex);
   const chatHistory: CreateChatCompletionRequestMessage[] = [];
 
   if (matches) {
-    const [, repoName, action, actionNumber, commentID, body] = matches;
+    const [, repoName, actionNumber, commentID, body] = matches;
     initQContext = commentID;
 
     const comments = await getAllIssueComments(issue.number);
-    const commentsWithAsk = comments.filter((content) => content.body.startsWith(`/ask`) && content.user.type == UserType.User);
-    const commentsWithAnswer = comments.filter((content) => content.body.includes(`Answer #`) && content.user.type == UserType.Bot);
-    const accsThatHaveAsked: string[] = [];
 
-    let senderAskedQuestions = [];
-    const senderAnsweredQuestions: string[] = [];
+    const streamlined: StreamlinedComment[] = [];
 
-    commentsWithAsk.forEach((comment) => {
-      accsThatHaveAsked.push(comment.user.login);
+    comments.forEach((comment) => {
+      if (comment.user.type == UserType.User) {
+        streamlined.push({
+          login: comment.user.login,
+          body: comment.body,
+        });
+      }
     });
 
-    commentsWithAnswer.forEach((comment) => {
-      accsThatHaveAsked.push(comment.user.login);
-    });
+    initQContext = streamlined;
 
     // Have they cited a commentID?
-    if (initQContext != "0") {
-      // Does the commentID live on a pull or an issue
-      if (action == "issue") {
-        const isItThisIssue = issue.number == Number(actionNumber);
-        if (isItThisIssue) {
-          // replace commentID with actual comment if it lives on this issue
-          initQContext = await replaceCommentIDWithBody(Number(commentID), comments);
-        } else {
-          // find the matching comment in whatever issue it is in
-          const allComments = await getAllIssueComments(Number(actionNumber));
-          const matchingComment = await replaceCommentIDWithBody(Number(commentID), allComments);
+    const isItThisIssue = issue.number == Number(actionNumber);
+    if (isItThisIssue) {
+      // replace commentID with actual comment if it lives on this issue
+      initQContext = streamlined;
+    } else {
+      // find the matching comment in whatever issue it is in
+      try {
+        const allComments = await getAllIssueComments(Number(actionNumber));
+        const otherRepoStreamlined: StreamlinedComment[] = [];
 
-          if (matchingComment) {
-            initQContext = matchingComment;
-          } else {
-            return `Could not find comment in ${repoName} with issue number: ${actionNumber}`;
+        allComments.forEach((comment) => {
+          if (comment.user.type == UserType.User) {
+            otherRepoStreamlined.push({
+              login: comment.user.login,
+              body: comment.body,
+            });
           }
-        }
-      } else if (action == "pull") {
-        const isItThisPull = context.pullRequest().pull_number == Number(actionNumber);
-        if (isItThisPull) {
-          initQContext = await replaceCommentIDWithBody(Number(commentID), comments);
-        } else {
-          // find the matching comment in whatever pull it is in
-          const allComments = await context.octokit.issues.listComments({
-            owner: context.repo().owner,
-            repo: repoName,
-            issue_number: Number(actionNumber),
-          });
+        });
 
-          const matchingComment = await replaceCommentIDWithBody(Number(commentID), allComments.data);
-          if (matchingComment) {
-            initQContext = matchingComment;
-          } else {
-            return `Could not find comment in ${repoName} with pull number: ${actionNumber}`;
-          }
-        }
+        initQContext = otherRepoStreamlined;
+      } catch (err) {
+        return `Could not find comment in ${repoName} with issue number: ${actionNumber}`;
       }
     }
 
-    // TODO: remove or refactor as this is useless as asked will always be > 0
-    // TODO: refactor to use the new PromptTemplate
-    // TODO: Handle multiple exchanges on by same user across multiple comments
-    // TODO: Currently grabbing all AI comments, need to distinguish which Q&As belong to the current interaction as there could be multiple interactions regarding different subjects.
-    senderAskedQuestions = comments.filter((content) => content.user.login == sender && content.body.startsWith(`/ask`));
     // has this sender asked any questions on this issue before?
-    if (senderAskedQuestions.length > 0) {
-      senderAskedQuestions.forEach((question, i) => {
-        const answer = comments.find(
-          (content) => content.user.login == "ubiquibot" && content.body.includes(`Answer #${i}`) && content.body.includes(`${sender}`)
-        );
-        if (answer) {
-          senderAnsweredQuestions.push(answer.body);
-        }
-      });
-
+    if (streamlined.length > 0) {
       // Push the original context and system message to the chat history
       chatHistory.push(
         {
@@ -162,30 +128,15 @@ export const ask = async (body: string) => {
         } as CreateChatCompletionRequestMessage,
         {
           role: "system",
-          content: "Original Question: " + initQContext,
+          content: "Question Context: " + initQContext,
+          name: sender,
+        } as CreateChatCompletionRequestMessage,
+        {
+          role: "user",
+          content: body,
           name: sender,
         } as CreateChatCompletionRequestMessage
       );
-
-      // Push the rest of the chat history to the chat history
-      for (let i = 0; i < senderAskedQuestions.length; i++) {
-        const answeredYet = !senderAnsweredQuestions;
-
-        if (answeredYet) {
-          chatHistory.push(
-            {
-              role: "user",
-              content: !senderAskedQuestions[i].body ? initQContext : senderAskedQuestions[i].body,
-              name: sender,
-            } as CreateChatCompletionRequestMessage,
-            {
-              role: "assistant",
-              content: !senderAnsweredQuestions[i] ? "No answer found" : senderAnsweredQuestions[i],
-              name: "UbiquityAI",
-            } as CreateChatCompletionRequestMessage
-          );
-        }
-      }
 
       chatHistory.push({
         role: "user",
@@ -202,6 +153,11 @@ export const ask = async (body: string) => {
           name: "system",
         } as CreateChatCompletionRequestMessage,
         {
+          role: "system",
+          content: "Question Context: " + initQContext,
+          name: sender,
+        } as CreateChatCompletionRequestMessage,
+        {
           role: "user",
           content: body,
           name: sender,
@@ -212,11 +168,23 @@ export const ask = async (body: string) => {
       return "Invalid syntax for ask \n usage: '/ask (repo name) (pull/issue) (action number) (comment ID) (question)' \n  ex-1 /ask ubiquibot 663 1690784310 What is pi?";
     }
 
+    // chat history as a string, length
+    console.log("=====================================");
+    console.log("chat history length as a string: ", JSON.stringify(chatHistory).length);
+    console.log("=====================================");
+    console.log("chat history length: ", chatHistory.length);
+    console.log("=====================================");
+    console.log("chat history: ", chatHistory);
+    console.log("=====================================");
+    console.log("chat history: ", JSON.stringify(chatHistory));
+    console.log("=====================================");
     const gptResponse = await askGPT(body, chatHistory);
     if (!gptResponse) {
       return `Error getting response from GPT`;
     }
 
     return gptResponse;
+  } else {
+    return "Invalid syntax for ask \n usage: '/ask (repo name) (pull/issue) (action number) (comment ID) (question)' \n  ex-1 /ask ubiquibot 663 1690784310 What is pi?";
   }
 };
