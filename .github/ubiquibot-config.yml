@@ -1,8 +1,5 @@
 issue-creator-multiplier: 4
 price-multiplier: 1.5
-max-concurrent-bounties: 2
-payment-permit-max-price: 1000
-register-wallet-with-verification: false
 
 default-labels:
   - "Time: <1 Hour"
