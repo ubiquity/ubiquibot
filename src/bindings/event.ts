@@ -34,7 +34,12 @@ export const bindEvents = async (context: Context): Promise<void> => {
   botContext = context;
   const payload = context.payload as Payload;
 
-  botConfig = await loadConfig(context);
+  let botConfigError;
+  try {
+    botConfig = await loadConfig(context);
+  } catch (err) {
+    botConfigError = err;
+  }
 
   adapters = createAdapters(botConfig);
 
@@ -45,6 +50,19 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   logger = new GitHubLogger(options.app, botConfig.log.logEnvironment, botConfig.log.level, botConfig.log.retryLimit); // contributors will see logs in console while on development env
   if (!logger) {
+    return;
+  }
+
+  if (botConfigError) {
+    logger.error(
+      `Error loading config: ${botConfigError}. Config: ${JSON.stringify({
+        price: botConfig.price,
+        unassign: botConfig.unassign,
+        mode: botConfig.mode,
+        log: botConfig.log,
+        wallet: botConfig.wallet,
+      })}`
+    );
     return;
   }
 
