@@ -71,21 +71,22 @@ export const validateConfigChange = async () => {
 
   // check for modified or added files and check for specified file
   if (changes.includes(BASE_RATE_FILE)) {
-    const latestCommitSha = payload.after;
+    const commitSha = payload.commits.filter((commit) => commit.modified.includes(BASE_RATE_FILE) || commit.added.includes(BASE_RATE_FILE)).reverse()[0]?.id;
+
     const configFileContent = await getFileContent(
       payload.repository.owner.login,
       payload.repository.name,
       payload.ref.split("refs/heads/")[1],
       BASE_RATE_FILE,
-      latestCommitSha
+      commitSha
     );
+
     if (configFileContent) {
       const decodedConfig = Buffer.from(configFileContent, "base64").toString();
       const config = parseYAML(decodedConfig);
       const valid = ajv.validate(WideOrgConfigSchema, config); // additionalProperties: false is required to prevent unknown properties from being allowed
       if (!valid) {
         // post commit comment
-        const commitSha = payload.commits.filter((commit) => commit.modified.includes(BASE_RATE_FILE) || commit.added.includes(BASE_RATE_FILE))[0]?.id;
         await context.octokit.rest.repos.createCommitComment({
           owner: payload.repository.owner.login,
           repo: payload.repository.name,
