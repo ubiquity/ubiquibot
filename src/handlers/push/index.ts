@@ -87,11 +87,18 @@ export const validateConfigChange = async () => {
       const valid = ajv.validate(WideOrgConfigSchema, config); // additionalProperties: false is required to prevent unknown properties from being allowed
       if (!valid) {
         // post commit comment
+        const additionalProperties = ajv.errors?.map((error) => {
+          if (error.keyword === "additionalProperties") {
+            return error.params.additionalProperty;
+          }
+        });
         await context.octokit.rest.repos.createCommitComment({
           owner: payload.repository.owner.login,
           repo: payload.repository.name,
           commit_sha: commitSha,
-          body: `@${payload.sender.login} Config validation failed! Error: ${ajv.errorsText()}`,
+          body: `@${payload.sender.login} Config validation failed! Error: ${ajv.errorsText()}. ${
+            additionalProperties && additionalProperties.length > 0 ? `Unnecessary properties: ${additionalProperties.join(", ")}` : ""
+          }`,
           path: BASE_RATE_FILE,
         });
       }
