@@ -2,6 +2,7 @@ import axios from "axios";
 import { HTMLElement, parse } from "node-html-parser";
 import { getPullByNumber } from "./issue";
 import { getBotContext } from "../bindings";
+import { Payload } from "../types";
 
 interface GitParser {
   owner: string;
@@ -49,6 +50,8 @@ export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitPars
 export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser) => {
   try {
     const { data } = await axios.get(`https://github.com/${owner}/${repo}/issues/${issue_number}`);
+    const context = getBotContext();
+    const payload = context.payload as Payload;
     const dom = parse(data);
     const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
     const linkedPRs = devForm.querySelectorAll(".my-1");
@@ -56,8 +59,14 @@ export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser
     let linkedPullRequest;
     for (const linkedPr of linkedPRs) {
       const prHref = linkedPr.querySelector("a")?.attrs?.href || "";
+      const parts = prHref.split("/");
+      // extract the organization name and repo name from the link:(e.g. "https://github.com/wannacfuture/ubiquibot/pull/5";)
+      const organization = parts[parts.length - 4];
+      const repository = parts[parts.length - 3];
+
+      if (`${organization}/${repository}` !== payload.repository.full_name) continue;
       const prNumber = prHref.substring(prHref.lastIndexOf("/") + 1);
-      const pr = await getPullByNumber(getBotContext(), Number(prNumber));
+      const pr = await getPullByNumber(context, Number(prNumber));
       if (!pr || !pr.merged) continue;
 
       if (!linkedPullRequest) linkedPullRequest = pr;
@@ -65,8 +74,6 @@ export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser
         linkedPullRequest = pr;
       }
     }
-    console.log("---------------------------");
-    console.log(linkedPullRequest);
     return linkedPullRequest;
   } catch (error) {
     return "";
