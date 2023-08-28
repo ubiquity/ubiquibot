@@ -21,6 +21,7 @@ import {
 } from "./helpers";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
+import { Static, Type } from "@sinclair/typebox";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
@@ -47,49 +48,57 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo", 
   }
 };
 
-export interface WideLabel {
-  name: string;
-}
+const WideLabelSchema = Type.Object({
+  name: Type.String(),
+});
 
-export interface CommentIncentives {
-  elements: Record<string, number>;
-  totals: {
-    word: number;
-  };
-}
+export type WideLabel = Static<typeof WideLabelSchema>;
 
-export interface Incentives {
-  comment: CommentIncentives;
-}
+const CommandObjSchema = Type.Object({
+  name: Type.String(),
+  enabled: Type.Boolean(),
+});
 
-export interface CommandObj {
-  name: string;
-  enabled: boolean;
-}
+export type CommandObj = Static<typeof CommandObjSchema>;
 
-export interface WideConfig {
-  "evm-network-id"?: number;
-  "price-multiplier"?: number;
-  "issue-creator-multiplier": number;
-  "time-labels"?: WideLabel[];
-  "priority-labels"?: WideLabel[];
-  "payment-permit-max-price"?: number;
-  "command-settings"?: CommandObj[];
-  "promotion-comment"?: string;
-  "disable-analytics"?: boolean;
-  "comment-incentives"?: boolean;
-  "assistive-pricing"?: boolean;
-  "max-concurrent-assigns"?: number;
-  incentives?: Incentives;
-  "default-labels"?: string[];
-  "register-wallet-with-verification"?: boolean;
-}
+const IncentivesSchema = Type.Object({
+  comment: Type.Object({
+    elements: Type.Record(Type.String(), Type.Number()),
+    totals: Type.Object({
+      word: Type.Number(),
+    }),
+  }),
+});
+
+export type Incentives = Static<typeof IncentivesSchema>;
+
+export const WideConfigSchema = Type.Object({
+  "evm-network-id": Type.Optional(Type.Number()),
+  "price-multiplier": Type.Optional(Type.Number()),
+  "issue-creator-multiplier": Type.Number(),
+  "time-labels": Type.Optional(Type.Array(WideLabelSchema)),
+  "priority-labels": Type.Optional(Type.Array(WideLabelSchema)),
+  "payment-permit-max-price": Type.Optional(Type.Number()),
+  "command-settings": Type.Optional(Type.Array(CommandObjSchema)),
+  "promotion-comment": Type.Optional(Type.String()),
+  "disable-analytics": Type.Optional(Type.Boolean()),
+  "comment-incentives": Type.Optional(Type.Boolean()),
+  "assistive-pricing": Type.Optional(Type.Boolean()),
+  "max-concurrent-assigns": Type.Optional(Type.Number()),
+  incentives: Type.Optional(IncentivesSchema),
+  "default-labels": Type.Optional(Type.Array(Type.String())),
+  "register-wallet-with-verification": Type.Optional(Type.Boolean()),
+});
+
+export type WideConfig = Static<typeof WideConfigSchema>;
 
 export type WideRepoConfig = WideConfig;
 
-export interface WideOrgConfig extends WideConfig {
-  "private-key-encrypted"?: string;
-}
+export const WideOrgConfigSchema = Type.Composite([Type.Object({ "private-key-encrypted": Type.Optional(Type.String()) }), WideConfigSchema], {
+  additionalProperties: false,
+});
+
+export type WideOrgConfig = Static<typeof WideOrgConfigSchema>;
 
 export const parseYAML = (data?: string): WideConfig | undefined => {
   try {

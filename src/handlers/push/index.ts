@@ -1,6 +1,10 @@
 import { getBotContext, getLogger } from "../../bindings";
+import { getFileContent } from "../../helpers";
 import { CommitsPayload, PushPayload } from "../../types";
+import { ajv } from "../../utils";
+import { parseYAML } from "../../utils/private";
 import { updateBaseRate } from "./update-base";
+import { WideOrgConfigSchema } from "../../utils/private";
 
 const ZERO_SHA = "0000000000000000000000000000000000000000";
 const BASE_RATE_FILE = ".github/ubiquibot-config.yml";
@@ -43,5 +47,53 @@ export const runOnPush = async () => {
   if (changes.includes(BASE_RATE_FILE)) {
     // update base rate
     await updateBaseRate(context, payload, BASE_RATE_FILE);
+  }
+};
+
+export const validateConfigChange = async () => {
+  const logger = getLogger();
+
+  const context = getBotContext();
+  const payload = context.payload as PushPayload;
+
+  if (!payload.ref.startsWith("refs/heads/")) {
+    logger.debug("Skipping push events, not a branch");
+    return;
+  }
+
+  const changes = getCommitChanges(payload.commits);
+
+  // skip if empty
+  if (changes && changes.length === 0) {
+    logger.debug("Skipping push events, file change empty");
+    return;
+  }
+
+  // check for modified or added files and check for specified file
+  if (changes.includes(BASE_RATE_FILE)) {
+    const latestCommitSha = payload.after;
+    const configFileContent = await getFileContent(
+      payload.repository.owner.login,
+      payload.repository.name,
+      payload.ref.split("refs/heads/")[1],
+      BASE_RATE_FILE,
+      latestCommitSha
+    );
+    if (configFileContent) {
+      const decodedConfig = Buffer.from(configFileContent, "base64").toString();
+      const config = parseYAML(decodedConfig);
+      const valid = ajv.validate(WideOrgConfigSchema, config); // additionalProperties: false is required to prevent unknown properties from being allowed
+      if (!valid) {
+        // post commit comment
+        const commitSha = payload.commits.filter((commit) => commit.modified.includes(BASE_RATE_FILE) || commit.added.includes(BASE_RATE_FILE))[0]?.id;
+        await context.octokit.rest.repos.createCommitComment({
+          owner: payload.repository.owner.login,
+          repo: payload.repository.name,
+          commit_sha: commitSha,
+          body: `@${payload.sender.login} Config validation failed! Error: ${ajv.errorsText()}`,
+          path: BASE_RATE_FILE,
+        });
+      }
+    }
   }
 };
