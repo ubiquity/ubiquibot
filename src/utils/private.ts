@@ -49,27 +49,42 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo", 
   }
 };
 
-const WideLabelSchema = Type.Object({
-  name: Type.String(),
-});
+const WideLabelSchema = Type.Object(
+  {
+    name: Type.String(),
+  },
+  { additionalProperties: false }
+);
 
 export type WideLabel = Static<typeof WideLabelSchema>;
 
-const CommandObjSchema = Type.Object({
-  name: Type.String(),
-  enabled: Type.Boolean(),
-});
+const CommandObjSchema = Type.Object(
+  {
+    name: Type.String(),
+    enabled: Type.Boolean(),
+  },
+  { additionalProperties: false }
+);
 
 export type CommandObj = Static<typeof CommandObjSchema>;
 
-const IncentivesSchema = Type.Object({
-  comment: Type.Object({
-    elements: Type.Record(Type.String(), Type.Number()),
-    totals: Type.Object({
-      word: Type.Number(),
-    }),
-  }),
-});
+const IncentivesSchema = Type.Object(
+  {
+    comment: Type.Object(
+      {
+        elements: Type.Record(Type.String(), Type.Number()),
+        totals: Type.Object(
+          {
+            word: Type.Number(),
+          },
+          { additionalProperties: false }
+        ),
+      },
+      { additionalProperties: false }
+    ),
+  },
+  { additionalProperties: false }
+);
 
 export type Incentives = Static<typeof IncentivesSchema>;
 

@@ -59,7 +59,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
   }
 
   if (botConfigError) {
-    logger.error(botConfigError);
+    logger.error(botConfigError.toString());
     return;
   }
 
