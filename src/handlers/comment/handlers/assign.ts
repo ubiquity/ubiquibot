@@ -1,4 +1,4 @@
-import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments } from "../../../helpers";
+import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments, calculateWeight, calculateDuration } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType, Issue } from "../../../types";
 import { deadLinePrefix } from "../../shared";
@@ -81,9 +81,9 @@ export const assign = async (body: string) => {
     return "Skipping `/start` since no time labels are set to calculate the timeline";
   }
 
-  const sorted = timeLabelsAssigned.sort((a, b) => a.weight - b.weight);
+  const sorted = timeLabelsAssigned.sort((a, b) => calculateWeight(a) - calculateWeight(b));
   const targetTimeLabel = sorted[0];
-  const duration = targetTimeLabel.value;
+  const duration = calculateDuration(targetTimeLabel);
   if (!duration) {
     logger.info(`Missing configure for time label: ${targetTimeLabel.name}`);
     return "Skipping `/start` since configuration is missing for the following labels";

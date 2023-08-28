@@ -1,5 +1,5 @@
 import { getBotConfig, getLogger } from "../../bindings";
-import { createLabel, listLabelsForRepo } from "../../helpers";
+import { calculateWeight, createLabel, listLabelsForRepo } from "../../helpers";
 import { calculateBountyPrice } from "../shared";
 
 /**
@@ -22,7 +22,7 @@ export const validatePriceLabels = async (): Promise<void> => {
   const aiLabels: string[] = [];
   for (const timeLabel of config.price.timeLabels) {
     for (const priorityLabel of config.price.priorityLabels) {
-      const targetPrice = calculateBountyPrice(timeLabel.weight, priorityLabel.weight, config.price.baseMultiplier);
+      const targetPrice = calculateBountyPrice(calculateWeight(timeLabel), calculateWeight(priorityLabel), config.price.baseMultiplier);
       const targetPriceLabel = `Price: ${targetPrice} USD`;
       aiLabels.push(targetPriceLabel);
     }

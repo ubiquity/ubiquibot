@@ -8,11 +8,12 @@ import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
 import { runOnPush } from "./push";
 import { incentivizeComments, incentivizeCreatorComment, incentivizePullRequestReviews } from "./payout";
+import { findDuplicateOne } from "./issue";
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_OPENED]: {
     pre: [nullHandler],
-    action: [nullHandler], // SHOULD not set `issueCreatedCallback` until the exploit issue resolved.  https://github.com/ubiquity/ubiquibot/issues/535
+    action: [findDuplicateOne], // SHOULD not set `issueCreatedCallback` until the exploit issue resolved.  https://github.com/ubiquity/ubiquibot/issues/535
     post: [nullHandler],
   },
   [GithubEvent.ISSUES_REOPENED]: {

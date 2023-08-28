@@ -49,8 +49,6 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo", 
 
 export interface WideLabel {
   name: string;
-  weight: number;
-  value?: number | undefined;
 }
 
 export interface CommentIncentives {
