@@ -6,7 +6,7 @@ import { BotConfig, GithubEvent, Payload, PayloadSchema } from "../types";
 import { Adapters } from "../types/adapters";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
-import { GitHubLogger } from "../adapters/supabase";
+import { GitHubLogger, Level } from "../adapters/supabase";
 
 let botContext: Context = {} as Context;
 export const getBotContext = () => botContext;
@@ -48,21 +48,18 @@ export const bindEvents = async (context: Context): Promise<void> => {
     // level: botConfig.log.level,
   };
 
-  logger = new GitHubLogger(options.app, botConfig.log.logEnvironment, botConfig.log.level, botConfig.log.retryLimit); // contributors will see logs in console while on development env
+  logger = new GitHubLogger(
+    options.app,
+    botConfig?.log?.logEnvironment ?? "development",
+    botConfig?.log?.level ?? Level.DEBUG,
+    botConfig?.log?.retryLimit ?? 0
+  ); // contributors will see logs in console while on development env
   if (!logger) {
     return;
   }
 
   if (botConfigError) {
-    logger.error(
-      `Error loading config: ${botConfigError}. Config: ${JSON.stringify({
-        price: botConfig.price,
-        unassign: botConfig.unassign,
-        mode: botConfig.mode,
-        log: botConfig.log,
-        wallet: botConfig.wallet,
-      })}`
-    );
+    logger.error(botConfigError);
     return;
   }
 
