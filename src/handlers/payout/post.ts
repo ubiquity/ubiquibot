@@ -165,14 +165,12 @@ export const incentivizePullRequestReviews = async () => {
     return;
   }
 
-  const pullRequestLinked = await gitLinkedPrParser({ owner: payload.repository.owner.login, repo: payload.repository.name, issue_number: issue.number });
+  const linkedPullRequest = await gitLinkedPrParser({ owner: payload.repository.owner.login, repo: payload.repository.name, issue_number: issue.number });
 
-  if (pullRequestLinked === "") {
+  if (!linkedPullRequest) {
     logger.debug(`incentivizePullRequestReviews: No linked pull requests found`);
     return;
   }
-
-  const linkedPullNumber = pullRequestLinked.substring(pullRequestLinked.lastIndexOf("/") + 1);
 
   const comments = await getAllIssueComments(issue.number);
   const permitComments = comments.filter(
@@ -190,7 +188,7 @@ export const incentivizePullRequestReviews = async () => {
     return;
   }
 
-  const prReviews = await getAllPullRequestReviews(context, Number(linkedPullNumber), "full");
+  const prReviews = await getAllPullRequestReviews(context, linkedPullRequest.number, "full");
   logger.info(`Getting the PR reviews done. comments: ${JSON.stringify(prReviews)}`);
   const prReviewsByUser: Record<string, string[]> = {};
   for (const review of prReviews) {
