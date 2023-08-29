@@ -18,6 +18,7 @@ import {
   getAssistivePricing,
   getCommandSettings,
   getRegisterWalletWithVerification,
+  getNewContributorGreeting,
 } from "./helpers";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
@@ -67,6 +68,13 @@ export interface CommandObj {
   enabled: boolean;
 }
 
+export interface FirstTimeObj {
+  enabled: boolean;
+  header: string;
+  helpMenu: boolean;
+  footer: string;
+}
+
 export interface WideConfig {
   "evm-network-id"?: number;
   "price-multiplier"?: number;
@@ -83,6 +91,7 @@ export interface WideConfig {
   incentives?: Incentives;
   "default-labels"?: string[];
   "register-wallet-with-verification"?: boolean;
+  "new-contributor-greeting"?: FirstTimeObj;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -182,6 +191,7 @@ export const getWideConfig = async (context: Context) => {
     defaultLabels: getDefaultLabels(configs),
     promotionComment: getPromotionComment(configs),
     registerWalletWithVerification: getRegisterWalletWithVerification(configs),
+    newContributorGreeting: getNewContributorGreeting(configs),
   };
 
   return configData;

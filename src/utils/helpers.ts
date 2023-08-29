@@ -1,4 +1,4 @@
-import { Incentives } from "./private";
+import { FirstTimeObj, Incentives } from "./private";
 import { Level } from "../adapters/supabase";
 import { CommandObj, WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
 
@@ -181,5 +181,15 @@ export const getRegisterWalletWithVerification = ({ parsedRepo, parsedOrg, parse
     return Boolean(parsedOrg["register-wallet-with-verification"]);
   } else {
     return Boolean(parsedDefault["register-wallet-with-verification"]);
+  }
+};
+
+export const getNewContributorGreeting = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): FirstTimeObj => {
+  if (parsedRepo && parsedRepo["new-contributor-greeting"] !== undefined && typeof parsedRepo["new-contributor-greeting"] === "object") {
+    return Object(parsedRepo["new-contributor-greeting"]);
+  } else if (parsedOrg && parsedOrg["new-contributor-greeting"] !== undefined && typeof parsedOrg["new-contributor-greeting"] === "object") {
+    return Object(parsedOrg["new-contributor-greeting"]);
+  } else {
+    return Object(parsedDefault["new-contributor-greeting"]);
   }
 };
