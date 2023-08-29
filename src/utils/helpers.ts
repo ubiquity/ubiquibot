@@ -1,6 +1,7 @@
 import { Incentives } from "./private";
 import { Level } from "../adapters/supabase";
 import { CommandObj, WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
+import _ from "lodash";
 
 interface Configs {
   parsedRepo?: WideRepoConfig;
@@ -95,7 +96,10 @@ export const getPriorityLabels = ({ parsedRepo, parsedOrg, parsedDefault }: Conf
 };
 
 export const getIncentives = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): Incentives => {
-  if (parsedRepo && parsedRepo["incentives"]) {
+  if (parsedRepo && parsedRepo["incentives"] && parsedOrg && parsedOrg["incentives"]) {
+    const mergedIncentives = _.merge({}, parsedOrg["incentives"], parsedRepo["incentives"]);
+    return mergedIncentives;
+  } else if (parsedRepo && parsedRepo["incentives"]) {
     return parsedRepo["incentives"];
   } else if (parsedOrg && parsedOrg["incentives"]) {
     return parsedOrg["incentives"];
