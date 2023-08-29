@@ -1,7 +1,7 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getIssueDescription, getTokenSymbol, parseComments } from "../../helpers";
-import { Incentives, MarkdownItem, Payload, StateReason, UserType } from "../../types";
+import { Incentives, MarkdownItem, MarkdownItems, Payload, StateReason, UserType } from "../../types";
 import { commentParser } from "../comment";
 import Decimal from "decimal.js";
 import { bountyInfo } from "../wildcard";
@@ -62,7 +62,7 @@ export const incentivizeComments = async () => {
     return;
   }
 
-  const issueComments = await getAllIssueComments(issue.number, "full");
+  const issueComments = await getAllIssueComments(issue.number);
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, string[]> = {};
   for (const issueComment of issueComments) {
@@ -73,14 +73,14 @@ export const incentivizeComments = async () => {
       logger.info(`Skipping to parse the comment because it contains commands. comment: ${JSON.stringify(issueComment)}`);
       continue;
     }
-    if (!issueComment.body_html) {
-      logger.info(`Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(issueComment)}`);
+    if (!issueComment.body) {
+      logger.info(`Skipping to parse the comment because body is undefined. comment: ${JSON.stringify(issueComment)}`);
       continue;
     }
     if (!issueCommentsByUser[user.login]) {
       issueCommentsByUser[user.login] = [];
     }
-    issueCommentsByUser[user.login].push(issueComment.body_html);
+    issueCommentsByUser[user.login].push(issueComment.body);
   }
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
@@ -172,7 +172,7 @@ export const incentivizeCreatorComment = async () => {
     return;
   }
 
-  const description = await getIssueDescription(issue.number, "html");
+  const description = await getIssueDescription(issue.number);
   if (!description) {
     logger.info(`Skipping to generate a permit url because issue description is empty. description: ${description}`);
     return;
@@ -243,13 +243,13 @@ const generatePermitForComments = async (
  * @param incentives - The basic price table for reward calculation
  * @returns - The reward value
  */
-const calculateRewardValue = (comments: Record<string, string[]>, incentives: Incentives): Decimal => {
+const calculateRewardValue = (comments: Record<MarkdownItem, string[]>, incentives: Incentives): Decimal => {
   let sum = new Decimal(0);
-  for (const key of Object.keys(comments)) {
-    const value = comments[key];
+  for (const item of MarkdownItems) {
+    const value = comments[item];
 
     // if it's a text node calculate word count and multiply with the reward value
-    if (key == "#text") {
+    if (item === MarkdownItem.Text) {
       if (!incentives.comment.totals.word) {
         continue;
       }
@@ -257,14 +257,49 @@ const calculateRewardValue = (comments: Record<string, string[]>, incentives: In
       const reward = wordReward.mul(value.map((str) => str.trim().split(" ").length).reduce((totalWords, wordCount) => totalWords + wordCount, 0));
       sum = sum.add(reward);
     } else {
-      if (!incentives.comment.elements[key]) {
+      const htmlTag = MarkdownItemToHTMLTag[item];
+      if (!htmlTag || !incentives.comment.elements[htmlTag]) {
         continue;
       }
-      const rewardValue = new Decimal(incentives.comment.elements[key]);
+      const rewardValue = new Decimal(incentives.comment.elements[htmlTag]);
       const reward = rewardValue.mul(value.length);
       sum = sum.add(reward);
     }
   }
 
   return sum;
+};
+
+const MarkdownItemToHTMLTag: Record<MarkdownItem, string> = {
+  [MarkdownItem.Text]: "p",
+  [MarkdownItem.Paragraph]: "p",
+  [MarkdownItem.Heading]: "h1",
+  [MarkdownItem.Heading1]: "h1",
+  [MarkdownItem.Heading2]: "h2",
+  [MarkdownItem.Heading3]: "h3",
+  [MarkdownItem.Heading4]: "h4",
+  [MarkdownItem.Heading5]: "h5",
+  [MarkdownItem.Heading6]: "h6",
+  [MarkdownItem.ListItem]: "li",
+  [MarkdownItem.List]: "ul",
+  [MarkdownItem.Link]: "a",
+  [MarkdownItem.Image]: "img",
+  [MarkdownItem.BlockQuote]: "blockquote",
+  [MarkdownItem.Code]: "code",
+  [MarkdownItem.Emphasis]: "em",
+  [MarkdownItem.Strong]: "strong",
+  [MarkdownItem.Delete]: "del",
+  [MarkdownItem.HTML]: "html",
+  [MarkdownItem.InlineCode]: "code",
+  [MarkdownItem.LinkReference]: "a",
+  [MarkdownItem.ImageReference]: "img",
+  [MarkdownItem.FootnoteReference]: "sup",
+  [MarkdownItem.FootnoteDefinition]: "li",
+  [MarkdownItem.Table]: "table",
+  [MarkdownItem.TableCell]: "td",
+  [MarkdownItem.TableRow]: "tr",
+  [MarkdownItem.ThematicBreak]: "hr",
+  [MarkdownItem.Break]: "br",
+  [MarkdownItem.Root]: "div",
+  [MarkdownItem.Definition]: "dl",
 };
