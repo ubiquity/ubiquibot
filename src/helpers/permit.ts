@@ -52,7 +52,12 @@ type TxData = {
  *
  * @returns Permit2 url including base64 encocded data
  */
-export const generatePermit2Signature = async (spender: string, amountInEth: Decimal, identifier: string): Promise<{ txData: TxData; payoutUrl: string }> => {
+export const generatePermit2Signature = async (
+  spender: string,
+  amountInEth: Decimal,
+  identifier: string,
+  userId: string = ""
+): Promise<{ txData: TxData; payoutUrl: string }> => {
   const {
     payout: { networkId, privateKey, permitBaseUrl, rpc, paymentToken },
   } = getBotConfig();
@@ -69,7 +74,7 @@ export const generatePermit2Signature = async (spender: string, amountInEth: Dec
     },
     // who can transfer the tokens
     spender: spender,
-    nonce: BigNumber.from(keccak256(toUtf8Bytes(identifier))),
+    nonce: BigNumber.from(keccak256(toUtf8Bytes(identifier + userId))),
     // signature deadline
     deadline: MaxUint256,
   };
