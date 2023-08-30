@@ -64,7 +64,7 @@ export const incentivizeComments = async () => {
 
   const issueComments = await getAllIssueComments(issue.number, "full");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
-  const issueCommentsByUser: Record<string, { id: number; comments: string[] }> = {};
+  const issueCommentsByUser: Record<string, { id: string; comments: string[] }> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
     if (user.type == UserType.Bot || user.login == assignee) continue;
@@ -78,9 +78,9 @@ export const incentivizeComments = async () => {
       continue;
     }
 
-    // Store the comment along with user's login and id
+    // Store the comment along with user's login and node_id
     if (!issueCommentsByUser[user.login]) {
-      issueCommentsByUser[user.login] = { id: user.id, comments: [] };
+      issueCommentsByUser[user.login] = { id: user.node_id, comments: [] };
     }
     issueCommentsByUser[user.login].comments.push(issueComment.body_html);
   }
@@ -109,7 +109,7 @@ export const incentivizeComments = async () => {
       continue;
     }
     if (account) {
-      const { payoutUrl } = await generatePermit2Signature(account, amountInETH, issue.node_id, commentsByUser.id?.toString());
+      const { payoutUrl } = await generatePermit2Signature(account, amountInETH, issue.node_id, commentsByUser.id, "ISSUE_COMMENTER");
       comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
       reward[user] = payoutUrl;
     } else {
@@ -189,7 +189,7 @@ export const incentivizeCreatorComment = async () => {
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const result = await generatePermitForComments(
     creator.login,
-    creator.id,
+    creator.node_id,
     [description],
     issueCreatorMultiplier,
     incentives,
@@ -209,7 +209,7 @@ export const incentivizeCreatorComment = async () => {
 
 const generatePermitForComments = async (
   user: string,
-  userId: number,
+  userId: string,
   comments: string[],
   multiplier: number,
   incentives: Incentives,
@@ -233,7 +233,7 @@ const generatePermitForComments = async (
   }
   let comment = `#### Task Creator Reward\n`;
   if (account) {
-    const { payoutUrl } = await generatePermit2Signature(account, amountInETH, node_id, userId?.toString());
+    const { payoutUrl } = await generatePermit2Signature(account, amountInETH, node_id, userId, "ISSUE_CREATOR");
     comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
     return { comment, payoutUrl };
   } else {
