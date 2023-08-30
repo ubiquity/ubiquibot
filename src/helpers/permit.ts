@@ -56,8 +56,8 @@ export const generatePermit2Signature = async (
   spender: string,
   amountInEth: Decimal,
   identifier: string,
-  userId: string = "",
-  type: string = ""
+  userId = "",
+  type = ""
 ): Promise<{ txData: TxData; payoutUrl: string }> => {
   const {
     payout: { networkId, privateKey, permitBaseUrl, rpc, paymentToken },
