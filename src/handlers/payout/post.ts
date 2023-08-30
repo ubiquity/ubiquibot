@@ -189,6 +189,7 @@ export const incentivizeCreatorComment = async () => {
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const result = await generatePermitForComments(
     creator.login,
+    creator.id,
     [description],
     issueCreatorMultiplier,
     incentives,
@@ -208,6 +209,7 @@ export const incentivizeCreatorComment = async () => {
 
 const generatePermitForComments = async (
   user: string,
+  userId: number,
   comments: string[],
   multiplier: number,
   incentives: Incentives,
@@ -231,7 +233,7 @@ const generatePermitForComments = async (
   }
   let comment = `#### Task Creator Reward\n`;
   if (account) {
-    const { payoutUrl } = await generatePermit2Signature(account, amountInETH, node_id);
+    const { payoutUrl } = await generatePermit2Signature(account, amountInETH, node_id, userId?.toString());
     comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
     return { comment, payoutUrl };
   } else {
