@@ -146,7 +146,7 @@ export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Prom
 };
 
 const mergeConfigs = (configs: MergedConfigs) => {
-  return _.merge({}, ...Object.values(configs));
+  return merge({}, configs.parsedDefault, configs.parsedOrg, configs.parsedRepo);
 };
 
 export const getWideConfig = async (context: Context) => {
