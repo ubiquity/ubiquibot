@@ -2,7 +2,7 @@ import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
 import { Payload } from "../types";
 import { Context } from "probot";
-import _ from "lodash";
+import merge from "lodash/merge";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
 
