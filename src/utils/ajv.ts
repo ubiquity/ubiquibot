@@ -1,4 +1,4 @@
-import Ajv from "ajv";
+import Ajv, { Schema } from "ajv";
 import addFormats from "ajv-formats";
 
 export const ajv = addFormats(new Ajv(), {
@@ -27,3 +27,25 @@ export const ajv = addFormats(new Ajv(), {
     "binary",
   ],
 });
+
+export function getAdditionalProperties() {
+  return ajv.errors?.map((error) => {
+    if (error.keyword === "additionalProperties") {
+      return error.params.additionalProperty;
+    }
+  });
+}
+
+export function validate(scheme: string | Schema, data: unknown): { valid: true; error: undefined } | { valid: false; error: string } {
+  const valid = ajv.validate(scheme, data);
+  if (!valid) {
+    const additionalProperties = getAdditionalProperties();
+    return {
+      valid: false,
+      error: `${ajv.errorsText()}. ${
+        additionalProperties && additionalProperties.length > 0 ? `Unnecessary properties: ${additionalProperties.join(", ")}` : ""
+      }`,
+    };
+  }
+  return { valid: true, error: undefined };
+}

@@ -1,10 +1,9 @@
 import { getBotContext, getLogger } from "../../bindings";
-import { getFileContent } from "../../helpers";
-import { CommitsPayload, PushPayload } from "../../types";
-import { ajv } from "../../utils";
+import { createCommitComment, getFileContent } from "../../helpers";
+import { CommitsPayload, PushPayload, WideOrgConfigSchema } from "../../types";
 import { parseYAML } from "../../utils/private";
 import { updateBaseRate } from "./update-base";
-import { WideOrgConfigSchema } from "../../utils/private";
+import { validate } from "../../utils/ajv";
 
 const ZERO_SHA = "0000000000000000000000000000000000000000";
 const BASE_RATE_FILE = ".github/ubiquibot-config.yml";
@@ -88,23 +87,9 @@ export const validateConfigChange = async () => {
     if (configFileContent) {
       const decodedConfig = Buffer.from(configFileContent, "base64").toString();
       const config = parseYAML(decodedConfig);
-      const valid = ajv.validate(WideOrgConfigSchema, config); // additionalProperties: false is required to prevent unknown properties from being allowed
+      const { valid, error } = validate(WideOrgConfigSchema, config);
       if (!valid) {
-        // post commit comment
-        const additionalProperties = ajv.errors?.map((error) => {
-          if (error.keyword === "additionalProperties") {
-            return error.params.additionalProperty;
-          }
-        });
-        await context.octokit.rest.repos.createCommitComment({
-          owner: payload.repository.owner.login,
-          repo: payload.repository.name,
-          commit_sha: commitSha,
-          body: `@${payload.sender.login} Config validation failed! Error: ${ajv.errorsText()}. ${
-            additionalProperties && additionalProperties.length > 0 ? `Unnecessary properties: ${additionalProperties.join(", ")}` : ""
-          }`,
-          path: BASE_RATE_FILE,
-        });
+        await createCommitComment(`@${payload.sender.login} Config validation failed! ${error}`, commitSha, BASE_RATE_FILE);
       }
     }
   }

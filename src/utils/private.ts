@@ -21,8 +21,8 @@ import {
 } from "./helpers";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
-import { Static, Type } from "@sinclair/typebox";
-import { ajv } from "./ajv";
+import { validate } from "./ajv";
+import { WideConfig, WideOrgConfig, WideRepoConfig, WideConfigSchema, WideOrgConfigSchema } from "../types";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
@@ -48,78 +48,6 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo", 
     return undefined;
   }
 };
-
-const WideLabelSchema = Type.Object(
-  {
-    name: Type.String(),
-  },
-  { additionalProperties: false }
-);
-
-export type WideLabel = Static<typeof WideLabelSchema>;
-
-const CommandObjSchema = Type.Object(
-  {
-    name: Type.String(),
-    enabled: Type.Boolean(),
-  },
-  { additionalProperties: false }
-);
-
-export type CommandObj = Static<typeof CommandObjSchema>;
-
-const IncentivesSchema = Type.Object(
-  {
-    comment: Type.Object(
-      {
-        elements: Type.Record(Type.String(), Type.Number()),
-        totals: Type.Object(
-          {
-            word: Type.Number(),
-          },
-          { additionalProperties: false }
-        ),
-      },
-      { additionalProperties: false }
-    ),
-  },
-  { additionalProperties: false }
-);
-
-export type Incentives = Static<typeof IncentivesSchema>;
-
-export const WideConfigSchema = Type.Object(
-  {
-    "evm-network-id": Type.Optional(Type.Number()),
-    "price-multiplier": Type.Optional(Type.Number()),
-    "issue-creator-multiplier": Type.Number(),
-    "time-labels": Type.Optional(Type.Array(WideLabelSchema)),
-    "priority-labels": Type.Optional(Type.Array(WideLabelSchema)),
-    "payment-permit-max-price": Type.Optional(Type.Number()),
-    "command-settings": Type.Optional(Type.Array(CommandObjSchema)),
-    "promotion-comment": Type.Optional(Type.String()),
-    "disable-analytics": Type.Optional(Type.Boolean()),
-    "comment-incentives": Type.Optional(Type.Boolean()),
-    "assistive-pricing": Type.Optional(Type.Boolean()),
-    "max-concurrent-assigns": Type.Optional(Type.Number()),
-    incentives: Type.Optional(IncentivesSchema),
-    "default-labels": Type.Optional(Type.Array(Type.String())),
-    "register-wallet-with-verification": Type.Optional(Type.Boolean()),
-  },
-  {
-    additionalProperties: false,
-  }
-);
-
-export type WideConfig = Static<typeof WideConfigSchema>;
-
-export type WideRepoConfig = WideConfig;
-
-export const WideOrgConfigSchema = Type.Composite([Type.Object({ "private-key-encrypted": Type.Optional(Type.String()) }), WideConfigSchema], {
-  additionalProperties: false,
-});
-
-export type WideOrgConfig = Static<typeof WideOrgConfigSchema>;
 
 export const parseYAML = (data?: string): WideConfig | undefined => {
   try {
@@ -190,12 +118,19 @@ export const getWideConfig = async (context: Context) => {
   const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
 
   const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
-  if (parsedOrg !== undefined && !ajv.validate(WideOrgConfigSchema, parsedOrg)) {
-    throw new Error(`Invalid org config: ${ajv.errorsText()}`);
+
+  if (parsedOrg) {
+    const { valid, error } = validate(WideOrgConfigSchema, parsedOrg);
+    if (!valid) {
+      throw new Error(`Invalid org config: ${error}`);
+    }
   }
   const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
-  if (parsedRepo !== undefined && !ajv.validate(WideConfigSchema, parsedRepo)) {
-    throw new Error(`Invalid repo config: ${ajv.errorsText()}`);
+  if (parsedRepo) {
+    const { valid, error } = validate(WideConfigSchema, parsedRepo);
+    if (!valid) {
+      throw new Error(`Invalid repo config: ${error}`);
+    }
   }
   const parsedDefault: WideRepoConfig = DEFAULT_CONFIG_JSON;
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;

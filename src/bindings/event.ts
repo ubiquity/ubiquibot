@@ -2,11 +2,12 @@ import { Context } from "probot";
 import { createAdapters } from "../adapters";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
-import { BotConfig, GithubEvent, Payload, PayloadSchema } from "../types";
+import { BotConfig, GithubEvent, Payload, PayloadSchema, LogLevel } from "../types";
 import { Adapters } from "../types/adapters";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
-import { GitHubLogger, Level } from "../adapters/supabase";
+import { GitHubLogger } from "../adapters/supabase";
+import { validateConfigChange } from "../handlers/push";
 
 let botContext: Context = {} as Context;
 export const getBotContext = () => botContext;
@@ -33,6 +34,8 @@ export const bindEvents = async (context: Context): Promise<void> => {
   const { id, name } = context;
   botContext = context;
   const payload = context.payload as Payload;
+  const allowedEvents = Object.values(GithubEvent) as string[];
+  const eventName = payload.action ? `${name}.${payload.action}` : name; // some events wont have actions as this grows
 
   let botConfigError;
   try {
@@ -51,7 +54,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
   logger = new GitHubLogger(
     options.app,
     botConfig?.log?.logEnvironment ?? "development",
-    botConfig?.log?.level ?? Level.DEBUG,
+    botConfig?.log?.level ?? LogLevel.DEBUG,
     botConfig?.log?.retryLimit ?? 0
   ); // contributors will see logs in console while on development env
   if (!logger) {
@@ -60,6 +63,9 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   if (botConfigError) {
     logger.error(botConfigError.toString());
+    if (eventName === GithubEvent.PUSH_EVENT) {
+      await validateConfigChange();
+    }
     return;
   }
 
@@ -75,8 +81,6 @@ export const bindEvents = async (context: Context): Promise<void> => {
       wallet: botConfig.wallet,
     })}`
   );
-  const allowedEvents = Object.values(GithubEvent) as string[];
-  const eventName = payload.action ? `${name}.${payload.action}` : name; // some events wont have actions as this grows
 
   logger.info(`Started binding events... id: ${id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
 

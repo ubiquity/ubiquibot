@@ -1,33 +1,10 @@
-import { Incentives } from "./private";
-import { Level } from "../adapters/supabase";
-import { CommandObj, WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
+import { CommandItem, LabelItem, WideOrgConfig, WideRepoConfig, Incentives } from "../types";
 
 interface Configs {
   parsedRepo?: WideRepoConfig;
   parsedOrg?: WideOrgConfig;
   parsedDefault: WideRepoConfig;
 }
-
-export const getNumericLevel = (level: Level) => {
-  switch (level) {
-    case Level.ERROR:
-      return 0;
-    case Level.WARN:
-      return 1;
-    case Level.INFO:
-      return 2;
-    case Level.HTTP:
-      return 3;
-    case Level.VERBOSE:
-      return 4;
-    case Level.DEBUG:
-      return 5;
-    case Level.SILLY:
-      return 6;
-    default:
-      return -1; // Invalid level
-  }
-};
 
 export const getNetworkId = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): number => {
   if (parsedRepo && parsedRepo["evm-network-id"] !== undefined && !Number.isNaN(Number(parsedRepo["evm-network-id"]))) {
@@ -59,27 +36,27 @@ export const getCreatorMultiplier = ({ parsedRepo, parsedOrg, parsedDefault }: C
   }
 };
 
-export const getTimeLabels = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): WideLabel[] => {
+export const getTimeLabels = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): LabelItem[] => {
   if (parsedRepo && parsedRepo["time-labels"] !== undefined && Array.isArray(parsedRepo["time-labels"]) && parsedRepo["time-labels"].length > 0) {
     return parsedRepo["time-labels"];
   } else if (parsedOrg && parsedOrg["time-labels"] !== undefined && Array.isArray(parsedOrg["time-labels"]) && parsedOrg["time-labels"].length > 0) {
     return parsedOrg["time-labels"];
   } else {
-    return parsedDefault["time-labels"] as WideLabel[];
+    return parsedDefault["time-labels"] as LabelItem[];
   }
 };
 
-export const getCommandSettings = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): CommandObj[] => {
+export const getCommandSettings = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): CommandItem[] => {
   if (parsedRepo && parsedRepo["command-settings"] && Array.isArray(parsedRepo["command-settings"]) && parsedRepo["command-settings"].length > 0) {
     return parsedRepo["command-settings"];
   } else if (parsedOrg && parsedOrg["command-settings"] && Array.isArray(parsedOrg["command-settings"]) && parsedOrg["command-settings"].length > 0) {
     return parsedOrg["command-settings"];
   } else {
-    return parsedDefault["command-settings"] as CommandObj[];
+    return parsedDefault["command-settings"] as CommandItem[];
   }
 };
 
-export const getPriorityLabels = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): WideLabel[] => {
+export const getPriorityLabels = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): LabelItem[] => {
   if (parsedRepo && parsedRepo["priority-labels"] !== undefined && Array.isArray(parsedRepo["priority-labels"]) && parsedRepo["priority-labels"].length > 0) {
     return parsedRepo["priority-labels"];
   } else if (
@@ -90,7 +67,7 @@ export const getPriorityLabels = ({ parsedRepo, parsedOrg, parsedDefault }: Conf
   ) {
     return parsedOrg["priority-labels"];
   } else {
-    return parsedDefault["priority-labels"] as WideLabel[];
+    return parsedDefault["priority-labels"] as LabelItem[];
   }
 };
 
