@@ -158,7 +158,7 @@ export const getWideConfig = async (context: Context) => {
   const parsedDefault: WideRepoConfig = DEFAULT_CONFIG_JSON;
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
-  const configs: MergedConfigs = { parsedRepo, parsedOrg, parsedDefault };
+  const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
   const mergedConfigData: WideConfig = mergeConfigs(configs);
 
   const configData = {
