@@ -1,6 +1,5 @@
 import { upsertAccessControl } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
-import { ACCESS_CONTROL_LABELS } from "../../../configs";
 import { getUserPermission } from "../../../helpers";
 import { Payload } from "../../../types";
 
@@ -10,7 +9,7 @@ export const setAccess = async (body: string) => {
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
 
-  const validAccessString = [ACCESS_CONTROL_LABELS.priority, ACCESS_CONTROL_LABELS.time, ACCESS_CONTROL_LABELS.price, ACCESS_CONTROL_LABELS.multiplier];
+  const validAccessString = ["priority", "time", "price", "multiplier"];
 
   logger.info(`Received '/allow' command from user: ${sender}`);
 
