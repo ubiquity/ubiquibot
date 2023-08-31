@@ -88,6 +88,7 @@ export const CommentsSchema = Type.Object({
 
 export const AskSchema = Type.Object({
   apiKey: Type.String(),
+  tokenLimit: Type.Number(),
 });
 
 export const CommandConfigSchema = Type.Array(CommandItemSchema);

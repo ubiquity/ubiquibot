@@ -1,4 +1,3 @@
-// import { CreateChatCompletionRequestMessage, Configuration, OpenAIApi, ResponseTypes } from 'openai-edge'
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, UserType } from "../../../types";
 import { getAllIssueComments, getIssueByNumber } from "../../../helpers";
@@ -8,6 +7,15 @@ import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 interface StreamlinedComment {
   login: string;
   body: string;
+}
+
+interface GPTResponse {
+  answer: string | null;
+  tokenUsage: {
+    output: number | undefined;
+    input: number | undefined;
+    total: number | undefined;
+  };
 }
 
 const sysMsg = `You are the UbiquityAI, designed to provide accurate technical answers. \n
@@ -31,15 +39,21 @@ export const askGPT = async (question: string, chatHistory: CreateChatCompletion
     model: "gpt-3.5-turbo",
   });
 
-  const answer = res.choices[0].message;
+  const answer = res.choices[0].message.content;
+
+  const tokenUsage = {
+    output: res.usage?.completion_tokens,
+    input: res.usage?.prompt_tokens,
+    total: res.usage?.total_tokens,
+  };
 
   if (!res) {
     logger.info(`No answer found for question: ${question}`);
-    return "No answer found";
   }
 
-  return answer.content;
+  return { answer, tokenUsage };
 };
+
 /**
  * @param body The question to ask
  */
@@ -49,7 +63,7 @@ export const ask = async (body: string) => {
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
   const issue = payload.issue;
-  let initQContext;
+  let initQContext: string | null | undefined;
 
   if (!body) {
     return `Please ask a question`;
@@ -69,7 +83,7 @@ export const ask = async (body: string) => {
 
     const comments = await getAllIssueComments(issue.number);
     if (!comments) {
-      return `Error getting issue comments`;
+      logger.info(`Error getting issue comments`);
     }
 
     const streamlined: StreamlinedComment[] = [];
@@ -84,37 +98,29 @@ export const ask = async (body: string) => {
       }
     });
 
-    initQContext = streamlined;
-    let connected: string;
-
     try {
-      connected = issue.body;
+      const connected = issue.body;
+      const referencedIssue = await getAllIssueComments(Number(connected.split("#")[1].split("\n")[0]));
+      const referencedIssueBody = await getIssueByNumber(context, Number(connected.split("#")[1].split("\n")[0]));
+      initQContext = referencedIssueBody?.body;
 
-      if (connected != "") {
-        const referencedIssue = await getAllIssueComments(Number(connected.split("#")[1].split("\n")[0]));
-        const referencedIssueBody = await getIssueByNumber(context, Number(connected.split("#")[1].split("\n")[0]));
+      if (!referencedIssue) {
+        logger.info(`Error getting referenced issue comments`);
+      }
 
-        linkedCommentsStreamlined.push({
-          login: referencedIssueBody?.user.login,
-          body: referencedIssueBody?.body,
-        });
-
-        if (referencedIssue) {
-          referencedIssue.forEach((comment) => {
-            if (comment.user.type == UserType.User || comment.body.includes("Answered:") == true) {
-              linkedCommentsStreamlined.push({
-                login: comment.user.login,
-                body: comment.body,
-              });
-            }
+      referencedIssue.forEach((comment) => {
+        if (comment.user.type == UserType.User || comment.body.includes("Answered:") == true) {
+          linkedCommentsStreamlined.push({
+            login: comment.user.login,
+            body: comment.body,
           });
         }
-      }
+      });
     } catch (error) {
-      logger.info(`No connected issue found for question: ${body}`);
+      logger.info(`Error getting referenced issue comments: ${error}`);
     }
 
-    if (initQContext.length == 0) {
+    if (initQContext?.length == 0) {
       chatHistory.push(
         {
           role: "system",
@@ -147,18 +153,22 @@ export const ask = async (body: string) => {
       );
     }
 
-    console.log("==========================================");
-    console.log("chatHistory: ", chatHistory);
-    logger.info(`Received '/ask' command from user: ${sender}`);
-    logger.info(`TODO: Add token count...`);
-    logger.info(`Question: ${body}`);
-    const gptResponse = await askGPT(body, chatHistory);
+    const gptResponse: GPTResponse | string = await askGPT(body, chatHistory);
+
+    console.log("====================================");
+    console.log(gptResponse);
+    console.log("====================================");
+
     if (!gptResponse) {
       return `Error getting response from GPT`;
     }
 
-    return gptResponse;
+    if (typeof gptResponse === "string") {
+      return gptResponse;
+    } else {
+      return gptResponse.answer;
+    }
   } else {
-    return "Invalid syntax for ask \n usage: '/ask (repo name) (pull/issue) (action number) (comment ID) (question)' \n  ex-1 /ask ubiquibot 663 1690784310 What is pi?";
+    return "Invalid syntax for ask \n usage: '/ask What is pi?";
   }
 };

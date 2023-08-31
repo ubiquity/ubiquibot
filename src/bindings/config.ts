@@ -1,12 +1,12 @@
 import ms from "ms";
 
 import { BotConfig, BotConfigSchema } from "../types";
-import { DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFAULT_PERMIT_BASE_URL } from "../configs";
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
 import { getScalarKey, getWideConfig } from "../utils/private";
 import { Level } from "../adapters/supabase";
+import { DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFAULT_PERMIT_BASE_URL, DEFAULT_TOKEN_LIMIT } from "../configs";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
@@ -86,6 +86,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     ask: {
       apiKey: process.env.OPENAI_API_KEY ?? "",
+      tokenLimit: Number(process.env.OPENAI_TOKEN_LIMIT) || DEFAULT_TOKEN_LIMIT,
     },
   };
 
