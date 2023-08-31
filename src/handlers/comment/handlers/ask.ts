@@ -1,9 +1,7 @@
 // import { CreateChatCompletionRequestMessage, Configuration, OpenAIApi, ResponseTypes } from 'openai-edge'
-import { getBotContext, getLogger } from "../../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, UserType } from "../../../types";
-import { getAllIssueComments } from "../../../helpers";
-import { BasePromptTemplate, PromptTemplate } from "langchain";
-
+import { getAllIssueComments, getIssueByNumber } from "../../../helpers";
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 
@@ -12,23 +10,21 @@ interface StreamlinedComment {
   body: string;
 }
 
-const openAI = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 const sysMsg = `You are the UbiquityAI, designed to provide accurate technical answers. \n
 Whenever appropriate, format your response using GitHub Flavored Markdown. Utilize tables, lists, and code blocks for clear and organized answers. \n
-Craft your response for clarity. Use concise language while providing the necessary technical details. \n
-Whenever possible, include relevant examples to clarify your explanations and make them easier for users to understand. \n
-Feel free to refer to relevant documentation or resources to provide the most accurate and up-to-date information. \n
-When referring to external resources, ensure proper attribution by providing links and acknowledging the original authors. \n
-If you're unsure about an answer, it's better to admit it than to provide incorrect information. State that you don't have the required information. \n
-If you require additional information, ask the user to provide more details. \n
+Do not make up answers. If you are unsure, say so. \n
+Original Context exists only to provide you with additional information to the current question, use it to formulate answers. \n
+Infer the context of the question from the Original Context using your best judgement. \n
+All replies MUST begin "Answered: " followed by your response. \n
 `;
 
 export const askGPT = async (question: string, chatHistory: CreateChatCompletionRequestMessage[]) => {
   const logger = getLogger();
-  logger.info(`Received '/ask' command for question: ${question}`);
+  const config = getBotConfig();
+
+  const openAI = new OpenAI({
+    apiKey: config.ask.apiKey,
+  });
 
   const res: OpenAI.Chat.Completions.ChatCompletion = await openAI.chat.completions.create({
     messages: chatHistory,
@@ -44,11 +40,7 @@ export const askGPT = async (question: string, chatHistory: CreateChatCompletion
 
   return answer.content;
 };
-
 /**
- * @param repoName To traverse repos incase original comment is not in call context repo
- * @param actionNumber To traverse issues incase original comment is not in call context issue
- * @param commentID To locate the original comment
  * @param body The question to ask
  */
 export const ask = async (body: string) => {
@@ -67,21 +59,24 @@ export const ask = async (body: string) => {
     return `This command can only be used on issues`;
   }
 
-  const regex = /^\/ask\s([\w-]+)\s(\d+)\s(\d+)\s"(.+)"$/;
+  const regex = /^\/ask\s(.+)$/;
 
   const matches = body.match(regex);
   const chatHistory: CreateChatCompletionRequestMessage[] = [];
 
   if (matches) {
-    const [, repoName, actionNumber, commentID, body] = matches;
-    initQContext = commentID;
+    const [, body] = matches;
 
     const comments = await getAllIssueComments(issue.number);
+    if (!comments) {
+      return `Error getting issue comments`;
+    }
 
     const streamlined: StreamlinedComment[] = [];
+    const linkedCommentsStreamlined: StreamlinedComment[] = [];
 
     comments.forEach((comment) => {
-      if (comment.user.type == UserType.User) {
+      if (comment.user.type == UserType.User || comment.body.includes("Answered:") == true) {
         streamlined.push({
           login: comment.user.login,
           body: comment.body,
@@ -90,36 +85,49 @@ export const ask = async (body: string) => {
     });
 
     initQContext = streamlined;
+    let connected: string;
 
-    // Have they cited a commentID?
-    const isItThisIssue = issue.number == Number(actionNumber);
-    if (isItThisIssue) {
-      // replace commentID with actual comment if it lives on this issue
-      initQContext = streamlined;
-    } else {
-      // find the matching comment in whatever issue it is in
-      try {
-        const allComments = await getAllIssueComments(Number(actionNumber));
-        const otherRepoStreamlined: StreamlinedComment[] = [];
+    try {
+      connected = issue.body;
 
-        allComments.forEach((comment) => {
-          if (comment.user.type == UserType.User) {
-            otherRepoStreamlined.push({
-              login: comment.user.login,
-              body: comment.body,
-            });
-          }
+      if (connected != "") {
+        const referencedIssue = await getAllIssueComments(Number(connected.split("#")[1].split("\n")[0]));
+        const referencedIssueBody = await getIssueByNumber(context, Number(connected.split("#")[1].split("\n")[0]));
+
+        linkedCommentsStreamlined.push({
+          login: referencedIssueBody?.user.login,
+          body: referencedIssueBody?.body,
         });
 
-        initQContext = otherRepoStreamlined;
-      } catch (err) {
-        return `Could not find comment in ${repoName} with issue number: ${actionNumber}`;
+        if (referencedIssue) {
+          referencedIssue.forEach((comment) => {
+            if (comment.user.type == UserType.User || comment.body.includes("Answered:") == true) {
+              linkedCommentsStreamlined.push({
+                login: comment.user.login,
+                body: comment.body,
+              });
+            }
+          });
+        }
       }
+    } catch (error) {
+      logger.info(`No connected issue found for question: ${body}`);
     }
 
-    // has this sender asked any questions on this issue before?
-    if (streamlined.length > 0) {
-      // Push the original context and system message to the chat history
+    if (initQContext.length == 0) {
+      chatHistory.push(
+        {
+          role: "system",
+          content: sysMsg,
+          name: "UbiquityAI",
+        } as CreateChatCompletionRequestMessage,
+        {
+          role: "user",
+          content: body,
+          name: sender,
+        } as CreateChatCompletionRequestMessage
+      );
+    } else {
       chatHistory.push(
         {
           role: "system",
@@ -128,56 +136,22 @@ export const ask = async (body: string) => {
         } as CreateChatCompletionRequestMessage,
         {
           role: "system",
-          content: "Question Context: " + initQContext,
-          name: sender,
-        } as CreateChatCompletionRequestMessage,
-        {
-          role: "user",
-          content: body,
-          name: sender,
-        } as CreateChatCompletionRequestMessage
-      );
-
-      chatHistory.push({
-        role: "user",
-        content: body,
-        name: sender,
-      } as CreateChatCompletionRequestMessage);
-
-      logger.info(`Received '/ask' command from user: ${sender}`);
-    } else {
-      chatHistory.push(
-        {
-          role: "system",
-          content: sysMsg,
+          content: "Original Context: " + JSON.stringify(linkedCommentsStreamlined),
           name: "system",
         } as CreateChatCompletionRequestMessage,
         {
-          role: "system",
-          content: "Question Context: " + initQContext,
-          name: sender,
-        } as CreateChatCompletionRequestMessage,
-        {
           role: "user",
-          content: body,
-          name: sender,
+          content: "Question: " + JSON.stringify(initQContext),
+          name: "user",
         } as CreateChatCompletionRequestMessage
       );
-
-      logger.error("Invalid body for ask command");
-      return "Invalid syntax for ask \n usage: '/ask (repo name) (pull/issue) (action number) (comment ID) (question)' \n  ex-1 /ask ubiquibot 663 1690784310 What is pi?";
     }
 
-    // chat history as a string, length
-    console.log("=====================================");
-    console.log("chat history length as a string: ", JSON.stringify(chatHistory).length);
-    console.log("=====================================");
-    console.log("chat history length: ", chatHistory.length);
-    console.log("=====================================");
-    console.log("chat history: ", chatHistory);
-    console.log("=====================================");
-    console.log("chat history: ", JSON.stringify(chatHistory));
-    console.log("=====================================");
+    console.log("==========================================");
+    console.log("chatHistory: ", chatHistory);
+    logger.info(`Received '/ask' command from user: ${sender}`);
+    logger.info(`TODO: Add token count...`);
+    logger.info(`Question: ${body}`);
     const gptResponse = await askGPT(body, chatHistory);
     if (!gptResponse) {
       return `Error getting response from GPT`;
