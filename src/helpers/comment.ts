@@ -1,4 +1,7 @@
 import { MarkdownItem } from "../types";
+import fromMarkdown from "mdast-util-from-markdown";
+import gfmFromMarkdown from "mdast-util-gfm";
+import gfm from "micromark-extension-gfm";
 
 type Node = {
   type: MarkdownItem;
@@ -30,11 +33,6 @@ const traverse = (result: Record<MarkdownItem, string[]>, node: Node, itemsToExc
 };
 
 export const parseComments = async (comments: string[], itemsToExclude: string[]): Promise<Record<MarkdownItem, string[]>> => {
-  // dynamic import of mdast
-  const { fromMarkdown } = await import("mdast-util-from-markdown");
-  const { gfmFromMarkdown } = await import("mdast-util-gfm");
-  const { gfm } = await import("micromark-extension-gfm");
-
   const result: Record<MarkdownItem, string[]> = {
     [MarkdownItem.Text]: [],
     [MarkdownItem.Paragraph]: [],
@@ -72,7 +70,7 @@ export const parseComments = async (comments: string[], itemsToExclude: string[]
   for (const comment of comments) {
     const tree = fromMarkdown(comment, {
       extensions: [gfm()],
-      mdastExtensions: [gfmFromMarkdown()],
+      mdastExtensions: [gfmFromMarkdown.fromMarkdown],
     });
     console.log(`Comment Mdast Tree: ${JSON.stringify(tree, null, 2)}`);
     traverse(result, tree as Node, itemsToExclude);
