@@ -85,5 +85,8 @@
         "word": 0
       }
     }
+  },
+  "enable-access-control": {
+    "label": false
   }
 }
