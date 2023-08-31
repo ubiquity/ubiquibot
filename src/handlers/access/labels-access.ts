@@ -5,7 +5,7 @@ import { Payload } from "../../types";
 
 export const handleLabelsAccess = async () => {
   const { accessControl } = getBotConfig();
-  if (!accessControl.label) return;
+  if (!accessControl.label) return true;
 
   const context = getBotContext();
   const logger = getLogger();
