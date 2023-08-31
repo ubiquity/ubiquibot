@@ -7,12 +7,6 @@ export enum MarkdownItem {
   Definition = "definition",
   Emphasis = "emphasis",
   Heading = "heading",
-  Heading1 = "heading1",
-  Heading2 = "heading2",
-  Heading3 = "heading3",
-  Heading4 = "heading4",
-  Heading5 = "heading5",
-  Heading6 = "heading6",
   HTML = "html",
   Image = "image",
   ImageReference = "imageReference",
@@ -33,6 +27,13 @@ export enum MarkdownItem {
   Table = "table",
   TableCell = "tableCell",
   TableRow = "tableRow",
+  // Our custom types to make it compatible with HTML
+  Heading1 = "heading1",
+  Heading2 = "heading2",
+  Heading3 = "heading3",
+  Heading4 = "heading4",
+  Heading5 = "heading5",
+  Heading6 = "heading6",
 }
 export const MarkdownItems = [
   MarkdownItem.BlockQuote,
@@ -60,4 +61,10 @@ export const MarkdownItems = [
   MarkdownItem.Table,
   MarkdownItem.TableCell,
   MarkdownItem.TableRow,
+  MarkdownItem.Heading1,
+  MarkdownItem.Heading2,
+  MarkdownItem.Heading3,
+  MarkdownItem.Heading4,
+  MarkdownItem.Heading5,
+  MarkdownItem.Heading6,
 ] as const;
