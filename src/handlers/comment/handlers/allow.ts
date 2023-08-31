@@ -20,7 +20,7 @@ export const setAccess = async (body: string) => {
     return;
   }
 
-  const regex = /^\/allow set-(\S+)\s@(\w+)\s(true|false)$/;
+  const regex = /^\/allow\s+set-(\S+)\s+@([\w-]+)\s+(true|false)\s*$/;
 
   const matches = body.match(regex);
 
