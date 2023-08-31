@@ -95,6 +95,7 @@ export const WalletSchema = Type.Object({
 
 export const AccessControlSchema = Type.Object({
   label: Type.Boolean(),
+  organization: Type.Boolean(),
 });
 
 export type AccessControl = Static<typeof AccessControlSchema>;
