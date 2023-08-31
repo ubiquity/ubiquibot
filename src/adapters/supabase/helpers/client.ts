@@ -4,7 +4,6 @@ import { Issue, UserProfile } from "../../../types";
 import { Database } from "../types";
 import { InsertPermit, Permit } from "../../../helpers";
 import { BigNumber, BigNumberish } from "ethers";
-import { ACCESS_CONTROL_LABELS } from "../../../configs";
 
 /**
  * @dev Creates a typescript client which will be used to interact with supabase platform
@@ -332,9 +331,8 @@ export const getAccessLevel = async (username: string, repository: string, label
 
   if (!data || !data[`${label_type}_access`]) {
     logger.info(`Access not found on the database`);
-    // By default, anyone should be able to set both priority/time labels.
-    if (label_type == ACCESS_CONTROL_LABELS.priority || label_type == ACCESS_CONTROL_LABELS.time) return true;
-    else return false;
+    // By default, anyone should be able to do anything.
+    return true;
   }
 
   const accessValues = data[`${label_type}_access`];
