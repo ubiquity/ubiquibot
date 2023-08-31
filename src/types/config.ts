@@ -97,6 +97,8 @@ export const AccessControlSchema = Type.Object({
   label: Type.Boolean(),
 });
 
+export type AccessControl = Static<typeof AccessControlSchema>;
+
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
   price: PriceConfigSchema,

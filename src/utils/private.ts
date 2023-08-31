@@ -1,6 +1,6 @@
 import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
-import { Payload } from "../types";
+import { AccessControl, Payload } from "../types";
 import { Context } from "probot";
 import {
   getAnalyticsMode,
@@ -66,10 +66,6 @@ export interface Incentives {
 export interface CommandObj {
   name: string;
   enabled: boolean;
-}
-
-export interface AccessControl {
-  label: boolean;
 }
 
 export interface WideConfig {
