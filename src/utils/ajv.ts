@@ -29,11 +29,7 @@ export const ajv = addFormats(new Ajv(), {
 });
 
 export function getAdditionalProperties() {
-  return ajv.errors?.map((error) => {
-    if (error.keyword === "additionalProperties") {
-      return error.params.additionalProperty;
-    }
-  });
+  return ajv.errors?.filter((error) => error.keyword === "additionalProperties").map((error) => error.params.additionalProperty);
 }
 
 export function validate(scheme: string | Schema, data: unknown): { valid: true; error: undefined } | { valid: false; error: string } {
