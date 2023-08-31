@@ -23,6 +23,15 @@ yarn start:watch
 - `LOGDNA_INGESTION_KEY`: Get it from [Memzo](https://app.mezmo.com/) by creating an account, adding an organization, and copying the ingestion key on the next screen.
 - `FOLLOWUP_TIME`: (optional) Set a custom follow-up time (default: 4 days).
 - `DISQUALIFY_TIME`: (optional) Set a custom disqualify time (default: 7 days).
+- `OPENAI_API_HOST`: (optional) Set OpenAI host url (default: https://api.openai.com).
+- `OPENAI_API_KEY`: Set OpenAI key.
+- `CHATGPT_USER_PROMPT_FOR_IMPORTANT_WORDS`: (optional) Set a custom user prompt for finding important words 
+(default: "I need your help to find important words (e.g. unique adjectives) from github issue below and I want to parse them easily so please separate them using #(No other contexts needed). Please separate the words by # so I can parse them easily. Please answer simply as I only need the important words. Here is the issue content.\n").
+- `CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY`: (optional) Set a custom user prompt for measuring similarity 
+(default: 'I have two github issues and I need to measure the possibility of the 2 issues are the same content (No other contents needed and give me only the number in %).\n Give me in number format and add % after the number.\nDo not tell other things since I only need the number (e.g. 85%). Here are two issues:\n 1. "%first%"\n2. "%second%"').
+- `SIMILARITY_THRESHOLD`: (optional) Set similarity threshold (default: 80).
+- `MEASURE_SIMILARITY_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for measuring similarity (default: 0).
+- `IMPORTANT_WORDS_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for finding important words (default: 0).
 
 `APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for internal developers to use.
 If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically generated when you install the app on your repository.
@@ -229,4 +238,28 @@ We can't use a `jsonc` file due to limitations with Netlify. Here is a snippet o
     /* https://github.com/syntax-tree/mdast#gfm */
   }
 }
+```
+
+## Supabase Cron Job (`logs-cleaner`)
+
+##### Dashboard > Project > Database > Extensions
+
+> Search `PG_CRON` and Enable it.
+
+
+##### Dashboard > Project > SQL Editor
+
+```sql
+-- Runs everyday at 03:00 AM to cleanup logs that are older than a week
+-- Use the cron time format to modify the trigger time if necessary
+select
+  cron.schedule (
+    'logs-cleaner', -- Job name
+    '0 3 * * *', -- Everyday at 03:00 AM
+    $$DELETE FROM logs WHERE timestamp < now() - INTERVAL '1 week'$$
+  );
+
+
+-- Cancel the cron job
+select cron.unschedule('logs-cleaner');
 ```
