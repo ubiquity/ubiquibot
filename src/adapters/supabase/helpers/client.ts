@@ -331,8 +331,8 @@ export const getAccessLevel = async (username: string, repository: string, label
 
   if (!data || !data[`${label_type}_access`]) {
     logger.info(`Access not found on the database`);
-    // By default, anyone should be able to do anything.
-    return true;
+    // no access
+    return false;
   }
 
   const accessValues = data[`${label_type}_access`];
