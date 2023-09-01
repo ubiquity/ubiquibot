@@ -87,6 +87,7 @@
     }
   },
   "enable-access-control": {
-    "label": false
+    "label": false,
+    "organization": true
   }
 }

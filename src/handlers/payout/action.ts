@@ -25,6 +25,7 @@ export const handleIssueClosed = async () => {
   const {
     payout: { paymentToken, rpc, permitBaseUrl, networkId, privateKey },
     mode: { paymentPermitMaxPrice },
+    accessControl,
   } = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -35,9 +36,11 @@ export const handleIssueClosed = async () => {
 
   if (!issue) return;
 
-  const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
+  if (accessControl.organization) {
+    const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
 
-  if (!userHasPermission) return "Permit generation skipped because this issue has been closed by an external contributor.";
+    if (!userHasPermission) return "Permit generation skipped because this issue has been closed by an external contributor.";
+  }
 
   const comments = await getAllIssueComments(issue.number);
 
