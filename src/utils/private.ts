@@ -1,6 +1,6 @@
 import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
-import { Payload } from "../types";
+import { AccessControl, Payload } from "../types";
 import { Context } from "probot";
 import merge from "lodash/merge";
 
@@ -67,6 +67,7 @@ export interface WideConfig {
   incentives: Incentives;
   "default-labels": string[];
   "register-wallet-with-verification": boolean;
+  "enable-access-control": AccessControl;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -178,6 +179,7 @@ export const getWideConfig = async (context: Context) => {
     defaultLabels: mergedConfigData["default-labels"],
     promotionComment: mergedConfigData["promotion-comment"],
     registerWalletWithVerification: mergedConfigData["register-wallet-with-verification"],
+    enableAccessControl: mergedConfigData["enable-access-control"]
   };
 
   return configData;
