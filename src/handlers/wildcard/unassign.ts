@@ -1,5 +1,5 @@
 import { closePullRequestForAnIssue } from "../assign";
-import { getBotConfig, getLogger } from "../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs/strings";
 import {
   addCommentToIssue,
@@ -9,7 +9,7 @@ import {
   listAllIssuesForRepo,
   removeAssignees,
 } from "../../helpers";
-import { Comment, Issue, IssueType } from "../../types";
+import { Comment, Issue, IssueType, Payload } from "../../types";
 
 /**
  * @dev Check out the bounties which haven't been completed within the initial timeline
@@ -31,6 +31,8 @@ export const checkBountiesToUnassign = async () => {
 };
 
 const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
   const logger = getLogger();
   const {
     unassign: { followUpTime, disqualifyTime },
@@ -49,7 +51,18 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   const curTimestamp = new Date().getTime();
   const lastActivity = await lastActivityTime(issue, comments);
   const passedDuration = curTimestamp - lastActivity.getTime();
+  const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee);
 
+  const { data: reviews } = await context.octokit.pulls.listReviews({
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    pull_number: pullRequest[0].id,
+  });
+
+  const pendingReviews = reviews.filter((review) => review.state === "PENDING");
+  if (pendingReviews.length > 0) {
+    return false;
+  }
   if (passedDuration >= disqualifyTime || passedDuration >= followUpTime) {
     if (passedDuration >= disqualifyTime) {
       logger.info(
