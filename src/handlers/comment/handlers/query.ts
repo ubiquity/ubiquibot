@@ -1,5 +1,6 @@
 import { getWalletInfo } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
+import { getUserPermission } from "../../../helpers";
 import { Payload } from "../../../types";
 
 export const query = async (body: string) => {
@@ -22,13 +23,14 @@ export const query = async (body: string) => {
   const regex = /^\/query\s+@([\w-]+)\s*$/;
   const matches = body.match(regex);
   const user = matches?.[1];
+  const permissionLevel = await getUserPermission(sender, context);
 
   if (user) {
     const walletInfo = await getWalletInfo(user, id?.toString());
     if (!walletInfo?.address) {
       return `Error retrieving multiplier and wallet address for @${user}`;
     } else {
-      return `@${user}'s wallet address is ${walletInfo?.address} and  multiplier is ${walletInfo?.multiplier}`;
+      return `@${user}'s wallet address is ${walletInfo?.address}, multiplier is ${walletInfo?.multiplier} and permission level is ${permissionLevel}`;
     }
   } else {
     logger.error("Invalid body for query command");
