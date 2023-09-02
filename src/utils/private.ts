@@ -18,6 +18,7 @@ import {
   getAssistivePricing,
   getCommandSettings,
   getRegisterWalletWithVerification,
+  getEnableAccessControl,
 } from "./helpers";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
@@ -153,6 +154,7 @@ export const getWideConfig = async (context: Context) => {
     defaultLabels: getDefaultLabels(configs),
     promotionComment: getPromotionComment(configs),
     registerWalletWithVerification: getRegisterWalletWithVerification(configs),
+    enableAccessControl: getEnableAccessControl(configs),
   };
 
   return configData;

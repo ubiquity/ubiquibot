@@ -111,6 +111,13 @@ export const WalletSchema = Type.Object({
   registerWalletWithVerification: Type.Boolean(),
 });
 
+export const AccessControlSchema = Type.Object({
+  label: Type.Boolean(),
+  organization: Type.Boolean(),
+});
+
+export type AccessControl = Static<typeof AccessControlSchema>;
+
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
   price: PriceConfigSchema,
@@ -124,6 +131,7 @@ export const BotConfigSchema = Type.Object({
   comments: CommentsSchema,
   command: CommandConfigSchema,
   wallet: WalletSchema,
+  accessControl: AccessControlSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;
@@ -145,6 +153,7 @@ export const WideConfigSchema = Type.Object(
     incentives: Type.Optional(IncentivesSchema),
     "default-labels": Type.Optional(Type.Array(Type.String())),
     "register-wallet-with-verification": Type.Optional(Type.Boolean()),
+    "enable-access-control": Type.Optional(AccessControlSchema),
   },
   {
     additionalProperties: false,

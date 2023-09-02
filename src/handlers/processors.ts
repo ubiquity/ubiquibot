@@ -3,7 +3,7 @@ import { closePullRequestForAnIssue, commentWithAssignMessage } from "./assign";
 import { pricingLabelLogic, validatePriceLabels } from "./pricing";
 import { checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate } from "./wildcard";
 import { nullHandler } from "./shared";
-import { handleComment, issueClosedCallback, issueReopenedCallback } from "./comment";
+import { handleComment, issueClosedCallback, issueCreatedCallback, issueReopenedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
 import { runOnPush, validateConfigChange } from "./push";
@@ -13,7 +13,7 @@ import { findDuplicateOne } from "./issue";
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_OPENED]: {
     pre: [nullHandler],
-    action: [findDuplicateOne], // SHOULD not set `issueCreatedCallback` until the exploit issue resolved.  https://github.com/ubiquity/ubiquibot/issues/535
+    action: [findDuplicateOne, issueCreatedCallback],
     post: [nullHandler],
   },
   [GithubEvent.ISSUES_REOPENED]: {
