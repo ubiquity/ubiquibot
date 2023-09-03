@@ -1,13 +1,13 @@
 import { Context } from "probot";
-import { getBotContext, getLogger } from "../bindings";
+import { getBotContext, getLogger, loadConfig } from "../bindings";
 import { AssignEvent, Comment, IssueType, Payload } from "../types";
 import { checkRateLimitGit } from "../utils";
-import { DEFAULT_TIME_RANGE_FOR_MAX_ISSUE, DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED } from "../configs";
 
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
+
   if (!payload.issue) return;
 
   const labels = payload.issue.labels;
@@ -48,7 +48,13 @@ export const addLabelToIssue = async (labelName: string) => {
   }
 };
 
-export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open", per_page = 30, page = 1) => {
+export const listIssuesForRepo = async (
+  state: "open" | "closed" | "all" = "open",
+  per_page = 30,
+  page = 1,
+  sort: "created" | "updated" | "comments" = "created",
+  direction: "desc" | "asc" = "desc"
+) => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -58,6 +64,8 @@ export const listIssuesForRepo = async (state: "open" | "closed" | "all" = "open
     state,
     per_page,
     page,
+    sort,
+    direction,
   });
 
   await checkRateLimitGit(response.headers);
@@ -175,7 +183,7 @@ export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[
   return result;
 };
 
-export const getIssueDescription = async (issue_number: number): Promise<string> => {
+export const getIssueDescription = async (issue_number: number, format: "raw" | "html" | "text" = "raw"): Promise<string> => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -186,17 +194,30 @@ export const getIssueDescription = async (issue_number: number): Promise<string>
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: issue_number,
+      mediaType: {
+        format,
+      },
     });
 
     await checkRateLimitGit(response?.headers);
-    if (response.data.body) result = response.data.body;
+    switch (format) {
+      case "raw":
+        result = response.data.body ?? "";
+        break;
+      case "html":
+        result = response.data.body_html ?? "";
+        break;
+      case "text":
+        result = response.data.body_text ?? "";
+        break;
+    }
   } catch (e: unknown) {
     logger.debug(`Getting issue description failed!, reason: ${e}`);
   }
   return result;
 };
 
-export const getAllIssueComments = async (issue_number: number): Promise<Comment[]> => {
+export const getAllIssueComments = async (issue_number: number, format: "raw" | "html" | "text" | "full" = "raw"): Promise<Comment[]> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -211,6 +232,9 @@ export const getAllIssueComments = async (issue_number: number): Promise<Comment
         issue_number: issue_number,
         per_page: 100,
         page: page_number,
+        mediaType: {
+          format,
+        },
       });
 
       await checkRateLimitGit(response?.headers);
@@ -317,8 +341,9 @@ export const removeAssignees = async (issue_number: number, assignees: string[])
 export const checkUserPermissionForRepoAndOrg = async (username: string, context: Context): Promise<boolean> => {
   const permissionForRepo = await checkUserPermissionForRepo(username, context);
   const permissionForOrg = await checkUserPermissionForOrg(username, context);
+  const userPermission = await getUserPermission(username, context);
 
-  return permissionForOrg || permissionForRepo;
+  return permissionForOrg || permissionForRepo || userPermission === "admin" || userPermission === "billing_manager";
 };
 
 export const checkUserPermissionForRepo = async (username: string, context: Context): Promise<boolean> => {
@@ -345,12 +370,12 @@ export const checkUserPermissionForOrg = async (username: string, context: Conte
   if (!payload.organization) return false;
 
   try {
-    const res = await context.octokit.rest.orgs.checkMembershipForUser({
+    await context.octokit.rest.orgs.checkMembershipForUser({
       org: payload.organization.login,
       username,
     });
-    // @ts-expect-error This looks like a bug in octokit. (https://github.com/octokit/rest.js/issues/188)
-    return res.status === 204;
+    // skipping status check due to type error of checkMembershipForUser function of octokit
+    return true;
   } catch (e: unknown) {
     logger.error(`Checking if user permisson for org failed!, reason: ${e}`);
     return false;
@@ -615,8 +640,10 @@ export const getCommitsOnPullRequest = async (pullNumber: number) => {
 };
 
 export const getAvailableOpenedPullRequests = async (username: string) => {
-  if (!DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED) return [];
   const context = getBotContext();
+  const botConfig = await loadConfig(context);
+  if (!botConfig.unassign.timeRangeForMaxIssueEnabled) return [];
+
   const opened_prs = await getOpenedPullRequests(username);
 
   const result = [];
@@ -630,7 +657,7 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
       if (approvedReviews) result.push(pr);
     }
 
-    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= DEFAULT_TIME_RANGE_FOR_MAX_ISSUE) {
+    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= botConfig.unassign.timeRangeForMaxIssue) {
       result.push(pr);
     }
   }

@@ -1,11 +1,34 @@
-import { CommentElementPricing } from "../types";
+import { Incentives } from "./private";
+import { Level } from "../adapters/supabase";
 import { CommandObj, WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
+import { AccessControl } from "../types";
 
 interface Configs {
   parsedRepo?: WideRepoConfig;
   parsedOrg?: WideOrgConfig;
   parsedDefault: WideRepoConfig;
 }
+
+export const getNumericLevel = (level: Level) => {
+  switch (level) {
+    case Level.ERROR:
+      return 0;
+    case Level.WARN:
+      return 1;
+    case Level.INFO:
+      return 2;
+    case Level.HTTP:
+      return 3;
+    case Level.VERBOSE:
+      return 4;
+    case Level.DEBUG:
+      return 5;
+    case Level.SILLY:
+      return 6;
+    default:
+      return -1; // Invalid level
+  }
+};
 
 export const getNetworkId = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): number => {
   if (parsedRepo && parsedRepo["evm-network-id"] !== undefined && !Number.isNaN(Number(parsedRepo["evm-network-id"]))) {
@@ -72,13 +95,13 @@ export const getPriorityLabels = ({ parsedRepo, parsedOrg, parsedDefault }: Conf
   }
 };
 
-export const getCommentItemPrice = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): CommentElementPricing => {
-  if (parsedRepo && parsedRepo["comment-element-pricing"] !== undefined) {
-    return parsedRepo["comment-element-pricing"];
-  } else if (parsedOrg && parsedOrg["comment-element-pricing"] !== undefined) {
-    return parsedOrg["comment-element-pricing"];
+export const getIncentives = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): Incentives => {
+  if (parsedRepo && parsedRepo["incentives"]) {
+    return parsedRepo["incentives"];
+  } else if (parsedOrg && parsedOrg["incentives"]) {
+    return parsedOrg["incentives"];
   } else {
-    return parsedDefault["comment-element-pricing"] as CommentElementPricing;
+    return parsedDefault["incentives"] as Incentives;
   }
 };
 
@@ -159,5 +182,15 @@ export const getRegisterWalletWithVerification = ({ parsedRepo, parsedOrg, parse
     return Boolean(parsedOrg["register-wallet-with-verification"]);
   } else {
     return Boolean(parsedDefault["register-wallet-with-verification"]);
+  }
+};
+
+export const getEnableAccessControl = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): AccessControl => {
+  if (parsedRepo && parsedRepo["enable-access-control"]) {
+    return parsedRepo["enable-access-control"];
+  } else if (parsedOrg && parsedOrg["enable-access-control"]) {
+    return parsedOrg["enable-access-control"];
+  } else {
+    return parsedDefault["enable-access-control"] as AccessControl;
   }
 };

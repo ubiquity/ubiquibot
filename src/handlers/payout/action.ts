@@ -7,23 +7,25 @@ import {
   clearAllPriceLabelsOnIssue,
   deleteLabel,
   generatePermit2Signature,
-  getAllIssueAssignEvents,
   getAllIssueComments,
   getTokenSymbol,
   savePermitToDB,
   wasIssueReopened,
+  getAllIssueAssignEvents,
 } from "../../helpers";
 import { UserType, Payload, StateReason } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
+import Decimal from "decimal.js";
 import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
 
 export const handleIssueClosed = async () => {
   const context = getBotContext();
   const {
-    payout: { paymentToken, rpc, permitBaseUrl, networkId },
+    payout: { paymentToken, rpc, permitBaseUrl, networkId, privateKey },
     mode: { paymentPermitMaxPrice },
+    accessControl,
   } = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -34,9 +36,11 @@ export const handleIssueClosed = async () => {
 
   if (!issue) return;
 
-  const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
+  if (accessControl.organization) {
+    const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
 
-  if (!userHasPermission) return "Permit generation skipped because this issue has been closed by an external contributor.";
+    if (!userHasPermission) return "Permit generation skipped because this issue has been closed by an external contributor.";
+  }
 
   const comments = await getAllIssueComments(issue.number);
 
@@ -89,7 +93,10 @@ export const handleIssueClosed = async () => {
     logger.info(`Penalty removed`);
     return;
   }
-
+  if (privateKey == "") {
+    logger.info("Permit generation skipped because wallet private key is not set");
+    return "Permit generation skipped because wallet private key is not set";
+  }
   if (issue.state_reason !== StateReason.COMPLETED) {
     logger.info("Permit generation skipped because the issue was not closed as completed");
     return "Permit generation skipped because the issue was not closed as completed";
@@ -142,30 +149,30 @@ export const handleIssueClosed = async () => {
   }
 
   const recipient = await getWalletAddress(assignee.login);
-  const { value } = await getWalletMultiplier(assignee.login, id?.toString());
+  if (!recipient || recipient?.trim() === "") {
+    logger.info(`Recipient address is missing`);
+    return;
+  }
 
-  if (value === 0) {
+  const { value: multiplier } = await getWalletMultiplier(assignee.login, id?.toString());
+
+  if (multiplier === 0) {
     const errMsg = "Refusing to generate the payment permit because " + `@${assignee.login}` + "'s payment `multiplier` is `0`";
     logger.info(errMsg);
     return errMsg;
   }
 
-  // TODO: add multiplier to the priceInEth
-  let priceInEth = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString();
-  if (parseInt(priceInEth) > paymentPermitMaxPrice) {
+  let priceInEth = new Decimal(issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4)).mul(multiplier);
+  if (priceInEth.gt(paymentPermitMaxPrice)) {
     logger.info("Skipping to proceed the payment because bounty payout is higher than paymentPermitMaxPrice");
     return `Permit generation skipped since issue's bounty is higher than ${paymentPermitMaxPrice}`;
-  }
-  if (!recipient || recipient?.trim() === "") {
-    logger.info(`Recipient address is missing`);
-    return;
   }
 
   // if bounty hunter has any penalty then deduct it from the bounty
   const penaltyAmount = await getPenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString());
   if (penaltyAmount.gt(0)) {
     logger.info(`Deducting penalty from bounty`);
-    const bountyAmount = ethers.utils.parseUnits(priceInEth, 18);
+    const bountyAmount = ethers.utils.parseUnits(priceInEth.toString(), 18);
     const bountyAmountAfterPenalty = bountyAmount.sub(penaltyAmount);
     if (bountyAmountAfterPenalty.lte(0)) {
       await removePenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString(), bountyAmount);
@@ -173,14 +180,15 @@ export const handleIssueClosed = async () => {
       logger.info(msg);
       return msg;
     }
-    priceInEth = ethers.utils.formatUnits(bountyAmountAfterPenalty, 18);
+    priceInEth = new Decimal(ethers.utils.formatUnits(bountyAmountAfterPenalty, 18));
   }
 
-  const { txData, payoutUrl } = await generatePermit2Signature(recipient, priceInEth, issue.node_id);
+  const { txData, payoutUrl } = await generatePermit2Signature(recipient, priceInEth, issue.node_id, assignee.node_id, "ISSUE_ASSIGNEE");
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
   logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
-  const comment = `### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
+  const comment =
+    `#### Task Assignee Reward\n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
   const permitComments = comments.filter((content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot);
   if (permitComments.length > 0) {
     logger.info(`Skip to generate a permit url because it has been already posted`);

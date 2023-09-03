@@ -1,5 +1,5 @@
 import { getBotContext } from "../bindings";
-import { Payload, UserType } from "../types";
+import { LabelItem, Payload, UserType } from "../types";
 
 const contextNamesToSkip = ["workflow_run"];
 
@@ -19,3 +19,29 @@ export const shouldSkip = (): { skip: boolean; reason: string } => {
 };
 
 export const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+export const calculateWeight = (label: LabelItem | undefined): number => {
+  if (!label) return 0;
+  const matches = label.name.match(/\d+/);
+  const number = matches && matches.length > 0 ? parseInt(matches[0]) || 0 : 0;
+  if (label.name.toLowerCase().includes("priority")) return number;
+  if (label.name.toLowerCase().includes("minute")) return number * 0.002;
+  if (label.name.toLowerCase().includes("hour")) return number * 0.125;
+  if (label.name.toLowerCase().includes("day")) return 1 + (number - 1) * 0.25;
+  if (label.name.toLowerCase().includes("week")) return number + 1;
+  if (label.name.toLowerCase().includes("month")) return 5 + (number - 1) * 8;
+  return 0;
+};
+
+export const calculateDuration = (label: LabelItem): number => {
+  if (!label) return 0;
+  const matches = label.name.match(/\d+/);
+  if (label.name.toLowerCase().includes("priority")) return 0;
+  const number = matches && matches.length > 0 ? parseInt(matches[0]) || 0 : 0;
+  if (label.name.toLowerCase().includes("minute")) return number * 60;
+  if (label.name.toLowerCase().includes("hour")) return number * 3600;
+  if (label.name.toLowerCase().includes("day")) return number * 86400;
+  if (label.name.toLowerCase().includes("week")) return number * 604800;
+  if (label.name.toLowerCase().includes("month")) return number * 2592000;
+  return 0;
+};
