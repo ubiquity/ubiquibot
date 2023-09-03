@@ -31,11 +31,6 @@ export const query = async (body: string) => {
     } else {
       return `@${user}'s wallet address is ${walletInfo?.address}, multiplier is ${walletInfo?.multiplier} and access levels are
 | access type | access level |
-| ----------- | ------------ |access type 	access level
-multiplier 	true
-priority 	true
-time 	true
-price 	true
 | multiplier  | ${getAccessLevel(sender, repo.full_name, "multiplier")}       |
 | priority    | ${getAccessLevel(sender, repo.full_name, "priority")}         |
 | time        | ${getAccessLevel(sender, repo.full_name, "time")}             |
