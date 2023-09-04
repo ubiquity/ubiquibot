@@ -82,7 +82,7 @@ export const incentivizeComments = async (): Promise<{
   const issueCommentsByUser: Record<string, { id: string; comments: string[] }> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
-    if (user.type == UserType.Bot || user.login == assignee) continue;
+    if (user.type == UserType.Bot || user.login == assignee.login) continue;
     const commands = commentParser(issueComment.body);
     if (commands.length > 0) {
       logger.info(`Skipping to parse the comment because it contains commands. comment: ${JSON.stringify(issueComment)}`);
