@@ -28,6 +28,7 @@ import { handleIssueClosed, incentivizeComments, incentivizeCreatorComment } fro
 import { query } from "./query";
 import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
+import isEmpty from "lodash/isEmpty";
 
 export * from "./assign";
 export * from "./wallet";
@@ -71,22 +72,25 @@ export const issueClosedCallback = async (): Promise<void> => {
   if (!issue) return;
   try {
     let commentersComment = "";
+    // The mapping between gh handle and comment with a permit url
+    const reward: Record<string, string> = {};
+
     const creatorIncentives = await incentivizeCreatorComment();
     const { title: commenterTitle, permitData, fallbackReward } = await incentivizeComments();
 
     // HANDLE COMMENTERS REWARD
     if (permitData && permitData.length > 0) {
-      // The mapping between gh handle and comment with a permit url
-      const reward: Record<string, string> = {};
-
       commentersComment = `#### ${commenterTitle}\n`;
 
       permitData.map(async (permit) => {
-        const { payoutUrl } = await generatePermit2Signature(permit.account, permit.amountInETH, permit.node_id, permit.userId, "ISSUE_COMMENTER");
-        commentersComment = `${commentersComment}### [ **${permit.user}: [ CLAIM ${
-          permit.amountInETH
-        } ${permit.tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
-        reward[permit.user] = payoutUrl;
+        // Exclude issue creator from commenter rewards
+        if (permit.userId === creatorIncentives.userId) {
+          const { payoutUrl } = await generatePermit2Signature(permit.account, permit.amountInETH, permit.node_id, permit.userId);
+          commentersComment = `${commentersComment}### [ **${permit.user}: [ CLAIM ${
+            permit.amountInETH
+          } ${permit.tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
+          reward[permit.user] = payoutUrl;
+        }
       });
 
       logger.info(`Permit url generated for contributors. reward: ${JSON.stringify(reward)}`);
@@ -96,7 +100,7 @@ export const issueClosedCallback = async (): Promise<void> => {
     const issueComments = await handleIssueClosed(creatorIncentives);
     if (issueComments) {
       const { comment, creatorComment } = issueComments;
-      if (commentersComment) await addCommentToIssue(commentersComment, issue.number);
+      if (commentersComment && !isEmpty(reward)) await addCommentToIssue(commentersComment, issue.number);
       if (creatorComment) await addCommentToIssue(creatorComment, issue.number);
       if (comment) await addCommentToIssue(comment + comments.promotionComment, issue.number);
     }

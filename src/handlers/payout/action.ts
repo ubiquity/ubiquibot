@@ -178,8 +178,7 @@ export const handleIssueClosed = async (creatorIncentives: CreatorCommentResult)
       creatorIncentives.account,
       creatorIncentives.amountInETH!,
       creatorIncentives.node_id!,
-      creatorIncentives.userId,
-      "ISSUE_CREATOR"
+      creatorIncentives.userId
     );
     creatorComment = `#### ${creatorIncentives.title}\n### [ **${creatorIncentives.user}: [ CLAIM ${
       creatorIncentives.amountInETH
@@ -210,7 +209,7 @@ export const handleIssueClosed = async (creatorIncentives: CreatorCommentResult)
     priceInEth = new Decimal(ethers.utils.formatUnits(bountyAmountAfterPenalty, 18));
   }
 
-  const { txData, payoutUrl } = await generatePermit2Signature(recipient, priceInEth, issue.node_id, assignee.node_id, "ISSUE_ASSIGNEE");
+  const { txData, payoutUrl } = await generatePermit2Signature(recipient, priceInEth, issue.node_id, assignee.node_id);
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
   logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
