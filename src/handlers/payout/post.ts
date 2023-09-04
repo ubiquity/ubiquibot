@@ -73,7 +73,7 @@ export const incentivizeComments = async () => {
 
   const issueComments = await getAllIssueComments(issue.number, "full");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
-  const issueCommentsByUser: Record<string, string[]> = {};
+  const issueCommentsByUser: Record<string, { id: string; comments: string[] }> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
     if (user.type == UserType.Bot || user.login == assignee) continue;
@@ -86,10 +86,12 @@ export const incentivizeComments = async () => {
       logger.info(`Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(issueComment)}`);
       continue;
     }
+
+    // Store the comment along with user's login and node_id
     if (!issueCommentsByUser[user.login]) {
-      issueCommentsByUser[user.login] = [];
+      issueCommentsByUser[user.login] = { id: user.node_id, comments: [] };
     }
-    issueCommentsByUser[user.login].push(issueComment.body_html);
+    issueCommentsByUser[user.login].comments.push(issueComment.body_html);
   }
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
@@ -101,8 +103,8 @@ export const incentivizeComments = async () => {
   const fallbackReward: Record<string, Decimal> = {};
   let comment = `#### Conversation Rewards\n`;
   for (const user of Object.keys(issueCommentsByUser)) {
-    const comments = issueCommentsByUser[user];
-    const commentsByNode = await parseComments(comments, ItemsToExclude);
+    const commentsByUser = issueCommentsByUser[user];
+    const commentsByNode = await parseComments(commentsByUser.comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, incentives);
     if (rewardValue.equals(0)) {
       logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`);
@@ -116,7 +118,7 @@ export const incentivizeComments = async () => {
       continue;
     }
     if (account) {
-      const { payoutUrl } = await generatePermit2Signature(account, amountInETH, issue.node_id);
+      const { payoutUrl } = await generatePermit2Signature(account, amountInETH, issue.node_id, commentsByUser.id, "ISSUE_COMMENTER");
       comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
       reward[user] = payoutUrl;
     } else {
@@ -309,6 +311,7 @@ export const incentivizeCreatorComment = async () => {
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const result = await generatePermitForComments(
     creator.login,
+    creator.node_id,
     [description],
     issueCreatorMultiplier,
     incentives,
@@ -328,6 +331,7 @@ export const incentivizeCreatorComment = async () => {
 
 const generatePermitForComments = async (
   user: string,
+  userId: string,
   comments: string[],
   multiplier: number,
   incentives: Incentives,
@@ -351,7 +355,7 @@ const generatePermitForComments = async (
   }
   let comment = `#### Task Creator Reward\n`;
   if (account) {
-    const { payoutUrl } = await generatePermit2Signature(account, amountInETH, node_id);
+    const { payoutUrl } = await generatePermit2Signature(account, amountInETH, node_id, userId, "ISSUE_CREATOR");
     comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
     return { comment, payoutUrl };
   } else {
