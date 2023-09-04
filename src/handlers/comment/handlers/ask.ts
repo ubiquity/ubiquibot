@@ -3,7 +3,6 @@ import { Payload, UserType } from "../../../types";
 import { addCommentToIssue, getAllIssueComments, getIssueByNumber, getPullByNumber } from "../../../helpers";
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
-import { link } from "fs";
 
 interface StreamlinedComment {
   login: string | null | undefined;
@@ -24,7 +23,7 @@ Whenever appropriate, format your response using GitHub Flavored Markdown. Utili
 Do not make up answers. If you are unsure, say so. \n
 Original Context exists only to provide you with additional information to the current question, use it to formulate answers. \n
 Infer the context of the question from the Original Context using your best judgement. \n
-All replies MUST begin "<!--- { 'UbiquityAI': 'answer' } ---> \n\n" followed by your response. \n
+All replies MUST end with "\n\n <!--- { 'UbiquityAI': 'answer' } ---> ".\n
 `;
 
 const speckCheck = `You are the UbiquityAI, designed to analyze pull request changes in comparison to issue spec. \n
@@ -33,7 +32,7 @@ You will determine based on the spec whether or not the implementation is sound.
 First will the logic work? Second how close to meeting the spec is it? \n
 Provide a score from 0 to 100, 0 being not at all and 100 being perfect. \n
 Provide an analysis of the implementation in comparison to the spec. \n
-All replies MUST begin "<!--- { 'UbiquityAI': 'answer' } ---> \n\n" followed by your response. \n
+All replies MUST end with "\n\n <!--- { 'UbiquityAI': 'specCheck' } --->".\n
 `;
 
 export const askGPT = async (question: string, chatHistory: CreateChatCompletionRequestMessage[]) => {
@@ -91,7 +90,6 @@ export const ask = async (body: string) => {
   let chatHistory: CreateChatCompletionRequestMessage[] = [];
   const streamlined: StreamlinedComment[] = [];
   const linkedCommentsStreamlined: StreamlinedComment[] = [];
-  const prStreamlined: StreamlinedComment[] = [];
 
   // return a diff of the changes made in the PR
   const comparePR = async () => {
@@ -133,6 +131,7 @@ export const ask = async (body: string) => {
 
     if (!comments) {
       logger.info(`Error getting issue comments`);
+      return `Error getting issue comments`;
     }
 
     // add the first comment of the issue
@@ -152,7 +151,7 @@ export const ask = async (body: string) => {
     });
 
     try {
-      // the very first comment of the issue should be the issue spec
+      // the very first comment of the issue should be the issue spec or the context of the issue
       const connected = issue.body;
       // as per issue formatting, we grab the context using the "#<issue number>" tag
       const referencedIssue = await getAllIssueComments(Number(connected.split("#")[1].split("\n")[0]));
@@ -163,6 +162,7 @@ export const ask = async (body: string) => {
 
       if (!referencedIssue) {
         logger.info(`Error getting referenced issue comments`);
+        return `Error getting referenced issue comments`;
       }
 
       // add the first comment of the referenced issue
@@ -184,19 +184,17 @@ export const ask = async (body: string) => {
       logger.info(`Error getting referenced issue comments: ${error}`);
     }
 
-    let isStreaming = false;
-
     // if this is a pr, we'll grab the spec and diff and pass it to the AI
     const isPull = async () => {
-      if (isPr) {
+      const alreadyChecked = commentsRaw.some((comment) => comment.body.includes("<!--- { 'UbiquityAI': 'specCheck' } --->"));
+      if (!alreadyChecked && isPr) {
         const diff = await comparePR()
-          .then(({ pr, diff }) => {
-            console.log("=============== DIFF ==================");
-            console.log(diff);
-            console.log("=============== DIFF ==================");
+          .then(({ diff }) => {
             return diff;
           })
-          .catch((error) => console.log(error));
+          .catch((error) => {
+            logger.info(`Error getting diff: ${error}`);
+          });
 
         // Pass the spec and the diff to the AI before we make the main call
         chatHistory.push(
@@ -217,23 +215,22 @@ export const ask = async (body: string) => {
           } as CreateChatCompletionRequestMessage
         );
 
-        isStreaming = true; // incase the answer is still being generated we can wait for it
-
         const gptResponse: GPTResponse | string = await askGPT(body, chatHistory);
-
-        if (!gptResponse) {
-          logger.info(`Error getting response from GPT`);
-        }
 
         if (typeof gptResponse === "string") {
           return gptResponse;
         } else {
           if (gptResponse.answer) {
             await addCommentToIssue(gptResponse.answer, issue.number); // add the diff analysis to the issue
-            isStreaming = false;
+
             return gptResponse.answer;
+          } else {
+            logger.info(`Error getting response from GPT`);
+            return `Error getting response from GPT`;
           }
         }
+      } else {
+        return;
       }
     };
 
@@ -274,44 +271,19 @@ export const ask = async (body: string) => {
       );
     }
 
-    if (!isStreaming) {
-      const gptResponse: GPTResponse | string = await askGPT(body, chatHistory);
-      console.log("====================================");
-      console.log(chatHistory);
-      console.log("====================================");
-      console.log(gptResponse);
-      console.log("====================================");
+    const gptResponse: GPTResponse | string = await askGPT(body, chatHistory);
+    console.log("====================================");
+    console.log(gptResponse);
+    console.log("====================================");
+    console.log(chatHistory);
+    console.log("====================================");
 
-      if (!gptResponse) {
-        return `Error getting response from GPT`;
-      }
-
-      if (typeof gptResponse === "string") {
-        return gptResponse;
-      } else {
-        return gptResponse.answer;
-      }
+    if (typeof gptResponse === "string") {
+      return gptResponse;
+    } else if (gptResponse.answer) {
+      return gptResponse.answer;
     } else {
-      await setInterval(async () => {
-        if (!isStreaming) {
-          const gptResponse: GPTResponse | string = await askGPT(body, chatHistory);
-          console.log("====================================");
-          console.log(chatHistory);
-          console.log("====================================");
-          console.log(gptResponse);
-          console.log("====================================");
-
-          if (!gptResponse) {
-            return `Error getting response from GPT`;
-          }
-
-          if (typeof gptResponse === "string") {
-            return gptResponse;
-          } else {
-            return gptResponse.answer;
-          }
-        }
-      }, 1000);
+      return `Error getting response from GPT`;
     }
   } else {
     return "Invalid syntax for ask \n usage: '/ask What is pi?";
