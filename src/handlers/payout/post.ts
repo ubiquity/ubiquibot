@@ -192,7 +192,7 @@ export const incentivizePullRequestReviews = async () => {
 
   const prReviews = await getAllPullRequestReviews(context, linkedPullRequest.number, "full");
   logger.info(`Getting the PR reviews done. comments: ${JSON.stringify(prReviews)}`);
-  const prReviewsByUser: Record<string, string[]> = {};
+  const prReviewsByUser: Record<string, { id: string; comments: string[] }> = {};
   for (const review of prReviews) {
     const user = review.user;
     if (!user) continue;
@@ -202,9 +202,9 @@ export const incentivizePullRequestReviews = async () => {
       continue;
     }
     if (!prReviewsByUser[user.login]) {
-      prReviewsByUser[user.login] = [];
+      prReviewsByUser[user.login] = { id: user.node_id, comments: [] };
     }
-    prReviewsByUser[user.login].push(review.body_html);
+    prReviewsByUser[user.login].comments.push(review.body_html);
   }
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   logger.info(`incentivizePullRequestReviews: Filtering by the user type done. commentsByUser: ${JSON.stringify(prReviewsByUser)}`);
@@ -216,8 +216,8 @@ export const incentivizePullRequestReviews = async () => {
   const fallbackReward: Record<string, Decimal> = {};
   let comment = `#### Reviewer Rewards\n`;
   for (const user of Object.keys(prReviewsByUser)) {
-    const comments = prReviewsByUser[user];
-    const commentsByNode = await parseComments(comments, ItemsToExclude);
+    const commentByUser = prReviewsByUser[user];
+    const commentsByNode = await parseComments(commentByUser.comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, incentives);
     if (rewardValue.equals(0)) {
       logger.info(`incentivizePullRequestReviews: Skipping to generate a permit url because the reward value is 0. user: ${user}`);
@@ -231,7 +231,7 @@ export const incentivizePullRequestReviews = async () => {
       continue;
     }
     if (account) {
-      const { payoutUrl } = await generatePermit2Signature(account, amountInETH, issue.node_id);
+      const { payoutUrl } = await generatePermit2Signature(account, amountInETH, issue.node_id, commentByUser.id, "ISSUE_COMMENTER");
       comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
       reward[user] = payoutUrl;
     } else {
