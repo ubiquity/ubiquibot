@@ -23,7 +23,7 @@ const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
  */
 export const incentivizeComments = async (): Promise<{
   title: string;
-  permitData?: { account?: string; amountInETH?: Decimal; userId?: string; tokenSymbol?: string; node_id?: string; user?: string }[];
+  permitData?: { account: string; amountInETH: Decimal; userId: string; tokenSymbol: string; node_id: string; user: string }[];
   fallbackReward?: Record<string, Decimal>;
 }> => {
   const title = `Conversation Rewards`;
@@ -130,7 +130,7 @@ export const incentivizeComments = async (): Promise<{
     }
   }
 
-  return { title, permitData };
+  return { title, permitData, fallbackReward };
 };
 
 export const incentivizeCreatorComment = async (): Promise<CreatorCommentResult> => {

@@ -181,7 +181,7 @@ export const handleIssueClosed = async (creatorIncentives: CreatorCommentResult)
       creatorIncentives.userId,
       "ISSUE_CREATOR"
     );
-    creatorComment = `### ${creatorIncentives.title}### [ **${creatorIncentives.user}: [ CLAIM ${
+    creatorComment = `#### ${creatorIncentives.title}\n### [ **${creatorIncentives.user}: [ CLAIM ${
       creatorIncentives.amountInETH
     } ${creatorIncentives.tokenSymbol!.toUpperCase()} ]** ](${payoutUrl})\n`;
     if (payoutUrl) {

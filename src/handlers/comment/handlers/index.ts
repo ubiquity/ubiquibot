@@ -21,6 +21,7 @@ import {
   getTokenSymbol,
   getAllIssueAssignEvents,
   calculateWeight,
+  generatePermit2Signature,
 } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { handleIssueClosed, incentivizeComments, incentivizeCreatorComment } from "../../payout";
@@ -63,24 +64,39 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
  */
 
 export const issueClosedCallback = async (): Promise<void> => {
+  const logger = getLogger();
   const { payload: _payload } = getBotContext();
   const { comments } = getBotConfig();
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   try {
+    let commentersComment = "";
     const creatorIncentives = await incentivizeCreatorComment();
+    const { title: commenterTitle, permitData, fallbackReward } = await incentivizeComments();
 
-    const { title: commenterTitle, permitData } = await incentivizeComments();
+    // HANDLE COMMENTERS REWARD
+    if (permitData && permitData.length > 0) {
+      // The mapping between gh handle and comment with a permit url
+      const reward: Record<string, string> = {};
 
-    // logger.info(`Permit url generated for contributors. reward: ${JSON.stringify(reward)}`);
-    // logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
+      commentersComment = `#### ${commenterTitle}\n`;
 
-    // The mapping between gh handle and comment with a permit url
-    //const reward: Record<string, string> = {};
+      permitData.map(async (permit) => {
+        const { payoutUrl } = await generatePermit2Signature(permit.account, permit.amountInETH, permit.node_id, permit.userId, "ISSUE_COMMENTER");
+        commentersComment = `${commentersComment}### [ **${permit.user}: [ CLAIM ${
+          permit.amountInETH
+        } ${permit.tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
+        reward[permit.user] = payoutUrl;
+      });
+
+      logger.info(`Permit url generated for contributors. reward: ${JSON.stringify(reward)}`);
+      logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
+    }
 
     const issueComments = await handleIssueClosed(creatorIncentives);
     if (issueComments) {
       const { comment, creatorComment } = issueComments;
+      if (commentersComment) await addCommentToIssue(commentersComment, issue.number);
       if (creatorComment) await addCommentToIssue(creatorComment, issue.number);
       if (comment) await addCommentToIssue(comment + comments.promotionComment, issue.number);
     }
