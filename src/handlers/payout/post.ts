@@ -5,6 +5,7 @@ import { Incentives, MarkdownItem, Payload, StateReason, UserType } from "../../
 import { commentParser } from "../comment";
 import Decimal from "decimal.js";
 import { bountyInfo } from "../wildcard";
+import { GLOBAL_STRINGS } from "../../configs";
 
 const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
 /**
@@ -53,6 +54,20 @@ export const incentivizeComments = async () => {
   if (permitComments.length > 0) {
     logger.info(`incentivizeComments: skip to generate a permit url because it has been already posted`);
     return;
+  }
+
+  for (const botComment of comments.filter((cmt) => cmt.user.type === UserType.Bot).reverse()) {
+    const botCommentBody = botComment.body;
+    if (botCommentBody.includes(GLOBAL_STRINGS.autopayComment)) {
+      const pattern = /\*\*(\w+)\*\*/;
+      const res = botCommentBody.match(pattern);
+      if (res) {
+        if (res[1] === "false") {
+          return;
+        }
+        break;
+      }
+    }
   }
 
   const assignees = issue?.assignees ?? [];
@@ -120,7 +135,9 @@ export const incentivizeComments = async () => {
   logger.info(`Permit url generated for contributors. reward: ${JSON.stringify(reward)}`);
   logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
 
-  await addCommentToIssue(comment, issue.number);
+  if (Object.keys(reward).length > 0) {
+    await addCommentToIssue(comment, issue.number);
+  }
 };
 
 export const incentivizeCreatorComment = async () => {
@@ -172,6 +189,20 @@ export const incentivizeCreatorComment = async () => {
   if (!assignee) {
     logger.info("incentivizeCreatorComment: skipping payment permit generation because `assignee` is `undefined`.");
     return;
+  }
+
+  for (const botComment of comments.filter((cmt) => cmt.user.type === UserType.Bot).reverse()) {
+    const botCommentBody = botComment.body;
+    if (botCommentBody.includes(GLOBAL_STRINGS.autopayComment)) {
+      const pattern = /\*\*(\w+)\*\*/;
+      const res = botCommentBody.match(pattern);
+      if (res) {
+        if (res[1] === "false") {
+          return;
+        }
+        break;
+      }
+    }
   }
 
   const description = await getIssueDescription(issue.number, "html");
