@@ -173,7 +173,7 @@ export const handleIssueClosed = async (creatorIncentives: CreatorCommentResult)
   // CREATOR REWARD HANDLER
   let creatorComment;
   // Generate permit for user if its not the same id as assignee
-  if (creatorIncentives.account && creatorIncentives.account !== "0x" && creatorIncentives.userId !== assignee.node_id) {
+  if (creatorIncentives && creatorIncentives.account && creatorIncentives.account !== "0x" && creatorIncentives.userId !== assignee.node_id) {
     const { payoutUrl } = await generatePermit2Signature(
       creatorIncentives.account,
       creatorIncentives.amountInETH!,
@@ -187,10 +187,10 @@ export const handleIssueClosed = async (creatorIncentives: CreatorCommentResult)
       logger.info(`Permit url generated for creator. reward: ${payoutUrl}`);
     }
     // Add amount to assignee if assignee is the creator
-  } else if (creatorIncentives.account && creatorIncentives.account !== "0x" && creatorIncentives.userId === assignee.node_id) {
+  } else if (creatorIncentives && creatorIncentives.account && creatorIncentives.account !== "0x" && creatorIncentives.userId === assignee.node_id) {
     priceInEth = priceInEth.add(creatorIncentives.amountInETH!);
-    title = " and Creator";
-  } else if (creatorIncentives.account && creatorIncentives.account === "0x") {
+    title += " and Creator";
+  } else if (creatorIncentives && creatorIncentives.account && creatorIncentives.account === "0x") {
     logger.info(`Skipping to generate a permit url for missing account. fallback: ${creatorIncentives.amountInETH}`);
   }
 

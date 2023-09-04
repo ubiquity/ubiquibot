@@ -84,7 +84,7 @@ export const issueClosedCallback = async (): Promise<void> => {
 
       permitData.map(async (permit) => {
         // Exclude issue creator from commenter rewards
-        if (permit.userId === creatorIncentives.userId) {
+        if (permit.userId !== creatorIncentives.userId) {
           const { payoutUrl } = await generatePermit2Signature(permit.account, permit.amountInETH, permit.node_id, permit.userId);
           commentersComment = `${commentersComment}### [ **${permit.user}: [ CLAIM ${
             permit.amountInETH
