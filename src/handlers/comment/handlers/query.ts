@@ -1,4 +1,4 @@
-import { getAccessLevel, getWalletInfo } from "../../../adapters/supabase";
+import { getAccessLevel, getAllAccessLevels, getWalletInfo } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
 import { Payload } from "../../../types";
 
@@ -25,16 +25,20 @@ export const query = async (body: string) => {
   const repo = payload.repository;
 
   if (user) {
+    let data = await getAllAccessLevels(user, repo.full_name);
+    if (data === false) {
+      return `Error retrieving access for @${user}`;
+    }
     const walletInfo = await getWalletInfo(user, id?.toString());
     if (!walletInfo?.address) {
       return `Error retrieving multiplier and wallet address for @${user}`;
     } else {
       return `@${user}'s wallet address is ${walletInfo?.address}, multiplier is ${walletInfo?.multiplier} and access levels are
 | access type | access level |
-| multiplier  | ${getAccessLevel(sender, repo.full_name, "multiplier")}       |
-| priority    | ${getAccessLevel(sender, repo.full_name, "priority")}         |
-| time        | ${getAccessLevel(sender, repo.full_name, "time")}             |
-| price       | ${getAccessLevel(sender, repo.full_name, "price")}            |`;
+| multiplier  |  ${data["multiplier"]}      |
+| priority    |  ${data["priority"]}        |
+| time        |  ${data["time"]}            |
+| price       |  ${data["price"]}           |`;
     }
   } else {
     logger.error("Invalid body for query command");
