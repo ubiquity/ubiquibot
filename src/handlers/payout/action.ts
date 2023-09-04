@@ -21,7 +21,9 @@ import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
 import { CreatorCommentResult } from "./post";
 
-export const handleIssueClosed = async (creatorIncentives: CreatorCommentResult): Promise<{ comment: string; creatorComment?: string } | undefined> => {
+export const handleIssueClosed = async (
+  creatorIncentives: CreatorCommentResult | undefined
+): Promise<{ comment: string; creatorComment?: string } | undefined> => {
   let title = "Task Assignee";
   const context = getBotContext();
   const {
