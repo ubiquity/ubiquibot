@@ -19,8 +19,10 @@ import { bountyInfo } from "../wildcard";
 import Decimal from "decimal.js";
 import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
+import { CreatorCommentResult } from "./post";
 
-export const handleIssueClosed = async () => {
+export const handleIssueClosed = async (creatorIncentives: CreatorCommentResult): Promise<{ comment: string; creatorComment?: string } | undefined> => {
+  let title = "Task Assignee";
   const context = getBotContext();
   const {
     payout: { paymentToken, rpc, permitBaseUrl, networkId, privateKey },
@@ -39,7 +41,7 @@ export const handleIssueClosed = async () => {
   if (accessControl.organization) {
     const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
 
-    if (!userHasPermission) return "Permit generation skipped because this issue has been closed by an external contributor.";
+    if (!userHasPermission) return { comment: "Permit generation skipped because this issue has been closed by an external contributor." };
   }
 
   const comments = await getAllIssueComments(issue.number);
@@ -95,18 +97,18 @@ export const handleIssueClosed = async () => {
   }
   if (privateKey == "") {
     logger.info("Permit generation skipped because wallet private key is not set");
-    return "Permit generation skipped because wallet private key is not set";
+    return { comment: "Permit generation skipped because wallet private key is not set" };
   }
   if (issue.state_reason !== StateReason.COMPLETED) {
     logger.info("Permit generation skipped because the issue was not closed as completed");
-    return "Permit generation skipped because the issue was not closed as completed";
+    return { comment: "Permit generation skipped because the issue was not closed as completed" };
   }
 
   logger.info(`Checking if the issue is a parent issue.`);
   if (issue.body && isParentIssue(issue.body)) {
     logger.error("Permit generation skipped since the issue is identified as parent issue.");
     await clearAllPriceLabelsOnIssue();
-    return "Permit generation skipped since the issue is identified as parent issue.";
+    return { comment: "Permit generation skipped since the issue is identified as parent issue." };
   }
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
@@ -118,7 +120,7 @@ export const handleIssueClosed = async () => {
       if (res) {
         if (res[1] === "false") {
           logger.info(`Skipping to generate permit2 url, reason: autoPayMode for this issue: false`);
-          return `Permit generation skipped since automatic payment for this issue is disabled.`;
+          return { comment: `Permit generation skipped since automatic payment for this issue is disabled.` };
         }
         break;
       }
@@ -127,25 +129,25 @@ export const handleIssueClosed = async () => {
 
   if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
     logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
-    return `Permit generation skipped since paymentPermitMaxPrice is 0`;
+    return { comment: `Permit generation skipped since paymentPermitMaxPrice is 0` };
   }
 
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
     logger.info(`Skipping... its not a bounty`);
-    return `Permit generation skipped since this issue didn't qualify as bounty`;
+    return { comment: `Permit generation skipped since this issue didn't qualify as bounty` };
   }
 
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
     logger.info("Skipping to proceed the payment because `assignee` is undefined");
-    return `Permit generation skipped since assignee is undefined`;
+    return { comment: `Permit generation skipped since assignee is undefined` };
   }
 
   if (!issueDetailed.priceLabel) {
     logger.info("Skipping to proceed the payment because price not set");
-    return `Permit generation skipped since price label is not set`;
+    return { comment: `Permit generation skipped since price label is not set` };
   }
 
   const recipient = await getWalletAddress(assignee.login);
@@ -159,13 +161,38 @@ export const handleIssueClosed = async () => {
   if (multiplier === 0) {
     const errMsg = "Refusing to generate the payment permit because " + `@${assignee.login}` + "'s payment `multiplier` is `0`";
     logger.info(errMsg);
-    return errMsg;
+    return { comment: errMsg };
   }
 
   let priceInEth = new Decimal(issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4)).mul(multiplier);
   if (priceInEth.gt(paymentPermitMaxPrice)) {
     logger.info("Skipping to proceed the payment because bounty payout is higher than paymentPermitMaxPrice");
-    return `Permit generation skipped since issue's bounty is higher than ${paymentPermitMaxPrice}`;
+    return { comment: `Permit generation skipped since issue's bounty is higher than ${paymentPermitMaxPrice}` };
+  }
+
+  // CREATOR REWARD HANDLER
+  let creatorComment;
+  // Generate permit for user if its not the same id as assignee
+  if (creatorIncentives.account && creatorIncentives.account !== "0x" && creatorIncentives.userId !== assignee.node_id) {
+    const { payoutUrl } = await generatePermit2Signature(
+      creatorIncentives.account,
+      creatorIncentives.amountInETH!,
+      creatorIncentives.node_id!,
+      creatorIncentives.userId,
+      "ISSUE_CREATOR"
+    );
+    creatorComment = `### ${creatorIncentives.title}### [ **${creatorIncentives.user}: [ CLAIM ${
+      creatorIncentives.amountInETH
+    } ${creatorIncentives.tokenSymbol!.toUpperCase()} ]** ](${payoutUrl})\n`;
+    if (payoutUrl) {
+      logger.info(`Permit url generated for creator. reward: ${payoutUrl}`);
+    }
+    // Add amount to assignee if assignee is the creator
+  } else if (creatorIncentives.account && creatorIncentives.account !== "0x" && creatorIncentives.userId === assignee.node_id) {
+    priceInEth = priceInEth.add(creatorIncentives.amountInETH!);
+    title = " and Creator";
+  } else if (creatorIncentives.account && creatorIncentives.account === "0x") {
+    logger.info(`Skipping to generate a permit url for missing account. fallback: ${creatorIncentives.amountInETH}`);
   }
 
   // if bounty hunter has any penalty then deduct it from the bounty
@@ -178,7 +205,7 @@ export const handleIssueClosed = async () => {
       await removePenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString(), bountyAmount);
       const msg = `Permit generation skipped because bounty amount after penalty is 0`;
       logger.info(msg);
-      return msg;
+      return { comment: msg };
     }
     priceInEth = new Decimal(ethers.utils.formatUnits(bountyAmountAfterPenalty, 18));
   }
@@ -187,12 +214,11 @@ export const handleIssueClosed = async () => {
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
   logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
-  const comment =
-    `#### Task Assignee Reward\n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
+  const comment = `#### ${title} Reward \n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
   const permitComments = comments.filter((content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot);
   if (permitComments.length > 0) {
     logger.info(`Skip to generate a permit url because it has been already posted`);
-    return `Permit generation skipped because it was already posted to this issue.`;
+    return { comment: `Permit generation skipped because it was already posted to this issue.` };
   }
   await deleteLabel(issueDetailed.priceLabel);
   await addLabelToIssue("Permitted");
@@ -200,5 +226,5 @@ export const handleIssueClosed = async () => {
   if (penaltyAmount.gt(0)) {
     await removePenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString(), penaltyAmount);
   }
-  return comment;
+  return { comment, creatorComment };
 };

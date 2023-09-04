@@ -68,11 +68,22 @@ export const issueClosedCallback = async (): Promise<void> => {
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   try {
-    const incentivizedCreator = await incentivizeCreatorComment();
-    const incentivizedComments = await incentivizeComments();
+    const creatorIncentives = await incentivizeCreatorComment();
 
-    const comment = await handleIssueClosed();
-    if (comment) await addCommentToIssue(comment + comments.promotionComment, issue.number);
+    const { title: commenterTitle, permitData } = await incentivizeComments();
+
+    // logger.info(`Permit url generated for contributors. reward: ${JSON.stringify(reward)}`);
+    // logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
+
+    // The mapping between gh handle and comment with a permit url
+    //const reward: Record<string, string> = {};
+
+    const issueComments = await handleIssueClosed(creatorIncentives);
+    if (issueComments) {
+      const { comment, creatorComment } = issueComments;
+      if (creatorComment) await addCommentToIssue(creatorComment, issue.number);
+      if (comment) await addCommentToIssue(comment + comments.promotionComment, issue.number);
+    }
   } catch (err: unknown) {
     return await addCommentToIssue(`Error: ${err}`, issue.number);
   }
