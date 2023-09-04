@@ -106,7 +106,7 @@ export const incentivizeComments = async (): Promise<{
   const fallbackReward: Record<string, Decimal> = {};
 
   // array of awaiting permits to generate
-  let permitData: { account: string; amountInETH: Decimal; node_id: string; userId: string; tokenSymbol: string; user: string }[] = [];
+  const permitData: { account: string; amountInETH: Decimal; node_id: string; userId: string; tokenSymbol: string; user: string }[] = [];
 
   for (const user of Object.keys(issueCommentsByUser)) {
     const commentsByUser = issueCommentsByUser[user];
