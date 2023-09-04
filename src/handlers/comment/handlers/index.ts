@@ -23,7 +23,7 @@ import {
   calculateWeight,
 } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
-import { handleIssueClosed } from "../../payout";
+import { handleIssueClosed, incentivizeComments, incentivizeCreatorComment } from "../../payout";
 import { query } from "./query";
 import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
@@ -68,6 +68,9 @@ export const issueClosedCallback = async (): Promise<void> => {
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   try {
+    const incentivizedCreator = await incentivizeCreatorComment();
+    const incentivizedComments = await incentivizeComments();
+
     const comment = await handleIssueClosed();
     if (comment) await addCommentToIssue(comment + comments.promotionComment, issue.number);
   } catch (err: unknown) {
