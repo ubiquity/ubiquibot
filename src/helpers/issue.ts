@@ -627,12 +627,25 @@ export const getCommitsOnPullRequest = async (pullNumber: number) => {
   const context = getBotContext();
   const payload = getBotContext().payload as Payload;
   try {
-    const { data: commits } = await context.octokit.rest.pulls.listCommits({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      pull_number: pullNumber,
-    });
-    return commits;
+    const perPage = 100;
+    let curPage = 1;
+    const allCommits = [];
+    let fetchDone = false;
+    while (!fetchDone) {
+      const { data: commits } = await context.octokit.rest.pulls.listCommits({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        pull_number: pullNumber,
+        per_page: 100,
+        page: curPage,
+      });
+      allCommits.push(...commits);
+      if (commits.length < perPage) {
+        fetchDone = true;
+        return allCommits;
+      } else curPage++;
+    }
+    return allCommits;
   } catch (e: unknown) {
     logger.debug(`Fetching pull request commits failed!, reason: ${e}`);
     return [];
