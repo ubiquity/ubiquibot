@@ -1,6 +1,14 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getIssueDescription, getTokenSymbol, parseComments } from "../../helpers";
+import {
+  addCommentToIssue,
+  generatePermit2Signature,
+  getAllIssueComments,
+  getIssueDescription,
+  getOrgMembershipOfUser,
+  getTokenSymbol,
+  parseComments,
+} from "../../helpers";
 import { Incentives, MarkdownItem, Payload, StateReason, UserType } from "../../types";
 import { commentParser } from "../comment";
 import Decimal from "decimal.js";
@@ -17,6 +25,7 @@ export const incentivizeComments = async () => {
     mode: { incentiveMode, paymentPermitMaxPrice },
     price: { baseMultiplier, incentives },
     payout: { paymentToken, rpc },
+    bountyRewardsCap: { issue_collaborator, issue_default },
   } = getBotConfig();
   if (!incentiveMode) {
     logger.info(`No incentive mode. skipping to process`);
@@ -25,6 +34,7 @@ export const incentivizeComments = async () => {
   const context = getBotContext();
   const payload = context.payload as Payload;
   const issue = payload.issue;
+
   if (!issue) {
     logger.info(`Incomplete payload. issue: ${issue}`);
     return;
@@ -103,7 +113,24 @@ export const incentivizeComments = async () => {
     }
     logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
-    const amountInETH = rewardValue.mul(baseMultiplier);
+    let amountInETH = rewardValue.mul(baseMultiplier);
+    let labelAmount: Decimal | undefined = undefined;
+    if (issueDetailed.priceLabel) {
+      labelAmount = new Decimal(issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4));
+    }
+    let isCollaborator = false;
+    if (payload.organization?.login) {
+      const status = await getOrgMembershipOfUser(payload.organization.login, user);
+      if (status !== undefined) {
+        isCollaborator = true;
+      }
+    }
+    if (isCollaborator) {
+      amountInETH = issue_collaborator && labelAmount !== undefined && amountInETH > labelAmount ? labelAmount : amountInETH;
+    } else {
+      amountInETH = issue_default && labelAmount !== undefined && amountInETH > labelAmount ? labelAmount : amountInETH;
+    }
+
     if (amountInETH.gt(paymentPermitMaxPrice)) {
       logger.info(`Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
       continue;
@@ -129,6 +156,7 @@ export const incentivizeCreatorComment = async () => {
     mode: { incentiveMode, paymentPermitMaxPrice },
     price: { incentives, issueCreatorMultiplier },
     payout: { paymentToken, rpc },
+    bountyRewardsCap: { issue_issuer },
   } = getBotConfig();
   if (!incentiveMode) {
     logger.info(`No incentive mode. skipping to process`);
@@ -187,6 +215,12 @@ export const incentivizeCreatorComment = async () => {
   }
 
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
+
+  let labelAmount: Decimal | undefined = undefined;
+  if (issueDetailed.priceLabel) {
+    labelAmount = new Decimal(issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4));
+  }
+
   const result = await generatePermitForComments(
     creator.login,
     creator.node_id,
@@ -195,7 +229,9 @@ export const incentivizeCreatorComment = async () => {
     incentives,
     tokenSymbol,
     issue.node_id,
-    paymentPermitMaxPrice
+    paymentPermitMaxPrice,
+    labelAmount,
+    issue_issuer
   );
 
   if (result.payoutUrl) {
@@ -215,7 +251,9 @@ const generatePermitForComments = async (
   incentives: Incentives,
   tokenSymbol: string,
   node_id: string,
-  paymentPermitMaxPrice: number
+  paymentPermitMaxPrice: number,
+  labelAmount: Decimal | undefined,
+  issue_issuer: boolean
 ): Promise<{ comment: string; payoutUrl?: string; amountInETH?: Decimal }> => {
   const logger = getLogger();
   const commentsByNode = await parseComments(comments, ItemsToExclude);
@@ -226,7 +264,9 @@ const generatePermitForComments = async (
   }
   logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
   const account = await getWalletAddress(user);
-  const amountInETH = rewardValue.mul(multiplier);
+  let amountInETH = rewardValue.mul(multiplier);
+  amountInETH = issue_issuer && labelAmount !== undefined && amountInETH > labelAmount ? labelAmount : amountInETH;
+
   if (amountInETH.gt(paymentPermitMaxPrice)) {
     logger.info(`Skipping issue creator reward for user ${user} because reward is higher than payment permit max price`);
     return { comment: "" };

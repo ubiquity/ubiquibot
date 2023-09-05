@@ -34,6 +34,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     assistivePricing,
     registerWalletWithVerification,
     enableAccessControl,
+    bountyRewardsCap,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -99,6 +100,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       registerWalletWithVerification: registerWalletWithVerification,
     },
     accessControl: enableAccessControl,
+    bountyRewardsCap: bountyRewardsCap,
   };
 
   if (botConfig.payout.privateKey == "") {

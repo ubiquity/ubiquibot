@@ -100,6 +100,17 @@ export const AccessControlSchema = Type.Object({
 
 export type AccessControl = Static<typeof AccessControlSchema>;
 
+export const BountyRewardsCapSchema = Type.Object({
+  issue_issuer: Type.Boolean(),
+  issue_collaborator: Type.Boolean(),
+  issue_default: Type.Boolean(),
+  review_issuer: Type.Boolean(),
+  review_collaborator: Type.Boolean(),
+  review_default: Type.Boolean(),
+});
+
+export type BountyRewardsCap = Static<typeof BountyRewardsCapSchema>;
+
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
   price: PriceConfigSchema,
@@ -114,6 +125,7 @@ export const BotConfigSchema = Type.Object({
   command: CommandConfigSchema,
   wallet: WalletSchema,
   accessControl: AccessControlSchema,
+  bountyRewardsCap: BountyRewardsCapSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;
