@@ -194,3 +194,13 @@ export const getEnableAccessControl = ({ parsedRepo, parsedOrg, parsedDefault }:
     return parsedDefault["enable-access-control"] as AccessControl;
   }
 };
+
+export const getOpenAiAPIKey = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): string => {
+  if (parsedRepo && parsedRepo["openai-api-key"] !== undefined && typeof parsedRepo["openai-api-key"] === "string") {
+    return parsedRepo["openai-api-key"];
+  } else if (parsedOrg && parsedOrg["openai-api-key"] !== undefined && typeof parsedOrg["openai-api-key"] === "string") {
+    return parsedOrg["openai-api-key"];
+  } else {
+    return parsedDefault["openai-api-key"] as string;
+  }
+};

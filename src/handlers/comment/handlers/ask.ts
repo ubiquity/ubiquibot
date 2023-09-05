@@ -272,11 +272,6 @@ export const ask = async (body: string) => {
     }
 
     const gptResponse: GPTResponse | string = await askGPT(body, chatHistory);
-    console.log("====================================");
-    console.log(gptResponse);
-    console.log("====================================");
-    console.log(chatHistory);
-    console.log("====================================");
 
     if (typeof gptResponse === "string") {
       return gptResponse;

@@ -19,6 +19,7 @@ import {
   getCommandSettings,
   getRegisterWalletWithVerification,
   getEnableAccessControl,
+  getOpenAiAPIKey,
 } from "./helpers";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
@@ -85,6 +86,7 @@ export interface WideConfig {
   "default-labels"?: string[];
   "register-wallet-with-verification"?: boolean;
   "enable-access-control"?: AccessControl;
+  "openai-api-key"?: string;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -185,6 +187,7 @@ export const getWideConfig = async (context: Context) => {
     promotionComment: getPromotionComment(configs),
     registerWalletWithVerification: getRegisterWalletWithVerification(configs),
     enableAccessControl: getEnableAccessControl(configs),
+    openAIKey: process.env.OPENAI_API_KEY || getOpenAiAPIKey(configs),
   };
 
   return configData;
