@@ -1,6 +1,7 @@
 import { Incentives } from "./private";
 import { Level } from "../adapters/supabase";
 import { CommandObj, WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
+import { AccessControl } from "../types";
 
 interface Configs {
   parsedRepo?: WideRepoConfig;
@@ -181,5 +182,15 @@ export const getRegisterWalletWithVerification = ({ parsedRepo, parsedOrg, parse
     return Boolean(parsedOrg["register-wallet-with-verification"]);
   } else {
     return Boolean(parsedDefault["register-wallet-with-verification"]);
+  }
+};
+
+export const getEnableAccessControl = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): AccessControl => {
+  if (parsedRepo && parsedRepo["enable-access-control"]) {
+    return parsedRepo["enable-access-control"];
+  } else if (parsedOrg && parsedOrg["enable-access-control"]) {
+    return parsedOrg["enable-access-control"];
+  } else {
+    return parsedDefault["enable-access-control"] as AccessControl;
   }
 };

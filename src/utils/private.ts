@@ -1,6 +1,6 @@
 import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
-import { Payload } from "../types";
+import { AccessControl, Payload } from "../types";
 import { Context } from "probot";
 import {
   getAnalyticsMode,
@@ -18,6 +18,7 @@ import {
   getAssistivePricing,
   getCommandSettings,
   getRegisterWalletWithVerification,
+  getEnableAccessControl,
 } from "./helpers";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
@@ -49,8 +50,6 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo", 
 
 export interface WideLabel {
   name: string;
-  weight: number;
-  value?: number | undefined;
 }
 
 export interface CommentIncentives {
@@ -85,6 +84,7 @@ export interface WideConfig {
   incentives?: Incentives;
   "default-labels"?: string[];
   "register-wallet-with-verification"?: boolean;
+  "enable-access-control"?: AccessControl;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -184,6 +184,7 @@ export const getWideConfig = async (context: Context) => {
     defaultLabels: getDefaultLabels(configs),
     promotionComment: getPromotionComment(configs),
     registerWalletWithVerification: getRegisterWalletWithVerification(configs),
+    enableAccessControl: getEnableAccessControl(configs),
   };
 
   return configData;
