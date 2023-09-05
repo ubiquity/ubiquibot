@@ -23,8 +23,9 @@ import { isParentIssue } from "../pricing";
 export const handleIssueClosed = async () => {
   const context = getBotContext();
   const {
-    payout: { paymentToken, rpc, permitBaseUrl, networkId },
+    payout: { paymentToken, rpc, permitBaseUrl, networkId, privateKey },
     mode: { paymentPermitMaxPrice },
+    accessControl,
   } = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -35,9 +36,11 @@ export const handleIssueClosed = async () => {
 
   if (!issue) return;
 
-  const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
+  if (accessControl.organization) {
+    const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
 
-  if (!userHasPermission) return "Permit generation skipped because this issue has been closed by an external contributor.";
+    if (!userHasPermission) return "Permit generation skipped because this issue has been closed by an external contributor.";
+  }
 
   const comments = await getAllIssueComments(issue.number);
 
@@ -90,7 +93,10 @@ export const handleIssueClosed = async () => {
     logger.info(`Penalty removed`);
     return;
   }
-
+  if (privateKey == "") {
+    logger.info("Permit generation skipped because wallet private key is not set");
+    return "Permit generation skipped because wallet private key is not set";
+  }
   if (issue.state_reason !== StateReason.COMPLETED) {
     logger.info("Permit generation skipped because the issue was not closed as completed");
     return "Permit generation skipped because the issue was not closed as completed";
@@ -177,7 +183,7 @@ export const handleIssueClosed = async () => {
     priceInEth = new Decimal(ethers.utils.formatUnits(bountyAmountAfterPenalty, 18));
   }
 
-  const { txData, payoutUrl } = await generatePermit2Signature(recipient, priceInEth, issue.node_id);
+  const { txData, payoutUrl } = await generatePermit2Signature(recipient, priceInEth, issue.node_id, assignee.node_id, "ISSUE_ASSIGNEE");
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
   logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);

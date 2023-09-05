@@ -1,6 +1,7 @@
 import { Incentives } from "./private";
 import { Level } from "../adapters/supabase";
 import { CommandObj, WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
+import { AccessControl } from "../types";
 
 interface Configs {
   parsedRepo?: WideRepoConfig;
@@ -184,6 +185,7 @@ export const getRegisterWalletWithVerification = ({ parsedRepo, parsedOrg, parse
   }
 };
 
+
 // we use ms library so the value is a a string like "30d" which we convert to a number inside the business logic
 export const getStaleBountyTime = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): string => {
   if (parsedRepo && parsedRepo["stale-bounty-time"] !== undefined && typeof parsedRepo["stale-bounty-time"] === "string") {
@@ -192,5 +194,15 @@ export const getStaleBountyTime = ({ parsedRepo, parsedOrg, parsedDefault }: Con
     return parsedOrg["stale-bounty-time"];
   } else {
     return parsedDefault["stale-bounty-time"] as string;
+  }
+};
+
+export const getEnableAccessControl = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): AccessControl => {
+  if (parsedRepo && parsedRepo["enable-access-control"]) {
+    return parsedRepo["enable-access-control"];
+  } else if (parsedOrg && parsedOrg["enable-access-control"]) {
+    return parsedOrg["enable-access-control"];
+  } else {
+    return parsedDefault["enable-access-control"] as AccessControl;
   }
 };
