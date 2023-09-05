@@ -1,0 +1,103 @@
+name : Deploy Log Web App to Cloudflare Worker
+
+on:
+  workflow_call:
+    inputs:
+      custom_domain:
+        required: false
+        type: string
+      production_branch:
+        required: false
+        type: string
+      build_artifact_name:
+        required: false
+        type: string
+      build_artifact_run_id:
+        required: false
+        type: string
+    secrets:
+      CLOUDFLARE_API_TOKEN:
+        required: true
+      CLOUDFLARE_ACCOUNT_ID:
+        required: false
+      UBIQUITY_BOUNTY_BOT_APP_ID:
+        required: true
+      UBIQUITY_BOUNTY_BOT_PRIVATE_KEY:
+        required: true
+
+jobs:
+  deploy-to-cloudflare:
+    name: Deploy to Cloudflare Pages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20.3.0"
+
+      - name: Build TypeScript
+        run: npm install && npm run build
+    
+      - name: Wrangler Install
+        run: npm install -g wrangler
+
+      - name: "Download Artifact"
+        uses: actions/github-script@v6.3.3
+        with:
+          script: |
+            const fs = require("fs");
+            const downloadArtifact = require('${{ github.workspace }}/utils/download-artifact.js');
+            const workflow_run_id = '${{ inputs.build_artifact_run_id || github.event.workflow_run.id }}';
+            const artifact_name = '${{ inputs.build_artifact_name || 'pr' }}';
+            const workspace = '${{ github.workspace }}';
+            downloadArtifact({ github, context, fs, workflow_run_id, artifact_name, workspace })
+
+      - name: Extract Artifact
+        run: mkdir ./dist && unzip pr.zip && unzip pull-request.zip -d ./dist && ls
+
+      - name: Publish to Cloudflare
+        id: publish-to-cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          REPOSITORY: ${{ github.repository }}
+          PRODUCTION_BRANCH: ${{ inputs.production_branch || 'development' }}
+          OUTPUT_DIRECTORY: "./dist"
+        run: |
+          IFS='/' read -ra fields <<< "$REPOSITORY"
+          projectName="${fields[1]}"
+          projectName=$(echo $projectName | sed 's/\./-/g')
+          echo $projectName
+          wrangler pages project list > project_list.txt
+          if grep -q $projectName project_list.txt; then
+            echo "Project found"
+          else
+            echo "Project not found"
+            wrangler pages project create "$projectName" --production-branch "$PRODUCTION_BRANCH"
+          fi
+          wrangler pages deploy "$OUTPUT_DIRECTORY" --project-name "$projectName" > ./deployments.log
+          cat deployments.log
+
+      - name: Get UbiquiBot Token
+        uses: tibdex/github-app-token@v1.7.0
+        id: get_installation_token
+        with:
+          app_id: ${{ secrets.UBIQUITY_BOUNTY_BOT_APP_ID }}
+          private_key: ${{ secrets.UBIQUITY_BOUNTY_BOT_PRIVATE_KEY }}
+
+      - name: Deploy Comment as UbiquiBot
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ steps.get_installation_token.outputs.token }}
+          script: |
+            const fs = require("fs");
+            const printDeploymentsLog = require('${{ github.workspace }}/utils/print-deployments-logs.js');
+            const customDomain = "${{ inputs.custom_domain || '' }}";
+            await printDeploymentsLog({ github, context, fs, customDomain });
