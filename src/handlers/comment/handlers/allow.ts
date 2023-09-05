@@ -31,25 +31,25 @@ export const setAccess = async (body: string) => {
       username = matches[2];
       bool = matches[3];
     } else if (matches[4]) {
-      username = matches[4];
-      accessType = matches[5];
-      bool = matches[6];
+      accessType = matches[4];
+      bool = matches[5];
+      username = matches[6];
     } else if (matches[7]) {
       bool = matches[7];
       accessType = matches[8];
       username = matches[9];
     } else if (matches[10]) {
-      accessType = matches[10];
-      bool = matches[11];
-      username = matches[12];
+      bool = matches[10];
+      username = matches[11];
+      accessType = matches[12];
     } else if (matches[13]) {
       username = matches[13];
       bool = matches[14];
       accessType = matches[15];
     } else if (matches[16]) {
-      bool = matches[16];
-      username = matches[17];
-      accessType = matches[18];
+      username = matches[16];
+      accessType = matches[17];
+      bool = matches[18];
     } else {
       bool = username = accessType = "";
     }
