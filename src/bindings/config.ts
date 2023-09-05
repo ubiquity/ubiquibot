@@ -8,14 +8,13 @@ import {
   DEFAULT_PERMIT_BASE_URL,
   DEFAULT_TIME_RANGE_FOR_MAX_ISSUE,
   DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED,
-  DEFAULT_TOKEN_LIMIT
+  DEFAULT_TOKEN_LIMIT,
 } from "../configs";
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
 import { getScalarKey, getWideConfig } from "../utils/private";
 import { Level } from "../adapters/supabase";
-import { DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFAULT_PERMIT_BASE_URL, DEFAULT_TOKEN_LIMIT } from "../configs";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
