@@ -21,8 +21,6 @@ import {
 } from "./helpers";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
-import { STALE_BOUNTY_TIME } from "../configs";
-import ms from "ms";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
@@ -187,7 +185,7 @@ export const getWideConfig = async (context: Context) => {
     defaultLabels: getDefaultLabels(configs),
     promotionComment: getPromotionComment(configs),
     registerWalletWithVerification: getRegisterWalletWithVerification(configs),
-    staleBountyTime: parsedDefault["stale-bounty-time"] == "0" ? ms(STALE_BOUNTY_TIME) : parsedDefault["stale-bounty-time"],
+    staleBountyTime: parsedDefault["stale-bounty-time"],
   };
 
   return configData;

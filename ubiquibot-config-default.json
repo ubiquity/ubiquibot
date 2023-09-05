@@ -8,7 +8,7 @@
   "disable-analytics": false,
   "comment-incentives": false,
   "register-wallet-with-verification": false,
-  "stale-bounty-time": 42060,
+  "stale-bounty-time": "30d",
   "promotion-comment": "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>",
   "default-labels": [],
   "time-labels": [
@@ -63,35 +63,35 @@
   "command-settings": [
     {
       "name": "start",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "stop",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "wallet",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "payout",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "multiplier",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "query",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "allow",
-      "enabled": true
+      "enabled": false
     },
     {
       "name": "autopay",
-      "enabled": true
+      "enabled": false
     }
   ],
   "incentives": {
