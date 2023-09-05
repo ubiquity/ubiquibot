@@ -20,12 +20,39 @@ export const setAccess = async (body: string) => {
     return;
   }
 
-  const regex = /^\/allow set-(\S+)\s@(\S+)\s(true|false)$/;
-
+  const regex =
+    /^\/allow (?:set-(\S+)\s@(\w+)\s(true|false)|set-(\S+)\s(true|false)\s@(\w+)|(true|false)\sset-(\S+)\s@(\w+)|(true|false)\s@(\w+)\sset-(\S+)|@(\w+)\s(true|false)\sset-(\S+)|@(\w+)\sset-(\S+)\s(true|false))$/;
   const matches = body.match(regex);
 
   if (matches) {
-    const [, accessType, username, bool] = matches;
+    let accessType, username, bool;
+    if (matches[1]) {
+      accessType = matches[1];
+      username = matches[2];
+      bool = matches[3];
+    } else if (matches[4]) {
+      username = matches[4];
+      accessType = matches[5];
+      bool = matches[6];
+    } else if (matches[7]) {
+      bool = matches[7];
+      accessType = matches[8];
+      username = matches[9];
+    } else if (matches[10]) {
+      accessType = matches[10];
+      bool = matches[11];
+      username = matches[12];
+    } else if (matches[13]) {
+      username = matches[13];
+      bool = matches[14];
+      accessType = matches[15];
+    } else if (matches[16]) {
+      bool = matches[16];
+      username = matches[17];
+      accessType = matches[18];
+    } else {
+      bool = username = accessType = "";
+    }
 
     // Check if access control demand is valid
     if (!validAccessString.includes(accessType)) {
