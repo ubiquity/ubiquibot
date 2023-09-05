@@ -18,6 +18,7 @@ import {
   getAssistivePricing,
   getCommandSettings,
   getRegisterWalletWithVerification,
+  getStaleBountyTime,
 } from "./helpers";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
@@ -185,7 +186,7 @@ export const getWideConfig = async (context: Context) => {
     defaultLabels: getDefaultLabels(configs),
     promotionComment: getPromotionComment(configs),
     registerWalletWithVerification: getRegisterWalletWithVerification(configs),
-    staleBountyTime: parsedDefault["stale-bounty-time"],
+    staleBountyTime: getStaleBountyTime(configs),
   };
 
   return configData;

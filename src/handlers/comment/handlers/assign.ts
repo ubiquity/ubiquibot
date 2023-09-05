@@ -113,7 +113,8 @@ export const assign = async (body: string) => {
   }
 
   const days = Math.floor((new Date().getTime() - new Date(issue.created_at).getTime()) / (1000 * 60 * 60 * 24));
-  const isBountyStale = staleBounty == 0 ? null : staleBounty > days ? false : true;
+  const staleToDays = Math.floor(staleBounty / (1000 * 60 * 60 * 24));
+  const isBountyStale = staleBounty == 0 ? null : staleToDays > days ? false : true;
 
   // double check whether the assign message has been already posted or not
   logger.info(`Creating an issue comment: ${comment.commit}`);

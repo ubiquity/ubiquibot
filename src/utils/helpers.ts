@@ -183,3 +183,14 @@ export const getRegisterWalletWithVerification = ({ parsedRepo, parsedOrg, parse
     return Boolean(parsedDefault["register-wallet-with-verification"]);
   }
 };
+
+// we use ms library so the value is a a string like "30d" which we convert to a number inside the business logic
+export const getStaleBountyTime = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): string => {
+  if (parsedRepo && parsedRepo["stale-bounty-time"] !== undefined && typeof parsedRepo["stale-bounty-time"] === "string") {
+    return parsedRepo["stale-bounty-time"];
+  } else if (parsedOrg && parsedOrg["stale-bounty-time"] !== undefined && typeof parsedOrg["stale-bounty-time"] === "string") {
+    return parsedOrg["stale-bounty-time"];
+  } else {
+    return parsedDefault["stale-bounty-time"] as string;
+  }
+};
