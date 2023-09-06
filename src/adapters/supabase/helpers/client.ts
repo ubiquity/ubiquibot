@@ -5,7 +5,7 @@ import { Database } from "../types";
 import { InsertPermit, Permit } from "../../../helpers";
 import { BigNumber, BigNumberish } from "ethers";
 
-interface accessLevels {
+interface AccessLevels {
   multiplier: boolean;
   price: boolean;
   priority: boolean;
@@ -347,7 +347,7 @@ export const getAccessLevel = async (username: string, repository: string, label
   return accessValues;
 };
 
-export const getAllAccessLevels = async (username: string, repository: string): Promise<false | accessLevels> => {
+export const getAllAccessLevels = async (username: string, repository: string): Promise<null | AccessLevels> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
 
@@ -356,7 +356,7 @@ export const getAllAccessLevels = async (username: string, repository: string): 
   if (!data) {
     logger.info(`Access not found on the database`);
     // no access
-    return false;
+    return null;
   }
   return { multiplier: data["multiplier_access"], time: data["time_access"], priority: data["priority_access"], price: data["price_access"] };
 };

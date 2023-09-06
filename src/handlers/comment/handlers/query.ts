@@ -26,7 +26,7 @@ export const query = async (body: string) => {
 
   if (user) {
     let data = await getAllAccessLevels(user, repo.full_name);
-    if (data === false) {
+    if (!data) {
       return `Error retrieving access for @${user}`;
     }
     const walletInfo = await getWalletInfo(user, id?.toString());
@@ -35,10 +35,10 @@ export const query = async (body: string) => {
     } else {
       return `@${user}'s wallet address is ${walletInfo?.address}, multiplier is ${walletInfo?.multiplier} and access levels are
 | access type | access level |
-| multiplier  |  ${data["multiplier"]}      |
-| priority    |  ${data["priority"]}        |
-| time        |  ${data["time"]}            |
-| price       |  ${data["price"]}           |`;
+| multiplier  |  ${data.multiplier}      |
+| priority    |  ${data.priority}        |
+| time        |  ${data.time}            |
+| price       |  ${data.price}           |`;
     }
   } else {
     logger.error("Invalid body for query command");
