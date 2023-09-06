@@ -6,6 +6,7 @@ import {
   getAllIssueComments,
   getCommitsOnPullRequest,
   getOpenedPullRequestsForAnIssue,
+  getPullRequestReviews,
   listAllIssuesForRepo,
   removeAssignees,
 } from "../../helpers";
@@ -53,11 +54,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   const passedDuration = curTimestamp - lastActivity.getTime();
   const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee);
 
-  const { data: reviews } = await context.octokit.pulls.listReviews({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    pull_number: pullRequest[0].id,
-  });
+  const reviews = await getPullRequestReviews(context, pullRequest[0].id, 30, 1);
 
   const pendingReviews = reviews.filter((review) => review.state === "PENDING");
   if (pendingReviews.length > 0) {
