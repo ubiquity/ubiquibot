@@ -1,34 +1,7 @@
-interface Config {
-  "evm-network-id": number;
-  "price-multiplier": number;
-  "issue-creator-multiplier": number;
-  "payment-permit-max-price": number;
-  "max-concurrent-assigns": number;
-  "assistive-pricing": boolean;
-  "disable-analytics": boolean;
-  "comment-incentives": boolean;
-  "register-wallet-with-verification": boolean;
-  "promotion-comment": string;
-  "default-labels": string[];
-  "time-labels": { name: string }[];
-  "priority-labels": { name: string }[];
-  "command-settings": { name: string; enabled: boolean }[];
-  "incentives": {
-    comment: {
-      elements: Record<string, unknown>;
-      totals: {
-        word: number;
-      };
-    };
-  };
-  "enable-access-control": {
-    label: boolean;
-    organization: boolean;
-  };
-}
+import {WideConfig} from './src/utils/private'
 
 
-const defaultConfig : Config ={
+const defaultConfig : WideConfig ={
   "evm-network-id": 100,
   "price-multiplier": 1,
   "issue-creator-multiplier": 2,
