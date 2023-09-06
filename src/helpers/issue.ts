@@ -632,15 +632,16 @@ export const getCommitsOnPullRequest = async (pullNumber: number) => {
     const allCommits = [];
     let fetchDone = false;
     while (!fetchDone) {
-      const { data: commits } = await context.octokit.rest.pulls.listCommits({
+      const response = await context.octokit.rest.pulls.listCommits({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
         pull_number: pullNumber,
         per_page: 100,
         page: curPage,
       });
-      allCommits.push(...commits);
-      if (commits.length < perPage) {
+      await checkRateLimitGit(response.headers);
+      allCommits.push(...response.data);
+      if (response.data.length < perPage) {
         fetchDone = true;
         return allCommits;
       } else curPage++;
