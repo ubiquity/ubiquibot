@@ -28,7 +28,7 @@ interface Config {
 }
 
 
-export const defaultConfig : Config ={
+const defaultConfig : Config ={
   "evm-network-id": 100,
   "price-multiplier": 1,
   "issue-creator-multiplier": 2,
@@ -121,3 +121,5 @@ export const defaultConfig : Config ={
     "organization": true
   }
 }
+
+export default defaultConfig;
