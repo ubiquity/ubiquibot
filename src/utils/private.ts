@@ -21,7 +21,7 @@ import {
   getEnableAccessControl,
 } from "./helpers";
 
-import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
+import defaultConfig from "../../ubiquibot-config-default.ts";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
@@ -163,7 +163,7 @@ export const getWideConfig = async (context: Context) => {
 
   const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
   const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
-  const parsedDefault: WideRepoConfig = DEFAULT_CONFIG_JSON;
+  const parsedDefault: WideRepoConfig = defaultConfig;
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configs = { parsedRepo, parsedOrg, parsedDefault };
