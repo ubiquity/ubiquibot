@@ -21,7 +21,7 @@ import {
   getEnableAccessControl,
 } from "./helpers";
 
-import defaultConfig from "../../ubiquibot-config-default.ts";
+import defaultConfig from "../../ubiquibot-config-default";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
