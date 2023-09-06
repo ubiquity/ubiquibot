@@ -1,5 +1,5 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue, closePullRequest, getOpenedPullRequestsForAnIssue, calculateWeight, calculateDuration } from "../../helpers";
+import { addCommentToIssue, closePullRequest, calculateWeight, calculateDuration } from "../../helpers";
 import { gitIssueParser } from "../../helpers/parser";
 import { Payload, LabelItem } from "../../types";
 import { deadLinePrefix } from "../shared";
