@@ -69,6 +69,7 @@ export interface WideConfig {
   "register-wallet-with-verification": boolean;
   "enable-access-control": AccessControl;
   "openai-api-key": string;
+  "openai-token-limit": number;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -182,6 +183,7 @@ export const getWideConfig = async (context: Context) => {
     registerWalletWithVerification: mergedConfigData["register-wallet-with-verification"],
     enableAccessControl: mergedConfigData["enable-access-control"],
     openAIKey: process.env.OPENAI_API_KEY || mergedConfigData["openai-api-key"],
+    openAITokenLimit: mergedConfigData["openai-token-limit"],
   };
 
   return configData;

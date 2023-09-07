@@ -36,6 +36,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     registerWalletWithVerification,
     enableAccessControl,
     openAIKey,
+    openAITokenLimit,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -102,7 +103,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     ask: {
       apiKey: openAIKey,
-      tokenLimit: Number(process.env.OPENAI_TOKEN_LIMIT) || DEFAULT_TOKEN_LIMIT,
+      tokenLimit: openAITokenLimit || DEFAULT_TOKEN_LIMIT,
     },
     accessControl: enableAccessControl,
   };
