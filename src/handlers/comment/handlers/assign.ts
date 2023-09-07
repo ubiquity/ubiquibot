@@ -112,8 +112,8 @@ export const assign = async (body: string) => {
     await addAssignees(issue.number, [payload.sender.login]);
   }
 
-  let days: Number;
-  let staleToDays: Number;
+  let days: number | undefined;
+  let staleToDays: number | undefined;
   let isBountyStale = false;
 
   if (staleBounty !== 0) {

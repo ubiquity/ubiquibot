@@ -20,7 +20,7 @@ export const tableComment = ({
   <table>
   ${
     isBountyStale
-      ? `<td>Warning!</td> <td>This task was created over ${days} days ago. Please confirm that this issue specification is accurate before starting.</td>`
+      ? `<tr><td>Warning!</td> <td>This task was created over ${days} days ago. Please confirm that this issue specification is accurate before starting.</td></tr>`
       : ``
   }
   <tr>
