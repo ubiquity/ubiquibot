@@ -68,7 +68,7 @@ export interface WideConfig {
   "default-labels": string[];
   "register-wallet-with-verification": boolean;
   "enable-access-control": AccessControl;
-  "openai-api-key"?: string;
+  "openai-api-key": string;
 }
 
 export type WideRepoConfig = WideConfig;
