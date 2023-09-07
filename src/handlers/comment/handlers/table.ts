@@ -12,16 +12,14 @@ export const tableComment = ({
   multiplier?: string;
   reason?: string;
   bounty?: string;
-  isBountyStale?: boolean | null;
+  isBountyStale?: boolean;
   days?: number;
 }) => {
   return `
 <code>
   <table>
   ${
-    isBountyStale == null
-      ? null
-      : isBountyStale
+    isBountyStale
       ? `<td>Warning!</td> <td>This task was created over ${days} days ago. Please confirm that this issue specification is accurate before starting.</td>`
       : ``
   }

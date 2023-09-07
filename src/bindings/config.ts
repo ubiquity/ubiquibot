@@ -91,7 +91,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     command: commandSettings,
     assign: {
       bountyHunterMax: bountyHunterMax,
-      staleBountyTime: staleBountyTime ? String(ms(staleBountyTime)) : "0",
+      staleBountyTime: ms(staleBountyTime),
     },
     sodium: {
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",

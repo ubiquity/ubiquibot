@@ -18,7 +18,7 @@ export const assign = async (body: string) => {
 
   const id = organization?.id || repository?.id; // repository?.id as fallback
 
-  const staleBounty = Number(config.assign.staleBountyTime);
+  const staleBounty = config.assign.staleBountyTime;
 
   logger.info(`Received '/start' command from user: ${payload.sender.login}, body: ${body}`);
   const issue = (_payload as Payload).issue;
@@ -112,9 +112,17 @@ export const assign = async (body: string) => {
     await addAssignees(issue.number, [payload.sender.login]);
   }
 
-  const days = Math.floor((new Date().getTime() - new Date(issue.created_at).getTime()) / (1000 * 60 * 60 * 24));
-  const staleToDays = Math.floor(staleBounty / (1000 * 60 * 60 * 24));
-  const isBountyStale = staleBounty == 0 ? null : staleToDays > days ? false : true;
+  let days;
+  Number;
+  let staleToDays;
+  Number;
+  let isBountyStale = false;
+
+  if (staleBounty !== 0) {
+    days = Math.floor((new Date().getTime() - new Date(issue.created_at).getTime()) / (1000 * 60 * 60 * 24));
+    staleToDays = Math.floor(staleBounty / (1000 * 60 * 60 * 24));
+    isBountyStale = staleToDays > days ? false : true;
+  }
 
   // double check whether the assign message has been already posted or not
   logger.info(`Creating an issue comment: ${comment.commit}`);

@@ -69,7 +69,7 @@ export const ModeSchema = Type.Object({
 
 export const AssignSchema = Type.Object({
   bountyHunterMax: Type.Number(),
-  staleBountyTime: Type.String(),
+  staleBountyTime: Type.Number(),
 });
 
 export const LogConfigSchema = Type.Object({
