@@ -70,6 +70,7 @@ export interface WideConfig {
   "enable-access-control": AccessControl;
   "openai-api-key": string;
   "openai-token-limit": number;
+  "stale-bounty-time": string;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -184,6 +185,7 @@ export const getWideConfig = async (context: Context) => {
     enableAccessControl: mergedConfigData["enable-access-control"],
     openAIKey: process.env.OPENAI_API_KEY || mergedConfigData["openai-api-key"],
     openAITokenLimit: mergedConfigData["openai-token-limit"],
+    staleBountyTime: mergedConfigData["stale-bounty-time"],
   };
 
   return configData;
