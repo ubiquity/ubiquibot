@@ -34,11 +34,14 @@ export const query = async (body: string) => {
       return `Error retrieving multiplier and wallet address for @${user}`;
     } else {
       return `@${user}'s wallet address is ${walletInfo?.address}, multiplier is ${walletInfo?.multiplier} and access levels are
-| access type | access level |
-| multiplier |  ${data.multiplier} |
-| priority |  ${data.priority} |
-| time |  ${data.time} |
-| price |  ${data.price} |`;
+
+| access type | access level        |
+| ----------- | ------------------- |
+| multiplier  | ${data.multiplier}  |
+| priority    | ${data.priority}    |
+| time        | ${data.time}        |
+| price       | ${data.price}       |
+      `;
     }
   } else {
     logger.error("Invalid body for query command");
