@@ -358,7 +358,7 @@ export const getAllAccessLevels = async (username: string, repository: string): 
     // no access
     return null;
   }
-  return { multiplier: data["multiplier_access"], time: data["time_access"], priority: data["priority_access"], price: data["price_access"] };
+  return { multiplier: data.multiplier_access, time: data.time_access, priority: data.priority_access, price: data.price_access };
 };
 
 /**
