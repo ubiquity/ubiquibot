@@ -68,6 +68,7 @@ export interface WideConfig {
   "default-labels": string[];
   "register-wallet-with-verification": boolean;
   "enable-access-control": AccessControl;
+  "stale-bounty-time": string;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -179,7 +180,8 @@ export const getWideConfig = async (context: Context) => {
     defaultLabels: mergedConfigData["default-labels"],
     promotionComment: mergedConfigData["promotion-comment"],
     registerWalletWithVerification: mergedConfigData["register-wallet-with-verification"],
-    enableAccessControl: mergedConfigData["enable-access-control"]
+    enableAccessControl: mergedConfigData["enable-access-control"],
+    staleBountyTime: mergedConfigData["stale-bounty-time"],
   };
 
   return configData;
