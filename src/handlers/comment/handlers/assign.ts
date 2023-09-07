@@ -119,7 +119,7 @@ export const assign = async (body: string) => {
   if (staleBounty !== 0) {
     days = Math.floor((new Date().getTime() - new Date(issue.created_at).getTime()) / (1000 * 60 * 60 * 24));
     staleToDays = Math.floor(staleBounty / (1000 * 60 * 60 * 24));
-    isBountyStale = staleToDays > days ? false : true;
+    isBountyStale = days >= staleToDays;
   }
 
   // double check whether the assign message has been already posted or not
