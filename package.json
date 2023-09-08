@@ -22,7 +22,8 @@
     "start:serverless": "tsx src/adapters/github/github-actions.ts",
     "start:watch": "nodemon --exec 'yarn start'",
     "start": "probot run ./lib/src/index.js",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "test": "nyc ts-mocha --check-leaks --exit --timeout 120000 './test/**/*.spec.ts'"
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
