@@ -50,6 +50,7 @@
     "js-yaml": "^4.1.0",
     "libsodium-wrappers": "^0.7.11",
     "lint-staged": "^13.1.0",
+    "lodash": "^4.17.21",
     "ms": "^2.1.3",
     "node-html-parser": "^6.1.5",
     "node-html-to-image": "^3.3.0",
