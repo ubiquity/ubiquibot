@@ -176,18 +176,22 @@ export const issueReopenedCallback = async (): Promise<void> => {
     }
     const assignee = events[0].assignee.login;
 
-    // write penalty to db
-    try {
-      await addPenalty(assignee, repository.full_name, tokenAddress, networkId.toString(), amount);
-    } catch (err) {
-      logger.error(`Error writing penalty to db: ${err}`);
-      return;
-    }
+    if (formattedAmount != "0.0") {
+      // write penalty to db
+      try {
+        await addPenalty(assignee, repository.full_name, tokenAddress, networkId.toString(), amount);
+      } catch (err) {
+        logger.error(`Error writing penalty to db: ${err}`);
+        return;
+      }
 
-    await addCommentToIssue(
-      `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of **${formattedAmount} ${tokenSymbol}** will be deducted from your next bounty.`,
-      issue.number
-    );
+      await addCommentToIssue(
+        `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of **${formattedAmount} ${tokenSymbol}** will be deducted from your next bounty.`,
+        issue.number
+      );
+    } else {
+      logger.info(`Skipped penalty because amount is 0`);
+    }
   } catch (err: unknown) {
     await addCommentToIssue(`Error: ${err}`, issue.number);
   }
