@@ -6,7 +6,6 @@ import {
   getAllIssueComments,
   getCommitsOnPullRequest,
   getOpenedPullRequestsForAnIssue,
-  getAllReviewRequests,
   listAllIssuesForRepo,
   removeAssignees,
 } from "../../helpers";
@@ -54,12 +53,17 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   const passedDuration = curTimestamp - lastActivity.getTime();
   const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee);
 
-  const requestedReviewers = await getAllReviewRequests(context, pullRequest[0].id);
-  if (!requestedReviewers) {
+  const response = await context.octokit.pulls.listRequestedReviewers({
+    owner: payload.repository.owner.login,
+    repo: payload.repository.full_name,
+    pull_number: pullRequest[0].id,
+  });
+  const data = response.status == 200 ? response.data : null;
+  if (!data) {
     logger.debug("Error: could not get requested reviewers");
     return false;
   }
-  if (requestedReviewers.users?.length > 0) {
+  if (data.users?.length > 0) {
     return false;
   }
   if (passedDuration >= disqualifyTime || passedDuration >= followUpTime) {
