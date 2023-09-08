@@ -27,6 +27,7 @@ import { handleIssueClosed } from "../../payout";
 import { query } from "./query";
 import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
+import { ErrorDiff } from "../../../utils/helpers";
 
 export * from "./assign";
 export * from "./wallet";
@@ -71,7 +72,7 @@ export const issueClosedCallback = async (): Promise<void> => {
     const comment = await handleIssueClosed();
     if (comment) await addCommentToIssue(comment + comments.promotionComment, issue.number);
   } catch (err: unknown) {
-    return await addCommentToIssue(`Error: ${err}`, issue.number);
+    return await addCommentToIssue(ErrorDiff(err), issue.number);
   }
 };
 
@@ -112,7 +113,7 @@ export const issueCreatedCallback = async (): Promise<void> => {
       await addLabelToIssue(targetPriceLabel);
     }
   } catch (err: unknown) {
-    await addCommentToIssue(`Error: ${err}`, issue.number);
+    await addCommentToIssue(ErrorDiff(err), issue.number);
   }
 };
 
@@ -193,7 +194,7 @@ export const issueReopenedCallback = async (): Promise<void> => {
       logger.info(`Skipped penalty because amount is 0`);
     }
   } catch (err: unknown) {
-    await addCommentToIssue(`Error: ${err}`, issue.number);
+    await addCommentToIssue(ErrorDiff(err), issue.number);
   }
 };
 
