@@ -6,6 +6,7 @@ import {
   getAllIssueComments,
   getCommitsOnPullRequest,
   getOpenedPullRequestsForAnIssue,
+  getReviewRequests,
   listAllIssuesForRepo,
   removeAssignees,
 } from "../../helpers";
@@ -52,49 +53,43 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   const lastActivity = await lastActivityTime(issue, comments);
   const passedDuration = curTimestamp - lastActivity.getTime();
   const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee);
-  try {
-    const response = await context.octokit.pulls.listRequestedReviewers({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.full_name,
-      pull_number: pullRequest[0].id,
-    });
-    const data = response.data;
-    if (data.users?.length > 0) {
-      return false;
-    }
-    if (passedDuration >= disqualifyTime || passedDuration >= followUpTime) {
-      if (passedDuration >= disqualifyTime) {
-        logger.info(
-          `Unassigning... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
-        );
-        await closePullRequestForAnIssue();
-        // remove assignees from the issue
-        await removeAssignees(issue.number, assignees);
-        await addCommentToIssue(`@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
 
-        return true;
-      } else if (passedDuration >= followUpTime) {
-        logger.info(
-          `Asking for updates... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
-        );
+  const response = await getReviewRequests(context, pullRequest[0].id, payload.repository.owner.login, payload.repository.full_name);
+  if (!response) return false;
 
-        if (lastAskTime > lastActivity.getTime()) {
-          logger.info(
-            `Skipping posting an update message cause its been already asked, lastAskTime: ${lastAskTime}, lastActivityTime: ${lastActivity.getTime()}`
-          );
-        } else {
-          await addCommentToIssue(
-            `${askUpdate} @${assignees[0]}? If you would like to release the bounty back to the DevPool, please comment \`/stop\` \nLast activity time: ${lastActivity}`,
-            issue.number
-          );
-        }
-      }
-    }
-    return false;
-  } catch (e) {
-    logger.debug(`Error: could not get requested reviewers Error: ${e}`);
+  if (response.users?.length > 0) {
     return false;
   }
+  if (passedDuration >= disqualifyTime || passedDuration >= followUpTime) {
+    if (passedDuration >= disqualifyTime) {
+      logger.info(
+        `Unassigning... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
+      );
+      await closePullRequestForAnIssue();
+      // remove assignees from the issue
+      await removeAssignees(issue.number, assignees);
+      await addCommentToIssue(`@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
+
+      return true;
+    } else if (passedDuration >= followUpTime) {
+      logger.info(
+        `Asking for updates... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
+      );
+
+      if (lastAskTime > lastActivity.getTime()) {
+        logger.info(
+          `Skipping posting an update message cause its been already asked, lastAskTime: ${lastAskTime}, lastActivityTime: ${lastActivity.getTime()}`
+        );
+      } else {
+        await addCommentToIssue(
+          `${askUpdate} @${assignees[0]}? If you would like to release the bounty back to the DevPool, please comment \`/stop\` \nLast activity time: ${lastActivity}`,
+          issue.number
+        );
+      }
+    }
+  }
+
+  return false;
 };
 
 const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date> => {
