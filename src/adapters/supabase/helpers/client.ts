@@ -188,7 +188,7 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
       logger.error(`Creating a new wallet_table record failed, error: ${JSON.stringify(error)}`);
       throw new Error(`Creating a new wallet_table record failed, error: ${JSON.stringify(error)}`);
     }
-    logger.info(`Creating a new wallet_table record done, { data: ${JSON.stringify(data)} }`);
+    logger.info(`Creating a new wallet_table record done, { data: ${JSON.stringify(data)}, address: $address }`);
   }
 };
 
