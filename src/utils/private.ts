@@ -1,25 +1,8 @@
 import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
-import { Payload } from "../types";
+import { MergedConfig, Payload } from "../types";
 import { Context } from "probot";
-import {
-  getAnalyticsMode,
-  getPaymentPermitMaxPrice,
-  getBaseMultiplier,
-  getCreatorMultiplier,
-  getBountyHunterMax,
-  getIncentiveMode,
-  getNetworkId,
-  getPriorityLabels,
-  getTimeLabels,
-  getDefaultLabels,
-  getPromotionComment,
-  getIncentives,
-  getAssistivePricing,
-  getCommandSettings,
-  getRegisterWalletWithVerification,
-  getEnableAccessControl,
-} from "./helpers";
+import merge from "lodash/merge";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
 import { validate } from "./ajv";
@@ -49,6 +32,12 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo", 
     return undefined;
   }
 };
+
+export interface MergedConfigs {
+  parsedRepo: WideRepoConfig | undefined;
+  parsedOrg: WideOrgConfig | undefined;
+  parsedDefault: MergedConfig;
+}
 
 export const parseYAML = (data?: string): WideConfig | undefined => {
   try {
@@ -114,6 +103,10 @@ export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Prom
   }
 };
 
+const mergeConfigs = (configs: MergedConfigs) => {
+  return merge({}, configs.parsedDefault, configs.parsedOrg, configs.parsedRepo);
+};
+
 export const getWideConfig = async (context: Context) => {
   const orgConfig = await getConfigSuperset(context, "org", CONFIG_PATH);
   const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
@@ -133,28 +126,31 @@ export const getWideConfig = async (context: Context) => {
       throw new Error(`Invalid repo config: ${error}`);
     }
   }
-  const parsedDefault: WideRepoConfig = DEFAULT_CONFIG_JSON;
+  const parsedDefault: MergedConfig = DEFAULT_CONFIG_JSON;
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
-  const configs = { parsedRepo, parsedOrg, parsedDefault };
+  const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
+  const mergedConfigData: MergedConfig = mergeConfigs(configs);
+
   const configData = {
-    networkId: getNetworkId(configs),
+    networkId: mergedConfigData["evm-network-id"],
     privateKey: privateKeyDecrypted ?? "",
-    assistivePricing: getAssistivePricing(configs),
-    commandSettings: getCommandSettings(configs),
-    baseMultiplier: getBaseMultiplier(configs),
-    issueCreatorMultiplier: getCreatorMultiplier(configs),
-    timeLabels: getTimeLabels(configs),
-    priorityLabels: getPriorityLabels(configs),
-    paymentPermitMaxPrice: getPaymentPermitMaxPrice(configs),
-    disableAnalytics: getAnalyticsMode(configs),
-    bountyHunterMax: getBountyHunterMax(configs),
-    incentiveMode: getIncentiveMode(configs),
-    incentives: getIncentives(configs),
-    defaultLabels: getDefaultLabels(configs),
-    promotionComment: getPromotionComment(configs),
-    registerWalletWithVerification: getRegisterWalletWithVerification(configs),
-    enableAccessControl: getEnableAccessControl(configs),
+    assistivePricing: mergedConfigData["assistive-pricing"],
+    commandSettings: mergedConfigData["command-settings"],
+    baseMultiplier: mergedConfigData["price-multiplier"],
+    issueCreatorMultiplier: mergedConfigData["issue-creator-multiplier"],
+    timeLabels: mergedConfigData["time-labels"],
+    priorityLabels: mergedConfigData["priority-labels"],
+    paymentPermitMaxPrice: mergedConfigData["payment-permit-max-price"],
+    disableAnalytics: mergedConfigData["disable-analytics"],
+    bountyHunterMax: mergedConfigData["max-concurrent-assigns"],
+    incentiveMode: mergedConfigData["comment-incentives"],
+    incentives: mergedConfigData["incentives"],
+    defaultLabels: mergedConfigData["default-labels"],
+    promotionComment: mergedConfigData["promotion-comment"],
+    registerWalletWithVerification: mergedConfigData["register-wallet-with-verification"],
+    enableAccessControl: mergedConfigData["enable-access-control"],
+    staleBountyTime: mergedConfigData["stale-bounty-time"],
   };
 
   return configData;
