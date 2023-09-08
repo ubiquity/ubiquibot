@@ -189,7 +189,14 @@ export const handleIssueClosed = async () => {
   logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
   const comment =
     `#### Task Assignee Reward\n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
-  const permitComments = comments.filter((content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot);
+  const permitComments = comments.filter((content) => {
+    if (content.body.includes("https://pay.ubq.fi") && content.user.type == UserType.Bot) {
+      const url = new URL(content.body);
+      // Check if the URL contains the specific query parameter
+      return url.searchParams.has("claim");
+    }
+    return false;
+  });
   if (permitComments.length > 0) {
     logger.info(`Skip to generate a permit url because it has been already posted`);
     return `Permit generation skipped because it was already posted to this issue.`;
