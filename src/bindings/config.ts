@@ -33,6 +33,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     commandSettings,
     assistivePricing,
     registerWalletWithVerification,
+    staleBountyTime,
     enableAccessControl,
   } = await getWideConfig(context);
 
@@ -90,6 +91,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     command: commandSettings,
     assign: {
       bountyHunterMax: bountyHunterMax,
+      staleBountyTime: ms(staleBountyTime),
     },
     sodium: {
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",
