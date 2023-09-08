@@ -225,17 +225,17 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
     }
     logger.info(`Upserting a wallet address done, { data: ${JSON.stringify(_data)} }`);
   } else {
-    const { data: _data, error: _error } = await supabase.from("wallets").insert({
+    const { error } = await supabase.from("wallets").insert({
       user_name: username,
       wallet_address: address,
       created_at: new Date().toUTCString(),
       updated_at: new Date().toUTCString(),
     });
-    if (_error) {
-      logger.error(`Creating a new wallet_table record failed, error: ${JSON.stringify(_error)}`);
-      throw new Error(`Creating a new wallet_table record failed, error: ${JSON.stringify(_error)}`);
+    if (error) {
+      logger.error(`Creating a new wallet_table record failed, error: ${JSON.stringify(error)}`);
+      throw new Error(`Creating a new wallet_table record failed, error: ${JSON.stringify(error)}`);
     }
-    logger.info(`Creating a new wallet_table record done, { data: ${JSON.stringify(_data)} }`);
+    logger.info(`Creating a new wallet_table record done, { data: ${JSON.stringify(data)}, address: $address }`);
   }
 };
 

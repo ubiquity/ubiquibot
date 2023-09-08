@@ -10,14 +10,19 @@ export const verifyFirstCheck = async (): Promise<void> => {
   if (!payload.issue) return;
 
   try {
-    const response = await context.octokit.rest.search.issuesAndPullRequests({
+    const response_issue = await context.octokit.rest.search.issuesAndPullRequests({
       q: `is:issue repo:${payload.repository.owner.login}/${payload.repository.name} commenter:${payload.sender.login}`,
       per_page: 2,
     });
-    if (response.data.total_count === 1) {
+    const response_pr = await context.octokit.rest.search.issuesAndPullRequests({
+      q: `is:pull-request repo:${payload.repository.owner.login}/${payload.repository.name} commenter:${payload.sender.login}`,
+      per_page: 2,
+    });
+    if (response_issue.data.total_count + response_pr.data.total_count === 1) {
       //continue_first_search
+      const data = response_issue.data.total_count > 0 ? response_issue.data : response_pr.data;
       const resp = await context.octokit.rest.issues.listComments({
-        issue_number: response.data.items[0].number,
+        issue_number: data.items[0].number,
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
         per_page: 100,
