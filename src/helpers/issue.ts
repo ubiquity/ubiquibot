@@ -532,6 +532,23 @@ export const getAllPullRequestReviews = async (context: Context, pull_number: nu
   return prArr;
 };
 
+export const getAllReviewRequests = async (context: Context, pull_number: number) => {
+  const payload = context.payload as Payload;
+  const response = await context.octokit.request("GET /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers", {
+    owner: payload.repository.owner.login,
+    repo: payload.repository.full_name,
+    pull_number: pull_number,
+    headers: {
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
+  if (response.status === 200) {
+    return response.data;
+  } else {
+    return null;
+  }
+};
+
 export const getPullRequestReviews = async (context: Context, pull_number: number, per_page: number, page: number) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
