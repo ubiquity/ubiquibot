@@ -1,6 +1,6 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs";
-import { addCommentToIssue, addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel, calculateWeight } from "../../helpers";
+import { addCommentToIssue, addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel, calculateWeight, getAllIssueEvents } from "../../helpers";
 import { Payload } from "../../types";
 import { handleLabelsAccess } from "../access";
 import { getTargetPriceLabel } from "../shared";
@@ -37,10 +37,44 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
 
   const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
+
   if (targetPriceLabel) {
-    if (labels.map((i) => i.name).includes(targetPriceLabel)) {
-      logger.info(`Skipping... already exists`);
+    if (labels.map((i) => i.name).includes("Price")) {
+      if (!labels.map((i) => i.name).includes(targetPriceLabel)) {
+        // get all issue events of type "labeled" and the event label includes Price
+        const events = await getAllIssueEvents();
+        if (!events) return;
+        let labeledEvents: typeof events = [];
+        let labeledPriceEvents: typeof events = [];
+        events.forEach((event) => {
+          if (event.event === "labeled") {
+            labeledEvents.push(event);
+          }
+        });
+        labeledEvents.forEach((event) => {
+          if (event.label?.name.includes("Price")) {
+            labeledPriceEvents.push(event);
+          }
+        });
+        // check if the latest price label has been added by a user
+        if (labeledPriceEvents[0].actor?.type == "User") {
+          logger.info(`Skipping... already exists`);
+        } else {
+          // add price label to issue becuase wrong price has been added by bot
+          logger.info(`Adding price label to issue`);
+          await clearAllPriceLabelsOnIssue();
+
+          const exist = await getLabel(targetPriceLabel);
+
+          if (assistivePricing && !exist) {
+            logger.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
+            await createLabel(targetPriceLabel, "price");
+          }
+          await addLabelToIssue(targetPriceLabel);
+        }
+      }
     } else {
+      // add price if there is none
       logger.info(`Adding price label to issue`);
       await clearAllPriceLabelsOnIssue();
 

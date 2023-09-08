@@ -3,6 +3,25 @@ import { getBotContext, getLogger, loadConfig } from "../bindings";
 import { AssignEvent, Comment, IssueType, Payload } from "../types";
 import { checkRateLimitGit } from "../utils";
 
+export const getAllIssueEvents = async () => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  if (!payload.issue) return;
+  try {
+    // Fetch issue events
+    const { data: events } = await context.octokit.issues.listEvents({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.full_name,
+      issue_number: payload.issue.number,
+    });
+    return events;
+  } catch (e: unknown) {
+    logger.debug(`Getting all issue events failed, reason: ${e}`);
+    return null;
+  }
+};
+
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
