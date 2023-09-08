@@ -44,8 +44,8 @@ export const pricingLabelLogic = async (): Promise<void> => {
         // get all issue events of type "labeled" and the event label includes Price
         const events = await getAllIssueEvents();
         if (!events) return;
-        let labeledEvents: typeof events = [];
-        let labeledPriceEvents: typeof events = [];
+        const labeledEvents: typeof events = [];
+        const labeledPriceEvents: typeof events = [];
         events.forEach((event) => {
           if (event.event === "labeled") {
             labeledEvents.push(event);
