@@ -52,12 +52,15 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   const curTimestamp = new Date().getTime();
   const lastActivity = await lastActivityTime(issue, comments);
   const passedDuration = curTimestamp - lastActivity.getTime();
-  const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee);
+  const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee.login);
 
-  const reviewRequests = await getReviewRequests(context, pullRequest[0].id, payload.repository.owner.login, payload.repository.full_name);
-  if (!reviewRequests || reviewRequests.users?.length > 0) {
-    return false;
+  if (pullRequest.length > 0) {
+    const reviewRequests = await getReviewRequests(context, pullRequest[0].number, payload.repository.owner.login, payload.repository.name);
+    if (!reviewRequests || reviewRequests.users?.length > 0) {
+      return false;
+    }
   }
+
   if (passedDuration >= disqualifyTime || passedDuration >= followUpTime) {
     if (passedDuration >= disqualifyTime) {
       logger.info(
