@@ -14,14 +14,12 @@ import {
   getAllIssueAssignEvents,
   addCommentToIssue,
 } from "../../helpers";
-import { UserType, Payload, StateReason, IssueType, Comment, User, Incentives, Issue } from "../../types";
+import { UserType, Payload, StateReason, Comment, User, Incentives, Issue } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
 import Decimal from "decimal.js";
 import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
-import { CreatorCommentResult } from "./post";
-import { Context } from "probot";
 import { RewardsResponse } from "../comment";
 import { isEmpty } from "lodash";
 
