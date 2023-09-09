@@ -21,14 +21,19 @@ import {
   getTokenSymbol,
   getAllIssueAssignEvents,
   calculateWeight,
-  generatePermit2Signature,
 } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
-import { handleIssueClosed, incentivizeComments, incentivizeCreatorComment } from "../../payout";
+import {
+  handleIssueClosed,
+  incentivesCalculation,
+  calculateIssueConversationReward,
+  calculateIssueCreatorReward,
+  calculateIssueAssigneeReward,
+} from "../../payout";
 import { query } from "./query";
 import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
-import isEmpty from "lodash/isEmpty";
+import Decimal from "decimal.js";
 
 export * from "./assign";
 export * from "./wallet";
@@ -37,6 +42,21 @@ export * from "./payout";
 export * from "./help";
 export * from "./multiplier";
 export * from "./query";
+
+export interface RewardsResponse {
+  error: string | null;
+  title?: string;
+  user_id?: string;
+  username?: string;
+  reward?: {
+    account?: string;
+    priceInEth: Decimal;
+    penaltyAmount?: BigNumber;
+    user?: string;
+    user_id?: string;
+  }[];
+  fallbackReward?: Record<string, Decimal>;
+}
 
 /**
  * Parses the comment body and figure out the command name a user wants
@@ -65,44 +85,27 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
  */
 
 export const issueClosedCallback = async (): Promise<void> => {
-  const logger = getLogger();
   const { payload: _payload } = getBotContext();
-  const { comments } = getBotConfig();
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   try {
-    let commentersComment = "";
-    // The mapping between gh handle and comment with a permit url
-    const reward: Record<string, string> = {};
+    // assign function incentivesCalculation to a variable
+    const calculateIncentives = await incentivesCalculation();
 
-    const creatorIncentives = await incentivizeCreatorComment();
-    const { title: commenterTitle, permitData, fallbackReward } = await incentivizeComments();
-
-    // HANDLE COMMENTERS REWARD
-    if (permitData && permitData.length > 0) {
-      commentersComment = `#### ${commenterTitle}\n`;
-
-      permitData.map(async (permit) => {
-        // Exclude issue creator from commenter rewards
-        if (permit.userId !== creatorIncentives.userId) {
-          const { payoutUrl } = await generatePermit2Signature(permit.account, permit.amountInETH, permit.node_id, permit.userId);
-          commentersComment = `${commentersComment}### [ **${permit.user}: [ CLAIM ${
-            permit.amountInETH
-          } ${permit.tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
-          reward[permit.user] = payoutUrl;
-        }
-      });
-
-      logger.info(`Permit url generated for contributors. reward: ${JSON.stringify(reward)}`);
-      logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
+    if (calculateIncentives.error) {
+      await addCommentToIssue(calculateIncentives.error, issue.number);
+      return;
     }
 
-    const issueComments = await handleIssueClosed(creatorIncentives);
-    if (issueComments) {
-      const { comment, creatorComment } = issueComments;
-      if (commentersComment && !isEmpty(reward)) await addCommentToIssue(commentersComment, issue.number);
-      if (creatorComment) await addCommentToIssue(creatorComment, issue.number);
-      if (comment) await addCommentToIssue(comment + comments.promotionComment, issue.number);
+    const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
+    const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
+    const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
+
+    const { error } = await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, calculateIncentives);
+
+    if (error) {
+      await addCommentToIssue(error, issue.number);
+      return;
     }
   } catch (err: unknown) {
     return await addCommentToIssue(`Error: ${err}`, issue.number);

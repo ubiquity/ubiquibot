@@ -1,10 +1,11 @@
 import { getWalletAddress } from "../../adapters/supabase";
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { getAllIssueComments, getIssueDescription, getTokenSymbol, parseComments } from "../../helpers";
-import { Incentives, MarkdownItem, Payload, StateReason, UserType } from "../../types";
-import { commentParser } from "../comment";
+import { getBotContext, getLogger } from "../../bindings";
+import { getAllIssueComments, getIssueDescription, parseComments } from "../../helpers";
+import { Incentives, MarkdownItem, Payload, UserType } from "../../types";
+import { RewardsResponse, commentParser } from "../comment";
 import Decimal from "decimal.js";
 import { bountyInfo } from "../wildcard";
+import { IncentivesCalculationResult } from "./action";
 
 export interface CreatorCommentResult {
   title: string;
@@ -21,63 +22,30 @@ const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
  * Incentivize the contributors based on their contribution.
  * The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
  */
-export const incentivizeComments = async (): Promise<{
-  title: string;
-  permitData?: { account: string; amountInETH: Decimal; userId: string; tokenSymbol: string; node_id: string; user: string }[];
-  fallbackReward?: Record<string, Decimal>;
-}> => {
+export const calculateIssueConversationReward = async (calculateIncentives: IncentivesCalculationResult): Promise<RewardsResponse> => {
   const title = `Conversation Rewards`;
   const logger = getLogger();
-  const {
-    mode: { incentiveMode, paymentPermitMaxPrice },
-    price: { baseMultiplier, incentives },
-    payout: { paymentToken, rpc },
-  } = getBotConfig();
-  if (!incentiveMode) {
-    logger.info(`No incentive mode. skipping to process`);
-    return { title };
-  }
+
   const context = getBotContext();
   const payload = context.payload as Payload;
   const issue = payload.issue;
-  if (!issue) {
-    logger.info(`Incomplete payload. issue: ${issue}`);
-    return { title };
-  }
 
-  if (issue.state_reason !== StateReason.COMPLETED) {
-    logger.info("incentivizeComments: comment incentives skipped because the issue was not closed as completed");
-    return { title };
-  }
-
-  if (!paymentPermitMaxPrice) {
-    logger.info(`incentivizeComments: skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
-    return { title };
-  }
-
-  const issueDetailed = bountyInfo(issue);
-  if (!issueDetailed.isBounty) {
-    logger.info(`incentivizeComments: its not a bounty`);
-    return { title };
-  }
-
-  const comments = await getAllIssueComments(issue.number);
-  const permitComments = comments.filter(
+  const permitComments = calculateIncentives.comments!.filter(
     (content) => content.body.includes("Conversation Rewards") && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
   );
   if (permitComments.length > 0) {
     logger.info(`incentivizeComments: skip to generate a permit url because it has been already posted`);
-    return { title };
+    return { error: `incentivizeComments: skip to generate a permit url because it has been already posted` };
   }
 
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
     logger.info("incentivizeComments: skipping payment permit generation because `assignee` is `undefined`.");
-    return { title };
+    return { error: "incentivizeComments: skipping payment permit generation because `assignee` is `undefined`." };
   }
 
-  const issueComments = await getAllIssueComments(issue.number, "full");
+  const issueComments = await getAllIssueComments(calculateIncentives.issue!.number, "full");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, { id: string; comments: string[] }> = {};
   for (const issueComment of issueComments) {
@@ -99,130 +67,100 @@ export const incentivizeComments = async (): Promise<{
     }
     issueCommentsByUser[user.login].comments.push(issueComment.body_html);
   }
-  const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
 
   // The mapping between gh handle and amount in ETH
   const fallbackReward: Record<string, Decimal> = {};
 
   // array of awaiting permits to generate
-  const permitData: { account: string; amountInETH: Decimal; node_id: string; userId: string; tokenSymbol: string; user: string }[] = [];
+  const reward: { account: string; priceInEth: Decimal; user_id: string; user: string }[] = [];
 
   for (const user of Object.keys(issueCommentsByUser)) {
     const commentsByUser = issueCommentsByUser[user];
     const commentsByNode = await parseComments(commentsByUser.comments, ItemsToExclude);
-    const rewardValue = calculateRewardValue(commentsByNode, incentives);
+    const rewardValue = calculateRewardValue(commentsByNode, calculateIncentives.incentives!);
     if (rewardValue.equals(0)) {
       logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`);
       continue;
     }
     logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
-    const amountInETH = rewardValue.mul(baseMultiplier);
-    if (amountInETH.gt(paymentPermitMaxPrice)) {
+    const priceInEth = rewardValue.mul(calculateIncentives.baseMultiplier!);
+    if (priceInEth.gt(calculateIncentives.paymentPermitMaxPrice!)) {
       logger.info(`Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
       continue;
     }
     if (account) {
-      permitData.push({ account, amountInETH, node_id: issue.node_id, userId: commentsByUser.id, tokenSymbol, user });
+      reward.push({ account, priceInEth, user_id: commentsByUser.id, user });
     } else {
-      fallbackReward[user] = amountInETH;
+      fallbackReward[user] = priceInEth;
     }
   }
 
-  return { title, permitData, fallbackReward };
+  return { error: "", title, reward, fallbackReward };
 };
 
-export const incentivizeCreatorComment = async (): Promise<CreatorCommentResult> => {
+export const calculateIssueCreatorReward = async (incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> => {
   const title = `Task Creator Reward`;
   const logger = getLogger();
-  const {
-    mode: { incentiveMode, paymentPermitMaxPrice },
-    price: { incentives, issueCreatorMultiplier },
-    payout: { paymentToken, rpc },
-  } = getBotConfig();
-  if (!incentiveMode) {
-    logger.info(`No incentive mode. skipping to process`);
-    return { title };
-  }
-  const context = getBotContext();
-  const payload = context.payload as Payload;
-  const issue = payload.issue;
-  if (!issue) {
-    logger.info(`Incomplete payload. issue: ${issue}`);
-    return { title };
-  }
 
-  if (issue.state_reason !== StateReason.COMPLETED) {
-    logger.info("incentivizeCreatorComment: comment incentives skipped because the issue was not closed as completed");
-    return { title };
-  }
-
-  if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
-    logger.info(`incentivizeCreatorComment: skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
-    return { title };
-  }
-
-  const issueDetailed = bountyInfo(issue);
+  const issueDetailed = bountyInfo(incentivesCalculation.issue!);
   if (!issueDetailed.isBounty) {
     logger.info(`incentivizeCreatorComment: its not a bounty`);
-    return { title };
+    return { error: `incentivizeCreatorComment: its not a bounty` };
   }
 
-  const comments = await getAllIssueComments(issue.number);
+  const comments = await getAllIssueComments(incentivesCalculation.issue!.number);
   const permitComments = comments.filter(
     (content) => content.body.includes("Task Creator Reward") && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
   );
   if (permitComments.length > 0) {
     logger.info(`incentivizeCreatorComment: skip to generate a permit url because it has been already posted`);
-    return { title };
+    return { error: `incentivizeCreatorComment: skip to generate a permit url because it has been already posted` };
   }
 
-  const assignees = issue.assignees ?? [];
+  const assignees = incentivesCalculation.issue!.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
     logger.info("incentivizeCreatorComment: skipping payment permit generation because `assignee` is `undefined`.");
-    return { title };
+    return { error: "incentivizeCreatorComment: skipping payment permit generation because `assignee` is `undefined`." };
   }
 
-  const description = await getIssueDescription(issue.number, "html");
+  const description = await getIssueDescription(incentivesCalculation.issue!.number, "html");
   if (!description) {
     logger.info(`Skipping to generate a permit url because issue description is empty. description: ${description}`);
-    return { title };
+    return { error: `Skipping to generate a permit url because issue description is empty. description: ${description}` };
   }
   logger.info(`Getting the issue description done. description: ${description}`);
-  const creator = issue.user;
-  if (creator.type === UserType.Bot || creator.login === issue.assignee) {
+  const creator = incentivesCalculation.issue!.user;
+  if (creator.type === UserType.Bot || creator.login === incentivesCalculation.issue!.assignee) {
     logger.info("Issue creator assigneed himself or Bot created this issue.");
-    return { title };
+    return { error: "Issue creator assigneed himself or Bot created this issue." };
   }
 
-  const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const result = await generatePermitForComments(
     creator.login,
-    creator.node_id,
     [description],
-    issueCreatorMultiplier,
-    incentives,
-    tokenSymbol,
-    issue.node_id,
-    paymentPermitMaxPrice
+    incentivesCalculation.issueCreatorMultiplier!,
+    incentivesCalculation.incentives!,
+    incentivesCalculation.paymentPermitMaxPrice!
   );
 
-  return result as CreatorCommentResult;
+  return {
+    error: "",
+    title,
+    user_id: creator.node_id,
+    username: creator.login,
+    reward: [
+      {
+        priceInEth: result?.amountInETH!,
+        account: result?.account,
+      },
+    ],
+  };
 };
 
-const generatePermitForComments = async (
-  user: string,
-  userId: string,
-  comments: string[],
-  multiplier: number,
-  incentives: Incentives,
-  tokenSymbol: string,
-  node_id: string,
-  paymentPermitMaxPrice: number
-) => {
-  const title = `Task Creator Reward`;
+const generatePermitForComments = async (user: string, comments: string[], multiplier: number, incentives: Incentives, paymentPermitMaxPrice: number) => {
   const logger = getLogger();
   const commentsByNode = await parseComments(comments, ItemsToExclude);
   const rewardValue = calculateRewardValue(commentsByNode, incentives);
@@ -238,9 +176,9 @@ const generatePermitForComments = async (
     return;
   }
   if (account) {
-    return { title, account, amountInETH, userId, tokenSymbol, node_id, user };
+    return { account, amountInETH };
   } else {
-    return { title, account: "0x" };
+    return { account: "0x" };
   }
 };
 /**
