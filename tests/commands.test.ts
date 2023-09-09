@@ -84,13 +84,24 @@ const orgConfig: WideOrgConfig = {
     "YU-tFJFczN3JPVoJu0pQKSbWoeiCFPjKiTXMoFnJxDDxUNX-BBXc6ZHkcQcHVjdOd6ZcEnU1o2jU3F-i05mGJPmhF2rhQYXkNlxu5U5fZMMcgxJ9INhAmktzRBUxWncg4L1HOalZIoQ7gm3nk1a84g",
 };
 
+const CustomOctokit = Octokit.defaults({
+  throttle: {
+    onRateLimit: () => {
+      return true;
+    },
+    onSecondaryRateLimit: () => {
+      return true;
+    },
+  },
+});
+
 beforeAll(async () => {
   const adminPAT = process.env.TEST_ADMIN_PAT;
   if (!adminPAT) {
     throw new Error("missing TEST_ADMIN_PAT");
   }
 
-  octokitAdmin = new Octokit({ auth: adminPAT });
+  octokitAdmin = new CustomOctokit({ auth: adminPAT });
 
   const { data } = await octokitAdmin.rest.users.getAuthenticated();
   adminUsername = data.login;
@@ -110,7 +121,7 @@ beforeAll(async () => {
     throw new Error("missing TEST_OUTSIDE_COLLABORATOR_PAT");
   }
 
-  octokitCollaborator = new Octokit({ auth: outsideCollaboratorPAT });
+  octokitCollaborator = new CustomOctokit({ auth: outsideCollaboratorPAT });
 
   const { data: data2 } = await octokitCollaborator.rest.users.getAuthenticated();
   collaboratorUsername = data2.login;
