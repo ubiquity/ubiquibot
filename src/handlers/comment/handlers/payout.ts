@@ -1,7 +1,13 @@
 import { getBotContext, getLogger } from "../../../bindings";
 import { Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
-import { handleIssueClosed } from "../../payout";
+import {
+  calculateIssueAssigneeReward,
+  calculateIssueConversationReward,
+  calculateIssueCreatorReward,
+  handleIssueClosed,
+  incentivesCalculation,
+} from "../../payout";
 import { getAllIssueComments, getUserPermission } from "../../../helpers";
 import { GLOBAL_STRINGS } from "../../../configs";
 
@@ -38,8 +44,24 @@ export const payout = async (body: string) => {
     return;
   }
 
-  const response = await handleIssueClosed(undefined);
-  return response;
+  // assign function incentivesCalculation to a variable
+  const calculateIncentives = await incentivesCalculation();
+
+  if (calculateIncentives.error) {
+    return calculateIncentives.error;
+  }
+
+  const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
+  const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
+  const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
+
+  const { error } = await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, calculateIncentives);
+
+  if (error) {
+    return error;
+  }
+
+  return;
 };
 
 export const autoPay = async (body: string) => {
