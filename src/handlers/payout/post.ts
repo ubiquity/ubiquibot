@@ -153,7 +153,7 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
     username: creator.login,
     reward: [
       {
-        priceInEth: result?.amountInETH!,
+        priceInEth: result?.amountInETH ?? new Decimal(0),
         account: result?.account,
       },
     ],
