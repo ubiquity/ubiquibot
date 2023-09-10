@@ -177,7 +177,7 @@ export const issueReopenedCallback = async (): Promise<void> => {
     }
     const assignee = events[0].assignee.login;
 
-    if (formattedAmount != "0.0") {
+    if (parseFloat(formattedAmount) > 0) {
       // write penalty to db
       try {
         await addPenalty(assignee, repository.full_name, tokenAddress, networkId.toString(), amount);
