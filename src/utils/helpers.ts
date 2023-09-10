@@ -20,3 +20,7 @@ export const getNumericLevel = (level: Level) => {
       return -1; // Invalid level
   }
 };
+
+export const ErrorDiff = (message: unknown) => {
+  return "```diff\n- " + message + "\n```";
+};
