@@ -1,4 +1,3 @@
-import { closePullRequestForAnIssue } from "../assign";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs/strings";
 import {
