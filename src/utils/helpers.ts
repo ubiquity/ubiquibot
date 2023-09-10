@@ -1,6 +1,9 @@
-import { FirstTimeObj, Incentives } from "./private";
+import { Incentives } from "./private";
+import { NewContributorGreeting as NewContributorGreetingType } from "../types";
+import { NewContributorGreeting as NewContributorGreetingInterface } from "./private";
 import { Level } from "../adapters/supabase";
 import { CommandObj, WideLabel, WideOrgConfig, WideRepoConfig } from "./private";
+import { AccessControl } from "../types";
 
 interface Configs {
   parsedRepo?: WideRepoConfig;
@@ -184,12 +187,39 @@ export const getRegisterWalletWithVerification = ({ parsedRepo, parsedOrg, parse
   }
 };
 
-export const getNewContributorGreeting = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): FirstTimeObj => {
+export const getNewContributorGreeting = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): NewContributorGreetingType => {
   if (parsedRepo && parsedRepo["new-contributor-greeting"] !== undefined && typeof parsedRepo["new-contributor-greeting"] === "object") {
-    return Object(parsedRepo["new-contributor-greeting"]);
+    const newContributorGreetingConfig = parsedRepo["new-contributor-greeting"] as NewContributorGreetingInterface;
+    return {
+      header: newContributorGreetingConfig["header"],
+      helpMenu: newContributorGreetingConfig["help-menu"],
+      enabled: newContributorGreetingConfig["enabled"],
+      footer: newContributorGreetingConfig["footer"],
+    };
   } else if (parsedOrg && parsedOrg["new-contributor-greeting"] !== undefined && typeof parsedOrg["new-contributor-greeting"] === "object") {
-    return Object(parsedOrg["new-contributor-greeting"]);
+    const newContributorGreetingConfig = parsedOrg["new-contributor-greeting"] as NewContributorGreetingInterface;
+    return {
+      header: newContributorGreetingConfig["header"],
+      helpMenu: newContributorGreetingConfig["help-menu"],
+      enabled: newContributorGreetingConfig["enabled"],
+      footer: newContributorGreetingConfig["footer"],
+    };
   } else {
-    return Object(parsedDefault["new-contributor-greeting"]);
+    const newContributorGreetingConfig = parsedDefault["new-contributor-greeting"] as NewContributorGreetingInterface;
+    return {
+      header: newContributorGreetingConfig["header"],
+      helpMenu: newContributorGreetingConfig["help-menu"],
+      enabled: newContributorGreetingConfig["enabled"],
+      footer: newContributorGreetingConfig["footer"],
+    };
+  }
+};
+export const getEnableAccessControl = ({ parsedRepo, parsedOrg, parsedDefault }: Configs): AccessControl => {
+  if (parsedRepo && parsedRepo["enable-access-control"]) {
+    return parsedRepo["enable-access-control"];
+  } else if (parsedOrg && parsedOrg["enable-access-control"]) {
+    return parsedOrg["enable-access-control"];
+  } else {
+    return parsedDefault["enable-access-control"] as AccessControl;
   }
 };

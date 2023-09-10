@@ -13,7 +13,7 @@
   "new-contributor-greeting": {
     "enabled": true,
     "header": "Thank you for contributing to UbiquiBot! Please be sure to set your wallet address before completing your first bounty so that the automatic payout upon task completion will work for you.",
-    "helpMenu": true,
+    "help-menu": true,
     "footer": "###### Also please star this repository and [@ubiquity/devpool-directory](https://github.com/ubiquity/devpool-directory/) to show your support. It helps a lot!"
   },
   "time-labels": [
@@ -91,5 +91,9 @@
         "word": 0
       }
     }
+  },
+  "enable-access-control": {
+    "label": false,
+    "organization": true
   }
 }

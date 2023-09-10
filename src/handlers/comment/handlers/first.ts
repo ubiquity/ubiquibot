@@ -8,7 +8,7 @@ export const verifyFirstCheck = async (): Promise<void> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   const {
-    first: { newContributorGreeting },
+    newContributorGreeting: { header, helpMenu, enabled, footer },
   } = getBotConfig();
   let msg = "";
   if (!payload.issue) return;
@@ -27,16 +27,16 @@ export const verifyFirstCheck = async (): Promise<void> => {
         per_page: 100,
       });
       const isFirstComment = resp.data.filter((item) => item.user?.login === payload.sender.login).length === 1;
-      if (isFirstComment && newContributorGreeting.enabled) {
+      if (isFirstComment && enabled) {
         //first_comment
-        if (newContributorGreeting.header) {
-          msg += `${newContributorGreeting.header}\n`;
+        if (header) {
+          msg += `${header}\n`;
         }
-        if (newContributorGreeting.helpMenu) {
+        if (helpMenu) {
           msg += `${generateHelpMenu()}\n@${payload.sender.login}\n`;
         }
-        if (newContributorGreeting.footer) {
-          msg += `${newContributorGreeting.footer}`;
+        if (footer) {
+          msg += `${footer}`;
         }
         await upsertCommentToIssue(payload.issue.number, msg, payload.action, payload.comment);
       }

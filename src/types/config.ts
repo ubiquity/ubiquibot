@@ -86,14 +86,13 @@ export const CommentsSchema = Type.Object({
   promotionComment: Type.String(),
 });
 
-export const FirstTimeSchema = Type.Object({
-  newContributorGreeting: Type.Object({
-    enabled: Type.Boolean(),
-    header: Type.String(),
-    helpMenu: Type.Boolean(),
-    footer: Type.String(),
-  }),
+export const NewContributorGreetingSchema = Type.Object({
+  enabled: Type.Boolean(),
+  header: Type.String(),
+  helpMenu: Type.Boolean(),
+  footer: Type.String(),
 });
+export type NewContributorGreeting = Static<typeof NewContributorGreetingSchema>;
 
 export const CommandConfigSchema = Type.Array(CommandItemSchema);
 
@@ -101,6 +100,13 @@ export type CommandConfig = Static<typeof CommandConfigSchema>;
 export const WalletSchema = Type.Object({
   registerWalletWithVerification: Type.Boolean(),
 });
+
+export const AccessControlSchema = Type.Object({
+  label: Type.Boolean(),
+  organization: Type.Boolean(),
+});
+
+export type AccessControl = Static<typeof AccessControlSchema>;
 
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
@@ -115,7 +121,8 @@ export const BotConfigSchema = Type.Object({
   comments: CommentsSchema,
   command: CommandConfigSchema,
   wallet: WalletSchema,
-  first: FirstTimeSchema,
+  newContributorGreeting: NewContributorGreetingSchema,
+  accessControl: AccessControlSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;

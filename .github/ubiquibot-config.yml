@@ -1,10 +1,9 @@
 price-multiplier: 1.5
-
 default-labels:
   - "Time: <1 Hour"
   - "Priority: 1 (Normal)"
-  first-time-contributor-greeting:
+new-contributor-greeting:
   enabled: true
   header:  "Thank you for contributing to UbiquiBot! Please be sure to set your wallet address before completing your first bounty so that the automatic payout upon task completion will work for you."
-  helpMenu: true
+  help-menu: true
   footer:  "###### Also please star this repository and [@ubiquity/devpool-directory](https://github.com/ubiquity/devpool-directory/) to show your support. It helps a lot!"

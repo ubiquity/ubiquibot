@@ -1,6 +1,6 @@
 import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
-import { Payload } from "../types";
+import { AccessControl, Payload } from "../types";
 import { Context } from "probot";
 import {
   getAnalyticsMode,
@@ -19,6 +19,7 @@ import {
   getCommandSettings,
   getRegisterWalletWithVerification,
   getNewContributorGreeting,
+  getEnableAccessControl,
 } from "./helpers";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
@@ -68,10 +69,10 @@ export interface CommandObj {
   enabled: boolean;
 }
 
-export interface FirstTimeObj {
+export interface NewContributorGreeting {
   enabled: boolean;
   header: string;
-  helpMenu: boolean;
+  "help-menu": boolean;
   footer: string;
 }
 
@@ -91,7 +92,8 @@ export interface WideConfig {
   incentives?: Incentives;
   "default-labels"?: string[];
   "register-wallet-with-verification"?: boolean;
-  "new-contributor-greeting"?: FirstTimeObj;
+  "new-contributor-greeting"?: NewContributorGreeting;
+  "enable-access-control"?: AccessControl;
 }
 
 export type WideRepoConfig = WideConfig;
@@ -192,6 +194,7 @@ export const getWideConfig = async (context: Context) => {
     promotionComment: getPromotionComment(configs),
     registerWalletWithVerification: getRegisterWalletWithVerification(configs),
     newContributorGreeting: getNewContributorGreeting(configs),
+    enableAccessControl: getEnableAccessControl(configs),
   };
 
   return configData;
