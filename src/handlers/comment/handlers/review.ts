@@ -3,9 +3,10 @@ import { GPTResponse, Payload, StreamlinedComment, UserType } from "../../../typ
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody, getPullByNumber } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { askGPT, decideContextGPT, gptContextTemplate, specCheckTemplate, speckCheckResponse } from "../../../helpers/gpt";
+import { ErrorDiff } from "../../../utils/helpers";
 
 /**
- * @notice Three calls to Chad are made. First for context, second for review and third for finalization.
+ * @notice Three calls to OpenAI are made. First for context, second for review and third for finalization.
  * @returns Pull Request Report
  */
 export const review = async (body: string) => {
@@ -16,24 +17,24 @@ export const review = async (body: string) => {
   const issue = payload.issue;
 
   if (!issue) {
-    return `Payload issue is undefined`;
+    return ErrorDiff(`Payload issue is undefined.`);
   }
 
   if (!body) {
-    return `Payload body is undefined`;
+    return ErrorDiff(`Payload body is undefined.`);
   }
 
   const isPr = await getPullByNumber(context, issue.number);
 
   if (!isPr) {
-    return `This command can only be used on pull requests.`;
+    return ErrorDiff(`Can only be used on pull requests.`);
   }
 
   const reviewRegex = /^\/review/;
   const reviewRegexMatch = body.match(reviewRegex);
 
   if (!reviewRegexMatch) {
-    return `Payload body does not match regex`;
+    return ErrorDiff(`Error matching regex for review`);
   }
 
   const streamlined: StreamlinedComment[] = [];
@@ -46,7 +47,7 @@ export const review = async (body: string) => {
 
   if (!commentsRaw) {
     logger.info(`Error getting issue comments`);
-    return `Error getting issue comments`;
+    return ErrorDiff(`Error getting issue comments.`);
   }
   streamlined.push({
     login: issue.user.login,
@@ -54,7 +55,7 @@ export const review = async (body: string) => {
   });
 
   comments.forEach(async (comment, i) => {
-    if (comment.user.type == UserType.User || commentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
+    if (comment.user.type == UserType.User || commentsRaw[i].body.includes("<!--- { 'OpenAI': 'answer' } --->")) {
       streamlined.push({
         login: comment.user.login,
         body: comment.body,
@@ -67,7 +68,7 @@ export const review = async (body: string) => {
 
   if (typeof links === "string") {
     logger.info(`Error getting linked issues or prs: ${links}`);
-    return `Error getting linked issues or prs: ${links}`;
+    return ErrorDiff(`Error getting linked issues or prs: ${links}`);
   }
   linkedIssueStreamlined = links.linkedIssues;
   linkedPRStreamlined = links.linkedPrs;
@@ -107,16 +108,15 @@ export const review = async (body: string) => {
         })
         .catch((error) => {
           logger.info(`Error getting diff: ${error}`);
-          return `Error getting diff: ${error}`;
+          return ErrorDiff(`Error getting diff: ${error}`);
         });
 
       chatHistory.push({
         role: "system",
         content: gptContextTemplate,
-        name: "UbiquityAI",
       } as CreateChatCompletionRequestMessage);
 
-      // We're allowing Chad to deduce what is the most relevant context
+      // We're allowing OpenAI to deduce what is the most relevant context
       const gptDecidedContext = await decideContextGPT(chatHistory, streamlined, linkedPRStreamlined, linkedIssueStreamlined);
 
       if (typeof gptDecidedContext === "string") {
@@ -128,31 +128,27 @@ export const review = async (body: string) => {
         {
           role: "system",
           content: specCheckTemplate, // provide the spec check template
-          name: "UbiquityAI",
         } as CreateChatCompletionRequestMessage,
         {
           role: "system",
           content: "Context: \n" + JSON.stringify(gptDecidedContext.answer), // provide the context
-          name: "UbiquityAI",
         } as CreateChatCompletionRequestMessage,
         {
           role: "user",
           content: "PR Diff: \n" + JSON.stringify(diff), // provide the diff
-          name: "user",
         } as CreateChatCompletionRequestMessage
       );
 
-      const draftReport: GPTResponse | string = await askGPT("", chatHistory);
-      let draftReportAnswer: string;
+      const draftReport: GPTResponse | string = await askGPT(`first pr review call for #${issue.number}`, chatHistory);
+      let draftReportAnswer = "";
 
       if (typeof draftReport === "string") {
         return draftReport;
       } else {
-        if (!draftReport.answer) {
-          logger.info(`First Run Response Error`);
-          return `First Run Response Error`;
+        if (draftReport.answer) {
+          draftReportAnswer = draftReport.answer;
+          return draftReportAnswer;
         }
-        draftReportAnswer = draftReport.answer;
       }
 
       chatHistory = [];
@@ -160,21 +156,18 @@ export const review = async (body: string) => {
         {
           role: "system",
           content: speckCheckResponse, // provide the finalization template
-          name: "UbiquityAI",
         } as CreateChatCompletionRequestMessage,
         {
           role: "system",
-          content: "Spec Review: \n" + draftReportAnswer, // provide the context
-          name: "UbiquityAI",
+          content: "Spec Review: \n" + draftReportAnswer, // provide the first analysis
         } as CreateChatCompletionRequestMessage,
         {
           role: "assistant",
-          content: "Supporting data: \n" + JSON.stringify(gptDecidedContext), // provide the first analysis
-          name: "assistant",
+          content: "Supporting data: \n" + JSON.stringify(gptDecidedContext), // provide the context
         } as CreateChatCompletionRequestMessage
       );
 
-      const gptResponse: GPTResponse | string = await askGPT(draftReportAnswer, chatHistory);
+      const gptResponse: GPTResponse | string = await askGPT(`final pr review call for #${issue.number}`, chatHistory);
 
       if (typeof gptResponse === "string") {
         return gptResponse;
@@ -182,12 +175,11 @@ export const review = async (body: string) => {
         if (gptResponse.answer) {
           return gptResponse.answer;
         } else {
-          logger.info(`Error getting response from GPT`);
-          return `Error getting response from GPT`;
+          return ErrorDiff(`No answer found for issue #${issue.number}`);
         }
       }
     } else {
-      return `No PR found for issue #${issue.number}`;
+      return ErrorDiff(`No PR found for issue #${issue.number}`);
     }
   };
 
