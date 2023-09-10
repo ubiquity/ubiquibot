@@ -103,7 +103,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     wallet: {
       registerWalletWithVerification: registerWalletWithVerification,
     },
-    ask: {
+    review: {
       apiKey: openAIKey,
       tokenLimit: openAITokenLimit || DEFAULT_TOKEN_LIMIT,
     },

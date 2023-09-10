@@ -7,7 +7,7 @@ import { listAvailableCommands } from "./help";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { setAccess } from "./allow";
-import { ask } from "./ask";
+import { review } from "./review";
 import { multiplier } from "./multiplier";
 import { BigNumber, ethers } from "ethers";
 import { addPenalty } from "../../../adapters/supabase";
@@ -36,7 +36,7 @@ export * from "./payout";
 export * from "./help";
 export * from "./multiplier";
 export * from "./query";
-export * from "./ask";
+export * from "./review";
 
 /**
  * Parses the comment body and figure out the command name a user wants
@@ -249,9 +249,9 @@ export const userCommands = (): UserCommands[] => {
       callback: commandCallback,
     },
     {
-      id: IssueCommentCommands.ASK,
-      description: `Ask a technical question to the Ubiquity AI. \n  example usage: "/ask How do I do X?"`,
-      handler: ask,
+      id: IssueCommentCommands.REVIEW,
+      description: `Ubiquity AI will perform a review of the current pull request. \n  example usage: /review`,
+      handler: review,
       callback: commandCallback,
     },
     {

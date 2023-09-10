@@ -87,7 +87,7 @@ export const CommentsSchema = Type.Object({
   promotionComment: Type.String(),
 });
 
-export const AskSchema = Type.Object({
+export const ReviewSchema = Type.Object({
   apiKey: Type.String(),
   tokenLimit: Type.Number(),
 });
@@ -119,7 +119,7 @@ export const BotConfigSchema = Type.Object({
   comments: CommentsSchema,
   command: CommandConfigSchema,
   wallet: WalletSchema,
-  ask: AskSchema,
+  review: ReviewSchema,
   accessControl: AccessControlSchema,
 });
 

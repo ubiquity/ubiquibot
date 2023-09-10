@@ -28,4 +28,4 @@ export const DEFAULT_NETWORK_ID = 1; // ethereum
 export const DEFAULT_RPC_ENDPOINT = "https://rpc-bot.ubq.fi/v1/mainnet";
 export const DEFAULT_PERMIT_BASE_URL = "https://pay.ubq.fi";
 
-export const DEFAULT_TOKEN_LIMIT = 4000;
+export const DEFAULT_TOKEN_LIMIT = 6000;
