@@ -1,6 +1,6 @@
 import { Context } from "probot";
 import { getBotContext, getLogger, loadConfig } from "../bindings";
-import { AssignEvent, Comment, IssueType, Payload } from "../types";
+import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
 
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
@@ -662,4 +662,110 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
     }
   }
   return result;
+};
+
+// Strips out all links from the body of an issue or pull request and fetches the conversational context from each linked issue or pull request
+export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
+  const context = getBotContext();
+  const logger = getLogger();
+
+  const issue = await getIssueByNumber(context, issueNumber);
+
+  if (!issue) {
+    return `Failed to fetch using issueNumber: ${issueNumber}`;
+  }
+
+  if (!issue.body) {
+    return `No body found for issue: ${issueNumber}`;
+  }
+
+  const body = issue.body;
+  const linkedPRStreamlined: StreamlinedComment[] = [];
+  const linkedIssueStreamlined: StreamlinedComment[] = [];
+
+  const regex = /https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+)/gi;
+  const matches = body.match(regex);
+
+  if (matches) {
+    try {
+      const linkedIssues: number[] = [];
+      const linkedPrs: number[] = [];
+
+      // this finds refs via all patterns: #<issue number>, full url or [#25](url.to.issue)
+      const issueRef = issue.body.match(/(#(\d+)|https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+))/gi);
+
+      // if they exist, strip out the # or the url and push them to their arrays
+      if (issueRef) {
+        issueRef.forEach((issue) => {
+          if (issue.includes("#")) {
+            linkedIssues.push(Number(issue.slice(1)));
+          } else {
+            if (issue.split("/")[5] == "pull") {
+              linkedPrs.push(Number(issue.split("/")[6]));
+            } else linkedIssues.push(Number(issue.split("/")[6]));
+          }
+        });
+      } else {
+        logger.info(`No linked issues or prs found`);
+      }
+
+      if (linkedPrs.length > 0) {
+        for (let i = 0; i < linkedPrs.length; i++) {
+          const pr = await getPullByNumber(context, linkedPrs[i]);
+          if (pr) {
+            linkedPRStreamlined.push({
+              login: "system",
+              body: `=============== Pull Request #${pr.number}: ${pr.title} + ===============\n ${pr.body}}`,
+            });
+            const prComments = await getAllIssueComments(linkedPrs[i]);
+            const prCommentsRaw = await getAllIssueComments(linkedPrs[i], "raw");
+            prComments.forEach(async (comment, i) => {
+              if (comment.user.type == UserType.User || prCommentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
+                linkedPRStreamlined.push({
+                  login: comment.user.login,
+                  body: comment.body,
+                });
+              }
+            });
+          }
+        }
+      }
+
+      if (linkedIssues.length > 0) {
+        for (let i = 0; i < linkedIssues.length; i++) {
+          const issue = await getIssueByNumber(context, linkedIssues[i]);
+          if (issue) {
+            linkedIssueStreamlined.push({
+              login: "system",
+              body: `=============== Issue #${issue.number}: ${issue.title} + ===============\n ${issue.body} `,
+            });
+            const issueComments = await getAllIssueComments(linkedIssues[i]);
+            const issueCommentsRaw = await getAllIssueComments(linkedIssues[i], "raw");
+            issueComments.forEach(async (comment, i) => {
+              if (comment.user.type == UserType.User || issueCommentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
+                linkedIssueStreamlined.push({
+                  login: comment.user.login,
+                  body: comment.body,
+                });
+              }
+            });
+          }
+        }
+      }
+
+      return {
+        linkedIssues: linkedIssueStreamlined,
+        linkedPrs: linkedPRStreamlined,
+      };
+    } catch (error) {
+      logger.info(`Error getting linked issues or prs: ${error}`);
+      return `Error getting linked issues or prs: ${error}`;
+    }
+  } else {
+    logger.info(`No matches found`);
+    return {
+      linkedIssues: [],
+      linkedPrs: [],
+    };
+  }
 };
