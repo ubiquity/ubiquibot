@@ -69,6 +69,7 @@ export const ModeSchema = Type.Object({
 
 export const AssignSchema = Type.Object({
   bountyHunterMax: Type.Number(),
+  staleBountyTime: Type.Number(),
 });
 
 export const LogConfigSchema = Type.Object({
@@ -93,6 +94,13 @@ export const WalletSchema = Type.Object({
   registerWalletWithVerification: Type.Boolean(),
 });
 
+export const AccessControlSchema = Type.Object({
+  label: Type.Boolean(),
+  organization: Type.Boolean(),
+});
+
+export type AccessControl = Static<typeof AccessControlSchema>;
+
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
   price: PriceConfigSchema,
@@ -106,6 +114,7 @@ export const BotConfigSchema = Type.Object({
   comments: CommentsSchema,
   command: CommandConfigSchema,
   wallet: WalletSchema,
+  accessControl: AccessControlSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;
