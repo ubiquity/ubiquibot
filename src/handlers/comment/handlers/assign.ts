@@ -24,8 +24,8 @@ export const assign = async (body: string) => {
   const issue = (_payload as Payload).issue;
 
   if (!issue) {
-    logger.info(`Disabled '/start' because of no issue instance`);
-    return "Disabled '/start' because of no issue instance!";
+    logger.info(`Skipping '/start' because of no issue instance`);
+    return "Skipping '/start' because of no issue instance!";
   }
 
   if (!ASSIGN_COMMAND_ENABLED) {
@@ -50,22 +50,22 @@ export const assign = async (body: string) => {
   }
 
   if (issue.state == IssueType.CLOSED) {
-    logger.info("Disabled '/start', reason: closed ");
-    return "Disabled `/start` because the issue is closed!";
+    logger.info("Skipping '/start', reason: closed ");
+    return "Skipping `/start` because the issue is closed!";
   }
   const _assignees = payload.issue?.assignees;
   const assignees = _assignees ?? [];
 
   if (assignees.length !== 0) {
-    logger.info(`Disabled '/start', reason: already assigned. assignees: ${assignees.length > 0 ? assignees.map((i) => i.login).join() : "NoAssignee"}`);
-    return "Disabled `/start` because the issue is already assigned!";
+    logger.info(`Skipping '/start', reason: already assigned. assignees: ${assignees.length > 0 ? assignees.map((i) => i.login).join() : "NoAssignee"}`);
+    return "Skipping `/start` because the issue is already assigned!";
   }
 
   // get the time label from the `labels`
   const labels = payload.issue?.labels;
   if (!labels) {
     logger.info(`No labels to calculate timeline`);
-    return "Disabled `/start` because no issue labels are set to calculate the timeline!";
+    return "Skipping `/start` because no issue labels are set to calculate the timeline!";
   }
   const timeLabelsDefined = config.price.timeLabels;
   const timeLabelsAssigned: LabelItem[] = [];
@@ -81,7 +81,7 @@ export const assign = async (body: string) => {
 
   if (timeLabelsAssigned.length == 0) {
     logger.info(`No time labels to calculate timeline`);
-    return "Disabled `/start` because no time labels are set to calculate the timeline!";
+    return "Skipping `/start` because no time labels are set to calculate the timeline!";
   }
 
   const sorted = timeLabelsAssigned.sort((a, b) => calculateWeight(a) - calculateWeight(b));
@@ -89,7 +89,7 @@ export const assign = async (body: string) => {
   const duration = calculateDuration(targetTimeLabel);
   if (!duration) {
     logger.info(`Missing configure for time label: ${targetTimeLabel.name}`);
-    return "Disabled `/start` because configuration is missing for the following labels!";
+    return "Skipping `/start` because configuration is missing for the following labels!";
   }
 
   const startTime = new Date().getTime();
