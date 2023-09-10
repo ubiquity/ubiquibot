@@ -4,10 +4,10 @@
   "issue-creator-multiplier": 2,
   "payment-permit-max-price": 9007199254740991,
   "max-concurrent-assigns": 9007199254740991,
-  "assistive-pricing": false,
-  "disable-analytics": false,
-  "comment-incentives": false,
-  "register-wallet-with-verification": false,
+  "assistive-pricing": true,
+  "disable-analytics": true,
+  "comment-incentives": true,
+  "register-wallet-with-verification": true,
   "stale-bounty-time": "0d",
   "promotion-comment": "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>",
   "default-labels": [],
@@ -48,35 +48,35 @@
   "command-settings": [
     {
       "name": "start",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "stop",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "wallet",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "payout",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "multiplier",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "query",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "allow",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "autopay",
-      "enabled": false
+      "enabled": true
     }
   ],
   "incentives": {
@@ -88,7 +88,7 @@
     }
   },
   "enable-access-control": {
-    "label": false,
+    "label": true,
     "organization": true
   }
 }

@@ -66,12 +66,26 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
       logger.info(
         `Unassigning... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
       );
-      await closePullRequestForAnIssue();
-      // remove assignees from the issue
-      await removeAssignees(issue.number, assignees);
-      await addCommentToIssue(`@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
 
-      return true;
+      const lastBotPenaltyCommentTime = comments.find(
+        (comment) => comment.body.includes(assignees[0]) && comment.body.includes("please be sure to review this conversation")
+      )?.created_at;
+
+      // use the last bot penalty comment time if it exists and is later than the last activity time
+      if (lastBotPenaltyCommentTime && new Date(lastBotPenaltyCommentTime).getTime() > lastActivity.getTime()) {
+        logger.info(
+          `Using the last bot penalty comment time instead of the last activity time, lastBotPenaltyCommentTime: ${lastBotPenaltyCommentTime}, lastActivityTime: ${lastActivity.getTime()}`
+        );
+        lastActivity.setTime(new Date(lastBotPenaltyCommentTime).getTime());
+        return false;
+      } else {
+        await closePullRequestForAnIssue();
+        // remove assignees from the issue
+        await removeAssignees(issue.number, assignees);
+        await addCommentToIssue(`@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
+
+        return true;
+      }
     } else if (passedDuration >= followUpTime) {
       logger.info(
         `Asking for updates... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
