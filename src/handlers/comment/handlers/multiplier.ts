@@ -17,8 +17,8 @@ export const multiplier = async (body: string) => {
 
   const issue = payload.issue;
   if (!issue) {
-    logger.info(`Skipping '/multiplier' because of no issue instance`);
-    return `Skipping '/multiplier' because of no issue instance`;
+    logger.info(`Disabled '/multiplier' because of no issue instance`);
+    return `Disabled '/multiplier' because of no issue instance`;
   }
 
   const regex = /(".*?"|[^"\s]+)(?=\s*|\s*$)/g;
@@ -65,7 +65,7 @@ export const multiplier = async (body: string) => {
 
       if (!accessible) {
         logger.info(`User ${sender} is not an admin or billing_manager`);
-        return "Insufficient permissions to update the payout multiplier. You are not an `admin` or `billing_manager`";
+        return "Insufficient permissions to update the payout multiplier. You are not an `admin` or `billing_manager`!";
       }
     }
     logger.info(`Upserting to the wallet table, username: ${username}, bountyMultiplier: ${bountyMultiplier}, reason: ${reason}}`);

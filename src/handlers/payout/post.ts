@@ -58,7 +58,7 @@ export const incentivizeComments = async () => {
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
-    logger.info("incentivizeComments: skipping payment permit generation because `assignee` is `undefined`.");
+    logger.info("incentivizeComments: disabled payment permit generation because `assignee` is `undefined`.");
     return;
   }
 

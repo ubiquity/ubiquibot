@@ -27,7 +27,7 @@ export const runOnPush = async () => {
 
   // if zero sha, push is a pr change
   if (payload.before === ZERO_SHA) {
-    logger.debug("Skipping push events, not a master write");
+    logger.debug("Disabled push events, not a master write");
     return;
   }
 
@@ -35,7 +35,7 @@ export const runOnPush = async () => {
 
   // skip if empty
   if (changes && changes.length === 0) {
-    logger.debug("Skipping push events, file change empty");
+    logger.debug("Disabled push events, file change empty");
     return;
   }
 

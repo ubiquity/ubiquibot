@@ -90,7 +90,7 @@ export const issueCreatedCallback = async (): Promise<void> => {
   const { assistivePricing } = config.mode;
 
   if (!assistivePricing) {
-    logger.info("Skipping adding label to issue because assistive pricing is disabled");
+    logger.info("Disabled adding label to issue because assistive pricing is disabled");
     return;
   }
 

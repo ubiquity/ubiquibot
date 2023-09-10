@@ -54,7 +54,7 @@ export const pricingLabelLogic = async (): Promise<void> => {
     }
   } else {
     await clearAllPriceLabelsOnIssue();
-    logger.info(`Skipping action...`);
+    logger.info(`Disabled action...`);
   }
 };
 

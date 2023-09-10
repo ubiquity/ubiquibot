@@ -39,7 +39,7 @@ export const handleIssueClosed = async () => {
   if (accessControl.organization) {
     const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
 
-    if (!userHasPermission) return "Permit generation skipped because this issue has been closed by an external contributor.";
+    if (!userHasPermission) return "Permit generation disabled because this issue has been closed by an external contributor!";
   }
 
   const comments = await getAllIssueComments(issue.number);
@@ -94,19 +94,19 @@ export const handleIssueClosed = async () => {
     return;
   }
   if (privateKey == "") {
-    logger.info("Permit generation skipped because wallet private key is not set");
-    return "Permit generation skipped because wallet private key is not set";
+    logger.info("Permit generation disabled because wallet private key is not set!");
+    return "Permit generation disabled because wallet private key is not set!";
   }
   if (issue.state_reason !== StateReason.COMPLETED) {
-    logger.info("Permit generation skipped because this is marked as unplanned.");
-    return "Permit generation skipped because this is marked as unplanned.";
+    logger.info("Permit generation disabled because this is marked as unplanned!");
+    return "Permit generation disabled because this is marked as unplanned!";
   }
 
   logger.info(`Checking if the issue is a parent issue.`);
   if (issue.body && isParentIssue(issue.body)) {
-    logger.error("Permit generation skipped since the issue is identified as parent issue.");
+    logger.error("Permit generation disabled because the issue is identified as parent issue!");
     await clearAllPriceLabelsOnIssue();
-    return "Permit generation skipped since the issue is identified as parent issue.";
+    return "Permit generation disabled because the issue is identified as parent issue!";
   }
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
@@ -117,8 +117,8 @@ export const handleIssueClosed = async () => {
       const res = botCommentBody.match(pattern);
       if (res) {
         if (res[1] === "false") {
-          logger.info(`Skipping to generate permit2 url, reason: autoPayMode for this issue: false`);
-          return `Permit generation skipped since automatic payment for this issue is disabled.`;
+          logger.info(`disabled to generate permit2 url, reason: autoPayMode for this issue: false`);
+          return `Permit generation disabled because automatic payment for this issue is disabled!`;
         }
         break;
       }
@@ -126,26 +126,26 @@ export const handleIssueClosed = async () => {
   }
 
   if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
-    logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
-    return `Permit generation skipped since paymentPermitMaxPrice is 0`;
+    logger.info(`disabled to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
+    return `Permit generation disabled because paymentPermitMaxPrice is 0`;
   }
 
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
-    logger.info(`Skipping... its not a bounty`);
-    return `Permit generation skipped since this issue didn't qualify as bounty`;
+    logger.info(`disabled... its not a bounty`);
+    return `Permit generation disabled because this issue didn't qualify as bounty!`;
   }
 
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
-    logger.info("Skipping to proceed the payment because `assignee` is undefined");
-    return `Permit generation skipped since assignee is undefined`;
+    logger.info("Disabled to proceed the payment because `assignee` is undefined");
+    return `Permit generation disabled because assignee is undefined!`;
   }
 
   if (!issueDetailed.priceLabel) {
-    logger.info("Skipping to proceed the payment because price not set");
-    return `Permit generation skipped since price label is not set`;
+    logger.info("Disabled to proceed the payment because price not set!");
+    return `Permit generation disabled because price label is not set!`;
   }
 
   const recipient = await getWalletAddress(assignee.login);
@@ -164,8 +164,8 @@ export const handleIssueClosed = async () => {
 
   let priceInEth = new Decimal(issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4)).mul(multiplier);
   if (priceInEth.gt(paymentPermitMaxPrice)) {
-    logger.info("Skipping to proceed the payment because bounty payout is higher than paymentPermitMaxPrice");
-    return `Permit generation skipped since issue's bounty is higher than ${paymentPermitMaxPrice}`;
+    logger.info("disabled to proceed the payment because bounty payout is higher than paymentPermitMaxPrice");
+    return `Permit generation disabled because issue's bounty is higher than ${paymentPermitMaxPrice}!`;
   }
 
   // if bounty hunter has any penalty then deduct it from the bounty
@@ -176,7 +176,7 @@ export const handleIssueClosed = async () => {
     const bountyAmountAfterPenalty = bountyAmount.sub(penaltyAmount);
     if (bountyAmountAfterPenalty.lte(0)) {
       await removePenalty(assignee.login, payload.repository.full_name, paymentToken, networkId.toString(), bountyAmount);
-      const msg = `Permit generation skipped because bounty amount after penalty is 0`;
+      const msg = `Permit generation disabled because bounty amount after penalty is 0`;
       logger.info(msg);
       return msg;
     }
@@ -191,8 +191,8 @@ export const handleIssueClosed = async () => {
     `#### Task Assignee Reward\n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
   const permitComments = comments.filter((content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot);
   if (permitComments.length > 0) {
-    logger.info(`Skip to generate a permit url because it has been already posted`);
-    return `Permit generation skipped because it was already posted to this issue.`;
+    logger.info(`Skip to generate a permit url because it has been already posted!`);
+    return `Permit generation disabled because it was already posted to this issue!`;
   }
   await deleteLabel(issueDetailed.priceLabel);
   await addLabelToIssue("Permitted");

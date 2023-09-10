@@ -8,7 +8,7 @@ export const unassign = async (body: string) => {
   const { payload: _payload } = getBotContext();
   const logger = getLogger();
   if (body != IssueCommentCommands.STOP && body.replace(/`/g, "") != IssueCommentCommands.STOP) {
-    logger.info(`Skipping to unassign. body: ${body}`);
+    logger.info(`Disabled to unassign. body: ${body}`);
     return;
   }
 
@@ -16,7 +16,7 @@ export const unassign = async (body: string) => {
   logger.info(`Received '/stop' command from user: ${payload.sender.login}`);
   const issue = (_payload as Payload).issue;
   if (!issue) {
-    logger.info(`Skipping '/stop' because of no issue instance`);
+    logger.info(`Disabled '/stop' because of no issue instance`);
     return;
   }
 

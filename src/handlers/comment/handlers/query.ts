@@ -15,8 +15,8 @@ export const query = async (body: string) => {
 
   const issue = payload.issue;
   if (!issue) {
-    logger.info(`Skipping '/query' because of no issue instance`);
-    return `Skipping '/query' because of no issue instance`;
+    logger.info(`Disabled '/query' because of no issue instance`);
+    return `Disabled '/query' because of no issue instance`;
   }
 
   const regex = /^\/query\s+@([\w-]+)\s*$/;

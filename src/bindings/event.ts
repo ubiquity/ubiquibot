@@ -67,7 +67,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   if (!allowedEvents.includes(eventName)) {
     // just check if its on the watch list
-    logger.info(`Skipping the event. reason: not configured`);
+    logger.info(`Disabled the event. reason: not configured`);
     return;
   }
 
@@ -85,7 +85,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
     // Check if we should skip the event
     const { skip, reason } = shouldSkip();
     if (skip) {
-      logger.info(`Skipping the event. reason: ${reason}`);
+      logger.info(`Disabled the event. reason: ${reason}`);
       return;
     }
   }

@@ -9,7 +9,7 @@ export const payout = async (body: string) => {
   const { payload: _payload } = getBotContext();
   const logger = getLogger();
   if (body != IssueCommentCommands.PAYOUT && body.replace(/`/g, "") != IssueCommentCommands.PAYOUT) {
-    logger.info(`Skipping to payout. body: ${body}`);
+    logger.info(`Disabled to payout. body: ${body}`);
     return;
   }
 
@@ -17,7 +17,7 @@ export const payout = async (body: string) => {
   logger.info(`Received '/payout' command from user: ${payload.sender.login}`);
   const issue = (_payload as Payload).issue;
   if (!issue) {
-    logger.info(`Skipping '/payout' because of no issue instance`);
+    logger.info(`Disabled '/payout' because of no issue instance`);
     return;
   }
 
@@ -56,7 +56,7 @@ export const autoPay = async (body: string) => {
   if (res) {
     const userPermission = await getUserPermission(payload.sender.login, context);
     if (userPermission !== "admin" && userPermission !== "billing_manager") {
-      return "You must be an `admin` or `billing_manager` to toggle automatic payments for completed issues.";
+      return "You must be an `admin` or `billing_manager` to toggle automatic payments for completed issues!";
     }
     if (res.length > 1) {
       return `${GLOBAL_STRINGS.autopayComment} **${res[1]}**`;

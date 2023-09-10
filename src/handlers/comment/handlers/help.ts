@@ -8,19 +8,19 @@ export const listAvailableCommands = async (body: string) => {
   const { payload: _payload } = getBotContext();
   const logger = getLogger();
   if (body != IssueCommentCommands.HELP && body.replace(/`/g, "") != IssueCommentCommands.HELP) {
-    logger.info(`Skipping to list available commands. body: ${body}`);
+    logger.info(`Disabled to list available commands. body: ${body}`);
     return;
   }
   const payload = _payload as Payload;
   const issue = payload.issue;
 
   if (!issue) {
-    logger.info("Skipping /help, reason: not issue");
+    logger.info("Disabled /help, reason: not issue");
     return;
   }
 
   if (issue.state == IssueType.CLOSED) {
-    logger.info("Skipping '/start', reason: closed ");
+    logger.info("Disabled '/start', reason: closed ");
     return;
   }
 

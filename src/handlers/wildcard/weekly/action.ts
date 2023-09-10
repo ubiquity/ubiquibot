@@ -355,6 +355,6 @@ export const run = async () => {
     await processTelegram(dataPadded);
   } else {
     const log = context.log;
-    log.info("Skipping processTelegram because no token was set.");
+    log.info("Disabled processTelegram because no token was set.");
   }
 };

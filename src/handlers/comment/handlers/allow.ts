@@ -16,7 +16,7 @@ export const setAccess = async (body: string) => {
   const issue = payload.issue;
   const repo = payload.repository;
   if (!issue) {
-    logger.info(`Skipping '/allow' because of no issue instance`);
+    logger.info(`Disabled '/allow' because of no issue instance`);
     return;
   }
 
