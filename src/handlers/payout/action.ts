@@ -98,8 +98,8 @@ export const handleIssueClosed = async () => {
     return "Permit generation skipped because wallet private key is not set";
   }
   if (issue.state_reason !== StateReason.COMPLETED) {
-    logger.info("Permit generation skipped because the issue was not closed as completed");
-    return "Permit generation skipped because the issue was not closed as completed";
+    logger.info("Permit generation skipped because this is marked as unplanned.");
+    return "Permit generation skipped because this is marked as unplanned.";
   }
 
   logger.info(`Checking if the issue is a parent issue.`);
