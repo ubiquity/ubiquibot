@@ -68,18 +68,13 @@ export interface WideConfig {
   "default-labels": string[];
   "register-wallet-with-verification": boolean;
   "enable-access-control": AccessControl;
-}
-
-export type WideRepoConfig = WideConfig;
-
-export interface WideOrgConfig extends WideConfig {
   "private-key-encrypted"?: string;
 }
 
 export interface MergedConfigs {
-  parsedRepo: WideRepoConfig | undefined;
-  parsedOrg: WideOrgConfig | undefined;
-  parsedDefault: WideRepoConfig;
+  parsedRepo: WideConfig | undefined;
+  parsedOrg: WideConfig | undefined;
+  parsedDefault: WideConfig;
 }
 
 export const parseYAML = (data?: string): WideConfig | undefined => {
@@ -154,10 +149,18 @@ export const getWideConfig = async (context: Context) => {
   const orgConfig = await getConfigSuperset(context, "org", CONFIG_PATH);
   const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
 
-  const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
-  const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
-  const parsedDefault: WideRepoConfig = DEFAULT_CONFIG_JSON;
-  const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
+  const parsedOrg: WideConfig | undefined = parseYAML(orgConfig);
+  const parsedRepo: WideConfig | undefined = parseYAML(repoConfig);
+  const parsedDefault: WideConfig = DEFAULT_CONFIG_JSON;
+  const privateKeyDecrypted = await (async () => {
+    if (parsedRepo && parsedRepo[KEY_NAME]) {
+      return await getPrivateKey(parsedRepo[KEY_NAME]);
+    } else if (parsedOrg && parsedOrg[KEY_NAME]) {
+      return await getPrivateKey(parsedOrg[KEY_NAME]);
+    } else {
+      return undefined;
+    }
+  })();
 
   const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
   const mergedConfigData: WideConfig = mergeConfigs(configs);
@@ -179,7 +182,7 @@ export const getWideConfig = async (context: Context) => {
     defaultLabels: mergedConfigData["default-labels"],
     promotionComment: mergedConfigData["promotion-comment"],
     registerWalletWithVerification: mergedConfigData["register-wallet-with-verification"],
-    enableAccessControl: mergedConfigData["enable-access-control"]
+    enableAccessControl: mergedConfigData["enable-access-control"],
   };
 
   return configData;
