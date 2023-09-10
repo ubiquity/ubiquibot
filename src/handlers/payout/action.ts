@@ -140,7 +140,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
 
   if (issue.state_reason !== StateReason.COMPLETED) {
     logger.info("Permit generation skipped because this is marked as unplanned.");
-    return "Permit generation skipped because this is marked as unplanned.";
+    return { error: "Permit generation skipped because this is marked as unplanned." };
   }
 
   logger.info(`Checking if the issue is a parent issue.`);
