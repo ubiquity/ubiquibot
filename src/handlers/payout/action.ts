@@ -19,6 +19,7 @@ import { bountyInfo } from "../wildcard";
 import Decimal from "decimal.js";
 import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
+import { DEFAULT_PERMIT_BASE_URL } from "../../configs";
 
 export const handleIssueClosed = async () => {
   const context = getBotContext();
@@ -190,7 +191,7 @@ export const handleIssueClosed = async () => {
   const comment =
     `#### Task Assignee Reward\n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
   const permitComments = comments.filter((content) => {
-    if (content.body.includes("https://pay.ubq.fi") && content.user.type == UserType.Bot) {
+    if (content.body.includes(DEFAULT_PERMIT_BASE_URL) && content.user.type == UserType.Bot) {
       const url = new URL(content.body);
       // Check if the URL contains the specific query parameter
       return url.searchParams.has("claim");
