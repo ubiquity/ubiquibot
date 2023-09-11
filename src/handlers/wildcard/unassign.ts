@@ -9,6 +9,7 @@ import {
   getReviewRequests,
   listAllIssuesForRepo,
   removeAssignees,
+  wasIssueReopened,
 } from "../../helpers";
 import { Comment, Issue, IssueType, Payload } from "../../types";
 
@@ -67,17 +68,24 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
         `Unassigning... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
       );
 
-      const lastBotPenaltyCommentTime = comments.find(
-        (comment) => comment.body.includes(assignees[0]) && comment.body.includes("please be sure to review this conversation")
-      )?.created_at;
+      const wasReopened = await wasIssueReopened(issue.number);
 
-      // use the last bot penalty comment time if it exists and is later than the last activity time
-      if (lastBotPenaltyCommentTime && new Date(lastBotPenaltyCommentTime).getTime() > lastActivity.getTime()) {
-        logger.info(
-          `Using the last bot penalty comment time instead of the last activity time, lastBotPenaltyCommentTime: ${lastBotPenaltyCommentTime}, lastActivityTime: ${lastActivity.getTime()}`
-        );
-        lastActivity.setTime(new Date(lastBotPenaltyCommentTime).getTime());
-        return false;
+      if (wasReopened) {
+        if (new Date(issue.updated_at).getTime() > lastActivity.getTime()) {
+          logger.info(
+            `Skipping unassigning because #${issue.number} was reopened, lastActivityTime: ${lastActivity.getTime()}, issue.updated_at: ${new Date(
+              issue.updated_at
+            ).getTime()}`
+          );
+          lastActivity.setTime(new Date(issue.updated_at).getTime());
+        } else {
+          await closePullRequestForAnIssue();
+          // remove assignees from the issue
+          await removeAssignees(issue.number, assignees);
+          await addCommentToIssue(`@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
+
+          return true;
+        }
       } else {
         await closePullRequestForAnIssue();
         // remove assignees from the issue
