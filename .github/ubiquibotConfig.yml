@@ -1,4 +1,4 @@
-price-multiplier: 1.5
-default-labels:
+priceMultiplier: 1.5
+defaultLabels:
   - "Time: <1 Hour"
   - "Priority: 1 (Normal)"
