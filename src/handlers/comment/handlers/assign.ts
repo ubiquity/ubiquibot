@@ -152,7 +152,7 @@ const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, i
   } else {
     _multiplierToDisplay = multiplier;
     _reasonToDisplay = reason;
-    _bountyToDisplay = `Permit generation skipped since price label is not set`;
+    _bountyToDisplay = `Permit generation disabled because price label is not set.`;
     const issueDetailed = bountyInfo(issue);
     if (issueDetailed.priceLabel) {
       _bountyToDisplay = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString() + " USD";

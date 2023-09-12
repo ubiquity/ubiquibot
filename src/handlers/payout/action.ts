@@ -74,7 +74,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
 
     if (!userHasPermission) {
-      throw new Error("Permit generation skipped because this issue has been closed by an external contributor.");
+      throw new Error("Permit generation disabled because this issue has been closed by an external contributor.");
     }
   }
 
@@ -136,20 +136,20 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
   }
 
   if (privateKey == "") {
-    logger.info("Permit generation skipped because wallet private key is not set");
-    throw new Error("Permit generation skipped because wallet private key is not set");
+    logger.info("Permit generation disabled because wallet private key is not set.");
+    throw new Error("Permit generation disabled because wallet private key is not set.");
   }
 
   if (issue.state_reason !== StateReason.COMPLETED) {
-    logger.info("Permit generation skipped because this is marked as unplanned.");
-    throw new Error("Permit generation skipped because this is marked as unplanned.");
+    logger.info("Permit generation disabled because this is marked as unplanned.");
+    throw new Error("Permit generation disabled because this is marked as unplanned.");
   }
 
   logger.info(`Checking if the issue is a parent issue.`);
   if (issue.body && isParentIssue(issue.body)) {
-    logger.error("Permit generation skipped since the issue is identified as parent issue.");
+    logger.error("Permit generation disabled because this is a collection of issues.");
     await clearAllPriceLabelsOnIssue();
-    throw new Error("Permit generation skipped since the issue is identified as parent issue.");
+    throw new Error("Permit generation disabled because this is a collection of issues.");
   }
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
@@ -161,7 +161,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
       if (res) {
         if (res[1] === "false") {
           logger.info(`Skipping to generate permit2 url, reason: autoPayMode for this issue: false`);
-          throw new Error(`Permit generation skipped since automatic payment for this issue is disabled.`);
+          throw new Error(`Permit generation disabled because automatic payment for this issue is disabled.`);
         }
         break;
       }
@@ -170,36 +170,36 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
 
   if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
     logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
-    throw new Error(`Permit generation skipped since paymentPermitMaxPrice is 0`);
+    throw new Error(`Permit generation disabled because paymentPermitMaxPrice is 0.`);
   }
 
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
     logger.info(`Skipping... its not a bounty`);
-    throw new Error(`Permit generation skipped since this issue didn't qualify as bounty`);
+    throw new Error(`Permit generation disabled because this issue didn't qualify as bounty.`);
   }
 
   if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timelabel) {
     logger.info(`Skipping... its not a bounty`);
-    throw new Error(`Permit generation skipped since this issue didn't qualify as bounty`);
+    throw new Error(`Permit generation disabled because this issue didn't qualify as bounty.`);
   }
 
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
     logger.info("Skipping to proceed the payment because `assignee` is undefined");
-    throw new Error(`Permit generation skipped since assignee is undefined`);
+    throw new Error(`Permit generation disabled because assignee is undefined.`);
   }
 
   if (!issueDetailed.priceLabel) {
     logger.info("Skipping to proceed the payment because price not set");
-    throw new Error(`Permit generation skipped since price label is not set`);
+    throw new Error(`Permit generation disabled because price label is not set.`);
   }
 
   const recipient = await getWalletAddress(assignee.login);
   if (!recipient || recipient?.trim() === "") {
     logger.info(`Recipient address is missing`);
-    throw new Error(`Permit generation skipped since recipient address is missing`);
+    throw new Error(`Permit generation skipped because recipient address is missing`);
   }
 
   const { value: multiplier } = await getWalletMultiplier(assignee.login, id?.toString());
@@ -249,8 +249,8 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
     incentivesCalculation.multiplier!
   );
   if (priceInEth.gt(incentivesCalculation.paymentPermitMaxPrice!)) {
-    logger.info("Skipping to proceed the payment because bounty payout is higher than paymentPermitMaxPrice");
-    return { error: `Permit generation skipped since issue's bounty is higher than ${incentivesCalculation.paymentPermitMaxPrice}` };
+    logger.info("Skipping to proceed the payment because bounty payout is higher than paymentPermitMaxPrice.");
+    return { error: `Permit generation disabled because issue's bounty is higher than ${incentivesCalculation.paymentPermitMaxPrice}` };
   }
 
   // if bounty hunter has any penalty then deduct it from the bounty
@@ -272,7 +272,7 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
         incentivesCalculation.networkId.toString(),
         bountyAmount
       );
-      const msg = `Permit generation skipped because bounty amount after penalty is 0`;
+      const msg = `Permit generation disabled because bounty amount after penalty is 0.`;
       logger.info(msg);
       return { error: msg };
     }
@@ -388,8 +388,8 @@ export const handleIssueClosed = async (
     );
 
     if (permitComments.length > 0) {
-      logger.info(`Skip to generate a permit url because it has been already posted`);
-      return { error: `Permit generation skipped because it was already posted to this issue.` };
+      logger.info(`Skip to generate a permit url because it has been already posted.`);
+      return { error: `Permit generation disabled because it was already posted to this issue.` };
     }
 
     if (assigneeReward.reward[0].penaltyAmount.gt(0)) {
