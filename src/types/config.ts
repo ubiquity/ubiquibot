@@ -196,6 +196,8 @@ export const MergedConfigSchema = Type.Object({
   "default-labels": Type.Array(Type.String()),
   "register-wallet-with-verification": Type.Boolean(),
   "enable-access-control": AccessControlSchema,
+  "openai-api-key": Type.String(),
+  "openai-token-limit": Type.Number(),
   "stale-bounty-time": Type.String(),
 });
 
