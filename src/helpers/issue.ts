@@ -601,8 +601,8 @@ export const getAssignedIssues = async (username: string) => {
   return assigned_issues;
 };
 
-export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userName: string) => {
-  const pulls = await getOpenedPullRequests(userName);
+export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userName: string, state: "draft" | "ready" | "all") => {
+  const pulls = await getOpenedPullRequests(userName, state);
 
   return pulls.filter((pull) => {
     if (!pull.body) return false;
@@ -616,10 +616,10 @@ export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userN
   });
 };
 
-export const getOpenedPullRequests = async (username: string) => {
+export const getOpenedPullRequests = async (username: string, state: "ready" | "draft" | "all") => {
   const context = getBotContext();
   const prs = await getAllPullRequests(context, "open");
-  return prs.filter((pr) => pr.user?.login === username || !username);
+  return prs.filter((pr) => (state === "ready" ? !pr.draft : state === "draft" ? pr.draft : true) && (pr.user?.login === username || !username));
 };
 
 export const getCommitsOnPullRequest = async (pullNumber: number) => {
@@ -658,7 +658,7 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
   const botConfig = await loadConfig(context);
   if (!botConfig.unassign.timeRangeForMaxIssueEnabled) return [];
 
-  const opened_prs = await getOpenedPullRequests(username);
+  const opened_prs = await getOpenedPullRequests(username, "ready");
 
   const result = [];
 

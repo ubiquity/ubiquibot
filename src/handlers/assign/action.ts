@@ -72,7 +72,7 @@ export const closePullRequestForAnIssue = async (): Promise<void> => {
   const payload = context.payload as Payload;
   if (!payload.issue?.number) return;
 
-  const prs = await getOpenedPullRequestsForAnIssue(payload.issue.number, "");
+  const prs = await getOpenedPullRequestsForAnIssue(payload.issue.number, "", "all");
   if (!prs.length) return;
   logger.info(`Opened prs for this issue: ${JSON.stringify(prs)}`);
   let comment = `These linked pull requests are closed: `;

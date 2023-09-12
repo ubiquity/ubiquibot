@@ -94,7 +94,7 @@ const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date
 
   if (lastCommentsOfHunterForIssue.length > 0) activities.push(new Date(lastCommentsOfHunterForIssue[0].created_at));
 
-  const openedPrsForIssue = await getOpenedPullRequestsForAnIssue(issue.number, assignees[0]);
+  const openedPrsForIssue = await getOpenedPullRequestsForAnIssue(issue.number, assignees[0], "all");
   const pr = openedPrsForIssue.length > 0 ? openedPrsForIssue[0] : undefined;
   // get last commit and last comment on the linked pr
   if (pr) {
