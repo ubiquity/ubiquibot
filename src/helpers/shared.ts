@@ -38,5 +38,9 @@ export const calculateDuration = (label: LabelItem): number => {
   if (!label) return 0;
   if (label.name.toLowerCase().includes("priority")) return 0;
 
-  return ms(label.name.split("<")[1]) / 1000;
+  const pattern = /<(\d+\s\w+)/;
+  const result = label.name.match(pattern);
+  if (!result) return 0;
+
+  return ms(result[1]) / 1000;
 };
