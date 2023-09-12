@@ -347,18 +347,19 @@ export const getAccessLevel = async (username: string, repository: string, label
   return accessValues;
 };
 
-export const getAllAccessLevels = async (username: string, repository: string): Promise<null | AccessLevels> => {
+export const getAllAccessLevels = async (username: string, repository: string): Promise<AccessLevels> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
 
-  const { data } = await supabase.from("access").select("*").eq("user_name", username).eq("repository", repository).single();
-
-  if (!data) {
-    logger.info(`Access not found on the database`);
-    // no access
-    return null;
+  const { data, error } = await supabase.from("access").select("*").eq("user_name", username).eq("repository", repository);
+  if (error) {
+    logger.error(`Checking access control failed, error: ${JSON.stringify(error)}`);
+    throw new Error(`Checking access control failed, error: ${JSON.stringify(error)}`);
   }
-  return { multiplier: data.multiplier_access, time: data.time_access, priority: data.priority_access, price: data.price_access };
+  if (!data || data.length === 0) {
+    return { multiplier: false, time: false, priority: false, price: false };
+  }
+  return { multiplier: data[0].multiplier_access, time: data[0].time_access, priority: data[0].priority_access, price: data[0].price_access };
 };
 
 /**

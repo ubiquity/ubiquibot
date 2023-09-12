@@ -26,9 +26,6 @@ export const query = async (body: string) => {
 
   if (user) {
     const data = await getAllAccessLevels(user, repo.full_name);
-    if (!data) {
-      return `Error retrieving access for @${user}`;
-    }
     const walletInfo = await getWalletInfo(user, id?.toString());
     if (!walletInfo?.address) {
       return `Error retrieving multiplier and wallet address for @${user}`;

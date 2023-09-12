@@ -282,7 +282,8 @@ describe("commmands test", () => {
       await createComment(octokitAdmin, owner, repo, issue.number, `/query @${adminUsername}`);
       await waitForNWebhooks(2);
 
-      await checkLastComment(octokitAdmin, owner, repo, issue.number, `@${adminUsername}'s wallet address is ${newWallet} and  multiplier is ${multiplier}`);
+      const lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      expect(lastComment.body).toContain(`@${adminUsername}'s wallet address is ${newWallet}, multiplier is ${multiplier}`);
     },
     testTimeout
   );
@@ -410,7 +411,7 @@ describe("commmands test", () => {
       await waitForNWebhooks(2);
 
       let lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-      expect(lastComment.body).toContain("Permit generation skipped since this issue didn't qualify as bounty");
+      expect(lastComment.body).toContain("Permit generation disabled because this issue didn't qualify as bounty");
 
       await octokitAdmin.rest.issues.update({
         owner,
@@ -465,7 +466,7 @@ describe("commmands test", () => {
       await waitForNWebhooks(2);
 
       lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-      expect(lastComment.body).toContain("Permit generation skipped since assignee is undefined");
+      expect(lastComment.body).toContain("Permit generation disabled because assignee is undefined");
 
       await octokitAdmin.rest.issues.update({
         owner,
@@ -509,7 +510,7 @@ describe("commmands test", () => {
       await waitForNWebhooks(2);
 
       lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-      expect(lastComment.body).toContain("Permit generation skipped since automatic payment for this issue is disabled.");
+      expect(lastComment.body).toContain("Permit generation disabled because automatic payment for this issue is disabled.");
 
       await octokitAdmin.rest.issues.update({
         owner,
@@ -535,7 +536,7 @@ describe("commmands test", () => {
       await waitForNWebhooks(2);
 
       lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-      expect(lastComment.body).toContain("Permit generation skipped because the issue was not closed as completed");
+      expect(lastComment.body).toContain("Permit generation disabled because this is marked as unplanned");
 
       await octokitAdmin.rest.issues.update({
         owner,
