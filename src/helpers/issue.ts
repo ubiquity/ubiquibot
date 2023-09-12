@@ -559,6 +559,20 @@ export const getPullRequestReviews = async (
   }
 };
 
+export const getReviewRequests = async (context: Context, pull_number: number, owner: string, repo: string) => {
+  const logger = getLogger();
+  try {
+    const response = await context.octokit.pulls.listRequestedReviewers({
+      owner: owner,
+      repo: repo,
+      pull_number: pull_number,
+    });
+    return response.data;
+  } catch (e: unknown) {
+    logger.error(`Error: could not get requested reviewers, reason: ${e}`);
+    return null;
+  }
+};
 // Get issues by issue number
 export const getIssueByNumber = async (context: Context, issue_number: number) => {
   const logger = getLogger();
