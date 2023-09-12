@@ -191,6 +191,7 @@ export const incentivizePullRequestReviews = async () => {
   }
 
   const prReviews = await getAllPullRequestReviews(context, linkedPullRequest.number, "full");
+  const prComments = await getAllIssueComments(linkedPullRequest.number, "full");
   logger.info(`Getting the PR reviews done. comments: ${JSON.stringify(prReviews)}`);
   const prReviewsByUser: Record<string, { id: string; comments: string[] }> = {};
   for (const review of prReviews) {
@@ -205,6 +206,20 @@ export const incentivizePullRequestReviews = async () => {
       prReviewsByUser[user.login] = { id: user.node_id, comments: [] };
     }
     prReviewsByUser[user.login].comments.push(review.body_html);
+  }
+
+  for (const comment of prComments) {
+    const user = comment.user;
+    if (!user) continue;
+    if (user.type == UserType.Bot || user.login == assignee) continue;
+    if (!comment.body_html) {
+      logger.info(`incentivizePullRequestReviews: Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(comment)}`);
+      continue;
+    }
+    if (!prReviewsByUser[user.login]) {
+      prReviewsByUser[user.login] = { id: user.node_id, comments: [] };
+    }
+    prReviewsByUser[user.login].comments.push(comment.body_html);
   }
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   logger.info(`incentivizePullRequestReviews: Filtering by the user type done. commentsByUser: ${JSON.stringify(prReviewsByUser)}`);
