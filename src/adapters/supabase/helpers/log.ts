@@ -1,26 +1,37 @@
 import { getAdapters, getBotContext, Logger } from "../../../bindings";
-import { Payload } from "../../../types";
-import { getNumericLevel } from "../../../utils/helpers";
+import { Payload, LogLevel } from "../../../types";
 import { getOrgAndRepoFromPath } from "../../../utils/private";
+
 interface Log {
   repo: string | null;
   org: string | null;
   commentId: number | undefined;
   issueNumber: number | undefined;
   logMessage: string;
-  level: Level;
+  level: LogLevel;
   timestamp: string;
 }
 
-export enum Level {
-  ERROR = "error",
-  WARN = "warn",
-  INFO = "info",
-  HTTP = "http",
-  VERBOSE = "verbose",
-  DEBUG = "debug",
-  SILLY = "silly",
-}
+export const getNumericLevel = (level: LogLevel) => {
+  switch (level) {
+    case LogLevel.ERROR:
+      return 0;
+    case LogLevel.WARN:
+      return 1;
+    case LogLevel.INFO:
+      return 2;
+    case LogLevel.HTTP:
+      return 3;
+    case LogLevel.VERBOSE:
+      return 4;
+    case LogLevel.DEBUG:
+      return 5;
+    case LogLevel.SILLY:
+      return 6;
+    default:
+      return -1; // Invalid level
+  }
+};
 
 export class GitHubLogger implements Logger {
   private supabase;
@@ -33,7 +44,7 @@ export class GitHubLogger implements Logger {
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
 
-  constructor(app: string, logEnvironment: string, maxLevel: Level, retryLimit: number) {
+  constructor(app: string, logEnvironment: string, maxLevel: LogLevel, retryLimit: number) {
     this.app = app;
     this.logEnvironment = logEnvironment;
     this.maxLevel = getNumericLevel(maxLevel);
@@ -118,7 +129,7 @@ export class GitHubLogger implements Logger {
     }
   }
 
-  private save(logMessage: string | object, level: Level, errorPayload?: string | object) {
+  private save(logMessage: string | object, level: LogLevel, errorPayload?: string | object) {
     if (getNumericLevel(level) > this.maxLevel) return; // only return errors lower than max level
 
     const context = getBotContext();
@@ -153,19 +164,19 @@ export class GitHubLogger implements Logger {
   }
 
   info(message: string | object, errorPayload?: string | object) {
-    this.save(message, Level.INFO, errorPayload);
+    this.save(message, LogLevel.INFO, errorPayload);
   }
 
   warn(message: string | object, errorPayload?: string | object) {
-    this.save(message, Level.WARN, errorPayload);
+    this.save(message, LogLevel.WARN, errorPayload);
   }
 
   debug(message: string | object, errorPayload?: string | object) {
-    this.save(message, Level.DEBUG, errorPayload);
+    this.save(message, LogLevel.DEBUG, errorPayload);
   }
 
   error(message: string | object, errorPayload?: string | object) {
-    this.save(message, Level.ERROR, errorPayload);
+    this.save(message, LogLevel.ERROR, errorPayload);
   }
 
   async get() {
