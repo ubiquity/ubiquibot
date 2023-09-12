@@ -6,6 +6,7 @@ import { RewardsResponse, commentParser } from "../comment";
 import Decimal from "decimal.js";
 import { bountyInfo } from "../wildcard";
 import { IncentivesCalculationResult } from "./action";
+import { BigNumber } from "ethers";
 
 export interface CreatorCommentResult {
   title: string;
@@ -30,7 +31,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   const payload = context.payload as Payload;
   const issue = payload.issue;
 
-  const permitComments = calculateIncentives.comments!.filter(
+  const permitComments = calculateIncentives.comments.filter(
     (content) => content.body.includes("Conversation Rewards") && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
   );
   if (permitComments.length > 0) {
@@ -45,7 +46,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
     return { error: "incentivizeComments: skipping payment permit generation because `assignee` is `undefined`." };
   }
 
-  const issueComments = await getAllIssueComments(calculateIncentives.issue!.number, "full");
+  const issueComments = await getAllIssueComments(calculateIncentives.issue.number, "full");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, { id: string; comments: string[] }> = {};
   for (const issueComment of issueComments) {
@@ -73,7 +74,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   const fallbackReward: Record<string, Decimal> = {};
 
   // array of awaiting permits to generate
-  const reward: { account: string; priceInEth: Decimal; user_id: string; user: string }[] = [];
+  const reward: { account: string; priceInEth: Decimal; userId: string; user: string; penaltyAmount: BigNumber }[] = [];
 
   for (const user of Object.keys(issueCommentsByUser)) {
     const commentsByUser = issueCommentsByUser[user];
@@ -91,7 +92,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
       continue;
     }
     if (account) {
-      reward.push({ account, priceInEth, user_id: commentsByUser.id, user });
+      reward.push({ account, priceInEth, userId: commentsByUser.id, user, penaltyAmount: BigNumber.from(0) });
     } else {
       fallbackReward[user] = priceInEth;
     }
@@ -110,7 +111,7 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
     return { error: `incentivizeCreatorComment: its not a bounty` };
   }
 
-  const comments = await getAllIssueComments(incentivesCalculation.issue!.number);
+  const comments = await getAllIssueComments(incentivesCalculation.issue.number);
   const permitComments = comments.filter(
     (content) => content.body.includes("Task Creator Reward") && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
   );
@@ -119,21 +120,21 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
     return { error: `incentivizeCreatorComment: skip to generate a permit url because it has been already posted` };
   }
 
-  const assignees = incentivesCalculation.issue!.assignees ?? [];
+  const assignees = incentivesCalculation.issue.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
     logger.info("incentivizeCreatorComment: skipping payment permit generation because `assignee` is `undefined`.");
     return { error: "incentivizeCreatorComment: skipping payment permit generation because `assignee` is `undefined`." };
   }
 
-  const description = await getIssueDescription(incentivesCalculation.issue!.number, "html");
+  const description = await getIssueDescription(incentivesCalculation.issue.number, "html");
   if (!description) {
     logger.info(`Skipping to generate a permit url because issue description is empty. description: ${description}`);
     return { error: `Skipping to generate a permit url because issue description is empty. description: ${description}` };
   }
   logger.info(`Getting the issue description done. description: ${description}`);
-  const creator = incentivesCalculation.issue!.user;
-  if (creator.type === UserType.Bot || creator.login === incentivesCalculation.issue!.assignee) {
+  const creator = incentivesCalculation.issue.user;
+  if (creator.type === UserType.Bot || creator.login === incentivesCalculation.issue.assignee) {
     logger.info("Issue creator assigneed himself or Bot created this issue.");
     return { error: "Issue creator assigneed himself or Bot created this issue." };
   }
@@ -146,15 +147,22 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
     incentivesCalculation.paymentPermitMaxPrice!
   );
 
+  if (!result || !result.account || !result.amountInETH) {
+    throw new Error("Failed to generate permit for issue creator");
+  }
+
   return {
     error: "",
     title,
-    user_id: creator.node_id,
+    userId: creator.node_id,
     username: creator.login,
     reward: [
       {
         priceInEth: result?.amountInETH ?? new Decimal(0),
         account: result?.account,
+        userId: "",
+        user: "",
+        penaltyAmount: BigNumber.from(0),
       },
     ],
   };

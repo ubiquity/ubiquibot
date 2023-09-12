@@ -47,10 +47,6 @@ export const payout = async (body: string) => {
   // assign function incentivesCalculation to a variable
   const calculateIncentives = await incentivesCalculation();
 
-  if (calculateIncentives.error) {
-    return calculateIncentives.error;
-  }
-
   const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
   const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
   const conversationRewards = await calculateIssueConversationReward(calculateIncentives);

@@ -24,29 +24,27 @@ import { RewardsResponse } from "../comment";
 import { isEmpty } from "lodash";
 
 export interface IncentivesCalculationResult {
-  error: string;
-  paymentToken?: string;
-  rpc?: string;
-  permitBaseUrl?: string;
-  networkId?: number;
-  privateKey?: string;
-  paymentPermitMaxPrice?: number;
-  baseMultiplier?: number;
-  incentives?: Incentives;
-  issueCreatorMultiplier?: number;
-  recipient?: string;
-  multiplier?: number;
-  issue?: Issue;
-  payload?: Payload;
-  comments?: Comment[];
-  issueDetailed?: {
+  paymentToken: string;
+  rpc: string;
+  networkId: number;
+  privateKey: string;
+  paymentPermitMaxPrice: number;
+  baseMultiplier: number;
+  incentives: Incentives;
+  issueCreatorMultiplier: number;
+  recipient: string;
+  multiplier: number;
+  issue: Issue;
+  payload: Payload;
+  comments: Comment[];
+  issueDetailed: {
     isBounty: boolean;
-    timelabel: string | undefined;
-    priorityLabel: string | undefined;
-    priceLabel: string | undefined;
+    timelabel: string;
+    priorityLabel: string;
+    priceLabel: string;
   };
-  assignee?: User;
-  tokenSymbol?: string;
+  assignee: User;
+  tokenSymbol: string;
 }
 
 /**
@@ -68,12 +66,16 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
 
   const id = organization?.id || repository?.id; // repository?.id as fallback
 
-  if (!issue) return { error: "Permit generation skipped because issue is undefined" };
+  if (!issue) {
+    throw new Error("Permit generation skipped because issue is undefined");
+  }
 
   if (accessControl.organization) {
     const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
 
-    if (!userHasPermission) return { error: "Permit generation skipped because this issue has been closed by an external contributor." };
+    if (!userHasPermission) {
+      throw new Error("Permit generation skipped because this issue has been closed by an external contributor.");
+    }
   }
 
   const comments = await getAllIssueComments(issue.number);
@@ -87,13 +89,13 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     const permitUrl = permitComment.body.match(claimUrlRegex);
     if (!permitUrl || permitUrl.length < 2) {
       logger.error(`Permit URL not found`);
-      return { error: "Permit generation skipped because permit URL not found" };
+      throw new Error("Permit generation skipped because permit URL not found");
     }
     const url = new URL(permitUrl[1]);
     const claimBase64 = url.searchParams.get("claim");
     if (!claimBase64) {
       logger.error(`Permit claim search parameter not found`);
-      return { error: "Permit generation skipped because permit claim search parameter not found" };
+      throw new Error("Permit generation skipped because permit claim search parameter not found");
     }
     let networkId = url.searchParams.get("network");
     if (!networkId) {
@@ -104,7 +106,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
       claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
     } catch (err: unknown) {
       logger.error(`${err}`);
-      return { error: "Permit generation skipped because permit claim is invalid" };
+      throw new Error("Permit generation skipped because permit claim is invalid");
     }
     const amount = BigNumber.from(claim.permit.permitted.amount);
     const tokenAddress = claim.permit.permitted.token;
@@ -113,7 +115,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     const events = await getAllIssueAssignEvents(issue.number);
     if (events.length === 0) {
       logger.error(`No assignment found`);
-      return { error: "Permit generation skipped because no assignment found" };
+      throw new Error("Permit generation skipped because no assignment found");
     }
     const assignee = events[0].assignee.login;
 
@@ -121,33 +123,33 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
       await removePenalty(assignee, payload.repository.full_name, tokenAddress, networkId, amount);
     } catch (err) {
       logger.error(`Failed to remove penalty: ${err}`);
-      return { error: "Permit generation skipped because failed to remove penalty" };
+      throw new Error("Permit generation skipped because failed to remove penalty");
     }
 
     logger.info(`Penalty removed`);
-    return { error: "Permit generation skipped, penalty removed" };
+    throw new Error("Permit generation skipped, penalty removed");
   }
 
   if (!incentiveMode) {
     logger.info(`No incentive mode. skipping to process`);
-    return { error: "No incentive mode. skipping to process" };
+    throw new Error("No incentive mode. skipping to process");
   }
 
   if (privateKey == "") {
     logger.info("Permit generation skipped because wallet private key is not set");
-    return { error: "Permit generation skipped because wallet private key is not set" };
+    throw new Error("Permit generation skipped because wallet private key is not set");
   }
 
   if (issue.state_reason !== StateReason.COMPLETED) {
     logger.info("Permit generation skipped because this is marked as unplanned.");
-    return { error: "Permit generation skipped because this is marked as unplanned." };
+    throw new Error("Permit generation skipped because this is marked as unplanned.");
   }
 
   logger.info(`Checking if the issue is a parent issue.`);
   if (issue.body && isParentIssue(issue.body)) {
     logger.error("Permit generation skipped since the issue is identified as parent issue.");
     await clearAllPriceLabelsOnIssue();
-    return { error: "Permit generation skipped since the issue is identified as parent issue." };
+    throw new Error("Permit generation skipped since the issue is identified as parent issue.");
   }
 
   logger.info(`Handling issues.closed event, issue: ${issue.number}`);
@@ -159,7 +161,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
       if (res) {
         if (res[1] === "false") {
           logger.info(`Skipping to generate permit2 url, reason: autoPayMode for this issue: false`);
-          return { error: `Permit generation skipped since automatic payment for this issue is disabled.` };
+          throw new Error(`Permit generation skipped since automatic payment for this issue is disabled.`);
         }
         break;
       }
@@ -168,31 +170,36 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
 
   if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
     logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
-    return { error: `Permit generation skipped since paymentPermitMaxPrice is 0` };
+    throw new Error(`Permit generation skipped since paymentPermitMaxPrice is 0`);
   }
 
   const issueDetailed = bountyInfo(issue);
   if (!issueDetailed.isBounty) {
     logger.info(`Skipping... its not a bounty`);
-    return { error: `Permit generation skipped since this issue didn't qualify as bounty` };
+    throw new Error(`Permit generation skipped since this issue didn't qualify as bounty`);
+  }
+
+  if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timelabel) {
+    logger.info(`Skipping... its not a bounty`);
+    throw new Error(`Permit generation skipped since this issue didn't qualify as bounty`);
   }
 
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
     logger.info("Skipping to proceed the payment because `assignee` is undefined");
-    return { error: `Permit generation skipped since assignee is undefined` };
+    throw new Error(`Permit generation skipped since assignee is undefined`);
   }
 
   if (!issueDetailed.priceLabel) {
     logger.info("Skipping to proceed the payment because price not set");
-    return { error: `Permit generation skipped since price label is not set` };
+    throw new Error(`Permit generation skipped since price label is not set`);
   }
 
   const recipient = await getWalletAddress(assignee.login);
   if (!recipient || recipient?.trim() === "") {
     logger.info(`Recipient address is missing`);
-    return { error: `Permit generation skipped since recipient address is missing` };
+    throw new Error(`Permit generation skipped since recipient address is missing`);
   }
 
   const { value: multiplier } = await getWalletMultiplier(assignee.login, id?.toString());
@@ -200,13 +207,12 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
   if (multiplier === 0) {
     const errMsg = "Refusing to generate the payment permit because " + `@${assignee.login}` + "'s payment `multiplier` is `0`";
     logger.info(errMsg);
-    return { error: errMsg };
+    throw new Error(errMsg);
   }
 
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
 
   return {
-    error: "",
     paymentToken,
     rpc,
     networkId,
@@ -220,7 +226,12 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     issue,
     payload,
     comments,
-    issueDetailed,
+    issueDetailed: {
+      isBounty: issueDetailed.isBounty,
+      timelabel: issueDetailed.timelabel,
+      priorityLabel: issueDetailed.priorityLabel,
+      priceLabel: issueDetailed.priceLabel,
+    },
     assignee,
     tokenSymbol,
   };
@@ -232,9 +243,9 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
 
 export const calculateIssueAssigneeReward = async (incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> => {
   const logger = getLogger();
-  const assigneeLogin = incentivesCalculation.assignee!.login;
+  const assigneeLogin = incentivesCalculation.assignee.login;
 
-  let priceInEth = new Decimal(incentivesCalculation.issueDetailed!.priceLabel!.substring(7, incentivesCalculation.issueDetailed!.priceLabel!.length - 4)).mul(
+  let priceInEth = new Decimal(incentivesCalculation.issueDetailed.priceLabel.substring(7, incentivesCalculation.issueDetailed.priceLabel.length - 4)).mul(
     incentivesCalculation.multiplier!
   );
   if (priceInEth.gt(incentivesCalculation.paymentPermitMaxPrice!)) {
@@ -245,9 +256,9 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
   // if bounty hunter has any penalty then deduct it from the bounty
   const penaltyAmount = await getPenalty(
     assigneeLogin,
-    incentivesCalculation.payload!.repository.full_name,
+    incentivesCalculation.payload.repository.full_name,
     incentivesCalculation.paymentToken!,
-    incentivesCalculation.networkId!.toString()
+    incentivesCalculation.networkId.toString()
   );
   if (penaltyAmount.gt(0)) {
     logger.info(`Deducting penalty from bounty`);
@@ -256,9 +267,9 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
     if (bountyAmountAfterPenalty.lte(0)) {
       await removePenalty(
         assigneeLogin,
-        incentivesCalculation.payload!.repository.full_name,
+        incentivesCalculation.payload.repository.full_name,
         incentivesCalculation.paymentToken!,
-        incentivesCalculation.networkId!.toString(),
+        incentivesCalculation.networkId.toString(),
         bountyAmount
       );
       const msg = `Permit generation skipped because bounty amount after penalty is 0`;
@@ -272,13 +283,15 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
 
   return {
     error: "",
-    user_id: incentivesCalculation.assignee!.node_id,
+    userId: incentivesCalculation.assignee.node_id,
     username: assigneeLogin,
     reward: [
       {
         priceInEth,
         penaltyAmount,
         account: account || "0x",
+        user: "",
+        userId: "",
       },
     ],
   };
@@ -292,7 +305,7 @@ export const handleIssueClosed = async (
 ): Promise<{ error: string }> => {
   const logger = getLogger();
   const { comments } = getBotConfig();
-  const issueNumber = incentivesCalculation.issue!.number;
+  const issueNumber = incentivesCalculation.issue.number;
 
   let commentersComment = "",
     title = "Task Assignee",
@@ -302,7 +315,7 @@ export const handleIssueClosed = async (
   const reward: Record<string, string> = {};
 
   // ASSIGNEE REWARD PRICE PROCESSOR
-  let priceInEth = new Decimal(incentivesCalculation.issueDetailed!.priceLabel!.substring(7, incentivesCalculation.issueDetailed!.priceLabel!.length - 4)).mul(
+  let priceInEth = new Decimal(incentivesCalculation.issueDetailed.priceLabel.substring(7, incentivesCalculation.issueDetailed.priceLabel.length - 4)).mul(
     incentivesCalculation.multiplier!
   );
   if (priceInEth.gt(incentivesCalculation.paymentPermitMaxPrice!)) {
@@ -316,11 +329,11 @@ export const handleIssueClosed = async (
 
     conversationRewards.reward.map(async (permit) => {
       // Exclude issue creator from commenter rewards
-      if (permit.user_id !== creatorReward.user_id) {
-        const { payoutUrl } = await generatePermit2Signature(permit.account!, permit.priceInEth, incentivesCalculation.issue!.node_id, permit.user_id);
+      if (permit.userId !== creatorReward.userId) {
+        const { payoutUrl } = await generatePermit2Signature(permit.account!, permit.priceInEth, incentivesCalculation.issue.node_id, permit.userId);
         commentersComment = `${commentersComment}### [ **${permit.user}: [ CLAIM ${
           permit.priceInEth
-        } ${incentivesCalculation.tokenSymbol!.toUpperCase()} ]** ](${payoutUrl})\n`;
+        } ${incentivesCalculation.tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
         reward[permit.user!] = payoutUrl;
       }
     });
@@ -331,16 +344,16 @@ export const handleIssueClosed = async (
 
   // CREATOR REWARD HANDLER
   // Generate permit for user if its not the same id as assignee
-  if (creatorReward && creatorReward.reward && creatorReward.reward[0].account !== "0x" && creatorReward.user_id !== incentivesCalculation.assignee!.node_id) {
+  if (creatorReward && creatorReward.reward && creatorReward.reward[0].account !== "0x" && creatorReward.userId !== incentivesCalculation.assignee.node_id) {
     const { payoutUrl } = await generatePermit2Signature(
       creatorReward.reward[0].account!,
       creatorReward.reward[0].priceInEth!,
-      incentivesCalculation.issue!.node_id,
-      creatorReward.user_id
+      incentivesCalculation.issue.node_id,
+      creatorReward.userId
     );
 
     creatorComment = `#### ${creatorReward.title}\n### [ **${creatorReward.username}: [ CLAIM ${creatorReward.reward[0]
-      .priceInEth!} ${incentivesCalculation.tokenSymbol!.toUpperCase()} ]** ](${payoutUrl})\n`;
+      .priceInEth!} ${incentivesCalculation.tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
     if (payoutUrl) {
       logger.info(`Permit url generated for creator. reward: ${payoutUrl}`);
     }
@@ -349,7 +362,7 @@ export const handleIssueClosed = async (
     creatorReward &&
     creatorReward.reward &&
     creatorReward.reward[0].account !== "0x" &&
-    creatorReward.user_id === incentivesCalculation.assignee!.node_id
+    creatorReward.userId === incentivesCalculation.assignee.node_id
   ) {
     priceInEth = priceInEth.add(creatorReward.reward[0].priceInEth!);
     title += " and Creator";
@@ -362,15 +375,15 @@ export const handleIssueClosed = async (
     const { txData, payoutUrl } = await generatePermit2Signature(
       assigneeReward.reward[0].account!,
       assigneeReward.reward[0].priceInEth!,
-      incentivesCalculation.issue!.node_id,
-      incentivesCalculation.assignee!.node_id
+      incentivesCalculation.issue.node_id,
+      incentivesCalculation.assignee.node_id
     );
     const tokenSymbol = await getTokenSymbol(incentivesCalculation.paymentToken!, incentivesCalculation.rpc!);
     const shortenRecipient = shortenEthAddress(assigneeReward.reward[0].account!, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
     logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
     assigneeComment =
       `#### ${title} Reward \n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
-    const permitComments = incentivesCalculation.comments!.filter(
+    const permitComments = incentivesCalculation.comments.filter(
       (content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
     );
 
@@ -379,24 +392,24 @@ export const handleIssueClosed = async (
       return { error: `Permit generation skipped because it was already posted to this issue.` };
     }
 
-    if (assigneeReward.reward[0].penaltyAmount!.gt(0)) {
+    if (assigneeReward.reward[0].penaltyAmount.gt(0)) {
       await removePenalty(
-        incentivesCalculation.assignee!.login,
-        incentivesCalculation.payload!.repository.full_name,
+        incentivesCalculation.assignee.login,
+        incentivesCalculation.payload.repository.full_name,
         incentivesCalculation.paymentToken!,
-        incentivesCalculation.networkId!.toString(),
+        incentivesCalculation.networkId.toString(),
         assigneeReward.reward[0].penaltyAmount!
       );
     }
 
-    await savePermitToDB(incentivesCalculation.assignee!.id, txData);
+    await savePermitToDB(incentivesCalculation.assignee.id, txData);
   }
 
   if (commentersComment && !isEmpty(reward)) await addCommentToIssue(commentersComment, issueNumber);
   if (creatorComment) await addCommentToIssue(creatorComment, issueNumber);
   if (assigneeComment) await addCommentToIssue(assigneeComment + comments.promotionComment, issueNumber);
 
-  await deleteLabel(incentivesCalculation.issueDetailed!.priceLabel!);
+  await deleteLabel(incentivesCalculation.issueDetailed.priceLabel!);
   await addLabelToIssue("Permitted");
 
   return { error: "" };

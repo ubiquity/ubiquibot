@@ -46,14 +46,14 @@ export * from "./query";
 export interface RewardsResponse {
   error: string | null;
   title?: string;
-  user_id?: string;
+  userId?: string;
   username?: string;
   reward?: {
-    account?: string;
+    account: string;
     priceInEth: Decimal;
-    penaltyAmount?: BigNumber;
-    user?: string;
-    user_id?: string;
+    penaltyAmount: BigNumber;
+    user: string;
+    userId: string;
   }[];
   fallbackReward?: Record<string, Decimal>;
 }
@@ -91,11 +91,6 @@ export const issueClosedCallback = async (): Promise<void> => {
   try {
     // assign function incentivesCalculation to a variable
     const calculateIncentives = await incentivesCalculation();
-
-    if (calculateIncentives.error) {
-      await addCommentToIssue(calculateIncentives.error, issue.number);
-      return;
-    }
 
     const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
     const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
