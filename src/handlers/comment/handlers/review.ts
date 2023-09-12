@@ -147,6 +147,7 @@ export const review = async (body: string) => {
       } else {
         if (draftReport.answer) {
           draftReportAnswer = draftReport.answer;
+
           return draftReportAnswer;
         }
       }

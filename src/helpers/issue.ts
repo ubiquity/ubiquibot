@@ -729,7 +729,7 @@ export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
           if (pr) {
             linkedPRStreamlined.push({
               login: "system",
-              body: `=============== Pull Request #${pr.number}: ${pr.title} + ===============\n ${pr.body}}`,
+              body: `=== Pull Request #${pr.number}: ${pr.title} + ===\n ${pr.body}}`,
             });
             const prComments = await getAllIssueComments(linkedPrs[i]);
             const prCommentsRaw = await getAllIssueComments(linkedPrs[i], "raw");
@@ -751,7 +751,7 @@ export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
           if (issue) {
             linkedIssueStreamlined.push({
               login: "system",
-              body: `=============== Issue #${issue.number}: ${issue.title} + ===============\n ${issue.body} `,
+              body: `=== Issue #${issue.number}: ${issue.title} + ===\n ${issue.body} `,
             });
             const issueComments = await getAllIssueComments(linkedIssues[i]);
             const issueCommentsRaw = await getAllIssueComments(linkedIssues[i], "raw");

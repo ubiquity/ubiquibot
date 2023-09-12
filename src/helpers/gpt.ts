@@ -13,70 +13,53 @@ Infer the context of the question from the Original Context using your best judg
 All replies MUST end with "\n\n <!--- { 'OpenAI': 'answer' } ---> ".\n
 `;
 
-export const ratingExample = `
-## Rating
-| Spec Match | Description |
-| --- | --- |
-| 100% | Why this rating... Wonderful Effort (S) |
-| 50% | Why this rating... Terrible effort (F) |
-`;
-
 export const issueSpecExample = `
-# Issue Spec
+## Requirements
+- [x] {item}
+- [ ] {item}
+
+## Context
 | Linked Context | Context | Relevancy |
 | --- | --- | --- |
 | Issue # | This is the issue spec | Why is this relevant? |
 | Pull # | This is the pull spec | Why is this relevant? |
 
-- [x] {item}
-- [ ] {item}
-`;
+# Pull Request Analysis
+- Added {itemName} file
+- Removed {itemName} file
+- Modified {itemName} file...
 
-export const implementationAnalysisExample = `
-## Implementation Analysis
-- [x] {item}
-- [ ] {item}
-`;
+# Changes in line with issue spec
+- {item}
 
-export const overallAnalysisExample = `
-## Overall Analysis
-- [x] {item}
-- [ ] {item}
+# Changes not in line with issue spec
+- {item}
+
+# Rating 
+| Spec Match | Description |
+| --- | --- |
+| 100% | Why this rating... Wonderful Effort (S) |
+| 50% | Why this rating... Terrible effort (F) |
+
+# Conclusion
+{conclusion}
 `;
 
 export const specCheckTemplate = `
   You are an AI designed to analyze pull requests in comparison to the issue specification.\n
-  You are to update the report after you review everything, pr diff, spec, and provided context.\n
-  Measure the implementation against the issue spec and provide an overall analysis.\n
-  You must NOT return any example text, only your comprehensive report. \n
-  You MUST provide the following structure, but you may add additional information if you deem it relevant.\n
+  Your utmost priority is to ensure the pull request is in line with the issue spec.\n
+  Detail the specification in as much detail as possible, and analyze the pull request in comparison to this specification.\n
+  Feed your analysis into the boilerplate provided below, changing what you need to.\n
+  Be concise and group your analysis into relevant sections.\n
 
   Boilerplate: \n
   ${issueSpecExample}
-
-  ${implementationAnalysisExample}
-
-  ${overallAnalysisExample}
-
-  ${ratingExample}
   `;
 
 export const speckCheckResponse = `
-The issue spec is provided in the context, and the pr diff is provided in the first response.
-
 Finalize the report by proofreading the report for any errors.
-Ensure only relevant context is provided in the spec and implementation analysis.
-You MUST provide the following structure, but you may add additional information if you deem it relevant.
-Do not include leftover boilerplate text, only your comprehensive report, this is crucial!
-
-Boilerplate: \n
-${issueSpecExample}
-
-${implementationAnalysisExample}
-
-${overallAnalysisExample}
-
-${ratingExample}
+Improve the report by adding any additional information you deem relevant.
+Remove anything that is not relevant to the report, if you can replace it with something more relevant, do so.
 
 All replies MUST end with "\n<!--- { 'OpenAI': 'specCheck' } --->".
 `;
@@ -86,6 +69,7 @@ You are an AI designed to review and analyze pull requests.
 You have been provided with the spec of the issue and all linked issues or pull requests.
 Using this full context, Reply in pure JSON format, with the following structure omitting irrelvant information pertaining to the specification.
 You MUST provide the following structure, but you may add additional information if you deem it relevant.
+Do not include example data, only include data relevant to the specification.
 
 Example:[
   {
