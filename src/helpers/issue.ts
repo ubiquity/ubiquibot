@@ -22,6 +22,18 @@ export const getAllIssueEvents = async () => {
   }
 };
 
+export const getAllLabeledEvents = async () => {
+  const events = await getAllIssueEvents();
+  if (!events) return;
+  const labeledEvents: typeof events = [];
+  events.forEach((event) => {
+    if (event.event === "labeled") {
+      labeledEvents.push(event);
+    }
+  });
+  return labeledEvents;
+};
+
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();

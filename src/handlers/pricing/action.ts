@@ -1,6 +1,6 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs";
-import { addCommentToIssue, addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel, calculateWeight, getAllIssueEvents } from "../../helpers";
+import { addCommentToIssue, addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel, calculateWeight, getAllLabeledEvents } from "../../helpers";
 import { Payload } from "../../types";
 import { handleLabelsAccess } from "../access";
 import { getTargetPriceLabel } from "../shared";
@@ -42,15 +42,9 @@ export const pricingLabelLogic = async (): Promise<void> => {
     if (labels.map((i) => i.name).includes("Price")) {
       if (!labels.map((i) => i.name).includes(targetPriceLabel)) {
         // get all issue events of type "labeled" and the event label includes Price
-        const events = await getAllIssueEvents();
-        if (!events) return;
-        const labeledEvents: typeof events = [];
-        const labeledPriceEvents: typeof events = [];
-        events.forEach((event) => {
-          if (event.event === "labeled") {
-            labeledEvents.push(event);
-          }
-        });
+        const labeledEvents = await getAllLabeledEvents();
+        if (!labeledEvents) return;
+        const labeledPriceEvents: typeof labeledEvents = [];
         labeledEvents.forEach((event) => {
           if (event.label?.name.includes("Price")) {
             labeledPriceEvents.push(event);
