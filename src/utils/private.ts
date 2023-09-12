@@ -1,10 +1,12 @@
 import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
-import { AccessControl, BountyRewardsCap, Payload } from "../types";
+import { MergedConfig, Payload } from "../types";
 import { Context } from "probot";
 import merge from "lodash/merge";
 
 import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
+import { validate } from "./ajv";
+import { WideConfig, WideOrgConfig, WideRepoConfig, WideConfigSchema, WideOrgConfigSchema } from "../types";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
@@ -51,37 +53,10 @@ export interface CommandObj {
   enabled: boolean;
 }
 
-export interface WideConfig {
-  "evm-network-id": number;
-  "price-multiplier": number;
-  "issue-creator-multiplier": number;
-  "time-labels": WideLabel[];
-  "priority-labels": WideLabel[];
-  "payment-permit-max-price": number;
-  "command-settings": CommandObj[];
-  "promotion-comment": string;
-  "disable-analytics": boolean;
-  "comment-incentives": boolean;
-  "assistive-pricing": boolean;
-  "max-concurrent-assigns": number;
-  incentives: Incentives;
-  "default-labels": string[];
-  "register-wallet-with-verification": boolean;
-  "enable-access-control": AccessControl;
-  "stale-bounty-time": string;
-  "bounty-rewards-cap": BountyRewardsCap;
-}
-
-export type WideRepoConfig = WideConfig;
-
-export interface WideOrgConfig extends WideConfig {
-  "private-key-encrypted"?: string;
-}
-
 export interface MergedConfigs {
   parsedRepo: WideRepoConfig | undefined;
   parsedOrg: WideOrgConfig | undefined;
-  parsedDefault: WideRepoConfig;
+  parsedDefault: MergedConfig;
 }
 
 export const parseYAML = (data?: string): WideConfig | undefined => {
@@ -157,12 +132,25 @@ export const getWideConfig = async (context: Context) => {
   const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
 
   const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
+
+  if (parsedOrg) {
+    const { valid, error } = validate(WideOrgConfigSchema, parsedOrg);
+    if (!valid) {
+      throw new Error(`Invalid org config: ${error}`);
+    }
+  }
   const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
-  const parsedDefault: WideRepoConfig = DEFAULT_CONFIG_JSON;
+  if (parsedRepo) {
+    const { valid, error } = validate(WideConfigSchema, parsedRepo);
+    if (!valid) {
+      throw new Error(`Invalid repo config: ${error}`);
+    }
+  }
+  const parsedDefault: MergedConfig = DEFAULT_CONFIG_JSON;
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
-  const mergedConfigData: WideConfig = mergeConfigs(configs);
+  const mergedConfigData: MergedConfig = mergeConfigs(configs);
 
   const configData = {
     networkId: mergedConfigData["evm-network-id"],

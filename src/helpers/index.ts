@@ -9,3 +9,4 @@ export * from "./comment";
 export * from "./payout";
 export * from "./file";
 export * from "./similarity";
+export * from "./commit";

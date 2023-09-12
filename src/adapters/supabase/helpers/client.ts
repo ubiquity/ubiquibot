@@ -5,6 +5,13 @@ import { Database } from "../types";
 import { InsertPermit, Permit } from "../../../helpers";
 import { BigNumber, BigNumberish } from "ethers";
 
+interface AccessLevels {
+  multiplier: boolean;
+  price: boolean;
+  priority: boolean;
+  time: boolean;
+}
+
 /**
  * @dev Creates a typescript client which will be used to interact with supabase platform
  *
@@ -218,17 +225,17 @@ export const upsertWalletAddress = async (username: string, address: string): Pr
     }
     logger.info(`Upserting a wallet address done, { data: ${JSON.stringify(_data)} }`);
   } else {
-    const { data: _data, error: _error } = await supabase.from("wallets").insert({
+    const { error } = await supabase.from("wallets").insert({
       user_name: username,
       wallet_address: address,
       created_at: new Date().toUTCString(),
       updated_at: new Date().toUTCString(),
     });
-    if (_error) {
-      logger.error(`Creating a new wallet_table record failed, error: ${JSON.stringify(_error)}`);
-      throw new Error(`Creating a new wallet_table record failed, error: ${JSON.stringify(_error)}`);
+    if (error) {
+      logger.error(`Creating a new wallet_table record failed, error: ${JSON.stringify(error)}`);
+      throw new Error(`Creating a new wallet_table record failed, error: ${JSON.stringify(error)}`);
     }
-    logger.info(`Creating a new wallet_table record done, { data: ${JSON.stringify(_data)} }`);
+    logger.info(`Creating a new wallet_table record done, { data: ${JSON.stringify(data)}, address: $address }`);
   }
 };
 
@@ -338,6 +345,20 @@ export const getAccessLevel = async (username: string, repository: string, label
   const accessValues = data[`${label_type}_access`];
 
   return accessValues;
+};
+
+export const getAllAccessLevels = async (username: string, repository: string): Promise<null | AccessLevels> => {
+  const logger = getLogger();
+  const { supabase } = getAdapters();
+
+  const { data } = await supabase.from("access").select("*").eq("user_name", username).eq("repository", repository).single();
+
+  if (!data) {
+    logger.info(`Access not found on the database`);
+    // no access
+    return null;
+  }
+  return { multiplier: data.multiplier_access, time: data.time_access, priority: data.priority_access, price: data.price_access };
 };
 
 /**
