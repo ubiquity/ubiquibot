@@ -16,7 +16,7 @@ import {
   checkLastComment,
   getLastComment,
 } from "./utils";
-import { WideOrgConfig, WideRepoConfig } from "../src/utils/private";
+import { WideOrgConfig, WideRepoConfig } from "../src/types";
 
 const testTimeout = 6 * 60 * 60 * 1000; // 6 hours
 

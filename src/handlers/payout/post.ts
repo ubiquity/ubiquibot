@@ -32,7 +32,7 @@ export const incentivizeComments = async () => {
   }
 
   if (issue.state_reason !== StateReason.COMPLETED) {
-    logger.info("incentivizeComments: comment incentives skipped because the issue was not closed as completed");
+    logger.info("incentivizeComments: comment incentives disabled because the issue was not closed as completed.");
     return;
   }
 
@@ -160,7 +160,7 @@ export const incentivizeCreatorComment = async () => {
   }
 
   if (issue.state_reason !== StateReason.COMPLETED) {
-    logger.info("incentivizeCreatorComment: comment incentives skipped because the issue was not closed as completed");
+    logger.info("incentivizeCreatorComment: comment incentives disabled because the issue was not closed as completed.");
     return;
   }
 

@@ -1,28 +1,46 @@
 import { Static, Type } from "@sinclair/typebox";
-import { Level } from "../adapters/supabase";
+import { LogLevel } from "./log";
 
-const LabelItemSchema = Type.Object({
-  name: Type.String(),
-});
+const LabelItemSchema = Type.Object(
+  {
+    name: Type.String(),
+  },
+  {
+    additionalProperties: false,
+  }
+);
 export type LabelItem = Static<typeof LabelItemSchema>;
 
-const CommentIncentivesSchema = Type.Object({
-  elements: Type.Record(Type.String(), Type.Number()),
-  totals: Type.Object({
-    word: Type.Number(),
-  }),
-});
+const CommentIncentivesSchema = Type.Object(
+  {
+    elements: Type.Record(Type.String(), Type.Number()),
+    totals: Type.Object(
+      {
+        word: Type.Number(),
+      },
+      { additionalProperties: false }
+    ),
+  },
+  { additionalProperties: false }
+);
 export type CommentIncentives = Static<typeof CommentIncentivesSchema>;
 
-const IncentivesSchema = Type.Object({
-  comment: CommentIncentivesSchema,
-});
+const IncentivesSchema = Type.Object(
+  {
+    comment: CommentIncentivesSchema,
+  },
+  { additionalProperties: false }
+);
+
 export type Incentives = Static<typeof IncentivesSchema>;
 
-const CommandItemSchema = Type.Object({
-  name: Type.String(),
-  enabled: Type.Boolean(),
-});
+const CommandItemSchema = Type.Object(
+  {
+    name: Type.String(),
+    enabled: Type.Boolean(),
+  },
+  { additionalProperties: false }
+);
 export type CommandItem = Static<typeof CommandItemSchema>;
 
 export const PriceConfigSchema = Type.Object({
@@ -69,11 +87,12 @@ export const ModeSchema = Type.Object({
 
 export const AssignSchema = Type.Object({
   bountyHunterMax: Type.Number(),
+  staleBountyTime: Type.Number(),
 });
 
 export const LogConfigSchema = Type.Object({
   logEnvironment: Type.String(),
-  level: Type.Enum(Level),
+  level: Type.Enum(LogLevel),
   retryLimit: Type.Number(),
 });
 
@@ -117,3 +136,61 @@ export const BotConfigSchema = Type.Object({
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;
+
+export const WideConfigSchema = Type.Object(
+  {
+    "evm-network-id": Type.Optional(Type.Number()),
+    "price-multiplier": Type.Optional(Type.Number()),
+    "issue-creator-multiplier": Type.Number(),
+    "time-labels": Type.Optional(Type.Array(LabelItemSchema)),
+    "priority-labels": Type.Optional(Type.Array(LabelItemSchema)),
+    "payment-permit-max-price": Type.Optional(Type.Number()),
+    "command-settings": Type.Optional(Type.Array(CommandItemSchema)),
+    "promotion-comment": Type.Optional(Type.String()),
+    "disable-analytics": Type.Optional(Type.Boolean()),
+    "comment-incentives": Type.Optional(Type.Boolean()),
+    "assistive-pricing": Type.Optional(Type.Boolean()),
+    "max-concurrent-assigns": Type.Optional(Type.Number()),
+    incentives: Type.Optional(IncentivesSchema),
+    "default-labels": Type.Optional(Type.Array(Type.String())),
+    "register-wallet-with-verification": Type.Optional(Type.Boolean()),
+    "enable-access-control": Type.Optional(AccessControlSchema),
+    "stale-bounty-time": Type.Optional(Type.String()),
+  },
+  {
+    additionalProperties: false,
+  }
+);
+
+export type WideConfig = Static<typeof WideConfigSchema>;
+
+export type WideRepoConfig = WideConfig;
+
+export const WideOrgConfigSchema = Type.Composite([Type.Object({ "private-key-encrypted": Type.Optional(Type.String()) }), WideConfigSchema], {
+  additionalProperties: false,
+});
+
+export type WideOrgConfig = Static<typeof WideOrgConfigSchema>;
+
+export const MergedConfigSchema = Type.Object({
+  "evm-network-id": Type.Number(),
+  "price-multiplier": Type.Number(),
+  "private-key-encrypted": Type.Optional(Type.String()),
+  "issue-creator-multiplier": Type.Number(),
+  "time-labels": Type.Array(LabelItemSchema),
+  "priority-labels": Type.Array(LabelItemSchema),
+  "payment-permit-max-price": Type.Number(),
+  "command-settings": Type.Array(CommandItemSchema),
+  "promotion-comment": Type.String(),
+  "disable-analytics": Type.Boolean(),
+  "comment-incentives": Type.Boolean(),
+  "assistive-pricing": Type.Boolean(),
+  "max-concurrent-assigns": Type.Number(),
+  incentives: IncentivesSchema,
+  "default-labels": Type.Array(Type.String()),
+  "register-wallet-with-verification": Type.Boolean(),
+  "enable-access-control": AccessControlSchema,
+  "stale-bounty-time": Type.String(),
+});
+
+export type MergedConfig = Static<typeof MergedConfigSchema>;
