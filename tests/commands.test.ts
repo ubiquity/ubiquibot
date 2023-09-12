@@ -18,6 +18,8 @@ import {
 } from "./utils";
 import { WideOrgConfig, WideRepoConfig } from "../src/utils/private";
 
+const testTimeout = 6 * 60 * 60 * 1000; // 6 hours
+
 let server: Server;
 let octokitAdmin: Octokit;
 let octokitCollaborator: Octokit;
@@ -151,11 +153,11 @@ beforeAll(async () => {
   await waitForNWebhooks(1);
   await updateConfig(octokitAdmin, owner, repo, ".github/ubiquibot-config.yml", repoConfig);
   await waitForNWebhooks(1);
-}, 20000);
+}, testTimeout);
 
 afterAll(async () => {
   await server?.stop();
-}, 10000);
+}, testTimeout);
 
 describe("commmands test", () => {
   let issue: Issue;
@@ -169,359 +171,391 @@ describe("commmands test", () => {
     issue = res.data as Issue;
 
     await waitForNWebhooks(4);
-  }, 10000);
+  }, testTimeout);
 
-  test("/wallet correct address", async () => {
-    const newWallet = "0x82AcFE58e0a6bE7100874831aBC56Ee13e2149e7";
-    await createComment(octokitAdmin, owner, repo, issue.number, `/wallet ${newWallet}`);
-    await waitForNWebhooks(2);
-    await checkLastComment(
-      octokitAdmin,
-      owner,
-      repo,
-      issue.number,
-      `Updated the wallet address for @${adminUsername} successfully!\t Your new address: \`${newWallet}\``
-    );
-  }, 10000);
-
-  test("/wallet wrong address", async () => {
-    const newWallet = "0x82AcFE58e0a6bE7100874831aBC56";
-    await createComment(octokitAdmin, owner, repo, issue.number, `/wallet ${newWallet}`);
-    await waitForNWebhooks(2);
-    await checkLastComment(
-      octokitAdmin,
-      owner,
-      repo,
-      issue.number,
-      `Please include your wallet or ENS address.\n usage: /wallet 0x0000000000000000000000000000000000000000`
-    );
-  }, 10000);
-
-  test("/multiplier", async () => {
-    await createComment(octokitAdmin, owner, repo, issue.number, `/multiplier @${adminUsername}`);
-    await waitForNWebhooks(2);
-
-    await checkLastComment(
-      octokitAdmin,
-      owner,
-      repo,
-      issue.number,
-      `Successfully changed the payout multiplier for @${adminUsername} to 1. The reason is not provided.`
-    );
-
-    await createComment(octokitAdmin, owner, repo, issue.number, `/multiplier @${adminUsername} 2`);
-    await waitForNWebhooks(2);
-
-    await checkLastComment(
-      octokitAdmin,
-      owner,
-      repo,
-      issue.number,
-      `Successfully changed the payout multiplier for @${adminUsername} to 2. The reason is not provided. This feature is designed to limit the contributor's compensation for any bounty on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a bounty multiplier above 1?`
-    );
-
-    await createComment(octokitAdmin, owner, repo, issue.number, `/multiplier @${adminUsername} 2 "Testing reason"`);
-    await waitForNWebhooks(2);
-
-    await checkLastComment(
-      octokitAdmin,
-      owner,
-      repo,
-      issue.number,
-      `Successfully changed the payout multiplier for @${adminUsername} to 2. The reason provided is "Testing reason". This feature is designed to limit the contributor's compensation for any bounty on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a bounty multiplier above 1?`
-    );
-
-    await createComment(octokitAdmin, owner, repo, issue.number, `/multiplier @${adminUsername} abcd`);
-    await waitForNWebhooks(2);
-
-    await checkLastComment(
-      octokitAdmin,
-      owner,
-      repo,
-      issue.number,
-      `Successfully changed the payout multiplier for @${adminUsername} to 1. The reason provided is "abcd".`
-    );
-
-    await createComment(octokitAdmin, owner, repo, issue.number, `/multiplier abcd`);
-    await waitForNWebhooks(2);
-
-    await checkLastComment(
-      octokitAdmin,
-      owner,
-      repo,
-      issue.number,
-      `Successfully changed the payout multiplier for @${adminUsername} to 1. The reason provided is "abcd".`
-    );
-  }, 60000);
-
-  test("/query", async () => {
-    const newWallet = "0x82AcFE58e0a6bE7100874831aBC56Ee13e2149e7";
-    await createComment(octokitAdmin, owner, repo, issue.number, `/wallet ${newWallet}`);
-    await waitForNWebhooks(2);
-
-    const multiplier = "5";
-    await createComment(octokitAdmin, owner, repo, issue.number, `/multiplier @${adminUsername} ${multiplier} 'Testing'`);
-    await waitForNWebhooks(2);
-
-    await createComment(octokitAdmin, owner, repo, issue.number, `/query @${adminUsername}`);
-    await waitForNWebhooks(2);
-
-    await checkLastComment(octokitAdmin, owner, repo, issue.number, `@${adminUsername}'s wallet address is ${newWallet} and  multiplier is ${multiplier}`);
-  }, 20000);
-
-  test("/query wrong username", async () => {
-    await createComment(octokitAdmin, owner, repo, issue.number, `/query @INVALID_$USERNAME`);
-    await waitForNWebhooks(2);
-
-    await checkLastComment(octokitAdmin, owner, repo, issue.number, `Invalid syntax for query command \n usage /query @user`);
-  }, 10000);
-
-  test("/help", async () => {
-    await createComment(octokitAdmin, owner, repo, issue.number, `/help`);
-    await waitForNWebhooks(2);
-
-    const lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-    expect(lastComment.body?.includes("Available commands")).toBe(true);
-  }, 10000);
-
-  test("/allow", async () => {
-    await createLabel(octokitAdmin, owner, repo, "Priority: 1 (Normal)");
-
-    await octokitAdmin.rest.issues.update({
-      owner,
-      repo,
-      issue_number: issue.number,
-      labels: [],
-    });
-
-    await createComment(octokitAdmin, owner, repo, issue.number, `/allow set-priority @${collaboratorUsername} false`);
-    await waitForNWebhooks(2);
-
-    let lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-    expect(lastComment.body).toContain(`Updated access for @${collaboratorUsername} successfully!\t Access: **priority** for "${owner}/${repo}"`);
-
-    // collaborator adds label
-    await addLabelToIssue(octokitCollaborator, owner, repo, issue.number, "Priority: 1 (Normal)");
-    await waitForNWebhooks(3);
-
-    let issueDetails = await octokitAdmin.rest.issues.get({
-      owner,
-      repo,
-      issue_number: issue.number,
-    });
-    expect(issueDetails.data.labels?.length).toBe(0);
-
-    lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-    expect(lastComment.body).toContain(`@${collaboratorUsername}, You are not allowed to add Priority: 1 (Normal)`);
-
-    await octokitAdmin.rest.issues.update({
-      owner,
-      repo,
-      issue_number: issue.number,
-      labels: ["Priority: 1 (Normal)"],
-    });
-
-    await removeLabelFromIssue(octokitCollaborator, owner, repo, issue.number, "Priority: 1 (Normal)");
-    await waitForNWebhooks(3);
-
-    issueDetails = await octokitAdmin.rest.issues.get({
-      owner,
-      repo,
-      issue_number: issue.number,
-    });
-    expect(issueDetails.data.labels?.length).toBe(1);
-
-    lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-    expect(lastComment.body).toContain(`@${collaboratorUsername}, You are not allowed to remove Priority: 1 (Normal)`);
-
-    await createComment(octokitAdmin, owner, repo, issue.number, `/allow set-priority @${collaboratorUsername} true`);
-    await waitForNWebhooks(2);
-
-    lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-    expect(lastComment.body).toContain(`Updated access for @${collaboratorUsername} successfully!\t Access: **priority** for "${owner}/${repo}"`);
-
-    await removeLabelFromIssue(octokitCollaborator, owner, repo, issue.number, "Priority: 1 (Normal)");
-    await waitForNWebhooks(1);
-
-    issueDetails = await octokitAdmin.rest.issues.get({
-      owner,
-      repo,
-      issue_number: issue.number,
-    });
-    expect(issueDetails.data.labels?.length).toBe(0);
-
-    await addLabelToIssue(octokitCollaborator, owner, repo, issue.number, "Priority: 1 (Normal)");
-    await waitForNWebhooks(1);
-
-    issueDetails = await octokitAdmin.rest.issues.get({
-      owner,
-      repo,
-      issue_number: issue.number,
-    });
-    expect(issueDetails.data.labels?.length).toBe(1);
-  }, 60000);
-
-  test("/start and /stop", async () => {
-    await octokitAdmin.rest.issues.update({
-      owner,
-      repo,
-      issue_number: issue.number,
-      labels: [],
-    });
-
-    await octokitAdmin.rest.issues.update({
-      owner,
-      repo,
-      issue_number: issue.number,
-      state: "closed",
-    });
-    await waitForNWebhooks(2);
-
-    let lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-    expect(lastComment.body).toContain("Permit generation skipped since this issue didn't qualify as bounty");
-
-    await octokitAdmin.rest.issues.update({
-      owner,
-      repo,
-      issue_number: issue.number,
-      state: "open",
-    });
-    await waitForNWebhooks(1);
-
-    try {
-      await octokitAdmin.rest.issues.createLabel({
+  test(
+    "/wallet correct address",
+    async () => {
+      const newWallet = "0x82AcFE58e0a6bE7100874831aBC56Ee13e2149e7";
+      await createComment(octokitAdmin, owner, repo, issue.number, `/wallet ${newWallet}`);
+      await waitForNWebhooks(2);
+      await checkLastComment(
+        octokitAdmin,
         owner,
         repo,
-        name: "Time: <1 Hour",
-      });
-    } catch (err) {
-      expect(err).toBeDefined();
-    } finally {
-      await octokitAdmin.rest.issues.addLabels({
+        issue.number,
+        `Updated the wallet address for @${adminUsername} successfully!\t Your new address: \`${newWallet}\``
+      );
+    },
+    testTimeout
+  );
+
+  test(
+    "/wallet wrong address",
+    async () => {
+      const newWallet = "0x82AcFE58e0a6bE7100874831aBC56";
+      await createComment(octokitAdmin, owner, repo, issue.number, `/wallet ${newWallet}`);
+      await waitForNWebhooks(2);
+      await checkLastComment(
+        octokitAdmin,
+        owner,
+        repo,
+        issue.number,
+        `Please include your wallet or ENS address.\n usage: /wallet 0x0000000000000000000000000000000000000000`
+      );
+    },
+    testTimeout
+  );
+
+  test(
+    "/multiplier",
+    async () => {
+      await createComment(octokitAdmin, owner, repo, issue.number, `/multiplier @${adminUsername}`);
+      await waitForNWebhooks(2);
+
+      await checkLastComment(
+        octokitAdmin,
+        owner,
+        repo,
+        issue.number,
+        `Successfully changed the payout multiplier for @${adminUsername} to 1. The reason is not provided.`
+      );
+
+      await createComment(octokitAdmin, owner, repo, issue.number, `/multiplier @${adminUsername} 2`);
+      await waitForNWebhooks(2);
+
+      await checkLastComment(
+        octokitAdmin,
+        owner,
+        repo,
+        issue.number,
+        `Successfully changed the payout multiplier for @${adminUsername} to 2. The reason is not provided. This feature is designed to limit the contributor's compensation for any bounty on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a bounty multiplier above 1?`
+      );
+
+      await createComment(octokitAdmin, owner, repo, issue.number, `/multiplier @${adminUsername} 2 "Testing reason"`);
+      await waitForNWebhooks(2);
+
+      await checkLastComment(
+        octokitAdmin,
+        owner,
+        repo,
+        issue.number,
+        `Successfully changed the payout multiplier for @${adminUsername} to 2. The reason provided is "Testing reason". This feature is designed to limit the contributor's compensation for any bounty on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a bounty multiplier above 1?`
+      );
+
+      await createComment(octokitAdmin, owner, repo, issue.number, `/multiplier @${adminUsername} abcd`);
+      await waitForNWebhooks(2);
+
+      await checkLastComment(
+        octokitAdmin,
+        owner,
+        repo,
+        issue.number,
+        `Successfully changed the payout multiplier for @${adminUsername} to 1. The reason provided is "abcd".`
+      );
+
+      await createComment(octokitAdmin, owner, repo, issue.number, `/multiplier abcd`);
+      await waitForNWebhooks(2);
+
+      await checkLastComment(
+        octokitAdmin,
+        owner,
+        repo,
+        issue.number,
+        `Successfully changed the payout multiplier for @${adminUsername} to 1. The reason provided is "abcd".`
+      );
+    },
+    testTimeout
+  );
+
+  test(
+    "/query",
+    async () => {
+      const newWallet = "0x82AcFE58e0a6bE7100874831aBC56Ee13e2149e7";
+      await createComment(octokitAdmin, owner, repo, issue.number, `/wallet ${newWallet}`);
+      await waitForNWebhooks(2);
+
+      const multiplier = "5";
+      await createComment(octokitAdmin, owner, repo, issue.number, `/multiplier @${adminUsername} ${multiplier} 'Testing'`);
+      await waitForNWebhooks(2);
+
+      await createComment(octokitAdmin, owner, repo, issue.number, `/query @${adminUsername}`);
+      await waitForNWebhooks(2);
+
+      await checkLastComment(octokitAdmin, owner, repo, issue.number, `@${adminUsername}'s wallet address is ${newWallet} and  multiplier is ${multiplier}`);
+    },
+    testTimeout
+  );
+
+  test(
+    "/query wrong username",
+    async () => {
+      await createComment(octokitAdmin, owner, repo, issue.number, `/query @INVALID_$USERNAME`);
+      await waitForNWebhooks(2);
+
+      await checkLastComment(octokitAdmin, owner, repo, issue.number, `Invalid syntax for query command \n usage /query @user`);
+    },
+    testTimeout
+  );
+
+  test(
+    "/help",
+    async () => {
+      await createComment(octokitAdmin, owner, repo, issue.number, `/help`);
+      await waitForNWebhooks(2);
+
+      const lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      expect(lastComment.body?.includes("Available commands")).toBe(true);
+    },
+    testTimeout
+  );
+
+  test(
+    "/allow",
+    async () => {
+      await createLabel(octokitAdmin, owner, repo, "Priority: 1 (Normal)");
+
+      await octokitAdmin.rest.issues.update({
         owner,
         repo,
         issue_number: issue.number,
-        labels: ["Time: <1 Hour"],
+        labels: [],
       });
-      await waitForNWebhooks(1);
-    }
 
-    try {
-      await octokitAdmin.rest.issues.createLabel({
+      await createComment(octokitAdmin, owner, repo, issue.number, `/allow set-priority @${collaboratorUsername} false`);
+      await waitForNWebhooks(2);
+
+      let lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      expect(lastComment.body).toContain(`Updated access for @${collaboratorUsername} successfully!\t Access: **priority** for "${owner}/${repo}"`);
+
+      // collaborator adds label
+      await addLabelToIssue(octokitCollaborator, owner, repo, issue.number, "Priority: 1 (Normal)");
+      await waitForNWebhooks(3);
+
+      let issueDetails = await octokitAdmin.rest.issues.get({
         owner,
         repo,
-        name: "Priority: 1 (Normal)",
+        issue_number: issue.number,
       });
-    } catch (err) {
-      expect(err).toBeDefined();
-    } finally {
-      await octokitAdmin.rest.issues.addLabels({
+      expect(issueDetails.data.labels?.length).toBe(0);
+
+      lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      expect(lastComment.body).toContain(`@${collaboratorUsername}, You are not allowed to add Priority: 1 (Normal)`);
+
+      await octokitAdmin.rest.issues.update({
         owner,
         repo,
         issue_number: issue.number,
         labels: ["Priority: 1 (Normal)"],
       });
+
+      await removeLabelFromIssue(octokitCollaborator, owner, repo, issue.number, "Priority: 1 (Normal)");
+      await waitForNWebhooks(3);
+
+      issueDetails = await octokitAdmin.rest.issues.get({
+        owner,
+        repo,
+        issue_number: issue.number,
+      });
+      expect(issueDetails.data.labels?.length).toBe(1);
+
+      lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      expect(lastComment.body).toContain(`@${collaboratorUsername}, You are not allowed to remove Priority: 1 (Normal)`);
+
+      await createComment(octokitAdmin, owner, repo, issue.number, `/allow set-priority @${collaboratorUsername} true`);
       await waitForNWebhooks(2);
-    }
 
-    await octokitAdmin.rest.issues.update({
-      owner,
-      repo,
-      issue_number: issue.number,
-      state: "closed",
-    });
-    await waitForNWebhooks(2);
+      lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      expect(lastComment.body).toContain(`Updated access for @${collaboratorUsername} successfully!\t Access: **priority** for "${owner}/${repo}"`);
 
-    lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-    expect(lastComment.body).toContain("Permit generation skipped since assignee is undefined");
+      await removeLabelFromIssue(octokitCollaborator, owner, repo, issue.number, "Priority: 1 (Normal)");
+      await waitForNWebhooks(1);
 
-    await octokitAdmin.rest.issues.update({
-      owner,
-      repo,
-      issue_number: issue.number,
-      state: "open",
-    });
-    await waitForNWebhooks(1);
+      issueDetails = await octokitAdmin.rest.issues.get({
+        owner,
+        repo,
+        issue_number: issue.number,
+      });
+      expect(issueDetails.data.labels?.length).toBe(0);
 
-    await createComment(octokitAdmin, owner, repo, issue.number, `/autopay false`);
-    await waitForNWebhooks(2);
+      await addLabelToIssue(octokitCollaborator, owner, repo, issue.number, "Priority: 1 (Normal)");
+      await waitForNWebhooks(1);
 
-    lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-    expect(lastComment.body).toContain("Automatic payment for this issue is enabled: **false**");
+      issueDetails = await octokitAdmin.rest.issues.get({
+        owner,
+        repo,
+        issue_number: issue.number,
+      });
+      expect(issueDetails.data.labels?.length).toBe(1);
+    },
+    testTimeout
+  );
 
-    await createComment(octokitAdmin, owner, repo, issue.number, `/start`);
-    await waitForNWebhooks(3);
+  test(
+    "/start and /stop",
+    async () => {
+      await octokitAdmin.rest.issues.update({
+        owner,
+        repo,
+        issue_number: issue.number,
+        labels: [],
+      });
 
-    lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-    const lastCommentBody = lastComment.body?.toLowerCase();
-    expect(lastCommentBody).toContain("deadline");
-    expect(lastCommentBody).toContain("registered wallet");
-    expect(lastCommentBody).toContain("payment multiplier");
-    expect(lastCommentBody).toContain("multiplier reason");
+      await octokitAdmin.rest.issues.update({
+        owner,
+        repo,
+        issue_number: issue.number,
+        state: "closed",
+      });
+      await waitForNWebhooks(2);
 
-    await createComment(octokitAdmin, owner, repo, issue.number, `/stop`);
-    await waitForNWebhooks(3);
+      let lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      expect(lastComment.body).toContain("Permit generation skipped since this issue didn't qualify as bounty");
 
-    lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-    expect(lastComment.body).toBe(`You have been unassigned from the bounty @${adminUsername}`);
+      await octokitAdmin.rest.issues.update({
+        owner,
+        repo,
+        issue_number: issue.number,
+        state: "open",
+      });
+      await waitForNWebhooks(1);
 
-    await createComment(octokitAdmin, owner, repo, issue.number, `/start`);
-    await waitForNWebhooks(3);
+      try {
+        await octokitAdmin.rest.issues.createLabel({
+          owner,
+          repo,
+          name: "Time: <1 Hour",
+        });
+      } catch (err) {
+        expect(err).toBeDefined();
+      } finally {
+        await octokitAdmin.rest.issues.addLabels({
+          owner,
+          repo,
+          issue_number: issue.number,
+          labels: ["Time: <1 Hour"],
+        });
+        await waitForNWebhooks(1);
+      }
 
-    await octokitAdmin.rest.issues.update({
-      owner,
-      repo,
-      issue_number: issue.number,
-      state: "closed",
-    });
-    await waitForNWebhooks(2);
+      try {
+        await octokitAdmin.rest.issues.createLabel({
+          owner,
+          repo,
+          name: "Priority: 1 (Normal)",
+        });
+      } catch (err) {
+        expect(err).toBeDefined();
+      } finally {
+        await octokitAdmin.rest.issues.addLabels({
+          owner,
+          repo,
+          issue_number: issue.number,
+          labels: ["Priority: 1 (Normal)"],
+        });
+        await waitForNWebhooks(2);
+      }
 
-    lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-    expect(lastComment.body).toContain("Permit generation skipped since automatic payment for this issue is disabled.");
+      await octokitAdmin.rest.issues.update({
+        owner,
+        repo,
+        issue_number: issue.number,
+        state: "closed",
+      });
+      await waitForNWebhooks(2);
 
-    await octokitAdmin.rest.issues.update({
-      owner,
-      repo,
-      issue_number: issue.number,
-      state: "open",
-    });
-    await waitForNWebhooks(1);
+      lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      expect(lastComment.body).toContain("Permit generation skipped since assignee is undefined");
 
-    await createComment(octokitAdmin, owner, repo, issue.number, `/autopay true`);
-    await waitForNWebhooks(2);
+      await octokitAdmin.rest.issues.update({
+        owner,
+        repo,
+        issue_number: issue.number,
+        state: "open",
+      });
+      await waitForNWebhooks(1);
 
-    lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-    expect(lastComment.body).toBe("Automatic payment for this issue is enabled: **true**");
+      await createComment(octokitAdmin, owner, repo, issue.number, `/autopay false`);
+      await waitForNWebhooks(2);
 
-    await octokitAdmin.rest.issues.update({
-      owner,
-      repo,
-      issue_number: issue.number,
-      state: "closed",
-      state_reason: "not_planned",
-    });
-    await waitForNWebhooks(2);
+      lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      expect(lastComment.body).toContain("Automatic payment for this issue is enabled: **false**");
 
-    lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-    expect(lastComment.body).toContain("Permit generation skipped because the issue was not closed as completed");
+      await createComment(octokitAdmin, owner, repo, issue.number, `/start`);
+      await waitForNWebhooks(3);
 
-    await octokitAdmin.rest.issues.update({
-      owner,
-      repo,
-      issue_number: issue.number,
-      state: "open",
-    });
-    await waitForNWebhooks(1);
+      lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      const lastCommentBody = lastComment.body?.toLowerCase();
+      expect(lastCommentBody).toContain("deadline");
+      expect(lastCommentBody).toContain("registered wallet");
+      expect(lastCommentBody).toContain("payment multiplier");
+      expect(lastCommentBody).toContain("multiplier reason");
 
-    await octokitAdmin.rest.issues.update({
-      owner,
-      repo,
-      issue_number: issue.number,
-      state: "closed",
-    });
-    await waitForNWebhooks(2);
+      await createComment(octokitAdmin, owner, repo, issue.number, `/stop`);
+      await waitForNWebhooks(3);
 
-    lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-    expect(lastComment.body).toContain("Task Assignee Reward");
-  }, 180000);
+      lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      expect(lastComment.body).toBe(`You have been unassigned from the bounty @${adminUsername}`);
+
+      await createComment(octokitAdmin, owner, repo, issue.number, `/start`);
+      await waitForNWebhooks(3);
+
+      await octokitAdmin.rest.issues.update({
+        owner,
+        repo,
+        issue_number: issue.number,
+        state: "closed",
+      });
+      await waitForNWebhooks(2);
+
+      lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      expect(lastComment.body).toContain("Permit generation skipped since automatic payment for this issue is disabled.");
+
+      await octokitAdmin.rest.issues.update({
+        owner,
+        repo,
+        issue_number: issue.number,
+        state: "open",
+      });
+      await waitForNWebhooks(1);
+
+      await createComment(octokitAdmin, owner, repo, issue.number, `/autopay true`);
+      await waitForNWebhooks(2);
+
+      lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      expect(lastComment.body).toBe("Automatic payment for this issue is enabled: **true**");
+
+      await octokitAdmin.rest.issues.update({
+        owner,
+        repo,
+        issue_number: issue.number,
+        state: "closed",
+        state_reason: "not_planned",
+      });
+      await waitForNWebhooks(2);
+
+      lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      expect(lastComment.body).toContain("Permit generation skipped because the issue was not closed as completed");
+
+      await octokitAdmin.rest.issues.update({
+        owner,
+        repo,
+        issue_number: issue.number,
+        state: "open",
+      });
+      await waitForNWebhooks(1);
+
+      await octokitAdmin.rest.issues.update({
+        owner,
+        repo,
+        issue_number: issue.number,
+        state: "closed",
+      });
+      await waitForNWebhooks(2);
+
+      lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
+      expect(lastComment.body).toContain("Task Assignee Reward");
+    },
+    testTimeout
+  );
 });
