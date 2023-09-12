@@ -153,7 +153,7 @@ export const WideConfigSchema = Type.Object(
   {
     "evm-network-id": Type.Optional(Type.Number()),
     "price-multiplier": Type.Optional(Type.Number()),
-    "issue-creator-multiplier": Type.Number(),
+    "issue-creator-multiplier": Type.Optional(Type.Number()),
     "time-labels": Type.Optional(Type.Array(LabelItemSchema)),
     "priority-labels": Type.Optional(Type.Array(LabelItemSchema)),
     "payment-permit-max-price": Type.Optional(Type.Number()),
