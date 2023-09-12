@@ -79,15 +79,15 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   for (const user of Object.keys(issueCommentsByUser)) {
     const commentsByUser = issueCommentsByUser[user];
     const commentsByNode = await parseComments(commentsByUser.comments, ItemsToExclude);
-    const rewardValue = calculateRewardValue(commentsByNode, calculateIncentives.incentives!);
+    const rewardValue = calculateRewardValue(commentsByNode, calculateIncentives.incentives);
     if (rewardValue.equals(0)) {
       logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`);
       continue;
     }
     logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
-    const priceInEth = rewardValue.mul(calculateIncentives.baseMultiplier!);
-    if (priceInEth.gt(calculateIncentives.paymentPermitMaxPrice!)) {
+    const priceInEth = rewardValue.mul(calculateIncentives.baseMultiplier);
+    if (priceInEth.gt(calculateIncentives.paymentPermitMaxPrice)) {
       logger.info(`Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
       continue;
     }
@@ -105,7 +105,7 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
   const title = `Task Creator Reward`;
   const logger = getLogger();
 
-  const issueDetailed = bountyInfo(incentivesCalculation.issue!);
+  const issueDetailed = bountyInfo(incentivesCalculation.issue);
   if (!issueDetailed.isBounty) {
     logger.info(`incentivizeCreatorComment: its not a bounty`);
     return { error: `incentivizeCreatorComment: its not a bounty` };
@@ -142,9 +142,9 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
   const result = await generatePermitForComments(
     creator.login,
     [description],
-    incentivesCalculation.issueCreatorMultiplier!,
-    incentivesCalculation.incentives!,
-    incentivesCalculation.paymentPermitMaxPrice!
+    incentivesCalculation.issueCreatorMultiplier,
+    incentivesCalculation.incentives,
+    incentivesCalculation.paymentPermitMaxPrice
   );
 
   if (!result || !result.account || !result.amountInETH) {

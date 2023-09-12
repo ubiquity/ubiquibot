@@ -246,9 +246,9 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
   const assigneeLogin = incentivesCalculation.assignee.login;
 
   let priceInEth = new Decimal(incentivesCalculation.issueDetailed.priceLabel.substring(7, incentivesCalculation.issueDetailed.priceLabel.length - 4)).mul(
-    incentivesCalculation.multiplier!
+    incentivesCalculation.multiplier
   );
-  if (priceInEth.gt(incentivesCalculation.paymentPermitMaxPrice!)) {
+  if (priceInEth.gt(incentivesCalculation.paymentPermitMaxPrice)) {
     logger.info("Skipping to proceed the payment because bounty payout is higher than paymentPermitMaxPrice.");
     return { error: `Permit generation disabled because issue's bounty is higher than ${incentivesCalculation.paymentPermitMaxPrice}` };
   }
@@ -257,7 +257,7 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
   const penaltyAmount = await getPenalty(
     assigneeLogin,
     incentivesCalculation.payload.repository.full_name,
-    incentivesCalculation.paymentToken!,
+    incentivesCalculation.paymentToken,
     incentivesCalculation.networkId.toString()
   );
   if (penaltyAmount.gt(0)) {
@@ -268,7 +268,7 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
       await removePenalty(
         assigneeLogin,
         incentivesCalculation.payload.repository.full_name,
-        incentivesCalculation.paymentToken!,
+        incentivesCalculation.paymentToken,
         incentivesCalculation.networkId.toString(),
         bountyAmount
       );
@@ -316,9 +316,9 @@ export const handleIssueClosed = async (
 
   // ASSIGNEE REWARD PRICE PROCESSOR
   let priceInEth = new Decimal(incentivesCalculation.issueDetailed.priceLabel.substring(7, incentivesCalculation.issueDetailed.priceLabel.length - 4)).mul(
-    incentivesCalculation.multiplier!
+    incentivesCalculation.multiplier
   );
-  if (priceInEth.gt(incentivesCalculation.paymentPermitMaxPrice!)) {
+  if (priceInEth.gt(incentivesCalculation.paymentPermitMaxPrice)) {
     logger.info("Skipping to proceed the payment because bounty payout is higher than paymentPermitMaxPrice");
     return { error: `Permit generation skipped since issue's bounty is higher than ${incentivesCalculation.paymentPermitMaxPrice}` };
   }
@@ -330,11 +330,11 @@ export const handleIssueClosed = async (
     conversationRewards.reward.map(async (permit) => {
       // Exclude issue creator from commenter rewards
       if (permit.userId !== creatorReward.userId) {
-        const { payoutUrl } = await generatePermit2Signature(permit.account!, permit.priceInEth, incentivesCalculation.issue.node_id, permit.userId);
+        const { payoutUrl } = await generatePermit2Signature(permit.account, permit.priceInEth, incentivesCalculation.issue.node_id, permit.userId);
         commentersComment = `${commentersComment}### [ **${permit.user}: [ CLAIM ${
           permit.priceInEth
         } ${incentivesCalculation.tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
-        reward[permit.user!] = payoutUrl;
+        reward[permit.user] = payoutUrl;
       }
     });
 
@@ -346,14 +346,15 @@ export const handleIssueClosed = async (
   // Generate permit for user if its not the same id as assignee
   if (creatorReward && creatorReward.reward && creatorReward.reward[0].account !== "0x" && creatorReward.userId !== incentivesCalculation.assignee.node_id) {
     const { payoutUrl } = await generatePermit2Signature(
-      creatorReward.reward[0].account!,
-      creatorReward.reward[0].priceInEth!,
+      creatorReward.reward[0].account,
+      creatorReward.reward[0].priceInEth,
       incentivesCalculation.issue.node_id,
       creatorReward.userId
     );
 
-    creatorComment = `#### ${creatorReward.title}\n### [ **${creatorReward.username}: [ CLAIM ${creatorReward.reward[0]
-      .priceInEth!} ${incentivesCalculation.tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
+    creatorComment = `#### ${creatorReward.title}\n### [ **${creatorReward.username}: [ CLAIM ${
+      creatorReward.reward[0].priceInEth
+    } ${incentivesCalculation.tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
     if (payoutUrl) {
       logger.info(`Permit url generated for creator. reward: ${payoutUrl}`);
     }
@@ -364,22 +365,22 @@ export const handleIssueClosed = async (
     creatorReward.reward[0].account !== "0x" &&
     creatorReward.userId === incentivesCalculation.assignee.node_id
   ) {
-    priceInEth = priceInEth.add(creatorReward.reward[0].priceInEth!);
+    priceInEth = priceInEth.add(creatorReward.reward[0].priceInEth);
     title += " and Creator";
   } else if (creatorReward && creatorReward.reward && creatorReward.reward[0].account === "0x") {
     logger.info(`Skipping to generate a permit url for missing account. fallback: ${creatorReward.fallbackReward}`);
   }
 
   // ASSIGNEE REWARD HANDLER
-  if (assigneeReward && assigneeReward.reward && assigneeReward.reward[0].account! !== "0x") {
+  if (assigneeReward && assigneeReward.reward && assigneeReward.reward[0].account !== "0x") {
     const { txData, payoutUrl } = await generatePermit2Signature(
-      assigneeReward.reward[0].account!,
-      assigneeReward.reward[0].priceInEth!,
+      assigneeReward.reward[0].account,
+      assigneeReward.reward[0].priceInEth,
       incentivesCalculation.issue.node_id,
       incentivesCalculation.assignee.node_id
     );
-    const tokenSymbol = await getTokenSymbol(incentivesCalculation.paymentToken!, incentivesCalculation.rpc!);
-    const shortenRecipient = shortenEthAddress(assigneeReward.reward[0].account!, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
+    const tokenSymbol = await getTokenSymbol(incentivesCalculation.paymentToken, incentivesCalculation.rpc);
+    const shortenRecipient = shortenEthAddress(assigneeReward.reward[0].account, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
     logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
     assigneeComment =
       `#### ${title} Reward \n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
@@ -396,9 +397,9 @@ export const handleIssueClosed = async (
       await removePenalty(
         incentivesCalculation.assignee.login,
         incentivesCalculation.payload.repository.full_name,
-        incentivesCalculation.paymentToken!,
+        incentivesCalculation.paymentToken,
         incentivesCalculation.networkId.toString(),
-        assigneeReward.reward[0].penaltyAmount!
+        assigneeReward.reward[0].penaltyAmount
       );
     }
 
@@ -409,7 +410,7 @@ export const handleIssueClosed = async (
   if (creatorComment) await addCommentToIssue(creatorComment, issueNumber);
   if (assigneeComment) await addCommentToIssue(assigneeComment + comments.promotionComment, issueNumber);
 
-  await deleteLabel(incentivesCalculation.issueDetailed.priceLabel!);
+  await deleteLabel(incentivesCalculation.issueDetailed.priceLabel);
   await addLabelToIssue("Permitted");
 
   return { error: "" };
