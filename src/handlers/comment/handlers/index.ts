@@ -100,8 +100,7 @@ export const issueClosedCallback = async (): Promise<void> => {
     const { error } = await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, calculateIncentives);
 
     if (error) {
-      await addCommentToIssue(error, issue.number);
-      return;
+      throw new Error(error);
     }
   } catch (err: unknown) {
     return await addCommentToIssue(ErrorDiff(err), issue.number);

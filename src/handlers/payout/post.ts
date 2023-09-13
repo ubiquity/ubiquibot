@@ -148,7 +148,7 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
   );
 
   if (!result || !result.account || !result.amountInETH) {
-    throw new Error("Failed to generate permit for issue creator");
+    throw new Error("Failed to generate permit for issue creator because of missing account or amountInETH");
   }
 
   return {
@@ -168,7 +168,13 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
   };
 };
 
-const generatePermitForComments = async (user: string, comments: string[], multiplier: number, incentives: Incentives, paymentPermitMaxPrice: number) => {
+const generatePermitForComments = async (
+  user: string,
+  comments: string[],
+  multiplier: number,
+  incentives: Incentives,
+  paymentPermitMaxPrice: number
+): Promise<undefined | { account: string; amountInETH: Decimal }> => {
   const logger = getLogger();
   const commentsByNode = await parseComments(comments, ItemsToExclude);
   const rewardValue = calculateRewardValue(commentsByNode, incentives);
@@ -186,7 +192,7 @@ const generatePermitForComments = async (user: string, comments: string[], multi
   if (account) {
     return { account, amountInETH };
   } else {
-    return { account: "0x" };
+    return { account: "0x", amountInETH: new Decimal(0) };
   }
 };
 /**

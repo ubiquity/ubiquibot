@@ -48,7 +48,7 @@ export interface IncentivesCalculationResult {
 }
 
 /**
- * Function to check payment conditions
+ * Collect the information required for the permit generation and error handling
  */
 
 export const incentivesCalculation = async (): Promise<IncentivesCalculationResult> => {

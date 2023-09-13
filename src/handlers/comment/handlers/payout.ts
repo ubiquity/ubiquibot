@@ -51,13 +51,7 @@ export const payout = async (body: string) => {
   const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
   const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
 
-  const { error } = await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, calculateIncentives);
-
-  if (error) {
-    return error;
-  }
-
-  return;
+  return await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, calculateIncentives);
 };
 
 export const autoPay = async (body: string) => {
