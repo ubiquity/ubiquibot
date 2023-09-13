@@ -8,7 +8,6 @@ import {
   DEFAULT_PERMIT_BASE_URL,
   DEFAULT_TIME_RANGE_FOR_MAX_ISSUE,
   DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED,
-  DEFAULT_TOKEN_LIMIT,
 } from "../configs";
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
@@ -104,7 +103,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     ask: {
       apiKey: openAIKey,
-      tokenLimit: openAITokenLimit || DEFAULT_TOKEN_LIMIT,
+      tokenLimit: openAITokenLimit,
     },
     accessControl: enableAccessControl,
   };

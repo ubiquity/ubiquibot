@@ -66,7 +66,6 @@ export const ask = async (body: string) => {
 
     if (typeof links === "string") {
       logger.info(`Error getting linked issues or prs: ${links}`);
-      return `Error getting linked issues or prs: ${links}`;
     } else {
       linkedIssueStreamlined = links.linkedIssues;
       linkedPRStreamlined = links.linkedPrs;
