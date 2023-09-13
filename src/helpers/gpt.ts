@@ -46,22 +46,12 @@ export const issueSpecExample = `
 `;
 
 export const specCheckTemplate = `
-  You are an AI designed to analyze pull requests in comparison to the issue specification.\n
-  Your utmost priority is to ensure the pull request is in line with the issue spec.\n
-  Detail the specification in as much detail as possible, and analyze the pull request in comparison to this specification.\n
-  Feed your analysis into the boilerplate provided below, changing what you need to.\n
-  Be concise and group your analysis into relevant sections.\n
-
-  Boilerplate: \n
-  ${issueSpecExample}
-  `;
-
-export const speckCheckResponse = `
-Finalize the report by proofreading the report for any errors.
-Improve the report by adding any additional information you deem relevant.
-Remove anything that is not relevant to the report, if you can replace it with something more relevant, do so.
-
-All replies MUST end with "\n<!--- { 'OpenAI': 'specCheck' } --->".
+Using the provided context, ensure you clearly understand the specification of the issue.
+If you do not understand the specification, infer it from the changes made.
+Describe exactly what the contributor has done and what do you think they were meaning to do.
+Do you think the contributor has met the specification? If not, why?
+Is this the best way to meet the specification? If not, why?
+Identify any logic errors or code improvements that could be made.
 `;
 
 export const gptContextTemplate = `

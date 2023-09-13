@@ -2,7 +2,7 @@ import { getBotContext, getLogger } from "../../../bindings";
 import { GPTResponse, Payload, StreamlinedComment, UserType } from "../../../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody, getPullByNumber } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
-import { askGPT, decideContextGPT, gptContextTemplate, specCheckTemplate, speckCheckResponse } from "../../../helpers/gpt";
+import { askGPT, decideContextGPT, gptContextTemplate, specCheckTemplate } from "../../../helpers/gpt";
 import { ErrorDiff } from "../../../utils/helpers";
 
 /**
@@ -130,7 +130,7 @@ export const review = async (body: string) => {
           content: specCheckTemplate, // provide the spec check template
         } as CreateChatCompletionRequestMessage,
         {
-          role: "system",
+          role: "assistant",
           content: "Context: \n" + JSON.stringify(gptDecidedContext.answer), // provide the context
         } as CreateChatCompletionRequestMessage,
         {
@@ -139,36 +139,7 @@ export const review = async (body: string) => {
         } as CreateChatCompletionRequestMessage
       );
 
-      const draftReport: GPTResponse | string = await askGPT(`first pr review call for #${issue.number}`, chatHistory);
-      let draftReportAnswer = "";
-
-      if (typeof draftReport === "string") {
-        return draftReport;
-      } else {
-        if (draftReport.answer) {
-          draftReportAnswer = draftReport.answer;
-
-          return draftReportAnswer;
-        }
-      }
-
-      chatHistory = [];
-      chatHistory.push(
-        {
-          role: "system",
-          content: speckCheckResponse, // provide the finalization template
-        } as CreateChatCompletionRequestMessage,
-        {
-          role: "system",
-          content: "Spec Review: \n" + draftReportAnswer, // provide the first analysis
-        } as CreateChatCompletionRequestMessage,
-        {
-          role: "assistant",
-          content: "Supporting data: \n" + JSON.stringify(gptDecidedContext), // provide the context
-        } as CreateChatCompletionRequestMessage
-      );
-
-      const gptResponse: GPTResponse | string = await askGPT(`final pr review call for #${issue.number}`, chatHistory);
+      const gptResponse: GPTResponse | string = await askGPT(`first pr review call for #${issue.number}`, chatHistory);
 
       if (typeof gptResponse === "string") {
         return gptResponse;
