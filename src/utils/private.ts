@@ -4,7 +4,7 @@ import { MergedConfig, Payload } from "../types";
 import { Context } from "probot";
 import merge from "lodash/merge";
 
-import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
+import defaultConfig from "../../ubiquibot-config-default";
 import { validate } from "./ajv";
 import { WideConfig, WideOrgConfig, WideRepoConfig, WideConfigSchema, WideOrgConfigSchema } from "../types";
 
@@ -126,7 +126,7 @@ export const getWideConfig = async (context: Context) => {
       throw new Error(`Invalid repo config: ${error}`);
     }
   }
-  const parsedDefault: MergedConfig = DEFAULT_CONFIG_JSON;
+  const parsedDefault: MergedConfig = defaultConfig;
   const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
 
   const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
