@@ -1,6 +1,6 @@
 import { MergedConfig } from './src/types/config'
 
-const defaultConfig : MergedConfig = {
+const DefaultConfig : MergedConfig = {
   "evm-network-id": 100,
   "price-multiplier": 1,
   "issue-creator-multiplier": 2,
@@ -92,7 +92,7 @@ const defaultConfig : MergedConfig = {
     "label": false,
     "organization": true
   },
-  "stale-bounty-time":""
+  "stale-bounty-time":"0d"
 }
 
-export default defaultConfig;
+export default DefaultConfig;
