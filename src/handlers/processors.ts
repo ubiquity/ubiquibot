@@ -6,8 +6,8 @@ import { nullHandler } from "./shared";
 import { handleComment, issueClosedCallback, issueCreatedCallback, issueReopenedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
-import { runOnPush } from "./push";
 import { incentivizeComments, incentivizeCreatorComment, incentivizePullRequestReviews } from "./payout";
+import { runOnPush, validateConfigChange } from "./push";
 import { findDuplicateOne } from "./issue";
 
 export const processors: Record<string, Handler> = {
@@ -68,7 +68,7 @@ export const processors: Record<string, Handler> = {
   },
   [GithubEvent.PUSH_EVENT]: {
     pre: [nullHandler],
-    action: [runOnPush],
+    action: [validateConfigChange, runOnPush],
     post: [nullHandler],
   },
 };
