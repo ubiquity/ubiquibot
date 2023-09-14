@@ -1,5 +1,5 @@
 import { Context } from "probot";
-import { getBotContext, getLogger, loadConfig } from "../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../bindings";
 import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
 
@@ -655,8 +655,10 @@ export const getCommitsOnPullRequest = async (pullNumber: number) => {
 
 export const getAvailableOpenedPullRequests = async (username: string) => {
   const context = getBotContext();
-  const botConfig = await loadConfig(context);
-  if (!botConfig.unassign.timeRangeForMaxIssueEnabled) return [];
+  const {
+    unassign: { timeRangeForMaxIssue, timeRangeForMaxIssueEnabled },
+  } = await getBotConfig();
+  if (!timeRangeForMaxIssueEnabled) return [];
 
   const opened_prs = await getOpenedPullRequests(username);
 
@@ -671,7 +673,7 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
       if (approvedReviews) result.push(pr);
     }
 
-    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= botConfig.unassign.timeRangeForMaxIssue) {
+    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= timeRangeForMaxIssue) {
       result.push(pr);
     }
   }
