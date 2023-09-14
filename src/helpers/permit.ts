@@ -2,6 +2,7 @@ import { MaxUint256, PermitTransferFrom, SignatureTransfer } from "@uniswap/perm
 import { BigNumber, ethers } from "ethers";
 import { getBotConfig, getBotContext, getLogger } from "../bindings";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
+import Decimal from "decimal.js";
 import { Payload } from "../types";
 import { savePermit } from "../adapters/supabase";
 
@@ -51,7 +52,13 @@ type TxData = {
  *
  * @returns Permit2 url including base64 encoded data
  */
-export const generatePermit2Signature = async (spender: string, amountInEth: string, identifier: string): Promise<{ txData: TxData; payoutUrl: string }> => {
+export const generatePermit2Signature = async (
+  spender: string,
+  amountInEth: Decimal,
+  identifier: string,
+  userId = "",
+  type = ""
+): Promise<{ txData: TxData; payoutUrl: string }> => {
   const {
     payout: { evmNetworkId, privateKey, permitBaseUrl, rpc, paymentToken },
   } = getBotConfig();
@@ -64,11 +71,11 @@ export const generatePermit2Signature = async (spender: string, amountInEth: str
       // token we are permitting to be transferred
       token: paymentToken,
       // amount we are permitting to be transferred
-      amount: ethers.utils.parseUnits(amountInEth, 18),
+      amount: ethers.utils.parseUnits(amountInEth.toString(), 18),
     },
     // who can transfer the tokens
     spender: spender,
-    nonce: BigNumber.from(keccak256(toUtf8Bytes(identifier))),
+    nonce: BigNumber.from(keccak256(toUtf8Bytes(identifier + userId + type))),
     // signature deadline
     deadline: MaxUint256,
   };
