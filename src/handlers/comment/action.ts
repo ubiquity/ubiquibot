@@ -1,5 +1,6 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { Payload } from "../../types";
+import { ErrorDiff } from "../../utils/helpers";
 import { IssueCommentCommands } from "./commands";
 import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCheck } from "./handlers/first";
@@ -40,8 +41,8 @@ export const handleComment = async (): Promise<void> => {
       const feature = config.command.find((e) => e.name === id.split("/")[1]);
 
       if (!feature?.enabled && id !== IssueCommentCommands.HELP) {
-        logger.info(`Skipping '${id}' because it is disabled on this repo`);
-        await callback(issue.number, `Skipping \`${id}\` because it is disabled on this repo`, payload.action, payload.comment);
+        logger.info(`Skipping '${id}' because it is disabled on this repo.`);
+        await callback(issue.number, `Skipping \`${id}\` because it is disabled on this repo.`, payload.action, payload.comment);
         continue;
       }
 
@@ -54,7 +55,7 @@ export const handleComment = async (): Promise<void> => {
         if (failureComment) {
           await callback(issue.number, failureComment, payload.action, payload.comment);
         }
-        await callback(issue.number, `Error: ${err}`, payload.action, payload.comment);
+        await callback(issue.number, ErrorDiff(err), payload.action, payload.comment);
       }
     } else {
       logger.info(`Skipping for a command: ${command}`);

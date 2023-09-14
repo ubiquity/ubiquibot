@@ -27,6 +27,7 @@ import { handleIssueClosed } from "../../payout";
 import { query } from "./query";
 import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
+import { ErrorDiff } from "../../../utils/helpers";
 
 export * from "./assign";
 export * from "./wallet";
@@ -71,7 +72,7 @@ export const issueClosedCallback = async (): Promise<void> => {
     const comment = await handleIssueClosed();
     if (comment) await addCommentToIssue(comment + comments.promotionComment, issue.number);
   } catch (err: unknown) {
-    return await addCommentToIssue(`Error: ${err}`, issue.number);
+    return await addCommentToIssue(ErrorDiff(err), issue.number);
   }
 };
 
@@ -90,7 +91,7 @@ export const issueCreatedCallback = async (): Promise<void> => {
   const { assistivePricing } = config.mode;
 
   if (!assistivePricing) {
-    logger.info("Skipping adding label to issue because assistive pricing is disabled");
+    logger.info("Skipping adding label to issue because assistive pricing is disabled.");
     return;
   }
 
@@ -112,7 +113,7 @@ export const issueCreatedCallback = async (): Promise<void> => {
       await addLabelToIssue(targetPriceLabel);
     }
   } catch (err: unknown) {
-    await addCommentToIssue(`Error: ${err}`, issue.number);
+    await addCommentToIssue(ErrorDiff(err), issue.number);
   }
 };
 
@@ -176,20 +177,24 @@ export const issueReopenedCallback = async (): Promise<void> => {
     }
     const assignee = events[0].assignee.login;
 
-    // write penalty to db
-    try {
-      await addPenalty(assignee, repository.full_name, tokenAddress, networkId.toString(), amount);
-    } catch (err) {
-      logger.error(`Error writing penalty to db: ${err}`);
-      return;
-    }
+    if (parseFloat(formattedAmount) > 0) {
+      // write penalty to db
+      try {
+        await addPenalty(assignee, repository.full_name, tokenAddress, networkId.toString(), amount);
+      } catch (err) {
+        logger.error(`Error writing penalty to db: ${err}`);
+        return;
+      }
 
-    await addCommentToIssue(
-      `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of **${formattedAmount} ${tokenSymbol}** will be deducted from your next bounty.`,
-      issue.number
-    );
+      await addCommentToIssue(
+        `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of **${formattedAmount} ${tokenSymbol}** will be deducted from your next bounty.`,
+        issue.number
+      );
+    } else {
+      logger.info(`Skipped penalty because amount is 0`);
+    }
   } catch (err: unknown) {
-    await addCommentToIssue(`Error: ${err}`, issue.number);
+    await addCommentToIssue(ErrorDiff(err), issue.number);
   }
 };
 
