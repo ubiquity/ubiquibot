@@ -9,9 +9,9 @@ import {
   getReviewRequests,
   listAllIssuesForRepo,
   removeAssignees,
-  wasIssueReopened,
 } from "../../helpers";
-import { Comment, Issue, IssueType, Payload } from "../../types";
+import { Comment, Issue, IssueType, Payload, UserType } from "../../types";
+import { deadLinePrefix } from "../shared";
 
 /**
  * @dev Check out the bounties which haven't been completed within the initial timeline
@@ -67,33 +67,12 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
       logger.info(
         `Unassigning... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
       );
+      await closePullRequestForAnIssue();
+      // remove assignees from the issue
+      await removeAssignees(issue.number, assignees);
+      await addCommentToIssue(`@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
 
-      const wasReopened = await wasIssueReopened(issue.number);
-
-      if (wasReopened) {
-        if (new Date(issue.updated_at).getTime() > lastActivity.getTime()) {
-          logger.info(
-            `Skipping unassigning because #${issue.number} was reopened, lastActivityTime: ${lastActivity.getTime()}, issue.updated_at: ${new Date(
-              issue.updated_at
-            ).getTime()}`
-          );
-          lastActivity.setTime(new Date(issue.updated_at).getTime());
-        } else {
-          await closePullRequestForAnIssue();
-          // remove assignees from the issue
-          await removeAssignees(issue.number, assignees);
-          await addCommentToIssue(`@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
-
-          return true;
-        }
-      } else {
-        await closePullRequestForAnIssue();
-        // remove assignees from the issue
-        await removeAssignees(issue.number, assignees);
-        await addCommentToIssue(`@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
-
-        return true;
-      }
+      return true;
     } else if (passedDuration >= followUpTime) {
       logger.info(
         `Asking for updates... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
@@ -120,6 +99,11 @@ const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date
   logger.info(`Checking the latest activity for the issue, issue_number: ${issue.number}`);
   const assignees = issue.assignees.map((i) => i.login);
   const activities: Date[] = [new Date(issue.created_at)];
+
+  const lastAssignCommentOfHunter = comments
+    .filter((comment) => comment.user.type === UserType.Bot && comment.body.includes(assignees[0]) && comment.body.includes(deadLinePrefix))
+    .sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  if (lastAssignCommentOfHunter.length > 0) activities.push(new Date(lastAssignCommentOfHunter[0].created_at));
 
   // get last comment on the issue
   const lastCommentsOfHunterForIssue = comments
