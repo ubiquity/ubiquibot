@@ -1,5 +1,5 @@
 import { getBotContext, getLogger } from "../../../bindings";
-import { GPTResponse, Payload, StreamlinedComment, UserType } from "../../../types";
+import { Payload, StreamlinedComment, UserType } from "../../../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { askGPT, decideContextGPT, sysMsg } from "../../../helpers/gpt";
@@ -71,7 +71,7 @@ export const ask = async (body: string) => {
       linkedPRStreamlined = links.linkedPrs;
     }
 
-    // let Chad deduce what is the most relevant context
+    // let chatgpt deduce what is the most relevant context
     const gptDecidedContext = await decideContextGPT(chatHistory, streamlined, linkedPRStreamlined, linkedIssueStreamlined);
 
     if (linkedIssueStreamlined.length == 0 && linkedPRStreamlined.length == 0) {
@@ -108,7 +108,7 @@ export const ask = async (body: string) => {
       );
     }
 
-    const gptResponse: GPTResponse | string = await askGPT(body, chatHistory);
+    const gptResponse = await askGPT(body, chatHistory);
 
     if (typeof gptResponse === "string") {
       return gptResponse;

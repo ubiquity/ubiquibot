@@ -143,6 +143,24 @@ export const BotConfigSchema = Type.Object({
 
 export type BotConfig = Static<typeof BotConfigSchema>;
 
+export const StreamlinedCommentSchema = Type.Object({
+  login: Type.Optional(Type.String()),
+  body: Type.Optional(Type.String()),
+});
+
+export type StreamlinedComment = Static<typeof StreamlinedCommentSchema>;
+
+export const GPTResponseSchema = Type.Object({
+  answer: Type.Optional(Type.String()),
+  tokenUsage: Type.Object({
+    output: Type.Optional(Type.Number()),
+    input: Type.Optional(Type.Number()),
+    total: Type.Optional(Type.Number()),
+  }),
+});
+
+export type GPTResponse = Static<typeof GPTResponseSchema>;
+
 export const WideConfigSchema = Type.Object(
   {
     "evm-network-id": Type.Optional(Type.Number()),
