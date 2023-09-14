@@ -12,63 +12,6 @@ Infer the context of the question from the Original Context using your best judg
 All replies MUST end with "\n\n <!--- { 'UbiquityAI': 'answer' } ---> ".\n
 `;
 
-export const ratingExample = `
-## Rating
-| Spec Match | Description |
-| --- | --- |
-| 100% | Why this rating... Wonderful Effort (S) |
-| 50% | Why this rating... Terrible effort (F) |
-`;
-
-export const issueSpecExample = `
-# Issue Spec
-| Linked Context | Context | Relevancy |
-| --- | --- | --- |
-| Issue # | This is the issue spec | Why is this relevant? |
-| Pull # | This is the pull spec | Why is this relevant? |
-- [x] {item}
-- [ ] {item}
-`;
-
-export const implementationAnalysisExample = `
-## Implementation Analysis
-- [x] {item}
-- [ ] {item}
-`;
-
-export const overallAnalysisExample = `
-## Overall Analysis
-- [x] {item}
-- [ ] {item}
-`;
-
-export const specCheckTemplate = `
-  You are the UbiquityAI, designed to analyze pull requests in comparison to the issue specification.\n
-  You are to update the report after you review everything, pr diff, spec, and provided context.\n
-  Measure the implementation against the issue spec and provide an overall analysis.\n
-  You must NOT return the any example text, only your comprehensive report. \n
-  You MUST provide the following structure, but you may add additional information if you deem it relevant.\n
-  Boilerplate: \n
-  ${issueSpecExample}
-  ${implementationAnalysisExample}
-  ${overallAnalysisExample}
-  ${ratingExample}
-  `;
-
-export const speckCheckResponse = `
-The issue spec is provided in the context, and the pr diff is provided in the first response.
-Finalize the report by proofreading the report for any errors.
-Ensure only relevant context is provided in the spec and implementation analysis.
-You MUST provide the following structure, but you may add additional information if you deem it relevant.
-Do not include leftover boilerplate text, only your comprehensive report, this is crucial!
-Boilerplate: \n
-${issueSpecExample}
-${implementationAnalysisExample}
-${overallAnalysisExample}
-${ratingExample}
-All replies MUST end with "\n<!--- { 'UbiquityAI': 'specCheck' } --->".
-`;
-
 export const gptContextTemplate = `
 You are the UbiquityAI, designed to review and analyze pull requests.
 You have been provided with the spec of the issue and all linked issues or pull requests.
