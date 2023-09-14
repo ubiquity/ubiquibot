@@ -6,7 +6,7 @@ export enum IssueCommentCommands {
   PAYOUT = "/payout", // request permit payout
   MULTIPLIER = "/multiplier", // set bounty multiplier (for treasury)
   QUERY = "/query",
-  REVIEW = "/review", // GPT will review the pull request
+  REVIEW = "/review", // gpt-3.5-turbo-16k will review the pull request
   // Access Controls
 
   ALLOW = "/allow",
