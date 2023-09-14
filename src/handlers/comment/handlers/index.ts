@@ -255,7 +255,7 @@ export const userCommands = (): UserCommands[] => {
     },
     {
       id: IssueCommentCommands.REVIEW,
-      description: `Ubiquity AI will perform a review of the current pull request. \n  example usage: /review`,
+      description: `Compares the pull request code diff with the linked issue's specification to perform a review of the current pull request. \n  example usage: /review`,
       handler: review,
       callback: commandCallback,
     },
