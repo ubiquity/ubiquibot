@@ -180,6 +180,8 @@ export const WideConfigSchema = Type.Object(
     "register-wallet-with-verification": Type.Optional(Type.Boolean()),
     "enable-access-control": Type.Optional(AccessControlSchema),
     "stale-bounty-time": Type.Optional(Type.String()),
+    "openai-api-key": Type.Optional(Type.String()),
+    "openai-token-limit": Type.Optional(Type.Number()),
   },
   {
     additionalProperties: false,
@@ -214,6 +216,8 @@ export const MergedConfigSchema = Type.Object({
   "default-labels": Type.Array(Type.String()),
   "register-wallet-with-verification": Type.Boolean(),
   "enable-access-control": AccessControlSchema,
+  "openai-api-key": ReviewSchema.apiKey,
+  "openai-token-limit": Type.Number(),
   "stale-bounty-time": Type.String(),
 });
 
