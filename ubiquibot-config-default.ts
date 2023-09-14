@@ -95,4 +95,4 @@ const DefaultConfig : MergedConfig = {
   "stale-bounty-time":"0d"
 }
 
-export default DefaultConfig as readonly;
+export default DefaultConfig;
