@@ -22,5 +22,5 @@ export const getNumericLevel = (level: Level) => {
 };
 
 export const ErrorDiff = (message: unknown) => {
-  return "```diff\n- " + message + "\n```";
+  return "```diff\n! " + message + "\n```";
 };

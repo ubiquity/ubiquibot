@@ -88,7 +88,7 @@ export const CommentsSchema = Type.Object({
 });
 
 export const ReviewSchema = Type.Object({
-  apiKey: Type.String(),
+  apiKey: Type.Union([Type.String(), Type.Null()]),
   tokenLimit: Type.Number(),
 });
 

@@ -246,6 +246,10 @@ export const askGPT = async (question: string, chatHistory: CreateChatCompletion
   const logger = getLogger();
   const config = getBotConfig();
 
+  if (!config.review.apiKey) {
+    return ErrorDiff("You must configure the `openai-api-key` property in the bot configuration in order to use AI powered features.");
+  }
+
   const openAI = new OpenAI({
     apiKey: config.review.apiKey,
   });
