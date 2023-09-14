@@ -3,6 +3,7 @@ import { Payload, StreamlinedComment, UserType } from "../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../helpers";
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
+import { ErrorDiff } from "../utils/helpers";
 
 export const sysMsg = `You are the UbiquityAI, designed to provide accurate technical answers. \n
 Whenever appropriate, format your response using GitHub Flavored Markdown. Utilize tables, lists, and code blocks for clear and organized answers. \n
@@ -145,6 +146,11 @@ export const decideContextGPT = async (
 export const askGPT = async (question: string, chatHistory: CreateChatCompletionRequestMessage[]) => {
   const logger = getLogger();
   const config = getBotConfig();
+
+  if (!config.ask.apiKey) {
+    logger.info(`No OpenAI API Key provided`);
+    return ErrorDiff("You must configure the `openai-api-key` property in the bot configuration in order to use AI powered features.");
+  }
 
   const openAI = new OpenAI({
     apiKey: config.ask.apiKey,

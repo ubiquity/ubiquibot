@@ -106,7 +106,7 @@ export const CommentsSchema = Type.Object({
 });
 
 export const AskSchema = Type.Object({
-  apiKey: Type.String(),
+  apiKey: Type.Union([Type.String(), Type.Null()]),
   tokenLimit: Type.Number(),
 });
 
@@ -180,6 +180,8 @@ export const WideConfigSchema = Type.Object(
     "register-wallet-with-verification": Type.Optional(Type.Boolean()),
     "enable-access-control": Type.Optional(AccessControlSchema),
     "stale-bounty-time": Type.Optional(Type.String()),
+    "openai-api-key": AskSchema.apiKey,
+    "openai-token-limit": Type.Optional(Type.Number()),
   },
   {
     additionalProperties: false,
@@ -214,7 +216,7 @@ export const MergedConfigSchema = Type.Object({
   "default-labels": Type.Array(Type.String()),
   "register-wallet-with-verification": Type.Boolean(),
   "enable-access-control": AccessControlSchema,
-  "openai-api-key": Type.String(),
+  "openai-api-key": AskSchema.apiKey,
   "openai-token-limit": Type.Number(),
   "stale-bounty-time": Type.String(),
 });
