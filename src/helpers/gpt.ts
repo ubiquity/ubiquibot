@@ -1,9 +1,10 @@
 import { getBotConfig, getBotContext, getLogger } from "../bindings";
 import { Payload, StreamlinedComment, UserType } from "../types";
-import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../helpers";
+import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody, getIssueByNumber } from "../helpers";
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { ErrorDiff } from "../utils/helpers";
+import { Context } from "probot";
 
 export const sysMsg = `You are an AI designed to provide accurate technical answers. \n
 Whenever appropriate, format your response using GitHub Flavored Markdown. Utilize tables, lists, and code blocks for clear and organized answers. \n
@@ -13,45 +14,36 @@ Infer the context of the question from the Original Context using your best judg
 All replies MUST end with "\n\n <!--- { 'OpenAI': 'answer' } ---> ".\n
 `;
 
-export const issueSpecExample = `
-## Requirements
-- [x] {item}
-- [ ] {item}
-
-## Context
-| Linked Context | Context | Relevancy |
-| --- | --- | --- |
-| Issue # | This is the issue spec | Why is this relevant? |
-| Pull # | This is the pull spec | Why is this relevant? |
-
-# Pull Request Analysis
-- Added {itemName} file
-- Removed {itemName} file
-- Modified {itemName} file...
-
-# Changes in line with issue spec
-- {item}
-
-# Changes not in line with issue spec
-- {item}
-
-# Rating 
-| Spec Match | Description |
-| --- | --- |
-| 100% | Why this rating... Wonderful Effort (S) |
-| 50% | Why this rating... Terrible effort (F) |
-
-# Conclusion
-{conclusion}
-`;
-
 export const specCheckTemplate = `
 Using the provided context, ensure you clearly understand the specification of the issue.
 If you do not understand the specification, infer it from the changes made.
-Describe exactly what the contributor has done and what do you think they were meaning to do.
-Do you think the contributor has met the specification? If not, why?
-Is this the best way to meet the specification? If not, why?
-Identify any logic errors or code improvements that could be made.
+
+You are the first line of defense to ensure the specification is met before reviewers do their job.
+If the specification is not met, you are to provide a clear and concise reason why.
+
+Your response will be posted as a GitHub comment for everyone see so try to compliment the GitHub UI.
+Knowing this, only include information that will benefit them, lists, breakdowns, summaries of changes made ARE NOT ALLOWED.
+Do not add a list of changes made, this is the reviewers job instead you can add value by identifying errors and code suggestions that benefit both the author and reviewers..
+Do not deviate from the provided examples below, use only their username, never use the @ symbol and if your summary is too long, use a collapsible summary.
+
+====================
+Spec not achieved example:
+This is the specification...
+
+{username} this is exactly where you went wrong...
+this is how you can fix it... > code example of solution
+====================
+Spec achieved example:
+
+<details>
+<summary>Review Summary</summary>
+  - This is a summary of the changes made
+  - This is another summary of the changes made
+
+</details>
+
+{username}, you have achieved the spec and now the reviewers will let you know if there are any other changes needed.\n
+====================
 `;
 
 export const gptContextTemplate = `
@@ -96,6 +88,70 @@ Example:[
   }
 ]
 `;
+
+export const getPRSpec = async (context: Context, chatHistory: CreateChatCompletionRequestMessage[], streamlined: StreamlinedComment[]) => {
+  const logger = getLogger();
+
+  const payload = context.payload as Payload;
+
+  const pr = payload.issue;
+
+  if (!pr) {
+    return ErrorDiff(`Payload issue is undefined.`);
+  }
+
+  // we're in the pr context, so grab the linked issue body
+  const regex = /(#(\d+)|https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+))/gi;
+  const linkedIssueNumber = pr.body.match(regex);
+  const linkedIssues: number[] = [];
+
+  if (linkedIssueNumber) {
+    linkedIssueNumber.forEach((issue: string) => {
+      if (issue.includes("#")) {
+        linkedIssues.push(Number(issue.slice(1)));
+      } else {
+        linkedIssues.push(Number(issue.split("/")[6]));
+      }
+    });
+  } else {
+    logger.info(`No linked issues or prs found`);
+  }
+
+  if (!linkedIssueNumber) {
+    return ErrorDiff(`No linked issue found in body.`);
+  }
+
+  // get the linked issue body
+  const linkedIssue = await getIssueByNumber(context, linkedIssues[0]);
+
+  if (!linkedIssue) {
+    return ErrorDiff(`Error getting linked issue.`);
+  }
+
+  console.log("gpt streamlined", streamlined);
+
+  // add the first comment of the pull request which is the contributor's description of their changes
+  streamlined.push({
+    login: pr.user.login,
+    body: `${pr.user.login}'s pull request description:\n` + pr.body,
+  });
+
+  // add the linked issue body as this is the spec
+  streamlined.push({
+    login: "assistant",
+    body: `#${linkedIssue.number} Specification: \n` + linkedIssue.body,
+  });
+
+  // no other conversation context is needed
+  chatHistory.push({
+    role: "system",
+    content: "This pull request context: \n" + JSON.stringify(streamlined),
+  } as CreateChatCompletionRequestMessage);
+
+  console.log("gtt", chatHistory);
+
+  return chatHistory;
+};
 
 /**
  * @notice best used alongside getAllLinkedIssuesAndPullsInBody() in helpers/issue
@@ -160,14 +216,18 @@ export const decideContextGPT = async (
   chatHistory.push(
     {
       role: "system",
+      content: gptContextTemplate,
+    },
+    {
+      role: "assistant",
       content: "This issue/Pr context: \n" + JSON.stringify(streamlined),
     } as CreateChatCompletionRequestMessage,
     {
-      role: "system",
+      role: "assistant",
       content: "Linked issue(s) context: \n" + JSON.stringify(linkedIssueStreamlined),
     } as CreateChatCompletionRequestMessage,
     {
-      role: "system",
+      role: "assistant",
       content: "Linked Pr(s) context: \n" + JSON.stringify(linkedPRStreamlined),
     } as CreateChatCompletionRequestMessage
   );
@@ -194,7 +254,7 @@ export const askGPT = async (question: string, chatHistory: CreateChatCompletion
     messages: chatHistory,
     model: "gpt-3.5-turbo-16k",
     max_tokens: config.review.tokenLimit,
-    temperature: 0,
+    temperature: 0.1,
   });
 
   const answer = res.choices[0].message.content;

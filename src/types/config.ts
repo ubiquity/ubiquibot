@@ -104,6 +104,24 @@ export const AccessControlSchema = Type.Object({
   organization: Type.Boolean(),
 });
 
+export const StreamlinedCommentSchema = Type.Object({
+  login: Type.Optional(Type.String()),
+  body: Type.Optional(Type.String()),
+});
+
+export type StreamlinedComment = Static<typeof StreamlinedCommentSchema>;
+
+export const GPTResponseSchema = Type.Object({
+  answer: Type.Optional(Type.String()),
+  tokenUsage: Type.Object({
+    output: Type.Optional(Type.Number()),
+    input: Type.Optional(Type.Number()),
+    total: Type.Optional(Type.Number()),
+  }),
+});
+
+export type GPTResponse = Static<typeof GPTResponseSchema>;
+
 export type AccessControl = Static<typeof AccessControlSchema>;
 
 export const BotConfigSchema = Type.Object({

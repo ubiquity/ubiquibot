@@ -697,7 +697,7 @@ export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
   const linkedPRStreamlined: StreamlinedComment[] = [];
   const linkedIssueStreamlined: StreamlinedComment[] = [];
 
-  const regex = /https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+)/gi;
+  const regex = /(#(\d+)|https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+))/gi;
   const matches = body.match(regex);
 
   if (matches) {
@@ -706,7 +706,7 @@ export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
       const linkedPrs: number[] = [];
 
       // this finds refs via all patterns: #<issue number>, full url or [#25](url.to.issue)
-      const issueRef = issue.body.match(/(#(\d+)|https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+))/gi);
+      const issueRef = issue.body.match(regex);
 
       // if they exist, strip out the # or the url and push them to their arrays
       if (issueRef) {

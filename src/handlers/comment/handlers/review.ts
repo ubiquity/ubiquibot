@@ -1,8 +1,8 @@
 import { getBotContext, getLogger } from "../../../bindings";
-import { GPTResponse, Payload, StreamlinedComment, UserType } from "../../../types";
-import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody, getPullByNumber } from "../../../helpers";
+import { Payload, StreamlinedComment } from "../../../types";
+import { getAllIssueComments, getPullByNumber } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
-import { askGPT, decideContextGPT, gptContextTemplate, specCheckTemplate } from "../../../helpers/gpt";
+import { askGPT, getPRSpec, specCheckTemplate } from "../../../helpers/gpt";
 import { ErrorDiff } from "../../../utils/helpers";
 
 /**
@@ -39,39 +39,12 @@ export const review = async (body: string) => {
 
   const streamlined: StreamlinedComment[] = [];
   let chatHistory: CreateChatCompletionRequestMessage[] = [];
-  let linkedPRStreamlined: StreamlinedComment[] = [];
-  let linkedIssueStreamlined: StreamlinedComment[] = [];
-
-  const comments = await getAllIssueComments(issue.number);
   const commentsRaw = await getAllIssueComments(issue.number, "raw");
 
   if (!commentsRaw) {
     logger.info(`Error getting issue comments`);
     return ErrorDiff(`Error getting issue comments.`);
   }
-  streamlined.push({
-    login: issue.user.login,
-    body: issue.body,
-  });
-
-  comments.forEach(async (comment, i) => {
-    if (comment.user.type == UserType.User || commentsRaw[i].body.includes("<!--- { 'OpenAI': 'answer' } --->")) {
-      streamlined.push({
-        login: comment.user.login,
-        body: comment.body,
-      });
-    }
-  });
-
-  // returns the conversational context from all linked issues and prs
-  const links = await getAllLinkedIssuesAndPullsInBody(issue.number);
-
-  if (typeof links === "string") {
-    logger.info(`Error getting linked issues or prs: ${links}`);
-    return ErrorDiff(`Error getting linked issues or prs: ${links}`);
-  }
-  linkedIssueStreamlined = links.linkedIssues;
-  linkedPRStreamlined = links.linkedPrs;
 
   // return a diff of the changes made in the PR
   const comparePR = async () => {
@@ -111,35 +84,25 @@ export const review = async (body: string) => {
           return ErrorDiff(`Error getting diff: ${error}`);
         });
 
-      chatHistory.push({
-        role: "system",
-        content: gptContextTemplate,
-      } as CreateChatCompletionRequestMessage);
-
-      // We're allowing OpenAI to deduce what is the most relevant context
-      const gptDecidedContext = await decideContextGPT(chatHistory, streamlined, linkedPRStreamlined, linkedIssueStreamlined);
-
-      if (typeof gptDecidedContext === "string") {
-        return gptDecidedContext;
-      }
+      const spec = await getPRSpec(context, chatHistory, streamlined);
 
       chatHistory = [];
       chatHistory.push(
         {
           role: "system",
-          content: specCheckTemplate, // provide the spec check template
+          content: specCheckTemplate,
         } as CreateChatCompletionRequestMessage,
         {
           role: "assistant",
-          content: "Context: \n" + JSON.stringify(gptDecidedContext.answer), // provide the context
+          content: "Spec for Pr: \n" + JSON.stringify(spec),
         } as CreateChatCompletionRequestMessage,
         {
           role: "user",
-          content: "PR Diff: \n" + JSON.stringify(diff), // provide the diff
+          content: `${issue.assignees[0].login}'s PR Diff: \n` + JSON.stringify(diff),
         } as CreateChatCompletionRequestMessage
       );
 
-      const gptResponse: GPTResponse | string = await askGPT(`first pr review call for #${issue.number}`, chatHistory);
+      const gptResponse = await askGPT(`Pr review call for #${issue.number}`, chatHistory);
 
       if (typeof gptResponse === "string") {
         return gptResponse;
@@ -156,5 +119,5 @@ export const review = async (body: string) => {
   };
 
   const res = await isPull();
-  return res;
+  return res + `\n> <small> Ensure the pull request requirements are in the linked issue's first comment and update it if the scope evolves. </small>.`;
 };
