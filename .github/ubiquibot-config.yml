@@ -1,6 +1,7 @@
 ---
 evm-network-id: 100
 price-multiplier: 1.5
+assistive-pricing: true
 time-labels:
   - name: "Time: <1 Hour"
   - name: "Time: <1 Day"
