@@ -1,6 +1,15 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue, generatePermit2Signature, getAllIssueComments, getIssueDescription, getTokenSymbol, parseComments } from "../../helpers";
+import {
+  addCommentToIssue,
+  generatePermit2Signature,
+  getAllIssueComments,
+  getAllPullRequestReviews,
+  getIssueDescription,
+  getTokenSymbol,
+  parseComments,
+} from "../../helpers";
+import { gitLinkedPrParser } from "../../helpers/parser";
 import { Incentives, MarkdownItem, Payload, StateReason, UserType } from "../../types";
 import { commentParser } from "../comment";
 import Decimal from "decimal.js";
@@ -119,6 +128,134 @@ export const incentivizeComments = async () => {
 
   logger.info(`Permit url generated for contributors. reward: ${JSON.stringify(reward)}`);
   logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
+
+  await addCommentToIssue(comment, issue.number);
+};
+
+export const incentivizePullRequestReviews = async () => {
+  const logger = getLogger();
+  const {
+    mode: { incentiveMode, paymentPermitMaxPrice },
+    price: { baseMultiplier, incentives },
+    payout: { paymentToken, rpc },
+  } = getBotConfig();
+  if (!incentiveMode) {
+    logger.info(`No incentive mode. skipping to process`);
+    return;
+  }
+  const context = getBotContext();
+  const payload = context.payload as Payload;
+  const issue = payload.issue;
+  if (!issue) {
+    logger.info(`Incomplete payload. issue: ${issue}`);
+    return;
+  }
+
+  if (issue.state_reason !== StateReason.COMPLETED) {
+    logger.info("incentivizePullRequestReviews: comment incentives skipped because the issue was not closed as completed");
+    return;
+  }
+
+  if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
+    logger.info(`incentivizePullRequestReviews: skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
+    return;
+  }
+
+  const issueDetailed = bountyInfo(issue);
+  if (!issueDetailed.isBounty) {
+    logger.info(`incentivizePullRequestReviews: its not a bounty`);
+    return;
+  }
+
+  const linkedPullRequest = await gitLinkedPrParser({ owner: payload.repository.owner.login, repo: payload.repository.name, issue_number: issue.number });
+
+  if (!linkedPullRequest) {
+    logger.debug(`incentivizePullRequestReviews: No linked pull requests found`);
+    return;
+  }
+
+  const comments = await getAllIssueComments(issue.number);
+  const permitComments = comments.filter(
+    (content) => content.body.includes("Reviewer Rewards") && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
+  );
+  if (permitComments.length > 0) {
+    logger.info(`incentivizePullRequestReviews: skip to generate a permit url because it has been already posted`);
+    return;
+  }
+
+  const assignees = issue?.assignees ?? [];
+  const assignee = assignees.length > 0 ? assignees[0] : undefined;
+  if (!assignee) {
+    logger.info("incentivizePullRequestReviews: skipping payment permit generation because `assignee` is `undefined`.");
+    return;
+  }
+
+  const prReviews = await getAllPullRequestReviews(context, linkedPullRequest.number, "full");
+  const prComments = await getAllIssueComments(linkedPullRequest.number, "full");
+  logger.info(`Getting the PR reviews done. comments: ${JSON.stringify(prReviews)}`);
+  const prReviewsByUser: Record<string, { id: string; comments: string[] }> = {};
+  for (const review of prReviews) {
+    const user = review.user;
+    if (!user) continue;
+    if (user.type == UserType.Bot || user.login == assignee) continue;
+    if (!review.body_html) {
+      logger.info(`incentivizePullRequestReviews: Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(review)}`);
+      continue;
+    }
+    if (!prReviewsByUser[user.login]) {
+      prReviewsByUser[user.login] = { id: user.node_id, comments: [] };
+    }
+    prReviewsByUser[user.login].comments.push(review.body_html);
+  }
+
+  for (const comment of prComments) {
+    const user = comment.user;
+    if (!user) continue;
+    if (user.type == UserType.Bot || user.login == assignee) continue;
+    if (!comment.body_html) {
+      logger.info(`incentivizePullRequestReviews: Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(comment)}`);
+      continue;
+    }
+    if (!prReviewsByUser[user.login]) {
+      prReviewsByUser[user.login] = { id: user.node_id, comments: [] };
+    }
+    prReviewsByUser[user.login].comments.push(comment.body_html);
+  }
+  const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
+  logger.info(`incentivizePullRequestReviews: Filtering by the user type done. commentsByUser: ${JSON.stringify(prReviewsByUser)}`);
+
+  // The mapping between gh handle and comment with a permit url
+  const reward: Record<string, string> = {};
+
+  // The mapping between gh handle and amount in ETH
+  const fallbackReward: Record<string, Decimal> = {};
+  let comment = `#### Reviewer Rewards\n`;
+  for (const user of Object.keys(prReviewsByUser)) {
+    const commentByUser = prReviewsByUser[user];
+    const commentsByNode = await parseComments(commentByUser.comments, ItemsToExclude);
+    const rewardValue = calculateRewardValue(commentsByNode, incentives);
+    if (rewardValue.equals(0)) {
+      logger.info(`incentivizePullRequestReviews: Skipping to generate a permit url because the reward value is 0. user: ${user}`);
+      continue;
+    }
+    logger.info(`incentivizePullRequestReviews: Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+    const account = await getWalletAddress(user);
+    const amountInETH = rewardValue.mul(baseMultiplier);
+    if (amountInETH.gt(paymentPermitMaxPrice)) {
+      logger.info(`incentivizePullRequestReviews: Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
+      continue;
+    }
+    if (account) {
+      const { payoutUrl } = await generatePermit2Signature(account, amountInETH, issue.node_id, commentByUser.id, "ISSUE_COMMENTER");
+      comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
+      reward[user] = payoutUrl;
+    } else {
+      fallbackReward[user] = amountInETH;
+    }
+  }
+
+  logger.info(`incentivizePullRequestReviews: Permit url generated for pull request reviewers. reward: ${JSON.stringify(reward)}`);
+  logger.info(`incentivizePullRequestReviews: Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
 
   await addCommentToIssue(comment, issue.number);
 };
