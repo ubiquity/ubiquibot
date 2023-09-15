@@ -12,7 +12,7 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const payload = context.payload as Payload;
   if (!payload.issue) return;
   const labels = payload.issue.labels;
-
+  const labelNames = labels.map((i) => i.name);
   logger.info(`Checking if the issue is a parent issue.`);
   if (payload.issue.body && isParentIssue(payload.issue.body)) {
     logger.error("Identified as parent issue. Disabling price label.");
@@ -37,10 +37,25 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
 
   const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
+  let hasPriceLabel = false;
+  let hasTargetPriceLabel = false;
 
   if (targetPriceLabel) {
-    if (labels.map((i) => i.name).includes("Price")) {
-      if (!labels.map((i) => i.name).includes(targetPriceLabel)) {
+    labelNames.forEach((e) => {
+      if (e.includes("Price")) {
+        hasPriceLabel = true;
+      }
+    });
+
+    labelNames.forEach((e) => {
+      if (e.includes(targetPriceLabel)) {
+        hasTargetPriceLabel = true;
+      }
+    });
+
+    if (hasPriceLabel) {
+      // below checks each label to see if theres a price
+      if (hasTargetPriceLabel) {
         // get all issue events of type "labeled" and the event label includes Price
         const labeledEvents = await getAllLabeledEvents();
         if (!labeledEvents) return;
@@ -51,7 +66,7 @@ export const pricingLabelLogic = async (): Promise<void> => {
           }
         });
         // check if the latest price label has been added by a user
-        if (labeledPriceEvents[0].actor?.type == "User") {
+        if (labeledPriceEvents[labeledPriceEvents.length - 1].actor?.type == "User") {
           logger.info(`Skipping... already exists`);
         } else {
           // add price label to issue becuase wrong price has been added by bot
