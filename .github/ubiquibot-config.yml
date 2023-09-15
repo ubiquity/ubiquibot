@@ -38,4 +38,4 @@ command-settings:
     enabled: true
   - name: autopay
     enabled: true
-private-key-encrypted: "OluXPVOgAhbeLc9i9NQjXXAKra9iVn9noGUjoBNcLluGVxD32BEKl4UglCBFUpE3Ve2uCApgZdMPsKwqVHa2vcmEJQaWjnxy6jx7jQXC9QEJ6YdL"
+private-key-encrypted: "5Awi3hP6k78nINwmjadju8SJPZ1SeHBOhoaNYjdRm2_1VAF3OlzVVIv6iFrZ2CqsJ-R2h9clb4CyXRhK7kRXucrev2sfalqRa33El_LiSQFlZBQ4WwYtk22np1BOUeDQLwW3dx8mse_05c3b1rMTQA"
