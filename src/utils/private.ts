@@ -33,26 +33,6 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo", 
   }
 };
 
-export interface WideLabel {
-  name: string;
-}
-
-export interface CommentIncentives {
-  elements: Record<string, number>;
-  totals: {
-    word: number;
-  };
-}
-
-export interface Incentives {
-  comment: CommentIncentives;
-}
-
-export interface CommandObj {
-  name: string;
-  enabled: boolean;
-}
-
 export interface MergedConfigs {
   parsedRepo: WideRepoConfig | undefined;
   parsedOrg: WideOrgConfig | undefined;
