@@ -28,7 +28,7 @@ export const bountyInfo = (
   const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
 
   const labelNames = labels.map((i) => i.name);
-  let priceLabel: string = "";
+  let priceLabel = "";
   labelNames.forEach((e) => {
     if (e.includes("Price")) {
       priceLabel = e;
