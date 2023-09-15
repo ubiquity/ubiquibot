@@ -1,5 +1,5 @@
 import { Octokit } from "octokit";
-import { WideRepoConfig } from "../src/utils/private";
+import { WideRepoConfig } from "../src/types";
 import YAML from "yaml";
 import EventEmitter from "events";
 
