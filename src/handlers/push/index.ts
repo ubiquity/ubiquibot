@@ -1,6 +1,6 @@
 import { getBotContext, getLogger } from "../../bindings";
 import { createCommitComment, getFileContent } from "../../helpers";
-import { CommitsPayload, PushPayload, WideConfigSchema } from "../../types";
+import { CommitsPayload, PushPayload, WideOrgConfigSchema } from "../../types";
 import { parseYAML } from "../../utils/private";
 import { updateBaseRate } from "./update-base";
 import { validate } from "../../utils/ajv";
@@ -87,7 +87,7 @@ export const validateConfigChange = async () => {
     if (configFileContent) {
       const decodedConfig = Buffer.from(configFileContent, "base64").toString();
       const config = parseYAML(decodedConfig);
-      const { valid, error } = validate(WideConfigSchema, config);
+      const { valid, error } = validate(WideOrgConfigSchema, config);
       if (!valid) {
         await createCommitComment(`@${payload.sender.login} Config validation failed! ${error}`, commitSha, BASE_RATE_FILE);
       }

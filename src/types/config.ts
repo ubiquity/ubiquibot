@@ -165,6 +165,14 @@ export const WideConfigSchema = Type.Object(
 
 export type WideConfig = Static<typeof WideConfigSchema>;
 
+export type WideRepoConfig = WideConfig;
+
+export const WideOrgConfigSchema = Type.Composite([Type.Object({ "private-key-encrypted": Type.Optional(Type.String()) }), WideConfigSchema], {
+  additionalProperties: false,
+});
+
+export type WideOrgConfig = Static<typeof WideOrgConfigSchema>;
+
 export const MergedConfigSchema = Type.Object({
   "evm-network-id": Type.Number(),
   "price-multiplier": Type.Number(),
