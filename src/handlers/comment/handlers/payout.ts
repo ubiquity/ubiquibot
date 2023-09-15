@@ -5,6 +5,7 @@ import {
   calculateIssueAssigneeReward,
   calculateIssueConversationReward,
   calculateIssueCreatorReward,
+  calculatePullRequestReviewsReward,
   handleIssueClosed,
   incentivesCalculation,
 } from "../../payout";
@@ -50,8 +51,9 @@ export const payout = async (body: string) => {
   const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
   const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
   const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
+  const pullRequestReviewersReward = await calculatePullRequestReviewsReward(calculateIncentives);
 
-  return await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, calculateIncentives);
+  return await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, pullRequestReviewersReward, calculateIncentives);
 };
 
 export const autoPay = async (body: string) => {

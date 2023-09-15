@@ -301,6 +301,7 @@ export const handleIssueClosed = async (
   creatorReward: RewardsResponse,
   assigneeReward: RewardsResponse,
   conversationRewards: RewardsResponse,
+  pullRequestReviewersReward: RewardsResponse,
   incentivesCalculation: IncentivesCalculationResult
 ): Promise<{ error: string }> => {
   const logger = getLogger();
@@ -310,9 +311,11 @@ export const handleIssueClosed = async (
   let commentersComment = "",
     title = "Task Assignee",
     assigneeComment = "",
-    creatorComment = "";
+    creatorComment = "",
+    pullRequestReviewerComment = "";
   // The mapping between gh handle and comment with a permit url
   const reward: Record<string, string> = {};
+  const prReviewersReward: Record<string, string> = {};
 
   // ASSIGNEE REWARD PRICE PROCESSOR
   let priceInEth = new Decimal(incentivesCalculation.issueDetailed.priceLabel.substring(7, incentivesCalculation.issueDetailed.priceLabel.length - 4)).mul(
@@ -340,6 +343,25 @@ export const handleIssueClosed = async (
 
     logger.info(`Permit url generated for contributors. reward: ${JSON.stringify(reward)}`);
     logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(conversationRewards.fallbackReward)}`);
+  }
+
+  // PULL REQUEST REVIEWERS REWARD HANDLER
+  if (pullRequestReviewersReward.reward && pullRequestReviewersReward.reward.length > 0) {
+    pullRequestReviewerComment = `#### ${pullRequestReviewersReward.title}\n`;
+
+    pullRequestReviewersReward.reward.map(async (permit) => {
+      // Exclude issue creator from commenter rewards
+      if (permit.userId !== creatorReward.userId) {
+        const { payoutUrl } = await generatePermit2Signature(permit.account, permit.priceInEth, incentivesCalculation.issue.node_id, permit.userId);
+        pullRequestReviewerComment = `${pullRequestReviewerComment}### [ **${permit.user}: [ CLAIM ${
+          permit.priceInEth
+        } ${incentivesCalculation.tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
+        prReviewersReward[permit.user] = payoutUrl;
+      }
+    });
+
+    logger.info(`Permit url generated for pull request reviewers. reward: ${JSON.stringify(prReviewersReward)}`);
+    logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(pullRequestReviewersReward.fallbackReward)}`);
   }
 
   // CREATOR REWARD HANDLER
@@ -408,6 +430,7 @@ export const handleIssueClosed = async (
 
   if (commentersComment && !isEmpty(reward)) await addCommentToIssue(commentersComment, issueNumber);
   if (creatorComment) await addCommentToIssue(creatorComment, issueNumber);
+  if (pullRequestReviewerComment && !isEmpty(prReviewersReward)) await addCommentToIssue(pullRequestReviewerComment, issueNumber);
   if (assigneeComment) await addCommentToIssue(assigneeComment + comments.promotionComment, issueNumber);
 
   await deleteLabel(incentivesCalculation.issueDetailed.priceLabel);

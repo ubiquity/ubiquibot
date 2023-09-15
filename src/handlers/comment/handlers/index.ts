@@ -29,6 +29,7 @@ import {
   calculateIssueConversationReward,
   calculateIssueCreatorReward,
   calculateIssueAssigneeReward,
+  calculatePullRequestReviewsReward,
 } from "../../payout";
 import { query } from "./query";
 import { autoPay } from "./payout";
@@ -96,8 +97,9 @@ export const issueClosedCallback = async (): Promise<void> => {
     const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
     const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
     const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
+    const pullRequestReviewersReward = await calculatePullRequestReviewsReward(calculateIncentives);
 
-    const { error } = await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, calculateIncentives);
+    const { error } = await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, pullRequestReviewersReward, calculateIncentives);
 
     if (error) {
       throw new Error(error);
