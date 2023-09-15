@@ -17,6 +17,7 @@ export const bountyInfo = (
   priceLabel: string | undefined;
 } => {
   const config = getBotConfig();
+  const labels = issue.labels;
 
   const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
   const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
@@ -26,7 +27,6 @@ export const bountyInfo = (
   const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
   const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
 
-  const labels = issue.labels;
   const labelNames = labels.map((i) => i.name);
   let priceLabel: string = "";
   labelNames.forEach((e) => {
