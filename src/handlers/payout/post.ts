@@ -105,7 +105,8 @@ export const incentivizeComments = async () => {
 
   // The mapping between gh handle and amount in ETH
   const fallbackReward: Record<string, Decimal> = {};
-  let comment = `#### Conversation Rewards\n`;
+  const commentBack = `#### Conversation Rewards\n`;
+  let comment = commentBack;
   for (const user of Object.keys(issueCommentsByUser)) {
     const commentsByUser = issueCommentsByUser[user];
     const commentsByNode = await parseComments(commentsByUser.comments, ItemsToExclude);
@@ -150,7 +151,10 @@ export const incentivizeComments = async () => {
   logger.info(`Permit url generated for contributors. reward: ${JSON.stringify(reward)}`);
   logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
 
-  await addCommentToIssue(comment, issue.number);
+  // not posting a comment if there's no permit
+  if (comment !== commentBack) {
+    await addCommentToIssue(comment, issue.number);
+  }
 };
 
 export const incentivizePullRequestReviews = async () => {
