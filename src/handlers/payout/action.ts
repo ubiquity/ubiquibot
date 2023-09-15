@@ -26,6 +26,7 @@ export const handleIssueClosed = async () => {
     payout: { paymentToken, rpc, permitBaseUrl, networkId, privateKey },
     mode: { paymentPermitMaxPrice },
     accessControl,
+    bountyRewardsCap: { issue_assignee },
   } = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -183,6 +184,12 @@ export const handleIssueClosed = async () => {
     priceInEth = new Decimal(ethers.utils.formatUnits(bountyAmountAfterPenalty, 18));
   }
 
+  let labelAmount: Decimal | undefined = undefined;
+  if (issueDetailed.priceLabel) {
+    labelAmount = new Decimal(issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4));
+  }
+
+  priceInEth = issue_assignee && labelAmount !== undefined && priceInEth > labelAmount ? labelAmount : priceInEth;
   const { txData, payoutUrl } = await generatePermit2Signature(recipient, priceInEth, issue.node_id, assignee.node_id, "ISSUE_ASSIGNEE");
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const shortenRecipient = shortenEthAddress(recipient, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);

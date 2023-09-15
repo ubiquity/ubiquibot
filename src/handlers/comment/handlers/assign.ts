@@ -128,13 +128,18 @@ export const assign = async (body: string) => {
   const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
-    const { multiplier, reason, bounty } = await getMultiplierInfoToDisplay(payload.sender.login, id?.toString(), issue);
+    const { multiplier, reason, bounty } = await getMultiplierInfoToDisplay(
+      payload.sender.login,
+      id?.toString(),
+      issue,
+      config.bountyRewardsCap.issue_assignee
+    );
     return tableComment({ ...comment, multiplier, reason, bounty, isBountyStale, days }) + comment.tips;
   }
   return;
 };
 
-const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, issue: Issue) => {
+const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, issue: Issue, cap: boolean) => {
   const { reason, value } = await getWalletMultiplier(senderLogin, org_id);
 
   const multiplier = value?.toFixed(2) || "1.00";
@@ -156,6 +161,9 @@ const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, i
     const issueDetailed = bountyInfo(issue);
     if (issueDetailed.priceLabel) {
       _bountyToDisplay = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString() + " USD";
+      if (cap) {
+        _bountyToDisplay = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4)).toString() + " USD" + " [Capped]";
+      }
     }
   }
   return { multiplier: _multiplierToDisplay, reason: _reasonToDisplay, bounty: _bountyToDisplay };

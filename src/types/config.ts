@@ -122,6 +122,7 @@ export type AccessControl = Static<typeof AccessControlSchema>;
 export const BountyRewardsCapSchema = Type.Object({
   issue_issuer: Type.Boolean(),
   issue_collaborator: Type.Boolean(),
+  issue_assignee: Type.Boolean(),
   issue_default: Type.Boolean(),
   review_issuer: Type.Boolean(),
   review_collaborator: Type.Boolean(),

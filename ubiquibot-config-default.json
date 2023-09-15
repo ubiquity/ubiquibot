@@ -94,6 +94,7 @@
   "bounty-rewards-cap": {
     "issue_issuer": true,
     "issue_collaborator": true,
+    "issue_assignee": true,
     "issue_default": true,
     "review_issuer": true,
     "review_collaborator": true,
