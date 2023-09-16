@@ -21,6 +21,7 @@ import {
   getTokenSymbol,
   getAllIssueAssignEvents,
   calculateWeight,
+  getAllPullRequests,
 } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { handleIssueClosed } from "../../payout";
@@ -114,6 +115,66 @@ export const issueCreatedCallback = async (): Promise<void> => {
     }
   } catch (err: unknown) {
     await addCommentToIssue(ErrorDiff(err), issue.number);
+  }
+};
+
+/**
+ * Callback for issues reopened - Blame Processor
+ * @notice Identifies the changes in main that broke the features of the issue
+ * @notice This is to assign responsibility to the person who broke the feature
+ * @dev The person in fault will be penalized...
+ */
+export const issueReopenedBlameCallback = async (): Promise<void> => {
+  // const logger = getLogger();
+  const context = getBotContext();
+  // const config = getBotConfig();
+  const payload = context.payload as Payload;
+
+  const issue = payload.issue;
+
+  if (!issue) return;
+
+  const repository = payload.repository;
+
+  if (!repository) return;
+
+  const allRepoCommits = await context.octokit.repos
+    .listCommits({
+      owner: repository.owner.login,
+      repo: repository.name,
+    })
+    .then((res) => res.data);
+
+  const currentCommit = allRepoCommits[0];
+  const currentCommitSha = currentCommit.sha;
+
+  const allClosedPulls = await getAllPullRequests(context, "closed");
+  const mergedPulls = allClosedPulls.filter((pull) => pull.merged_at);
+  const mergedSHAs = mergedPulls.map((pull) => pull.merge_commit_sha);
+  const pullNumbers = mergedPulls.map((pull) => pull.number);
+
+  const diffs = [];
+
+  for (const sha of mergedSHAs) {
+    if (!sha) continue;
+    const diff = await context.octokit.repos
+      .compareCommits({
+        owner: repository.owner.login,
+        repo: repository.name,
+        base: sha,
+        head: currentCommitSha,
+      })
+      .then((res) => res.data);
+
+    diffs.push(diff);
+  }
+
+  for (let i = 0; i < diffs.length; i++) {
+    console.log("====================================");
+    console.log(`Pull #${pullNumbers[i]}`);
+    console.log("====================================");
+    console.log(diffs[i]);
+    console.log("====================================");
   }
 };
 

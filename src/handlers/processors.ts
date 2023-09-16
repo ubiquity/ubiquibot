@@ -3,7 +3,7 @@ import { closePullRequestForAnIssue, commentWithAssignMessage } from "./assign";
 import { pricingLabelLogic, validatePriceLabels } from "./pricing";
 import { checkBountiesToUnassign, collectAnalytics, checkWeeklyUpdate } from "./wildcard";
 import { nullHandler } from "./shared";
-import { handleComment, issueClosedCallback, issueCreatedCallback, issueReopenedCallback } from "./comment";
+import { handleComment, issueClosedCallback, issueCreatedCallback, issueReopenedBlameCallback, issueReopenedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
 import { runOnPush, validateConfigChange } from "./push";
@@ -18,7 +18,7 @@ export const processors: Record<string, Handler> = {
   },
   [GithubEvent.ISSUES_REOPENED]: {
     pre: [nullHandler],
-    action: [issueReopenedCallback],
+    action: [issueReopenedBlameCallback, issueReopenedCallback],
     post: [nullHandler],
   },
   [GithubEvent.ISSUES_LABELED]: {
