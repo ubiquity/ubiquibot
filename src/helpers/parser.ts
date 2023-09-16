@@ -13,6 +13,8 @@ interface GitParser {
 
 export const gitIssueParser = async ({ owner, repo, issue_number }: GitParser): Promise<{ number: number; href: string }[]> => {
   try {
+    const context = getBotContext();
+    const payload = context.payload as Payload;
     const { data } = await axios.get(`https://github.com/${owner}/${repo}/issues/${issue_number}`);
     const dom = parse(data);
     const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
@@ -24,8 +26,14 @@ export const gitIssueParser = async ({ owner, repo, issue_number }: GitParser): 
 
       if (!prUrl) return;
 
-      const prInfo = prUrl.split("/");
-      const prNumber = Number(prInfo[prInfo.length - 1]);
+      const parts = prUrl.split("/");
+      // extract the organization name and repo name from the link:(e.g. "
+      const organization = parts[parts.length - 4];
+      const repository = parts[parts.length - 3];
+
+      if (`${organization}/${repository}` !== payload.repository.full_name) return;
+
+      const prNumber = Number(parts[parts.length - 1]);
       const prHref = `https://github.com${prUrl}`;
 
       prs.push({ number: prNumber, href: prHref });
