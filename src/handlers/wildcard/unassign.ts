@@ -93,7 +93,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   return false;
 };
 
-const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date> => {
+export const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date> => {
   const logger = getLogger();
   logger.info(`Checking the latest activity for the issue, issue_number: ${issue.number}`);
   const assignees = issue.assignees.map((i) => i.login);

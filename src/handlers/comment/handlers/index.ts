@@ -29,6 +29,7 @@ import { query } from "./query";
 import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
 import { ErrorDiff } from "../../../utils/helpers";
+import { lastActivityTime } from "../../wildcard";
 
 export * from "./assign";
 export * from "./wallet";
@@ -125,17 +126,14 @@ export const issueCreatedCallback = async (): Promise<void> => {
  * @dev The person in fault will be penalized...
  */
 export const issueReopenedBlameCallback = async (): Promise<void> => {
-  // const logger = getLogger();
+  const logger = getLogger();
   const context = getBotContext();
   // const config = getBotConfig();
   const payload = context.payload as Payload;
-
   const issue = payload.issue;
-
-  if (!issue) return;
-
   const repository = payload.repository;
 
+  if (!issue) return;
   if (!repository) return;
 
   const allRepoCommits = await context.octokit.repos
@@ -147,35 +145,91 @@ export const issueReopenedBlameCallback = async (): Promise<void> => {
 
   const currentCommit = allRepoCommits[0];
   const currentCommitSha = currentCommit.sha;
+  const lastActivity = await lastActivityTime(issue, await getAllIssueComments(issue.number));
 
   const allClosedPulls = await getAllPullRequests(context, "closed");
-  const mergedPulls = allClosedPulls.filter((pull) => pull.merged_at);
+  const mergedPulls = allClosedPulls.filter((pull) => pull.merged_at && pull.merged_at > lastActivity.toISOString());
   const mergedSHAs = mergedPulls.map((pull) => pull.merge_commit_sha);
-  const pullNumbers = mergedPulls.map((pull) => pull.number);
+  const commitsThatMatch = allRepoCommits.filter((commit) => mergedSHAs.includes(commit.sha)).reverse();
+
+  const pullsThatCommitsMatch = await Promise.all(
+    commitsThatMatch.map((commit) =>
+      context.octokit.repos
+        .listPullRequestsAssociatedWithCommit({
+          owner: repository.owner.login,
+          repo: repository.name,
+          commit_sha: commit.sha,
+        })
+        .then((res) => res.data)
+    )
+  );
+
+  // it looks like [[16],[48]] so we need to flatten it not using flat()
+  const onlyPRsNeeded = pullsThatCommitsMatch.map((pulls) => pulls.map((pull) => pull.number)).reduce((acc, val) => acc.concat(val), []);
+
+  const issueRegex = new RegExp(`#${issue.number}`, "g");
+  const matchingPull = mergedPulls.find((pull) => pull.body?.match(issueRegex));
+
+  if (!matchingPull) {
+    logger.info(`No matching pull found for issue #${issue.number}`);
+    return;
+  }
+
+  const pullDiff = await context.octokit.repos
+    .compareCommitsWithBasehead({
+      owner: repository.owner.login,
+      repo: repository.name,
+      basehead: matchingPull?.merge_commit_sha + "..." + currentCommitSha,
+      mediaType: {
+        format: "diff",
+      },
+    })
+    .then((res) => res.data);
 
   const diffs = [];
+  const fileLens: number[] = [];
 
   for (const sha of mergedSHAs) {
     if (!sha) continue;
     const diff = await context.octokit.repos
-      .compareCommits({
+      .compareCommitsWithBasehead({
         owner: repository.owner.login,
         repo: repository.name,
-        base: sha,
-        head: currentCommitSha,
+        basehead: sha + "..." + currentCommitSha,
       })
       .then((res) => res.data);
 
+    const fileLen = diff.files?.length;
+
+    fileLens.push(fileLen || 0);
     diffs.push(diff);
+
+    if (diff.files && diff.files.length > 0) {
+      logger.info(`Found ${diff.files.length} files changed in commit ${sha}`);
+    } else {
+      logger.info(`No files changed in commit ${sha}`);
+    }
   }
 
-  for (let i = 0; i < diffs.length; i++) {
-    console.log("====================================");
-    console.log(`Pull #${pullNumbers[i]}`);
-    console.log("====================================");
-    console.log(diffs[i]);
-    console.log("====================================");
+  if (pullDiff.files && pullDiff.files.length > 0) {
+    logger.info(`Found ${pullDiff.files.length} files changed in commit ${matchingPull?.merge_commit_sha}`);
   }
+
+  const comment = `
+  The following pull requests were merged after this issue was closed:
+  ${onlyPRsNeeded
+    .sort()
+    .map((pullNumber) => `<ul><li>#${pullNumber}</li></ul>`)
+    .join("\n")}
+
+  | **Files Changed** | **Commit** | **Author** |
+  | --- | --- | --- |
+  ${onlyPRsNeeded.map((_pullNumber, index) => `| ${fileLens[index]} | ${commitsThatMatch[index].sha} | ${commitsThatMatch[index].author?.login} |`).join("\n")}
+
+  Basehead Comparison: ${matchingPull?.merge_commit_sha}...${currentCommitSha}
+  `;
+
+  await addCommentToIssue(comment, issue.number);
 };
 
 /**
