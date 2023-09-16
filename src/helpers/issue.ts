@@ -515,13 +515,13 @@ export const closePullRequest = async (pull_number: number) => {
   }
 };
 
-export const getAllPullRequestReviews = async (context: Context, pull_number: number) => {
+export const getAllPullRequestReviews = async (context: Context, pull_number: number, format: "raw" | "html" | "text" | "full" = "raw") => {
   const prArr = [];
   let fetchDone = false;
   const perPage = 30;
   let curPage = 1;
   while (!fetchDone) {
-    const prs = await getPullRequestReviews(context, pull_number, perPage, curPage);
+    const prs = await getPullRequestReviews(context, pull_number, perPage, curPage, format);
 
     // push the objects to array
     prArr.push(...prs);
@@ -532,7 +532,13 @@ export const getAllPullRequestReviews = async (context: Context, pull_number: nu
   return prArr;
 };
 
-export const getPullRequestReviews = async (context: Context, pull_number: number, per_page: number, page: number) => {
+export const getPullRequestReviews = async (
+  context: Context,
+  pull_number: number,
+  per_page: number,
+  page: number,
+  format: "raw" | "html" | "text" | "full" = "raw"
+) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   try {
@@ -542,6 +548,9 @@ export const getPullRequestReviews = async (context: Context, pull_number: numbe
       pull_number,
       per_page,
       page,
+      mediaType: {
+        format,
+      },
     });
     return reviews;
   } catch (e: unknown) {
