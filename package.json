@@ -34,6 +34,7 @@
     "@sinclair/typebox": "^0.31.5",
     "@supabase/supabase-js": "^2.4.0",
     "@types/ms": "^0.7.31",
+    "@types/parse5": "^7.0.0",
     "@typescript-eslint/eslint-plugin": "^5.59.11",
     "@typescript-eslint/parser": "^5.59.11",
     "@uniswap/permit2-sdk": "^1.2.0",
