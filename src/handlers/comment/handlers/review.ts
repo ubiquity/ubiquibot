@@ -122,5 +122,5 @@ export const review = async (body: string) => {
   if (res.startsWith("```diff\n")) {
     return res;
   }
-  return res + `\n> <small> Ensure the pull request requirements are in the linked issue's first comment and update it if the scope evolves. </small>.`;
+  return res + `\n> ###### Ensure the pull request requirements are in the linked issue's first comment and update it if the scope evolves.`;
 };
