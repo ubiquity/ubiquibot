@@ -47,6 +47,15 @@ export interface IncentivesCalculationResult {
   tokenSymbol: string;
 }
 
+export interface RewardByUser {
+  account: string;
+  priceInEth: Decimal;
+  userId: string | undefined;
+  issueId: string;
+  type: string | undefined;
+  user: string | undefined;
+}
+
 /**
  * Collect the information required for the permit generation and error handling
  */
@@ -319,14 +328,7 @@ export const handleIssueClosed = async (
   const prReviewersReward: Record<string, string> = {};
 
   // Rewards by user
-  const rewardByUser: {
-    account: string;
-    priceInEth: Decimal;
-    userId: string | undefined;
-    issueId: string;
-    type: string | undefined;
-    user: string | undefined;
-  }[] = [];
+  const rewardByUser: RewardByUser[] = [];
 
   // ASSIGNEE REWARD PRICE PROCESSOR
   let priceInEth = new Decimal(incentivesCalculation.issueDetailed.priceLabel.substring(7, incentivesCalculation.issueDetailed.priceLabel.length - 4)).mul(
@@ -450,7 +452,7 @@ export const handleIssueClosed = async (
       acc.push(curr);
     }
     return acc;
-  }, [] as { account: string; priceInEth: Decimal; userId: string | undefined; issueId: string; type: string | undefined; user: string | undefined }[]);
+  }, [] as RewardByUser[]);
 
   // CREATE PERMIT URL FOR EACH USER
   for (const reward of rewards) {
