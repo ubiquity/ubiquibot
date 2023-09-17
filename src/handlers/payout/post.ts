@@ -9,7 +9,7 @@ import {
   getTokenSymbol,
   parseComments,
 } from "../../helpers";
-import { gitLinkedPrParser } from "../../helpers/parser";
+import { ListPullsByNumberResponse, getLinkedPrs } from "../../helpers/parser";
 import { Incentives, MarkdownItem, Payload, StateReason, UserType } from "../../types";
 import { commentParser } from "../comment";
 import Decimal from "decimal.js";
@@ -167,7 +167,12 @@ export const incentivizePullRequestReviews = async () => {
     return;
   }
 
-  const linkedPullRequest = await gitLinkedPrParser({ owner: payload.repository.owner.login, repo: payload.repository.name, issue_number: issue.number });
+  const linkedPullRequest = (await getLinkedPrs({
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    issue_number: issue.number,
+    latest: true,
+  })) as ListPullsByNumberResponse["data"];
 
   if (!linkedPullRequest) {
     logger.debug(`incentivizePullRequestReviews: No linked pull requests found`);

@@ -1,6 +1,6 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, closePullRequest, calculateWeight, calculateDuration } from "../../helpers";
-import { gitIssueParser } from "../../helpers/parser";
+import { PRsForClose, getLinkedPrs } from "../../helpers/parser";
 import { Payload, LabelItem } from "../../types";
 import { deadLinePrefix } from "../shared";
 
@@ -73,11 +73,12 @@ export const closePullRequestForAnIssue = async (): Promise<void> => {
   const payload = context.payload as Payload;
   if (!payload.issue?.number) return;
 
-  const prs = await gitIssueParser({
+  const prs = (await getLinkedPrs({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     issue_number: payload.issue.number,
-  });
+    latest: false,
+  })) as PRsForClose[];
 
   if (!prs.length) return;
 
