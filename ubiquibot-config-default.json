@@ -116,7 +116,9 @@
         "em": 0,
         "strong": 0,
         "hr": 0,
-        "del": 0
+        "del": 0,
+        "pre": 0,
+        "ol": 0
       },
       "totals": {
         "word": 0
