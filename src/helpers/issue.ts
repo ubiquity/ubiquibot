@@ -14,23 +14,21 @@ export const getAllIssueEvents = async () => {
       owner: payload.repository.owner.login,
       repo: payload.repository.full_name,
       issue_number: payload.issue.number,
+      per_page: 100,
+      page: 1,
     });
     return events;
   } catch (e: unknown) {
-    logger.debug(`Getting all issue events failed, reason: ${e}`);
+    logger.error(`Getting all issue events failed, reason: ${e}`);
     return null;
   }
 };
 
 export const getAllLabeledEvents = async () => {
   const events = await getAllIssueEvents();
-  if (!events) return;
-  const labeledEvents: typeof events = [];
-  events.forEach((event) => {
-    if (event.event === "labeled") {
-      labeledEvents.push(event);
-    }
-  });
+  if (!events) return null;
+  let labeledEvents: typeof events = [];
+  labeledEvents = events.filter((event) => event.event === "labeled");
   return labeledEvents;
 };
 

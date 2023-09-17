@@ -27,13 +27,7 @@ export const bountyInfo = (
   const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
   const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
 
-  const labelNames = labels.map((i) => i.name);
-  let priceLabel = "";
-  labelNames.forEach((e) => {
-    if (e.includes("Price")) {
-      priceLabel = e;
-    }
-  });
+  const priceLabel = labels.find((label) => label.name.includes("Price"))?.name;
 
   return {
     isBounty,

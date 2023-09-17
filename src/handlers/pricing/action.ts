@@ -1,7 +1,7 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs";
 import { addCommentToIssue, addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel, calculateWeight, getAllLabeledEvents } from "../../helpers";
-import { Payload } from "../../types";
+import { Payload, UserType } from "../../types";
 import { handleLabelsAccess } from "../access";
 import { getTargetPriceLabel } from "../shared";
 
@@ -58,15 +58,14 @@ export const pricingLabelLogic = async (): Promise<void> => {
       if (hasTargetPriceLabel) {
         // get all issue events of type "labeled" and the event label includes Price
         const labeledEvents = await getAllLabeledEvents();
+        let labeledPriceEvents: typeof labeledEvents = [];
+
         if (!labeledEvents) return;
-        const labeledPriceEvents: typeof labeledEvents = [];
-        labeledEvents.forEach((event) => {
-          if (event.label?.name.includes("Price")) {
-            labeledPriceEvents.push(event);
-          }
-        });
+        labeledPriceEvents = labeledEvents.filter((event) => event.label?.name.includes("Price"));
+        if (!labeledPriceEvents.length) return;
+
         // check if the latest price label has been added by a user
-        if (labeledPriceEvents[labeledPriceEvents.length - 1].actor?.type == "User") {
+        if (labeledPriceEvents[labeledPriceEvents.length - 1].actor?.type == UserType.User) {
           logger.info(`Skipping... already exists`);
         } else {
           // add price label to issue becuase wrong price has been added by bot
