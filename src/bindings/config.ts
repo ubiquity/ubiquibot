@@ -1,12 +1,18 @@
 import ms from "ms";
 
-import { BotConfig, BotConfigSchema } from "../types";
-import { DEFAULT_BOT_DELAY, DEFAULT_DISQUALIFY_TIME, DEFAULT_FOLLOWUP_TIME, DEFAULT_PERMIT_BASE_URL } from "../configs";
+import { BotConfig, BotConfigSchema, LogLevel } from "../types";
+import {
+  DEFAULT_BOT_DELAY,
+  DEFAULT_DISQUALIFY_TIME,
+  DEFAULT_FOLLOWUP_TIME,
+  DEFAULT_PERMIT_BASE_URL,
+  DEFAULT_TIME_RANGE_FOR_MAX_ISSUE,
+  DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED,
+} from "../configs";
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
 import { getScalarKey, getWideConfig } from "../utils/private";
-import { Level } from "../adapters/supabase";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
@@ -26,6 +32,8 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     commandSettings,
     assistivePricing,
     registerWalletWithVerification,
+    staleBountyTime,
+    enableAccessControl,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -34,7 +42,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const botConfig: BotConfig = {
     log: {
       logEnvironment: process.env.LOG_ENVIRONMENT || "production",
-      level: (process.env.LOG_LEVEL as Level) || Level.DEBUG,
+      level: (process.env.LOG_LEVEL as LogLevel) || LogLevel.DEBUG,
       retryLimit: Number(process.env.LOG_RETRY) || 0,
     },
     price: {
@@ -56,6 +64,12 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
     },
     unassign: {
+      timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE
+        ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE)
+        : DEFAULT_TIME_RANGE_FOR_MAX_ISSUE,
+      timeRangeForMaxIssueEnabled: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED
+        ? process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED == "true"
+        : DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED,
       followUpTime: ms(process.env.FOLLOW_UP_TIME || DEFAULT_FOLLOWUP_TIME),
       disqualifyTime: ms(process.env.DISQUALIFY_TIME || DEFAULT_DISQUALIFY_TIME),
     },
@@ -76,6 +90,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     command: commandSettings,
     assign: {
       bountyHunterMax: bountyHunterMax,
+      staleBountyTime: ms(staleBountyTime),
     },
     sodium: {
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",
@@ -84,6 +99,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     wallet: {
       registerWalletWithVerification: registerWalletWithVerification,
     },
+    accessControl: enableAccessControl,
   };
 
   if (botConfig.payout.privateKey == "") {

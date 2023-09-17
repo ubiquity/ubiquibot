@@ -1,15 +1,16 @@
 import { closePullRequestForAnIssue } from "../assign";
-import { getBotConfig, getLogger } from "../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs/strings";
 import {
   addCommentToIssue,
   getAllIssueComments,
   getCommitsOnPullRequest,
   getOpenedPullRequestsForAnIssue,
+  getReviewRequests,
   listAllIssuesForRepo,
   removeAssignees,
 } from "../../helpers";
-import { Comment, Issue, IssueType } from "../../types";
+import { Comment, Issue, IssueType, Payload } from "../../types";
 
 /**
  * @dev Check out the bounties which haven't been completed within the initial timeline
@@ -31,6 +32,8 @@ export const checkBountiesToUnassign = async () => {
 };
 
 const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
   const logger = getLogger();
   const {
     unassign: { followUpTime, disqualifyTime },
@@ -49,6 +52,14 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   const curTimestamp = new Date().getTime();
   const lastActivity = await lastActivityTime(issue, comments);
   const passedDuration = curTimestamp - lastActivity.getTime();
+  const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee.login);
+
+  if (pullRequest.length > 0) {
+    const reviewRequests = await getReviewRequests(context, pullRequest[0].number, payload.repository.owner.login, payload.repository.name);
+    if (!reviewRequests || reviewRequests.users?.length > 0) {
+      return false;
+    }
+  }
 
   if (passedDuration >= disqualifyTime || passedDuration >= followUpTime) {
     if (passedDuration >= disqualifyTime) {
@@ -70,11 +81,12 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
         logger.info(
           `Skipping posting an update message cause its been already asked, lastAskTime: ${lastAskTime}, lastActivityTime: ${lastActivity.getTime()}`
         );
-      } else
+      } else {
         await addCommentToIssue(
           `${askUpdate} @${assignees[0]}? If you would like to release the bounty back to the DevPool, please comment \`/stop\` \nLast activity time: ${lastActivity}`,
           issue.number
         );
+      }
     }
   }
 

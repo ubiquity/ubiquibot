@@ -1,6 +1,6 @@
 import { getMaxIssueNumber, upsertIssue, upsertUser } from "../../adapters/supabase";
 import { getBotConfig, getLogger } from "../../bindings";
-import { listIssuesForRepo, getUser } from "../../helpers";
+import { listIssuesForRepo, getUser, calculateWeight } from "../../helpers";
 import { Issue, IssueType, User, UserProfile } from "../../types";
 import { getTargetPriceLabel } from "../shared";
 
@@ -24,8 +24,8 @@ export const bountyInfo = (
 
   const isBounty = timeLabels.length > 0 && priorityLabels.length > 0;
 
-  const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : undefined;
-  const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (a.weight < b.weight ? a : b)).name : undefined;
+  const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
+  const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
 
   const priceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
 
@@ -83,26 +83,28 @@ export const collectAnalytics = async (): Promise<void> => {
         .toString()}`
     );
 
-    await Promise.all(userProfilesToUpsert.map(async (i) => upsertUser(i)));
+    await Promise.all(userProfilesToUpsert.map((i) => upsertUser(i)));
 
     // No need to update the record for the bounties already closed
     const bountiesToUpsert = bounties.filter((bounty) => (bounty.state === IssueType.CLOSED ? bounty.number > maximumIssueNumber : true));
     logger.info(`Upserting bounties: ${bountiesToUpsert.map((i) => i.title).toString()}`);
     await Promise.all(
-      bountiesToUpsert.map(async (i) => {
+      bountiesToUpsert.map((i) => {
         const additions = bountyInfo(i as Issue);
         if (additions.timelabel && additions.priorityLabel && additions.priceLabel)
-          await upsertIssue(i as Issue, {
+          return upsertIssue(i as Issue, {
             labels: {
               timeline: additions.timelabel,
               priority: additions.priorityLabel,
               price: additions.priceLabel,
             },
           });
+        return undefined;
       })
     );
 
     if (issues.length < perPage) fetchDone = true;
     else curPage++;
   }
+  logger.info("Collecting analytics finished...");
 };
