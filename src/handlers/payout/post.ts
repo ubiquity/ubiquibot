@@ -9,7 +9,7 @@ import {
   getTokenSymbol,
   parseComments,
 } from "../../helpers";
-import { ListPullsByNumberResponse, getLinkedPrs } from "../../helpers/parser";
+import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
 import { Incentives, MarkdownItem, Payload, StateReason, UserType } from "../../types";
 import { commentParser } from "../comment";
 import Decimal from "decimal.js";
@@ -167,14 +167,15 @@ export const incentivizePullRequestReviews = async () => {
     return;
   }
 
-  const linkedPullRequest = (await getLinkedPrs({
+  const linkedPullRequest = await gitLinkedPrParser({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     issue_number: issue.number,
     latest: true,
-  })) as ListPullsByNumberResponse["data"];
+  });
+  const latestLinkedPullRequest = await getLatestPullRequest(linkedPullRequest);
 
-  if (!linkedPullRequest) {
+  if (!latestLinkedPullRequest) {
     logger.debug(`incentivizePullRequestReviews: No linked pull requests found`);
     return;
   }
@@ -195,8 +196,8 @@ export const incentivizePullRequestReviews = async () => {
     return;
   }
 
-  const prReviews = await getAllPullRequestReviews(context, linkedPullRequest.number, "full");
-  const prComments = await getAllIssueComments(linkedPullRequest.number, "full");
+  const prReviews = await getAllPullRequestReviews(context, latestLinkedPullRequest.number, "full");
+  const prComments = await getAllIssueComments(latestLinkedPullRequest.number, "full");
   logger.info(`Getting the PR reviews done. comments: ${JSON.stringify(prReviews)}`);
   const prReviewsByUser: Record<string, { id: string; comments: string[] }> = {};
   for (const review of prReviews) {

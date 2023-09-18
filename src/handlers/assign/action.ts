@@ -1,6 +1,6 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, closePullRequest, calculateWeight, calculateDuration } from "../../helpers";
-import { PRsForClose, getLinkedPrs } from "../../helpers/parser";
+import { gitLinkedPrParser } from "../../helpers/parser";
 import { Payload, LabelItem } from "../../types";
 import { deadLinePrefix } from "../shared";
 
@@ -73,20 +73,20 @@ export const closePullRequestForAnIssue = async (): Promise<void> => {
   const payload = context.payload as Payload;
   if (!payload.issue?.number) return;
 
-  const prs = (await getLinkedPrs({
+  const prs = await gitLinkedPrParser({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     issue_number: payload.issue.number,
     latest: false,
-  })) as PRsForClose[];
+  });
 
   if (!prs.length) return;
 
   logger.info(`Opened prs for this issue: ${JSON.stringify(prs)}`);
   let comment = `These linked pull requests are closed: `;
   for (let i = 0; i < prs.length; i++) {
-    await closePullRequest(prs[i].number);
-    comment += ` <a href="${prs[i].href}">#${prs[i].number}</a> `;
+    await closePullRequest(prs[i].prNumber);
+    comment += ` <a href="${prs[i].prHref}">#${prs[i].prNumber}</a> `;
   }
   await addCommentToIssue(comment, payload.issue.number);
 };
