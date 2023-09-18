@@ -1,18 +1,20 @@
 name: "Bounty Proposal"
 description: Have a suggestion for how to improve UbiquiBot? Let us know!
-title: "Bounty Proposal:"
+title: "Bounty Proposal: "
 
 body:
   - type: markdown
     attributes:
       value: |
         ## Feature Request Form
-        Thank you for taking the time to file a feature request! Please let us know what you're trying to do, and how UbiquiBot can help.
+        Thank you for taking the time to file a feature request. 
+        If you register your wallet address, you will be eligible for compensation if this is accepted! 
+        Please let us know how we can improve the bot.
 
   - type: textarea
     attributes:
       label: Describe the background or context
-      description: Please let us know what inspired you to write this proposal. Backlinking to specific comments is usually sufficient context.
+      description: Please let us know what inspired you to write this proposal. Backlinking to specific comments on GitHub, and leaving a remark about how the bot should have interacted with it is usually sufficient context.
     validations:
       required: false
   
@@ -22,3 +24,10 @@ body:
       description: A clear description of what you want to happen. Add any considered drawbacks.
     validations:
       required: true
+  
+  - type: textarea
+    attributes:
+      label: Remarks
+      description: Any closing remarks?
+    validations:
+      required: false
