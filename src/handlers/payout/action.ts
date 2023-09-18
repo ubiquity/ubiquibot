@@ -191,12 +191,10 @@ export const handleIssueClosed = async () => {
   const comment =
     `#### Task Assignee Reward\n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
   const permitComments = comments.filter((content) => {
-    if (content.body.includes(DEFAULT_PERMIT_BASE_URL) && content.user.type == UserType.Bot) {
-      const url = new URL(content.body);
-      // Check if the URL contains the specific query parameter
-      return url.searchParams.has("claim");
-    }
-    return false;
+    claimUrlRegex;
+    const permitUrlMatches = content.body.match(claimUrlRegex);
+    if (!permitUrlMatches || permitUrlMatches.length < 2) return false;
+    else return true;
   });
   if (permitComments.length > 0) {
     logger.info(`Skip to generate a permit url because it has been already posted.`);
