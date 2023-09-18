@@ -80,7 +80,7 @@ export const getLatestPullRequest = async (prs: PRsParserResponse[]): Promise<Li
   let linkedPullRequest = null;
   for (const _pr of prs) {
     if (Number.isNaN(_pr.prNumber)) return null;
-    const pr = (await getPullByNumber(context, _pr.prNumber)) as ListPullsByNumberResponse["data"];
+    const pr = await getPullByNumber(context, _pr.prNumber);
     if (!pr || !pr.merged) continue;
 
     if (!linkedPullRequest) linkedPullRequest = pr;
