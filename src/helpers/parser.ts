@@ -12,7 +12,7 @@ interface GitParser {
   latest?: boolean;
 }
 
-export interface PRsParserResponse {
+export interface LinkedPR {
   prOrganization: string;
   prRepository: string;
   prNumber: number;
