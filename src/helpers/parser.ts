@@ -2,14 +2,12 @@ import axios from "axios";
 import { HTMLElement, parse } from "node-html-parser";
 import { getPullByNumber } from "./issue";
 import { getBotContext, getLogger } from "../bindings";
-import { Endpoints } from "@octokit/types";
 
 interface GitParser {
   owner: string;
   repo: string;
   issue_number?: number;
   pull_number?: number;
-  latest?: boolean;
 }
 
 export interface LinkedPR {
@@ -18,7 +16,6 @@ export interface LinkedPR {
   prNumber: number;
   prHref: string;
 }
-
 
 export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitParser) => {
   const logger = getLogger();
@@ -40,7 +37,7 @@ export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitPars
   }
 };
 
-export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser): Promise<PRsParserResponse[]> => {
+export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser): Promise<LinkedPR[]> => {
   const logger = getLogger();
   try {
     const prData = [];
@@ -56,6 +53,10 @@ export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser
       if (!prUrl) continue;
 
       const parts = prUrl.split("/");
+
+      // check if array size is at least 4
+      if (parts.length < 4) continue;
+
       // extract the organization name and repo name from the link:(e.g. "
       const prOrganization = parts[parts.length - 4];
       const prRepository = parts[parts.length - 3];
@@ -74,7 +75,7 @@ export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser
   }
 };
 
-export const getLatestPullRequest = async (prs: PRsParserResponse[]) => {
+export const getLatestPullRequest = async (prs: LinkedPR[]) => {
   const context = getBotContext();
   let linkedPullRequest = null;
   for (const _pr of prs) {

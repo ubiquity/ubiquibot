@@ -77,7 +77,6 @@ export const closePullRequestForAnIssue = async (): Promise<void> => {
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     issue_number: payload.issue.number,
-    latest: false,
   });
 
   if (!prs.length) return;

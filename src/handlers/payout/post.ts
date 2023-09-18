@@ -171,7 +171,6 @@ export const incentivizePullRequestReviews = async () => {
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     issue_number: issue.number,
-    latest: true,
   });
   const latestLinkedPullRequest = await getLatestPullRequest(linkedPullRequest);
 
