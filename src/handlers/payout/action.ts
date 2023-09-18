@@ -45,6 +45,7 @@ export interface IncentivesCalculationResult {
   };
   assignee: User;
   tokenSymbol: string;
+  claimUrlRegex: RegExp;
 }
 
 export interface RewardByUser {
@@ -243,6 +244,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     },
     assignee,
     tokenSymbol,
+    claimUrlRegex,
   };
 };
 
@@ -420,8 +422,7 @@ export const handleIssueClosed = async (
     assigneeComment =
       `#### ${title} Reward \n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
     const permitComments = incentivesCalculation.comments.filter((content) => {
-      claimUrlRegex;
-      const permitUrlMatches = content.body.match(claimUrlRegex);
+      const permitUrlMatches = content.body.match(incentivesCalculation.claimUrlRegex);
       if (!permitUrlMatches || permitUrlMatches.length < 2) return false;
       else return true;
     });
