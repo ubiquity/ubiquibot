@@ -1,4 +1,6 @@
-{
+import { MergedConfig } from "../types";
+
+export const DefaultConfig : MergedConfig = {
   "evmNetworkId": 100,
   "priceMultiplier": 1,
   "issueCreatorMultiplier": 2,
@@ -8,7 +10,6 @@
   "disableAnalytics": false,
   "commentIncentives": false,
   "registerWalletWithVerification": false,
-  "staleBountyTime": "0d",
   "promotionComment": "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>",
   "defaultLabels": [],
   "timeLabels": [
@@ -90,5 +91,7 @@
   "enableAccessControl": {
     "label": false,
     "organization": true
-  }
+  },
+  "staleBountyTime":"0d"
 }
+
