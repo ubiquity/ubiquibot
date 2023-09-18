@@ -132,28 +132,27 @@ export const getWideConfig = async (context: Context) => {
   const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
   const mergedConfigData: MergedConfig = mergeConfigs(configs);
 
-const configData = {
-  assistivePricing: mergedConfigData["assistive-pricing"],
-  baseMultiplier: mergedConfigData["price-multiplier"],
-  maxConcurrentBounties: mergedConfigData["max-concurrent-assigns"], // FIXME: property name might be wrong
-  commandSettings: mergedConfigData["command-settings"],
-  commentElementPricing: getCommentItemPrice(configs), // @TODO: refactor this method
-  defaultLabels: mergedConfigData["default-labels"],
-  disableAnalytics: mergedConfigData["disable-analytics"],
-  enableAccessControl: mergedConfigData["enable-access-control"],
-  evmNetworkId: mergedConfigData["evm-network-id"],
-  incentiveMode: mergedConfigData["comment-incentives"],
-  incentives: mergedConfigData["incentives"],
-  issueCreatorMultiplier: mergedConfigData["issue-creator-multiplier"],
-  paymentPermitMaxPrice: mergedConfigData["payment-permit-max-price"],
-  priorityLabels: mergedConfigData["priority-labels"],
-  privateKey: privateKeyDecrypted ?? "",
-  privateKey: privateKeyDecrypted ?? "",
-  promotionComment: mergedConfigData["promotion-comment"],
-  registerWalletWithVerification: mergedConfigData["register-wallet-with-verification"],
-  staleBountyTime: mergedConfigData["stale-bounty-time"],
-  timeLabels: mergedConfigData["time-labels"],
-};
+  const configData = {
+    assistivePricing: mergedConfigData["assistive-pricing"],
+    baseMultiplier: mergedConfigData["price-multiplier"],
+    maxConcurrentBounties: mergedConfigData["max-concurrent-assigns"], // FIXME: property name might be wrong
+    commandSettings: mergedConfigData["command-settings"],
+    // commentElementPricing: getCommentItemPrice(configs), // @TODO: refactor this method -- commenting out because no place to use it
+    defaultLabels: mergedConfigData["default-labels"],
+    disableAnalytics: mergedConfigData["disable-analytics"],
+    enableAccessControl: mergedConfigData["enable-access-control"],
+    evmNetworkId: mergedConfigData["evm-network-id"],
+    incentiveMode: mergedConfigData["comment-incentives"],
+    incentives: mergedConfigData["incentives"],
+    issueCreatorMultiplier: mergedConfigData["issue-creator-multiplier"],
+    paymentPermitMaxPrice: mergedConfigData["payment-permit-max-price"],
+    priorityLabels: mergedConfigData["priority-labels"],
+    privateKey: privateKeyDecrypted ?? "",
+    promotionComment: mergedConfigData["promotion-comment"],
+    registerWalletWithVerification: mergedConfigData["register-wallet-with-verification"],
+    staleBountyTime: mergedConfigData["stale-bounty-time"],
+    timeLabels: mergedConfigData["time-labels"],
+  };
 
   return configData;
 };
