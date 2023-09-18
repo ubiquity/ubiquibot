@@ -1,18 +1,18 @@
 import { MergedConfig } from "../types";
 
 export const DefaultConfig : MergedConfig = {
-  "evmNetworkId": 100,
-  "priceMultiplier": 1,
-  "issueCreatorMultiplier": 2,
-  "paymentPermitMaxPrice": 9007199254740991,
-  "maxConcurrentAssigns": 9007199254740991,
-  "assistivePricing": false,
-  "disableAnalytics": false,
-  "commentIncentives": false,
-  "registerWalletWithVerification": false,
-  "promotionComment": "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>",
-  "defaultLabels": [],
-  "timeLabels": [
+  evmNetworkId: 100,
+  priceMultiplier: 1,
+  issueCreatorMultiplier: 2,
+  paymentPermitMaxPrice: 9007199254740991,
+  maxConcurrentAssigns: 9007199254740991,
+  assistivePricing: false,
+  disableAnalytics: false,
+  commentIncentives: false,
+  registerWalletWithVerification: false,
+  promotionComment: "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>",
+  defaultLabels: [],
+  timeLabels: [
     {
       "name": "Time: <1 Hour"
     },
@@ -29,7 +29,7 @@ export const DefaultConfig : MergedConfig = {
       "name": "Time: <1 Month"
     }
   ],
-  "priorityLabels": [
+  priorityLabels: [
     {
       "name": "Priority: 1 (Normal)"
     },
@@ -46,7 +46,7 @@ export const DefaultConfig : MergedConfig = {
       "name": "Priority: 5 (Emergency)"
     }
   ],
-  "commandSettings": [
+  commandSettings: [
     {
       "name": "start",
       "enabled": false
@@ -80,7 +80,7 @@ export const DefaultConfig : MergedConfig = {
       "enabled": false
     }
   ],
-  "incentives": {
+  incentives: {
     "comment": {
       "elements": {},
       "totals": {
@@ -88,10 +88,10 @@ export const DefaultConfig : MergedConfig = {
       }
     }
   },
-  "enableAccessControl": {
+  enableAccessControl: {
     "label": false,
     "organization": true
   },
-  "staleBountyTime":"0d"
+  staleBountyTime:"0d"
 }
 
