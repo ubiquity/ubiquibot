@@ -23,7 +23,7 @@
     "start:watch": "nodemon --exec 'yarn start'",
     "start": "probot run ./lib/src/index.js",
     "prepare": "husky install",
-    "test": "jest"
+    "test:e2e": "jest"
   },
   "dependencies": {
     "@actions/core": "^1.10.0",

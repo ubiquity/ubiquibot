@@ -59,7 +59,7 @@ const repoConfig: WideRepoConfig = {
     { name: "help", enabled: true },
     { name: "payout", enabled: true },
   ],
-  "disable-analytics": false,
+  "disable-analytics": true,
   "enable-access-control": {
     label: true,
     organization: true,
