@@ -3,7 +3,7 @@ import { getBotConfig, getBotContext, getLogger } from "../bindings";
 import { AssignEvent, Comment, IssueType, Payload } from "../types";
 import { checkRateLimitGit } from "../utils";
 
-export const getAllIssueEvents = async () => {
+export const getAllIssueEvents = async (per_page: number, page: number) => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -14,8 +14,8 @@ export const getAllIssueEvents = async () => {
       owner: payload.repository.owner.login,
       repo: payload.repository.full_name,
       issue_number: payload.issue.number,
-      per_page: 100,
-      page: 1,
+      per_page: per_page,
+      page: page,
     });
     return events;
   } catch (e: unknown) {
@@ -25,7 +25,7 @@ export const getAllIssueEvents = async () => {
 };
 
 export const getAllLabeledEvents = async () => {
-  const events = await getAllIssueEvents();
+  const events = await getAllIssueEvents(100, 1);
   if (!events) return null;
   let labeledEvents: typeof events = [];
   labeledEvents = events.filter((event) => event.event === "labeled");
