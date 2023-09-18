@@ -19,7 +19,6 @@ import { bountyInfo } from "../wildcard";
 import Decimal from "decimal.js";
 import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
-import { DEFAULT_PERMIT_BASE_URL } from "../../configs";
 
 export const handleIssueClosed = async () => {
   const context = getBotContext();
