@@ -75,7 +75,7 @@ export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser
   }
 };
 
-export const getLatestPullRequest = async (prs: PRsParserResponse[]): Promise<ListPullsByNumberResponse["data"] | null> => {
+export const getLatestPullRequest = async (prs: PRsParserResponse[]) => {
   const context = getBotContext();
   let linkedPullRequest = null;
   for (const _pr of prs) {
