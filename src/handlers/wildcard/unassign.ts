@@ -10,7 +10,8 @@ import {
   listAllIssuesForRepo,
   removeAssignees,
 } from "../../helpers";
-import { Comment, Issue, IssueType, Payload } from "../../types";
+import { Comment, Issue, IssueType, Payload, UserType } from "../../types";
+import { deadLinePrefix } from "../shared";
 
 /**
  * @dev Check out the bounties which haven't been completed within the initial timeline
@@ -98,6 +99,11 @@ const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date
   logger.info(`Checking the latest activity for the issue, issue_number: ${issue.number}`);
   const assignees = issue.assignees.map((i) => i.login);
   const activities: Date[] = [new Date(issue.created_at)];
+
+  const lastAssignCommentOfHunter = comments
+    .filter((comment) => comment.user.type === UserType.Bot && comment.body.includes(assignees[0]) && comment.body.includes(deadLinePrefix))
+    .sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  if (lastAssignCommentOfHunter.length > 0) activities.push(new Date(lastAssignCommentOfHunter[0].created_at));
 
   // get last comment on the issue
   const lastCommentsOfHunterForIssue = comments
