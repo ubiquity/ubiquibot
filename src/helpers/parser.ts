@@ -19,7 +19,6 @@ export interface LinkedPR {
   prHref: string;
 }
 
-export type ListPullsByNumberResponse = Endpoints["GET /repos/{owner}/{repo}/pulls/{pull_number}"]["response"];
 
 export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitParser) => {
   const logger = getLogger();
