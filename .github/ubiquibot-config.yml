@@ -38,6 +38,7 @@ command-settings:
   - name: autopay
     enabled: true
 incentives: 
+  comments:
     totals:
       word: 0.1
     elements:
