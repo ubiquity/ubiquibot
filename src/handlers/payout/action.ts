@@ -419,9 +419,12 @@ export const handleIssueClosed = async (
     logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
     assigneeComment =
       `#### ${title} Reward \n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
-    const permitComments = incentivesCalculation.comments.filter(
-      (content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
-    );
+    const permitComments = incentivesCalculation.comments.filter((content) => {
+      claimUrlRegex;
+      const permitUrlMatches = content.body.match(claimUrlRegex);
+      if (!permitUrlMatches || permitUrlMatches.length < 2) return false;
+      else return true;
+    });
 
     if (permitComments.length > 0) {
       logger.info(`Skip to generate a permit url because it has been already posted.`);
