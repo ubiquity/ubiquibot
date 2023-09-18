@@ -4,7 +4,7 @@ import { MergedConfig, Payload } from "../types";
 import { Context } from "probot";
 import merge from "lodash/merge";
 
-import DefaultConfig from "../../ubiquibot-config-default";
+import { DefaultConfig } from "../configs";
 import { validate } from "./ajv";
 import { WideConfig, WideOrgConfig, WideRepoConfig, WideConfigSchema, WideOrgConfigSchema } from "../types";
 
