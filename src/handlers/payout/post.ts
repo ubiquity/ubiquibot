@@ -1,7 +1,7 @@
 import { getWalletAddress } from "../../adapters/supabase";
-import { getBotContext, getLogger } from "../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { getAllIssueComments, getAllPullRequestReviews, getIssueDescription, parseComments } from "../../helpers";
-import { gitLinkedPrParser } from "../../helpers/parser";
+import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
 import { Incentives, MarkdownItem, Payload, UserType } from "../../types";
 import { RewardsResponse, commentParser } from "../comment";
 import Decimal from "decimal.js";
@@ -173,12 +173,14 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
   const logger = getLogger();
   const context = getBotContext();
   const title = "Reviewer";
-
+  
   const linkedPullRequest = await gitLinkedPrParser({
-    owner: incentivesCalculation.payload.repository.owner.login,
-    repo: incentivesCalculation.payload.repository.name,
-    issue_number: incentivesCalculation.issue.number,
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    issue_number: issue.number,
   });
+  
+  const latestLinkedPullRequest = await getLatestPullRequest(linkedPullRequest);
 
   if (!linkedPullRequest) {
     logger.debug(`calculatePullRequestReviewsReward: No linked pull requests found`);
@@ -201,8 +203,8 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
     return { error: "calculatePullRequestReviewsReward: skipping payment permit generation because `assignee` is `undefined`." };
   }
 
-  const prReviews = await getAllPullRequestReviews(context, linkedPullRequest.number, "full");
-  const prComments = await getAllIssueComments(linkedPullRequest.number, "full");
+  const prReviews = await getAllPullRequestReviews(context, latestLinkedPullRequest.number, "full");
+  const prComments = await getAllIssueComments(latestLinkedPullRequest.number, "full");
   logger.info(`Getting the PR reviews done. comments: ${JSON.stringify(prReviews)}`);
   const prReviewsByUser: Record<string, { id: string; comments: string[] }> = {};
   for (const review of prReviews) {
