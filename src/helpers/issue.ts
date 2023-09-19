@@ -1,5 +1,5 @@
 import { Context } from "probot";
-import { getBotContext, getLogger, loadConfig } from "../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../bindings";
 import { AssignEvent, Comment, IssueType, Payload } from "../types";
 import { checkRateLimitGit } from "../utils";
 
@@ -515,13 +515,13 @@ export const closePullRequest = async (pull_number: number) => {
   }
 };
 
-export const getAllPullRequestReviews = async (context: Context, pull_number: number) => {
+export const getAllPullRequestReviews = async (context: Context, pull_number: number, format: "raw" | "html" | "text" | "full" = "raw") => {
   const prArr = [];
   let fetchDone = false;
   const perPage = 30;
   let curPage = 1;
   while (!fetchDone) {
-    const prs = await getPullRequestReviews(context, pull_number, perPage, curPage);
+    const prs = await getPullRequestReviews(context, pull_number, perPage, curPage, format);
 
     // push the objects to array
     prArr.push(...prs);
@@ -532,7 +532,13 @@ export const getAllPullRequestReviews = async (context: Context, pull_number: nu
   return prArr;
 };
 
-export const getPullRequestReviews = async (context: Context, pull_number: number, per_page: number, page: number) => {
+export const getPullRequestReviews = async (
+  context: Context,
+  pull_number: number,
+  per_page: number,
+  page: number,
+  format: "raw" | "html" | "text" | "full" = "raw"
+) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   try {
@@ -542,6 +548,9 @@ export const getPullRequestReviews = async (context: Context, pull_number: numbe
       pull_number,
       per_page,
       page,
+      mediaType: {
+        format,
+      },
     });
     return reviews;
   } catch (e: unknown) {
@@ -550,6 +559,20 @@ export const getPullRequestReviews = async (context: Context, pull_number: numbe
   }
 };
 
+export const getReviewRequests = async (context: Context, pull_number: number, owner: string, repo: string) => {
+  const logger = getLogger();
+  try {
+    const response = await context.octokit.pulls.listRequestedReviewers({
+      owner: owner,
+      repo: repo,
+      pull_number: pull_number,
+    });
+    return response.data;
+  } catch (e: unknown) {
+    logger.error(`Error: could not get requested reviewers, reason: ${e}`);
+    return null;
+  }
+};
 // Get issues by issue number
 export const getIssueByNumber = async (context: Context, issue_number: number) => {
   const logger = getLogger();
@@ -641,8 +664,10 @@ export const getCommitsOnPullRequest = async (pullNumber: number) => {
 
 export const getAvailableOpenedPullRequests = async (username: string) => {
   const context = getBotContext();
-  const botConfig = await loadConfig(context);
-  if (!botConfig.unassign.timeRangeForMaxIssueEnabled) return [];
+  const {
+    unassign: { timeRangeForMaxIssue, timeRangeForMaxIssueEnabled },
+  } = await getBotConfig();
+  if (!timeRangeForMaxIssueEnabled) return [];
 
   const opened_prs = await getOpenedPullRequests(username);
 
@@ -657,7 +682,7 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
       if (approvedReviews) result.push(pr);
     }
 
-    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= botConfig.unassign.timeRangeForMaxIssue) {
+    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= timeRangeForMaxIssue) {
       result.push(pr);
     }
   }

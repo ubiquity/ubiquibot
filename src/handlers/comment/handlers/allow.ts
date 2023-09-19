@@ -20,13 +20,20 @@ export const setAccess = async (body: string) => {
     return;
   }
 
-  const regex = /^\/allow set-(\S+)\s@(\w+)\s(true|false)$/;
-
+  const regex = /\/allow\s+(\S+)\s+(\S+)\s+(\S+)/;
   const matches = body.match(regex);
 
   if (matches) {
-    const [, accessType, username, bool] = matches;
-
+    let accessType, username, bool;
+    matches.slice(1).forEach((part) => {
+      if (part.startsWith("@")) username = part.slice(1);
+      else if (part.startsWith("set-")) accessType = part.slice(4);
+      else if (part === "true" || part === "false") bool = part;
+    });
+    if (!accessType || !username || !bool) {
+      logger.error("Invalid body for allow command");
+      return `Invalid syntax for allow \n usage: '/allow set-(access type) @user true|false' \n  ex-1 /allow set-multiplier @user false`;
+    }
     // Check if access control demand is valid
     if (!validAccessString.includes(accessType)) {
       logger.info(`Access control setting for ${accessType} does not exist.`);

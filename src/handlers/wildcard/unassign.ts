@@ -1,15 +1,16 @@
-import { closePullRequestForAnIssue } from "../assign";
-import { getBotConfig, getLogger } from "../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs/strings";
 import {
   addCommentToIssue,
   getAllIssueComments,
   getCommitsOnPullRequest,
   getOpenedPullRequestsForAnIssue,
+  getReviewRequests,
   listAllIssuesForRepo,
   removeAssignees,
 } from "../../helpers";
-import { Comment, Issue, IssueType } from "../../types";
+import { Comment, Issue, IssueType, Payload, UserType } from "../../types";
+import { deadLinePrefix } from "../shared";
 
 /**
  * @dev Check out the bounties which haven't been completed within the initial timeline
@@ -31,6 +32,8 @@ export const checkBountiesToUnassign = async () => {
 };
 
 const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
   const logger = getLogger();
   const {
     unassign: { followUpTime, disqualifyTime },
@@ -49,13 +52,20 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   const curTimestamp = new Date().getTime();
   const lastActivity = await lastActivityTime(issue, comments);
   const passedDuration = curTimestamp - lastActivity.getTime();
+  const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee.login);
+
+  if (pullRequest.length > 0) {
+    const reviewRequests = await getReviewRequests(context, pullRequest[0].number, payload.repository.owner.login, payload.repository.name);
+    if (!reviewRequests || reviewRequests.users?.length > 0) {
+      return false;
+    }
+  }
 
   if (passedDuration >= disqualifyTime || passedDuration >= followUpTime) {
     if (passedDuration >= disqualifyTime) {
       logger.info(
         `Unassigning... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
       );
-      await closePullRequestForAnIssue();
       // remove assignees from the issue
       await removeAssignees(issue.number, assignees);
       await addCommentToIssue(`@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
@@ -70,11 +80,12 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
         logger.info(
           `Skipping posting an update message cause its been already asked, lastAskTime: ${lastAskTime}, lastActivityTime: ${lastActivity.getTime()}`
         );
-      } else
+      } else {
         await addCommentToIssue(
           `${askUpdate} @${assignees[0]}? If you would like to release the bounty back to the DevPool, please comment \`/stop\` \nLast activity time: ${lastActivity}`,
           issue.number
         );
+      }
     }
   }
 
@@ -86,6 +97,11 @@ const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date
   logger.info(`Checking the latest activity for the issue, issue_number: ${issue.number}`);
   const assignees = issue.assignees.map((i) => i.login);
   const activities: Date[] = [new Date(issue.created_at)];
+
+  const lastAssignCommentOfHunter = comments
+    .filter((comment) => comment.user.type === UserType.Bot && comment.body.includes(assignees[0]) && comment.body.includes(deadLinePrefix))
+    .sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  if (lastAssignCommentOfHunter.length > 0) activities.push(new Date(lastAssignCommentOfHunter[0].created_at));
 
   // get last comment on the issue
   const lastCommentsOfHunterForIssue = comments

@@ -224,7 +224,7 @@ Bounty bot is built using the [probot](https://probot.github.io/) framework so i
 ├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/utils">utils</a> A set of utility functions
 </pre>
 
-## Default Config Notes (`ubiquibot-config-default.json`)
+## Default Config Notes (`ubiquibot-config-default.ts`)
 
 We can't use a `jsonc` file due to limitations with Netlify. Here is a snippet of some values with notes next to them.
 
@@ -238,4 +238,28 @@ We can't use a `jsonc` file due to limitations with Netlify. Here is a snippet o
     /* https://github.com/syntax-tree/mdast#gfm */
   }
 }
+```
+
+## Supabase Cron Job (`logs-cleaner`)
+
+##### Dashboard > Project > Database > Extensions
+
+> Search `PG_CRON` and Enable it.
+
+
+##### Dashboard > Project > SQL Editor
+
+```sql
+-- Runs everyday at 03:00 AM to cleanup logs that are older than a week
+-- Use the cron time format to modify the trigger time if necessary
+select
+  cron.schedule (
+    'logs-cleaner', -- Job name
+    '0 3 * * *', -- Everyday at 03:00 AM
+    $$DELETE FROM logs WHERE timestamp < now() - INTERVAL '1 week'$$
+  );
+
+
+-- Cancel the cron job
+select cron.unschedule('logs-cleaner');
 ```
