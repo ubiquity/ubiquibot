@@ -48,11 +48,6 @@ export interface Incentives {
   comment: CommentIncentives;
 }
 
-export interface CommandObj {
-  name: string;
-  enabled: boolean;
-}
-
 export interface MergedConfigs {
   parsedRepo: WideRepoConfig | undefined;
   parsedOrg: WideOrgConfig | undefined;
