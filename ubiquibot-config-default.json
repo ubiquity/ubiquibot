@@ -98,6 +98,6 @@
     "issue_default": true,
     "review_issuer": true,
     "review_collaborator": true,
-    "review-default": true
+    "review_default": true
   }
 }
