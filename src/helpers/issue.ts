@@ -95,6 +95,22 @@ export const listAllIssuesForRepo = async (state: "open" | "closed" | "all" = "o
   return issuesArr;
 };
 
+export const getIncentivizedUsers = async (issue_number: number) => {
+  const comments = await getAllIssueComments(issue_number);
+  const incentiveComment = comments.filter((comment) => comment.body.startsWith("/comment-incentives"));
+  const parts = incentiveComment[0].body.split("");
+  parts.shift();
+  let users: { enable: boolean; users: string[] } = { enable: false, users: [] };
+  for (const part of parts) {
+    if (part.startsWith("@")) {
+      users.users.push(part.substring(1));
+    } else if (part == "true") {
+      users.enable = part == "true";
+    }
+  }
+  return users;
+};
+
 export const addCommentToIssue = async (msg: string, issue_number: number) => {
   const context = getBotContext();
   const logger = getLogger();

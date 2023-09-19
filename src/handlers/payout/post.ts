@@ -5,6 +5,7 @@ import {
   generatePermit2Signature,
   getAllIssueComments,
   getAllPullRequestReviews,
+  getIncentivizedUsers,
   getIssueDescription,
   getTokenSymbol,
   parseComments,
@@ -70,13 +71,13 @@ export const incentivizeComments = async () => {
     logger.info("incentivizeComments: skipping payment permit generation because `assignee` is `undefined`.");
     return;
   }
-
+  const users = await getIncentivizedUsers(issue.number);
   const issueComments = await getAllIssueComments(issue.number, "full");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, { id: string; comments: string[] }> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
-    if (user.type == UserType.Bot || user.login == assignee) continue;
+    if (user.type == UserType.Bot) continue;
     const commands = commentParser(issueComment.body);
     if (commands.length > 0) {
       logger.info(`Skipping to parse the comment because it contains commands. comment: ${JSON.stringify(issueComment)}`);
@@ -103,26 +104,30 @@ export const incentivizeComments = async () => {
   const fallbackReward: Record<string, Decimal> = {};
   let comment = `#### Conversation Rewards\n`;
   for (const user of Object.keys(issueCommentsByUser)) {
-    const commentsByUser = issueCommentsByUser[user];
-    const commentsByNode = await parseComments(commentsByUser.comments, ItemsToExclude);
-    const rewardValue = calculateRewardValue(commentsByNode, incentives);
-    if (rewardValue.equals(0)) {
-      logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`);
-      continue;
-    }
-    logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
-    const account = await getWalletAddress(user);
-    const amountInETH = rewardValue.mul(baseMultiplier);
-    if (amountInETH.gt(paymentPermitMaxPrice)) {
-      logger.info(`Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
-      continue;
-    }
-    if (account) {
-      const { payoutUrl } = await generatePermit2Signature(account, amountInETH, issue.node_id, commentsByUser.id, "ISSUE_COMMENTER");
-      comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
-      reward[user] = payoutUrl;
+    if (users.users.includes(user) || users.enable) {
+      const commentsByUser = issueCommentsByUser[user];
+      const commentsByNode = await parseComments(commentsByUser.comments, ItemsToExclude);
+      const rewardValue = calculateRewardValue(commentsByNode, incentives);
+      if (rewardValue.equals(0)) {
+        logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`);
+        continue;
+      }
+      logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+      const account = await getWalletAddress(user);
+      const amountInETH = rewardValue.mul(baseMultiplier);
+      if (amountInETH.gt(paymentPermitMaxPrice)) {
+        logger.info(`Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
+        continue;
+      }
+      if (account) {
+        const { payoutUrl } = await generatePermit2Signature(account, amountInETH, issue.node_id, commentsByUser.id, "ISSUE_COMMENTER");
+        comment = `${comment}### [ **${user}: [ CLAIM ${amountInETH} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
+        reward[user] = payoutUrl;
+      } else {
+        fallbackReward[user] = amountInETH;
+      }
     } else {
-      fallbackReward[user] = amountInETH;
+      continue;
     }
   }
 
