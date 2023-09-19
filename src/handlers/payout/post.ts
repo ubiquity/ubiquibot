@@ -71,7 +71,6 @@ export const incentivizeComments = async () => {
     logger.info("incentivizeComments: skipping payment permit generation because `assignee` is `undefined`.");
     return;
   }
-  const users = await getIncentivizedUsers(issue.number);
   const issueComments = await getAllIssueComments(issue.number, "full");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, { id: string; comments: string[] }> = {};
@@ -99,7 +98,7 @@ export const incentivizeComments = async () => {
 
   // The mapping between gh handle and comment with a permit url
   const reward: Record<string, string> = {};
-
+  const users = await getIncentivizedUsers(issue.number);
   // The mapping between gh handle and amount in ETH
   const fallbackReward: Record<string, Decimal> = {};
   let comment = `#### Conversation Rewards\n`;
