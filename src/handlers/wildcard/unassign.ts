@@ -57,7 +57,17 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
 
   if (pullRequest.length > 0) {
     const reviewRequests = await getReviewRequests(context, pullRequest[0].number, payload.repository.owner.login, payload.repository.name);
-    if (!reviewRequests || reviewRequests.users?.length > 0) {
+    if (!reviewRequests) return false;
+    if (reviewRequests.users?.length > 0) {
+      let msg = "";
+      if (reviewRequests) {
+      }
+      for (const reviewer of reviewRequests.users) {
+        msg += "@" + reviewer.login + " ";
+      }
+      msg += "Can you please review this pull request";
+      // the below function can also add comment to prs
+      await addCommentToIssue(msg, pullRequest[0].number);
       return false;
     }
   }
