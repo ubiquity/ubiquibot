@@ -60,8 +60,6 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
     if (!reviewRequests) return false;
     if (reviewRequests.users?.length > 0) {
       let msg = "";
-      if (reviewRequests) {
-      }
       for (const reviewer of reviewRequests.users) {
         msg += "@" + reviewer.login + " ";
       }
