@@ -1,5 +1,5 @@
 import { getWalletAddress } from "../../adapters/supabase";
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import { getBotContext, getLogger } from "../../bindings";
 import { getAllIssueComments, getAllPullRequestReviews, getIssueDescription, parseComments } from "../../helpers";
 import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
 import { Incentives, MarkdownItem, Payload, UserType } from "../../types";
@@ -173,16 +173,16 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
   const logger = getLogger();
   const context = getBotContext();
   const title = "Reviewer";
-  
+
   const linkedPullRequest = await gitLinkedPrParser({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    issue_number: issue.number,
+    owner: incentivesCalculation.payload.repository.owner.login,
+    repo: incentivesCalculation.payload.repository.name,
+    issue_number: incentivesCalculation.issue.number,
   });
-  
+
   const latestLinkedPullRequest = await getLatestPullRequest(linkedPullRequest);
 
-  if (!linkedPullRequest) {
+  if (!latestLinkedPullRequest) {
     logger.debug(`calculatePullRequestReviewsReward: No linked pull requests found`);
     return { error: `calculatePullRequestReviewsReward: No linked pull requests found` };
   }
