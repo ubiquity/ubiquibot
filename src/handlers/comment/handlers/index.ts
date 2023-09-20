@@ -164,7 +164,6 @@ export const issueReopenedBlameCallback = async (): Promise<void> => {
     )
   );
 
-  // it looks like [[16],[48]] so we need to flatten it not using flat()
   const onlyPRsNeeded = pullsThatCommitsMatch.map((pulls) => pulls.map((pull) => pull.number)).reduce((acc, val) => acc.concat(val), []);
 
   const issueRegex = new RegExp(`#${issue.number}`, "g");
@@ -215,19 +214,86 @@ export const issueReopenedBlameCallback = async (): Promise<void> => {
     logger.info(`Found ${pullDiff.files.length} files changed in commit ${matchingPull?.merge_commit_sha}`);
   }
 
-  const comment = `
-  The following pull requests were merged after this issue was closed:
-  ${onlyPRsNeeded
-    .sort()
-    .map((pullNumber) => `<ul><li>#${pullNumber}</li></ul>`)
-    .join("\n")}
+  const matchingSlice = matchingPull?.merge_commit_sha?.slice(0, 8);
+  const currentSlice = currentCommitSha.slice(0, 8);
 
-  | **Files Changed** | **Commit** | **Author** |
+  const twoDotUrl = `<code>[${matchingSlice}..${currentSlice}](${repository.html_url}/compare/${matchingPull?.merge_commit_sha}..${currentCommitSha})</code>`;
+
+  interface Blamer {
+    author: string;
+    count: number;
+  }
+
+  const blamers: Blamer[] = [];
+
+  for (const diff of diffs) {
+    if (!diff.files) continue;
+    for (const file of diff.files) {
+      const linesChanged = file.patch?.split("\n").filter((line) => line.startsWith("+")).length;
+      const author = diff.base_commit?.author?.login;
+      const blamer = blamers.find((b) => b.author === author);
+      if (blamer) {
+        blamer.count += linesChanged || 0;
+      } else {
+        blamers.push({ author: author || "", count: linesChanged || 0 });
+      }
+    }
+  }
+
+  const advancedBlameTable = `
+  | **Blame** | **Count** | **%** |
   | --- | --- | --- |
-  ${onlyPRsNeeded.map((_pullNumber, index) => `| ${fileLens[index]} | ${commitsThatMatch[index].sha} | ${commitsThatMatch[index].author?.login} |`).join("\n")}
-
-  Basehead Comparison: ${matchingPull?.merge_commit_sha}...${currentCommitSha}
+  ${Array.from(new Set(blamers))
+    .filter((blamer) => blamer.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .map((blamer) => {
+      const linesChanged = blamer.count;
+      const totalLinesChanged = blamers.reduce((acc, val) => acc + val.count, 0);
+      const percent = Math.round((linesChanged / totalLinesChanged) * 100);
+      return `| ${blamer.author} | ${blamer.count} | ${percent}% |`;
+    })
+    .join("\n")}
   `;
+
+  const blameQuantifier = blamers.length > 1 ? "suspects" : "suspect";
+
+  const comment = `
+<details>
+<summary>Merged Pulls Since Issue Close</summary><br/>
+
+${onlyPRsNeeded
+  .sort()
+  .map((pullNumber) => `\n<ul><li>#${pullNumber}</li></ul>`)
+  .join("\n")}
+</details>
+
+
+<details>
+<summary>Merged Commits Since Issue Close</summary><br/>
+${diffs
+  // @ts-expect-error - diff is unused
+  .map((diff, i) => {
+    const fileLen = fileLens[i];
+    const sha = mergedSHAs[i];
+    const slice = sha?.slice(0, 7);
+    const url = `${repository.html_url}/commit/${sha}`;
+    return `\n<code><a href="${url}">${slice}</a></code> - ${fileLen} files changed`;
+  })
+  .join("\n")}
+</details>
+
+<details>
+<summary>Assigned Blame</summary><br/>
+
+The following ${blameQuantifier} may be responsible for breaking this issue:
+  ${advancedBlameTable}
+</details>
+
+<hr>
+
+2 dot: ${twoDotUrl}
+3 dot: ${repository.html_url}/compare/${matchingPull?.merge_commit_sha}...${currentCommitSha}
+`;
 
   await addCommentToIssue(comment, issue.number);
 };
