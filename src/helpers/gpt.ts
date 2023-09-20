@@ -16,34 +16,24 @@ All replies MUST end with "\n\n <!--- { 'OpenAI': 'answer' } ---> ".\n
 
 export const specCheckTemplate = `
 Using the provided context, ensure you clearly understand the specification of the issue.
-If you do not understand the specification, infer it from the changes made.
-
-You are the first line of defense to ensure the specification is met before reviewers do their job.
+They must achieve the specification exactly as it is written, no less but more is acceptable.
 If the specification is not met, you are to provide a clear and concise reason why.
 
 Your response will be posted as a GitHub comment for everyone to see in the pull request review conversation.
-Knowing this, only include information that will benefit them, lists, breakdowns, summaries of changes made ARE NOT ALLOWED.
-Do not add a list of changes made, this is the reviewers job instead you can add value by identifying errors and code suggestions that benefit both the author and reviewers..
-Do not deviate from the provided examples below, use only their username, never use the @ symbol and if your summary is too long, use a collapsible summary.
+Knowing this, only include information that will benefit them, think of it as a summary of the review.
+You can add value by identifying coding errors and code suggestions that benefit both the author and reviewers.
 
-====================
-Spec not achieved example:
-This is the specification...
+Do not deviate from the provided examples below, use only their username, never use the @ symbol.
+Always use the following format for your response, do not deviate from this format and do not add additional information.
 
-{username} this is exactly where you went wrong...
-this is how you can fix it... > code example of solution
-====================
-Spec achieved example:
-
-<details>
-<summary>Review Summary</summary>
-  - This is a summary of the changes made
-  - This is another summary of the changes made
-
-</details>
-
+==If the spec is wrong==
+### Haven't achieved specification
+{username} this is where you went wrong...
+this is how you can fix it... 
+> code example of solution
+==If the spec is right==
+### Have achieved specification
 {username}, you have achieved the spec and now the reviewers will let you know if there are any other changes needed.\n
-====================
 `;
 
 export const gptContextTemplate = `
@@ -128,8 +118,6 @@ export const getPRSpec = async (context: Context, chatHistory: CreateChatComplet
     return ErrorDiff(`Error getting linked issue.`);
   }
 
-  console.log("gpt streamlined", streamlined);
-
   // add the first comment of the pull request which is the contributor's description of their changes
   streamlined.push({
     login: pr.user.login,
@@ -147,8 +135,6 @@ export const getPRSpec = async (context: Context, chatHistory: CreateChatComplet
     role: "system",
     content: "This pull request context: \n" + JSON.stringify(streamlined),
   } as CreateChatCompletionRequestMessage);
-
-  console.log("gtt", chatHistory);
 
   return chatHistory;
 };
@@ -258,7 +244,7 @@ export const askGPT = async (question: string, chatHistory: CreateChatCompletion
     messages: chatHistory,
     model: "gpt-3.5-turbo-16k",
     max_tokens: config.review.tokenLimit,
-    temperature: 0.1,
+    temperature: 0,
   });
 
   const answer = res.choices[0].message.content;
