@@ -417,7 +417,7 @@ const calculateRewardValue = (comments: Record<MarkdownItem, string[]>, incentiv
   return sum;
 };
 
-const MarkdownItemToHTMLTag: Record<MarkdownItem, string> = {
+const MarkdownItemToHTMLTag: Record<MarkdownItem, HTMLItem> = {
   [MarkdownItem.Text]: HTMLItem.P,
   [MarkdownItem.Paragraph]: HTMLItem.P,
   [MarkdownItem.Heading]: HTMLItem.H1,

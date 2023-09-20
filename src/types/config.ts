@@ -13,6 +13,23 @@ export type LabelItem = Static<typeof LabelItemSchema>;
 
 const CommentIncentivesSchema = Type.Object(
   {
+    issue: Type.Object(
+      {
+        assignee: Type.Boolean(),
+        creator: Type.Boolean(),
+        default: Type.Boolean(),
+      },
+      { additionalProperties: false }
+    ),
+    pullRequest: Type.Object(
+      {
+        assignee: Type.Boolean(),
+        creator: Type.Boolean(),
+        reviewer: Type.Boolean(),
+        default: Type.Boolean(),
+      },
+      { additionalProperties: false }
+    ),
     elements: Type.Record(Type.String(), Type.Number()),
     totals: Type.Object(
       {

@@ -83,7 +83,20 @@ export const DefaultConfig: MergedConfig = {
   ],
   incentives: {
     comment: {
-      elements: {},
+      issue: {
+        assignee: false,
+        creator: false,
+        default: true,
+      },
+      pullRequest: {
+        assignee: false,
+        creator: false,
+        reviewer: true,
+        default: true,
+      },
+      elements: {
+        p: 0.1,
+      },
       totals: {
         word: 0,
       },
