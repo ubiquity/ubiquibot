@@ -29,8 +29,26 @@ export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitPars
       return null;
     }
 
-    const issueUrl = linkedIssues[0].querySelector("a")?.attrs?.href || "";
-    return issueUrl;
+    for (const linkedIssue of linkedIssues) {
+      const issueUrl = linkedIssue.querySelector("a")?.attrs?.href;
+
+      if (!issueUrl) continue;
+
+      const parts = issueUrl.split("/");
+
+      // check if array size is at least 4
+      if (parts.length < 4) continue;
+
+      // extract the organization name and repo name from the link:(e.g. "
+      const issueOrganization = parts[parts.length - 4];
+      const issueRepository = parts[parts.length - 3];
+
+      if (`${issueOrganization}/${issueRepository}` !== `${owner}/${repo}`) continue;
+
+      return issueUrl;
+    }
+
+    return null;
   } catch (error) {
     logger.error(`${JSON.stringify(error)}`);
     return null;
