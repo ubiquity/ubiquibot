@@ -156,6 +156,7 @@ export const WideConfigSchema = Type.Object(
     registerWalletWithVerification: Type.Optional(Type.Boolean()),
     enableAccessControl: Type.Optional(AccessControlSchema),
     staleBountyTime: Type.Optional(Type.String()),
+    private-key-encrypted: Type.Optional(Type.String()),
   },
   {
     additionalProperties: false,
@@ -165,12 +166,6 @@ export const WideConfigSchema = Type.Object(
 export type WideConfig = Static<typeof WideConfigSchema>;
 
 export type WideRepoConfig = WideConfig;
-
-export const WideOrgConfigSchema = Type.Composite([Type.Object({ "private-key-encrypted": Type.Optional(Type.String()) }), WideConfigSchema], {
-  additionalProperties: false,
-});
-
-export type WideOrgConfig = Static<typeof WideOrgConfigSchema>;
 
 export const MergedConfigSchema = Type.Object({
   evmNetworkId: Type.Number(),

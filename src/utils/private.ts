@@ -6,7 +6,7 @@ import merge from "lodash/merge";
 
 import { DefaultConfig } from "../configs";
 import { validate } from "./ajv";
-import { WideConfig, WideOrgConfig, WideRepoConfig, WideConfigSchema, WideOrgConfigSchema } from "../types";
+import { WideConfig, WideRepoConfig, WideConfigSchema } from "../types";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
@@ -35,7 +35,7 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo", 
 
 export interface MergedConfigs {
   parsedRepo: WideRepoConfig | undefined;
-  parsedOrg: WideOrgConfig | undefined;
+  parsedOrg: WideRepoConfig | undefined;
   parsedDefault: MergedConfig;
 }
 
@@ -111,10 +111,10 @@ export const getWideConfig = async (context: Context) => {
   const orgConfig = await getConfigSuperset(context, "org", CONFIG_PATH);
   const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
 
-  const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
+  const parsedOrg: WideRepoConfig | undefined = parseYAML(orgConfig);
 
   if (parsedOrg) {
-    const { valid, error } = validate(WideOrgConfigSchema, parsedOrg);
+    const { valid, error } = validate(WideConfigSchema, parsedOrg);
     if (!valid) {
       throw new Error(`Invalid org config: ${error}`);
     }
@@ -127,7 +127,15 @@ export const getWideConfig = async (context: Context) => {
     }
   }
   const parsedDefault: MergedConfig = DefaultConfig;
-  const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
+  
+  let privateKeyDecrypted;
+  if (parsedRepo && parsedRepo[KEY_NAME]) {
+    privateKeyDecrypted = await getPrivateKey(parsedRepo[KEY_NAME]);
+  } else if (parsedOrg && parsedOrg[KEY_NAME]) {
+    privateKeyDecrypted = await getPrivateKey(parsedOrg[KEY_NAME]);
+  } else {
+    privateKeyDecrypted = undefined;
+  }
 
   const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
   const mergedConfigData: MergedConfig = mergeConfigs(configs);
