@@ -3,29 +3,46 @@ import { getBotConfig, getBotContext, getLogger } from "../bindings";
 import { AssignEvent, Comment, IssueType, Payload } from "../types";
 import { checkRateLimitGit } from "../utils";
 
-export const getAllIssueEvents = async (per_page: number, page: number) => {
+export const getAllIssueEvents = async () => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.issue) return;
+
+  let shouldFetch = true;
+  let page_number = 1;
+  let events: any[] = [];
+
   try {
-    // Fetch issue events
-    const { data: events } = await context.octokit.issues.listEvents({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.full_name,
-      issue_number: payload.issue.number,
-      per_page: per_page,
-      page: page,
-    });
-    return events;
+    while (shouldFetch) {
+      // Fetch issue events
+      const response = await context.octokit.issues.listEvents({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.full_name,
+        issue_number: payload.issue.number,
+        per_page: 100,
+        page: page_number,
+      });
+
+      await checkRateLimitGit(response?.headers);
+
+      if (response?.data?.length > 0) {
+        events.push(response.data);
+        page_number++;
+      } else {
+        shouldFetch = false;
+      }
+    }
   } catch (e: unknown) {
+    shouldFetch = false;
     logger.error(`Getting all issue events failed, reason: ${e}`);
     return null;
   }
+  return events;
 };
 
 export const getAllLabeledEvents = async () => {
-  const events = await getAllIssueEvents(100, 1);
+  const events = await getAllIssueEvents();
   if (!events) return null;
   let labeledEvents: typeof events = [];
   labeledEvents = events.filter((event) => event.event === "labeled");
