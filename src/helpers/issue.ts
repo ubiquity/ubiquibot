@@ -98,14 +98,17 @@ export const listAllIssuesForRepo = async (state: "open" | "closed" | "all" = "o
 export const getIncentivizedUsers = async (issue_number: number) => {
   const comments = await getAllIssueComments(issue_number);
   const incentiveComment = comments.filter((comment) => comment.body.startsWith("/comment-incentives"));
-  const parts = incentiveComment[0].body.split("");
+  const parts = incentiveComment[0].body.split(" ");
   parts.shift();
   const users: { enable: boolean; users: string[] } = { enable: false, users: [] };
   for (const part of parts) {
     if (part.startsWith("@")) {
       users.users.push(part.substring(1));
-    } else if (part == "true") {
-      users.enable = part == "true";
+    }
+    if (part == "true") {
+      users.enable = true;
+    } else {
+      users.enable = false;
     }
   }
   return users;

@@ -125,8 +125,6 @@ export const incentivizeComments = async () => {
       } else {
         fallbackReward[user] = amountInETH;
       }
-    } else {
-      continue;
     }
   }
 
