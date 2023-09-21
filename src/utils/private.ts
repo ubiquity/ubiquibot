@@ -151,7 +151,7 @@ export const getWideConfig = async (context: Context) => {
     registerWalletWithVerification: mergedConfigData["register-wallet-with-verification"],
     enableAccessControl: mergedConfigData["enable-access-control"],
     openAIKey: mergedConfigData["openai-api-key"],
-    openAITokenLimit: mergedConfigData["openai-token-limit"],
+    openAIMaxTokens: mergedConfigData["openai-max-tokens"],
     staleBountyTime: mergedConfigData["stale-bounty-time"],
   };
 

@@ -36,7 +36,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     staleBountyTime,
     enableAccessControl,
     openAIKey,
-    openAITokenLimit,
+    openAIMaxTokens,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -104,7 +104,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     review: {
       apiKey: openAIKey,
-      tokenLimit: openAITokenLimit || DEFAULT_TOKEN_LIMIT,
+      maxTokens: openAIMaxTokens || DEFAULT_TOKEN_LIMIT,
     },
     accessControl: enableAccessControl,
   };

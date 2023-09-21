@@ -243,7 +243,7 @@ export const askGPT = async (question: string, chatHistory: CreateChatCompletion
   const res: OpenAI.Chat.Completions.ChatCompletion = await openAI.chat.completions.create({
     messages: chatHistory,
     model: "gpt-3.5-turbo-16k",
-    max_tokens: config.review.tokenLimit,
+    max_tokens: config.review.maxTokens,
     temperature: 0,
   });
 
