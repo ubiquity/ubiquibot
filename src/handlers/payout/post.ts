@@ -41,7 +41,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
 
   const issueComments = await getAllIssueComments(calculateIncentives.issue.number, "full");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
-  const issueCommentsByUser: Record<string, { id: string; comments: string[] }> = {};
+  const issueCommentsByUser: Record<string, { id: number; comments: string[] }> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
     if (user.type == UserType.Bot || user.login == assignee.login) continue;
@@ -57,7 +57,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
 
     // Store the comment along with user's login and node_id
     if (!issueCommentsByUser[user.login]) {
-      issueCommentsByUser[user.login] = { id: user.node_id, comments: [] };
+      issueCommentsByUser[user.login] = { id: user.id, comments: [] };
     }
     issueCommentsByUser[user.login].comments.push(issueComment.body_html);
   }
@@ -67,7 +67,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   const fallbackReward: Record<string, Decimal> = {};
 
   // array of awaiting permits to generate
-  const reward: { account: string; priceInEth: Decimal; userId: string; user: string; penaltyAmount: BigNumber }[] = [];
+  const reward: { account: string; priceInEth: Decimal; userId: number; user: string; penaltyAmount: BigNumber }[] = [];
 
   for (const user of Object.keys(issueCommentsByUser)) {
     const commentsByUser = issueCommentsByUser[user];
@@ -138,13 +138,13 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
   return {
     error: "",
     title,
-    userId: creator.node_id,
+    userId: creator.id,
     username: creator.login,
     reward: [
       {
         priceInEth: result?.amountInETH ?? new Decimal(0),
         account: result?.account,
-        userId: "",
+        userId: creator.id,
         user: "",
         penaltyAmount: BigNumber.from(0),
       },
@@ -180,7 +180,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
   const prReviews = await getAllPullRequestReviews(context, latestLinkedPullRequest.number, "full");
   const prComments = await getAllIssueComments(latestLinkedPullRequest.number, "full");
   logger.info(`Getting the PR reviews done. comments: ${JSON.stringify(prReviews)}`);
-  const prReviewsByUser: Record<string, { id: string; comments: string[] }> = {};
+  const prReviewsByUser: Record<string, { id: number; comments: string[] }> = {};
   for (const review of prReviews) {
     const user = review.user;
     if (!user) continue;
@@ -190,7 +190,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
       continue;
     }
     if (!prReviewsByUser[user.login]) {
-      prReviewsByUser[user.login] = { id: user.node_id, comments: [] };
+      prReviewsByUser[user.login] = { id: user.id, comments: [] };
     }
     prReviewsByUser[user.login].comments.push(review.body_html);
   }
@@ -204,7 +204,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
       continue;
     }
     if (!prReviewsByUser[user.login]) {
-      prReviewsByUser[user.login] = { id: user.node_id, comments: [] };
+      prReviewsByUser[user.login] = { id: user.id, comments: [] };
     }
     prReviewsByUser[user.login].comments.push(comment.body_html);
   }
@@ -212,7 +212,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
   logger.info(`calculatePullRequestReviewsReward: Filtering by the user type done. commentsByUser: ${JSON.stringify(prReviewsByUser)}`);
 
   // array of awaiting permits to generate
-  const reward: { account: string; priceInEth: Decimal; userId: string; user: string; penaltyAmount: BigNumber }[] = [];
+  const reward: { account: string; priceInEth: Decimal; userId: number; user: string; penaltyAmount: BigNumber }[] = [];
 
   // The mapping between gh handle and amount in ETH
   const fallbackReward: Record<string, Decimal> = {};

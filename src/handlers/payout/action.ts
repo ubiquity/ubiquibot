@@ -51,7 +51,7 @@ export interface IncentivesCalculationResult {
 export interface RewardByUser {
   account: string;
   priceInEth: Decimal;
-  userId: string | undefined;
+  userId: number | undefined;
   issueId: string;
   type: (string | undefined)[];
   user: string | undefined;
@@ -304,7 +304,7 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
   return {
     title: "Issue-Assignee",
     error: "",
-    userId: incentivesCalculation.assignee.node_id,
+    userId: incentivesCalculation.assignee.id,
     username: assigneeLogin,
     reward: [
       {
@@ -312,7 +312,7 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
         penaltyAmount,
         account: account || "0x",
         user: "",
-        userId: "",
+        userId: incentivesCalculation.assignee.id,
       },
     ],
   };
@@ -483,7 +483,7 @@ export const handleIssueClosed = async (
       reward.priceInEth = price.mul(multiplier);
     }
 
-    const { payoutUrl, txData } = await generatePermit2Signature(reward.account, reward.priceInEth, reward.issueId, reward.userId);
+    const { payoutUrl, txData } = await generatePermit2Signature(reward.account, reward.priceInEth, reward.issueId, reward.userId?.toString());
 
     const mergedType = reward.type.join(",");
     const price = `${reward.priceInEth} ${incentivesCalculation.tokenSymbol.toUpperCase()}`;

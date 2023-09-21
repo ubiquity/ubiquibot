@@ -50,14 +50,14 @@ export * from "./ask";
 export interface RewardsResponse {
   error: string | null;
   title?: string;
-  userId?: string;
+  userId?: number;
   username?: string;
   reward?: {
     account: string;
     priceInEth: Decimal;
     penaltyAmount: BigNumber;
     user: string;
-    userId: string;
+    userId: number;
   }[];
   fallbackReward?: Record<string, Decimal>;
 }
