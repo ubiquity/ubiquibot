@@ -329,16 +329,17 @@ export const handleIssueClosed = async (
   const { comments } = getBotConfig();
   const issueNumber = incentivesCalculation.issue.number;
 
-  let permitComment = "",
-    title = ["Issue-Assignee"];
+  let permitComment = "";
+  const title = ["Issue-Assignee"];
 
   // Rewards by user
   const rewardByUser: RewardByUser[] = [];
 
   // ASSIGNEE REWARD PRICE PROCESSOR
-  let priceInEth = new Decimal(incentivesCalculation.issueDetailed.priceLabel.substring(7, incentivesCalculation.issueDetailed.priceLabel.length - 4)).mul(
+  const priceInEth = new Decimal(incentivesCalculation.issueDetailed.priceLabel.substring(7, incentivesCalculation.issueDetailed.priceLabel.length - 4)).mul(
     incentivesCalculation.multiplier
   );
+
   if (priceInEth.gt(incentivesCalculation.paymentPermitMaxPrice)) {
     logger.info("Skipping to proceed the payment because bounty payout is higher than paymentPermitMaxPrice");
     return { error: `Permit generation skipped since issue's bounty is higher than ${incentivesCalculation.paymentPermitMaxPrice}` };
@@ -457,7 +458,7 @@ export const handleIssueClosed = async (
       continue;
     }
 
-    let detailsValue = reward.priceArray
+    const detailsValue = reward.priceArray
       .map((price, i) => {
         const separateTitle = reward.type[i]?.split("-");
         if (!separateTitle) return { title: "", subtitle: "", value: "" };
