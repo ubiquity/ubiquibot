@@ -25,7 +25,7 @@ const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
  * The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
  */
 export const calculateIssueConversationReward = async (calculateIncentives: IncentivesCalculationResult): Promise<RewardsResponse> => {
-  const title = `Conversation`;
+  const title = `Issue-Comments`;
   const logger = getLogger();
 
   const context = getBotContext();
@@ -103,7 +103,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
 };
 
 export const calculateIssueCreatorReward = async (incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> => {
-  const title = `Task Creator`;
+  const title = `Issue-Creation`;
   const logger = getLogger();
 
   const issueDetailed = bountyInfo(incentivesCalculation.issue);
@@ -172,7 +172,7 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
 export const calculatePullRequestReviewsReward = async (incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> => {
   const logger = getLogger();
   const context = getBotContext();
-  const title = "Reviewer";
+  const title = "Review-Reviewer";
 
   const linkedPullRequest = await gitLinkedPrParser({
     owner: incentivesCalculation.payload.repository.owner.login,

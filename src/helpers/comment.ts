@@ -45,18 +45,19 @@ export const createDetailsTable = (
   amount: string,
   paymentURL: string,
   username: string,
-  values: { header: string; label: string; value: string }[]
+  values: { title: string; subtitle: string; value: string }[]
 ): string => {
   // Generate the table rows based on the values array
   const tableRows = values
-    .map(({ label, value, header }) => {
-      return `
-        <tr>
-          <td>${header || ""}</td>
-          <td>${label}</td>
+    .map(({ title, value, subtitle }) => {
+      if (!subtitle || !value) {
+        return "";
+      }
+      return `<tr>
+          <td>${title || ""}</td>
+          <td>${subtitle}</td>
           <td>${value}</td>
-        </tr>
-      `;
+        </tr>`;
     })
     .join("");
 
@@ -81,5 +82,8 @@ export const createDetailsTable = (
     </details>
   `;
 
-  return html;
+  // Remove spaces and line breaks from the HTML, ignoring the attributes like <a href="..."> and [ ... ]
+  const cleanedHtml = html.replace(/>\s+</g, "><").replace(/[\r\n]+/g, "");
+
+  return cleanedHtml;
 };
