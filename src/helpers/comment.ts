@@ -40,3 +40,40 @@ export const parseComments = (comments: string[], itemsToExclude: string[]): Rec
 
   return result;
 };
+
+export const createDetailsTable = (amount: string, paymentURL: string, values: { header: string; label: string; value: string }[]): string => {
+  // Generate the table rows based on the values array
+  const tableRows = values
+    .map(({ label, value, header }) => {
+      return `
+        <tr>
+          <td>${header || ""}</td>
+          <td>${label}</td>
+          <td>${value}</td>
+        </tr>
+      `;
+    })
+    .join("");
+
+  // Construct the complete HTML structure
+  const html = `
+    <details>
+      <summary>
+        <b>
+          <h3>
+            <a href="${paymentURL}">[ ${amount} ]</a>
+          </h3>
+        </b>
+      </summary>
+      <code>
+        <table>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+      </code>
+    </details>
+  `;
+
+  return html;
+};
