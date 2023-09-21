@@ -32,14 +32,6 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   const payload = context.payload as Payload;
   const issue = payload.issue;
 
-  const permitComments = calculateIncentives.comments.filter(
-    (content) => content.body.includes(title) && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
-  );
-  if (permitComments.length > 0) {
-    logger.info(`incentivizeComments: skip to generate a permit url because it has been already posted`);
-    return { error: `incentivizeComments: skip to generate a permit url because it has been already posted` };
-  }
-
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
@@ -112,15 +104,6 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
     return { error: `incentivizeCreatorComment: its not a bounty` };
   }
 
-  const comments = await getAllIssueComments(incentivesCalculation.issue.number);
-  const permitComments = comments.filter(
-    (content) => content.body.includes(title) && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
-  );
-  if (permitComments.length > 0) {
-    logger.info(`incentivizeCreatorComment: skip to generate a permit url because it has been already posted`);
-    return { error: `incentivizeCreatorComment: skip to generate a permit url because it has been already posted` };
-  }
-
   const assignees = incentivesCalculation.issue.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
@@ -185,15 +168,6 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
   if (!latestLinkedPullRequest) {
     logger.debug(`calculatePullRequestReviewsReward: No linked pull requests found`);
     return { error: `calculatePullRequestReviewsReward: No linked pull requests found` };
-  }
-
-  const comments = await getAllIssueComments(incentivesCalculation.issue.number);
-  const permitComments = comments.filter(
-    (content) => content.body.includes(title) && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
-  );
-  if (permitComments.length > 0) {
-    logger.info(`calculatePullRequestReviewsReward: skip to generate a permit url because it has been already posted`);
-    return { error: `calculatePullRequestReviewsReward: skip to generate a permit url because it has been already posted` };
   }
 
   const assignees = incentivesCalculation.issue?.assignees ?? [];

@@ -220,6 +220,13 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     throw new Error(errMsg);
   }
 
+  const permitComments = comments.filter((content) => content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot);
+
+  if (permitComments.length > 0) {
+    logger.info(`skip to generate a permit url because it has been already posted`);
+    throw new Error(`skip to generate a permit url because it has been already posted`);
+  }
+
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
 
   return {
@@ -322,10 +329,6 @@ export const handleIssueClosed = async (
 
   let permitComment = "",
     title = ["Issue-Assignee"];
-
-  // The mapping between gh handle and comment with a permit url
-  const commentersReward: Record<string, string> = {};
-  const prReviewersReward: Record<string, string> = {};
 
   // Rewards by user
   const rewardByUser: RewardByUser[] = [];
@@ -438,7 +441,10 @@ export const handleIssueClosed = async (
     return acc;
   }, [] as RewardByUser[]);
 
-  const tokenSymbol = await getTokenSymbol(incentivesCalculation.paymentToken, incentivesCalculation.rpc);
+  // sort rewards by price
+  rewards.sort((a, b) => {
+    return new Decimal(b.priceInEth).cmp(new Decimal(a.priceInEth));
+  });
 
   // CREATE PERMIT URL FOR EACH USER
   for (const reward of rewards) {
@@ -456,6 +462,7 @@ export const handleIssueClosed = async (
         if (!separateTitle) return { title: "", subtitle: "", value: "" };
         return { title: separateTitle[0], subtitle: separateTitle[1], value: price };
       })
+      // remove title if it's the same as the first one
       .map((item, i, arr) => {
         if (i === 0) return item;
         if (item.title === arr[0].title) return { ...item, title: "" };
@@ -463,7 +470,7 @@ export const handleIssueClosed = async (
       });
 
     const mergedType = reward.type.join(",");
-    const price = `${reward.priceInEth} ${tokenSymbol.toUpperCase()}`;
+    const price = `${reward.priceInEth} ${incentivesCalculation.tokenSymbol.toUpperCase()}`;
 
     switch (mergedType) {
       case "Issue-Comments,Review-Reviewer":
@@ -491,10 +498,7 @@ export const handleIssueClosed = async (
     await savePermitToDB(incentivesCalculation.assignee.id, txData);
     permitComment += comment;
 
-    logger.info(`Permit url generated for contributors. reward: ${JSON.stringify(commentersReward)}`);
     logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(conversationRewards.fallbackReward)}`);
-
-    logger.info(`Permit url generated for pull request reviewers. reward: ${JSON.stringify(prReviewersReward)}`);
     logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(pullRequestReviewersReward.fallbackReward)}`);
   }
 
