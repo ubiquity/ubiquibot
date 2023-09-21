@@ -41,7 +41,12 @@ export const parseComments = (comments: string[], itemsToExclude: string[]): Rec
   return result;
 };
 
-export const createDetailsTable = (amount: string, paymentURL: string, values: { header: string; label: string; value: string }[]): string => {
+export const createDetailsTable = (
+  amount: string,
+  paymentURL: string,
+  username: string,
+  values: { header: string; label: string; value: string }[]
+): string => {
   // Generate the table rows based on the values array
   const tableRows = values
     .map(({ label, value, header }) => {
@@ -63,6 +68,7 @@ export const createDetailsTable = (amount: string, paymentURL: string, values: {
           <h3>
             <a href="${paymentURL}">[ ${amount} ]</a>
           </h3>
+          <h6>&nbsp;@${username}</h6>
         </b>
       </summary>
       <code>
