@@ -105,6 +105,11 @@ export const CommentsSchema = Type.Object({
   promotionComment: Type.String(),
 });
 
+export const AskSchema = Type.Object({
+  apiKey: Type.Union([Type.String(), Type.Null()]),
+  tokenLimit: Type.Number(),
+});
+
 export const CommandConfigSchema = Type.Array(CommandItemSchema);
 
 export type CommandConfig = Static<typeof CommandConfigSchema>;
@@ -132,10 +137,29 @@ export const BotConfigSchema = Type.Object({
   comments: CommentsSchema,
   command: CommandConfigSchema,
   wallet: WalletSchema,
+  ask: AskSchema,
   accessControl: AccessControlSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;
+
+export const StreamlinedCommentSchema = Type.Object({
+  login: Type.Optional(Type.String()),
+  body: Type.Optional(Type.String()),
+});
+
+export type StreamlinedComment = Static<typeof StreamlinedCommentSchema>;
+
+export const GPTResponseSchema = Type.Object({
+  answer: Type.Optional(Type.String()),
+  tokenUsage: Type.Object({
+    output: Type.Optional(Type.Number()),
+    input: Type.Optional(Type.Number()),
+    total: Type.Optional(Type.Number()),
+  }),
+});
+
+export type GPTResponse = Static<typeof GPTResponseSchema>;
 
 export const WideConfigSchema = Type.Object(
   {
@@ -156,6 +180,8 @@ export const WideConfigSchema = Type.Object(
     "register-wallet-with-verification": Type.Optional(Type.Boolean()),
     "enable-access-control": Type.Optional(AccessControlSchema),
     "stale-bounty-time": Type.Optional(Type.String()),
+    "openai-api-key": AskSchema.apiKey,
+    "openai-token-limit": Type.Optional(Type.Number()),
     "private-key-encrypted": Type.Optional(Type.String()),
   },
   {
@@ -185,6 +211,8 @@ export const MergedConfigSchema = Type.Object({
   "default-labels": Type.Array(Type.String()),
   "register-wallet-with-verification": Type.Boolean(),
   "enable-access-control": AccessControlSchema,
+  "openai-api-key": AskSchema.apiKey,
+  "openai-token-limit": Type.Number(),
   "stale-bounty-time": Type.String(),
 });
 

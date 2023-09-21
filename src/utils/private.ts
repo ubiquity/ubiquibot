@@ -127,7 +127,7 @@ export const getWideConfig = async (context: Context) => {
     }
   }
   const parsedDefault: MergedConfig = DefaultConfig;
-  
+
   let privateKeyDecrypted;
   if (parsedRepo && parsedRepo[KEY_NAME]) {
     privateKeyDecrypted = await getPrivateKey(parsedRepo[KEY_NAME]);
@@ -158,6 +158,8 @@ export const getWideConfig = async (context: Context) => {
     promotionComment: mergedConfigData["promotion-comment"],
     registerWalletWithVerification: mergedConfigData["register-wallet-with-verification"],
     enableAccessControl: mergedConfigData["enable-access-control"],
+    openAIKey: mergedConfigData["openai-api-key"],
+    openAITokenLimit: mergedConfigData["openai-token-limit"],
     staleBountyTime: mergedConfigData["stale-bounty-time"],
   };
 
