@@ -11,7 +11,7 @@ export const getAllIssueEvents = async () => {
 
   let shouldFetch = true;
   let page_number = 1;
-  let events: any[] = [];
+  const events: any[] = [];
 
   try {
     while (shouldFetch) {
