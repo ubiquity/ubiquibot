@@ -100,5 +100,4 @@ export const DefaultConfig: MergedConfig = {
     label: false,
     organization: true,
   },
-  "stale-bounty-time": "0d",
 };
