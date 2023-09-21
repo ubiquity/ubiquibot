@@ -179,8 +179,10 @@ export const WideConfigSchema = Type.Object(
     defaultLabels: Type.Optional(Type.Array(Type.String())),
     registerWalletWithVerification: Type.Optional(Type.Boolean()),
     enableAccessControl: Type.Optional(AccessControlSchema),
+    openAIKey: Type.Optional(Type.String()),
+    openAITokenLimit: Type.Optional(Type.Number()),
     staleBountyTime: Type.Optional(Type.String()),
-    private-key-encrypted: Type.Optional(Type.String()),
+    privateKeyEncrypted: Type.Optional(Type.String()),
   },
   {
     additionalProperties: false,
@@ -209,6 +211,8 @@ export const MergedConfigSchema = Type.Object({
   defaultLabels: Type.Array(Type.String()),
   registerWalletWithVerification: Type.Boolean(),
   enableAccessControl: AccessControlSchema,
+  openAIKey: Type.Optional(Type.String()),
+  openAITokenLimit: Type.Optional(Type.Number()),
   staleBountyTime: Type.String(),
 });
 

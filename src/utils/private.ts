@@ -10,7 +10,7 @@ import { WideConfig, WideRepoConfig, WideConfigSchema } from "../types";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
-const KEY_NAME = "private-key-encrypted";
+const KEY_NAME = "privateKeyEncrypted";
 const KEY_PREFIX = "HSK_";
 
 export const getConfigSuperset = async (context: Context, type: "org" | "repo", filePath: string): Promise<string | undefined> => {
@@ -158,8 +158,8 @@ export const getWideConfig = async (context: Context) => {
     promotionComment: mergedConfigData.promotionComment,
     registerWalletWithVerification: mergedConfigData.registerWalletWithVerification,
     enableAccessControl: mergedConfigData.enableAccessControl,
-    openAIKey: mergedConfigData.openaiApiKey,
-    openAITokenLimit: mergedConfigData.openaiTokenLimit,
+    openAIKey: mergedConfigData.openAIKey,
+    openAITokenLimit: mergedConfigData.openAITokenLimit,
     staleBountyTime: mergedConfigData.staleBountyTime,
 
   };
