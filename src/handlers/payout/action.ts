@@ -452,7 +452,7 @@ export const handleIssueClosed = async (
   for (const reward of rewards) {
     let comment;
 
-    if (!reward.user) {
+    if (!reward.user || !reward.userId) {
       logger.info(`Skipping to generate a permit url for missing user. fallback: ${reward.user}`);
       continue;
     }
@@ -511,7 +511,7 @@ export const handleIssueClosed = async (
         break;
     }
 
-    await savePermitToDB(incentivesCalculation.assignee.id, txData);
+    await savePermitToDB(Number(reward.userId), txData);
     permitComment += comment;
 
     logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(conversationRewards.fallbackReward)}`);
