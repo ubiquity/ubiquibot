@@ -72,13 +72,11 @@ export const createDetailsTable = (
           <h6>&nbsp;@${username}</h6>
         </b>
       </summary>
-      <code>
-        <table>
-          <tbody>
-            ${tableRows}
-          </tbody>
-        </table>
-      </code>
+      <table>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
     </details>
   `;
 

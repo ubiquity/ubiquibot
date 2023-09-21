@@ -13,6 +13,7 @@ import {
   getAllIssueAssignEvents,
   addCommentToIssue,
   createDetailsTable,
+  savePermitToDB,
 } from "../../helpers";
 import { UserType, Payload, StateReason, Comment, User, Incentives, Issue } from "../../types";
 import { bountyInfo } from "../wildcard";
@@ -20,7 +21,6 @@ import Decimal from "decimal.js";
 import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
 import { RewardsResponse } from "../comment";
-import { isEmpty } from "lodash";
 
 export interface IncentivesCalculationResult {
   paymentToken: string;
@@ -320,12 +320,9 @@ export const handleIssueClosed = async (
   const { comments } = getBotConfig();
   const issueNumber = incentivesCalculation.issue.number;
 
-  let commentersComment = "",
-    title = ["Issue-Assignee"],
-    assigneeComment = "",
-    creatorComment = "",
-    mergedComment = "",
-    pullRequestReviewerComment = "";
+  let permitComment = "",
+    title = ["Issue-Assignee"];
+
   // The mapping between gh handle and comment with a permit url
   const commentersReward: Record<string, string> = {};
   const prReviewersReward: Record<string, string> = {};
@@ -380,14 +377,7 @@ export const handleIssueClosed = async (
 
   // CREATOR REWARD HANDLER
   // Generate permit for user if its not the same id as assignee
-  if (creatorReward && creatorReward.reward && creatorReward.reward[0].account !== "0x" && creatorReward.userId !== incentivesCalculation.assignee.node_id) {
-    // const { payoutUrl } = await generatePermit2Signature(
-    //   creatorReward.reward[0].account,
-    //   creatorReward.reward[0].priceInEth,
-    //   incentivesCalculation.issue.node_id,
-    //   creatorReward.userId
-    // );
-
+  if (creatorReward && creatorReward.reward && creatorReward.reward[0].account !== "0x") {
     rewardByUser.push({
       account: creatorReward.reward[0].account,
       priceInEth: creatorReward.reward[0].priceInEth,
@@ -397,39 +387,12 @@ export const handleIssueClosed = async (
       user: creatorReward.username,
       priceArray: [creatorReward.reward[0].priceInEth.toString()],
     });
-
-    // creatorComment = `#### ${creatorReward.title} Reward \n### [ **${creatorReward.username}: [ CLAIM ${
-    //   creatorReward.reward[0].priceInEth
-    // } ${incentivesCalculation.tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n`;
-    // if (payoutUrl) {
-    //   logger.info(`Permit url generated for creator. reward: ${payoutUrl}`);
-    // }
-    // Add amount to assignee if assignee is the creator
-  } else if (
-    creatorReward &&
-    creatorReward.reward &&
-    creatorReward.reward[0].account !== "0x" &&
-    creatorReward.userId === incentivesCalculation.assignee.node_id
-  ) {
-    priceInEth = priceInEth.add(creatorReward.reward[0].priceInEth);
-    title.push("Issue-Creation");
   } else if (creatorReward && creatorReward.reward && creatorReward.reward[0].account === "0x") {
     logger.info(`Skipping to generate a permit url for missing account. fallback: ${creatorReward.fallbackReward}`);
   }
 
   // ASSIGNEE REWARD HANDLER
   if (assigneeReward && assigneeReward.reward && assigneeReward.reward[0].account !== "0x") {
-    // const { txData, payoutUrl } = await generatePermit2Signature(
-    //   assigneeReward.reward[0].account,
-    //   assigneeReward.reward[0].priceInEth,
-    //   incentivesCalculation.issue.node_id,
-    //   incentivesCalculation.assignee.node_id
-    // );
-    // const tokenSymbol = await getTokenSymbol(incentivesCalculation.paymentToken, incentivesCalculation.rpc);
-    // const shortenRecipient = shortenEthAddress(assigneeReward.reward[0].account, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
-    // logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
-    // assigneeComment =
-    //   `#### ${title} Reward \n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
     const permitComments = incentivesCalculation.comments.filter((content) => {
       const permitUrlMatches = content.body.match(incentivesCalculation.claimUrlRegex);
       if (!permitUrlMatches || permitUrlMatches.length < 2) return false;
@@ -479,50 +442,54 @@ export const handleIssueClosed = async (
 
   // CREATE PERMIT URL FOR EACH USER
   for (const reward of rewards) {
-    const { payoutUrl } = await generatePermit2Signature(reward.account, reward.priceInEth, reward.issueId, reward.userId);
+    let comment;
+    const { payoutUrl, txData } = await generatePermit2Signature(reward.account, reward.priceInEth, reward.issueId, reward.userId);
 
     if (!reward.user) {
       logger.info(`Skipping to generate a permit url for missing user. fallback: ${reward.user}`);
       continue;
     }
 
-    const detailsValue = reward.priceArray.map((price, i) => {
-      const separateTitle = reward.type[i]?.split("-");
-      if (!separateTitle) return { title: "", subtitle: "", value: "" };
-      return { title: separateTitle[0], subtitle: separateTitle[1], value: price };
-    });
+    const detailsValue = reward.priceArray
+      .map((price, i) => {
+        const separateTitle = reward.type[i]?.split("-");
+        if (!separateTitle) return { title: "", subtitle: "", value: "" };
+        return { title: separateTitle[0], subtitle: separateTitle[1], value: price };
+      })
+      .map((item, i, arr) => {
+        if (i === 0) return item;
+        if (item.title === arr[0].title) return { ...item, title: "" };
+        return item;
+      });
 
     const mergedType = reward.type.join(",");
     const price = `${reward.priceInEth} ${tokenSymbol.toUpperCase()}`;
 
     switch (mergedType) {
       case "Issue-Comments,Review-Reviewer":
-        const responseOne = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
-        console.log(responseOne);
+        comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
         break;
       case "Issue-Comments":
-        const responseTwo = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
-        console.log(responseTwo);
+        comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
         break;
       case "Review-Reviewer":
-        const responseThree = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
-        console.log(responseThree);
+        comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
         break;
-      case "Issue-Assignee,Issue-Creation":
-        const responseFour = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
-        console.log(responseFour);
+      case "Issue-Creation,Issue-Assignee":
+        comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
         break;
       case "Issue-Assignee":
-        const responseFive = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
-        console.log(responseFive);
+        comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
         break;
       case "Issue-Creation":
-        const responseSix = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
-        console.log(responseSix);
+        comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
         break;
       default:
         break;
     }
+
+    await savePermitToDB(incentivesCalculation.assignee.id, txData);
+    permitComment += comment;
 
     logger.info(`Permit url generated for contributors. reward: ${JSON.stringify(commentersReward)}`);
     logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(conversationRewards.fallbackReward)}`);
@@ -531,16 +498,10 @@ export const handleIssueClosed = async (
     logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(pullRequestReviewersReward.fallbackReward)}`);
   }
 
-  //await savePermitToDB(incentivesCalculation.assignee.id, txData);
-
-  if (commentersComment && !isEmpty(commentersReward)) await addCommentToIssue(commentersComment, issueNumber);
-  if (creatorComment) await addCommentToIssue(creatorComment, issueNumber);
-  if (pullRequestReviewerComment && !isEmpty(prReviewersReward)) await addCommentToIssue(pullRequestReviewerComment, issueNumber);
-  if (mergedComment) await addCommentToIssue(mergedComment, issueNumber);
-  if (assigneeComment) await addCommentToIssue(assigneeComment + comments.promotionComment, issueNumber);
+  if (permitComment) await addCommentToIssue(permitComment.trim() + comments.promotionComment, issueNumber);
 
   await deleteLabel(incentivesCalculation.issueDetailed.priceLabel);
-  //await addLabelToIssue("Permitted");
+  await addLabelToIssue("Permitted");
 
   return { error: "" };
 };
