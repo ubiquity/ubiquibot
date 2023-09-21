@@ -23,6 +23,7 @@ import { isParentIssue } from "../pricing";
 import { RewardsResponse } from "../comment";
 
 export interface IncentivesCalculationResult {
+  id: number;
   paymentToken: string;
   rpc: string;
   networkId: number;
@@ -230,6 +231,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
 
   return {
+    id,
     paymentToken,
     rpc,
     networkId,
@@ -449,14 +451,13 @@ export const handleIssueClosed = async (
   // CREATE PERMIT URL FOR EACH USER
   for (const reward of rewards) {
     let comment;
-    const { payoutUrl, txData } = await generatePermit2Signature(reward.account, reward.priceInEth, reward.issueId, reward.userId);
 
     if (!reward.user) {
       logger.info(`Skipping to generate a permit url for missing user. fallback: ${reward.user}`);
       continue;
     }
 
-    const detailsValue = reward.priceArray
+    let detailsValue = reward.priceArray
       .map((price, i) => {
         const separateTitle = reward.type[i]?.split("-");
         if (!separateTitle) return { title: "", subtitle: "", value: "" };
@@ -468,6 +469,21 @@ export const handleIssueClosed = async (
         if (item.title === arr[0].title) return { ...item, title: "" };
         return item;
       });
+
+    const { reason, value } = await getWalletMultiplier(reward.user, incentivesCalculation.id?.toString());
+
+    // if reason is not "", then add multiplier to detailsValue and multiply the price
+    if (reason) {
+      detailsValue.push({ title: "Multiplier", subtitle: "Amount", value: value.toString() });
+      detailsValue.push({ title: "", subtitle: "Reason", value: reason });
+
+      const multiplier = new Decimal(value);
+      const price = new Decimal(reward.priceInEth);
+      // add multiplier to the price
+      reward.priceInEth = price.mul(multiplier);
+    }
+
+    const { payoutUrl, txData } = await generatePermit2Signature(reward.account, reward.priceInEth, reward.issueId, reward.userId);
 
     const mergedType = reward.type.join(",");
     const price = `${reward.priceInEth} ${incentivesCalculation.tokenSymbol.toUpperCase()}`;
