@@ -2,7 +2,6 @@ import axios from "axios";
 import { HTMLElement, parse } from "node-html-parser";
 import { getPullByNumber } from "./issue";
 import { getBotContext, getLogger } from "../bindings";
-import { Payload } from "../types";
 
 interface GitParser {
   owner: string;
@@ -11,23 +10,12 @@ interface GitParser {
   pull_number?: number;
 }
 
-export const gitIssueParser = async ({ owner, repo, issue_number }: GitParser): Promise<boolean> => {
-  try {
-    const { data } = await axios.get(`https://github.com/${owner}/${repo}/issues/${issue_number}`);
-    const dom = parse(data);
-    const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
-    const linkedPRs = devForm.querySelectorAll(".my-1");
-    if (linkedPRs.length > 0) {
-      //has LinkedPRs
-      return true;
-    } else {
-      //no LinkedPRs
-      return false;
-    }
-  } catch (error) {
-    return true;
-  }
-};
+export interface LinkedPR {
+  prOrganization: string;
+  prRepository: string;
+  prNumber: number;
+  prHref: string;
+}
 
 export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitParser) => {
   const logger = getLogger();
@@ -49,38 +37,57 @@ export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitPars
   }
 };
 
-export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser) => {
+export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser): Promise<LinkedPR[]> => {
   const logger = getLogger();
   try {
+    const prData = [];
     const { data } = await axios.get(`https://github.com/${owner}/${repo}/issues/${issue_number}`);
-    const context = getBotContext();
-    const payload = context.payload as Payload;
     const dom = parse(data);
     const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
     const linkedPRs = devForm.querySelectorAll(".my-1");
-    if (linkedPRs.length === 0) return null;
-    let linkedPullRequest = null;
+    if (linkedPRs.length === 0) return [];
+
     for (const linkedPr of linkedPRs) {
-      const prHref = linkedPr.querySelector("a")?.attrs?.href || "";
-      const parts = prHref.split("/");
-      // extract the organization name and repo name from the link:(e.g. "https://github.com/wannacfuture/ubiquibot/pull/5";)
-      const organization = parts[parts.length - 4];
-      const repository = parts[parts.length - 3];
+      const prUrl = linkedPr.querySelector("a")?.attrs?.href;
 
-      if (`${organization}/${repository}` !== payload.repository.full_name) continue;
-      const prNumber = parts[parts.length - 1];
-      if (Number.isNaN(Number(prNumber))) return null;
-      const pr = await getPullByNumber(context, Number(prNumber));
-      if (!pr || !pr.merged) continue;
+      if (!prUrl) continue;
 
-      if (!linkedPullRequest) linkedPullRequest = pr;
-      else if (linkedPullRequest.merged_at && pr.merged_at && new Date(linkedPullRequest.merged_at) < new Date(pr.merged_at)) {
-        linkedPullRequest = pr;
-      }
+      const parts = prUrl.split("/");
+
+      // check if array size is at least 4
+      if (parts.length < 4) continue;
+
+      // extract the organization name and repo name from the link:(e.g. "
+      const prOrganization = parts[parts.length - 4];
+      const prRepository = parts[parts.length - 3];
+      const prNumber = Number(parts[parts.length - 1]);
+      const prHref = `https://github.com${prUrl}`;
+
+      if (`${prOrganization}/${prRepository}` !== `${owner}/${repo}`) continue;
+
+      prData.push({ prOrganization, prRepository, prNumber, prHref });
     }
-    return linkedPullRequest;
+
+    return prData;
   } catch (error) {
     logger.error(`${JSON.stringify(error)}`);
-    return null;
+    return [];
   }
+};
+
+export const getLatestPullRequest = async (prs: LinkedPR[]) => {
+  const context = getBotContext();
+  let linkedPullRequest = null;
+  for (const _pr of prs) {
+    if (Number.isNaN(_pr.prNumber)) return null;
+    const pr = await getPullByNumber(context, _pr.prNumber);
+    if (!pr || !pr.merged) continue;
+
+    if (!linkedPullRequest) linkedPullRequest = pr;
+    else if (linkedPullRequest.merged_at && pr.merged_at && new Date(linkedPullRequest.merged_at) < new Date(pr.merged_at)) {
+      linkedPullRequest = pr;
+    }
+  }
+
+  return linkedPullRequest;
 };
