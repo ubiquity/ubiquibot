@@ -106,7 +106,7 @@ export const CommentsSchema = Type.Object({
 });
 
 export const AskSchema = Type.Object({
-  apiKey: Type.Union([Type.String(), Type.Null()]),
+  apiKey: Type.Optional(Type.String()),
   tokenLimit: Type.Number(),
 });
 
