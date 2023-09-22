@@ -161,7 +161,7 @@ export const getWideConfig = async (context: Context) => {
     openAIKey: mergedConfigData.openAIKey,
     openAITokenLimit: mergedConfigData.openAITokenLimit,
     staleBountyTime: mergedConfigData.staleBountyTime,
-
+    newContributorGreeting: mergedConfigData.newContributorGreeting,
   };
 
   return configData;

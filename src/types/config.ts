@@ -110,6 +110,14 @@ export const AskSchema = Type.Object({
   tokenLimit: Type.Number(),
 });
 
+export const NewContributorGreetingSchema = Type.Object({
+  enabled: Type.Boolean(),
+  header: Type.String(),
+  helpMenu: Type.Boolean(),
+  footer: Type.String(),
+});
+export type NewContributorGreeting = Static<typeof NewContributorGreetingSchema>;
+
 export const CommandConfigSchema = Type.Array(CommandItemSchema);
 
 export type CommandConfig = Static<typeof CommandConfigSchema>;
@@ -139,6 +147,7 @@ export const BotConfigSchema = Type.Object({
   wallet: WalletSchema,
   ask: AskSchema,
   accessControl: AccessControlSchema,
+  newContributorGreeting: NewContributorGreetingSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;
@@ -183,6 +192,7 @@ export const WideConfigSchema = Type.Object(
     openAITokenLimit: Type.Optional(Type.Number()),
     staleBountyTime: Type.Optional(Type.String()),
     privateKeyEncrypted: Type.Optional(Type.String()),
+    newContributorGreeting: Type.Optional(NewContributorGreetingSchema),
   },
   {
     additionalProperties: false,
@@ -214,6 +224,7 @@ export const MergedConfigSchema = Type.Object({
   openAIKey: Type.Optional(Type.String()),
   openAITokenLimit: Type.Optional(Type.Number()),
   staleBountyTime: Type.String(),
+  newContributorGreeting: NewContributorGreetingSchema,
 });
 
 export type MergedConfig = Static<typeof MergedConfigSchema>;
