@@ -21,8 +21,8 @@ export const ASSIGN_COMMAND_ENABLED = true;
  * ms('-1h')     // -3600000
  * ms('-200')    // -200
  */
-export const DEFAULT_FOLLOWUP_TIME = "4 days"; // 4 days
-export const DEFAULT_DISQUALIFY_TIME = "7 days"; // 7 days
+export const DEFAULT_FOLLOWUP_TIME = "5s"; // 4 days
+export const DEFAULT_DISQUALIFY_TIME = "20s"; // 7 days
 
 export const DEFAULT_NETWORK_ID = 1; // ethereum
 export const DEFAULT_RPC_ENDPOINT = "https://rpc-bot.ubq.fi/v1/mainnet";
