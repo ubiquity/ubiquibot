@@ -224,7 +224,7 @@ Bounty bot is built using the [probot](https://probot.github.io/) framework so i
 ├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/utils">utils</a> A set of utility functions
 </pre>
 
-## Default Config Notes (`ubiquibot-config-default.json`)
+## Default Config Notes (`ubiquibot-config-default.ts`)
 
 We can't use a `jsonc` file due to limitations with Netlify. Here is a snippet of some values with notes next to them.
 
