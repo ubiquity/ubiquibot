@@ -6,6 +6,7 @@ export enum IssueCommentCommands {
   PAYOUT = "/payout", // request permit payout
   MULTIPLIER = "/multiplier", // set bounty multiplier (for treasury)
   QUERY = "/query",
+  ASK = "/ask", // ask GPT a question
   // Access Controls
 
   ALLOW = "/allow",

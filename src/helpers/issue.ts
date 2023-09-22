@@ -1,6 +1,6 @@
 import { Context } from "probot";
-import { getBotContext, getLogger, loadConfig } from "../bindings";
-import { AssignEvent, Comment, IssueType, Payload } from "../types";
+import { getBotConfig, getBotContext, getLogger } from "../bindings";
+import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
 
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
@@ -515,13 +515,13 @@ export const closePullRequest = async (pull_number: number) => {
   }
 };
 
-export const getAllPullRequestReviews = async (context: Context, pull_number: number) => {
+export const getAllPullRequestReviews = async (context: Context, pull_number: number, format: "raw" | "html" | "text" | "full" = "raw") => {
   const prArr = [];
   let fetchDone = false;
   const perPage = 30;
   let curPage = 1;
   while (!fetchDone) {
-    const prs = await getPullRequestReviews(context, pull_number, perPage, curPage);
+    const prs = await getPullRequestReviews(context, pull_number, perPage, curPage, format);
 
     // push the objects to array
     prArr.push(...prs);
@@ -532,7 +532,13 @@ export const getAllPullRequestReviews = async (context: Context, pull_number: nu
   return prArr;
 };
 
-export const getPullRequestReviews = async (context: Context, pull_number: number, per_page: number, page: number) => {
+export const getPullRequestReviews = async (
+  context: Context,
+  pull_number: number,
+  per_page: number,
+  page: number,
+  format: "raw" | "html" | "text" | "full" = "raw"
+) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   try {
@@ -542,6 +548,9 @@ export const getPullRequestReviews = async (context: Context, pull_number: numbe
       pull_number,
       per_page,
       page,
+      mediaType: {
+        format,
+      },
     });
     return reviews;
   } catch (e: unknown) {
@@ -550,6 +559,20 @@ export const getPullRequestReviews = async (context: Context, pull_number: numbe
   }
 };
 
+export const getReviewRequests = async (context: Context, pull_number: number, owner: string, repo: string) => {
+  const logger = getLogger();
+  try {
+    const response = await context.octokit.pulls.listRequestedReviewers({
+      owner: owner,
+      repo: repo,
+      pull_number: pull_number,
+    });
+    return response.data;
+  } catch (e: unknown) {
+    logger.error(`Error: could not get requested reviewers, reason: ${e}`);
+    return null;
+  }
+};
 // Get issues by issue number
 export const getIssueByNumber = async (context: Context, issue_number: number) => {
   const logger = getLogger();
@@ -641,8 +664,10 @@ export const getCommitsOnPullRequest = async (pullNumber: number) => {
 
 export const getAvailableOpenedPullRequests = async (username: string) => {
   const context = getBotContext();
-  const botConfig = await loadConfig(context);
-  if (!botConfig.unassign.timeRangeForMaxIssueEnabled) return [];
+  const {
+    unassign: { timeRangeForMaxIssue, timeRangeForMaxIssueEnabled },
+  } = await getBotConfig();
+  if (!timeRangeForMaxIssueEnabled) return [];
 
   const opened_prs = await getOpenedPullRequests(username);
 
@@ -657,9 +682,115 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
       if (approvedReviews) result.push(pr);
     }
 
-    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= botConfig.unassign.timeRangeForMaxIssue) {
+    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= timeRangeForMaxIssue) {
       result.push(pr);
     }
   }
   return result;
+};
+
+// Strips out all links from the body of an issue or pull request and fetches the conversational context from each linked issue or pull request
+export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
+  const context = getBotContext();
+  const logger = getLogger();
+
+  const issue = await getIssueByNumber(context, issueNumber);
+
+  if (!issue) {
+    return `Failed to fetch using issueNumber: ${issueNumber}`;
+  }
+
+  if (!issue.body) {
+    return `No body found for issue: ${issueNumber}`;
+  }
+
+  const body = issue.body;
+  const linkedPRStreamlined: StreamlinedComment[] = [];
+  const linkedIssueStreamlined: StreamlinedComment[] = [];
+
+  const regex = /https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+)/gi;
+  const matches = body.match(regex);
+
+  if (matches) {
+    try {
+      const linkedIssues: number[] = [];
+      const linkedPrs: number[] = [];
+
+      // this finds refs via all patterns: #<issue number>, full url or [#25](url.to.issue)
+      const issueRef = issue.body.match(/(#(\d+)|https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+))/gi);
+
+      // if they exist, strip out the # or the url and push them to their arrays
+      if (issueRef) {
+        issueRef.forEach((issue) => {
+          if (issue.includes("#")) {
+            linkedIssues.push(Number(issue.slice(1)));
+          } else {
+            if (issue.split("/")[5] == "pull") {
+              linkedPrs.push(Number(issue.split("/")[6]));
+            } else linkedIssues.push(Number(issue.split("/")[6]));
+          }
+        });
+      } else {
+        logger.info(`No linked issues or prs found`);
+      }
+
+      if (linkedPrs.length > 0) {
+        for (let i = 0; i < linkedPrs.length; i++) {
+          const pr = await getPullByNumber(context, linkedPrs[i]);
+          if (pr) {
+            linkedPRStreamlined.push({
+              login: "system",
+              body: `=============== Pull Request #${pr.number}: ${pr.title} + ===============\n ${pr.body}}`,
+            });
+            const prComments = await getAllIssueComments(linkedPrs[i]);
+            const prCommentsRaw = await getAllIssueComments(linkedPrs[i], "raw");
+            prComments.forEach(async (comment, i) => {
+              if (comment.user.type == UserType.User || prCommentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
+                linkedPRStreamlined.push({
+                  login: comment.user.login,
+                  body: comment.body,
+                });
+              }
+            });
+          }
+        }
+      }
+
+      if (linkedIssues.length > 0) {
+        for (let i = 0; i < linkedIssues.length; i++) {
+          const issue = await getIssueByNumber(context, linkedIssues[i]);
+          if (issue) {
+            linkedIssueStreamlined.push({
+              login: "system",
+              body: `=============== Issue #${issue.number}: ${issue.title} + ===============\n ${issue.body} `,
+            });
+            const issueComments = await getAllIssueComments(linkedIssues[i]);
+            const issueCommentsRaw = await getAllIssueComments(linkedIssues[i], "raw");
+            issueComments.forEach(async (comment, i) => {
+              if (comment.user.type == UserType.User || issueCommentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
+                linkedIssueStreamlined.push({
+                  login: comment.user.login,
+                  body: comment.body,
+                });
+              }
+            });
+          }
+        }
+      }
+
+      return {
+        linkedIssues: linkedIssueStreamlined,
+        linkedPrs: linkedPRStreamlined,
+      };
+    } catch (error) {
+      logger.info(`Error getting linked issues or prs: ${error}`);
+      return `Error getting linked issues or prs: ${error}`;
+    }
+  } else {
+    logger.info(`No matches found`);
+    return {
+      linkedIssues: [],
+      linkedPrs: [],
+    };
+  }
 };

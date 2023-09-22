@@ -1,44 +1,93 @@
 import axios from "axios";
 import { HTMLElement, parse } from "node-html-parser";
+import { getPullByNumber } from "./issue";
+import { getBotContext, getLogger } from "../bindings";
 
 interface GitParser {
   owner: string;
   repo: string;
-  issue_number: number;
+  issue_number?: number;
+  pull_number?: number;
 }
 
-export const gitIssueParser = async ({ owner, repo, issue_number }: GitParser): Promise<boolean> => {
+export interface LinkedPR {
+  prOrganization: string;
+  prRepository: string;
+  prNumber: number;
+  prHref: string;
+}
+
+export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitParser) => {
+  const logger = getLogger();
   try {
+    const { data } = await axios.get(`https://github.com/${owner}/${repo}/pull/${pull_number}`);
+    const dom = parse(data);
+    const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
+    const linkedIssues = devForm.querySelectorAll(".my-1");
+
+    if (linkedIssues.length === 0) {
+      return null;
+    }
+
+    const issueUrl = linkedIssues[0].querySelector("a")?.attrs?.href || "";
+    return issueUrl;
+  } catch (error) {
+    logger.error(`${JSON.stringify(error)}`);
+    return null;
+  }
+};
+
+export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser): Promise<LinkedPR[]> => {
+  const logger = getLogger();
+  try {
+    const prData = [];
     const { data } = await axios.get(`https://github.com/${owner}/${repo}/issues/${issue_number}`);
     const dom = parse(data);
     const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
     const linkedPRs = devForm.querySelectorAll(".my-1");
-    if (linkedPRs.length > 0) {
-      //has LinkedPRs
-      return true;
-    } else {
-      //no LinkedPRs
-      return false;
+    if (linkedPRs.length === 0) return [];
+
+    for (const linkedPr of linkedPRs) {
+      const prUrl = linkedPr.querySelector("a")?.attrs?.href;
+
+      if (!prUrl) continue;
+
+      const parts = prUrl.split("/");
+
+      // check if array size is at least 4
+      if (parts.length < 4) continue;
+
+      // extract the organization name and repo name from the link:(e.g. "
+      const prOrganization = parts[parts.length - 4];
+      const prRepository = parts[parts.length - 3];
+      const prNumber = Number(parts[parts.length - 1]);
+      const prHref = `https://github.com${prUrl}`;
+
+      if (`${prOrganization}/${prRepository}` !== `${owner}/${repo}`) continue;
+
+      prData.push({ prOrganization, prRepository, prNumber, prHref });
     }
+
+    return prData;
   } catch (error) {
-    return true;
+    logger.error(`${JSON.stringify(error)}`);
+    return [];
   }
 };
 
-export const gitLinkedIssueParser = async ({ owner, repo, issue_number }: GitParser): Promise<string> => {
-  try {
-    const { data } = await axios.get(`https://github.com/${owner}/${repo}/pull/${issue_number}`);
-    const dom = parse(data);
-    const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
-    const linkedPRs = devForm.querySelectorAll(".my-1");
+export const getLatestPullRequest = async (prs: LinkedPR[]) => {
+  const context = getBotContext();
+  let linkedPullRequest = null;
+  for (const _pr of prs) {
+    if (Number.isNaN(_pr.prNumber)) return null;
+    const pr = await getPullByNumber(context, _pr.prNumber);
+    if (!pr || !pr.merged) continue;
 
-    if (linkedPRs.length === 0) {
-      return "";
+    if (!linkedPullRequest) linkedPullRequest = pr;
+    else if (linkedPullRequest.merged_at && pr.merged_at && new Date(linkedPullRequest.merged_at) < new Date(pr.merged_at)) {
+      linkedPullRequest = pr;
     }
-
-    const prUrl = linkedPRs[0].querySelector("a")?.attrs?.href || "";
-    return prUrl;
-  } catch (error) {
-    return "";
   }
+
+  return linkedPullRequest;
 };

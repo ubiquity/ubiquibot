@@ -1,6 +1,6 @@
 import ms from "ms";
 
-import { BotConfig, BotConfigSchema } from "../types";
+import { BotConfig, BotConfigSchema, LogLevel } from "../types";
 import {
   DEFAULT_BOT_DELAY,
   DEFAULT_DISQUALIFY_TIME,
@@ -13,7 +13,6 @@ import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
 import { getScalarKey, getWideConfig } from "../utils/private";
-import { Level } from "../adapters/supabase";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
@@ -33,7 +32,10 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     commandSettings,
     assistivePricing,
     registerWalletWithVerification,
+    staleBountyTime,
     enableAccessControl,
+    openAIKey,
+    openAITokenLimit,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -42,7 +44,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const botConfig: BotConfig = {
     log: {
       logEnvironment: process.env.LOG_ENVIRONMENT || "production",
-      level: (process.env.LOG_LEVEL as Level) || Level.DEBUG,
+      level: (process.env.LOG_LEVEL as LogLevel) || LogLevel.DEBUG,
       retryLimit: Number(process.env.LOG_RETRY) || 0,
     },
     price: {
@@ -90,6 +92,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     command: commandSettings,
     assign: {
       bountyHunterMax: bountyHunterMax,
+      staleBountyTime: ms(staleBountyTime),
     },
     sodium: {
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",
@@ -97,6 +100,10 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     wallet: {
       registerWalletWithVerification: registerWalletWithVerification,
+    },
+    ask: {
+      apiKey: openAIKey,
+      tokenLimit: openAITokenLimit || 0,
     },
     accessControl: enableAccessControl,
   };
