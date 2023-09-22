@@ -103,7 +103,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     ask: {
       apiKey: openAIKey,
-      tokenLimit: openAITokenLimit,
+      tokenLimit: openAITokenLimit || 0,
     },
     accessControl: enableAccessControl,
   };
