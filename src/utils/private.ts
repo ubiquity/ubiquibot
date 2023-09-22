@@ -10,7 +10,7 @@ import { WideConfig, WideRepoConfig, WideConfigSchema } from "../types";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
-const KEY_NAME = "private-key-encrypted";
+const KEY_NAME = "privateKeyEncrypted";
 const KEY_PREFIX = "HSK_";
 
 export const getConfigSuperset = async (context: Context, type: "org" | "repo", filePath: string): Promise<string | undefined> => {
@@ -141,26 +141,27 @@ export const getWideConfig = async (context: Context) => {
   const mergedConfigData: MergedConfig = mergeConfigs(configs);
 
   const configData = {
-    networkId: mergedConfigData["evm-network-id"],
+    networkId: mergedConfigData.evmNetworkId,
     privateKey: privateKeyDecrypted ?? "",
-    assistivePricing: mergedConfigData["assistive-pricing"],
-    commandSettings: mergedConfigData["command-settings"],
-    baseMultiplier: mergedConfigData["price-multiplier"],
-    issueCreatorMultiplier: mergedConfigData["issue-creator-multiplier"],
-    timeLabels: mergedConfigData["time-labels"],
-    priorityLabels: mergedConfigData["priority-labels"],
-    paymentPermitMaxPrice: mergedConfigData["payment-permit-max-price"],
-    disableAnalytics: mergedConfigData["disable-analytics"],
-    bountyHunterMax: mergedConfigData["max-concurrent-assigns"],
-    incentiveMode: mergedConfigData["comment-incentives"],
-    incentives: mergedConfigData["incentives"],
-    defaultLabels: mergedConfigData["default-labels"],
-    promotionComment: mergedConfigData["promotion-comment"],
-    registerWalletWithVerification: mergedConfigData["register-wallet-with-verification"],
-    enableAccessControl: mergedConfigData["enable-access-control"],
-    openAIKey: mergedConfigData["openai-api-key"],
-    openAITokenLimit: mergedConfigData["openai-token-limit"],
-    staleBountyTime: mergedConfigData["stale-bounty-time"],
+    assistivePricing: mergedConfigData.assistivePricing,
+    commandSettings: mergedConfigData.commandSettings,
+    baseMultiplier: mergedConfigData.priceMultiplier,
+    issueCreatorMultiplier: mergedConfigData.issueCreatorMultiplier,
+    timeLabels: mergedConfigData.timeLabels,
+    priorityLabels: mergedConfigData.priorityLabels,
+    paymentPermitMaxPrice: mergedConfigData.paymentPermitMaxPrice,
+    disableAnalytics: mergedConfigData.disableAnalytics,
+    bountyHunterMax: mergedConfigData.maxConcurrentAssigns,
+    incentiveMode: mergedConfigData.commentIncentives,
+    incentives: mergedConfigData.incentives,
+    defaultLabels: mergedConfigData.defaultLabels,
+    promotionComment: mergedConfigData.promotionComment,
+    registerWalletWithVerification: mergedConfigData.registerWalletWithVerification,
+    enableAccessControl: mergedConfigData.enableAccessControl,
+    openAIKey: mergedConfigData.openAIKey,
+    openAITokenLimit: mergedConfigData.openAITokenLimit,
+    staleBountyTime: mergedConfigData.staleBountyTime,
+
   };
 
   return configData;
