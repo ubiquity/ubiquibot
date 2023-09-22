@@ -1,4 +1,4 @@
-import { getBotContext, getLogger } from "../../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { upsertCommentToIssue } from "../../../helpers";
 import { Payload } from "../../../types";
 import { generateHelpMenu } from "./help";
@@ -7,8 +7,11 @@ export const verifyFirstCheck = async (): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
+  let msg = "";
   if (!payload.issue) return;
-
+  const {
+    newContributorGreeting: { header, helpMenu, footer, enabled },
+  } = getBotConfig();
   try {
     const response_issue = await context.octokit.rest.search.issuesAndPullRequests({
       q: `is:issue repo:${payload.repository.owner.login}/${payload.repository.name} commenter:${payload.sender.login}`,
@@ -28,9 +31,17 @@ export const verifyFirstCheck = async (): Promise<void> => {
         per_page: 100,
       });
       const isFirstComment = resp.data.filter((item) => item.user?.login === payload.sender.login).length === 1;
-      if (isFirstComment) {
+      if (isFirstComment && enabled) {
         //first_comment
-        const msg = `${generateHelpMenu()}\n@${payload.sender.login}`;
+        if (header) {
+          msg += `${header}\n`;
+        }
+        if (helpMenu) {
+          msg += `${generateHelpMenu()}\n@${payload.sender.login}\n`;
+        }
+        if (footer) {
+          msg += `${footer}`;
+        }
         await upsertCommentToIssue(payload.issue.number, msg, payload.action, payload.comment);
       }
     }
