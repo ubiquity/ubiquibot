@@ -5,7 +5,6 @@ import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
 import { Incentives, MarkdownItem, Payload, UserType } from "../../types";
 import { RewardsResponse, commentParser } from "../comment";
 import Decimal from "decimal.js";
-import { bountyInfo } from "../wildcard";
 import { IncentivesCalculationResult } from "./action";
 import { BigNumber } from "ethers";
 
@@ -42,10 +41,6 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
 
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
-  if (!assignee) {
-    logger.info("incentivizeComments: skipping payment permit generation because `assignee` is `undefined`.");
-    return { error: "incentivizeComments: skipping payment permit generation because `assignee` is `undefined`." };
-  }
 
   const issueComments = await getAllIssueComments(calculateIncentives.issue.number, "full");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
@@ -106,12 +101,6 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
   const title = `Task Creator`;
   const logger = getLogger();
 
-  const issueDetailed = bountyInfo(incentivesCalculation.issue);
-  if (!issueDetailed.isBounty) {
-    logger.info(`incentivizeCreatorComment: its not a bounty`);
-    return { error: `incentivizeCreatorComment: its not a bounty` };
-  }
-
   const comments = await getAllIssueComments(incentivesCalculation.issue.number);
   const permitComments = comments.filter(
     (content) => content.body.includes(title) && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
@@ -119,13 +108,6 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
   if (permitComments.length > 0) {
     logger.info(`incentivizeCreatorComment: skip to generate a permit url because it has been already posted`);
     return { error: `incentivizeCreatorComment: skip to generate a permit url because it has been already posted` };
-  }
-
-  const assignees = incentivesCalculation.issue.assignees ?? [];
-  const assignee = assignees.length > 0 ? assignees[0] : undefined;
-  if (!assignee) {
-    logger.info("incentivizeCreatorComment: skipping payment permit generation because `assignee` is `undefined`.");
-    return { error: "incentivizeCreatorComment: skipping payment permit generation because `assignee` is `undefined`." };
   }
 
   const description = await getIssueDescription(incentivesCalculation.issue.number, "html");
