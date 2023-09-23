@@ -5,16 +5,16 @@ import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { ErrorDiff } from "../utils/helpers";
 
-export const sysMsg = `You are the UbiquityAI, designed to provide accurate technical answers. \n
+export const sysMsg = `You are the UbiquiBot, designed to provide accurate technical answers. \n
 Whenever appropriate, format your response using GitHub Flavored Markdown. Utilize tables, lists, and code blocks for clear and organized answers. \n
 Do not make up answers. If you are unsure, say so. \n
 Original Context exists only to provide you with additional information to the current question, use it to formulate answers. \n
 Infer the context of the question from the Original Context using your best judgement. \n
-All replies MUST end with "\n\n <!--- { 'UbiquityAI': 'answer' } ---> ".\n
+All replies MUST end with "\n\n <!--- { 'UbiquiBot': 'answer' } ---> ".\n
 `;
 
 export const gptContextTemplate = `
-You are the UbiquityAI, designed to review and analyze pull requests.
+You are the UbiquiBot, designed to review and analyze pull requests.
 You have been provided with the spec of the issue and all linked issues or pull requests.
 Using this full context, Reply in pure JSON format, with the following structure omitting irrelvant information pertaining to the specification.
 You MUST provide the following structure, but you may add additional information if you deem it relevant.
@@ -79,7 +79,7 @@ export const decideContextGPT = async (
 
   // standard comments
   const comments = await getAllIssueComments(issue.number);
-  // raw so we can grab the <!--- { 'UbiquityAI': 'answer' } ---> tag
+  // raw so we can grab the <!--- { 'UbiquiBot': 'answer' } ---> tag
   const commentsRaw = await getAllIssueComments(issue.number, "raw");
 
   if (!comments) {
@@ -95,7 +95,7 @@ export const decideContextGPT = async (
 
   // add the rest
   comments.forEach(async (comment, i) => {
-    if (comment.user.type == UserType.User || commentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
+    if (comment.user.type == UserType.User || commentsRaw[i].body.includes("<!--- { 'UbiquiBot': 'answer' } --->")) {
       streamlined.push({
         login: comment.user.login,
         body: comment.body,
@@ -117,18 +117,19 @@ export const decideContextGPT = async (
   chatHistory.push(
     {
       role: "system",
+      content: gptContextTemplate,
+    },
+    {
+      role: "assistant",
       content: "This issue/Pr context: \n" + JSON.stringify(streamlined),
-      name: "UbiquityAI",
     } as CreateChatCompletionRequestMessage,
     {
-      role: "system",
+      role: "assistant",
       content: "Linked issue(s) context: \n" + JSON.stringify(linkedIssueStreamlined),
-      name: "UbiquityAI",
     } as CreateChatCompletionRequestMessage,
     {
-      role: "system",
+      role: "assistant",
       content: "Linked Pr(s) context: \n" + JSON.stringify(linkedPRStreamlined),
-      name: "UbiquityAI",
     } as CreateChatCompletionRequestMessage
   );
 

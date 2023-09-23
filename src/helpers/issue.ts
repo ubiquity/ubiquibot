@@ -745,7 +745,7 @@ export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
             const prComments = await getAllIssueComments(linkedPrs[i]);
             const prCommentsRaw = await getAllIssueComments(linkedPrs[i], "raw");
             prComments.forEach(async (comment, i) => {
-              if (comment.user.type == UserType.User || prCommentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
+              if (comment.user.type == UserType.User || prCommentsRaw[i].body.includes("<!--- { 'UbiquiBot': 'answer' } --->")) {
                 linkedPRStreamlined.push({
                   login: comment.user.login,
                   body: comment.body,
@@ -767,7 +767,7 @@ export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
             const issueComments = await getAllIssueComments(linkedIssues[i]);
             const issueCommentsRaw = await getAllIssueComments(linkedIssues[i], "raw");
             issueComments.forEach(async (comment, i) => {
-              if (comment.user.type == UserType.User || issueCommentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
+              if (comment.user.type == UserType.User || issueCommentsRaw[i].body.includes("<!--- { 'UbiquiBot': 'answer' } --->")) {
                 linkedIssueStreamlined.push({
                   login: comment.user.login,
                   body: comment.body,

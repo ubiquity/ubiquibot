@@ -33,6 +33,7 @@ export const handleComment = async (): Promise<void> => {
     if (userCommand) {
       const { id, handler, callback, successComment, failureComment } = userCommand;
       logger.info(`Running a comment handler: ${handler.name}`);
+      console.log("running a comment handler: ", handler.name);
 
       const { payload: _payload } = getBotContext();
       const issue = (_payload as Payload).issue;

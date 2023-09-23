@@ -50,7 +50,7 @@ export const DefaultConfig: MergedConfig = {
   commandSettings: [
     {
       name: "start",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "stop",
@@ -78,7 +78,7 @@ export const DefaultConfig: MergedConfig = {
     },
     {
       name: "allow",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "autopay",
