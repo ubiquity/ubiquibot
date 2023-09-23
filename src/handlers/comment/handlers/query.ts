@@ -31,7 +31,7 @@ export const query = async (body: string) => {
       data = {
         multiplier: false,
         priority: false,
-        time: false,
+        time: true,
         price: false,
       };
     }
