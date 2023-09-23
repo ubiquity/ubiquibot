@@ -1,5 +1,6 @@
 import { Static, Type } from "@sinclair/typebox";
 import { LogLevel } from "./log";
+import { Context } from "probot";
 
 const LabelItemSchema = Type.Object(
   {
@@ -142,6 +143,10 @@ export const BotConfigSchema = Type.Object({
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;
+
+export interface BotContext extends Context {
+  botConfig: BotConfig;
+}
 
 export const StreamlinedCommentSchema = Type.Object({
   login: Type.Optional(Type.String()),

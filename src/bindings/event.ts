@@ -2,7 +2,7 @@ import { Context } from "probot";
 import { createAdapters } from "../adapters";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
-import { BotConfig, GithubEvent, Payload, PayloadSchema, LogLevel } from "../types";
+import { BotContext, GithubEvent, Payload, PayloadSchema, LogLevel } from "../types";
 import { Adapters } from "../types/adapters";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
@@ -11,9 +11,6 @@ import { validateConfigChange } from "../handlers/push";
 
 let botContext: Context = {} as Context;
 export const getBotContext = () => botContext;
-
-let botConfig: BotConfig = {} as BotConfig;
-export const getBotConfig = () => botConfig;
 
 let adapters: Adapters = {} as Adapters;
 export const getAdapters = () => adapters;
@@ -30,7 +27,7 @@ export const getLogger = (): Logger => logger;
 
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT as string, GithubEvent.PUSH_EVENT as string];
 
-export const bindEvents = async (context: Context): Promise<void> => {
+export const bindEvents = async (context: BotContext): Promise<void> => {
   const { id, name } = context;
   botContext = context;
   const payload = context.payload as Payload;
@@ -39,12 +36,12 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   let botConfigError;
   try {
-    botConfig = await loadConfig(context);
+    context.botConfig = await loadConfig(context);
   } catch (err) {
     botConfigError = err;
   }
 
-  adapters = createAdapters(botConfig);
+  adapters = createAdapters(context.botConfig);
 
   const options = {
     app: "UbiquiBot",
@@ -53,9 +50,9 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   logger = new GitHubLogger(
     options.app,
-    botConfig?.log?.logEnvironment ?? "development",
-    botConfig?.log?.level ?? LogLevel.DEBUG,
-    botConfig?.log?.retryLimit ?? 0
+    context.botConfig?.log?.logEnvironment ?? "development",
+    context.botConfig?.log?.level ?? LogLevel.DEBUG,
+    context.botConfig?.log?.retryLimit ?? 0
   ); // contributors will see logs in console while on development env
   if (!logger) {
     return;
@@ -74,11 +71,11 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   logger.info(
     `Config loaded! config: ${JSON.stringify({
-      price: botConfig.price,
-      unassign: botConfig.unassign,
-      mode: botConfig.mode,
-      log: botConfig.log,
-      wallet: botConfig.wallet,
+      price: context.botConfig.price,
+      unassign: context.botConfig.unassign,
+      mode: context.botConfig.mode,
+      log: context.botConfig.log,
+      wallet: context.botConfig.wallet,
     })}`
   );
 
