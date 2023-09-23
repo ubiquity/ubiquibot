@@ -54,27 +54,27 @@ export const DefaultConfig: MergedConfig = {
     },
     {
       name: "stop",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "wallet",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "payout",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "multiplier",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "query",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "ask",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "allow",
@@ -82,7 +82,7 @@ export const DefaultConfig: MergedConfig = {
     },
     {
       name: "autopay",
-      enabled: false,
+      enabled: true,
     },
   ],
   incentives: {
