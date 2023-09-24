@@ -2,7 +2,7 @@ import { getWalletAddress } from "../../adapters/supabase";
 import { getBotContext, getLogger } from "../../bindings";
 import { getAllIssueComments, getAllPullRequestReviews, getIssueDescription, parseComments } from "../../helpers";
 import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
-import { Incentives, MarkdownItem, Payload, UserType } from "../../types";
+import { Incentives, Payload, UserType } from "../../types";
 import { RewardsResponse, commentParser } from "../comment";
 import Decimal from "decimal.js";
 import { bountyInfo } from "../wildcard";
@@ -19,7 +19,6 @@ export interface CreatorCommentResult {
   user?: string | undefined;
 }
 
-const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
 /**
  * Incentivize the contributors based on their contribution.
  * The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
@@ -79,7 +78,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
 
   for (const user of Object.keys(issueCommentsByUser)) {
     const commentsByUser = issueCommentsByUser[user];
-    const commentsByNode = await parseComments(commentsByUser.comments, ItemsToExclude);
+    const commentsByNode = await parseComments(commentsByUser.comments, calculateIncentives.incentives.comment.ignore_children);
     const rewardValue = calculateRewardValue(commentsByNode, calculateIncentives.incentives);
     if (rewardValue.equals(0)) {
       logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`);
@@ -245,8 +244,9 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
 
   for (const user of Object.keys(prReviewsByUser)) {
     const commentByUser = prReviewsByUser[user];
-    const commentsByNode = await parseComments(commentByUser.comments, ItemsToExclude);
+    const commentsByNode = await parseComments(commentByUser.comments, incentivesCalculation.incentives.comment.ignore_children);
     const rewardValue = calculateRewardValue(commentsByNode, incentivesCalculation.incentives);
+
     if (rewardValue.equals(0)) {
       logger.info(`calculatePullRequestReviewsReward: Skipping to generate a permit url because the reward value is 0. user: ${user}`);
       continue;
@@ -280,7 +280,7 @@ const generatePermitForComments = async (
   paymentPermitMaxPrice: number
 ): Promise<undefined | { account: string; amountInETH: Decimal }> => {
   const logger = getLogger();
-  const commentsByNode = await parseComments(comments, ItemsToExclude);
+  const commentsByNode = await parseComments(comments, incentives.comment.ignore_children);
   const rewardValue = calculateRewardValue(commentsByNode, incentives);
   if (rewardValue.equals(0)) {
     logger.info(`No reward for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);

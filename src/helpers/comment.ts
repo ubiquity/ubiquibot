@@ -9,6 +9,7 @@ type Node = {
 
 const traverse = (result: Record<string, string[]>, node: Node, itemsToExclude: string[]): Record<string, string[]> => {
   if (itemsToExclude.includes(node.nodeName)) {
+    result[node.nodeName].push(node.nodeName);
     return result;
   }
 
@@ -18,7 +19,7 @@ const traverse = (result: Record<string, string[]>, node: Node, itemsToExclude: 
 
   result[node.nodeName].push(node.value?.trim() ?? "");
 
-  if (node.childNodes && node.childNodes.length > 0) {
+  if (node.childNodes && node.childNodes.length > 0 && !itemsToExclude.includes(node.nodeName)) {
     node.childNodes.forEach((child) => traverse(result, child, itemsToExclude));
   }
 
