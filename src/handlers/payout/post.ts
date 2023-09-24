@@ -1,5 +1,5 @@
 import { getWalletAddress } from "../../adapters/supabase";
-import { getBotContext, getLogger } from "../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { getAllIssueComments, getAllPullRequestReviews, getIssueDescription, parseComments } from "../../helpers";
 import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
 import { Incentives, MarkdownItem, Payload, UserType } from "../../types";
@@ -29,11 +29,14 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   const logger = getLogger();
 
   const context = getBotContext();
+  const {
+    payout: { permitBaseUrl },
+  } = getBotConfig();
   const payload = context.payload as Payload;
   const issue = payload.issue;
 
   const permitComments = calculateIncentives.comments.filter(
-    (content) => content.body.includes(title) && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
+    (content) => content.body.includes(title) && content.body.includes(permitBaseUrl) && content.user.type == UserType.Bot
   );
   if (permitComments.length > 0) {
     logger.info(`incentivizeComments: skip to generate a permit url because it has been already posted`);
@@ -105,6 +108,9 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
 export const calculateIssueCreatorReward = async (incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> => {
   const title = `Task Creator`;
   const logger = getLogger();
+  const {
+    payout: { permitBaseUrl },
+  } = getBotConfig();
 
   const issueDetailed = bountyInfo(incentivesCalculation.issue);
   if (!issueDetailed.isBounty) {
@@ -114,7 +120,7 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
 
   const comments = await getAllIssueComments(incentivesCalculation.issue.number);
   const permitComments = comments.filter(
-    (content) => content.body.includes(title) && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
+    (content) => content.body.includes(title) && content.body.includes(permitBaseUrl) && content.user.type == UserType.Bot
   );
   if (permitComments.length > 0) {
     logger.info(`incentivizeCreatorComment: skip to generate a permit url because it has been already posted`);
@@ -172,6 +178,9 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
 export const calculatePullRequestReviewsReward = async (incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> => {
   const logger = getLogger();
   const context = getBotContext();
+  const {
+    payout: { permitBaseUrl },
+  } = getBotConfig();
   const title = "Reviewer";
 
   const linkedPullRequest = await gitLinkedPrParser({
@@ -189,7 +198,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
 
   const comments = await getAllIssueComments(incentivesCalculation.issue.number);
   const permitComments = comments.filter(
-    (content) => content.body.includes(title) && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
+    (content) => content.body.includes(title) && content.body.includes(permitBaseUrl) && content.user.type == UserType.Bot
   );
   if (permitComments.length > 0) {
     logger.info(`calculatePullRequestReviewsReward: skip to generate a permit url because it has been already posted`);
