@@ -117,9 +117,7 @@ export const getIncentivizedUsers = async (issue_number: number) => {
     } else {
       return undefined;
     }
-    return users;
   }
-
   return users;
 };
 
