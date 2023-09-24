@@ -99,11 +99,12 @@ export const incentivizeComments = async () => {
   // The mapping between gh handle and comment with a permit url
   const reward: Record<string, string> = {};
   const users = await getIncentivizedUsers(issue.number);
+  if (!users) return;
   // The mapping between gh handle and amount in ETH
   const fallbackReward: Record<string, Decimal> = {};
   let comment = `#### Conversation Rewards\n`;
   for (const user of Object.keys(issueCommentsByUser)) {
-    if (users.users.includes(user) || users.enable) {
+    if (users[user] || users[user] == true) {
       const commentsByUser = issueCommentsByUser[user];
       const commentsByNode = await parseComments(commentsByUser.comments, ItemsToExclude);
       const rewardValue = calculateRewardValue(commentsByNode, incentives);

@@ -28,6 +28,7 @@ import { query } from "./query";
 import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
 import { ErrorDiff } from "../../../utils/helpers";
+import { commentIncentive } from "./comment-incentives";
 
 export * from "./assign";
 export * from "./wallet";
@@ -36,6 +37,7 @@ export * from "./payout";
 export * from "./help";
 export * from "./multiplier";
 export * from "./query";
+export * from "./comment-incentives";
 
 /**
  * Parses the comment body and figure out the command name a user wants
@@ -243,6 +245,12 @@ export const userCommands = (): UserCommands[] => {
       id: IssueCommentCommands.AUTOPAY,
       description: "Toggle automatic payment for the completion of the current issue.",
       handler: autoPay,
+      callback: commandCallback,
+    },
+    {
+      id: IssueCommentCommands.COMMENTINCENTIVE,
+      description: `Enabled or disables comment incentives for a user`,
+      handler: commentIncentive,
       callback: commandCallback,
     },
     {
