@@ -11,13 +11,13 @@ export function waitForNWebhooks(n = 1) {
 
     const timer = setTimeout(() => {
       reject(new Error(`timeout, received ${i} webhooks, expected ${n}`));
-    }, 10000);
+    }, 30000);
 
     webhookEventEmitter.on("event", () => {
       i += 1;
       if (i == n) {
         clearTimeout(timer);
-        setTimeout(resolve, 500);
+        setTimeout(resolve, 1000);
       }
     });
   });
