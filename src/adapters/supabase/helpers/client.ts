@@ -521,3 +521,26 @@ export const savePermit = async (permit: InsertPermit): Promise<Permit> => {
   }
   return getPermitFromDbData(data[0]);
 };
+
+export const saveLabelChange = async (username: string, repository: string, label_from: string, label_to: string) => {
+  const { supabase } = getAdapters();
+  const { data, error } = await supabase
+    .from("label_changes")
+    .insert({
+      username,
+      repository,
+      label_from,
+      label_to,
+      approved: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .select();
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!data || data.length === 0) {
+    throw new Error("No data returned");
+  }
+  return data[0];
+};
