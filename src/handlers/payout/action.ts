@@ -442,7 +442,7 @@ export const handleIssueClosed = async (
       );
     }
 
-    await savePermitToDB(incentivesCalculation.assignee.id, txData);
+    await savePermitToDB(txData);
   }
 
   // MERGE ALL REWARDS

@@ -485,13 +485,13 @@ const getPermitFromDbData = (data: Record<string, unknown>): Permit => {
     id: data.id,
     createdAt: new Date(Date.parse(data.created_at as string)),
     updatedAt: new Date(Date.parse(data.updated_at as string)),
-    network: data.network,
-    token: data.token,
-    amount: data.amount,
+    networkId: data.network,
+    tokenAddress: data.token,
+    payoutAmount: data.amount,
     nonce: data.nonce,
     deadline: data.deadline,
-    beneficiary: data.beneficiary,
-    owner: data.owner,
+    bountyHunterAddress: data.beneficiary,
+    walletOwnerAddress: data.owner,
     signature: data.signature,
   } as Permit;
 };
