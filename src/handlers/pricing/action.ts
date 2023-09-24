@@ -58,14 +58,13 @@ export const pricingLabelLogic = async (): Promise<void> => {
       if (hasTargetPriceLabel) {
         // get all issue events of type "labeled" and the event label includes Price
         const labeledEvents = await getAllLabeledEvents();
-        let labeledPriceEvents: typeof labeledEvents = [];
-
         if (!labeledEvents) return;
-        labeledPriceEvents = labeledEvents.filter((event) => event.label?.name.includes("Price"));
-        if (!labeledPriceEvents.length) return;
+
+        labeledEvents.filter((event) => event.label?.name.includes("Price"));
+        if (!labeledEvents.length) return;
 
         // check if the latest price label has been added by a user
-        if (labeledPriceEvents[labeledPriceEvents.length - 1].actor?.type == UserType.User) {
+        if (labeledEvents[labeledEvents.length - 1].actor?.type == UserType.User) {
           logger.info(`Skipping... already exists`);
         } else {
           // add price label to issue becuase wrong price has been added by bot

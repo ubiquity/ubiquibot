@@ -11,7 +11,7 @@ export const getAllIssueEvents = async () => {
 
   let shouldFetch = true;
   let page_number = 1;
-  const events: any[] = [];
+  const events = [];
 
   try {
     while (shouldFetch) {
@@ -27,7 +27,7 @@ export const getAllIssueEvents = async () => {
       await checkRateLimitGit(response?.headers);
 
       if (response?.data?.length > 0) {
-        events.push(response.data);
+        events.push(...response.data);
         page_number++;
       } else {
         shouldFetch = false;
@@ -44,9 +44,7 @@ export const getAllIssueEvents = async () => {
 export const getAllLabeledEvents = async () => {
   const events = await getAllIssueEvents();
   if (!events) return null;
-  let labeledEvents: typeof events = [];
-  labeledEvents = events.filter((event) => event.event === "labeled");
-  return labeledEvents;
+  return events.filter((event) => event.event === "labeled");
 };
 
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
