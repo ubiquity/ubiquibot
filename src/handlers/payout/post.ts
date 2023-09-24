@@ -136,14 +136,14 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
 
   const description = await getIssueDescription(incentivesCalculation.issue.number, "html");
   if (!description) {
-    logger.info(`Skipping to generate a permit url because issue description is empty. description: ${description}`);
-    return { error: `Skipping to generate a permit url because issue description is empty. description: ${description}` };
+    logger.info(`Skipping issue creator reward because issue description is empty. description: ${description}`);
+    return { error: `Skipping issue creator reward because issue description is empty. description: ${description}` };
   }
   logger.info(`Getting the issue description done. description: ${description}`);
   const creator = incentivesCalculation.issue.user;
-  if (creator.type === UserType.Bot || creator.login === incentivesCalculation.issue.assignee) {
-    logger.info("Issue creator assigneed himself or Bot created this issue.");
-    return { error: "Issue creator assigneed himself or Bot created this issue." };
+  if (creator.type === UserType.Bot) {
+    logger.info("Skipping issue creator reward because Bot created this issue.");
+    return { error: "Skipping issue creator reward because Bot created this issue." };
   }
 
   const result = await generatePermitForComments(
