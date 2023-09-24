@@ -498,11 +498,11 @@ export const handleIssueClosed = async (
     logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(pullRequestReviewersReward.fallbackReward)}`);
   }
 
+  if (assigneeComment) await addCommentToIssue(assigneeComment + comments.promotionComment, issueNumber);
   if (commentersComment && !isEmpty(commentersReward)) await addCommentToIssue(commentersComment, issueNumber);
   if (creatorComment) await addCommentToIssue(creatorComment, issueNumber);
   if (pullRequestReviewerComment && !isEmpty(prReviewersReward)) await addCommentToIssue(pullRequestReviewerComment, issueNumber);
   if (mergedComment) await addCommentToIssue(mergedComment, issueNumber);
-  if (assigneeComment) await addCommentToIssue(assigneeComment + comments.promotionComment, issueNumber);
 
   await deleteLabel(incentivesCalculation.issueDetailed.priceLabel);
   await addLabelToIssue("Permitted");
