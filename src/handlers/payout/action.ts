@@ -91,8 +91,8 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
   const comments = await getAllIssueComments(issue.number);
 
   const wasReopened = await wasIssueReopened(issue.number);
-  const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
-  const permitCommentIdx = comments.findIndex((e) => e.user.type === UserType.Bot && e.body.match(claimUrlRegex));
+  const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\S+)\\)`);
+  const permitCommentIdx = comments.findIndex((e) => e.user.type === UserType.Bot && e.body.match(claimUrlRegex) && e.body.includes("Task Assignee Reward"));
 
   if (wasReopened && permitCommentIdx !== -1) {
     const permitComment = comments[permitCommentIdx];
