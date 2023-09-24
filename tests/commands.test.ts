@@ -16,7 +16,7 @@ import {
   checkLastComment,
   getLastComment,
 } from "./utils";
-import { WideOrgConfig, WideRepoConfig } from "../src/types";
+import { WideRepoConfig } from "../src/types";
 
 const testTimeout = 6 * 60 * 60 * 1000; // 6 hours
 
@@ -30,25 +30,25 @@ let adminUsername = "";
 let collaboratorUsername = "";
 
 const repoConfig: WideRepoConfig = {
-  "evm-network-id": 100,
-  "price-multiplier": 1,
-  "issue-creator-multiplier": 1,
-  "time-labels": [{ name: "Time: <1 Hour" }, { name: "Time: <2 Hours" }, { name: "Time: <4 Hours" }, { name: "Time: <1 Day" }, { name: "Time: <1 Week" }],
-  "priority-labels": [
+  evmNetworkId: 100,
+  priceMultiplier: 1,
+  issueCreatorMultiplier: 1,
+  timeLabels: [{ name: "Time: <1 Hour" }, { name: "Time: <2 Hours" }, { name: "Time: <4 Hours" }, { name: "Time: <1 Day" }, { name: "Time: <1 Week" }],
+  priorityLabels: [
     { name: "Priority: 1 (Normal)" },
     { name: "Priority: 2 (Medium)" },
     { name: "Priority: 3 (High)" },
     { name: "Priority: 4 (Urgent)" },
     { name: "Priority: 5 (Emergency)" },
   ],
-  "default-labels": ["Time: <1 Hour", "Priority: 1 (Normal)"],
-  "payment-permit-max-price": 1000,
-  "comment-incentives": true,
-  "max-concurrent-assigns": 5,
-  "promotion-comment": "",
-  "assistive-pricing": true,
-  "register-wallet-with-verification": false,
-  "command-settings": [
+  defaultLabels: ["Time: <1 Hour", "Priority: 1 (Normal)"],
+  paymentPermitMaxPrice: 1000,
+  commentIncentives: true,
+  maxConcurrentAssigns: 5,
+  promotionComment: "",
+  assistivePricing: true,
+  registerWalletWithVerification: false,
+  commandSettings: [
     { name: "start", enabled: true },
     { name: "stop", enabled: true },
     { name: "wallet", enabled: true },
@@ -59,8 +59,8 @@ const repoConfig: WideRepoConfig = {
     { name: "help", enabled: true },
     { name: "payout", enabled: true },
   ],
-  "disable-analytics": true,
-  "enable-access-control": {
+  disableAnalytics: true,
+  enableAccessControl: {
     label: true,
     organization: true,
   },
@@ -81,8 +81,8 @@ const repoConfig: WideRepoConfig = {
   },
 };
 
-const orgConfig: WideOrgConfig = {
-  "private-key-encrypted":
+const orgConfig: WideRepoConfig = {
+  privateKeyEncrypted:
     "YU-tFJFczN3JPVoJu0pQKSbWoeiCFPjKiTXMoFnJxDDxUNX-BBXc6ZHkcQcHVjdOd6ZcEnU1o2jU3F-i05mGJPmhF2rhQYXkNlxu5U5fZMMcgxJ9INhAmktzRBUxWncg4L1HOalZIoQ7gm3nk1a84g",
 };
 

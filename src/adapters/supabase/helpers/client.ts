@@ -347,7 +347,7 @@ export const getAccessLevel = async (username: string, repository: string, label
   return accessValues;
 };
 
-export const getAllAccessLevels = async (username: string, repository: string): Promise<AccessLevels> => {
+export const getAllAccessLevels = async (username: string, repository: string): Promise<AccessLevels | null> => {
   const logger = getLogger();
   const { supabase } = getAdapters();
 
@@ -357,7 +357,7 @@ export const getAllAccessLevels = async (username: string, repository: string): 
     throw new Error(`Checking access control failed, error: ${JSON.stringify(error)}`);
   }
   if (!data || data.length === 0) {
-    return { multiplier: false, time: false, priority: false, price: false };
+    return null;
   }
   return { multiplier: data[0].multiplier_access, time: data[0].time_access, priority: data[0].priority_access, price: data[0].price_access };
 };
