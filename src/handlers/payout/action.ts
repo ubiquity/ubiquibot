@@ -341,6 +341,43 @@ export const handleIssueClosed = async (
     return { error: `Permit generation skipped since issue's bounty is higher than ${incentivesCalculation.paymentPermitMaxPrice}` };
   }
 
+  // ASSIGNEE REWARD HANDLER
+  if (assigneeReward && assigneeReward.reward && assigneeReward.reward[0].account !== "0x") {
+    const { txData, payoutUrl } = await generatePermit2Signature(
+      assigneeReward.reward[0].account,
+      assigneeReward.reward[0].priceInEth,
+      incentivesCalculation.issue.node_id,
+      incentivesCalculation.assignee.node_id
+    );
+    const tokenSymbol = await getTokenSymbol(incentivesCalculation.paymentToken, incentivesCalculation.rpc);
+    const shortenRecipient = shortenEthAddress(assigneeReward.reward[0].account, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
+    logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
+    assigneeComment =
+      `#### ${title} Reward \n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
+    const permitComments = incentivesCalculation.comments.filter((content) => {
+      const permitUrlMatches = content.body.match(incentivesCalculation.claimUrlRegex);
+      if (!permitUrlMatches || permitUrlMatches.length < 2) return false;
+      else return true;
+    });
+
+    if (permitComments.length > 0) {
+      logger.info(`Skip to generate a permit url because it has been already posted.`);
+      return { error: `Permit generation disabled because it was already posted to this issue.` };
+    }
+
+    if (assigneeReward.reward[0].penaltyAmount.gt(0)) {
+      await removePenalty(
+        incentivesCalculation.assignee.login,
+        incentivesCalculation.payload.repository.full_name,
+        incentivesCalculation.paymentToken,
+        incentivesCalculation.networkId.toString(),
+        assigneeReward.reward[0].penaltyAmount
+      );
+    }
+
+    await savePermitToDB(incentivesCalculation.assignee.id, txData);
+  }
+
   // COMMENTERS REWARD HANDLER
   if (conversationRewards.reward && conversationRewards.reward.length > 0) {
     commentersComment = `#### ${conversationRewards.title} Rewards \n`;
@@ -406,43 +443,6 @@ export const handleIssueClosed = async (
     title += " and Creator";
   } else if (creatorReward && creatorReward.reward && creatorReward.reward[0].account === "0x") {
     logger.info(`Skipping to generate a permit url for missing account. fallback: ${creatorReward.fallbackReward}`);
-  }
-
-  // ASSIGNEE REWARD HANDLER
-  if (assigneeReward && assigneeReward.reward && assigneeReward.reward[0].account !== "0x") {
-    const { txData, payoutUrl } = await generatePermit2Signature(
-      assigneeReward.reward[0].account,
-      assigneeReward.reward[0].priceInEth,
-      incentivesCalculation.issue.node_id,
-      incentivesCalculation.assignee.node_id
-    );
-    const tokenSymbol = await getTokenSymbol(incentivesCalculation.paymentToken, incentivesCalculation.rpc);
-    const shortenRecipient = shortenEthAddress(assigneeReward.reward[0].account, `[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]`.length);
-    logger.info(`Posting a payout url to the issue, url: ${payoutUrl}`);
-    assigneeComment =
-      `#### ${title} Reward \n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
-    const permitComments = incentivesCalculation.comments.filter((content) => {
-      const permitUrlMatches = content.body.match(incentivesCalculation.claimUrlRegex);
-      if (!permitUrlMatches || permitUrlMatches.length < 2) return false;
-      else return true;
-    });
-
-    if (permitComments.length > 0) {
-      logger.info(`Skip to generate a permit url because it has been already posted.`);
-      return { error: `Permit generation disabled because it was already posted to this issue.` };
-    }
-
-    if (assigneeReward.reward[0].penaltyAmount.gt(0)) {
-      await removePenalty(
-        incentivesCalculation.assignee.login,
-        incentivesCalculation.payload.repository.full_name,
-        incentivesCalculation.paymentToken,
-        incentivesCalculation.networkId.toString(),
-        assigneeReward.reward[0].penaltyAmount
-      );
-    }
-
-    await savePermitToDB(incentivesCalculation.assignee.id, txData);
   }
 
   // MERGE ALL REWARDS
