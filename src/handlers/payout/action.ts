@@ -422,9 +422,12 @@ export const handleIssueClosed = async (
     assigneeComment =
       `#### ${title} Reward \n### [ **[ CLAIM ${priceInEth} ${tokenSymbol.toUpperCase()} ]** ](${payoutUrl})\n` + "```" + shortenRecipient + "```";
     const permitComments = incentivesCalculation.comments.filter((content) => {
-      const permitUrlMatches = content.body.match(incentivesCalculation.claimUrlRegex);
-      if (!permitUrlMatches || permitUrlMatches.length < 2) return false;
-      else return true;
+      if (content.body.includes("https://pay.ubq.fi") && content.user.type == UserType.Bot) {
+        const url = new URL(content.body);
+        // Check if the URL contains the specific query parameter
+        return url.searchParams.has("claim");
+      }
+      return false;
     });
 
     if (permitComments.length > 0) {
