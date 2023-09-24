@@ -5,6 +5,7 @@ import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 import Decimal from "decimal.js";
 import { Payload } from "../types";
 import { savePermit } from "../adapters/supabase";
+import { ERC20ABI } from "../configs";
 
 const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on all networks
 
@@ -45,16 +46,16 @@ type TxData = {
 };
 
 /**
- * Generates permit2 signature data with `spender` and `amountInETH`
+ * Generates permit2 signature data with `spender` and `amountInTokens`
  *
  * @param spender The recipient address we're going to send tokens
- * @param amountInETH The token amount in ETH
+ * @param amountInTokens The token amount
  *
  * @returns Permit2 url including base64 encocded data
  */
 export const generatePermit2Signature = async (
   spender: string,
-  amountInEth: Decimal,
+  amountInTokens: Decimal,
   identifier: string,
   userId = ""
 ): Promise<{ txData: TxData; payoutUrl: string }> => {
@@ -65,12 +66,15 @@ export const generatePermit2Signature = async (
   const provider = new ethers.providers.JsonRpcProvider(rpc);
   const adminWallet = new ethers.Wallet(privateKey, provider);
 
+  const tokenContract = new ethers.Contract(paymentToken, ERC20ABI, provider);
+  const decimals = await tokenContract.decimals();
+
   const permitTransferFromData: PermitTransferFrom = {
     permitted: {
       // token we are permitting to be transferred
       token: paymentToken,
       // amount we are permitting to be transferred
-      amount: ethers.utils.parseUnits(amountInEth.toString(), 18),
+      amount: ethers.utils.parseUnits(amountInTokens.toString(), decimals),
     },
     // who can transfer the tokens
     spender: spender,
@@ -101,9 +105,12 @@ export const generatePermit2Signature = async (
 
   const base64encodedTxData = Buffer.from(JSON.stringify(txData)).toString("base64");
 
-  const payoutUrl = `${permitBaseUrl}?claim=${base64encodedTxData}&network=${networkId}`;
-  logger.info(`Generated permit2 url: ${payoutUrl}`);
-  return { txData, payoutUrl };
+  const payoutUrl = new URL(permitBaseUrl);
+  payoutUrl.searchParams.append("claim", base64encodedTxData);
+  payoutUrl.searchParams.append("network", networkId.toString());
+  logger.info(`Generated permit2 of amount ${amountInTokens} for user ${spender}, url: ${payoutUrl}`);
+
+  return { txData, payoutUrl: payoutUrl.toString() };
 };
 
 export const savePermitToDB = async (bountyHunterId: number, txData: TxData): Promise<Permit> => {

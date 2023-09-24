@@ -12,7 +12,7 @@ import { BigNumber } from "ethers";
 export interface CreatorCommentResult {
   title: string;
   account?: string | undefined;
-  amountInETH?: Decimal | undefined;
+  rewardInTokens?: Decimal | undefined;
   userId?: string | undefined;
   tokenSymbol?: string | undefined;
   node_id?: string | undefined;
@@ -148,8 +148,8 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
     incentivesCalculation.paymentPermitMaxPrice
   );
 
-  if (!result || !result.account || !result.amountInETH) {
-    throw new Error("Failed to generate permit for issue creator because of missing account or amountInETH");
+  if (!result || !result.account || !result.rewardInTokens) {
+    throw new Error("Failed to generate permit for issue creator because of missing account or rewardInTokens");
   }
 
   return {
@@ -159,7 +159,7 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
     username: creator.login,
     reward: [
       {
-        priceInEth: result?.amountInETH ?? new Decimal(0),
+        priceInEth: result?.rewardInTokens ?? new Decimal(0),
         account: result?.account,
         userId: "",
         user: "",
@@ -278,7 +278,7 @@ const generatePermitForComments = async (
   multiplier: number,
   incentives: Incentives,
   paymentPermitMaxPrice: number
-): Promise<undefined | { account: string; amountInETH: Decimal }> => {
+): Promise<undefined | { account: string; rewardInTokens: Decimal }> => {
   const logger = getLogger();
   const commentsByNode = await parseComments(comments, ItemsToExclude);
   const rewardValue = calculateRewardValue(commentsByNode, incentives);
@@ -288,15 +288,15 @@ const generatePermitForComments = async (
   }
   logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
   const account = await getWalletAddress(user);
-  const amountInETH = rewardValue.mul(multiplier);
-  if (amountInETH.gt(paymentPermitMaxPrice)) {
+  const rewardInTokens = rewardValue.mul(multiplier);
+  if (rewardInTokens.gt(paymentPermitMaxPrice)) {
     logger.info(`Skipping issue creator reward for user ${user} because reward is higher than payment permit max price`);
     return;
   }
   if (account) {
-    return { account, amountInETH };
+    return { account, rewardInTokens };
   } else {
-    return { account: "0x", amountInETH: new Decimal(0) };
+    return { account: "0x", rewardInTokens: new Decimal(0) };
   }
 };
 /**
