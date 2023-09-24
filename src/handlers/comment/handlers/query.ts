@@ -25,9 +25,15 @@ export const query = async (body: string) => {
   const repo = payload.repository;
 
   if (user) {
-    const data = await getAllAccessLevels(user, repo.full_name);
+    let data = await getAllAccessLevels(user, repo.full_name);
     if (!data) {
-      return `Error retrieving access for @${user}`;
+      logger.info(`Access info does not exist for @${user}`);
+      data = {
+        multiplier: false,
+        priority: false,
+        time: true,
+        price: false,
+      };
     }
     const walletInfo = await getWalletInfo(user, id?.toString());
     if (!walletInfo?.address) {

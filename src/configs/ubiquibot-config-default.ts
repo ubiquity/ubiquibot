@@ -1,19 +1,19 @@
 import { MergedConfig } from "../types";
 
 export const DefaultConfig: MergedConfig = {
-  "evm-network-id": 100,
-  "price-multiplier": 1,
-  "issue-creator-multiplier": 2,
-  "payment-permit-max-price": 9007199254740991,
-  "max-concurrent-assigns": 9007199254740991,
-  "assistive-pricing": false,
-  "disable-analytics": false,
-  "comment-incentives": false,
-  "register-wallet-with-verification": false,
-  "promotion-comment":
+  evmNetworkId: 100,
+  priceMultiplier: 1,
+  issueCreatorMultiplier: 2,
+  paymentPermitMaxPrice: 9007199254740991,
+  maxConcurrentAssigns: 9007199254740991,
+  assistivePricing: false,
+  disableAnalytics: false,
+  commentIncentives: false,
+  registerWalletWithVerification: false,
+  promotionComment:
     "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>",
-  "default-labels": [],
-  "time-labels": [
+  defaultLabels: [],
+  timeLabels: [
     {
       name: "Time: <1 Hour",
     },
@@ -30,7 +30,7 @@ export const DefaultConfig: MergedConfig = {
       name: "Time: <1 Month",
     },
   ],
-  "priority-labels": [
+  priorityLabels: [
     {
       name: "Priority: 1 (Normal)",
     },
@@ -47,7 +47,7 @@ export const DefaultConfig: MergedConfig = {
       name: "Priority: 5 (Emergency)",
     },
   ],
-  "command-settings": [
+  commandSettings: [
     {
       name: "start",
       enabled: false,
@@ -73,6 +73,10 @@ export const DefaultConfig: MergedConfig = {
       enabled: false,
     },
     {
+      name: "ask",
+      enabled: false,
+    },
+    {
       name: "allow",
       enabled: false,
     },
@@ -89,9 +93,17 @@ export const DefaultConfig: MergedConfig = {
       },
     },
   },
-  "enable-access-control": {
+  enableAccessControl: {
     label: false,
     organization: true,
   },
-  "stale-bounty-time": "0d",
+  staleBountyTime: "0d",
+  newContributorGreeting: {
+    enabled: true,
+    header:
+      "Thank you for contributing to UbiquiBot! Please be sure to set your wallet address before completing your first bounty so that the automatic payout upon task completion will work for you.",
+    helpMenu: true,
+    footer:
+      "###### Also please star this repository and [@ubiquity/devpool-directory](https://github.com/ubiquity/devpool-directory/) to show your support. It helps a lot!",
+  },
 };

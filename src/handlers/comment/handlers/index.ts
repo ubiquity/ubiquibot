@@ -7,6 +7,7 @@ import { listAvailableCommands } from "./help";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 import { setAccess } from "./allow";
+import { ask } from "./ask";
 import { multiplier } from "./multiplier";
 import { BigNumber, ethers } from "ethers";
 import { addPenalty } from "../../../adapters/supabase";
@@ -23,10 +24,18 @@ import {
   calculateWeight,
 } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
-import { handleIssueClosed } from "../../payout";
+import {
+  handleIssueClosed,
+  incentivesCalculation,
+  calculateIssueConversationReward,
+  calculateIssueCreatorReward,
+  calculateIssueAssigneeReward,
+  calculatePullRequestReviewsReward,
+} from "../../payout";
 import { query } from "./query";
 import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
+import Decimal from "decimal.js";
 import { ErrorDiff } from "../../../utils/helpers";
 
 export * from "./assign";
@@ -36,6 +45,22 @@ export * from "./payout";
 export * from "./help";
 export * from "./multiplier";
 export * from "./query";
+export * from "./ask";
+
+export interface RewardsResponse {
+  error: string | null;
+  title?: string;
+  userId?: string;
+  username?: string;
+  reward?: {
+    account: string;
+    priceInEth: Decimal;
+    penaltyAmount: BigNumber;
+    user: string;
+    userId: string;
+  }[];
+  fallbackReward?: Record<string, Decimal>;
+}
 
 /**
  * Parses the comment body and figure out the command name a user wants
@@ -65,12 +90,22 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
 
 export const issueClosedCallback = async (): Promise<void> => {
   const { payload: _payload } = getBotContext();
-  const { comments } = getBotConfig();
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   try {
-    const comment = await handleIssueClosed();
-    if (comment) await addCommentToIssue(comment + comments.promotionComment, issue.number);
+    // assign function incentivesCalculation to a variable
+    const calculateIncentives = await incentivesCalculation();
+
+    const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
+    const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
+    const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
+    const pullRequestReviewersReward = await calculatePullRequestReviewsReward(calculateIncentives);
+
+    const { error } = await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, pullRequestReviewersReward, calculateIncentives);
+
+    if (error) {
+      throw new Error(error);
+    }
   } catch (err: unknown) {
     return await addCommentToIssue(ErrorDiff(err), issue.number);
   }
@@ -249,6 +284,12 @@ export const userCommands = (): UserCommands[] => {
       id: IssueCommentCommands.QUERY,
       description: `Comments the users multiplier and address`,
       handler: query,
+      callback: commandCallback,
+    },
+    {
+      id: IssueCommentCommands.ASK,
+      description: `Ask a technical question to the Ubiquity AI. \n  example usage: "/ask How do I do X?"`,
+      handler: ask,
       callback: commandCallback,
     },
     {

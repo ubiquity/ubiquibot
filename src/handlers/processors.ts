@@ -6,7 +6,6 @@ import { nullHandler } from "./shared";
 import { handleComment, issueClosedCallback, issueCreatedCallback, issueReopenedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
-import { incentivizeComments, incentivizeCreatorComment, incentivizePullRequestReviews } from "./payout";
 import { runOnPush, validateConfigChange } from "./push";
 import { findDuplicateOne } from "./issue";
 
@@ -54,7 +53,7 @@ export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_CLOSED]: {
     pre: [nullHandler],
     action: [issueClosedCallback],
-    post: [incentivizeCreatorComment, incentivizeComments, incentivizePullRequestReviews],
+    post: [nullHandler],
   },
   [GithubEvent.PULL_REQUEST_OPENED]: {
     pre: [nullHandler],
