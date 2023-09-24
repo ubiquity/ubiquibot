@@ -4,13 +4,13 @@ CREATE TABLE IF NOT EXISTS
     created_at timestamptz not null,
     updated_at timestamptz not null,
     network smallserial not null,
-    token char(42) not null,
+    token varchar(42) not null,
     amount numeric not null,
     nonce numeric not null,
     deadline numeric not null,
-    beneficiary char(42) not null,
-    owner char(42) not null,
-    signature char(132) not null
+    beneficiary varchar(42) not null,
+    owner varchar(42) not null,
+    signature varchar(132) not null
   );
 
 INSERT INTO
