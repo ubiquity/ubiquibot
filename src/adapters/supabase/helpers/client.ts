@@ -521,3 +521,55 @@ export const savePermit = async (permit: InsertPermit): Promise<Permit> => {
   }
   return getPermitFromDbData(data[0]);
 };
+
+export const saveLabelChange = async (username: string, repository: string, label_from: string, label_to: string, hasAccess: boolean) => {
+  const { supabase } = getAdapters();
+  const { data, error } = await supabase
+    .from("label_changes")
+    .insert({
+      username,
+      repository,
+      label_from,
+      label_to,
+      authorized: hasAccess || false,
+      created: new Date().toISOString(),
+      updated: new Date().toISOString(),
+    })
+    .select();
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!data || data.length === 0) {
+    throw new Error("No data returned");
+  }
+  return data[0];
+};
+
+export const getLabelChanges = async (repository: string, labels: string[]) => {
+  const { supabase } = getAdapters();
+  const logger = getLogger();
+
+  const { data, error } = await supabase.from("label_changes").select("*").in("label_to", labels).eq("repository", repository).eq("authorized", false);
+
+  logger.debug(`Getting label changes done, { data: ${JSON.stringify(data)}, error: ${JSON.stringify(error)} }`);
+
+  if (error) {
+    throw new Error(`Error getting label changes: ${error.message}`);
+  }
+
+  if (data.length === 0) {
+    return null;
+  }
+  return data[0];
+};
+
+export const _approveLabelChange = async (changeId: number) => {
+  const { supabase } = getAdapters();
+  const { error } = await supabase.from("label_changes").update({ authorized: true }).eq("id", changeId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return;
+};
