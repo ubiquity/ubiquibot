@@ -26,7 +26,7 @@ import { isEmpty } from "lodash";
 export interface IncentivesCalculationResult {
   paymentToken: string;
   rpc: string;
-  networkId: number;
+  evmNetworkId: number;
   privateKey: string;
   permitMaxPrice: number;
   baseMultiplier: number;
@@ -225,7 +225,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
   return {
     paymentToken,
     rpc,
-    networkId: evmNetworkId,
+    evmNetworkId,
     privateKey,
     recipient,
     multiplier,
@@ -269,7 +269,7 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
     assigneeLogin,
     incentivesCalculation.payload.repository.full_name,
     incentivesCalculation.paymentToken,
-    incentivesCalculation.networkId.toString()
+    incentivesCalculation.evmNetworkId.toString()
   );
   if (penaltyAmount.gt(0)) {
     logger.info(`Deducting penalty from bounty`);
@@ -280,7 +280,7 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
         assigneeLogin,
         incentivesCalculation.payload.repository.full_name,
         incentivesCalculation.paymentToken,
-        incentivesCalculation.networkId.toString(),
+        incentivesCalculation.evmNetworkId.toString(),
         bountyAmount
       );
       const msg = `Permit generation disabled because bounty amount after penalty is 0.`;
@@ -437,7 +437,7 @@ export const handleIssueClosed = async (
         incentivesCalculation.assignee.login,
         incentivesCalculation.payload.repository.full_name,
         incentivesCalculation.paymentToken,
-        incentivesCalculation.networkId.toString(),
+        incentivesCalculation.evmNetworkId.toString(),
         assigneeReward.reward[0].penaltyAmount
       );
     }
