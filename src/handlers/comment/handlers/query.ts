@@ -1,6 +1,7 @@
 import { getAllAccessLevels, getWalletInfo, upsertAccessControl } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
 import { Payload } from "../../../types";
+import { ErrorDiff } from "../../../utils/helpers";
 
 export const query = async (body: string) => {
   const context = getBotContext();
@@ -37,7 +38,7 @@ export const query = async (body: string) => {
           price: false,
         };
       } catch (e) {
-        logger.error(`Exception thrown by getAllAcessLevels: ${e}`);
+        ErrorDiff(e);
         return `Error upserting acess info for @${user}`;
       }
     }
