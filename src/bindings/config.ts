@@ -36,6 +36,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     enableAccessControl,
     openAIKey,
     openAITokenLimit,
+    newContributorGreeting,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -103,9 +104,10 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     ask: {
       apiKey: openAIKey,
-      tokenLimit: openAITokenLimit,
+      tokenLimit: openAITokenLimit || 0,
     },
     accessControl: enableAccessControl,
+    newContributorGreeting: newContributorGreeting,
   };
 
   if (botConfig.payout.privateKey == "") {
