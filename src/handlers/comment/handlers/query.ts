@@ -38,7 +38,7 @@ export const query = async (body: string) => {
         };
       } catch (e) {
         logger.error(`Exception thrown by getAllAcessLevels: ${e}`);
-        return `Error upserting acess info for @${user}`;
+        return `Error upserting access info for @${user}`;
       }
     }
     const walletInfo = await getWalletInfo(user, id?.toString());
