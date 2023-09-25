@@ -562,3 +562,14 @@ export const getLabelChanges = async (repository: string, labels: string[]) => {
   }
   return data[0];
 };
+
+export const _approveLabelChange = async (changeId: number) => {
+  const { supabase } = getAdapters();
+  const { error } = await supabase.from("label_changes").update({ approved: true }).eq("id", changeId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return;
+};
