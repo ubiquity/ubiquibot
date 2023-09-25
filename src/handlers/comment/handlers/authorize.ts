@@ -11,11 +11,11 @@ export const approveLabelChange = async () => {
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
 
-  logger.info(`Received '/approve' command from user: ${sender}`);
+  logger.info(`Received '/authorize' command from user: ${sender}`);
 
   const { issue, repository } = payload;
   if (!issue) {
-    logger.info(`Skipping '/approve' because of no issue instance`);
+    logger.info(`Skipping '/authorize' because of no issue instance`);
     return;
   }
 

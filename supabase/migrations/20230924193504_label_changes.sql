@@ -6,5 +6,5 @@ CREATE TABLE IF NOT EXISTS label_changes (
     repository text NOT NULL,
     label_from text NOT NULL,
     label_to text NOT NULL,
-    approved boolean NOT NULL
+    authorized boolean NOT NULL
 );

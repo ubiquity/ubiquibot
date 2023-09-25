@@ -531,7 +531,7 @@ export const saveLabelChange = async (username: string, repository: string, labe
       repository,
       label_from,
       label_to,
-      approved: hasAccess || false,
+      authorized: hasAccess || false,
       created: new Date().toISOString(),
       updated: new Date().toISOString(),
     })
@@ -549,7 +549,7 @@ export const getLabelChanges = async (repository: string, labels: string[]) => {
   const { supabase } = getAdapters();
   const logger = getLogger();
 
-  const { data, error } = await supabase.from("label_changes").select("*").in("label_to", labels).eq("repository", repository).eq("approved", false);
+  const { data, error } = await supabase.from("label_changes").select("*").in("label_to", labels).eq("repository", repository).eq("authorized", false);
 
   logger.debug(`Getting label changes done, { data: ${JSON.stringify(data)}, error: ${JSON.stringify(error)} }`);
 
@@ -565,7 +565,7 @@ export const getLabelChanges = async (repository: string, labels: string[]) => {
 
 export const _approveLabelChange = async (changeId: number) => {
   const { supabase } = getAdapters();
-  const { error } = await supabase.from("label_changes").update({ approved: true }).eq("id", changeId);
+  const { error } = await supabase.from("label_changes").update({ authorized: true }).eq("id", changeId);
 
   if (error) {
     throw new Error(error.message);
