@@ -33,6 +33,6 @@ ${
 </tr>
 ${multiplier ? `<tr><td>Payment Multiplier</td><td>${multiplier}</td></tr>` : ``}
 ${reason ? `<tr><td>Multiplier Reason</td><td>${reason}</td></tr>` : ``}
-${task ? `<tr><td>Total Task</td><td>${task}</td></tr>` : ``}
+${task ? `<tr><td>Total Price</td><td>${task}</td></tr>` : ``}
 </table></code>`;
 };
