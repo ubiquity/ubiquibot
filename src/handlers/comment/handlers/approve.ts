@@ -41,5 +41,5 @@ export const approveLabelChange = async () => {
 
   await _approveLabelChange(labelChanges.id);
 
-  return `Label change have been approved, permit can now be generated`;
+  return `Label change has been approved, permit can now be generated`;
 };
