@@ -1,6 +1,52 @@
-priceMultiplier: 1.5
-# newContributorGreeting:
-#  enabled: true
-#  header:  "Thank you for contributing to UbiquiBot! Please be sure to set your wallet address before completing your first bounty so that the automatic payout upon task completion will work for you."
-#  helpMenu: true
-#  footer:  "###### Also please star this repository and [@ubiquity/devpool-directory](https://github.com/ubiquity/devpool-directory/) to show your support. It helps a lot!"
+evmNetworkId: 100
+priceMultiplier: 1
+issueCreatorMultiplier: 2
+privateKeyEncrypted: "YU-tFJFczN3JPVoJu0pQKSbWoeiCFPjKiTXMoFnJxDDxUNX-BBXc6ZHkcQcHVjdOd6ZcEnU1o2jU3F-i05mGJPmhF2rhQYXkNlxu5U5fZMMcgxJ9INhAmktzRBUxWncg4L1HOalZIoQ7gm3nk1a84g"
+timeLabels:
+  - name: "Time: <1 Hour"
+  - name: "Time: <2 Hours"
+  - name: "Time: <4 Hours"
+  - name: "Time: <1 Day"
+  - name: "Time: <1 Week"
+priorityLabels:
+  - name: "Priority: 0 (Normal)"
+  - name: "Priority: 1 (Medium)"
+  - name: "Priority: 2 (High)"
+  - name: "Priority: 3 (Urgent)"
+  - name: "Priority: 4 (Emergency)"
+defaultLabels:
+  - "Time: <1 Hour"
+  - "Priority: 0 (Normal)"
+commandSettings:
+  - name: start
+    enabled: true
+  - name: stop
+    enabled: true
+  - name: wallet
+    enabled: true
+  - name: payout
+    enabled: true
+  - name: multiplier
+    enabled: true
+  - name: query
+    enabled: true
+  - name: allow
+    enabled: true
+  - name: autopay
+    enabled: true
+paymentPermitMaxPrice: 1000
+commentIncentives: true
+disableAnalytics: false
+maxConcurrentAssigns: 2
+promotionComment: "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>"
+registerWalletWithVerification: false
+assistivePricing: true
+incentives:
+  comment:
+    elements:
+      h1: 5
+    totals:
+      word: 0.1
+enableAccessControl:
+  label: true
+  organization: true
