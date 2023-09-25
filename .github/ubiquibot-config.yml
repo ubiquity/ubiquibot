@@ -5,7 +5,7 @@ evmNetworkId: 100
 priceMultiplier: 1
 issueCreatorMultiplier: 3
 maxConcurrentAssigns: 2
-paymentPermitMaxPrice: 1000
+# paymentPermitMaxPrice: 1000
 
 disableAnalytics: true
 commentIncentives: true
