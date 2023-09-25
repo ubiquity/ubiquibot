@@ -151,7 +151,7 @@ export const getWideConfig = async (context: Context) => {
     priorityLabels: mergedConfigData.priorityLabels,
     permitMaxPrice: mergedConfigData.permitMaxPrice,
     disableAnalytics: mergedConfigData.disableAnalytics,
-    maxConcurrentBounties: mergedConfigData.maxConcurrentAssigns,
+    maxConcurrentTasks: mergedConfigData.maxConcurrentAssigns,
     incentiveMode: mergedConfigData.commentIncentives,
     incentives: mergedConfigData.incentives,
     defaultLabels: mergedConfigData.defaultLabels,

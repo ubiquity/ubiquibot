@@ -23,7 +23,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     incentives,
     permitMaxPrice,
     disableAnalytics,
-    maxConcurrentBounties,
+    maxConcurrentTasks,
     incentiveMode,
     evmNetworkId,
     issueCreatorMultiplier,
@@ -92,7 +92,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     command: commandSettings,
     assign: {
-      maxConcurrentBounties: maxConcurrentBounties,
+      maxConcurrentTasks: maxConcurrentTasks,
       staleBountyTime: ms(staleBountyTime),
     },
     sodium: {

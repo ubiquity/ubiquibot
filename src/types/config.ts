@@ -86,7 +86,7 @@ export const ModeSchema = Type.Object({
 });
 
 export const AssignSchema = Type.Object({
-  maxConcurrentBounties: Type.Number(),
+  maxConcurrentTasks: Type.Number(),
   staleBountyTime: Type.Number(),
 });
 
