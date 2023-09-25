@@ -21,7 +21,7 @@
     "lint": "eslint --ext .ts ./src",
     "start:serverless": "tsx src/adapters/github/github-actions.ts",
     "start:watch": "nodemon --exec 'yarn start'",
-    "start": "probot run ./lib/src/index.js",
+    "start": "probot run ./lib/index.js",
     "prepare": "husky install"
   },
   "dependencies": {
