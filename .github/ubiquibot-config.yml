@@ -5,7 +5,7 @@ evmNetworkId: 100
 priceMultiplier: 1
 issueCreatorMultiplier: 3
 maxConcurrentAssigns: 2
-# paymentPermitMaxPrice: 1000
+permitMaxPrice: 1000
 
 disableAnalytics: true
 commentIncentives: true
@@ -66,8 +66,8 @@ commandSettings:
   - name: review
     enabled: true
 
-enableAccessControl:
-  label: true
-  organization: true
+publicAccessControl:
+  setLabel: true
+  fundExternalClosedIssue: true
 
 openAITokenLimit: 8000
