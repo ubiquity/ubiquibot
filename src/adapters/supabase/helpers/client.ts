@@ -483,8 +483,8 @@ const getDbDataFromPermit = (permit: InsertPermit): Record<string, unknown> => {
 const getPermitFromDbData = (data: Record<string, unknown>): Permit => {
   return {
     id: data.id,
-    createdAt: new Date(Date.parse(data.created_at as string)),
-    updatedAt: new Date(Date.parse(data.updated_at as string)),
+    created: new Date(Date.parse(data.created as string)),
+    updated: new Date(Date.parse(data.updated as string)),
     networkId: data.network,
     tokenAddress: data.token,
     payoutAmount: data.amount,
@@ -502,8 +502,8 @@ export const savePermit = async (permit: InsertPermit): Promise<Permit> => {
     .from("permits")
     .insert({
       ...getDbDataFromPermit(permit),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created: new Date().toISOString(),
+      updated: new Date().toISOString(),
     })
     .select();
   if (error) {

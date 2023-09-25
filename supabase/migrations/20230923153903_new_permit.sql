@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS
   new_permits (
     id serial primary key,
-    created_at timestamptz not null,
-    updated_at timestamptz not null,
+    created timestamptz not null,
+    updated timestamptz not null,
     network smallserial not null,
     token varchar(42) not null,
     amount numeric not null,
@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS
 INSERT INTO
   new_permits (
     id,
-    created_at,
-    updated_at,
+    created,
+    updated,
     network,
     token,
     amount,

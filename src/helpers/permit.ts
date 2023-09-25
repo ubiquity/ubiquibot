@@ -10,8 +10,8 @@ const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on
 
 export type Permit = {
   id: number;
-  createdAt: Date;
-  updatedAt: Date;
+  created: Date;
+  updated: Date;
   networkId: number;
   bountyHunterAddress: string;
   tokenAddress: string;
@@ -22,7 +22,7 @@ export type Permit = {
   walletOwnerAddress: string;
 };
 
-export type InsertPermit = Omit<Permit, "id" | "createdAt" | "updatedAt">;
+export type InsertPermit = Omit<Permit, "id" | "created" | "updated">;
 
 type TxData = {
   permit: {
