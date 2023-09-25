@@ -181,7 +181,7 @@ export const ConfigSchema = Type.Object(
     incentives: Type.Optional(IncentivesSchema),
     defaultLabels: Type.Optional(Type.Array(Type.String())),
     registerWalletWithVerification: Type.Optional(Type.Boolean()),
-    enableAccessControl: Type.Optional(PublicAccessControlSchema),
+    publicAccessControl: Type.Optional(PublicAccessControlSchema),
     openAIKey: Type.Optional(Type.String()),
     openAITokenLimit: Type.Optional(Type.Number()),
     staleTaskTime: Type.Optional(Type.String()),
