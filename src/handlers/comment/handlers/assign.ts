@@ -18,7 +18,7 @@ export const assign = async (body: string) => {
 
   const id = organization?.id || repository?.id; // repository?.id as fallback
 
-  const staleBounty = config.assign.staleTaskTime;
+  const staleTask = config.assign.staleTaskTime;
 
   logger.info(`Received '/start' command from user: ${payload.sender.login}, body: ${body}`);
   const issue = (_payload as Payload).issue;
@@ -116,9 +116,9 @@ export const assign = async (body: string) => {
   let staleToDays: number | undefined;
   let isTaskStale = false;
 
-  if (staleBounty !== 0) {
+  if (staleTask !== 0) {
     days = Math.floor((new Date().getTime() - new Date(issue.created_at).getTime()) / (1000 * 60 * 60 * 24));
-    staleToDays = Math.floor(staleBounty / (1000 * 60 * 60 * 24));
+    staleToDays = Math.floor(staleTask / (1000 * 60 * 60 * 24));
     isTaskStale = days >= staleToDays;
   }
 
@@ -146,7 +146,7 @@ const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, i
       _multiplierToDisplay = multiplier;
       _reasonToDisplay = reason;
     } else {
-      // default mode: normal bounty hunter with default multiplier 1 and no reason
+      // default mode: normal contributor with default multiplier 1 and no reason
       // nothing to show about multiplier
     }
   } else {

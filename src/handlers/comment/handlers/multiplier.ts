@@ -74,7 +74,7 @@ export const multiplier = async (body: string) => {
     if (taskMultiplier > 1) {
       return `Successfully changed the payout multiplier for @${username} to ${taskMultiplier}. The reason ${
         reason ? `provided is "${reason}"` : "is not provided"
-      }. This feature is designed to limit the contributor's compensation for any bounty on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a bounty multiplier above 1?`;
+      }. This feature is designed to limit the contributor's compensation for any task on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a price multiplier above 1?`;
     } else {
       return `Successfully changed the payout multiplier for @${username} to ${taskMultiplier}. The reason ${
         reason ? `provided is "${reason}"` : "is not provided"

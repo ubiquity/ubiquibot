@@ -292,7 +292,7 @@ export const userCommands = (): UserCommands[] => {
     },
     {
       id: IssueCommentCommands.MULTIPLIER,
-      description: `Set the bounty payout multiplier for a specific contributor, and provide a reason for why.\n\te.g. '/wallet @user 0.5 "Multiplier reason"'`,
+      description: `Set the task payout multiplier for a specific contributor, and provide a reason for why.\n\te.g. '/wallet @user 0.5 "Multiplier reason"'`,
       handler: multiplier,
       callback: commandCallback,
     },

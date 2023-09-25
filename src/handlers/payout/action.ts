@@ -260,11 +260,11 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
     incentivesCalculation.multiplier
   );
   if (priceInEth.gt(incentivesCalculation.permitMaxPrice)) {
-    logger.info("Skipping to proceed the payment because bounty payout is higher than permitMaxPrice.");
-    return { error: `Permit generation disabled because issue's bounty is higher than ${incentivesCalculation.permitMaxPrice}` };
+    logger.info("Skipping to proceed the payment because task payout is higher than permitMaxPrice.");
+    return { error: `Permit generation disabled because issue's task is higher than ${incentivesCalculation.permitMaxPrice}` };
   }
 
-  // if bounty hunter has any penalty then deduct it from the bounty
+  // if contributor has any penalty then deduct it from the task
   const penaltyAmount = await getPenalty(
     assigneeLogin,
     incentivesCalculation.payload.repository.full_name,
@@ -283,7 +283,7 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
         incentivesCalculation.evmNetworkId.toString(),
         taskAmount
       );
-      const msg = `Permit generation disabled because bounty amount after penalty is 0.`;
+      const msg = `Permit generation disabled because task amount after penalty is 0.`;
       logger.info(msg);
       return { error: msg };
     }
@@ -337,8 +337,8 @@ export const handleIssueClosed = async (
     incentivesCalculation.multiplier
   );
   if (priceInEth.gt(incentivesCalculation.permitMaxPrice)) {
-    logger.info("Skipping to proceed the payment because bounty payout is higher than permitMaxPrice");
-    return { error: `Permit generation skipped since issue's bounty is higher than ${incentivesCalculation.permitMaxPrice}` };
+    logger.info("Skipping to proceed the payment because task payout is higher than permitMaxPrice");
+    return { error: `Permit generation skipped since issue's task is higher than ${incentivesCalculation.permitMaxPrice}` };
   }
 
   // COMMENTERS REWARD HANDLER

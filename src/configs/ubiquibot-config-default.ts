@@ -101,7 +101,7 @@ export const DefaultConfig: MergedConfig = {
   newContributorGreeting: {
     enabled: false,
     header:
-      "Thank you for contributing! Please be sure to set your wallet address before completing your first bounty so that the automatic payout upon task completion will work for you.",
+      "Thank you for contributing! Please be sure to set your wallet address before completing your first task so that the automatic payout upon task completion will work for you.",
     helpMenu: true,
     footer:
       "###### Also please star this repository and [@ubiquity/devpool-directory](https://github.com/ubiquity/devpool-directory/) to show your support. It helps a lot!",

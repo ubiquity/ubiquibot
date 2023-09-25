@@ -5,9 +5,9 @@ import { Issue, IssueType, User, UserProfile } from "../../types";
 import { getTargetPriceLabel } from "../shared";
 
 /**
- * Checks the issue whether it's a bounty for hunters or an issue for not
+ * Checks the issue whether it's a task for hunters or an issue for not
  * @param issue - The issue object
- * @returns If bounty - true, If issue - false
+ * @returns If task - true, If issue - false
  */
 export const taskInfo = (
   issue: Issue
@@ -61,10 +61,10 @@ export const collectAnalytics = async (): Promise<void> => {
     // need to skip checking the closed issues already stored in the db and filter them by doing a sanitation checks.
     // sanitation checks would be basically checking labels of the issue
     // whether the issue has both `priority` label and `timeline` label
-    const bounties = issues.filter((issue) => taskInfo(issue as Issue).isTask);
+    const tasks = issues.filter((issue) => taskInfo(issue as Issue).isTask);
 
     // collect assignees from both type of issues (opened/closed)
-    const assignees = bounties.filter((task) => task.assignee).map((task) => task.assignee as User);
+    const assignees = tasks.filter((task) => task.assignee).map((task) => task.assignee as User);
 
     // remove duplication by assignee
     const tmp = assignees.map((i) => i.login);
@@ -85,11 +85,11 @@ export const collectAnalytics = async (): Promise<void> => {
 
     await Promise.all(userProfilesToUpsert.map((i) => upsertUser(i)));
 
-    // No need to update the record for the bounties already closed
-    const bountiesToUpsert = bounties.filter((task) => (task.state === IssueType.CLOSED ? task.number > maximumIssueNumber : true));
-    logger.info(`Upserting bounties: ${bountiesToUpsert.map((i) => i.title).toString()}`);
+    // No need to update the record for the tasks already closed
+    const tasksToUpsert = tasks.filter((task) => (task.state === IssueType.CLOSED ? task.number > maximumIssueNumber : true));
+    logger.info(`Upserting tasks: ${tasksToUpsert.map((i) => i.title).toString()}`);
     await Promise.all(
-      bountiesToUpsert.map((i) => {
+      tasksToUpsert.map((i) => {
         const additions = taskInfo(i as Issue);
         if (additions.timelabel && additions.priorityLabel && additions.priceLabel)
           return upsertIssue(i as Issue, {
