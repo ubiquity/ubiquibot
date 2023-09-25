@@ -1,11 +1,11 @@
 import { MergedConfig } from "../types";
 
 export const DefaultConfig: MergedConfig = {
-  evmNetworkId: 100,
+  evmNetworkId: 1,
   priceMultiplier: 1,
-  issueCreatorMultiplier: 2,
-  permitMaxPrice: 9007199254740991,
-  maxConcurrentAssigns: 9007199254740991,
+  issueCreatorMultiplier: 1,
+  permitMaxPrice: Number.MAX_SAFE_INTEGER,
+  maxConcurrentAssigns: Number.MAX_SAFE_INTEGER,
   assistivePricing: false,
   disableAnalytics: false,
   commentIncentives: false,
@@ -18,16 +18,16 @@ export const DefaultConfig: MergedConfig = {
       name: "Time: <1 Hour",
     },
     {
+      name: "Time: <2 Hours",
+    },
+    {
+      name: "Time: <4 Hours",
+    },
+    {
       name: "Time: <1 Day",
     },
     {
       name: "Time: <1 Week",
-    },
-    {
-      name: "Time: <2 Weeks",
-    },
-    {
-      name: "Time: <1 Month",
     },
   ],
   priorityLabels: [
@@ -99,9 +99,9 @@ export const DefaultConfig: MergedConfig = {
   },
   staleBountyTime: "0d",
   newContributorGreeting: {
-    enabled: true,
+    enabled: false,
     header:
-      "Thank you for contributing to UbiquiBot! Please be sure to set your wallet address before completing your first bounty so that the automatic payout upon task completion will work for you.",
+      "Thank you for contributing! Please be sure to set your wallet address before completing your first bounty so that the automatic payout upon task completion will work for you.",
     helpMenu: true,
     footer:
       "###### Also please star this repository and [@ubiquity/devpool-directory](https://github.com/ubiquity/devpool-directory/) to show your support. It helps a lot!",
