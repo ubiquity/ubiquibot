@@ -12,7 +12,7 @@ import {
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
-import { getScalarKey, getWideConfig as getConfig } from "../utils/private";
+import { getScalarKey, getWideConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
@@ -34,7 +34,10 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     registerWalletWithVerification,
     staleBountyTime,
     enableAccessControl,
-  } = await getConfig(context);
+    openAIKey,
+    openAITokenLimit,
+    newContributorGreeting,
+  } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
   const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
@@ -99,7 +102,12 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     wallet: {
       registerWalletWithVerification: registerWalletWithVerification,
     },
+    ask: {
+      apiKey: openAIKey,
+      tokenLimit: openAITokenLimit || 0,
+    },
     accessControl: enableAccessControl,
+    newContributorGreeting: newContributorGreeting,
   };
 
   if (botConfig.payout.privateKey == "") {

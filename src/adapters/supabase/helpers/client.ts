@@ -317,7 +317,7 @@ export const upsertAccessControl = async (username: string, repository: string, 
     const { data: _data, error: _error } = await supabase.from("access").insert({
       created_at: new Date().toUTCString(),
       price_access: false,
-      time_access: false,
+      time_access: true,
       multiplier_access: false,
       priority_access: false,
       ...properties,
