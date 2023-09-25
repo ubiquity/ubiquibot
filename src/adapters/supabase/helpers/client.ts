@@ -549,7 +549,7 @@ export const getLabelChanges = async (repository: string, labels: string[]) => {
   const { supabase } = getAdapters();
   const logger = getLogger();
 
-  const { data, error } = await supabase.from("label_changes").select("*").in("label_to", labels).eq("repository", repository);
+  const { data, error } = await supabase.from("label_changes").select("*").in("label_to", labels).eq("repository", repository).eq("approved", false);
 
   logger.debug(`Getting label changes done, { data: ${JSON.stringify(data)}, error: ${JSON.stringify(error)} }`);
 
