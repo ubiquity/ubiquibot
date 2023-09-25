@@ -1,7 +1,8 @@
 import { telegramFormattedNotifier, telegramNotifier } from "../adapters/telegram/helpers";
+import { BotContext } from "../types";
 const chatIds = ["tg1", "tg2", "tg3"]; // SHOULD update chatIds with valid ones
 
-export async function messageTests() {
+export async function messageTests(context: BotContext) {
   /**@method telegramNotifier - call unformatted issue */
   await telegramNotifier({
     chatIds: chatIds,
@@ -11,7 +12,7 @@ export async function messageTests() {
     id: `10`,
     ref: `https://github.com/ubiquity/ubiquity-dollar/issues/10`,
     user: `pavlovcik`,
-  });
+  }, context);
 
   /**@method telegramNotifier - call unformatted pull */
   await telegramNotifier({
@@ -22,7 +23,7 @@ export async function messageTests() {
     id: `246`,
     ref: `https://github.com/ubiquity/ubiquity-dollar/pull/246`,
     user: `pavlovcik`,
-  });
+  }, context);
 
   /**@method telegramFormattedNotifier - call formatted issue */
   await telegramFormattedNotifier({
@@ -34,7 +35,7 @@ export async function messageTests() {
       `<a href="https://github.com/pavlovcik">pavlovcik</a>\n` +
       `<code>I worked through getting the build process to work by force \nmoving all dev dependencies into dependencies, but \nnow the build process is extremely slow on vercel.</code>`,
     parseMode: "HTML",
-  });
+  }, context);
 
   /**@method telegramFormattedNotifier - call formatted pull */
   await telegramFormattedNotifier({
@@ -46,5 +47,5 @@ export async function messageTests() {
       `<a href="https://github.com/pavlovcik">pavlovcik</a>\n` +
       `<code>Small enhancements but mostly renamed the \ninternal smart contract references, and \nadded support for DAI and USDT in the inventory.</code>`,
     parseMode: "HTML",
-  });
+  }, context);
 }

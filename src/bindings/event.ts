@@ -1,4 +1,3 @@
-import { Context } from "probot";
 import { createAdapters } from "../adapters";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
@@ -8,9 +7,6 @@ import { ajv } from "../utils";
 import { loadConfig } from "./config";
 import { GitHubLogger } from "../adapters/supabase";
 import { validateConfigChange } from "../handlers/push";
-
-let botContext: Context = {} as Context;
-export const getBotContext = () => botContext;
 
 let adapters: Adapters = {} as Adapters;
 export const getAdapters = () => adapters;
@@ -29,7 +25,6 @@ const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT as string, GithubEve
 
 export const bindEvents = async (context: BotContext): Promise<void> => {
   const { id, name } = context;
-  botContext = context;
   const payload = context.payload as Payload;
   const allowedEvents = Object.values(GithubEvent) as string[];
   const eventName = payload.action ? `${name}.${payload.action}` : name; // some events wont have actions as this grows
