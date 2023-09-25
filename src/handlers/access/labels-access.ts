@@ -4,8 +4,8 @@ import { addCommentToIssue, getUserPermission, removeLabel, addLabelToIssue } fr
 import { Payload } from "../../types";
 
 export const handleLabelsAccess = async () => {
-  const { publicAccessControl: accessControl } = getBotConfig();
-  if (!accessControl.setLabel) return true;
+  const { publicAccessControl } = getBotConfig();
+  if (!publicAccessControl.setLabel) return true;
 
   const context = getBotContext();
   const logger = getLogger();
