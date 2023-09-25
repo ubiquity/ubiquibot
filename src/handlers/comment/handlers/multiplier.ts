@@ -39,13 +39,13 @@ export const multiplier = async (body: string) => {
   matches?.shift();
 
   if (matches) {
-    let bountyMultiplier = 1;
+    let taskMultiplier = 1;
     let username = "";
     let reason = "";
 
     for (const part of matches) {
       if (!isNaN(parseFloat(part))) {
-        bountyMultiplier = parseFloat(part);
+        taskMultiplier = parseFloat(part);
       } else if (part.startsWith("@")) {
         username = part.substring(1);
       } else {
@@ -68,20 +68,20 @@ export const multiplier = async (body: string) => {
         return "Insufficient permissions to update the payout multiplier. You are not an `admin` or `billing_manager`";
       }
     }
-    logger.info(`Upserting to the wallet table, username: ${username}, bountyMultiplier: ${bountyMultiplier}, reason: ${reason}}`);
+    logger.info(`Upserting to the wallet table, username: ${username}, taskMultiplier: ${taskMultiplier}, reason: ${reason}}`);
 
-    await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason, id?.toString());
-    if (bountyMultiplier > 1) {
-      return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
+    await upsertWalletMultiplier(username, taskMultiplier?.toString(), reason, id?.toString());
+    if (taskMultiplier > 1) {
+      return `Successfully changed the payout multiplier for @${username} to ${taskMultiplier}. The reason ${
         reason ? `provided is "${reason}"` : "is not provided"
       }. This feature is designed to limit the contributor's compensation for any bounty on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a bounty multiplier above 1?`;
     } else {
-      return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
+      return `Successfully changed the payout multiplier for @${username} to ${taskMultiplier}. The reason ${
         reason ? `provided is "${reason}"` : "is not provided"
       }.`;
     }
   } else {
-    logger.error("Invalid body for bountyMultiplier command");
+    logger.error("Invalid body for taskMultiplier command");
     return `Invalid syntax for wallet command \n example usage: "/multiplier @user 0.5 'Multiplier reason'"`;
   }
 };

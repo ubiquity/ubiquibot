@@ -104,13 +104,13 @@ const processEvents = (JSONList: any[]): SummaryType => {
             closedIssues++;
             elem.payload.issue?.labels.forEach((elem: any) => {
               if (elem.name.includes("Price")) {
-                const bountyUSD = parseInt(
+                const taskUSD = parseInt(
                   elem.name
                     .toString()
                     .match(/\b\d+\b/)
                     .join("")
                 );
-                bountiesUSD += bountyUSD;
+                bountiesUSD += taskUSD;
               }
             });
             break;

@@ -87,7 +87,7 @@ export const ModeSchema = Type.Object({
 
 export const AssignSchema = Type.Object({
   maxConcurrentTasks: Type.Number(),
-  staleBountyTime: Type.Number(),
+  staleTaskTime: Type.Number(),
 });
 
 export const LogConfigSchema = Type.Object({
@@ -190,7 +190,7 @@ export const ConfigSchema = Type.Object(
     enableAccessControl: Type.Optional(PublicAccessControlSchema),
     openAIKey: Type.Optional(Type.String()),
     openAITokenLimit: Type.Optional(Type.Number()),
-    staleBountyTime: Type.Optional(Type.String()),
+    staleTaskTime: Type.Optional(Type.String()),
     privateKeyEncrypted: Type.Optional(Type.String()),
     newContributorGreeting: Type.Optional(NewContributorGreetingSchema),
   },
@@ -223,7 +223,7 @@ export const MergedConfigSchema = Type.Object({
   publicAccessControl: PublicAccessControlSchema,
   openAIKey: Type.Optional(Type.String()),
   openAITokenLimit: Type.Optional(Type.Number()),
-  staleBountyTime: Type.String(),
+  staleTaskTime: Type.String(),
   newContributorGreeting: NewContributorGreetingSchema,
 });
 

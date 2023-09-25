@@ -160,7 +160,7 @@ export const getConfig = async (context: Context) => {
     publicAccessControl: mergedConfigData.publicAccessControl,
     openAIKey: mergedConfigData.openAIKey,
     openAITokenLimit: mergedConfigData.openAITokenLimit,
-    staleBountyTime: mergedConfigData.staleBountyTime,
+    staleTaskTime: mergedConfigData.staleTaskTime,
     newContributorGreeting: mergedConfigData.newContributorGreeting,
   };
 

@@ -32,7 +32,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     commandSettings,
     assistivePricing,
     registerWalletWithVerification,
-    staleBountyTime,
+    staleTaskTime,
     publicAccessControl,
     openAIKey,
     openAITokenLimit,
@@ -93,7 +93,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     command: commandSettings,
     assign: {
       maxConcurrentTasks: maxConcurrentTasks,
-      staleBountyTime: ms(staleBountyTime),
+      staleTaskTime: ms(staleTaskTime),
     },
     sodium: {
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",
