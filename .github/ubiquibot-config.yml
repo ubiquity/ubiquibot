@@ -63,8 +63,6 @@ commandSettings:
     enabled: true
   - name: ask
     enabled: true
-  - name: review
-    enabled: true
 
 # publicAccessControl:
 #   setLabel: true
