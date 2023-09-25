@@ -532,8 +532,8 @@ export const saveLabelChange = async (username: string, repository: string, labe
       label_from,
       label_to,
       approved: hasAccess || false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created: new Date().toISOString(),
+      updated: new Date().toISOString(),
     })
     .select();
   if (error) {
