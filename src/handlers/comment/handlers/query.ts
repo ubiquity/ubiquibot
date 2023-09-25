@@ -1,6 +1,7 @@
-import { getAllAccessLevels, getWalletInfo } from "../../../adapters/supabase";
+import { getAllAccessLevels, getWalletInfo, upsertAccessControl } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
 import { Payload } from "../../../types";
+import { ErrorDiff } from "../../../utils/helpers";
 
 export const query = async (body: string) => {
   const context = getBotContext();
@@ -25,9 +26,21 @@ export const query = async (body: string) => {
   const repo = payload.repository;
 
   if (user) {
-    const data = await getAllAccessLevels(user, repo.full_name);
+    let data = await getAllAccessLevels(user, repo.full_name);
     if (!data) {
-      return `Error retrieving access for @${user}`;
+      logger.info(`Access info does not exist for @${user}`);
+      try {
+        await upsertAccessControl(user, repo.full_name, "time_access", true);
+        data = {
+          multiplier: false,
+          priority: false,
+          time: true,
+          price: false,
+        };
+      } catch (e) {
+        ErrorDiff(e);
+        return `Error upserting access info for @${user}`;
+      }
     }
     const walletInfo = await getWalletInfo(user, id?.toString());
     if (!walletInfo?.address) {

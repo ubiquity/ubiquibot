@@ -1,28 +1,46 @@
 import { Static, Type } from "@sinclair/typebox";
-import { Level } from "../adapters/supabase";
+import { LogLevel } from "./log";
 
-const LabelItemSchema = Type.Object({
-  name: Type.String(),
-});
+const LabelItemSchema = Type.Object(
+  {
+    name: Type.String(),
+  },
+  {
+    additionalProperties: false,
+  }
+);
 export type LabelItem = Static<typeof LabelItemSchema>;
 
-const CommentIncentivesSchema = Type.Object({
-  elements: Type.Record(Type.String(), Type.Number()),
-  totals: Type.Object({
-    word: Type.Number(),
-  }),
-});
+const CommentIncentivesSchema = Type.Object(
+  {
+    elements: Type.Record(Type.String(), Type.Number()),
+    totals: Type.Object(
+      {
+        word: Type.Number(),
+      },
+      { additionalProperties: false }
+    ),
+  },
+  { additionalProperties: false }
+);
 export type CommentIncentives = Static<typeof CommentIncentivesSchema>;
 
-const IncentivesSchema = Type.Object({
-  comment: CommentIncentivesSchema,
-});
+const IncentivesSchema = Type.Object(
+  {
+    comment: CommentIncentivesSchema,
+  },
+  { additionalProperties: false }
+);
+
 export type Incentives = Static<typeof IncentivesSchema>;
 
-const CommandItemSchema = Type.Object({
-  name: Type.String(),
-  enabled: Type.Boolean(),
-});
+const CommandItemSchema = Type.Object(
+  {
+    name: Type.String(),
+    enabled: Type.Boolean(),
+  },
+  { additionalProperties: false }
+);
 export type CommandItem = Static<typeof CommandItemSchema>;
 
 export const PriceConfigSchema = Type.Object({
@@ -74,7 +92,7 @@ export const AssignSchema = Type.Object({
 
 export const LogConfigSchema = Type.Object({
   logEnvironment: Type.String(),
-  level: Type.Enum(Level),
+  level: Type.Enum(LogLevel),
   retryLimit: Type.Number(),
 });
 
@@ -86,6 +104,19 @@ export const SodiumSchema = Type.Object({
 export const CommentsSchema = Type.Object({
   promotionComment: Type.String(),
 });
+
+export const AskSchema = Type.Object({
+  apiKey: Type.Optional(Type.String()),
+  tokenLimit: Type.Number(),
+});
+
+export const NewContributorGreetingSchema = Type.Object({
+  enabled: Type.Boolean(),
+  header: Type.String(),
+  helpMenu: Type.Boolean(),
+  footer: Type.String(),
+});
+export type NewContributorGreeting = Static<typeof NewContributorGreetingSchema>;
 
 export const CommandConfigSchema = Type.Array(CommandItemSchema);
 
@@ -114,7 +145,86 @@ export const BotConfigSchema = Type.Object({
   comments: CommentsSchema,
   command: CommandConfigSchema,
   wallet: WalletSchema,
+  ask: AskSchema,
   accessControl: AccessControlSchema,
+  newContributorGreeting: NewContributorGreetingSchema,
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;
+
+export const StreamlinedCommentSchema = Type.Object({
+  login: Type.Optional(Type.String()),
+  body: Type.Optional(Type.String()),
+});
+
+export type StreamlinedComment = Static<typeof StreamlinedCommentSchema>;
+
+export const GPTResponseSchema = Type.Object({
+  answer: Type.Optional(Type.String()),
+  tokenUsage: Type.Object({
+    output: Type.Optional(Type.Number()),
+    input: Type.Optional(Type.Number()),
+    total: Type.Optional(Type.Number()),
+  }),
+});
+
+export type GPTResponse = Static<typeof GPTResponseSchema>;
+
+export const WideConfigSchema = Type.Object(
+  {
+    evmNetworkId: Type.Optional(Type.Number()),
+    priceMultiplier: Type.Optional(Type.Number()),
+    issueCreatorMultiplier: Type.Optional(Type.Number()),
+    timeLabels: Type.Optional(Type.Array(LabelItemSchema)),
+    priorityLabels: Type.Optional(Type.Array(LabelItemSchema)),
+    paymentPermitMaxPrice: Type.Optional(Type.Number()),
+    commandSettings: Type.Optional(Type.Array(CommandItemSchema)),
+    promotionComment: Type.Optional(Type.String()),
+    disableAnalytics: Type.Optional(Type.Boolean()),
+    commentIncentives: Type.Optional(Type.Boolean()),
+    assistivePricing: Type.Optional(Type.Boolean()),
+    maxConcurrentAssigns: Type.Optional(Type.Number()),
+    incentives: Type.Optional(IncentivesSchema),
+    defaultLabels: Type.Optional(Type.Array(Type.String())),
+    registerWalletWithVerification: Type.Optional(Type.Boolean()),
+    enableAccessControl: Type.Optional(AccessControlSchema),
+    openAIKey: Type.Optional(Type.String()),
+    openAITokenLimit: Type.Optional(Type.Number()),
+    staleBountyTime: Type.Optional(Type.String()),
+    privateKeyEncrypted: Type.Optional(Type.String()),
+    newContributorGreeting: Type.Optional(NewContributorGreetingSchema),
+  },
+  {
+    additionalProperties: false,
+  }
+);
+
+export type WideConfig = Static<typeof WideConfigSchema>;
+
+export type WideRepoConfig = WideConfig;
+
+export const MergedConfigSchema = Type.Object({
+  evmNetworkId: Type.Number(),
+  priceMultiplier: Type.Number(),
+  privateKeyEncrypted: Type.Optional(Type.String()),
+  issueCreatorMultiplier: Type.Number(),
+  timeLabels: Type.Array(LabelItemSchema),
+  priorityLabels: Type.Array(LabelItemSchema),
+  paymentPermitMaxPrice: Type.Number(),
+  commandSettings: Type.Array(CommandItemSchema),
+  promotionComment: Type.String(),
+  disableAnalytics: Type.Boolean(),
+  commentIncentives: Type.Boolean(),
+  assistivePricing: Type.Boolean(),
+  maxConcurrentAssigns: Type.Number(),
+  incentives: IncentivesSchema,
+  defaultLabels: Type.Array(Type.String()),
+  registerWalletWithVerification: Type.Boolean(),
+  enableAccessControl: AccessControlSchema,
+  openAIKey: Type.Optional(Type.String()),
+  openAITokenLimit: Type.Optional(Type.Number()),
+  staleBountyTime: Type.String(),
+  newContributorGreeting: NewContributorGreetingSchema,
+});
+
+export type MergedConfig = Static<typeof MergedConfigSchema>;

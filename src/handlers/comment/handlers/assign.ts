@@ -101,7 +101,7 @@ export const assign = async (body: string) => {
     commit: `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`,
     tips: `<h6>Tips:</h6>
     <ul>
-    <li>Use <code>/wallet 0x0000...0000</code> if you want to update your registered payment wallet address @user.</li>
+    <li>Use <code>/wallet 0x0000...0000</code> if you want to update your registered payment wallet address @${payload.sender.login}.</li>
     <li>Be sure to open a draft pull request as soon as possible to communicate updates on your progress.</li>
     <li>Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the bounty.</li>
     <ul>`,
@@ -152,7 +152,7 @@ const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, i
   } else {
     _multiplierToDisplay = multiplier;
     _reasonToDisplay = reason;
-    _bountyToDisplay = `Permit generation skipped since price label is not set`;
+    _bountyToDisplay = `Permit generation disabled because price label is not set.`;
     const issueDetailed = bountyInfo(issue);
     if (issueDetailed.priceLabel) {
       _bountyToDisplay = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString() + " USD";

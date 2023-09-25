@@ -1,14 +1,16 @@
 import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
-import { AccessControl, Payload } from "../types";
+import { MergedConfig, Payload } from "../types";
 import { Context } from "probot";
 import merge from "lodash/merge";
 
-import DEFAULT_CONFIG_JSON from "../../ubiquibot-config-default.json";
+import { DefaultConfig } from "../configs";
+import { validate } from "./ajv";
+import { WideConfig, WideRepoConfig, WideConfigSchema } from "../types";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
-const KEY_NAME = "private-key-encrypted";
+const KEY_NAME = "privateKeyEncrypted";
 const KEY_PREFIX = "HSK_";
 
 export const getConfigSuperset = async (context: Context, type: "org" | "repo", filePath: string): Promise<string | undefined> => {
@@ -31,56 +33,10 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo", 
   }
 };
 
-export interface WideLabel {
-  name: string;
-}
-
-export interface CommentIncentives {
-  elements: Record<string, number>;
-  totals: {
-    word: number;
-  };
-}
-
-export interface Incentives {
-  comment: CommentIncentives;
-}
-
-export interface CommandObj {
-  name: string;
-  enabled: boolean;
-}
-
-export interface WideConfig {
-  "evm-network-id": number;
-  "price-multiplier": number;
-  "issue-creator-multiplier": number;
-  "time-labels": WideLabel[];
-  "priority-labels": WideLabel[];
-  "payment-permit-max-price": number;
-  "command-settings": CommandObj[];
-  "promotion-comment": string;
-  "disable-analytics": boolean;
-  "comment-incentives": boolean;
-  "assistive-pricing": boolean;
-  "max-concurrent-assigns": number;
-  incentives: Incentives;
-  "default-labels": string[];
-  "register-wallet-with-verification": boolean;
-  "enable-access-control": AccessControl;
-  "stale-bounty-time": string;
-}
-
-export type WideRepoConfig = WideConfig;
-
-export interface WideOrgConfig extends WideConfig {
-  "private-key-encrypted"?: string;
-}
-
 export interface MergedConfigs {
   parsedRepo: WideRepoConfig | undefined;
-  parsedOrg: WideOrgConfig | undefined;
-  parsedDefault: WideRepoConfig;
+  parsedOrg: WideRepoConfig | undefined;
+  parsedDefault: MergedConfig;
 }
 
 export const parseYAML = (data?: string): WideConfig | undefined => {
@@ -155,33 +111,57 @@ export const getWideConfig = async (context: Context) => {
   const orgConfig = await getConfigSuperset(context, "org", CONFIG_PATH);
   const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
 
-  const parsedOrg: WideOrgConfig | undefined = parseYAML(orgConfig);
+  const parsedOrg: WideRepoConfig | undefined = parseYAML(orgConfig);
+
+  if (parsedOrg) {
+    const { valid, error } = validate(WideConfigSchema, parsedOrg);
+    if (!valid) {
+      throw new Error(`Invalid org config: ${error}`);
+    }
+  }
   const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
-  const parsedDefault: WideRepoConfig = DEFAULT_CONFIG_JSON;
-  const privateKeyDecrypted = parsedOrg && parsedOrg[KEY_NAME] ? await getPrivateKey(parsedOrg[KEY_NAME]) : undefined;
+  if (parsedRepo) {
+    const { valid, error } = validate(WideConfigSchema, parsedRepo);
+    if (!valid) {
+      throw new Error(`Invalid repo config: ${error}`);
+    }
+  }
+  const parsedDefault: MergedConfig = DefaultConfig;
+
+  let privateKeyDecrypted;
+  if (parsedRepo && parsedRepo[KEY_NAME]) {
+    privateKeyDecrypted = await getPrivateKey(parsedRepo[KEY_NAME]);
+  } else if (parsedOrg && parsedOrg[KEY_NAME]) {
+    privateKeyDecrypted = await getPrivateKey(parsedOrg[KEY_NAME]);
+  } else {
+    privateKeyDecrypted = undefined;
+  }
 
   const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
-  const mergedConfigData: WideConfig = mergeConfigs(configs);
+  const mergedConfigData: MergedConfig = mergeConfigs(configs);
 
   const configData = {
-    networkId: mergedConfigData["evm-network-id"],
+    networkId: mergedConfigData.evmNetworkId,
     privateKey: privateKeyDecrypted ?? "",
-    assistivePricing: mergedConfigData["assistive-pricing"],
-    commandSettings: mergedConfigData["command-settings"],
-    baseMultiplier: mergedConfigData["price-multiplier"],
-    issueCreatorMultiplier: mergedConfigData["issue-creator-multiplier"],
-    timeLabels: mergedConfigData["time-labels"],
-    priorityLabels: mergedConfigData["priority-labels"],
-    paymentPermitMaxPrice: mergedConfigData["payment-permit-max-price"],
-    disableAnalytics: mergedConfigData["disable-analytics"],
-    bountyHunterMax: mergedConfigData["max-concurrent-assigns"],
-    incentiveMode: mergedConfigData["comment-incentives"],
-    incentives: mergedConfigData["incentives"],
-    defaultLabels: mergedConfigData["default-labels"],
-    promotionComment: mergedConfigData["promotion-comment"],
-    registerWalletWithVerification: mergedConfigData["register-wallet-with-verification"],
-    enableAccessControl: mergedConfigData["enable-access-control"],
-    staleBountyTime: mergedConfigData["stale-bounty-time"],
+    assistivePricing: mergedConfigData.assistivePricing,
+    commandSettings: mergedConfigData.commandSettings,
+    baseMultiplier: mergedConfigData.priceMultiplier,
+    issueCreatorMultiplier: mergedConfigData.issueCreatorMultiplier,
+    timeLabels: mergedConfigData.timeLabels,
+    priorityLabels: mergedConfigData.priorityLabels,
+    paymentPermitMaxPrice: mergedConfigData.paymentPermitMaxPrice,
+    disableAnalytics: mergedConfigData.disableAnalytics,
+    bountyHunterMax: mergedConfigData.maxConcurrentAssigns,
+    incentiveMode: mergedConfigData.commentIncentives,
+    incentives: mergedConfigData.incentives,
+    defaultLabels: mergedConfigData.defaultLabels,
+    promotionComment: mergedConfigData.promotionComment,
+    registerWalletWithVerification: mergedConfigData.registerWalletWithVerification,
+    enableAccessControl: mergedConfigData.enableAccessControl,
+    openAIKey: mergedConfigData.openAIKey,
+    openAITokenLimit: mergedConfigData.openAITokenLimit,
+    staleBountyTime: mergedConfigData.staleBountyTime,
+    newContributorGreeting: mergedConfigData.newContributorGreeting,
   };
 
   return configData;
