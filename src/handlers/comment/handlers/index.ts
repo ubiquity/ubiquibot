@@ -308,7 +308,7 @@ export const userCommands = (): UserCommands[] => {
     },
     {
       id: IssueCommentCommands.APPROVE,
-      description: `Approve a label change. (Admin Only)`,
+      description: `Approve a label change. Superuser only.`,
       handler: approveLabelChange,
       callback: commandCallback,
     },
