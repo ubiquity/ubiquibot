@@ -70,7 +70,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
   }
 
   // Create adapters for telegram, supabase, twitter, discord, etc
-  logger.info("Creating adapters for supabase, telegram, twitter, etc...");
+  logger.info("Creating adapters for supabase, twitter, etc...");
 
   logger.info(`Config loaded! config: ${JSON.stringify(botConfig)}`);
 

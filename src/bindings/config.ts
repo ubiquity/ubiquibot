@@ -2,7 +2,6 @@ import ms from "ms";
 
 import { BotConfig, BotConfigSchema, LogLevel } from "../types";
 import {
-  DEFAULT_BOT_DELAY,
   DEFAULT_DISQUALIFY_TIME,
   DEFAULT_FOLLOWUP_TIME,
   DEFAULT_PERMIT_BASE_URL,
@@ -80,10 +79,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       url: process.env.SUPABASE_URL ?? "",
       key: process.env.SUPABASE_KEY ?? "",
     },
-    telegram: {
-      token: process.env.TELEGRAM_BOT_TOKEN ?? "",
-      delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
-    },
+
     mode: {
       permitMaxPrice: permitMaxPrice,
       disableAnalytics: disableAnalytics,

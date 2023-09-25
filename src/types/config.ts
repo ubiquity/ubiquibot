@@ -58,11 +58,6 @@ export const SupabaseConfigSchema = Type.Object({
   key: Type.String(),
 });
 
-export const TelegramBotConfigSchema = Type.Object({
-  token: Type.String(),
-  delay: Type.Number(),
-});
-
 export const PayoutConfigSchema = Type.Object({
   evmNetworkId: Type.Number(),
   rpc: Type.String(),
@@ -138,7 +133,6 @@ export const BotConfigSchema = Type.Object({
   payout: PayoutConfigSchema,
   unassign: UnassignConfigSchema,
   supabase: SupabaseConfigSchema,
-  telegram: TelegramBotConfigSchema,
   mode: ModeSchema,
   assign: AssignSchema,
   sodium: SodiumSchema,
