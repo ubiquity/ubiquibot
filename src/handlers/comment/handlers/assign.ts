@@ -162,7 +162,7 @@ const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, i
     if (issueDetailed.priceLabel) {
       _bountyToDisplay = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString() + " USD";
       if (cap) {
-        _bountyToDisplay = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4)).toString() + " USD" + " [Capped]";
+        _bountyToDisplay = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4)).toString() + " USD";
       }
     }
   }
