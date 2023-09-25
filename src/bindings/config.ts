@@ -12,7 +12,7 @@ import {
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
-import { getScalarKey, getWideConfig } from "../utils/private";
+import { getScalarKey, getConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
@@ -37,7 +37,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     openAIKey,
     openAITokenLimit,
     newContributorGreeting,
-  } = await getWideConfig(context);
+  } = await getConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
   const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);

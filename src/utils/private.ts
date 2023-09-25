@@ -6,7 +6,7 @@ import merge from "lodash/merge";
 
 import { DefaultConfig } from "../configs";
 import { validate } from "./ajv";
-import { WideConfig, WideRepoConfig, WideConfigSchema } from "../types";
+import { Config, RepositoryConfig, ConfigSchema } from "../types";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
@@ -34,12 +34,12 @@ export const getConfigSuperset = async (context: Context, type: "org" | "repo", 
 };
 
 export interface MergedConfigs {
-  parsedRepo: WideRepoConfig | undefined;
-  parsedOrg: WideRepoConfig | undefined;
+  parsedRepo: RepositoryConfig | undefined;
+  parsedOrg: RepositoryConfig | undefined;
   parsedDefault: MergedConfig;
 }
 
-export const parseYAML = (data?: string): WideConfig | undefined => {
+export const parseYAML = (data?: string): Config | undefined => {
   try {
     if (data) {
       const parsedData = YAML.parse(data);
@@ -107,21 +107,21 @@ const mergeConfigs = (configs: MergedConfigs) => {
   return merge({}, configs.parsedDefault, configs.parsedOrg, configs.parsedRepo);
 };
 
-export const getWideConfig = async (context: Context) => {
+export const getConfig = async (context: Context) => {
   const orgConfig = await getConfigSuperset(context, "org", CONFIG_PATH);
   const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
 
-  const parsedOrg: WideRepoConfig | undefined = parseYAML(orgConfig);
+  const parsedOrg: RepositoryConfig | undefined = parseYAML(orgConfig);
 
   if (parsedOrg) {
-    const { valid, error } = validate(WideConfigSchema, parsedOrg);
+    const { valid, error } = validate(ConfigSchema, parsedOrg);
     if (!valid) {
       throw new Error(`Invalid org config: ${error}`);
     }
   }
-  const parsedRepo: WideRepoConfig | undefined = parseYAML(repoConfig);
+  const parsedRepo: RepositoryConfig | undefined = parseYAML(repoConfig);
   if (parsedRepo) {
-    const { valid, error } = validate(WideConfigSchema, parsedRepo);
+    const { valid, error } = validate(ConfigSchema, parsedRepo);
     if (!valid) {
       throw new Error(`Invalid repo config: ${error}`);
     }
