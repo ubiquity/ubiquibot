@@ -157,7 +157,7 @@ export const getWideConfig = async (context: Context) => {
     defaultLabels: mergedConfigData.defaultLabels,
     promotionComment: mergedConfigData.promotionComment,
     registerWalletWithVerification: mergedConfigData.registerWalletWithVerification,
-    enableAccessControl: mergedConfigData.enableAccessControl,
+    publicAccessControl: mergedConfigData.publicAccessControl,
     openAIKey: mergedConfigData.openAIKey,
     openAITokenLimit: mergedConfigData.openAITokenLimit,
     staleBountyTime: mergedConfigData.staleBountyTime,

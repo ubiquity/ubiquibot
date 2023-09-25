@@ -25,7 +25,7 @@ export const pricingLabelLogic = async (): Promise<void> => {
   }
   const valid = await handleLabelsAccess();
 
-  if (!valid && config.accessControl.label) {
+  if (!valid && config.publicAccessControl.setLabel) {
     return;
   }
 

@@ -67,7 +67,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     payout: { paymentToken, rpc, permitBaseUrl, evmNetworkId, privateKey },
     mode: { incentiveMode, permitMaxPrice },
     price: { incentives, issueCreatorMultiplier, baseMultiplier },
-    accessControl,
+    publicAccessControl: accessControl,
   } = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -80,7 +80,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     throw new Error("Permit generation skipped because issue is undefined");
   }
 
-  if (accessControl.organization) {
+  if (accessControl.fundExternalClosedIssue) {
     const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
 
     if (!userHasPermission) {

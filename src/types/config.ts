@@ -125,12 +125,12 @@ export const WalletSchema = Type.Object({
   registerWalletWithVerification: Type.Boolean(),
 });
 
-export const AccessControlSchema = Type.Object({
-  label: Type.Boolean(),
-  organization: Type.Boolean(),
+export const PublicAccessControlSchema = Type.Object({
+  setLabel: Type.Boolean(),
+  fundExternalClosedIssue: Type.Boolean(),
 });
 
-export type AccessControl = Static<typeof AccessControlSchema>;
+export type AccessControl = Static<typeof PublicAccessControlSchema>;
 
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
@@ -146,7 +146,7 @@ export const BotConfigSchema = Type.Object({
   command: CommandConfigSchema,
   wallet: WalletSchema,
   ask: AskSchema,
-  accessControl: AccessControlSchema,
+  publicAccessControl: PublicAccessControlSchema,
   newContributorGreeting: NewContributorGreetingSchema,
 });
 
@@ -187,7 +187,7 @@ export const WideConfigSchema = Type.Object(
     incentives: Type.Optional(IncentivesSchema),
     defaultLabels: Type.Optional(Type.Array(Type.String())),
     registerWalletWithVerification: Type.Optional(Type.Boolean()),
-    enableAccessControl: Type.Optional(AccessControlSchema),
+    enableAccessControl: Type.Optional(PublicAccessControlSchema),
     openAIKey: Type.Optional(Type.String()),
     openAITokenLimit: Type.Optional(Type.Number()),
     staleBountyTime: Type.Optional(Type.String()),
@@ -220,7 +220,7 @@ export const MergedConfigSchema = Type.Object({
   incentives: IncentivesSchema,
   defaultLabels: Type.Array(Type.String()),
   registerWalletWithVerification: Type.Boolean(),
-  enableAccessControl: AccessControlSchema,
+  publicAccessControl: PublicAccessControlSchema,
   openAIKey: Type.Optional(Type.String()),
   openAITokenLimit: Type.Optional(Type.Number()),
   staleBountyTime: Type.String(),

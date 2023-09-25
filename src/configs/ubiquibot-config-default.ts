@@ -93,10 +93,14 @@ export const DefaultConfig: MergedConfig = {
       },
     },
   },
-  enableAccessControl: {
-    label: true,
-    organization: true,
+  publicAccessControl: {
+    setLabel: true,
+    fundExternalClosedIssue: true,
   },
+
+  // "public-access-control": {
+  // "set-label": false,
+  // "fund-external-closed-issue": false
   staleBountyTime: "0d",
   newContributorGreeting: {
     enabled: false,

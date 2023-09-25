@@ -33,7 +33,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     assistivePricing,
     registerWalletWithVerification,
     staleBountyTime,
-    enableAccessControl,
+    publicAccessControl,
     openAIKey,
     openAITokenLimit,
     newContributorGreeting,
@@ -106,7 +106,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       apiKey: openAIKey,
       tokenLimit: openAITokenLimit || 0,
     },
-    accessControl: enableAccessControl,
+    publicAccessControl: publicAccessControl,
     newContributorGreeting: newContributorGreeting,
   };
 
