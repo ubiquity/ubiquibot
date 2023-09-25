@@ -286,13 +286,13 @@ export const userCommands = (): UserCommands[] => {
     },
     {
       id: IssueCommentCommands.ASK,
-      description: `Ask a technical question to the Ubiquity AI. \n  example usage: "/ask How do I do X?"`,
+      description: `Ask a technical question to UbiquiBot. \n  example usage: "/ask How do I do X?"`,
       handler: ask,
       callback: commandCallback,
     },
     {
       id: IssueCommentCommands.MULTIPLIER,
-      description: `Set the task payout multiplier for a specific contributor, and provide a reason for why.\n\te.g. '/wallet @user 0.5 "Multiplier reason"'`,
+      description: `Set the task payout multiplier for a specific contributor, and provide a reason for why.\n\te.g. /wallet @user 0.5 "Multiplier reason"`,
       handler: multiplier,
       callback: commandCallback,
     },
