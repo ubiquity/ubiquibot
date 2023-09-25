@@ -16,7 +16,7 @@ import {
 } from "../../helpers";
 import { UserType, Payload, StateReason, Comment, User, Incentives, Issue } from "../../types";
 import { shortenEthAddress } from "../../utils";
-import { bountyInfo } from "../wildcard";
+import { taskInfo } from "../wildcard";
 import Decimal from "decimal.js";
 import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
@@ -26,9 +26,9 @@ import { isEmpty } from "lodash";
 export interface IncentivesCalculationResult {
   paymentToken: string;
   rpc: string;
-  networkId: number;
+  evmNetworkId: number;
   privateKey: string;
-  paymentPermitMaxPrice: number;
+  permitMaxPrice: number;
   baseMultiplier: number;
   incentives: Incentives;
   issueCreatorMultiplier: number;
@@ -38,7 +38,7 @@ export interface IncentivesCalculationResult {
   payload: Payload;
   comments: Comment[];
   issueDetailed: {
-    isBounty: boolean;
+    isTask: boolean;
     timelabel: string;
     priorityLabel: string;
     priceLabel: string;
@@ -64,10 +64,10 @@ export interface RewardByUser {
 export const incentivesCalculation = async (): Promise<IncentivesCalculationResult> => {
   const context = getBotContext();
   const {
-    payout: { paymentToken, rpc, permitBaseUrl, networkId, privateKey },
-    mode: { incentiveMode, paymentPermitMaxPrice },
+    payout: { paymentToken, rpc, permitBaseUrl, evmNetworkId, privateKey },
+    mode: { incentiveMode, permitMaxPrice },
     price: { incentives, issueCreatorMultiplier, baseMultiplier },
-    accessControl,
+    publicAccessControl: accessControl,
   } = getBotConfig();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -80,7 +80,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     throw new Error("Permit generation skipped because issue is undefined");
   }
 
-  if (accessControl.organization) {
+  if (accessControl.fundExternalClosedIssue) {
     const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
 
     if (!userHasPermission) {
@@ -107,9 +107,9 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
       logger.error(`Permit claim search parameter not found`);
       throw new Error("Permit generation skipped because permit claim search parameter not found");
     }
-    let networkId = url.searchParams.get("network");
-    if (!networkId) {
-      networkId = "1";
+    let evmNetworkId = url.searchParams.get("network");
+    if (!evmNetworkId) {
+      evmNetworkId = "1";
     }
     let claim;
     try {
@@ -130,7 +130,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     const assignee = events[0].assignee.login;
 
     try {
-      await removePenalty(assignee, payload.repository.full_name, tokenAddress, networkId, amount);
+      await removePenalty(assignee, payload.repository.full_name, tokenAddress, evmNetworkId, amount);
     } catch (err) {
       logger.error(`Failed to remove penalty: ${err}`);
       throw new Error("Permit generation skipped because failed to remove penalty");
@@ -178,20 +178,20 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     }
   }
 
-  if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
-    logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
-    throw new Error(`Permit generation disabled because paymentPermitMaxPrice is 0.`);
+  if (permitMaxPrice == 0 || !permitMaxPrice) {
+    logger.info(`Skipping to generate permit2 url, reason: { permitMaxPrice: ${permitMaxPrice}}`);
+    throw new Error(`Permit generation disabled because permitMaxPrice is 0.`);
   }
 
-  const issueDetailed = bountyInfo(issue);
-  if (!issueDetailed.isBounty) {
-    logger.info(`Skipping... its not a bounty`);
-    throw new Error(`Permit generation disabled because this issue didn't qualify as bounty.`);
+  const issueDetailed = taskInfo(issue);
+  if (!issueDetailed.isTask) {
+    logger.info(`Skipping... its not a task`);
+    throw new Error(`Permit generation disabled because this issue didn't qualify for funding.`);
   }
 
   if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timelabel) {
-    logger.info(`Skipping... its not a bounty`);
-    throw new Error(`Permit generation disabled because this issue didn't qualify as bounty.`);
+    logger.info(`Skipping... its not a task`);
+    throw new Error(`Permit generation disabled because this issue didn't qualify for funding.`);
   }
 
   const assignees = issue?.assignees ?? [];
@@ -225,11 +225,11 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
   return {
     paymentToken,
     rpc,
-    networkId,
+    evmNetworkId,
     privateKey,
     recipient,
     multiplier,
-    paymentPermitMaxPrice,
+    permitMaxPrice,
     baseMultiplier,
     incentives,
     issueCreatorMultiplier,
@@ -237,7 +237,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     payload,
     comments,
     issueDetailed: {
-      isBounty: issueDetailed.isBounty,
+      isTask: issueDetailed.isTask,
       timelabel: issueDetailed.timelabel,
       priorityLabel: issueDetailed.priorityLabel,
       priceLabel: issueDetailed.priceLabel,
@@ -259,35 +259,35 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
   let priceInEth = new Decimal(incentivesCalculation.issueDetailed.priceLabel.substring(7, incentivesCalculation.issueDetailed.priceLabel.length - 4)).mul(
     incentivesCalculation.multiplier
   );
-  if (priceInEth.gt(incentivesCalculation.paymentPermitMaxPrice)) {
-    logger.info("Skipping to proceed the payment because bounty payout is higher than paymentPermitMaxPrice.");
-    return { error: `Permit generation disabled because issue's bounty is higher than ${incentivesCalculation.paymentPermitMaxPrice}` };
+  if (priceInEth.gt(incentivesCalculation.permitMaxPrice)) {
+    logger.info("Skipping to proceed the payment because task payout is higher than permitMaxPrice.");
+    return { error: `Permit generation disabled because issue's task is higher than ${incentivesCalculation.permitMaxPrice}` };
   }
 
-  // if bounty hunter has any penalty then deduct it from the bounty
+  // if contributor has any penalty then deduct it from the task
   const penaltyAmount = await getPenalty(
     assigneeLogin,
     incentivesCalculation.payload.repository.full_name,
     incentivesCalculation.paymentToken,
-    incentivesCalculation.networkId.toString()
+    incentivesCalculation.evmNetworkId.toString()
   );
   if (penaltyAmount.gt(0)) {
-    logger.info(`Deducting penalty from bounty`);
-    const bountyAmount = ethers.utils.parseUnits(priceInEth.toString(), 18);
-    const bountyAmountAfterPenalty = bountyAmount.sub(penaltyAmount);
-    if (bountyAmountAfterPenalty.lte(0)) {
+    logger.info(`Deducting penalty from task`);
+    const taskAmount = ethers.utils.parseUnits(priceInEth.toString(), 18);
+    const taskAmountAfterPenalty = taskAmount.sub(penaltyAmount);
+    if (taskAmountAfterPenalty.lte(0)) {
       await removePenalty(
         assigneeLogin,
         incentivesCalculation.payload.repository.full_name,
         incentivesCalculation.paymentToken,
-        incentivesCalculation.networkId.toString(),
-        bountyAmount
+        incentivesCalculation.evmNetworkId.toString(),
+        taskAmount
       );
-      const msg = `Permit generation disabled because bounty amount after penalty is 0.`;
+      const msg = `Permit generation disabled because task amount after penalty is 0.`;
       logger.info(msg);
       return { error: msg };
     }
-    priceInEth = new Decimal(ethers.utils.formatUnits(bountyAmountAfterPenalty, 18));
+    priceInEth = new Decimal(ethers.utils.formatUnits(taskAmountAfterPenalty, 18));
   }
 
   const account = await getWalletAddress(assigneeLogin);
@@ -336,9 +336,9 @@ export const handleIssueClosed = async (
   let priceInEth = new Decimal(incentivesCalculation.issueDetailed.priceLabel.substring(7, incentivesCalculation.issueDetailed.priceLabel.length - 4)).mul(
     incentivesCalculation.multiplier
   );
-  if (priceInEth.gt(incentivesCalculation.paymentPermitMaxPrice)) {
-    logger.info("Skipping to proceed the payment because bounty payout is higher than paymentPermitMaxPrice");
-    return { error: `Permit generation skipped since issue's bounty is higher than ${incentivesCalculation.paymentPermitMaxPrice}` };
+  if (priceInEth.gt(incentivesCalculation.permitMaxPrice)) {
+    logger.info("Skipping to proceed the payment because task payout is higher than permitMaxPrice");
+    return { error: `Permit generation skipped since issue's task is higher than ${incentivesCalculation.permitMaxPrice}` };
   }
 
   // COMMENTERS REWARD HANDLER
@@ -437,7 +437,7 @@ export const handleIssueClosed = async (
         incentivesCalculation.assignee.login,
         incentivesCalculation.payload.repository.full_name,
         incentivesCalculation.paymentToken,
-        incentivesCalculation.networkId.toString(),
+        incentivesCalculation.evmNetworkId.toString(),
         assigneeReward.reward[0].penaltyAmount
       );
     }

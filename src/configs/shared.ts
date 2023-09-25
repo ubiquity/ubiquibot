@@ -1,8 +1,9 @@
+// cspell:disable
 export const COLORS = {
   default: "ededed",
   price: "1f883d",
 };
-export const DEFAULT_BOT_DELAY = 100; // 100ms
+// cspell:enable
 export const DEFAULT_TIME_RANGE_FOR_MAX_ISSUE = 24;
 export const DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED = true;
 

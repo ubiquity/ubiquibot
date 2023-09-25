@@ -33,7 +33,7 @@ export const unassign = async (body: string) => {
       issue_number,
       assignees.map((i) => i.login)
     );
-    return `You have been unassigned from the bounty @${payload.sender.login}`;
+    return `You have been unassigned from the task @${payload.sender.login}`;
   }
   return;
 };

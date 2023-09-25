@@ -58,13 +58,8 @@ export const SupabaseConfigSchema = Type.Object({
   key: Type.String(),
 });
 
-export const TelegramBotConfigSchema = Type.Object({
-  token: Type.String(),
-  delay: Type.Number(),
-});
-
 export const PayoutConfigSchema = Type.Object({
-  networkId: Type.Number(),
+  evmNetworkId: Type.Number(),
   rpc: Type.String(),
   privateKey: Type.String(),
   paymentToken: Type.String(),
@@ -79,15 +74,15 @@ export const UnassignConfigSchema = Type.Object({
 });
 
 export const ModeSchema = Type.Object({
-  paymentPermitMaxPrice: Type.Number(),
+  permitMaxPrice: Type.Number(),
   disableAnalytics: Type.Boolean(),
   incentiveMode: Type.Boolean(),
   assistivePricing: Type.Boolean(),
 });
 
 export const AssignSchema = Type.Object({
-  bountyHunterMax: Type.Number(),
-  staleBountyTime: Type.Number(),
+  maxConcurrentTasks: Type.Number(),
+  staleTaskTime: Type.Number(),
 });
 
 export const LogConfigSchema = Type.Object({
@@ -125,12 +120,12 @@ export const WalletSchema = Type.Object({
   registerWalletWithVerification: Type.Boolean(),
 });
 
-export const AccessControlSchema = Type.Object({
-  label: Type.Boolean(),
-  organization: Type.Boolean(),
+export const PublicAccessControlSchema = Type.Object({
+  setLabel: Type.Boolean(),
+  fundExternalClosedIssue: Type.Boolean(),
 });
 
-export type AccessControl = Static<typeof AccessControlSchema>;
+export type AccessControl = Static<typeof PublicAccessControlSchema>;
 
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
@@ -138,7 +133,6 @@ export const BotConfigSchema = Type.Object({
   payout: PayoutConfigSchema,
   unassign: UnassignConfigSchema,
   supabase: SupabaseConfigSchema,
-  telegram: TelegramBotConfigSchema,
   mode: ModeSchema,
   assign: AssignSchema,
   sodium: SodiumSchema,
@@ -146,7 +140,7 @@ export const BotConfigSchema = Type.Object({
   command: CommandConfigSchema,
   wallet: WalletSchema,
   ask: AskSchema,
-  accessControl: AccessControlSchema,
+  publicAccessControl: PublicAccessControlSchema,
   newContributorGreeting: NewContributorGreetingSchema,
 });
 
@@ -170,14 +164,14 @@ export const GPTResponseSchema = Type.Object({
 
 export type GPTResponse = Static<typeof GPTResponseSchema>;
 
-export const WideConfigSchema = Type.Object(
+export const ConfigSchema = Type.Object(
   {
     evmNetworkId: Type.Optional(Type.Number()),
     priceMultiplier: Type.Optional(Type.Number()),
     issueCreatorMultiplier: Type.Optional(Type.Number()),
     timeLabels: Type.Optional(Type.Array(LabelItemSchema)),
     priorityLabels: Type.Optional(Type.Array(LabelItemSchema)),
-    paymentPermitMaxPrice: Type.Optional(Type.Number()),
+    permitMaxPrice: Type.Optional(Type.Number()),
     commandSettings: Type.Optional(Type.Array(CommandItemSchema)),
     promotionComment: Type.Optional(Type.String()),
     disableAnalytics: Type.Optional(Type.Boolean()),
@@ -187,10 +181,10 @@ export const WideConfigSchema = Type.Object(
     incentives: Type.Optional(IncentivesSchema),
     defaultLabels: Type.Optional(Type.Array(Type.String())),
     registerWalletWithVerification: Type.Optional(Type.Boolean()),
-    enableAccessControl: Type.Optional(AccessControlSchema),
+    enableAccessControl: Type.Optional(PublicAccessControlSchema),
     openAIKey: Type.Optional(Type.String()),
     openAITokenLimit: Type.Optional(Type.Number()),
-    staleBountyTime: Type.Optional(Type.String()),
+    staleTaskTime: Type.Optional(Type.String()),
     privateKeyEncrypted: Type.Optional(Type.String()),
     newContributorGreeting: Type.Optional(NewContributorGreetingSchema),
   },
@@ -199,9 +193,9 @@ export const WideConfigSchema = Type.Object(
   }
 );
 
-export type WideConfig = Static<typeof WideConfigSchema>;
+export type Config = Static<typeof ConfigSchema>;
 
-export type WideRepoConfig = WideConfig;
+export type RepositoryConfig = Config;
 
 export const MergedConfigSchema = Type.Object({
   evmNetworkId: Type.Number(),
@@ -210,7 +204,7 @@ export const MergedConfigSchema = Type.Object({
   issueCreatorMultiplier: Type.Number(),
   timeLabels: Type.Array(LabelItemSchema),
   priorityLabels: Type.Array(LabelItemSchema),
-  paymentPermitMaxPrice: Type.Number(),
+  permitMaxPrice: Type.Number(),
   commandSettings: Type.Array(CommandItemSchema),
   promotionComment: Type.String(),
   disableAnalytics: Type.Boolean(),
@@ -220,10 +214,10 @@ export const MergedConfigSchema = Type.Object({
   incentives: IncentivesSchema,
   defaultLabels: Type.Array(Type.String()),
   registerWalletWithVerification: Type.Boolean(),
-  enableAccessControl: AccessControlSchema,
+  publicAccessControl: PublicAccessControlSchema,
   openAIKey: Type.Optional(Type.String()),
   openAITokenLimit: Type.Optional(Type.Number()),
-  staleBountyTime: Type.String(),
+  staleTaskTime: Type.String(),
   newContributorGreeting: NewContributorGreetingSchema,
 });
 

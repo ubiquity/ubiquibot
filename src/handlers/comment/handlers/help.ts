@@ -28,7 +28,7 @@ export const listAvailableCommands = async (body: string) => {
 };
 
 export const generateHelpMenu = () => {
-  let helpMenu = "### Available commands\n```";
+  let helpMenu = "### Available Commands\n```";
   const commands = userCommands();
   commands.map((command) => {
     // if first command, add a new line
@@ -42,7 +42,8 @@ export const generateHelpMenu = () => {
       helpMenu += `\n`;
     }
   });
-
-  if (!ASSIGN_COMMAND_ENABLED) helpMenu += "```\n***_To assign yourself to an issue, please open a draft pull request that is linked to it._***";
+  if (!ASSIGN_COMMAND_ENABLED) {
+    helpMenu += "\n***_To assign yourself to an issue, please open a draft pull request that is linked to it._***";
+  }
   return helpMenu;
 };

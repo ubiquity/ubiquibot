@@ -70,17 +70,9 @@ export const bindEvents = async (context: Context): Promise<void> => {
   }
 
   // Create adapters for telegram, supabase, twitter, discord, etc
-  logger.info("Creating adapters for supabase, telegram, twitter, etc...");
+  logger.info("Creating adapters for supabase, twitter, etc...");
 
-  logger.info(
-    `Config loaded! config: ${JSON.stringify({
-      price: botConfig.price,
-      unassign: botConfig.unassign,
-      mode: botConfig.mode,
-      log: botConfig.log,
-      wallet: botConfig.wallet,
-    })}`
-  );
+  logger.info(`Config loaded! config: ${JSON.stringify(botConfig)}`);
 
   logger.info(`Started binding events... id: ${id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
 
@@ -96,7 +88,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
     const validate = ajv.compile(PayloadSchema);
     const valid = validate(payload);
     if (!valid) {
-      logger.info("Payload schema validation failed!!!", payload);
+      logger.info("Payload schema validation failed!", payload);
       if (validate.errors) logger.warn(validate.errors);
       return;
     }

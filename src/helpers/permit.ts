@@ -14,15 +14,15 @@ export type Permit = {
   organizationId: number | null;
   repositoryId: number;
   issueId: number;
-  networkId: number;
-  bountyHunterId: number;
-  bountyHunterAddress: string;
+  evmNetworkId: number;
+  contributorId: number;
+  contributorWallet: string;
   tokenAddress: string;
   payoutAmount: string;
   nonce: string;
   deadline: string;
   signature: string;
-  walletOwnerAddress: string;
+  partnerWallet: string;
 };
 
 export type InsertPermit = Omit<Permit, "id" | "createdAt">;
@@ -50,7 +50,7 @@ type TxData = {
  * @param spender The recipient address we're going to send tokens
  * @param amountInETH The token amount in ETH
  *
- * @returns Permit2 url including base64 encocded data
+ * @returns Permit2 url including base64 encoded data
  */
 export const generatePermit2Signature = async (
   spender: string,
@@ -59,7 +59,7 @@ export const generatePermit2Signature = async (
   userId = ""
 ): Promise<{ txData: TxData; payoutUrl: string }> => {
   const {
-    payout: { networkId, privateKey, permitBaseUrl, rpc, paymentToken },
+    payout: { evmNetworkId, privateKey, permitBaseUrl, rpc, paymentToken },
   } = getBotConfig();
   const logger = getLogger();
   const provider = new ethers.providers.JsonRpcProvider(rpc);
@@ -79,7 +79,7 @@ export const generatePermit2Signature = async (
     deadline: MaxUint256,
   };
 
-  const { domain, types, values } = SignatureTransfer.getPermitData(permitTransferFromData, PERMIT2_ADDRESS, networkId);
+  const { domain, types, values } = SignatureTransfer.getPermitData(permitTransferFromData, PERMIT2_ADDRESS, evmNetworkId);
 
   const signature = await adminWallet._signTypedData(domain, types, values);
   const txData: TxData = {
@@ -101,12 +101,12 @@ export const generatePermit2Signature = async (
 
   const base64encodedTxData = Buffer.from(JSON.stringify(txData)).toString("base64");
 
-  const payoutUrl = `${permitBaseUrl}?claim=${base64encodedTxData}&network=${networkId}`;
+  const payoutUrl = `${permitBaseUrl}?claim=${base64encodedTxData}&network=${evmNetworkId}`;
   logger.info(`Generated permit2 url: ${payoutUrl}`);
   return { txData, payoutUrl };
 };
 
-export const savePermitToDB = async (bountyHunterId: number, txData: TxData): Promise<Permit> => {
+export const savePermitToDB = async (contributorId: number, txData: TxData): Promise<Permit> => {
   const logger = getLogger();
 
   const context = getBotContext();
@@ -120,21 +120,21 @@ export const savePermitToDB = async (bountyHunterId: number, txData: TxData): Pr
   }
 
   const { payout } = getBotConfig();
-  const { networkId } = payout;
+  const { evmNetworkId } = payout;
 
   const permit: InsertPermit = {
     organizationId: organization?.id ?? null,
     repositoryId: repository?.id,
     issueId: issue?.id,
-    networkId: networkId,
-    bountyHunterId: bountyHunterId,
+    evmNetworkId: evmNetworkId,
+    contributorId: contributorId,
     tokenAddress: txData.permit.permitted.token,
     payoutAmount: txData.permit.permitted.amount,
-    bountyHunterAddress: txData.transferDetails.to,
+    contributorWallet: txData.transferDetails.to,
     nonce: txData.permit.nonce,
     deadline: txData.permit.deadline,
     signature: txData.signature,
-    walletOwnerAddress: txData.owner,
+    partnerWallet: txData.owner,
   };
 
   const savedPermit = await savePermit(permit);

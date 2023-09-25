@@ -2,7 +2,6 @@ import ms from "ms";
 
 import { BotConfig, BotConfigSchema, LogLevel } from "../types";
 import {
-  DEFAULT_BOT_DELAY,
   DEFAULT_DISQUALIFY_TIME,
   DEFAULT_FOLLOWUP_TIME,
   DEFAULT_PERMIT_BASE_URL,
@@ -12,7 +11,7 @@ import {
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
-import { getScalarKey, getWideConfig } from "../utils/private";
+import { getScalarKey, getConfig } from "../utils/private";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {
@@ -21,26 +20,26 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     privateKey,
     priorityLabels,
     incentives,
-    paymentPermitMaxPrice,
+    permitMaxPrice,
     disableAnalytics,
-    bountyHunterMax,
+    maxConcurrentTasks,
     incentiveMode,
-    networkId,
+    evmNetworkId,
     issueCreatorMultiplier,
     defaultLabels,
     promotionComment,
     commandSettings,
     assistivePricing,
     registerWalletWithVerification,
-    staleBountyTime,
-    enableAccessControl,
+    staleTaskTime,
+    publicAccessControl,
     openAIKey,
     openAITokenLimit,
     newContributorGreeting,
-  } = await getWideConfig(context);
+  } = await getConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
-  const { rpc, paymentToken } = getPayoutConfigByNetworkId(networkId);
+  const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
 
   const botConfig: BotConfig = {
     log: {
@@ -60,7 +59,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       promotionComment: promotionComment,
     },
     payout: {
-      networkId: networkId,
+      evmNetworkId: evmNetworkId,
       rpc: rpc,
       privateKey: privateKey,
       paymentToken: paymentToken,
@@ -80,20 +79,17 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       url: process.env.SUPABASE_URL ?? "",
       key: process.env.SUPABASE_KEY ?? "",
     },
-    telegram: {
-      token: process.env.TELEGRAM_BOT_TOKEN ?? "",
-      delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
-    },
+
     mode: {
-      paymentPermitMaxPrice: paymentPermitMaxPrice,
+      permitMaxPrice: permitMaxPrice,
       disableAnalytics: disableAnalytics,
       incentiveMode: incentiveMode,
       assistivePricing: assistivePricing,
     },
     command: commandSettings,
     assign: {
-      bountyHunterMax: bountyHunterMax,
-      staleBountyTime: ms(staleBountyTime),
+      maxConcurrentTasks: maxConcurrentTasks,
+      staleTaskTime: ms(staleTaskTime),
     },
     sodium: {
       privateKey: process.env.X25519_PRIVATE_KEY ?? "",
@@ -106,12 +102,12 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       apiKey: openAIKey,
       tokenLimit: openAITokenLimit || 0,
     },
-    accessControl: enableAccessControl,
+    publicAccessControl: publicAccessControl,
     newContributorGreeting: newContributorGreeting,
   };
 
   if (botConfig.payout.privateKey == "") {
-    botConfig.mode.paymentPermitMaxPrice = 0;
+    botConfig.mode.permitMaxPrice = 0;
   }
 
   const validate = ajv.compile(BotConfigSchema);
