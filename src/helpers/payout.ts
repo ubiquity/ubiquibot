@@ -14,6 +14,9 @@
 import { Static } from "@sinclair/typebox";
 import { DEFAULT_RPC_ENDPOINT } from "../configs";
 import { PayoutConfigSchema } from "../types";
+import { getUserPermission } from "./issue";
+import { getBotContext, getLogger } from "../bindings";
+import { getAccessLevel } from "../adapters/supabase";
 
 // available tokens for payouts
 const PAYMENT_TOKEN_PER_NETWORK: Record<string, { rpc: string; token: string }> = {
@@ -44,4 +47,29 @@ export const getPayoutConfigByNetworkId = (networkId: number): PayoutConfigParti
     rpc: paymentToken.rpc,
     paymentToken: paymentToken.token,
   };
+};
+
+export const hasLabelEditPermission = async (label: string, caller: string, repository: string) => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const permissionLevel = await getUserPermission(caller, context);
+
+  // get text before :
+  const match = label.split(":");
+  if (match.length == 0) return false;
+  const label_type = match[0].toLowerCase();
+
+  if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {
+    // check permission
+    const accessible = await getAccessLevel(caller, repository, label_type);
+
+    if (accessible) {
+      return true;
+    }
+
+    logger.info(`@${caller} is not allowed to edit label ${label}`);
+    return false;
+  }
+
+  return true;
 };

@@ -522,7 +522,7 @@ export const savePermit = async (permit: InsertPermit): Promise<Permit> => {
   return getPermitFromDbData(data[0]);
 };
 
-export const saveLabelChange = async (username: string, repository: string, label_from: string, label_to: string) => {
+export const saveLabelChange = async (username: string, repository: string, label_from: string, label_to: string, hasAccess: boolean) => {
   const { supabase } = getAdapters();
   const { data, error } = await supabase
     .from("label_changes")
@@ -531,7 +531,7 @@ export const saveLabelChange = async (username: string, repository: string, labe
       repository,
       label_from,
       label_to,
-      approved: false,
+      approved: hasAccess || false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
@@ -541,6 +541,24 @@ export const saveLabelChange = async (username: string, repository: string, labe
   }
   if (!data || data.length === 0) {
     throw new Error("No data returned");
+  }
+  return data[0];
+};
+
+export const getLabelChanges = async (repository: string, labels: string[]) => {
+  const { supabase } = getAdapters();
+  const logger = getLogger();
+
+  const { data, error } = await supabase.from("label_changes").select("*").in("label_to", labels).eq("repository", repository);
+
+  logger.debug(`Getting label changes done, { data: ${JSON.stringify(data)}, error: ${JSON.stringify(error)} }`);
+
+  if (error) {
+    throw new Error(`Error getting label changes: ${error.message}`);
+  }
+
+  if (data.length === 0) {
+    return null;
   }
   return data[0];
 };
