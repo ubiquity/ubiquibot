@@ -66,8 +66,8 @@ commandSettings:
   - name: review
     enabled: true
 
-# publicAccessControl:
-#   setLabel: true
-#   fundExternalClosedIssue: true
+publicAccessControl:
+  setLabel: true
+  fundExternalClosedIssue: true
 
 openAITokenLimit: 8000
