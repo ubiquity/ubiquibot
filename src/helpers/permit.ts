@@ -56,8 +56,7 @@ export const generatePermit2Signature = async (
   spender: string,
   amountInEth: Decimal,
   identifier: string,
-  userId = "",
-  type = ""
+  userId = ""
 ): Promise<{ txData: TxData; payoutUrl: string }> => {
   const {
     payout: { networkId, privateKey, permitBaseUrl, rpc, paymentToken },
@@ -75,7 +74,7 @@ export const generatePermit2Signature = async (
     },
     // who can transfer the tokens
     spender: spender,
-    nonce: BigNumber.from(keccak256(toUtf8Bytes(identifier + userId + type))),
+    nonce: BigNumber.from(keccak256(toUtf8Bytes(identifier + userId))),
     // signature deadline
     deadline: MaxUint256,
   };
