@@ -9,16 +9,6 @@ import { taskInfo } from "../wildcard";
 import { IncentivesCalculationResult } from "./action";
 import { BigNumber } from "ethers";
 
-export interface CreatorCommentResult {
-  title: string;
-  account?: string | undefined;
-  amountInETH?: Decimal | undefined;
-  userId?: string | undefined;
-  tokenSymbol?: string | undefined;
-  node_id?: string | undefined;
-  user?: string | undefined;
-}
-
 const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
 /**
  * Incentivize the contributors based on their contribution.
@@ -71,7 +61,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   }
   logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
 
-  // The mapping between gh handle and amount in ETH
+  // The mapping between gh handle and amount in big number
   const fallbackReward: Record<string, Decimal> = {};
 
   // array of awaiting permits to generate
@@ -79,7 +69,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
 
   for (const user of Object.keys(issueCommentsByUser)) {
     const commentsByUser = issueCommentsByUser[user];
-    const commentsByNode = await parseComments(commentsByUser.comments, ItemsToExclude);
+    const commentsByNode = parseComments(commentsByUser.comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, calculateIncentives.incentives);
     if (rewardValue.equals(0)) {
       logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`);
@@ -136,8 +126,8 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
   logger.info(`Getting the issue description done. description: ${description}`);
   const creator = incentivesCalculation.issue.user;
   if (creator.type === UserType.Bot || creator.login === incentivesCalculation.issue.assignee) {
-    logger.info("Issue creator assigneed himself or Bot created this issue.");
-    return { error: "Issue creator assigneed himself or Bot created this issue." };
+    logger.info("Issue creator assigned himself or Bot created this issue.");
+    return { error: "Issue creator assigned their self or bot created this issue." };
   }
 
   const result = await generatePermitForComments(
@@ -148,8 +138,8 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
     incentivesCalculation.permitMaxPrice
   );
 
-  if (!result || !result.account || !result.amountInETH) {
-    throw new Error("Failed to generate permit for issue creator because of missing account or amountInETH");
+  if (!result || !result.account || !result.amountInBigNumber) {
+    throw new Error("Failed to generate permit for issue creator because of missing account or amountInBigNumber");
   }
 
   return {
@@ -159,7 +149,7 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
     username: creator.login,
     reward: [
       {
-        priceInBigNumber: result?.amountInETH ?? new Decimal(0),
+        priceInBigNumber: result?.amountInBigNumber ?? new Decimal(0),
         account: result?.account,
         userId: "",
         user: "",
@@ -240,12 +230,12 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
   // array of awaiting permits to generate
   const reward: { account: string; priceInBigNumber: Decimal; userId: string; user: string; penaltyAmount: BigNumber }[] = [];
 
-  // The mapping between gh handle and amount in ETH
+  // The mapping between gh handle and amount in big number
   const fallbackReward: Record<string, Decimal> = {};
 
   for (const user of Object.keys(prReviewsByUser)) {
     const commentByUser = prReviewsByUser[user];
-    const commentsByNode = await parseComments(commentByUser.comments, ItemsToExclude);
+    const commentsByNode = parseComments(commentByUser.comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, incentivesCalculation.incentives);
     if (rewardValue.equals(0)) {
       logger.info(`calculatePullRequestReviewsReward: Skipping to generate a permit url because the reward value is 0. user: ${user}`);
@@ -278,9 +268,9 @@ const generatePermitForComments = async (
   multiplier: number,
   incentives: Incentives,
   permitMaxPrice: number
-): Promise<undefined | { account: string; amountInETH: Decimal }> => {
+): Promise<undefined | { account: string; amountInBigNumber: Decimal }> => {
   const logger = getLogger();
-  const commentsByNode = await parseComments(comments, ItemsToExclude);
+  const commentsByNode = parseComments(comments, ItemsToExclude);
   const rewardValue = calculateRewardValue(commentsByNode, incentives);
   if (rewardValue.equals(0)) {
     logger.info(`No reward for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
@@ -288,15 +278,15 @@ const generatePermitForComments = async (
   }
   logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
   const account = await getWalletAddress(user);
-  const amountInETH = rewardValue.mul(multiplier);
-  if (amountInETH.gt(permitMaxPrice)) {
+  const amountInBigNumber = rewardValue.mul(multiplier);
+  if (amountInBigNumber.gt(permitMaxPrice)) {
     logger.info(`Skipping issue creator reward for user ${user} because reward is higher than payment permit max price`);
     return;
   }
   if (account) {
-    return { account, amountInETH };
+    return { account, amountInBigNumber };
   } else {
-    return { account: "0x", amountInETH: new Decimal(0) };
+    return { account: "0x", amountInBigNumber: new Decimal(0) };
   }
 };
 /**
