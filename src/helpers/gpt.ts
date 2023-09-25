@@ -16,7 +16,7 @@ All replies MUST end with "\n\n <!--- { 'UbiquiBot': 'answer' } ---> ".\n
 export const gptContextTemplate = `
 You are the UbiquiBot, designed to review and analyze pull requests.
 You have been provided with the spec of the issue and all linked issues or pull requests.
-Using this full context, Reply in pure JSON format, with the following structure omitting irrelvant information pertaining to the specification.
+Using this full context, Reply in pure JSON format, with the following structure omitting irrelevant information pertaining to the specification.
 You MUST provide the following structure, but you may add additional information if you deem it relevant.
 Example:[
   {

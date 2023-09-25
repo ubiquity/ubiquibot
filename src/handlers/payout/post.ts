@@ -75,7 +75,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   const fallbackReward: Record<string, Decimal> = {};
 
   // array of awaiting permits to generate
-  const reward: { account: string; priceInEth: Decimal; userId: string; user: string; penaltyAmount: BigNumber }[] = [];
+  const reward: { account: string; priceInBigNumber: Decimal; userId: string; user: string; penaltyAmount: BigNumber }[] = [];
 
   for (const user of Object.keys(issueCommentsByUser)) {
     const commentsByUser = issueCommentsByUser[user];
@@ -87,15 +87,15 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
     }
     logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
-    const priceInEth = rewardValue.mul(calculateIncentives.baseMultiplier);
-    if (priceInEth.gt(calculateIncentives.permitMaxPrice)) {
+    const priceInBigNumber = rewardValue.mul(calculateIncentives.baseMultiplier);
+    if (priceInBigNumber.gt(calculateIncentives.permitMaxPrice)) {
       logger.info(`Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
       continue;
     }
     if (account) {
-      reward.push({ account, priceInEth, userId: commentsByUser.id, user, penaltyAmount: BigNumber.from(0) });
+      reward.push({ account, priceInBigNumber, userId: commentsByUser.id, user, penaltyAmount: BigNumber.from(0) });
     } else {
-      fallbackReward[user] = priceInEth;
+      fallbackReward[user] = priceInBigNumber;
     }
   }
 
@@ -159,7 +159,7 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
     username: creator.login,
     reward: [
       {
-        priceInEth: result?.amountInETH ?? new Decimal(0),
+        priceInBigNumber: result?.amountInETH ?? new Decimal(0),
         account: result?.account,
         userId: "",
         user: "",
@@ -238,7 +238,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
   logger.info(`calculatePullRequestReviewsReward: Filtering by the user type done. commentsByUser: ${JSON.stringify(prReviewsByUser)}`);
 
   // array of awaiting permits to generate
-  const reward: { account: string; priceInEth: Decimal; userId: string; user: string; penaltyAmount: BigNumber }[] = [];
+  const reward: { account: string; priceInBigNumber: Decimal; userId: string; user: string; penaltyAmount: BigNumber }[] = [];
 
   // The mapping between gh handle and amount in ETH
   const fallbackReward: Record<string, Decimal> = {};
@@ -253,16 +253,16 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
     }
     logger.info(`calculatePullRequestReviewsReward: Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     const account = await getWalletAddress(user);
-    const priceInEth = rewardValue.mul(incentivesCalculation.baseMultiplier);
-    if (priceInEth.gt(incentivesCalculation.permitMaxPrice)) {
+    const priceInBigNumber = rewardValue.mul(incentivesCalculation.baseMultiplier);
+    if (priceInBigNumber.gt(incentivesCalculation.permitMaxPrice)) {
       logger.info(`calculatePullRequestReviewsReward: Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
       continue;
     }
 
     if (account) {
-      reward.push({ account, priceInEth, userId: commentByUser.id, user, penaltyAmount: BigNumber.from(0) });
+      reward.push({ account, priceInBigNumber, userId: commentByUser.id, user, penaltyAmount: BigNumber.from(0) });
     } else {
-      fallbackReward[user] = priceInEth;
+      fallbackReward[user] = priceInBigNumber;
     }
   }
 

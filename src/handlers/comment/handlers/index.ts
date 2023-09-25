@@ -54,7 +54,7 @@ export interface RewardsResponse {
   username?: string;
   reward?: {
     account: string;
-    priceInEth: Decimal;
+    priceInBigNumber: Decimal;
     penaltyAmount: BigNumber;
     user: string;
     userId: string;

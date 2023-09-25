@@ -87,7 +87,7 @@ export const getAnswerFromChatGPT = async (systemPrompt: string, userPrompt: str
     const validate = ajv.compile(ChoicesSchema);
     const valid = validate(data);
     if (!valid) {
-      logger.error(`Error occured from OpenAI`);
+      logger.error(`Error occurred from OpenAI`);
       return "";
     }
     const { choices: choice } = data;
