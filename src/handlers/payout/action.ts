@@ -201,7 +201,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     // if approved is still false, it means user was certainly not authorized for that edit
     if (!labelChanges.approved) {
       logger.info(`Skipping... label was changed by unauthorized user`);
-      throw new Error(`Permit generation disabled because this label: ${labelChanges.label_to} on this issue was edited by an authorized user`);
+      throw new Error(`Permit generation disabled because label: "${labelChanges.label_to}" was modified by an unauthorized user`);
     }
   }
 
