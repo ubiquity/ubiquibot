@@ -72,7 +72,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     assign: { maxConcurrentTasks: maxConcurrentTasks, staleTaskTime: ms(staleTaskTime) },
     sodium: { privateKey: process.env.X25519_PRIVATE_KEY ?? "", publicKey: publicKey ?? "" },
     wallet: { registerWalletWithVerification: registerWalletWithVerification },
-    ask: { apiKey: openAIKey || process.env.OPENAI_API_KEY, tokenLimit: openAITokenLimit || 0 },
+    ask: { apiKey: process.env.OPENAI_API_KEY || openAIKey, tokenLimit: openAITokenLimit || 0 },
     publicAccessControl: publicAccessControl,
     newContributorGreeting: newContributorGreeting,
   };
