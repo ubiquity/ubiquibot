@@ -79,7 +79,7 @@ export const UnassignConfigSchema = Type.Object({
 });
 
 export const ModeSchema = Type.Object({
-  paymentPermitMaxPrice: Type.Number(),
+  permitMaxPrice: Type.Number(),
   disableAnalytics: Type.Boolean(),
   incentiveMode: Type.Boolean(),
   assistivePricing: Type.Boolean(),
@@ -177,7 +177,7 @@ export const WideConfigSchema = Type.Object(
     issueCreatorMultiplier: Type.Optional(Type.Number()),
     timeLabels: Type.Optional(Type.Array(LabelItemSchema)),
     priorityLabels: Type.Optional(Type.Array(LabelItemSchema)),
-    paymentPermitMaxPrice: Type.Optional(Type.Number()),
+    permitMaxPrice: Type.Optional(Type.Number()),
     commandSettings: Type.Optional(Type.Array(CommandItemSchema)),
     promotionComment: Type.Optional(Type.String()),
     disableAnalytics: Type.Optional(Type.Boolean()),
@@ -210,7 +210,7 @@ export const MergedConfigSchema = Type.Object({
   issueCreatorMultiplier: Type.Number(),
   timeLabels: Type.Array(LabelItemSchema),
   priorityLabels: Type.Array(LabelItemSchema),
-  paymentPermitMaxPrice: Type.Number(),
+  permitMaxPrice: Type.Number(),
   commandSettings: Type.Array(CommandItemSchema),
   promotionComment: Type.String(),
   disableAnalytics: Type.Boolean(),

@@ -149,7 +149,7 @@ export const getWideConfig = async (context: Context) => {
     issueCreatorMultiplier: mergedConfigData.issueCreatorMultiplier,
     timeLabels: mergedConfigData.timeLabels,
     priorityLabels: mergedConfigData.priorityLabels,
-    paymentPermitMaxPrice: mergedConfigData.paymentPermitMaxPrice,
+    permitMaxPrice: mergedConfigData.permitMaxPrice,
     disableAnalytics: mergedConfigData.disableAnalytics,
     maxConcurrentBounties: mergedConfigData.maxConcurrentAssigns,
     incentiveMode: mergedConfigData.commentIncentives,

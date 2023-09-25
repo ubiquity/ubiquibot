@@ -28,7 +28,7 @@ export interface IncentivesCalculationResult {
   rpc: string;
   networkId: number;
   privateKey: string;
-  paymentPermitMaxPrice: number;
+  permitMaxPrice: number;
   baseMultiplier: number;
   incentives: Incentives;
   issueCreatorMultiplier: number;
@@ -65,7 +65,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
   const context = getBotContext();
   const {
     payout: { paymentToken, rpc, permitBaseUrl, evmNetworkId, privateKey },
-    mode: { incentiveMode, paymentPermitMaxPrice },
+    mode: { incentiveMode, permitMaxPrice },
     price: { incentives, issueCreatorMultiplier, baseMultiplier },
     accessControl,
   } = getBotConfig();
@@ -178,9 +178,9 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     }
   }
 
-  if (paymentPermitMaxPrice == 0 || !paymentPermitMaxPrice) {
-    logger.info(`Skipping to generate permit2 url, reason: { paymentPermitMaxPrice: ${paymentPermitMaxPrice}}`);
-    throw new Error(`Permit generation disabled because paymentPermitMaxPrice is 0.`);
+  if (permitMaxPrice == 0 || !permitMaxPrice) {
+    logger.info(`Skipping to generate permit2 url, reason: { permitMaxPrice: ${permitMaxPrice}}`);
+    throw new Error(`Permit generation disabled because permitMaxPrice is 0.`);
   }
 
   const issueDetailed = bountyInfo(issue);
@@ -229,7 +229,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     privateKey,
     recipient,
     multiplier,
-    paymentPermitMaxPrice,
+    permitMaxPrice,
     baseMultiplier,
     incentives,
     issueCreatorMultiplier,
@@ -259,9 +259,9 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
   let priceInEth = new Decimal(incentivesCalculation.issueDetailed.priceLabel.substring(7, incentivesCalculation.issueDetailed.priceLabel.length - 4)).mul(
     incentivesCalculation.multiplier
   );
-  if (priceInEth.gt(incentivesCalculation.paymentPermitMaxPrice)) {
-    logger.info("Skipping to proceed the payment because bounty payout is higher than paymentPermitMaxPrice.");
-    return { error: `Permit generation disabled because issue's bounty is higher than ${incentivesCalculation.paymentPermitMaxPrice}` };
+  if (priceInEth.gt(incentivesCalculation.permitMaxPrice)) {
+    logger.info("Skipping to proceed the payment because bounty payout is higher than permitMaxPrice.");
+    return { error: `Permit generation disabled because issue's bounty is higher than ${incentivesCalculation.permitMaxPrice}` };
   }
 
   // if bounty hunter has any penalty then deduct it from the bounty
@@ -336,9 +336,9 @@ export const handleIssueClosed = async (
   let priceInEth = new Decimal(incentivesCalculation.issueDetailed.priceLabel.substring(7, incentivesCalculation.issueDetailed.priceLabel.length - 4)).mul(
     incentivesCalculation.multiplier
   );
-  if (priceInEth.gt(incentivesCalculation.paymentPermitMaxPrice)) {
-    logger.info("Skipping to proceed the payment because bounty payout is higher than paymentPermitMaxPrice");
-    return { error: `Permit generation skipped since issue's bounty is higher than ${incentivesCalculation.paymentPermitMaxPrice}` };
+  if (priceInEth.gt(incentivesCalculation.permitMaxPrice)) {
+    logger.info("Skipping to proceed the payment because bounty payout is higher than permitMaxPrice");
+    return { error: `Permit generation skipped since issue's bounty is higher than ${incentivesCalculation.permitMaxPrice}` };
   }
 
   // COMMENTERS REWARD HANDLER
