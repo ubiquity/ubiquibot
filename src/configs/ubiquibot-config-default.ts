@@ -94,7 +94,7 @@ export const DefaultConfig: MergedConfig = {
     },
   },
   enableAccessControl: {
-    label: false,
+    label: true,
     organization: true,
   },
   staleBountyTime: "0d",
