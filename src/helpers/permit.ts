@@ -15,14 +15,14 @@ export type Permit = {
   repositoryId: number;
   issueId: number;
   evmNetworkId: number;
-  taskHunterId: number;
-  taskHunterAddress: string;
+  contributorId: number;
+  contributorWallet: string;
   tokenAddress: string;
   payoutAmount: string;
   nonce: string;
   deadline: string;
   signature: string;
-  walletOwnerAddress: string;
+  partnerWallet: string;
 };
 
 export type InsertPermit = Omit<Permit, "id" | "createdAt">;
@@ -106,7 +106,7 @@ export const generatePermit2Signature = async (
   return { txData, payoutUrl };
 };
 
-export const savePermitToDB = async (taskHunterId: number, txData: TxData): Promise<Permit> => {
+export const savePermitToDB = async (contributorId: number, txData: TxData): Promise<Permit> => {
   const logger = getLogger();
 
   const context = getBotContext();
@@ -127,14 +127,14 @@ export const savePermitToDB = async (taskHunterId: number, txData: TxData): Prom
     repositoryId: repository?.id,
     issueId: issue?.id,
     evmNetworkId: evmNetworkId,
-    taskHunterId: taskHunterId,
+    contributorId: contributorId,
     tokenAddress: txData.permit.permitted.token,
     payoutAmount: txData.permit.permitted.amount,
-    taskHunterAddress: txData.transferDetails.to,
+    contributorWallet: txData.transferDetails.to,
     nonce: txData.permit.nonce,
     deadline: txData.permit.deadline,
     signature: txData.signature,
-    walletOwnerAddress: txData.owner,
+    partnerWallet: txData.owner,
   };
 
   const savedPermit = await savePermit(permit);

@@ -435,7 +435,7 @@ export const getPenalty = async (username: string, repoName: string, tokenAddres
     .select("amount")
     .eq("username", username)
     .eq("repository_name", repoName)
-    .eq("network_id", evmNetworkId)
+    .eq("evm_network_id", evmNetworkId)
     .eq("token_address", tokenAddress);
   logger.debug(`Getting penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
 
@@ -472,15 +472,15 @@ const getDbDataFromPermit = (permit: InsertPermit): Record<string, unknown> => {
     organization_id: permit.organizationId,
     repository_id: permit.repositoryId,
     issue_id: permit.issueId,
-    network_id: permit.evmNetworkId,
-    task_hunter_id: permit.taskHunterId,
+    evm_network_id: permit.evmNetworkId,
+    contributor_id: permit.contributorId,
     token_address: permit.tokenAddress,
     payout_amount: permit.payoutAmount,
-    task_hunter_address: permit.taskHunterAddress,
+    contributor_wallet: permit.contributorWallet,
     nonce: permit.nonce,
     deadline: permit.deadline,
     signature: permit.signature,
-    wallet_owner_address: permit.walletOwnerAddress,
+    partner_wallet: permit.partnerWallet,
   };
 };
 
@@ -491,15 +491,15 @@ const getPermitFromDbData = (data: Record<string, unknown>): Permit => {
     organizationId: data.organization_id,
     repositoryId: data.repository_i,
     issueId: data.issue_id,
-    evmNetworkId: data.network_id,
-    taskHunterId: data.task_hunter_id,
+    evmNetworkId: data.evm_network_id,
+    contributorId: data.contributor_id,
     tokenAddress: data.token_address,
     payoutAmount: data.payout_amount,
-    taskHunterAddress: data.task_hunter_address,
+    contributorWallet: data.contributor_wallet,
     nonce: data.nonce,
     deadline: data.deadline,
     signature: data.signature,
-    walletOwnerAddress: data.wallet_owner_address,
+    partnerWallet: data.partner_wallet,
   } as Permit;
 };
 
