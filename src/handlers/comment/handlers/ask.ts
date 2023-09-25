@@ -21,7 +21,7 @@ export const ask = async (body: string) => {
   }
 
   if (!issue) {
-    return `This command can only be used on issues`;
+    return `This command can only be used on issues and pull requests`;
   }
 
   const chatHistory: CreateChatCompletionRequestMessage[] = [];
@@ -37,7 +37,7 @@ export const ask = async (body: string) => {
 
     // standard comments
     const comments = await getAllIssueComments(issue.number);
-    // raw so we can grab the <!--- { 'UbiquityAI': 'answer' } ---> tag
+    // raw so we can grab the <!--- { 'UbiquiBot': 'answer' } ---> tag
     const commentsRaw = await getAllIssueComments(issue.number, "raw");
 
     if (!comments) {
@@ -53,7 +53,7 @@ export const ask = async (body: string) => {
 
     // add the rest
     comments.forEach(async (comment, i) => {
-      if (comment.user.type == UserType.User || commentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
+      if (comment.user.type == UserType.User || commentsRaw[i].body.includes("<!--- { 'UbiquiBot': 'answer' } --->")) {
         streamlined.push({
           login: comment.user.login,
           body: comment.body,
@@ -80,7 +80,7 @@ export const ask = async (body: string) => {
         {
           role: "system",
           content: sysMsg,
-          name: "UbiquityAI",
+          name: "UbiquiBot",
         } as CreateChatCompletionRequestMessage,
         {
           role: "user",
@@ -93,7 +93,7 @@ export const ask = async (body: string) => {
         {
           role: "system",
           content: sysMsg, // provide the answer template
-          name: "UbiquityAI",
+          name: "UbiquiBot",
         } as CreateChatCompletionRequestMessage,
         {
           role: "system",
