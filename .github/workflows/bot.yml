@@ -1,4 +1,4 @@
-name: Calculate Bounty Based on Events
+name: Calculate Task Price Based on Events
 on:
   push:
   issues:
@@ -14,12 +14,12 @@ on:
       - edited
 
 jobs:
-  calculate_bounty_job:
+  calculate_task_job:
     # ignore events invoked by bots
     if: >-
       github.event.pull_request.payload.sender.type != 'Bot' && github.repository != 'ubiquity/ubiquibot'
     runs-on: ubuntu-latest
-    name: Calculate Bounty with UbiquiBot
+    name: Calculate Task Price with UbiquiBot
     steps:
       # To use this repository's private action,
       # you must check out the repository

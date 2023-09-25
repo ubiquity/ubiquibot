@@ -25,9 +25,9 @@ yarn start:watch
 - `DISQUALIFY_TIME`: (optional) Set a custom disqualify time (default: 7 days).
 - `OPENAI_API_HOST`: (optional) Set OpenAI host url (default: https://api.openai.com).
 - `OPENAI_API_KEY`: Set OpenAI key.
-- `CHATGPT_USER_PROMPT_FOR_IMPORTANT_WORDS`: (optional) Set a custom user prompt for finding important words 
+- `CHATGPT_USER_PROMPT_FOR_IMPORTANT_WORDS`: (optional) Set a custom user prompt for finding important words
 (default: "I need your help to find important words (e.g. unique adjectives) from github issue below and I want to parse them easily so please separate them using #(No other contexts needed). Please separate the words by # so I can parse them easily. Please answer simply as I only need the important words. Here is the issue content.\n").
-- `CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY`: (optional) Set a custom user prompt for measuring similarity 
+- `CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY`: (optional) Set a custom user prompt for measuring similarity
 (default: 'I have two github issues and I need to measure the possibility of the 2 issues are the same content (No other contents needed and give me only the number in %).\n Give me in number format and add % after the number.\nDo not tell other things since I only need the number (e.g. 85%). Here are two issues:\n 1. "%first%"\n2. "%second%"').
 - `SIMILARITY_THRESHOLD`: (optional) Set similarity threshold (default: 80).
 - `MEASURE_SIMILARITY_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for measuring similarity (default: 0).
@@ -48,7 +48,7 @@ Instead, it is recommended to make a copy of the `.env.example` file and replace
 
 1. Go to the [UbiquiBot App Marketplace](https://github.com/marketplace/ubiquibot)
 2. Choose a plan and install UbiquiBot on your repository
-3. Congratulations! You can now use the UbiquiBot to manage your bounties.
+3. Congratulations! You can now use the UbiquiBot to manage your tasks.
 
 To test the bot, you can:
 
@@ -61,14 +61,14 @@ To test the bot, you can:
 
 `evm-network-id` is ID of the EVM-compatible network that will be used for payouts.
 
-`price-multiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = price-multiplier * time-label-weight * priority-label-weight * 100`
+`price-multiplier` is a base number that will be used to calculate task price based on the following formula: `price = price-multiplier * time-label-weight * priority-label-weight * 100`
 
-`time-labels` are labels for marking the time limit of the bounty:
+`time-labels` are labels for marking the time limit of the task:
 
 - `name` is a human-readable name
-- `value` is number of seconds that corresponds to the time limit of the bounty
+- `value` is number of seconds that corresponds to the time limit of the task
 
-`priority-labels` are labels for marking the priority of the bounty:
+`priority-labels` are labels for marking the priority of the task:
 
 - `name` is a human-readable name
 
@@ -83,7 +83,7 @@ To test the bot, you can:
 
 `disable-analytics` can be `true` or `false` that disables or enables weekly analytics collection by Ubiquity.
 
-`payment-permit-max-price` sets the max amount for automatic payout of bounties when the issue is closed.
+`payment-permit-max-price` sets the max amount for automatic payout of tasks when the issue is closed.
 
 `comment-incentives` can be `true` or `false` that enable or disable comment incentives. These are payments generated for comments in the issue by contributors, excluding the assignee.
 
@@ -98,7 +98,7 @@ To test the bot, you can:
   - `totals`:
     - `word` defines reward for each word in the comment
 
-`max-concurrent-assigns` is the maximum number of bounties that can be assigned to a bounty hunter at once. This excludes bounties with delayed or approved pull request reviews.
+`max-concurrent-assigns` is the maximum number of tasks that can be assigned to an assignee at once. This excludes tasks with delayed or approved pull request reviews.
 
 `register-wallet-with-verification` can be `true` or `false`. If enabled, it requires a signed message to set wallet address. This prevents users from setting wallet address from centralized exchanges, which would make payments impossible to claim.
 
@@ -139,7 +139,7 @@ DISQUALIFY_TIME="7 days" // 7 days
 6. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
 
 At this point the `.env` files auto-fill the empty fields (`PRIVATE_KEY` and `APP_ID`) if it is not previously filled.
-Now you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react.
+Now you can make changes to the repository on GitHub (e.g. add a task) and the bot should react.
 
 You can, for example:
 
@@ -150,13 +150,13 @@ You can, for example:
 
 ## How it works
 
-Bounty bot is built using the [probot](https://probot.github.io/) framework so initially the bot is a github app. But thanks to the [probot/adapter-github-actions](https://github.com/probot/adapter-github-actions) you can also use the bot as a github action.
+Task bot is built using the [probot](https://probot.github.io/) framework so initially the bot is a github app. But thanks to the [probot/adapter-github-actions](https://github.com/probot/adapter-github-actions) you can also use the bot as a github action.
 
-You can use the bounty bot as a [github app](https://github.com/marketplace/ubiquibot).
+You can use the task bot as a [github app](https://github.com/marketplace/ubiquibot).
 
 When using as a github app the flow is the following:
 
-1. Bounty bot is added to a repository as a github app
+1. Task bot is added to a repository as a github app
 2. You run the bot "backend" (for example on your local machine)
 3. Some event happens in a repository and the bot should react somehow (for example: on adding a time label to an issue the bot should add a price label)
 4. Event details are sent to your deployed bot instance (to a webhook URL that was set in github app's settings)
@@ -197,7 +197,7 @@ Make sure you have your local instance of ubiquibot running.
 
 ## Architecture Overview
 
-Bounty bot is built using the [probot](https://probot.github.io/) framework so initially the bot is a github app
+Task bot is built using the [probot](https://probot.github.io/) framework so initially the bot is a github app
 
 <pre>
 &lt;root&gt;

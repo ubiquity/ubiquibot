@@ -1,6 +1,6 @@
 # Supabase Database Adapter
 
-[Supabase](https://supabase.com/) is used to store bounty hunters profiles and bounties information.
+[Supabase](https://supabase.com/) is used to store contributor profiles and task information.
 
 ### How to setup supabase project locally
 

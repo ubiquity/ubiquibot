@@ -87,7 +87,7 @@ const processEvents = (JSONList: any[]): SummaryType => {
   let openedIssues = 0;
   let closedIssues = 0;
   let comments = 0;
-  let bountiesUSD = 0;
+  let tasksUSD = 0;
   let openedPRs = 0;
   let closedPRs = 0;
   let mergedPRs = 0;
@@ -104,13 +104,13 @@ const processEvents = (JSONList: any[]): SummaryType => {
             closedIssues++;
             elem.payload.issue?.labels.forEach((elem: any) => {
               if (elem.name.includes("Price")) {
-                const bountyUSD = parseInt(
+                const taskUSD = parseInt(
                   elem.name
                     .toString()
                     .match(/\b\d+\b/)
                     .join("")
                 );
-                bountiesUSD += bountyUSD;
+                tasksUSD += taskUSD;
               }
             });
             break;
@@ -156,7 +156,7 @@ const processEvents = (JSONList: any[]): SummaryType => {
     `<code>new issues: ${openedIssues}</code>\n` +
     `<code>issues resolved: ${closedIssues}</code>\n` +
     `<code>total user interactions count: ${comments}</code>\n` +
-    `<code>bounties given: ${bountiesUSD} USD</code>\n` +
+    `<code>tasks given: ${tasksUSD} USD</code>\n` +
     `<code>new pulls: ${openedPRs}</code>\n` +
     `<code>closed pulls: ${closedPRs}</code>\n` +
     `<code>merged pulls: ${mergedPRs}</code>\n` +

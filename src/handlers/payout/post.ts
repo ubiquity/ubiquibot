@@ -5,7 +5,7 @@ import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
 import { Incentives, MarkdownItem, Payload, UserType } from "../../types";
 import { RewardsResponse, commentParser } from "../comment";
 import Decimal from "decimal.js";
-import { bountyInfo } from "../wildcard";
+import { taskInfo } from "../wildcard";
 import { IncentivesCalculationResult } from "./action";
 import { BigNumber } from "ethers";
 
@@ -106,10 +106,10 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
   const title = `Task Creator`;
   const logger = getLogger();
 
-  const issueDetailed = bountyInfo(incentivesCalculation.issue);
-  if (!issueDetailed.isBounty) {
-    logger.info(`incentivizeCreatorComment: its not a bounty`);
-    return { error: `incentivizeCreatorComment: its not a bounty` };
+  const issueDetailed = taskInfo(incentivesCalculation.issue);
+  if (!issueDetailed.isTask) {
+    logger.info(`incentivizeCreatorComment: its not a funded task`);
+    return { error: `incentivizeCreatorComment: its not a funded task` };
   }
 
   const comments = await getAllIssueComments(incentivesCalculation.issue.number);

@@ -13,10 +13,10 @@ import { Comment, Issue, IssueType, Payload, UserType } from "../../types";
 import { deadLinePrefix } from "../shared";
 
 /**
- * @dev Check out the bounties which haven't been completed within the initial timeline
- *  and try to release the bounty back to dev pool
+ * @dev Check out the tasks which haven't been completed within the initial timeline
+ *  and try to release the task back to dev pool
  */
-export const checkBountiesToUnassign = async () => {
+export const checkTasksToUnassign = async () => {
   const logger = getLogger();
   logger.info(`Getting all the issues...`);
 
@@ -26,19 +26,19 @@ export const checkBountiesToUnassign = async () => {
 
   const assigned_issues = issues_opened.filter((issue) => issue.assignee);
 
-  // Checking the bounties in parallel
-  const res = await Promise.all(assigned_issues.map(async (issue) => checkBountyToUnassign(issue as Issue)));
-  logger.info(`Checking expired bounties done! total: ${res.length}, unassigned: ${res.filter((i) => i).length}`);
+  // Checking the tasks in parallel
+  const res = await Promise.all(assigned_issues.map(async (issue) => checkTaskToUnassign(issue as Issue)));
+  logger.info(`Checking expired tasks done! total: ${res.length}, unassigned: ${res.filter((i) => i).length}`);
 };
 
-const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
+const checkTaskToUnassign = async (issue: Issue): Promise<boolean> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
   const logger = getLogger();
   const {
     unassign: { followUpTime, disqualifyTime },
   } = getBotConfig();
-  logger.info(`Checking the bounty to unassign, issue_number: ${issue.number}`);
+  logger.info(`Checking the task to unassign, issue_number: ${issue.number}`);
   const { unassignComment, askUpdate } = GLOBAL_STRINGS;
   const assignees = issue.assignees.map((i) => i.login);
   const comments = await getAllIssueComments(issue.number);
@@ -82,7 +82,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
         );
       } else {
         await addCommentToIssue(
-          `${askUpdate} @${assignees[0]}? If you would like to release the bounty back to the DevPool, please comment \`/stop\` \nLast activity time: ${lastActivity}`,
+          `${askUpdate} @${assignees[0]}? If you would like to release the task back to the DevPool, please comment \`/stop\` \nLast activity time: ${lastActivity}`,
           issue.number
         );
       }

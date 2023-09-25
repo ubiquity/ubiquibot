@@ -222,7 +222,7 @@ export const issueReopenedCallback = async (): Promise<void> => {
       }
 
       await addCommentToIssue(
-        `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of **${formattedAmount} ${tokenSymbol}** will be deducted from your next bounty.`,
+        `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of **${formattedAmount} ${tokenSymbol}** will be deducted from your next task.`,
         issue.number
       );
     } else {
@@ -292,7 +292,7 @@ export const userCommands = (): UserCommands[] => {
     },
     {
       id: IssueCommentCommands.MULTIPLIER,
-      description: `Set the bounty payout multiplier for a specific contributor, and provide a reason for why.\n\te.g. '/wallet @user 0.5 "Multiplier reason"'`,
+      description: `Set the task payout multiplier for a specific contributor, and provide a reason for why.\n\te.g. '/wallet @user 0.5 "Multiplier reason"'`,
       handler: multiplier,
       callback: commandCallback,
     },
