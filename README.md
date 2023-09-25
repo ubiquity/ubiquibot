@@ -48,7 +48,7 @@ Instead, it is recommended to make a copy of the `.env.example` file and replace
 
 1. Go to the [UbiquiBot App Marketplace](https://github.com/marketplace/ubiquibot)
 2. Choose a plan and install UbiquiBot on your repository
-3. Congratulations! You can now use the UbiquiBot to manage your tasks.
+3. Congratulations! You can now use UbiquiBot to manage your tasks.
 
 To test the bot, you can:
 
@@ -150,13 +150,13 @@ You can, for example:
 
 ## How it works
 
-Task bot is built using the [probot](https://probot.github.io/) framework so initially the bot is a github app. But thanks to the [probot/adapter-github-actions](https://github.com/probot/adapter-github-actions) you can also use the bot as a github action.
+UbiquiBot is built using the [probot](https://probot.github.io/) framework so initially the bot is a github app. But thanks to the [probot/adapter-github-actions](https://github.com/probot/adapter-github-actions) you can also use the bot as a github action.
 
-You can use the task bot as a [github app](https://github.com/marketplace/ubiquibot).
+You can use UbiquiBot as a [github app](https://github.com/marketplace/ubiquibot).
 
 When using as a github app the flow is the following:
 
-1. Task bot is added to a repository as a github app
+1. UbiquiBot is added to a repository as a github app
 2. You run the bot "backend" (for example on your local machine)
 3. Some event happens in a repository and the bot should react somehow (for example: on adding a time label to an issue the bot should add a price label)
 4. Event details are sent to your deployed bot instance (to a webhook URL that was set in github app's settings)
@@ -197,7 +197,7 @@ Make sure you have your local instance of ubiquibot running.
 
 ## Architecture Overview
 
-Task bot is built using the [probot](https://probot.github.io/) framework so initially the bot is a github app
+UbiquiBot is built using the [probot](https://probot.github.io/) framework so initially the bot is a github app
 
 <pre>
 &lt;root&gt;
