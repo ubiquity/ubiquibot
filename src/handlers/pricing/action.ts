@@ -57,10 +57,10 @@ export const pricingLabelLogic = async (): Promise<void> => {
       // below checks each label to see if theres a price
       if (hasTargetPriceLabel) {
         // get all issue events of type "labeled" and the event label includes Price
-        const labeledEvents = await getAllLabeledEvents();
+        let labeledEvents = await getAllLabeledEvents();
         if (!labeledEvents) return;
 
-        labeledEvents.filter((event) => event.label?.name.includes("Price"));
+        labeledEvents = labeledEvents.filter((event) => event.label?.name.includes("Price"));
         if (!labeledEvents.length) return;
 
         // check if the latest price label has been added by a user
