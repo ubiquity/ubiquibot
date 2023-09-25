@@ -97,7 +97,7 @@ export const DefaultConfig: MergedConfig = {
     setLabel: true,
     fundExternalClosedIssue: true,
   },
-  staleBountyTime: "0d",
+  staleTaskTime: "0d",
   newContributorGreeting: {
     enabled: false,
     header:

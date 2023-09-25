@@ -15,8 +15,8 @@ export type Permit = {
   repositoryId: number;
   issueId: number;
   evmNetworkId: number;
-  bountyHunterId: number;
-  bountyHunterAddress: string;
+  taskHunterId: number;
+  taskHunterAddress: string;
   tokenAddress: string;
   payoutAmount: string;
   nonce: string;
@@ -106,7 +106,7 @@ export const generatePermit2Signature = async (
   return { txData, payoutUrl };
 };
 
-export const savePermitToDB = async (bountyHunterId: number, txData: TxData): Promise<Permit> => {
+export const savePermitToDB = async (taskHunterId: number, txData: TxData): Promise<Permit> => {
   const logger = getLogger();
 
   const context = getBotContext();
@@ -127,10 +127,10 @@ export const savePermitToDB = async (bountyHunterId: number, txData: TxData): Pr
     repositoryId: repository?.id,
     issueId: issue?.id,
     evmNetworkId: evmNetworkId,
-    bountyHunterId: bountyHunterId,
+    taskHunterId: taskHunterId,
     tokenAddress: txData.permit.permitted.token,
     payoutAmount: txData.permit.permitted.amount,
-    bountyHunterAddress: txData.transferDetails.to,
+    taskHunterAddress: txData.transferDetails.to,
     nonce: txData.permit.nonce,
     deadline: txData.permit.deadline,
     signature: txData.signature,

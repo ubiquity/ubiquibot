@@ -16,7 +16,7 @@ import {
 } from "../../helpers";
 import { UserType, Payload, StateReason, Comment, User, Incentives, Issue } from "../../types";
 import { shortenEthAddress } from "../../utils";
-import { bountyInfo } from "../wildcard";
+import { taskInfo } from "../wildcard";
 import Decimal from "decimal.js";
 import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
@@ -38,7 +38,7 @@ export interface IncentivesCalculationResult {
   payload: Payload;
   comments: Comment[];
   issueDetailed: {
-    isBounty: boolean;
+    isTask: boolean;
     timelabel: string;
     priorityLabel: string;
     priceLabel: string;
@@ -183,15 +183,15 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     throw new Error(`Permit generation disabled because permitMaxPrice is 0.`);
   }
 
-  const issueDetailed = bountyInfo(issue);
-  if (!issueDetailed.isBounty) {
-    logger.info(`Skipping... its not a bounty`);
-    throw new Error(`Permit generation disabled because this issue didn't qualify as bounty.`);
+  const issueDetailed = taskInfo(issue);
+  if (!issueDetailed.isTask) {
+    logger.info(`Skipping... its not a task`);
+    throw new Error(`Permit generation disabled because this issue didn't qualify for funding.`);
   }
 
   if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timelabel) {
-    logger.info(`Skipping... its not a bounty`);
-    throw new Error(`Permit generation disabled because this issue didn't qualify as bounty.`);
+    logger.info(`Skipping... its not a task`);
+    throw new Error(`Permit generation disabled because this issue didn't qualify for funding.`);
   }
 
   const assignees = issue?.assignees ?? [];
@@ -237,7 +237,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     payload,
     comments,
     issueDetailed: {
-      isBounty: issueDetailed.isBounty,
+      isTask: issueDetailed.isTask,
       timelabel: issueDetailed.timelabel,
       priorityLabel: issueDetailed.priorityLabel,
       priceLabel: issueDetailed.priceLabel,
@@ -272,22 +272,22 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
     incentivesCalculation.evmNetworkId.toString()
   );
   if (penaltyAmount.gt(0)) {
-    logger.info(`Deducting penalty from bounty`);
-    const bountyAmount = ethers.utils.parseUnits(priceInEth.toString(), 18);
-    const bountyAmountAfterPenalty = bountyAmount.sub(penaltyAmount);
-    if (bountyAmountAfterPenalty.lte(0)) {
+    logger.info(`Deducting penalty from task`);
+    const taskAmount = ethers.utils.parseUnits(priceInEth.toString(), 18);
+    const taskAmountAfterPenalty = taskAmount.sub(penaltyAmount);
+    if (taskAmountAfterPenalty.lte(0)) {
       await removePenalty(
         assigneeLogin,
         incentivesCalculation.payload.repository.full_name,
         incentivesCalculation.paymentToken,
         incentivesCalculation.evmNetworkId.toString(),
-        bountyAmount
+        taskAmount
       );
       const msg = `Permit generation disabled because bounty amount after penalty is 0.`;
       logger.info(msg);
       return { error: msg };
     }
-    priceInEth = new Decimal(ethers.utils.formatUnits(bountyAmountAfterPenalty, 18));
+    priceInEth = new Decimal(ethers.utils.formatUnits(taskAmountAfterPenalty, 18));
   }
 
   const account = await getWalletAddress(assigneeLogin);

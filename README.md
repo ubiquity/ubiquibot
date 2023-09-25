@@ -25,9 +25,9 @@ yarn start:watch
 - `DISQUALIFY_TIME`: (optional) Set a custom disqualify time (default: 7 days).
 - `OPENAI_API_HOST`: (optional) Set OpenAI host url (default: https://api.openai.com).
 - `OPENAI_API_KEY`: Set OpenAI key.
-- `CHATGPT_USER_PROMPT_FOR_IMPORTANT_WORDS`: (optional) Set a custom user prompt for finding important words 
+- `CHATGPT_USER_PROMPT_FOR_IMPORTANT_WORDS`: (optional) Set a custom user prompt for finding important words
 (default: "I need your help to find important words (e.g. unique adjectives) from github issue below and I want to parse them easily so please separate them using #(No other contexts needed). Please separate the words by # so I can parse them easily. Please answer simply as I only need the important words. Here is the issue content.\n").
-- `CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY`: (optional) Set a custom user prompt for measuring similarity 
+- `CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY`: (optional) Set a custom user prompt for measuring similarity
 (default: 'I have two github issues and I need to measure the possibility of the 2 issues are the same content (No other contents needed and give me only the number in %).\n Give me in number format and add % after the number.\nDo not tell other things since I only need the number (e.g. 85%). Here are two issues:\n 1. "%first%"\n2. "%second%"').
 - `SIMILARITY_THRESHOLD`: (optional) Set similarity threshold (default: 80).
 - `MEASURE_SIMILARITY_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for measuring similarity (default: 0).
@@ -63,12 +63,12 @@ To test the bot, you can:
 
 `price-multiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = price-multiplier * time-label-weight * priority-label-weight * 100`
 
-`time-labels` are labels for marking the time limit of the bounty:
+`time-labels` are labels for marking the time limit of the task:
 
 - `name` is a human-readable name
 - `value` is number of seconds that corresponds to the time limit of the bounty
 
-`priority-labels` are labels for marking the priority of the bounty:
+`priority-labels` are labels for marking the priority of the task:
 
 - `name` is a human-readable name
 
@@ -139,7 +139,7 @@ DISQUALIFY_TIME="7 days" // 7 days
 6. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
 
 At this point the `.env` files auto-fill the empty fields (`PRIVATE_KEY` and `APP_ID`) if it is not previously filled.
-Now you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react.
+Now you can make changes to the repository on GitHub (e.g. add a task) and the bot should react.
 
 You can, for example:
 

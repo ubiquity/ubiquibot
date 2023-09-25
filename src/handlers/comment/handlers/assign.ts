@@ -4,7 +4,7 @@ import { Payload, LabelItem, Comment, IssueType, Issue } from "../../../types";
 import { deadLinePrefix } from "../../shared";
 import { getWalletAddress, getWalletMultiplier } from "../../../adapters/supabase";
 import { tableComment } from "./table";
-import { bountyInfo } from "../../wildcard";
+import { taskInfo } from "../../wildcard";
 import { ASSIGN_COMMAND_ENABLED, GLOBAL_STRINGS } from "../../../configs";
 import { isParentIssue } from "../../pricing";
 
@@ -18,7 +18,7 @@ export const assign = async (body: string) => {
 
   const id = organization?.id || repository?.id; // repository?.id as fallback
 
-  const staleBounty = config.assign.staleBountyTime;
+  const staleBounty = config.assign.staleTaskTime;
 
   logger.info(`Received '/start' command from user: ${payload.sender.login}, body: ${body}`);
   const issue = (_payload as Payload).issue;
@@ -103,7 +103,7 @@ export const assign = async (body: string) => {
     <ul>
     <li>Use <code>/wallet 0x0000...0000</code> if you want to update your registered payment wallet address @${payload.sender.login}.</li>
     <li>Be sure to open a draft pull request as soon as possible to communicate updates on your progress.</li>
-    <li>Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the bounty.</li>
+    <li>Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the task.</li>
     <ul>`,
   };
 
@@ -114,12 +114,12 @@ export const assign = async (body: string) => {
 
   let days: number | undefined;
   let staleToDays: number | undefined;
-  let isBountyStale = false;
+  let isTaskStale = false;
 
   if (staleBounty !== 0) {
     days = Math.floor((new Date().getTime() - new Date(issue.created_at).getTime()) / (1000 * 60 * 60 * 24));
     staleToDays = Math.floor(staleBounty / (1000 * 60 * 60 * 24));
-    isBountyStale = days >= staleToDays;
+    isTaskStale = days >= staleToDays;
   }
 
   // double check whether the assign message has been already posted or not
@@ -128,8 +128,8 @@ export const assign = async (body: string) => {
   const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
-    const { multiplier, reason, bounty } = await getMultiplierInfoToDisplay(payload.sender.login, id?.toString(), issue);
-    return tableComment({ ...comment, multiplier, reason, bounty, isBountyStale, days }) + comment.tips;
+    const { multiplier, reason, task } = await getMultiplierInfoToDisplay(payload.sender.login, id?.toString(), issue);
+    return tableComment({ ...comment, multiplier, reason, task, isTaskStale, days }) + comment.tips;
   }
   return;
 };
@@ -139,7 +139,7 @@ const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, i
 
   const multiplier = value?.toFixed(2) || "1.00";
 
-  let _multiplierToDisplay, _reasonToDisplay, _bountyToDisplay;
+  let _multiplierToDisplay, _reasonToDisplay, _taskToDisplay;
 
   if (value == 1) {
     if (reason) {
@@ -152,11 +152,11 @@ const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, i
   } else {
     _multiplierToDisplay = multiplier;
     _reasonToDisplay = reason;
-    _bountyToDisplay = `Permit generation disabled because price label is not set.`;
-    const issueDetailed = bountyInfo(issue);
+    _taskToDisplay = `Permit generation disabled because price label is not set.`;
+    const issueDetailed = taskInfo(issue);
     if (issueDetailed.priceLabel) {
-      _bountyToDisplay = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString() + " USD";
+      _taskToDisplay = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString() + " USD";
     }
   }
-  return { multiplier: _multiplierToDisplay, reason: _reasonToDisplay, bounty: _bountyToDisplay };
+  return { multiplier: _multiplierToDisplay, reason: _reasonToDisplay, task: _taskToDisplay };
 };

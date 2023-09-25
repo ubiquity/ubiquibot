@@ -27,11 +27,11 @@ export const checkBountiesToUnassign = async () => {
   const assigned_issues = issues_opened.filter((issue) => issue.assignee);
 
   // Checking the bounties in parallel
-  const res = await Promise.all(assigned_issues.map(async (issue) => checkBountyToUnassign(issue as Issue)));
+  const res = await Promise.all(assigned_issues.map(async (issue) => checkTaskToUnassign(issue as Issue)));
   logger.info(`Checking expired bounties done! total: ${res.length}, unassigned: ${res.filter((i) => i).length}`);
 };
 
-const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
+const checkTaskToUnassign = async (issue: Issue): Promise<boolean> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
   const logger = getLogger();
