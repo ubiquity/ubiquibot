@@ -1,4 +1,4 @@
-import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments } from "../../../helpers";
+import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments, calculateWeight, calculateDuration } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType, Issue } from "../../../types";
 import { deadLinePrefix } from "../../shared";
@@ -18,8 +18,11 @@ export const assign = async (body: string) => {
 
   const id = organization?.id || repository?.id; // repository?.id as fallback
 
+  const staleBounty = config.assign.staleBountyTime;
+
   logger.info(`Received '/start' command from user: ${payload.sender.login}, body: ${body}`);
   const issue = (_payload as Payload).issue;
+
   if (!issue) {
     logger.info(`Skipping '/start' because of no issue instance`);
     return "Skipping '/start' because of no issue instance";
@@ -81,9 +84,9 @@ export const assign = async (body: string) => {
     return "Skipping `/start` since no time labels are set to calculate the timeline";
   }
 
-  const sorted = timeLabelsAssigned.sort((a, b) => a.weight - b.weight);
+  const sorted = timeLabelsAssigned.sort((a, b) => calculateWeight(a) - calculateWeight(b));
   const targetTimeLabel = sorted[0];
-  const duration = targetTimeLabel.value;
+  const duration = calculateDuration(targetTimeLabel);
   if (!duration) {
     logger.info(`Missing configure for time label: ${targetTimeLabel.name}`);
     return "Skipping `/start` since configuration is missing for the following labels";
@@ -98,7 +101,7 @@ export const assign = async (body: string) => {
     commit: `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`,
     tips: `<h6>Tips:</h6>
     <ul>
-    <li>Use <code>/wallet 0x0000...0000</code> if you want to update your registered payment wallet address @user.</li>
+    <li>Use <code>/wallet 0x0000...0000</code> if you want to update your registered payment wallet address @${payload.sender.login}.</li>
     <li>Be sure to open a draft pull request as soon as possible to communicate updates on your progress.</li>
     <li>Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the bounty.</li>
     <ul>`,
@@ -109,6 +112,16 @@ export const assign = async (body: string) => {
     await addAssignees(issue.number, [payload.sender.login]);
   }
 
+  let days: number | undefined;
+  let staleToDays: number | undefined;
+  let isBountyStale = false;
+
+  if (staleBounty !== 0) {
+    days = Math.floor((new Date().getTime() - new Date(issue.created_at).getTime()) / (1000 * 60 * 60 * 24));
+    staleToDays = Math.floor(staleBounty / (1000 * 60 * 60 * 24));
+    isBountyStale = days >= staleToDays;
+  }
+
   // double check whether the assign message has been already posted or not
   logger.info(`Creating an issue comment: ${comment.commit}`);
   const issueComments = await getAllIssueComments(issue.number);
@@ -116,7 +129,7 @@ export const assign = async (body: string) => {
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
     const { multiplier, reason, bounty } = await getMultiplierInfoToDisplay(payload.sender.login, id?.toString(), issue);
-    return tableComment({ ...comment, multiplier, reason, bounty }) + comment.tips;
+    return tableComment({ ...comment, multiplier, reason, bounty, isBountyStale, days }) + comment.tips;
   }
   return;
 };
@@ -139,7 +152,7 @@ const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, i
   } else {
     _multiplierToDisplay = multiplier;
     _reasonToDisplay = reason;
-    _bountyToDisplay = `Permit generation skipped since price label is not set`;
+    _bountyToDisplay = `Permit generation disabled because price label is not set.`;
     const issueDetailed = bountyInfo(issue);
     if (issueDetailed.priceLabel) {
       _bountyToDisplay = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString() + " USD";

@@ -1,5 +1,6 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue, closePullRequest, getOpenedPullRequestsForAnIssue } from "../../helpers";
+import { addCommentToIssue, closePullRequest, calculateWeight, calculateDuration } from "../../helpers";
+import { gitLinkedPrParser } from "../../helpers/parser";
 import { Payload, LabelItem } from "../../types";
 import { deadLinePrefix } from "../shared";
 
@@ -49,9 +50,9 @@ export const commentWithAssignMessage = async (): Promise<void> => {
     return;
   }
 
-  const sorted = timeLabelsAssigned.sort((a, b) => a.weight - b.weight);
+  const sorted = timeLabelsAssigned.sort((a, b) => calculateWeight(a) - calculateWeight(b));
   const targetTimeLabel = sorted[0];
-  const duration = targetTimeLabel.value;
+  const duration = calculateDuration(targetTimeLabel);
   if (!duration) {
     logger.debug(`Missing configure for timelabel: ${targetTimeLabel.name}`);
     return;
@@ -72,13 +73,19 @@ export const closePullRequestForAnIssue = async (): Promise<void> => {
   const payload = context.payload as Payload;
   if (!payload.issue?.number) return;
 
-  const prs = await getOpenedPullRequestsForAnIssue(payload.issue.number, "");
+  const prs = await gitLinkedPrParser({
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    issue_number: payload.issue.number,
+  });
+
   if (!prs.length) return;
+
   logger.info(`Opened prs for this issue: ${JSON.stringify(prs)}`);
   let comment = `These linked pull requests are closed: `;
   for (let i = 0; i < prs.length; i++) {
-    await closePullRequest(prs[i].number);
-    comment += ` <a href="${prs[i]._links.html.href}">#${prs[i].number}</a> `;
+    await closePullRequest(prs[i].prNumber);
+    comment += ` <a href="${prs[i].prHref}">#${prs[i].prNumber}</a> `;
   }
   await addCommentToIssue(comment, payload.issue.number);
 };

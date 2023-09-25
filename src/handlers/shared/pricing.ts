@@ -1,4 +1,5 @@
 import { getBotConfig } from "../../bindings";
+import { calculateWeight } from "../../helpers";
 
 export const calculateBountyPrice = (timeValue: number, priorityValue: number, baseValue?: number): number => {
   const botConfig = getBotConfig();
@@ -12,8 +13,8 @@ export const getTargetPriceLabel = (timeLabel: string | undefined, priorityLabel
   const botConfig = getBotConfig();
   let targetPriceLabel: string | undefined = undefined;
   if (timeLabel && priorityLabel) {
-    const timeWeight = botConfig.price.timeLabels.find((item) => item.name === timeLabel)?.weight;
-    const priorityWeight = botConfig.price.priorityLabels.find((item) => item.name === priorityLabel)?.weight;
+    const timeWeight = calculateWeight(botConfig.price.timeLabels.find((item) => item.name === timeLabel));
+    const priorityWeight = calculateWeight(botConfig.price.priorityLabels.find((item) => item.name === priorityLabel));
     if (timeWeight && priorityWeight) {
       const bountyPrice = calculateBountyPrice(timeWeight, priorityWeight);
       targetPriceLabel = `Price: ${bountyPrice} USD`;
