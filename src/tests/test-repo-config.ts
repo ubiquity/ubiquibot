@@ -1,4 +1,4 @@
-import { RepositoryConfig } from "../src/types";
+import { RepositoryConfig } from "../types";
 
 export const repoConfig: RepositoryConfig = {
   evmNetworkId: 100,
