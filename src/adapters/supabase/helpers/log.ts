@@ -96,7 +96,7 @@ export class GitHubLogger implements Logger {
 
     const issueLink = `https://github.com/${org}/${repo}/issues/${issueNumber}${commentId ? `#issuecomment-${commentId}` : ""}`;
 
-    (async () => {
+    return new Promise((resolve, reject) => {
       try {
         if (!this.logNotification.enabled) {
           throw new Error("Telegram Log Notification is disabled, please check that url, secret and group is provided");
@@ -128,13 +128,19 @@ export class GitHubLogger implements Logger {
           Authorization: `${jwtToken}`,
         };
 
-        const response = await axios.get(apiUrl, { headers });
-
-        console.log("Log Notification API Response:", response.data);
+        axios
+          .get(apiUrl, { headers })
+          .then((response) => {
+            resolve(response.data);
+          })
+          .catch((error) => {
+            reject(error);
+          });
       } catch (error) {
-        console.error("Log Notification Error:", error);
+        // Reject the promise with the error
+        reject(error);
       }
-    })();
+    });
   }
 
   async retryLog(log: Log, retryCount = 0) {
@@ -226,7 +232,13 @@ export class GitHubLogger implements Logger {
 
   warn(message: string | object, errorPayload?: string | object) {
     this.save(message, LogLevel.WARN, errorPayload);
-    this.sendDataWithJwt(message, errorPayload);
+    this.sendDataWithJwt(message, errorPayload)
+      .then((response) => {
+        console.log("Log Notification Success:", response);
+      })
+      .catch((error) => {
+        console.error("Log Notification Error:", error);
+      });
   }
 
   debug(message: string | object, errorPayload?: string | object) {
@@ -235,7 +247,13 @@ export class GitHubLogger implements Logger {
 
   error(message: string | object, errorPayload?: string | object) {
     this.save(message, LogLevel.ERROR, errorPayload);
-    this.sendDataWithJwt(message, errorPayload);
+    this.sendDataWithJwt(message, errorPayload)
+      .then((response) => {
+        console.log("Log Notification Success:", response);
+      })
+      .catch((error) => {
+        console.error("Log Notification Error:", error);
+      });
   }
 
   async get() {
