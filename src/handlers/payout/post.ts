@@ -78,7 +78,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
 
   for (const user of Object.keys(issueCommentsByUser)) {
     const commentsByUser = issueCommentsByUser[user];
-    const commentsByNode = await parseComments(commentsByUser.comments, calculateIncentives.incentives.comment.ignore_children);
+    const commentsByNode = await parseComments(commentsByUser.comments);
     const rewardValue = calculateRewardValue(commentsByNode, calculateIncentives.incentives);
     if (rewardValue.equals(0)) {
       logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`);
@@ -244,7 +244,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
 
   for (const user of Object.keys(prReviewsByUser)) {
     const commentByUser = prReviewsByUser[user];
-    const commentsByNode = await parseComments(commentByUser.comments, incentivesCalculation.incentives.comment.ignore_children);
+    const commentsByNode = await parseComments(commentByUser.comments);
     const rewardValue = calculateRewardValue(commentsByNode, incentivesCalculation.incentives);
 
     if (rewardValue.equals(0)) {
@@ -280,7 +280,7 @@ const generatePermitForComments = async (
   paymentPermitMaxPrice: number
 ): Promise<undefined | { account: string; amountInETH: Decimal }> => {
   const logger = getLogger();
-  const commentsByNode = await parseComments(comments, incentives.comment.ignore_children);
+  const commentsByNode = await parseComments(comments);
   const rewardValue = calculateRewardValue(commentsByNode, incentives);
   if (rewardValue.equals(0)) {
     logger.info(`No reward for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
