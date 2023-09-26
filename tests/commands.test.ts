@@ -23,7 +23,7 @@ const TEST_TIME_LABEL = "Time: <1 Hour";
 const TEST_PRIORITY_LABEL = "Priority: 1 (Normal)";
 
 const SIX_HOURS = 6 * 60 * 60 * 1000; // 6 hours
-
+const DATE_NOW = new Date().toISOString();
 let server: Server;
 let octokitAdmin: Octokit;
 let octokitCollaborator: Octokit;
@@ -119,7 +119,7 @@ describe("commands test", () => {
     const res = await octokitAdmin.rest.issues.create({
       repo,
       owner,
-      title: "E2E TEST",
+      title: `${DATE_NOW} - E2E TEST`,
     });
     issue = res.data as Issue;
 
@@ -182,7 +182,7 @@ describe("commands test", () => {
         owner,
         repo,
         issue.number,
-        `Successfully changed the payout multiplier for @${adminUsername} to 2. The reason is not provided. This feature is designed to limit the contributor's compensation for any bounty on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a bounty multiplier above 1?`
+        `Successfully changed the payout multiplier for @${adminUsername} to 2. The reason is not provided. This feature is designed to limit the contributor's compensation for any task on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a price multiplier above 1?`
       );
 
       await createComment(octokitAdmin, owner, repo, issue.number, `/multiplier @${adminUsername} 2 "Testing reason"`);
@@ -193,7 +193,7 @@ describe("commands test", () => {
         owner,
         repo,
         issue.number,
-        `Successfully changed the payout multiplier for @${adminUsername} to 2. The reason provided is "Testing reason". This feature is designed to limit the contributor's compensation for any bounty on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a bounty multiplier above 1?`
+        `Successfully changed the payout multiplier for @${adminUsername} to 2. The reason provided is "Testing reason". This feature is designed to limit the contributor's compensation for any task on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a price multiplier above 1?`
       );
 
       await createComment(octokitAdmin, owner, repo, issue.number, `/multiplier @${adminUsername} abcd`);
@@ -259,7 +259,7 @@ describe("commands test", () => {
       await waitForNWebhooks(2);
 
       const lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-      expect(lastComment.body?.includes("Available commands")).toBe(true);
+      expect(lastComment.body?.includes("Available Commands")).toBe(true);
     },
     SIX_HOURS
   );
@@ -364,7 +364,7 @@ describe("commands test", () => {
       await waitForNWebhooks(2);
 
       let lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-      expect(lastComment.body).toContain("Permit generation disabled because this issue didn't qualify as bounty");
+      expect(lastComment.body).toContain("Permit generation disabled because this issue didn't qualify for funding");
 
       await octokitAdmin.rest.issues.update({
         owner,
@@ -449,7 +449,7 @@ describe("commands test", () => {
       await waitForNWebhooks(3);
 
       lastComment = await getLastComment(octokitAdmin, owner, repo, issue.number);
-      expect(lastComment.body).toBe(`You have been unassigned from the bounty @${adminUsername}`);
+      expect(lastComment.body).toBe(`You have been unassigned from the task @${adminUsername}`);
 
       await createComment(octokitAdmin, owner, repo, issue.number, `/start`);
       await waitForNWebhooks(3);
