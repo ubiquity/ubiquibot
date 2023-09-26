@@ -84,6 +84,12 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       token: process.env.TELEGRAM_BOT_TOKEN ?? "",
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
+    logNotification: {
+      secret: process.env.LOG_WEBHOOK_SECRET || "",
+      groupId: Number(process.env.LOG_WEBHOOK_GROUP_ID) || 0,
+      topicId: Number(process.env.LOG_WEBHOOK_TOPIC_ID) || 0,
+      enabled: true,
+    },
     mode: {
       paymentPermitMaxPrice: paymentPermitMaxPrice,
       disableAnalytics: disableAnalytics,
@@ -112,6 +118,10 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
 
   if (botConfig.payout.privateKey == "") {
     botConfig.mode.paymentPermitMaxPrice = 0;
+  }
+
+  if (botConfig.logNotification.secret == "" || botConfig.logNotification.groupId == 0) {
+    botConfig.logNotification.enabled = false;
   }
 
   const validate = ajv.compile(BotConfigSchema);

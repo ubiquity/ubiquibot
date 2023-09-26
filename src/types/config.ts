@@ -63,6 +63,13 @@ export const TelegramBotConfigSchema = Type.Object({
   delay: Type.Number(),
 });
 
+export const LogNotificationSchema = Type.Object({
+  secret: Type.String(),
+  groupId: Type.Number(),
+  topicId: Type.Number(),
+  enabled: Type.Boolean(),
+});
+
 export const PayoutConfigSchema = Type.Object({
   networkId: Type.Number(),
   rpc: Type.String(),
@@ -139,6 +146,7 @@ export const BotConfigSchema = Type.Object({
   unassign: UnassignConfigSchema,
   supabase: SupabaseConfigSchema,
   telegram: TelegramBotConfigSchema,
+  logNotification: LogNotificationSchema,
   mode: ModeSchema,
   assign: AssignSchema,
   sodium: SodiumSchema,
