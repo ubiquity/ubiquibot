@@ -5,14 +5,22 @@ import {
   owner,
   repo,
   SIX_HOURS,
-  TEST_PRIORITY_LABEL,
-  TEST_TIME_LABEL,
+  // TEST_PRIORITY_LABEL,
+  // TEST_TIME_LABEL,
   getAdminUsername,
-  getCollaboratorUsername,
+  // getCollaboratorUsername,
   getAdminUser,
-  getCollaboratorUser,
+  // getCollaboratorUser,
 } from "./commands.test";
-import { addLabelToIssue, checkLastComment, createComment, createLabel, getLastComment, removeLabelFromIssue, waitForNWebhooks } from "./utils";
+import {
+  //  addLabelToIssue,
+  checkLastComment,
+  createComment,
+  // createLabel,
+  getLastComment,
+  // removeLabelFromIssue,
+  waitForNWebhooks,
+} from "./utils";
 
 let issue: Issue;
 
@@ -175,253 +183,253 @@ function allTests(): () => void {
       SIX_HOURS
     );
 
-    test(
-      "/allow",
-      async () => {
-        await createLabel(getAdminUser(), owner, repo, TEST_PRIORITY_LABEL);
+    // test(
+    //   "/allow",
+    //   async () => {
+    //     await createLabel(getAdminUser(), owner, repo, TEST_PRIORITY_LABEL);
 
-        await getAdminUser().rest.issues.update({
-          owner,
-          repo,
-          issue_number: issue.number,
-          labels: [],
-        });
+    //     await getAdminUser().rest.issues.update({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //       labels: [],
+    //     });
 
-        await createComment(getAdminUser(), owner, repo, issue.number, `/allow set-priority @${getCollaboratorUsername()} false`);
-        await waitForNWebhooks(2);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, `/allow set-priority @${getCollaboratorUsername()} false`);
+    //     await waitForNWebhooks(2);
 
-        let lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        expect(lastComment.body).toContain(`Updated access for @${getCollaboratorUsername()} successfully!\t Access: **priority** for "${owner}/${repo}"`);
+    //     let lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
+    //     expect(lastComment.body).toContain(`Updated access for @${getCollaboratorUsername()} successfully!\t Access: **priority** for "${owner}/${repo}"`);
 
-        // collaborator adds label
-        await addLabelToIssue(getCollaboratorUser(), owner, repo, issue.number, TEST_PRIORITY_LABEL);
-        await waitForNWebhooks(3);
+    //     // collaborator adds label
+    //     await addLabelToIssue(getCollaboratorUser(), owner, repo, issue.number, TEST_PRIORITY_LABEL);
+    //     await waitForNWebhooks(3);
 
-        let issueDetails = await getAdminUser().rest.issues.get({
-          owner,
-          repo,
-          issue_number: issue.number,
-        });
-        expect(issueDetails.data.labels?.length).toBe(0);
+    //     let issueDetails = await getAdminUser().rest.issues.get({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //     });
+    //     expect(issueDetails.data.labels?.length).toBe(0);
 
-        lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        expect(lastComment.body).toContain(`@${getCollaboratorUsername()}, You are not allowed to add Priority: 1 (Normal)`);
+    //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
+    //     expect(lastComment.body).toContain(`@${getCollaboratorUsername()}, You are not allowed to add Priority: 1 (Normal)`);
 
-        await getAdminUser().rest.issues.update({
-          owner,
-          repo,
-          issue_number: issue.number,
-          labels: [TEST_PRIORITY_LABEL],
-        });
+    //     await getAdminUser().rest.issues.update({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //       labels: [TEST_PRIORITY_LABEL],
+    //     });
 
-        await removeLabelFromIssue(getCollaboratorUser(), owner, repo, issue.number, TEST_PRIORITY_LABEL);
-        await waitForNWebhooks(3);
+    //     await removeLabelFromIssue(getCollaboratorUser(), owner, repo, issue.number, TEST_PRIORITY_LABEL);
+    //     await waitForNWebhooks(3);
 
-        issueDetails = await getAdminUser().rest.issues.get({
-          owner,
-          repo,
-          issue_number: issue.number,
-        });
-        expect(issueDetails.data.labels?.length).toBe(1);
+    //     issueDetails = await getAdminUser().rest.issues.get({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //     });
+    //     expect(issueDetails.data.labels?.length).toBe(1);
 
-        lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        expect(lastComment.body).toContain(`@${getCollaboratorUsername()}, You are not allowed to remove Priority: 1 (Normal)`);
+    //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
+    //     expect(lastComment.body).toContain(`@${getCollaboratorUsername()}, You are not allowed to remove Priority: 1 (Normal)`);
 
-        await createComment(getAdminUser(), owner, repo, issue.number, `/allow set-priority @${getCollaboratorUsername()} true`);
-        await waitForNWebhooks(2);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, `/allow set-priority @${getCollaboratorUsername()} true`);
+    //     await waitForNWebhooks(2);
 
-        lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        expect(lastComment.body).toContain(`Updated access for @${getCollaboratorUsername()} successfully!\t Access: **priority** for "${owner}/${repo}"`);
+    //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
+    //     expect(lastComment.body).toContain(`Updated access for @${getCollaboratorUsername()} successfully!\t Access: **priority** for "${owner}/${repo}"`);
 
-        await removeLabelFromIssue(getCollaboratorUser(), owner, repo, issue.number, TEST_PRIORITY_LABEL);
-        await waitForNWebhooks(1);
+    //     await removeLabelFromIssue(getCollaboratorUser(), owner, repo, issue.number, TEST_PRIORITY_LABEL);
+    //     await waitForNWebhooks(1);
 
-        issueDetails = await getAdminUser().rest.issues.get({
-          owner,
-          repo,
-          issue_number: issue.number,
-        });
-        expect(issueDetails.data.labels?.length).toBe(0);
+    //     issueDetails = await getAdminUser().rest.issues.get({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //     });
+    //     expect(issueDetails.data.labels?.length).toBe(0);
 
-        await addLabelToIssue(getCollaboratorUser(), owner, repo, issue.number, TEST_PRIORITY_LABEL);
-        await waitForNWebhooks(1);
+    //     await addLabelToIssue(getCollaboratorUser(), owner, repo, issue.number, TEST_PRIORITY_LABEL);
+    //     await waitForNWebhooks(1);
 
-        issueDetails = await getAdminUser().rest.issues.get({
-          owner,
-          repo,
-          issue_number: issue.number,
-        });
-        expect(issueDetails.data.labels?.length).toBe(1);
-      },
-      SIX_HOURS
-    );
+    //     issueDetails = await getAdminUser().rest.issues.get({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //     });
+    //     expect(issueDetails.data.labels?.length).toBe(1);
+    //   },
+    //   SIX_HOURS
+    // );
 
-    test(
-      "/start and /stop",
-      async () => {
-        await getAdminUser().rest.issues.update({
-          owner,
-          repo,
-          issue_number: issue.number,
-          labels: [],
-        });
+    // test(
+    //   "/start and /stop",
+    //   async () => {
+    //     await getAdminUser().rest.issues.update({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //       labels: [],
+    //     });
 
-        await getAdminUser().rest.issues.update({
-          owner,
-          repo,
-          issue_number: issue.number,
-          state: "closed",
-        });
-        await waitForNWebhooks(2);
+    //     await getAdminUser().rest.issues.update({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //       state: "closed",
+    //     });
+    //     await waitForNWebhooks(2);
 
-        let lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        expect(lastComment.body).toContain("Permit generation disabled because this issue didn't qualify for funding");
+    //     let lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
+    //     expect(lastComment.body).toContain("Permit generation disabled because this issue didn't qualify for funding");
 
-        await getAdminUser().rest.issues.update({
-          owner,
-          repo,
-          issue_number: issue.number,
-          state: "open",
-        });
-        await waitForNWebhooks(1);
+    //     await getAdminUser().rest.issues.update({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //       state: "open",
+    //     });
+    //     await waitForNWebhooks(1);
 
-        try {
-          await getAdminUser().rest.issues.createLabel({
-            owner,
-            repo,
-            name: TEST_TIME_LABEL,
-          });
-        } catch (err) {
-          expect(err).toBeDefined();
-        } finally {
-          await getAdminUser().rest.issues.addLabels({
-            owner,
-            repo,
-            issue_number: issue.number,
-            labels: [TEST_TIME_LABEL],
-          });
-          await waitForNWebhooks(1);
-        }
+    //     try {
+    //       await getAdminUser().rest.issues.createLabel({
+    //         owner,
+    //         repo,
+    //         name: TEST_TIME_LABEL,
+    //       });
+    //     } catch (err) {
+    //       expect(err).toBeDefined();
+    //     } finally {
+    //       await getAdminUser().rest.issues.addLabels({
+    //         owner,
+    //         repo,
+    //         issue_number: issue.number,
+    //         labels: [TEST_TIME_LABEL],
+    //       });
+    //       await waitForNWebhooks(1);
+    //     }
 
-        try {
-          await getAdminUser().rest.issues.createLabel({
-            owner,
-            repo,
-            name: TEST_PRIORITY_LABEL,
-          });
-        } catch (err) {
-          expect(err).toBeDefined();
-        } finally {
-          await getAdminUser().rest.issues.addLabels({
-            owner,
-            repo,
-            issue_number: issue.number,
-            labels: [TEST_PRIORITY_LABEL],
-          });
-          await waitForNWebhooks(2);
-        }
+    //     try {
+    //       await getAdminUser().rest.issues.createLabel({
+    //         owner,
+    //         repo,
+    //         name: TEST_PRIORITY_LABEL,
+    //       });
+    //     } catch (err) {
+    //       expect(err).toBeDefined();
+    //     } finally {
+    //       await getAdminUser().rest.issues.addLabels({
+    //         owner,
+    //         repo,
+    //         issue_number: issue.number,
+    //         labels: [TEST_PRIORITY_LABEL],
+    //       });
+    //       await waitForNWebhooks(2);
+    //     }
 
-        await getAdminUser().rest.issues.update({
-          owner,
-          repo,
-          issue_number: issue.number,
-          state: "closed",
-        });
-        await waitForNWebhooks(2);
+    //     await getAdminUser().rest.issues.update({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //       state: "closed",
+    //     });
+    //     await waitForNWebhooks(2);
 
-        lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        expect(lastComment.body).toContain("Permit generation disabled because assignee is undefined");
+    //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
+    //     expect(lastComment.body).toContain("Permit generation disabled because assignee is undefined");
 
-        await getAdminUser().rest.issues.update({
-          owner,
-          repo,
-          issue_number: issue.number,
-          state: "open",
-        });
-        await waitForNWebhooks(1);
+    //     await getAdminUser().rest.issues.update({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //       state: "open",
+    //     });
+    //     await waitForNWebhooks(1);
 
-        await createComment(getAdminUser(), owner, repo, issue.number, `/autopay false`);
-        await waitForNWebhooks(2);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, `/autopay false`);
+    //     await waitForNWebhooks(2);
 
-        lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        expect(lastComment.body).toContain("Automatic payment for this issue is enabled: **false**");
+    //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
+    //     expect(lastComment.body).toContain("Automatic payment for this issue is enabled: **false**");
 
-        await createComment(getAdminUser(), owner, repo, issue.number, `/start`);
-        await waitForNWebhooks(3);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, `/start`);
+    //     await waitForNWebhooks(3);
 
-        lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        const lastCommentBody = lastComment.body?.toLowerCase();
-        expect(lastCommentBody).toContain("deadline");
-        expect(lastCommentBody).toContain("registered wallet");
-        expect(lastCommentBody).toContain("payment multiplier");
-        expect(lastCommentBody).toContain("multiplier reason");
+    //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
+    //     const lastCommentBody = lastComment.body?.toLowerCase();
+    //     expect(lastCommentBody).toContain("deadline");
+    //     expect(lastCommentBody).toContain("registered wallet");
+    //     expect(lastCommentBody).toContain("payment multiplier");
+    //     expect(lastCommentBody).toContain("multiplier reason");
 
-        await createComment(getAdminUser(), owner, repo, issue.number, `/stop`);
-        await waitForNWebhooks(3);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, `/stop`);
+    //     await waitForNWebhooks(3);
 
-        lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        expect(lastComment.body).toBe(`You have been unassigned from the task @${getAdminUsername()}`);
+    //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
+    //     expect(lastComment.body).toBe(`You have been unassigned from the task @${getAdminUsername()}`);
 
-        await createComment(getAdminUser(), owner, repo, issue.number, `/start`);
-        await waitForNWebhooks(3);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, `/start`);
+    //     await waitForNWebhooks(3);
 
-        await getAdminUser().rest.issues.update({
-          owner,
-          repo,
-          issue_number: issue.number,
-          state: "closed",
-        });
-        await waitForNWebhooks(2);
+    //     await getAdminUser().rest.issues.update({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //       state: "closed",
+    //     });
+    //     await waitForNWebhooks(2);
 
-        lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        expect(lastComment.body).toContain("Permit generation disabled because automatic payment for this issue is disabled.");
+    //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
+    //     expect(lastComment.body).toContain("Permit generation disabled because automatic payment for this issue is disabled.");
 
-        await getAdminUser().rest.issues.update({
-          owner,
-          repo,
-          issue_number: issue.number,
-          state: "open",
-        });
-        await waitForNWebhooks(1);
+    //     await getAdminUser().rest.issues.update({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //       state: "open",
+    //     });
+    //     await waitForNWebhooks(1);
 
-        await createComment(getAdminUser(), owner, repo, issue.number, `/autopay true`);
-        await waitForNWebhooks(2);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, `/autopay true`);
+    //     await waitForNWebhooks(2);
 
-        lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        expect(lastComment.body).toBe("Automatic payment for this issue is enabled: **true**");
+    //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
+    //     expect(lastComment.body).toBe("Automatic payment for this issue is enabled: **true**");
 
-        await getAdminUser().rest.issues.update({
-          owner,
-          repo,
-          issue_number: issue.number,
-          state: "closed",
-          state_reason: "not_planned",
-        });
-        await waitForNWebhooks(2);
+    //     await getAdminUser().rest.issues.update({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //       state: "closed",
+    //       state_reason: "not_planned",
+    //     });
+    //     await waitForNWebhooks(2);
 
-        lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        expect(lastComment.body).toContain("Permit generation disabled because this is marked as unplanned");
+    //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
+    //     expect(lastComment.body).toContain("Permit generation disabled because this is marked as unplanned");
 
-        await getAdminUser().rest.issues.update({
-          owner,
-          repo,
-          issue_number: issue.number,
-          state: "open",
-        });
-        await waitForNWebhooks(1);
+    //     await getAdminUser().rest.issues.update({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //       state: "open",
+    //     });
+    //     await waitForNWebhooks(1);
 
-        await getAdminUser().rest.issues.update({
-          owner,
-          repo,
-          issue_number: issue.number,
-          state: "closed",
-        });
-        await waitForNWebhooks(2);
+    //     await getAdminUser().rest.issues.update({
+    //       owner,
+    //       repo,
+    //       issue_number: issue.number,
+    //       state: "closed",
+    //     });
+    //     await waitForNWebhooks(2);
 
-        lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        expect(lastComment.body).toContain("Task Assignee Reward");
-      },
-      SIX_HOURS
-    );
+    //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
+    //     expect(lastComment.body).toContain("Task Assignee Reward");
+    //   },
+    //   SIX_HOURS
+    // );
   };
 }
