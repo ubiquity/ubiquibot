@@ -13,9 +13,8 @@ export const commentIncentive = async (body: string) => {
     logger.info(`Skipping '/comment-incentive' because of no issue instance`);
     return `Skipping '/comment-incentive' because of no issue instance`;
   }
-  const parts = body.split(" ");
-  parts.shift();
-  if (parts.pop() !== "true" && parts.pop() !== "false") {
+  var toggle = body.match(/\b(true|false)\b/);
+  if (!toggle) {
     return `invalid syntax for /comment-incentive \n usage /comment-incentive @user @user1... true|false \n ex /comment-incentive @user true`;
   } else {
     return;
