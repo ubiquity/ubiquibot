@@ -235,7 +235,8 @@ select cron.unschedule('logs-cleaner');
 
 ## Tests
 
-- Make a new GitHub App
+- Make a new GitHub App for your bot instance
 - Make sure its "public" so you can install on a test org.
    - hidden away under "Advanced Options" when creating the app: https://github.com/settings/apps/YOUR_APP/advanced
 - Make sure it has access to BOTH the test repo and the ubiquibot-config repo
+   - make sure you make the ubiquibot-config repo first
