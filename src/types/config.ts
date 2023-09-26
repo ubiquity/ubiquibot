@@ -64,11 +64,14 @@ export const TelegramBotConfigSchema = Type.Object({
 });
 
 export const LogNotificationSchema = Type.Object({
+  url: Type.String(),
   secret: Type.String(),
   groupId: Type.Number(),
   topicId: Type.Number(),
   enabled: Type.Boolean(),
 });
+
+export type LogNotification = Static<typeof LogNotificationSchema>;
 
 export const PayoutConfigSchema = Type.Object({
   networkId: Type.Number(),

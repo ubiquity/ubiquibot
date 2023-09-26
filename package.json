@@ -49,6 +49,7 @@
     "husky": "^8.0.2",
     "jimp": "^0.22.4",
     "js-yaml": "^4.1.0",
+    "jsonwebtoken": "^9.0.2",
     "libsodium-wrappers": "^0.7.11",
     "lint-staged": "^13.1.0",
     "lodash": "^4.17.21",

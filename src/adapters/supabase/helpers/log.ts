@@ -1,7 +1,8 @@
+import axios from "axios";
 import { getAdapters, getBotContext, Logger } from "../../../bindings";
-import { Payload, LogLevel } from "../../../types";
+import { Payload, LogLevel, LogNotification } from "../../../types";
 import { getOrgAndRepoFromPath } from "../../../utils/private";
-
+import jwt from "jsonwebtoken";
 interface Log {
   repo: string | null;
   org: string | null;
@@ -43,13 +44,15 @@ export class GitHubLogger implements Logger {
   private retryDelay = 1000; // Delay between retries in milliseconds
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
+  private logNotification;
 
-  constructor(app: string, logEnvironment: string, maxLevel: LogLevel, retryLimit: number) {
+  constructor(app: string, logEnvironment: string, maxLevel: LogLevel, retryLimit: number, logNotification: LogNotification) {
     this.app = app;
     this.logEnvironment = logEnvironment;
     this.maxLevel = getNumericLevel(maxLevel);
     this.retryLimit = retryLimit;
     this.supabase = getAdapters().supabase;
+    this.logNotification = logNotification;
   }
 
   async sendLogsToSupabase({ repo, org, commentId, issueNumber, logMessage, level, timestamp }: Log) {
@@ -77,6 +80,45 @@ export class GitHubLogger implements Logger {
     } catch (error) {
       console.error("Error sending log, retrying:", error);
       return this.retryLimit > 0 ? await this.retryLog(log) : null;
+    }
+  }
+
+  async sendDataWithJwt(message: string | object, errorPayload?: string | object) {
+    try {
+      if (!this.logNotification.enabled) {
+        throw new Error("Telegram Log Notification is disabled, please check that url, secret and group is provided");
+      }
+
+      if (typeof message === "object") {
+        message = JSON.stringify(message);
+      }
+
+      if (errorPayload && typeof errorPayload === "object") {
+        errorPayload = JSON.stringify(errorPayload);
+      }
+
+      const errorMessage = `${message}${errorPayload ? " - " + errorPayload : ""}`;
+
+      // Step 1: Sign a JWT with the provided parameter
+      const jwtToken = jwt.sign(
+        {
+          group: this.logNotification.groupId,
+          topic: this.logNotification.topicId,
+          msg: errorMessage,
+        },
+        this.logNotification.secret
+      );
+
+      const apiUrl = this.logNotification.url;
+      const headers = {
+        Authorization: `${jwtToken}`,
+      };
+
+      const response = await axios.get(apiUrl, { headers });
+
+      console.log("Log Notification API Response:", response.data);
+    } catch (error) {
+      console.error("Log Notification Error:", error);
     }
   }
 
@@ -169,6 +211,7 @@ export class GitHubLogger implements Logger {
 
   warn(message: string | object, errorPayload?: string | object) {
     this.save(message, LogLevel.WARN, errorPayload);
+    this.sendDataWithJwt(message, errorPayload);
   }
 
   debug(message: string | object, errorPayload?: string | object) {
@@ -177,6 +220,7 @@ export class GitHubLogger implements Logger {
 
   error(message: string | object, errorPayload?: string | object) {
     this.save(message, LogLevel.ERROR, errorPayload);
+    this.sendDataWithJwt(message, errorPayload);
   }
 
   async get() {

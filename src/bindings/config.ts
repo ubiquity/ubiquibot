@@ -85,6 +85,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
     logNotification: {
+      url: process.env.LOG_WEBHOOK_BOT_URL || "",
       secret: process.env.LOG_WEBHOOK_SECRET || "",
       groupId: Number(process.env.LOG_WEBHOOK_GROUP_ID) || 0,
       topicId: Number(process.env.LOG_WEBHOOK_TOPIC_ID) || 0,
@@ -120,7 +121,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     botConfig.mode.paymentPermitMaxPrice = 0;
   }
 
-  if (botConfig.logNotification.secret == "" || botConfig.logNotification.groupId == 0) {
+  if (botConfig.logNotification.secret == "" || botConfig.logNotification.groupId == 0 || botConfig.logNotification.url == "") {
     botConfig.logNotification.enabled = false;
   }
 
