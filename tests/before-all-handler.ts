@@ -9,13 +9,13 @@ import {
   repo,
   setAdminUsername,
   setCollaboratorUsername,
-  setOctokitAdmin,
-  setOctokitCollaborator,
+  setAdminUser,
+  setCollaboratorUser,
   setServer,
 } from "./commands.test";
 import { repoConfig } from "./test-repo-config";
 import { updateConfig, waitForNWebhooks, webhookEventEmitter } from "./utils";
-import { getOctokitAdmin, getAdminUsername, getOctokitCollaborator, getCollaboratorUsername } from "./commands.test";
+import { getAdminUser, getAdminUsername, getCollaboratorUser, getCollaboratorUsername } from "./commands.test";
 
 export function beforeAllHandler(): jest.ProvidesHookCallback {
   return async () => {
@@ -24,13 +24,13 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
       throw new Error("missing TEST_ADMIN_PAT");
     }
 
-    setOctokitAdmin(new CustomOctokit({ auth: adminPAT }));
+    setAdminUser(new CustomOctokit({ auth: adminPAT }));
 
-    const { data } = await getOctokitAdmin().rest.users.getAuthenticated();
+    const { data } = await getAdminUser().rest.users.getAuthenticated();
     setAdminUsername(data.login);
 
     // check if the user is admin
-    const { data: data1 } = await getOctokitAdmin().rest.repos.getCollaboratorPermissionLevel({
+    const { data: data1 } = await getAdminUser().rest.repos.getCollaboratorPermissionLevel({
       repo,
       owner,
       username: getAdminUsername(),
@@ -44,13 +44,13 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
       throw new Error("missing TEST_OUTSIDE_COLLABORATOR_PAT");
     }
 
-    setOctokitCollaborator(new CustomOctokit({ auth: outsideCollaboratorPAT }));
+    setCollaboratorUser(new CustomOctokit({ auth: outsideCollaboratorPAT }));
 
-    const { data: data2 } = await getOctokitCollaborator().rest.users.getAuthenticated();
+    const { data: data2 } = await getCollaboratorUser().rest.users.getAuthenticated();
     setCollaboratorUsername(data2.login);
 
     // check if the user is outside collaborator
-    const { data: data3 } = await getOctokitAdmin().rest.repos.getCollaboratorPermissionLevel({
+    const { data: data3 } = await getAdminUser().rest.repos.getCollaboratorPermissionLevel({
       repo,
       owner,
       username: getCollaboratorUsername(),
@@ -72,9 +72,9 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
       })
     );
 
-    await updateConfig(getOctokitAdmin(), owner, "ubiquibot-config", ".github/ubiquibot-config.yml", orgConfig);
+    await updateConfig(getAdminUser(), owner, "ubiquibot-config", ".github/ubiquibot-config.yml", orgConfig);
     await waitForNWebhooks(1);
-    await updateConfig(getOctokitAdmin(), owner, repo, ".github/ubiquibot-config.yml", repoConfig);
+    await updateConfig(getAdminUser(), owner, repo, ".github/ubiquibot-config.yml", repoConfig);
     await waitForNWebhooks(1);
   };
 }

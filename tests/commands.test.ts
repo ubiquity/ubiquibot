@@ -26,16 +26,16 @@ let adminUsername = "";
 let collaboratorUsername = "";
 let server: Server;
 
-export function getOctokitAdmin(): Octokit {
+export function getAdminUser(): Octokit {
   return octokitAdmin;
 }
-export function setOctokitAdmin(value: Octokit) {
+export function setAdminUser(value: Octokit) {
   octokitAdmin = value;
 }
-export function getOctokitCollaborator(): Octokit {
+export function getCollaboratorUser(): Octokit {
   return octokitCollaborator;
 }
-export function setOctokitCollaborator(value: Octokit) {
+export function setCollaboratorUser(value: Octokit) {
   octokitCollaborator = value;
 }
 export function getAdminUsername(): string {
