@@ -159,7 +159,7 @@ afterAll(async () => {
   await server?.stop();
 }, testTimeout);
 
-describe("commmands test", () => {
+describe("commands test", () => {
   let issue: Issue;
 
   beforeAll(async () => {
