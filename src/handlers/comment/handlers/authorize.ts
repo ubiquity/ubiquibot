@@ -3,7 +3,7 @@ import { getBotContext, getLogger } from "../../../bindings";
 import { getUserPermission } from "../../../helpers";
 import { Payload } from "../../../types";
 import { ErrorDiff } from "../../../utils/helpers";
-import { bountyInfo } from "../../wildcard";
+import { taskInfo } from "../../wildcard";
 
 export const approveLabelChange = async () => {
   const context = getBotContext();
@@ -29,11 +29,11 @@ export const approveLabelChange = async () => {
     return ErrorDiff(`You are not an admin/billing_manager and do not have the required permissions to access this function.`);
   }
 
-  const issueDetailed = bountyInfo(issue);
+  const issueDetailed = taskInfo(issue);
 
   if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timelabel) {
-    logger.info(`Skipping... its not a bounty`);
-    return ErrorDiff(`No valid bounty label on this issue`);
+    logger.info(`Skipping... its not a task`);
+    return ErrorDiff(`No valid task label on this issue`);
   }
 
   // check for label altering here
