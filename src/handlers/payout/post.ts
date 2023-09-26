@@ -8,6 +8,7 @@ import Decimal from "decimal.js";
 import { bountyInfo } from "../wildcard";
 import { IncentivesCalculationResult } from "./action";
 import { BigNumber } from "ethers";
+import { GLOBAL_STRINGS } from "../../configs";
 
 export interface CreatorCommentResult {
   title: string;
@@ -38,6 +39,20 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   if (permitComments.length > 0) {
     logger.info(`incentivizeComments: skip to generate a permit url because it has been already posted`);
     return { error: `incentivizeComments: skip to generate a permit url because it has been already posted` };
+  }
+
+  for (const botComment of permitComments.filter((cmt) => cmt.user.type === UserType.Bot).reverse()) {
+    const botCommentBody = botComment.body;
+    if (botCommentBody.includes(GLOBAL_STRINGS.autopayComment)) {
+      const pattern = /\*\*(\w+)\*\*/;
+      const res = botCommentBody.match(pattern);
+      if (res) {
+        if (res[1] === "false") {
+          return { error: "autopay is disabled" };
+        }
+        break;
+      }
+    }
   }
 
   const assignees = issue?.assignees ?? [];
