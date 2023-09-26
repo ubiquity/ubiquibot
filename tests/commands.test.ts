@@ -16,7 +16,7 @@ import {
   checkLastComment,
   getLastComment,
 } from "./utils";
-import { WideRepoConfig } from "../src/types";
+import { RepositoryConfig } from "../src/types";
 
 const testTimeout = 6 * 60 * 60 * 1000; // 6 hours
 
@@ -29,7 +29,7 @@ const owner = process.env.TEST_ORGANIZATION || "staging";
 let adminUsername = "";
 let collaboratorUsername = "";
 
-const repoConfig: WideRepoConfig = {
+const repoConfig: RepositoryConfig = {
   evmNetworkId: 100,
   priceMultiplier: 1,
   issueCreatorMultiplier: 1,
@@ -42,7 +42,7 @@ const repoConfig: WideRepoConfig = {
     { name: "Priority: 5 (Emergency)" },
   ],
   defaultLabels: ["Time: <1 Hour", "Priority: 1 (Normal)"],
-  paymentPermitMaxPrice: 1000,
+  permitMaxPrice: 1000,
   commentIncentives: true,
   maxConcurrentAssigns: 5,
   promotionComment: "",
@@ -60,9 +60,9 @@ const repoConfig: WideRepoConfig = {
     { name: "payout", enabled: true },
   ],
   disableAnalytics: true,
-  enableAccessControl: {
-    label: true,
-    organization: true,
+  publicAccessControl: {
+    setLabel: true,
+    fundExternalClosedIssue: true,
   },
   incentives: {
     comment: {
@@ -81,7 +81,7 @@ const repoConfig: WideRepoConfig = {
   },
 };
 
-const orgConfig: WideRepoConfig = {
+const orgConfig: RepositoryConfig = {
   privateKeyEncrypted:
     "YU-tFJFczN3JPVoJu0pQKSbWoeiCFPjKiTXMoFnJxDDxUNX-BBXc6ZHkcQcHVjdOd6ZcEnU1o2jU3F-i05mGJPmhF2rhQYXkNlxu5U5fZMMcgxJ9INhAmktzRBUxWncg4L1HOalZIoQ7gm3nk1a84g",
 };

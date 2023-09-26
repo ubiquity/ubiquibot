@@ -1,5 +1,5 @@
 import { Octokit } from "octokit";
-import { WideRepoConfig } from "../src/types";
+import { RepositoryConfig } from "../src/types";
 import YAML from "yaml";
 import EventEmitter from "events";
 
@@ -76,7 +76,7 @@ export async function createAndAddLabel(octokit: Octokit, owner: string, repo: s
   }
 }
 
-export async function updateConfig(octokit: Octokit, owner: string, repo: string, path: string, config: WideRepoConfig | WideRepoConfig) {
+export async function updateConfig(octokit: Octokit, owner: string, repo: string, path: string, config: RepositoryConfig | RepositoryConfig) {
   let sha: string | undefined = undefined;
   try {
     const fileContent = await octokit.rest.repos.getContent({
