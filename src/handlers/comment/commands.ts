@@ -12,3 +12,5 @@ export enum IssueCommentCommands {
   ALLOW = "/allow",
   AUTOPAY = "/autopay",
 }
+
+// see more info at `src/handlers/comment/handlers/index.ts`
