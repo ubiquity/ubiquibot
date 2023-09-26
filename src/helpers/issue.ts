@@ -30,11 +30,11 @@ export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
 export const getIncentivizedUsers = async (issue_number: number) => {
   const comments = await getAllIssueComments(issue_number);
   const incentiveComments = comments.filter((comment) => comment.body.startsWith("/comment-incentives"));
-  let users: { [key: string]: boolean } = {};
+  const users: { [key: string]: boolean } = {};
   for (const incentiveComment of incentiveComments) {
     const parts = incentiveComment.body.split(" ");
     parts.shift();
-    var toggle: RegExpMatchArray | null = incentiveComment.body.match(/\b(true|false)\b/);
+    const toggle: RegExpMatchArray | null = incentiveComment.body.match(/\b(true|false)\b/);
 
     if (!toggle) {
       for (const part of parts) {
