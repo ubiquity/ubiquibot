@@ -234,10 +234,10 @@ export class GitHubLogger implements Logger {
     this.save(message, LogLevel.WARN, errorPayload);
     this.sendDataWithJwt(message, errorPayload)
       .then((response) => {
-        console.log("Log Notification Success:", response);
+        this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG, "");
       })
       .catch((error) => {
-        console.error("Log Notification Error:", error);
+        this.save(`Log Notification Error: ${error}`, LogLevel.DEBUG, "");
       });
   }
 
@@ -249,10 +249,10 @@ export class GitHubLogger implements Logger {
     this.save(message, LogLevel.ERROR, errorPayload);
     this.sendDataWithJwt(message, errorPayload)
       .then((response) => {
-        console.log("Log Notification Success:", response);
+        this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG, "");
       })
       .catch((error) => {
-        console.error("Log Notification Error:", error);
+        this.save(`Log Notification Error: ${error}`, LogLevel.DEBUG, "");
       });
   }
 
