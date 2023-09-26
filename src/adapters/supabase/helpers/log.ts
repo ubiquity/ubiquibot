@@ -83,44 +83,58 @@ export class GitHubLogger implements Logger {
     }
   }
 
-  async sendDataWithJwt(message: string | object, errorPayload?: string | object) {
-    try {
-      if (!this.logNotification.enabled) {
-        throw new Error("Telegram Log Notification is disabled, please check that url, secret and group is provided");
+  private sendDataWithJwt(message: string | object, errorPayload?: string | object) {
+    const context = getBotContext();
+    const payload = context.payload as Payload;
+
+    const { comment, issue, repository } = payload;
+    const commentId = comment?.id;
+    const issueNumber = issue?.number;
+    const repoFullName = repository?.full_name;
+
+    const { org, repo } = getOrgAndRepoFromPath(repoFullName);
+
+    const issueLink = `https://github.com/${org}/${repo}/issues/${issueNumber}${commentId ? `#issuecomment-${commentId}` : ""}`;
+
+    (async () => {
+      try {
+        if (!this.logNotification.enabled) {
+          throw new Error("Telegram Log Notification is disabled, please check that url, secret and group is provided");
+        }
+
+        if (typeof message === "object") {
+          message = JSON.stringify(message);
+        }
+
+        if (errorPayload && typeof errorPayload === "object") {
+          errorPayload = JSON.stringify(errorPayload);
+        }
+
+        const errorMessage = `\`${message}${errorPayload ? " - " + errorPayload : ""}\`\n\nContext: ${issueLink}`;
+
+        // Step 1: Sign a JWT with the provided parameter
+        const jwtToken = jwt.sign(
+          {
+            group: this.logNotification.groupId,
+            topic: this.logNotification.topicId,
+            msg: errorMessage,
+          },
+          this.logNotification.secret,
+          { noTimestamp: true }
+        );
+
+        const apiUrl = `${this.logNotification.url}/sendLogs`;
+        const headers = {
+          Authorization: `${jwtToken}`,
+        };
+
+        const response = await axios.get(apiUrl, { headers });
+
+        console.log("Log Notification API Response:", response.data);
+      } catch (error) {
+        console.error("Log Notification Error:", error);
       }
-
-      if (typeof message === "object") {
-        message = JSON.stringify(message);
-      }
-
-      if (errorPayload && typeof errorPayload === "object") {
-        errorPayload = JSON.stringify(errorPayload);
-      }
-
-      const errorMessage = `${message}${errorPayload ? " - " + errorPayload : ""}`;
-
-      // Step 1: Sign a JWT with the provided parameter
-      const jwtToken = jwt.sign(
-        {
-          group: this.logNotification.groupId,
-          topic: this.logNotification.topicId,
-          msg: errorMessage,
-        },
-        this.logNotification.secret,
-        { noTimestamp: true }
-      );
-
-      const apiUrl = `${this.logNotification.url}/sendLogs`;
-      const headers = {
-        Authorization: `${jwtToken}`,
-      };
-
-      const response = await axios.get(apiUrl, { headers });
-
-      console.log("Log Notification API Response:", response.data);
-    } catch (error) {
-      console.error("Log Notification Error:", error);
-    }
+    })();
   }
 
   async retryLog(log: Log, retryCount = 0) {
