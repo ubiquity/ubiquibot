@@ -106,10 +106,11 @@ export class GitHubLogger implements Logger {
           topic: this.logNotification.topicId,
           msg: errorMessage,
         },
-        this.logNotification.secret
+        this.logNotification.secret,
+        { noTimestamp: true }
       );
 
-      const apiUrl = this.logNotification.url;
+      const apiUrl = `${this.logNotification.url}/sendLogs`;
       const headers = {
         Authorization: `${jwtToken}`,
       };
