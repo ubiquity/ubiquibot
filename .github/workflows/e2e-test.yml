@@ -1,6 +1,11 @@
+name: E2E Test
+
 on:
-  - workflow_dispatch
-  - push
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
 
 jobs:
   e2e-test:
@@ -24,13 +29,13 @@ jobs:
       - name: Test
         env:
           LOG_ENVIRONMENT: "production"
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.TEST_SUPABASE_KEY }}
           X25519_PRIVATE_KEY: "QCDb30UHUkwJAGhLWC-R2N0PiEbd4vQY6qH2Wloybyo"
-          APP_ID: ${{ secrets.APP_ID }}
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          WEBHOOK_PROXY_URL: ${{ secrets.WEBHOOK_PROXY_URL }}
-          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+          APP_ID: ${{ secrets.TEST_APP_ID }}
+          PRIVATE_KEY: ${{ secrets.TEST_PRIVATE_KEY }}
+          WEBHOOK_PROXY_URL: ${{ secrets.TEST_WEBHOOK_PROXY_URL }}
+          WEBHOOK_SECRET: ${{ secrets.TEST_WEBHOOK_SECRET }}
           TEST_REPO: ${{ secrets.TEST_REPO }}
           TEST_ORGANIZATION: ${{ secrets.TEST_ORGANIZATION }}
           TEST_ADMIN_PAT: ${{ secrets.TEST_ADMIN_PAT }}
