@@ -16,3 +16,4 @@ supabase/temp
 bin
 .yarn
 yarn-error.log
+tsconfig.tsbuildinfo

@@ -1,7 +1,7 @@
 import { Octokit } from "octokit";
-import { RepositoryConfig } from "../src/types";
 import YAML from "yaml";
 import EventEmitter from "events";
+import { RepositoryConfig } from "../types";
 
 export const webhookEventEmitter = new EventEmitter();
 
@@ -76,7 +76,7 @@ export async function createAndAddLabel(octokit: Octokit, owner: string, repo: s
   }
 }
 
-export async function updateConfig(octokit: Octokit, owner: string, repo: string, path: string, config: RepositoryConfig | RepositoryConfig) {
+export async function updateConfig(octokit: Octokit, owner: string, repo: string, path: string, config: RepositoryConfig) {
   let sha: string | undefined = undefined;
   try {
     const fileContent = await octokit.rest.repos.getContent({

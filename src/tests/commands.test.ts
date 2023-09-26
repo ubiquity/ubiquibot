@@ -3,7 +3,7 @@ import { execSync } from "child_process";
 import "dotenv/config";
 import { Octokit } from "octokit";
 import { Server } from "probot";
-import { RepositoryConfig } from "../src/types";
+import { RepositoryConfig } from "../types";
 import { afterAllHandler } from "./after-all-handler";
 import { beforeAllHandler } from "./before-all-handler";
 import { testSuite } from "./test-suite";

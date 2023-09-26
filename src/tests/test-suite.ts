@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { Issue } from "../src/types";
+import { Issue } from "../types";
 import {
   GIT_COMMIT_HASH,
   owner,
