@@ -1,4 +1,5 @@
 import { describe } from "@jest/globals";
+import { execSync } from "child_process";
 import "dotenv/config";
 import { Octokit } from "octokit";
 import { Server } from "probot";
@@ -11,7 +12,9 @@ export const TEST_TIME_LABEL = "Time: <1 Hour";
 export const TEST_PRIORITY_LABEL = "Priority: 1 (Normal)";
 
 export const SIX_HOURS = 6 * 60 * 60 * 1000; // 6 hours
-export const DATE_NOW = new Date().toISOString();
+
+// return the current 7 character git commit hash using git rev-parse
+export const GIT_COMMIT_HASH = execSync("git rev-parse --short HEAD").toString().trim();
 
 export const owner = process.env.TEST_ORGANIZATION_NAME || "ubiquibot";
 export const repo = process.env.TEST_REPOSITORY_NAME || "staging";

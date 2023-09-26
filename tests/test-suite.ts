@@ -1,7 +1,7 @@
 import { expect, test } from "@jest/globals";
 import { Issue } from "../src/types";
 import {
-  DATE_NOW,
+  GIT_COMMIT_HASH,
   owner,
   repo,
   SIX_HOURS,
@@ -27,7 +27,7 @@ export function testSuite(): () => void {
       const res = await getOctokitAdmin().rest.issues.create({
         repo,
         owner,
-        title: `${DATE_NOW} - E2E TEST`,
+        title: `${GIT_COMMIT_HASH} - E2E TEST`,
       });
       issue = res.data as Issue;
 
