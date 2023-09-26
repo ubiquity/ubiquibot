@@ -8,6 +8,7 @@ import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
 import { runOnPush, validateConfigChange } from "./push";
 import { findDuplicateOne } from "./issue";
+import { watchLabelChange } from "./label";
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_OPENED]: {
@@ -68,6 +69,11 @@ export const processors: Record<string, Handler> = {
   [GithubEvent.PUSH_EVENT]: {
     pre: [nullHandler],
     action: [validateConfigChange, runOnPush],
+    post: [nullHandler],
+  },
+  [GithubEvent.LABEL_EDITED]: {
+    pre: [nullHandler],
+    action: [watchLabelChange],
     post: [nullHandler],
   },
 };

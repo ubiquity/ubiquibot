@@ -12,4 +12,5 @@ export enum IssueCommentCommands {
 
   ALLOW = "/allow",
   AUTOPAY = "/autopay",
+  AUTHORIZE = "/authorize",
 }
