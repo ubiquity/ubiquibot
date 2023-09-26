@@ -3,9 +3,9 @@ import "dotenv/config";
 import { Octokit } from "octokit";
 import { Server } from "probot";
 import { RepositoryConfig } from "../src/types";
-import { afterAllHandler } from "./afterAllHandler";
-import { beforeAllHandler } from "./beforeAllHandler";
-import { testSuite } from "./testSuite";
+import { afterAllHandler } from "./after-all-handler";
+import { beforeAllHandler } from "./before-all-handler";
+import { testSuite } from "./test-suite";
 
 export const TEST_TIME_LABEL = "Time: <1 Hour";
 export const TEST_PRIORITY_LABEL = "Priority: 1 (Normal)";
