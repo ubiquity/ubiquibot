@@ -352,7 +352,7 @@ export const handleIssueClosed = async (
     return { error: `Permit generation skipped since issue's task is higher than ${incentivesCalculation.permitMaxPrice}` };
   }
 
-  // COMMENTERS REWARD HANDLER
+  // COMMENTER REWARD HANDLER
   if (conversationRewards.reward && conversationRewards.reward.length > 0) {
     contributorComment = `#### ${conversationRewards.title} Rewards \n`;
 

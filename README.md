@@ -195,7 +195,7 @@ UbiquiBot is built using the [probot](https://probot.github.io/) framework so in
 
 <pre>
 &lt;src&gt;
-├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/adapters">adapters</a>: A set of interaces to interact with 3rd party libraries such as <a href="https://www.npmjs.com/package/telegraf">Telegraf</a>, <a href="https://www.npmjs.com/package/@supabase/supabase-js">supabase-js</a>.<br> It consists of a set of small functions bulit on top of a specific library.<br> Every adapter needs to be for calling a specific method of the library.
+├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/adapters">adapters</a>: A set of interaces to interact with 3rd party libraries such as <a href="https://www.npmjs.com/package/@supabase/supabase-js">supabase-js</a>.<br> It consists of a set of small functions built on top of a specific library.<br> Every adapter needs to be for calling a specific method of the library.
 |
 ├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/bindings">bindings</a>: A set of listeners to bind/process requests emitted by GitHub.<br> It also has a function to load a project configuration.
 |
@@ -231,3 +231,11 @@ select
 -- Cancel the cron job
 select cron.unschedule('logs-cleaner');
 ```
+
+
+## Tests
+
+- Make a new GitHub App
+- Make sure its "public" so you can install on a test org.
+   - hidden away under "Advanced Options" when creating the app: https://github.com/settings/apps/YOUR_APP/advanced
+- Make sure it has access to BOTH the test repo and the ubiquibot-config repo

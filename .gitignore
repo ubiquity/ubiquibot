@@ -15,3 +15,4 @@ supabase/temp
 .netlify
 bin
 .yarn
+yarn-error.log

@@ -1,0 +1,40 @@
+name: Run E2E Tests
+
+on:
+  - workflow_dispatch
+  - push
+
+jobs:
+  e2e-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.16.0"
+
+      - name: Install
+        run: yarn install
+
+      - name: Build
+        run: yarn build
+
+      - name: Test
+        env:
+          LOG_ENVIRONMENT: "production"
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          X25519_PRIVATE_KEY: "QCDb30UHUkwJAGhLWC-R2N0PiEbd4vQY6qH2Wloybyo"
+          APP_ID: ${{ secrets.APP_ID }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          WEBHOOK_PROXY_URL: ${{ secrets.WEBHOOK_PROXY_URL }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+          TEST_ORGANIZATION_NAME: ${{ secrets.TEST_ORGANIZATION_NAME }}
+          TEST_REPOSITORY_NAME: ${{ secrets.TEST_REPOSITORY_NAME }}
+          TEST_ADMIN_PAT: ${{ secrets.TEST_ADMIN_PAT }}
+          TEST_OUTSIDE_COLLABORATOR_PAT: ${{ secrets.TEST_OUTSIDE_COLLABORATOR_PAT }}
+        run: "yarn test:e2e"
