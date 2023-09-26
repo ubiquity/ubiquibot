@@ -10,6 +10,8 @@ import { approveLabelChange } from "./authorize";
 import { setAccess } from "./allow";
 import { ask } from "./ask";
 import { multiplier } from "./multiplier";
+import { commentIncentive } from "./comment-incentive";
+
 import { BigNumber, ethers } from "ethers";
 import { addPenalty } from "../../../adapters/supabase";
 import {
@@ -48,6 +50,7 @@ export * from "./multiplier";
 export * from "./query";
 export * from "./ask";
 export * from "./authorize";
+export * from "./comment-incentive";
 
 export interface RewardsResponse {
   error: string | null;
@@ -261,6 +264,12 @@ export const userCommands = (): UserCommands[] => {
       id: IssueCommentCommands.STOP,
       description: "Unassign the origin sender from the issue automatically.",
       handler: unassign,
+      callback: commandCallback,
+    },
+    {
+      id: IssueCommentCommands.COMMENTINCENTIVE,
+      description: "Enables or Disables comment incentives for a user",
+      handler: commentIncentive,
       callback: commandCallback,
     },
     {

@@ -27,6 +27,32 @@ export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   }
 };
 
+export const getIncentivizedUsers = async (issue_number: number) => {
+  const comments = await getAllIssueComments(issue_number);
+  const incentiveComments = comments.filter((comment) => comment.body.startsWith("/comment-incentives"));
+  let users: { [key: string]: boolean } = {};
+  for (const incentiveComment of incentiveComments) {
+    const parts = incentiveComment.body.split(" ");
+    parts.shift();
+    var toggle: RegExpMatchArray | null = incentiveComment.body.match(/\b(true|false)\b/);
+
+    if (!toggle) {
+      for (const part of parts) {
+        if (part.startsWith("@")) {
+          users[part.substring(1)] = false;
+        }
+      }
+    } else {
+      for (const part of parts) {
+        if (part.startsWith("@")) {
+          users[part.substring(1)] = toggle[0] === "true";
+        }
+      }
+    }
+  }
+  return users;
+};
+
 export const addLabelToIssue = async (labelName: string) => {
   const context = getBotContext();
   const logger = getLogger();

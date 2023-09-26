@@ -1,6 +1,6 @@
 import { getWalletAddress } from "../../adapters/supabase";
 import { getBotContext, getLogger } from "../../bindings";
-import { getAllIssueComments, getAllPullRequestReviews, getIssueDescription, parseComments } from "../../helpers";
+import { getAllIssueComments, getAllPullRequestReviews, getIncentivizedUsers, getIssueDescription, parseComments } from "../../helpers";
 import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
 import { Incentives, MarkdownItem, Payload, UserType } from "../../types";
 import { RewardsResponse, commentParser } from "../comment";
@@ -52,7 +52,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   const issueCommentsByUser: Record<string, { id: string; comments: string[] }> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
-    if (user.type == UserType.Bot || user.login == assignee.login) continue;
+    if (user.type == UserType.Bot) continue;
     const commands = commentParser(issueComment.body);
     if (commands.length > 0) {
       logger.info(`Skipping to parse the comment because it contains commands. comment: ${JSON.stringify(issueComment)}`);
@@ -76,8 +76,10 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
 
   // array of awaiting permits to generate
   const reward: { account: string; priceInEth: Decimal; userId: string; user: string; penaltyAmount: BigNumber }[] = [];
-
+  const users = await getIncentivizedUsers(calculateIncentives.issue.number);
+  if (!users) return { error: "Error: Could not find any incentivized users" };
   for (const user of Object.keys(issueCommentsByUser)) {
+    if (!users[user] === true) continue;
     const commentsByUser = issueCommentsByUser[user];
     const commentsByNode = await parseComments(commentsByUser.comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, calculateIncentives.incentives);
