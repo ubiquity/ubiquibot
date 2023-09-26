@@ -1,4 +1,5 @@
 module.exports = {
+  // "cache": false,
   "rootDir": "tests/",
   "maxConcurrency": 1,
   "preset": "ts-jest",
