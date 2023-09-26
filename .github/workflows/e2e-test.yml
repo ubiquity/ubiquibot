@@ -31,8 +31,8 @@ jobs:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           WEBHOOK_PROXY_URL: ${{ secrets.WEBHOOK_PROXY_URL }}
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
-          TEST_REPO: ${{ secrets.TEST_REPO }}
-          TEST_ORGANIZATION: ${{ secrets.TEST_ORGANIZATION }}
+          TEST_ORGANIZATION_NAME: ${{ secrets.TEST_ORGANIZATION_NAME }}
+          TEST_REPOSITORY_NAME: ${{ secrets.TEST_REPOSITORY_NAME }}
           TEST_ADMIN_PAT: ${{ secrets.TEST_ADMIN_PAT }}
           TEST_OUTSIDE_COLLABORATOR_PAT: ${{ secrets.TEST_OUTSIDE_COLLABORATOR_PAT }}
         run: "yarn test:e2e"
