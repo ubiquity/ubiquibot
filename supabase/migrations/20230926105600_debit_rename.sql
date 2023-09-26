@@ -1,0 +1,1 @@
+ALTER TABLE Debits RENAME TO debits;
