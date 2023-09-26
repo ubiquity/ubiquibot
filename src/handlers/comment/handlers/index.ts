@@ -6,6 +6,7 @@ import { listAvailableCommands } from "./help";
 // import { payout } from "./payout";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
+import { approveLabelChange } from "./authorize";
 import { setAccess } from "./allow";
 import { ask } from "./ask";
 import { multiplier } from "./multiplier";
@@ -46,6 +47,7 @@ export * from "./help";
 export * from "./multiplier";
 export * from "./query";
 export * from "./ask";
+export * from "./authorize";
 
 export interface RewardsResponse {
   error: string | null;
@@ -300,6 +302,12 @@ export const userCommands = (): UserCommands[] => {
       id: IssueCommentCommands.ALLOW,
       description: `Set access control. Superuser only.`,
       handler: setAccess,
+      callback: commandCallback,
+    },
+    {
+      id: IssueCommentCommands.AUTHORIZE,
+      description: `Approve a label change. Superuser only.`,
+      handler: approveLabelChange,
       callback: commandCallback,
     },
     {
