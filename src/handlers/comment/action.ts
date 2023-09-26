@@ -50,7 +50,7 @@ export const handleComment = async (): Promise<void> => {
         const response = await handler(body);
         const callbackComment = response ?? successComment ?? "";
         if (callbackComment) await callback(issue.number, callbackComment, payload.action, payload.comment);
-      } catch (err: unknown) {
+      } catch (err: Error | unknown) {
         // Use failureComment for failed command if it is available
         if (failureComment) {
           await callback(issue.number, failureComment, payload.action, payload.comment);
