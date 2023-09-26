@@ -100,7 +100,7 @@ export async function updateConfig(octokit: Octokit, owner: string, repo: string
     owner,
     repo,
     path,
-    message: "Updated config for testing",
+    message: "test(e2e): automated update config for test",
     content: Buffer.from(YAML.stringify(config)).toString("base64"),
     sha,
   });
