@@ -24,7 +24,7 @@ default_events:
   # - gollum
   - issue_comment
   - issues
-  # - label
+  - label
   # - milestone
   # - member
   # - membership
