@@ -51,7 +51,7 @@ type TxData = {
  * @param spender The recipient address we're going to send tokens
  * @param amountInTokens The token amount
  *
- * @returns Permit2 url including base64 encocded data
+ * @returns Permit2 url including base64 encoded data
  */
 export const generatePermit2Signature = async (
   spender: string,
