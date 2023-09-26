@@ -23,7 +23,7 @@ const TEST_TIME_LABEL = "Time: <1 Hour";
 const TEST_PRIORITY_LABEL = "Priority: 1 (Normal)";
 
 const SIX_HOURS = 6 * 60 * 60 * 1000; // 6 hours
-// const DATE_NOW = new Date().toISOString();
+const DATE_NOW = new Date().toISOString();
 let server: Server;
 let octokitAdmin: Octokit;
 let octokitCollaborator: Octokit;
@@ -119,8 +119,7 @@ describe("commands test", () => {
     const res = await octokitAdmin.rest.issues.create({
       repo,
       owner,
-      title: "E2E TEST",
-      // title: `${DATE_NOW} - E2E TEST`,
+      title: `${DATE_NOW} - E2E TEST`,
     });
     issue = res.data as Issue;
 
