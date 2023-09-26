@@ -8,7 +8,6 @@ type Node = {
 };
 
 const traverse = (result: Record<string, string[]>, node: Node, itemsToExclude: string[]): Record<string, string[]> => {
-  result[node.nodeName].push(node.nodeName);
 
   if (!result[node.nodeName]) {
     result[node.nodeName] = [];
