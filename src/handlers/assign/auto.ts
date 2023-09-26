@@ -52,7 +52,7 @@ export const checkPullRequests = async (context: BotContext) => {
 
     const assignedUsernames = issue.assignees.map((assignee) => assignee.login);
     if (!assignedUsernames.includes(opener)) {
-      await addAssignees(+linkedIssueNumber, [opener]);
+      await addAssignees(context, +linkedIssueNumber, [opener]);
       logger.debug(`Assigned pull request #${pull.number} opener to issue ${linkedIssueNumber}.`);
     }
   }

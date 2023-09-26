@@ -57,7 +57,7 @@ export const bindEvents = async (context: BotContext): Promise<void> => {
   if (botConfigError) {
     logger.error(botConfigError.toString());
     if (eventName === GithubEvent.PUSH_EVENT) {
-      await validateConfigChange();
+      await validateConfigChange(context);
     }
     return;
   }
@@ -95,7 +95,7 @@ export const bindEvents = async (context: BotContext): Promise<void> => {
     }
 
     // Check if we should skip the event
-    const { skip, reason } = shouldSkip();
+    const { skip, reason } = shouldSkip(context);
     if (skip) {
       logger.info(`Skipping the event. reason: ${reason}`);
       return;

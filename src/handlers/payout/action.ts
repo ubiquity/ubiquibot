@@ -87,9 +87,9 @@ export const incentivesCalculation = async (context: BotContext): Promise<Incent
     }
   }
 
-  const comments = await getAllIssueComments(issue.number);
+  const comments = await getAllIssueComments(context, issue.number);
 
-  const wasReopened = await wasIssueReopened(issue.number);
+  const wasReopened = await wasIssueReopened(context, issue.number);
   const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
   const permitCommentIdx = comments.findIndex((e) => e.user.type === UserType.Bot && e.body.match(claimUrlRegex));
 
@@ -121,7 +121,7 @@ export const incentivesCalculation = async (context: BotContext): Promise<Incent
     const tokenAddress = claim.permit.permitted.token;
 
     // extract assignee
-    const events = await getAllIssueAssignEvents(issue.number);
+    const events = await getAllIssueAssignEvents(context, issue.number);
     if (events.length === 0) {
       logger.error(`No assignment found`);
       throw new Error("Permit generation skipped because no assignment found");
@@ -157,7 +157,7 @@ export const incentivesCalculation = async (context: BotContext): Promise<Incent
   logger.info(`Checking if the issue is a parent issue.`);
   if (issue.body && isParentIssue(issue.body)) {
     logger.error("Permit generation disabled because this is a collection of issues.");
-    await clearAllPriceLabelsOnIssue();
+    await clearAllPriceLabelsOnIssue(context);
     throw new Error("Permit generation disabled because this is a collection of issues.");
   }
 
@@ -182,7 +182,7 @@ export const incentivesCalculation = async (context: BotContext): Promise<Incent
     throw new Error(`Permit generation disabled because paymentPermitMaxPrice is 0.`);
   }
 
-  const issueDetailed = bountyInfo(issue);
+  const issueDetailed = bountyInfo(context, issue);
   if (!issueDetailed.isBounty) {
     logger.info(`Skipping... its not a bounty`);
     throw new Error(`Permit generation disabled because this issue didn't qualify as bounty.`);
@@ -383,6 +383,7 @@ export const handleIssueClosed = async (
   // Generate permit for user if its not the same id as assignee
   if (creatorReward && creatorReward.reward && creatorReward.reward[0].account !== "0x" && creatorReward.userId !== incentivesCalculation.assignee.node_id) {
     const { payoutUrl } = await generatePermit2Signature(
+      context,
       creatorReward.reward[0].account,
       creatorReward.reward[0].priceInEth,
       incentivesCalculation.issue.node_id,
@@ -411,6 +412,7 @@ export const handleIssueClosed = async (
   // ASSIGNEE REWARD HANDLER
   if (assigneeReward && assigneeReward.reward && assigneeReward.reward[0].account !== "0x") {
     const { txData, payoutUrl } = await generatePermit2Signature(
+      context, 
       assigneeReward.reward[0].account,
       assigneeReward.reward[0].priceInEth,
       incentivesCalculation.issue.node_id,
@@ -442,7 +444,7 @@ export const handleIssueClosed = async (
       );
     }
 
-    await savePermitToDB(incentivesCalculation.assignee.id, txData);
+    await savePermitToDB(context, incentivesCalculation.assignee.id, txData);
   }
 
   // MERGE ALL REWARDS
@@ -460,7 +462,7 @@ export const handleIssueClosed = async (
 
   // CREATE PERMIT URL FOR EACH USER
   for (const reward of rewards) {
-    const { payoutUrl } = await generatePermit2Signature(reward.account, reward.priceInEth, reward.issueId, reward.userId);
+    const { payoutUrl } = await generatePermit2Signature(context, reward.account, reward.priceInEth, reward.issueId, reward.userId);
 
     if (!reward.user) {
       logger.info(`Skipping to generate a permit url for missing user. fallback: ${reward.user}`);
@@ -498,14 +500,14 @@ export const handleIssueClosed = async (
     logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(pullRequestReviewersReward.fallbackReward)}`);
   }
 
-  if (commentersComment && !isEmpty(commentersReward)) await addCommentToIssue(commentersComment, issueNumber);
-  if (creatorComment) await addCommentToIssue(creatorComment, issueNumber);
-  if (pullRequestReviewerComment && !isEmpty(prReviewersReward)) await addCommentToIssue(pullRequestReviewerComment, issueNumber);
-  if (mergedComment) await addCommentToIssue(mergedComment, issueNumber);
-  if (assigneeComment) await addCommentToIssue(assigneeComment + comments.promotionComment, issueNumber);
+  if (commentersComment && !isEmpty(commentersReward)) await addCommentToIssue(context, commentersComment, issueNumber);
+  if (creatorComment) await addCommentToIssue(context, creatorComment, issueNumber);
+  if (pullRequestReviewerComment && !isEmpty(prReviewersReward)) await addCommentToIssue(context, pullRequestReviewerComment, issueNumber);
+  if (mergedComment) await addCommentToIssue(context, mergedComment, issueNumber);
+  if (assigneeComment) await addCommentToIssue(context, assigneeComment + comments.promotionComment, issueNumber);
 
-  await deleteLabel(incentivesCalculation.issueDetailed.priceLabel);
-  await addLabelToIssue("Permitted");
+  await deleteLabel(context, incentivesCalculation.issueDetailed.priceLabel);
+  await addLabelToIssue(context, "Permitted");
 
   return { error: "" };
 };

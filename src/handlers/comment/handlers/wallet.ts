@@ -44,7 +44,7 @@ export const registerWallet = async (context: BotContext, body: string) => {
 
   if (!address && ensName) {
     logger.info(`Trying to resolve address from Ens name: ${ensName}`);
-    address = await resolveAddress(ensName);
+    address = await resolveAddress(context, ensName);
     if (!address) {
       logger.info(`Resolving address from Ens name failed, EnsName: ${ensName}`);
       return `Resolving address from Ens name failed, Try again`;

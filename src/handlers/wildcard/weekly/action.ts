@@ -6,10 +6,9 @@ import path from "path";
 import axios from "axios";
 import Jimp from "jimp";
 import nodeHtmlToImage from "node-html-to-image";
-import { getBotConfig, getBotContext } from "../../../bindings";
 import { telegramPhotoNotifier } from "../../../adapters";
 import { Context } from "probot";
-import { Payload } from "../../../types";
+import { BotContext, Payload } from "../../../types";
 import { fetchImage } from "../../../utils/web-assets";
 import { weeklyConfig } from "../../../configs/weekly";
 import { ProximaNovaRegularBase64 } from "../../../assets/fonts/proxima-nova-regular-b64";
@@ -340,8 +339,7 @@ const processTelegram = async (caption: string) => {
   });
 };
 
-export const run = async () => {
-  const context = getBotContext();
+export const run = async (context: BotContext) => {
   const payload = context.payload as Payload;
   const repository = payload.repository.full_name;
   const eventsList = await fetchEvents(context);
@@ -350,7 +348,7 @@ export const run = async () => {
   await htmlImage(summaryInfo);
   await compositeImage();
 
-  const { telegram } = getBotConfig();
+  const { telegram } = context.botConfig;
   if (telegram.token) {
     await processTelegram(dataPadded);
   } else {

@@ -23,7 +23,7 @@ export const validatePriceLabels = async (context: BotContext): Promise<void> =>
   const aiLabels: string[] = [];
   for (const timeLabel of config.price.timeLabels) {
     for (const priorityLabel of config.price.priorityLabels) {
-      const targetPrice = calculateBountyPrice(calculateWeight(timeLabel), calculateWeight(priorityLabel), config.price.baseMultiplier);
+      const targetPrice = calculateBountyPrice(context, calculateWeight(timeLabel), calculateWeight(priorityLabel), config.price.baseMultiplier);
       const targetPriceLabel = `Price: ${targetPrice} USD`;
       aiLabels.push(targetPriceLabel);
     }
@@ -33,7 +33,7 @@ export const validatePriceLabels = async (context: BotContext): Promise<void> =>
   logger.debug(`Got needed labels for setting up price, neededLabels: ${neededLabels.toString()}`);
 
   // List all the labels for a repository
-  const repoLabels = await listLabelsForRepo();
+  const repoLabels = await listLabelsForRepo(context);
 
   // Get the missing labels
   const missingLabels = neededLabels.filter((label) => !repoLabels.map((i) => i.name).includes(label));
@@ -41,7 +41,7 @@ export const validatePriceLabels = async (context: BotContext): Promise<void> =>
   // Create missing labels
   if (missingLabels.length > 0) {
     logger.info(`Creating missing labels: ${missingLabels}`);
-    await Promise.all(missingLabels.map((label) => createLabel(label)));
+    await Promise.all(missingLabels.map((label) => createLabel(context, label)));
     logger.info(`Creating missing labels done`);
   }
 };

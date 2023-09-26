@@ -30,6 +30,7 @@ export const findDuplicateOne = async (context: BotContext) => {
             const similarity = await measureSimilarity(issue, result as Issue);
             if (similarity > parseInt(process.env.SIMILARITY_THRESHOLD || "80")) {
               await upsertCommentToIssue(
+                context,
                 issue.number,
                 `Similar issue (${result.title}) found at ${result.html_url}.\nSimilarity is about ${similarity}%`,
                 "created"

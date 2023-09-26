@@ -1,5 +1,5 @@
-import { getBotConfig, getBotContext, getLogger } from "../bindings";
-import { Payload, StreamlinedComment, UserType } from "../types";
+import { getLogger } from "../bindings";
+import { BotContext, Payload, StreamlinedComment, UserType } from "../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../helpers";
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
@@ -62,12 +62,12 @@ Example:[
  * @param linkedIssueStreamlined an array of comments in the form of { login: string, body: string }
  */
 export const decideContextGPT = async (
+  context: BotContext,
   chatHistory: CreateChatCompletionRequestMessage[],
   streamlined: StreamlinedComment[],
   linkedPRStreamlined: StreamlinedComment[],
   linkedIssueStreamlined: StreamlinedComment[]
 ) => {
-  const context = getBotContext();
   const logger = getLogger();
 
   const payload = context.payload as Payload;
@@ -78,9 +78,9 @@ export const decideContextGPT = async (
   }
 
   // standard comments
-  const comments = await getAllIssueComments(issue.number);
+  const comments = await getAllIssueComments(context, issue.number);
   // raw so we can grab the <!--- { 'UbiquityAI': 'answer' } ---> tag
-  const commentsRaw = await getAllIssueComments(issue.number, "raw");
+  const commentsRaw = await getAllIssueComments(context, issue.number, "raw");
 
   if (!comments) {
     logger.info(`Error getting issue comments`);
@@ -104,7 +104,7 @@ export const decideContextGPT = async (
   });
 
   // returns the conversational context from all linked issues and prs
-  const links = await getAllLinkedIssuesAndPullsInBody(issue.number);
+  const links = await getAllLinkedIssuesAndPullsInBody(context, issue.number);
 
   if (typeof links === "string") {
     logger.info(`Error getting linked issues or prs: ${links}`);
@@ -133,7 +133,7 @@ export const decideContextGPT = async (
   );
 
   // we'll use the first response to determine the context of future calls
-  const res = await askGPT("", chatHistory);
+  const res = await askGPT(context, "", chatHistory);
 
   return res;
 };
@@ -143,9 +143,9 @@ export const decideContextGPT = async (
  * @param question the question to ask
  * @param chatHistory the conversational context to provide to GPT
  */
-export const askGPT = async (question: string, chatHistory: CreateChatCompletionRequestMessage[]) => {
+export const askGPT = async (context: BotContext,question: string, chatHistory: CreateChatCompletionRequestMessage[]) => {
   const logger = getLogger();
-  const config = getBotConfig();
+  const config = context.botConfig;
 
   if (!config.ask.apiKey) {
     logger.info(`No OpenAI API Key provided`);

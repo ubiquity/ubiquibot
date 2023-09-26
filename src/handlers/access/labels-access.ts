@@ -33,12 +33,12 @@ export const handleLabelsAccess = async (context: BotContext) => {
 
     if (payload.action === "labeled") {
       // remove the label
-      await removeLabel(labelName);
+      await removeLabel(context, labelName);
     } else if (payload.action === "unlabeled") {
       // add the label
-      await addLabelToIssue(labelName);
+      await addLabelToIssue(context, labelName);
     }
-    await addCommentToIssue(`@${sender}, You are not allowed to ${eventName} ${labelName}`, payload.issue.number);
+    await addCommentToIssue(context, `@${sender}, You are not allowed to ${eventName} ${labelName}`, payload.issue.number);
     logger.info(`@${sender} is not allowed to ${eventName} ${labelName}`);
     return false;
   }

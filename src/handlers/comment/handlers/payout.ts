@@ -34,7 +34,7 @@ export const payout = async (context: BotContext, body: string) => {
     return;
   }
 
-  const IssueComments = await getAllIssueComments(issue.number);
+  const IssueComments = await getAllIssueComments(context, issue.number);
   if (IssueComments.length === 0) {
     return `Permit generation failed due to internal GitHub Error`;
   }
@@ -48,10 +48,10 @@ export const payout = async (context: BotContext, body: string) => {
   // assign function incentivesCalculation to a variable
   const calculateIncentives = await incentivesCalculation(context);
 
-  const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
+  const creatorReward = await calculateIssueCreatorReward(context, calculateIncentives);
   const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
-  const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
-  const pullRequestReviewersReward = await calculatePullRequestReviewsReward(calculateIncentives);
+  const conversationRewards = await calculateIssueConversationReward(context, calculateIncentives);
+  const pullRequestReviewersReward = await calculatePullRequestReviewsReward(context, calculateIncentives);
 
   return await handleIssueClosed(context, creatorReward, assigneeReward, conversationRewards, pullRequestReviewersReward, calculateIncentives);
 };

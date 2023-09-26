@@ -17,8 +17,8 @@ export const pricingLabelLogic = async (context: BotContext): Promise<void> => {
     logger.error("Identified as parent issue. Disabling price label.");
     const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));
     if (issuePrices.length) {
-      await addCommentToIssue(GLOBAL_STRINGS.skipPriceLabelGenerationComment, payload.issue.number);
-      await clearAllPriceLabelsOnIssue();
+      await addCommentToIssue(context, GLOBAL_STRINGS.skipPriceLabelGenerationComment, payload.issue.number);
+      await clearAllPriceLabelsOnIssue(context);
     }
     return;
   }
@@ -41,18 +41,18 @@ export const pricingLabelLogic = async (context: BotContext): Promise<void> => {
       logger.info(`Skipping... already exists`);
     } else {
       logger.info(`Adding price label to issue`);
-      await clearAllPriceLabelsOnIssue();
+      await clearAllPriceLabelsOnIssue(context);
 
-      const exist = await getLabel(targetPriceLabel);
+      const exist = await getLabel(context, targetPriceLabel);
 
       if (assistivePricing && !exist) {
         logger.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
-        await createLabel(targetPriceLabel, "price");
+        await createLabel(context, targetPriceLabel, "price");
       }
-      await addLabelToIssue(targetPriceLabel);
+      await addLabelToIssue(context, targetPriceLabel);
     }
   } else {
-    await clearAllPriceLabelsOnIssue();
+    await clearAllPriceLabelsOnIssue(context);
     logger.info(`Skipping action...`);
   }
 };

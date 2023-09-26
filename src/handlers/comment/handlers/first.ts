@@ -41,7 +41,7 @@ export const verifyFirstCheck = async (context: BotContext): Promise<void> => {
         if (footer) {
           msg += `${footer}`;
         }
-        await upsertCommentToIssue(payload.issue.number, msg, payload.action, payload.comment);
+        await upsertCommentToIssue(context, payload.issue.number, msg, payload.action, payload.comment);
       }
     }
   } catch (error: unknown) {

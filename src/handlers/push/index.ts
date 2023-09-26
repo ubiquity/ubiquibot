@@ -73,6 +73,7 @@ export const validateConfigChange = async (context: BotContext) => {
     }
 
     const configFileContent = await getFileContent(
+      context,
       payload.repository.owner.login,
       payload.repository.name,
       payload.ref.split("refs/heads/")[1],
@@ -85,7 +86,7 @@ export const validateConfigChange = async (context: BotContext) => {
       const config = parseYAML(decodedConfig);
       const { valid, error } = validate(WideConfigSchema, config);
       if (!valid) {
-        await createCommitComment(`@${payload.sender.login} Config validation failed! ${error}`, commitSha, BASE_RATE_FILE);
+        await createCommitComment(context, `@${payload.sender.login} Config validation failed! ${error}`, commitSha, BASE_RATE_FILE);
       }
     }
   }

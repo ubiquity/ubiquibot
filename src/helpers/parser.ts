@@ -1,7 +1,8 @@
 import axios from "axios";
 import { HTMLElement, parse } from "node-html-parser";
 import { getPullByNumber } from "./issue";
-import { getBotContext, getLogger } from "../bindings";
+import { getLogger } from "../bindings";
+import { BotContext } from "../types";
 
 interface GitParser {
   owner: string;
@@ -75,8 +76,7 @@ export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser
   }
 };
 
-export const getLatestPullRequest = async (prs: LinkedPR[]) => {
-  const context = getBotContext();
+export const getLatestPullRequest = async (context: BotContext,prs: LinkedPR[]) => {
   let linkedPullRequest = null;
   for (const _pr of prs) {
     if (Number.isNaN(_pr.prNumber)) return null;

@@ -63,7 +63,7 @@ export const commentWithAssignMessage = async (context: BotContext): Promise<voi
   const commit_msg = `${flattened_assignees} ${deadLinePrefix} ${endDate.toUTCString().replace("GMT", "UTC")}`;
   logger.debug(`Creating an issue comment, commit_msg: ${commit_msg}`);
 
-  await addCommentToIssue(commit_msg, payload.issue?.number);
+  await addCommentToIssue(context, commit_msg, payload.issue?.number);
 };
 
 export const closePullRequestForAnIssue = async (context: BotContext): Promise<void> => {
@@ -82,8 +82,8 @@ export const closePullRequestForAnIssue = async (context: BotContext): Promise<v
   logger.info(`Opened prs for this issue: ${JSON.stringify(prs)}`);
   let comment = `These linked pull requests are closed: `;
   for (let i = 0; i < prs.length; i++) {
-    await closePullRequest(prs[i].prNumber);
+    await closePullRequest(context, prs[i].prNumber);
     comment += ` <a href="${prs[i].prHref}">#${prs[i].prNumber}</a> `;
   }
-  await addCommentToIssue(comment, payload.issue.number);
+  await addCommentToIssue(context, comment, payload.issue.number);
 };

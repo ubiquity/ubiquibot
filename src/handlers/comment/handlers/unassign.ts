@@ -30,6 +30,7 @@ export const unassign = async (context: BotContext, body: string) => {
   if (shouldUnassign) {
     await closePullRequestForAnIssue(context);
     await removeAssignees(
+      context,
       issue_number,
       assignees.map((i) => i.login)
     );

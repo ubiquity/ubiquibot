@@ -1,7 +1,7 @@
 import { getMaxIssueNumber, upsertIssue, upsertUser } from "../../adapters/supabase";
-import { getBotConfig, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
 import { listIssuesForRepo, getUser, calculateWeight } from "../../helpers";
-import { Issue, IssueType, User, UserProfile } from "../../types";
+import { BotContext, Issue, IssueType, User, UserProfile } from "../../types";
 import { getTargetPriceLabel } from "../shared";
 
 /**
@@ -9,7 +9,7 @@ import { getTargetPriceLabel } from "../shared";
  * @param issue - The issue object
  * @returns If bounty - true, If issue - false
  */
-export const bountyInfo = (
+export const bountyInfo = (context: BotContext,
   issue: Issue
 ): {
   isBounty: boolean;
@@ -17,7 +17,7 @@ export const bountyInfo = (
   priorityLabel: string | undefined;
   priceLabel: string | undefined;
 } => {
-  const config = getBotConfig();
+  const config = context.botConfig;
   const labels = issue.labels;
   const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
   const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
@@ -27,7 +27,7 @@ export const bountyInfo = (
   const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
   const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
 
-  const priceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
+  const priceLabel = getTargetPriceLabel(context, minTimeLabel, minPriorityLabel);
 
   return {
     isBounty,
@@ -40,11 +40,11 @@ export const bountyInfo = (
 /**
  * Collects all the analytics information by scanning the issues opened | closed
  */
-export const collectAnalytics = async (): Promise<void> => {
+export const collectAnalytics = async (context: BotContext): Promise<void> => {
   const logger = getLogger();
   const {
     mode: { disableAnalytics },
-  } = getBotConfig();
+  } = context.botConfig;
   if (disableAnalytics) {
     logger.info(`Skipping to collect analytics, reason: mode=${disableAnalytics}`);
     return;
@@ -56,12 +56,12 @@ export const collectAnalytics = async (): Promise<void> => {
   const perPage = 30;
   let curPage = 1;
   while (!fetchDone) {
-    const issues = await listIssuesForRepo(IssueType.ALL, perPage, curPage);
+    const issues = await listIssuesForRepo(context, IssueType.ALL, perPage, curPage);
 
     // need to skip checking the closed issues already stored in the db and filter them by doing a sanitation checks.
     // sanitation checks would be basically checking labels of the issue
     // whether the issue has both `priority` label and `timeline` label
-    const bounties = issues.filter((issue) => bountyInfo(issue as Issue).isBounty);
+    const bounties = issues.filter((issue) => bountyInfo(context, issue as Issue).isBounty);
 
     // collect assignees from both type of issues (opened/closed)
     const assignees = bounties.filter((bounty) => bounty.assignee).map((bounty) => bounty.assignee as User);
@@ -90,7 +90,7 @@ export const collectAnalytics = async (): Promise<void> => {
     logger.info(`Upserting bounties: ${bountiesToUpsert.map((i) => i.title).toString()}`);
     await Promise.all(
       bountiesToUpsert.map((i) => {
-        const additions = bountyInfo(i as Issue);
+        const additions = bountyInfo(context, i as Issue);
         if (additions.timelabel && additions.priorityLabel && additions.priceLabel)
           return upsertIssue(i as Issue, {
             labels: {

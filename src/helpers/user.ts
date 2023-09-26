@@ -1,13 +1,12 @@
-import { getBotContext, getLogger } from "../bindings";
-import { User } from "../types";
+import { getLogger } from "../bindings";
+import { BotContext, User } from "../types";
 
 /**
  * @dev Gets the publicly available information about `username`
  *
  * @param username The username you're getting information for
  */
-export const getUser = async (username: string): Promise<User | undefined> => {
-  const context = getBotContext();
+export const getUser = async (context: BotContext, username: string): Promise<User | undefined> => {
   const logger = getLogger();
 
   try {
@@ -33,8 +32,7 @@ export const getUser = async (username: string): Promise<User | undefined> => {
  *
  * @returns The role name of a user in the organization. "admin" || "member" || "billing_manager"
  */
-export const getOrgMembershipOfUser = async (org: string, username: string): Promise<string | undefined> => {
-  const context = getBotContext();
+export const getOrgMembershipOfUser = async (context: BotContext,org: string, username: string): Promise<string | undefined> => {
   const logger = getLogger();
   let membership: string | undefined = undefined;
 
