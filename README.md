@@ -26,9 +26,9 @@ yarn start:watch
 - `OPENAI_API_HOST`: (optional) Set OpenAI host url (default: https://api.openai.com).
 - `OPENAI_API_KEY`: Set OpenAI key.
 - `CHATGPT_USER_PROMPT_FOR_IMPORTANT_WORDS`: (optional) Set a custom user prompt for finding important words
-(default: "I need your help to find important words (e.g. unique adjectives) from github issue below and I want to parse them easily so please separate them using #(No other contexts needed). Please separate the words by # so I can parse them easily. Please answer simply as I only need the important words. Here is the issue content.\n").
+  (default: "I need your help to find important words (e.g. unique adjectives) from github issue below and I want to parse them easily so please separate them using #(No other contexts needed). Please separate the words by # so I can parse them easily. Please answer simply as I only need the important words. Here is the issue content.\n").
 - `CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY`: (optional) Set a custom user prompt for measuring similarity
-(default: 'I have two github issues and I need to measure the possibility of the 2 issues are the same content (No other contents needed and give me only the number in %).\n Give me in number format and add % after the number.\nDo not tell other things since I only need the number (e.g. 85%). Here are two issues:\n 1. "%first%"\n2. "%second%"').
+  (default: 'I have two github issues and I need to measure the possibility of the 2 issues are the same content (No other contents needed and give me only the number in %).\n Give me in number format and add % after the number.\nDo not tell other things since I only need the number (e.g. 85%). Here are two issues:\n 1. "%first%"\n2. "%second%"').
 - `SIMILARITY_THRESHOLD`: (optional) Set similarity threshold (default: 80).
 - `MEASURE_SIMILARITY_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for measuring similarity (default: 0).
 - `IMPORTANT_WORDS_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for finding important words (default: 0).
@@ -38,11 +38,6 @@ If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically ge
 
 **Note:** When setting up the project, please do not rename the `.env.example` file to `.env` as it will delete the environment example from the repository.
 Instead, it is recommended to make a copy of the `.env.example` file and replace the values with the appropriate ones.
-
-## Overview
-
-- This bot is designed to exist as a GitHub Action.
-- The code must be compiled using `@vercel/ncc` because all the dependencies (e.g. `node_modules`) must be included and committed on the repository for the GitHub Actions runner to use.
 
 ## How to use
 
@@ -54,7 +49,7 @@ To test the bot, you can:
 
 1. Create a new issue
 2. Add a time label, ex: `Time: <1 Day`
-3. Add a priority label, ex: `Priority: 0 (Normal)`
+3. Add a priority label, ex: `Priority: 1 (Normal)`
 4. At this point the bot should add a price label.
 
 ## Configuration
@@ -113,30 +108,20 @@ To test the bot, you can:
 SUPABASE_URL="XXX"
 SUPABASE_KEY="XXX"
 
-```
-
-2. Create a new organization at [Memzo](https://app.mezmo.com/). Add `LOGDNA_INGESTION_KEY` to the `.env` file:
-
-```
-
-LOGDNA_INGESTION_KEY ="XXX"
-
-```
-
-3. Add `FOLLOW_UP_TIME` and `DISQUALIFY_TIME` to the `.env` file if you don't want to use default ones.
+2. Add `FOLLOW_UP_TIME` and `DISQUALIFY_TIME` to the `.env` file if you don't want to use default ones.
 
 ```
 
 FOLLOW_UP_TIME="4 days" // 4 days
 DISQUALIFY_TIME="7 days" // 7 days
 
-```
+````
 
-4. `yarn install`
-5. Open 2 terminal instances:
+3. `yarn install`
+4. Open 2 terminal instances:
    - in one instance run `yarn build --watch` (compiles the Typescript code)
    - in another instance run `yarn start:watch` (runs the bot locally)
-6. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
+5. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
 
 At this point the `.env` files auto-fill the empty fields (`PRIVATE_KEY` and `APP_ID`) if it is not previously filled.
 Now you can make changes to the repository on GitHub (e.g. add a task) and the bot should react.
@@ -145,7 +130,7 @@ You can, for example:
 
 1. Create a new issue
 2. Add a time label, ex: `Time: <1 Day`
-3. Add a priority label, ex: `Priority: 0 (Normal)`
+3. Add a priority label, ex: `Priority: 1 (Normal)`
 4. At this point the bot should add a price label, you should see event logs in one of your opened terminals
 
 ## How it works
@@ -223,22 +208,6 @@ UbiquiBot is built using the [probot](https://probot.github.io/) framework so in
 |
 ├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/utils">utils</a> A set of utility functions
 </pre>
-
-## Default Config Notes (`ubiquibot-config-default.ts`)
-
-We can't use a `jsonc` file due to limitations with Netlify. Here is a snippet of some values with notes next to them.
-
-```jsonc
-{
-  "payment-permit-max-price": 9007199254740991, // Number.MAX_SAFE_INTEGER
-  "max-concurrent-assigns": 9007199254740991, // Number.MAX_SAFE_INTEGER
-  "comment-element-pricing": {
-    /* https://github.com/syntax-tree/mdast#nodes */
-    "strong": 0 // Also includes italics, unfortunately https://github.com/syntax-tree/mdast#strong
-    /* https://github.com/syntax-tree/mdast#gfm */
-  }
-}
-```
 
 ## Supabase Cron Job (`logs-cleaner`)
 
