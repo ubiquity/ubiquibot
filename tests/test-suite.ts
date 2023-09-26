@@ -14,26 +14,29 @@ import {
 } from "./commands.test";
 import { addLabelToIssue, checkLastComment, createComment, createLabel, getLastComment, removeLabelFromIssue, waitForNWebhooks } from "./utils";
 
+let issue: Issue;
+
 export function testSuite(): () => void {
+  beforeAll(createAndAlwaysUseThisTestIssue(), SIX_HOURS);
+
+  return allTests();
+}
+
+function createAndAlwaysUseThisTestIssue(): jest.ProvidesHookCallback {
+  return async () => {
+    const res = await getAdminUser().rest.issues.create({
+      repo,
+      owner,
+      title: `${GIT_COMMIT_HASH} - E2E TEST`,
+    });
+    issue = res.data as Issue;
+
+    await waitForNWebhooks(4);
+  };
+}
+
+function allTests(): () => void {
   return () => {
-    let issue: Issue;
-
-    // const getAdminUsername() = getAdminUsername();
-    // const getCollaboratorUsername() = getCollaboratorUsername();
-    // const getOctokitAdmin() = getOctokitAdmin();
-    // const getOctokitCollaborator() = getOctokitCollaborator();
-
-    beforeAll(async () => {
-      const res = await getAdminUser().rest.issues.create({
-        repo,
-        owner,
-        title: `${GIT_COMMIT_HASH} - E2E TEST`,
-      });
-      issue = res.data as Issue;
-
-      await waitForNWebhooks(4);
-    }, SIX_HOURS);
-
     test(
       "/wallet correct address",
       async () => {
