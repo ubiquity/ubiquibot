@@ -50,4 +50,15 @@ export const repoConfig: RepositoryConfig = {
       },
     },
   },
+  // openAIKey: "",
+  // privateKeyEncrypted: "",
+  openAITokenLimit: 100000,
+  staleTaskTime: "15 minutes",
+
+  newContributorGreeting: {
+    enabled: true,
+    header: "Welcome to the test sandbox! My Header!",
+    helpMenu: true,
+    footer: "Please note that this is a footer from a bot. Thanks!",
+  },
 };
