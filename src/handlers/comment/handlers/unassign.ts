@@ -1,11 +1,11 @@
 import { removeAssignees } from "../../../helpers";
-import { getBotContext, getLogger } from "../../../bindings";
-import { Payload } from "../../../types";
+import { getLogger } from "../../../bindings";
+import { BotContext, Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { closePullRequestForAnIssue } from "../../assign/index";
 
-export const unassign = async (body: string) => {
-  const { payload: _payload } = getBotContext();
+export const unassign = async (context: BotContext, body: string) => {
+  const { payload: _payload } = context;
   const logger = getLogger();
   if (body != IssueCommentCommands.STOP && body.replace(/`/g, "") != IssueCommentCommands.STOP) {
     logger.info(`Skipping to unassign. body: ${body}`);
@@ -28,7 +28,7 @@ export const unassign = async (body: string) => {
   logger.debug(`Unassigning sender: ${payload.sender.login.toLowerCase()}, assignee: ${assignees[0].login.toLowerCase()}, shouldUnassign: ${shouldUnassign}`);
 
   if (shouldUnassign) {
-    await closePullRequestForAnIssue();
+    await closePullRequestForAnIssue(context);
     await removeAssignees(
       issue_number,
       assignees.map((i) => i.login)

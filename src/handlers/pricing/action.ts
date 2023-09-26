@@ -1,13 +1,12 @@
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs";
 import { addCommentToIssue, addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel, calculateWeight } from "../../helpers";
-import { Payload } from "../../types";
+import { BotContext, Payload } from "../../types";
 import { handleLabelsAccess } from "../access";
 import { getTargetPriceLabel } from "../shared";
 
-export const pricingLabelLogic = async (): Promise<void> => {
-  const context = getBotContext();
-  const config = getBotConfig();
+export const pricingLabelLogic = async (context: BotContext): Promise<void> => {
+  const config = context.botConfig;
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.issue) return;
@@ -23,7 +22,7 @@ export const pricingLabelLogic = async (): Promise<void> => {
     }
     return;
   }
-  const valid = await handleLabelsAccess();
+  const valid = await handleLabelsAccess(context);
 
   if (!valid && config.accessControl.label) {
     return;
@@ -36,7 +35,7 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
   const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
 
-  const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
+  const targetPriceLabel = getTargetPriceLabel(context, minTimeLabel, minPriorityLabel);
   if (targetPriceLabel) {
     if (labels.map((i) => i.name).includes(targetPriceLabel)) {
       logger.info(`Skipping... already exists`);

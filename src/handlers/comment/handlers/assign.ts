@@ -1,6 +1,6 @@
 import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments, calculateWeight, calculateDuration } from "../../../helpers";
-import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
-import { Payload, LabelItem, Comment, IssueType, Issue } from "../../../types";
+import { getLogger } from "../../../bindings";
+import { Payload, LabelItem, Comment, IssueType, Issue, BotContext } from "../../../types";
 import { deadLinePrefix } from "../../shared";
 import { getWalletAddress, getWalletMultiplier } from "../../../adapters/supabase";
 import { tableComment } from "./table";
@@ -8,10 +8,10 @@ import { bountyInfo } from "../../wildcard";
 import { ASSIGN_COMMAND_ENABLED, GLOBAL_STRINGS } from "../../../configs";
 import { isParentIssue } from "../../pricing";
 
-export const assign = async (body: string) => {
-  const { payload: _payload } = getBotContext();
+export const assign = async (context: BotContext, body: string) => {
+  const { payload: _payload } = context;
   const logger = getLogger();
-  const config = getBotConfig();
+  const config = context.botConfig;
 
   const payload = _payload as Payload;
   const { repository, organization } = payload;

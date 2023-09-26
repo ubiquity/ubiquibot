@@ -1,13 +1,12 @@
 import { getAccessLevel } from "../../adapters/supabase";
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
 import { addCommentToIssue, getUserPermission, removeLabel, addLabelToIssue } from "../../helpers";
-import { Payload } from "../../types";
+import { BotContext, Payload } from "../../types";
 
-export const handleLabelsAccess = async () => {
-  const { accessControl } = getBotConfig();
+export const handleLabelsAccess = async (context: BotContext) => {
+  const { accessControl } = context.botConfig;
   if (!accessControl.label) return true;
 
-  const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.issue) return;

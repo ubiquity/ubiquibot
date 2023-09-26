@@ -1,11 +1,11 @@
 import { userCommands } from ".";
-import { getBotContext, getLogger } from "../../../bindings";
+import { getLogger } from "../../../bindings";
 import { ASSIGN_COMMAND_ENABLED } from "../../../configs";
-import { IssueType, Payload } from "../../../types";
+import { BotContext, IssueType, Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 
-export const listAvailableCommands = async (body: string) => {
-  const { payload: _payload } = getBotContext();
+export const listAvailableCommands = async (context: BotContext, body: string) => {
+  const { payload: _payload } = context;
   const logger = getLogger();
   if (body != IssueCommentCommands.HELP && body.replace(/`/g, "") != IssueCommentCommands.HELP) {
     logger.info(`Skipping to list available commands. body: ${body}`);
@@ -24,12 +24,12 @@ export const listAvailableCommands = async (body: string) => {
     return;
   }
 
-  return generateHelpMenu();
+  return generateHelpMenu(context);
 };
 
-export const generateHelpMenu = () => {
+export const generateHelpMenu = (context: BotContext) => {
   let helpMenu = "### Available commands\n```";
-  const commands = userCommands();
+  const commands = userCommands(context);
   commands.map((command) => {
     // if first command, add a new line
     if (command.id === commands[0].id) {

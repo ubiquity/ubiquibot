@@ -44,6 +44,7 @@ export const bindEvents = async (context: BotContext): Promise<void> => {
   };
 
   logger = new GitHubLogger(
+    context,
     options.app,
     context.botConfig?.log?.logEnvironment ?? "development",
     context.botConfig?.log?.level ?? LogLevel.DEBUG,

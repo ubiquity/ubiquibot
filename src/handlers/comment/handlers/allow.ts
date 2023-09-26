@@ -1,10 +1,9 @@
 import { upsertAccessControl } from "../../../adapters/supabase";
-import { getBotContext, getLogger } from "../../../bindings";
+import { getLogger } from "../../../bindings";
 import { getUserPermission } from "../../../helpers";
-import { Payload } from "../../../types";
+import { BotContext, Payload } from "../../../types";
 
-export const setAccess = async (body: string) => {
-  const context = getBotContext();
+export const setAccess = async (context: BotContext, body: string) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   const sender = payload.sender.login;

@@ -1,4 +1,4 @@
-import { Comment, Payload, UserCommands } from "../../../types";
+import { BotContext, Comment, Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
@@ -23,7 +23,7 @@ import {
   getAllIssueAssignEvents,
   calculateWeight,
 } from "../../../helpers";
-import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
+import { getLogger } from "../../../bindings";
 import {
   handleIssueClosed,
   incentivesCalculation,
@@ -88,20 +88,20 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
  * Callback for issues closed - Processor
  */
 
-export const issueClosedCallback = async (): Promise<void> => {
-  const { payload: _payload } = getBotContext();
+export const issueClosedCallback = async (context: BotContext): Promise<void> => {
+  const { payload: _payload } = context;
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   try {
     // assign function incentivesCalculation to a variable
-    const calculateIncentives = await incentivesCalculation();
+    const calculateIncentives = await incentivesCalculation(context);
 
     const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
     const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
     const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
     const pullRequestReviewersReward = await calculatePullRequestReviewsReward(calculateIncentives);
 
-    const { error } = await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, pullRequestReviewersReward, calculateIncentives);
+    const { error } = await handleIssueClosed(context, creatorReward, assigneeReward, conversationRewards, pullRequestReviewersReward, calculateIncentives);
 
     if (error) {
       throw new Error(error);
@@ -115,10 +115,10 @@ export const issueClosedCallback = async (): Promise<void> => {
  * Callback for issues created - Processor
  */
 
-export const issueCreatedCallback = async (): Promise<void> => {
+export const issueCreatedCallback = async (context: BotContext): Promise<void> => {
   const logger = getLogger();
-  const { payload: _payload } = getBotContext();
-  const config = getBotConfig();
+  const { payload: _payload } = context;
+  const config = context.botConfig;
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   const labels = issue.labels;
@@ -156,11 +156,11 @@ export const issueCreatedCallback = async (): Promise<void> => {
  * Callback for issues reopened - Processor
  */
 
-export const issueReopenedCallback = async (): Promise<void> => {
-  const { payload: _payload } = getBotContext();
+export const issueReopenedCallback = async (context: BotContext): Promise<void> => {
+  const { payload: _payload } = context;
   const {
     payout: { permitBaseUrl },
-  } = getBotConfig();
+  } = context.botConfig;
   const logger = getLogger();
   const issue = (_payload as Payload).issue;
   const repository = (_payload as Payload).repository;
@@ -245,8 +245,8 @@ const commandCallback = async (issue_number: number, comment: string, action: st
   await upsertCommentToIssue(issue_number, comment, action, reply_to);
 };
 
-export const userCommands = (): UserCommands[] => {
-  const config = getBotConfig();
+export const userCommands = (context: BotContext): UserCommands[] => {
+  const config = context.botConfig;
 
   return [
     {

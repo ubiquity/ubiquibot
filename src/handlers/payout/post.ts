@@ -1,8 +1,8 @@
 import { getWalletAddress } from "../../adapters/supabase";
-import { getBotContext, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
 import { getAllIssueComments, getAllPullRequestReviews, getIssueDescription, parseComments } from "../../helpers";
 import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
-import { Incentives, MarkdownItem, Payload, UserType } from "../../types";
+import { BotContext, Incentives, MarkdownItem, Payload, UserType } from "../../types";
 import { RewardsResponse, commentParser } from "../comment";
 import Decimal from "decimal.js";
 import { bountyInfo } from "../wildcard";
@@ -24,11 +24,9 @@ const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
  * Incentivize the contributors based on their contribution.
  * The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
  */
-export const calculateIssueConversationReward = async (calculateIncentives: IncentivesCalculationResult): Promise<RewardsResponse> => {
+export const calculateIssueConversationReward = async (context: BotContext, calculateIncentives: IncentivesCalculationResult): Promise<RewardsResponse> => {
   const title = `Conversation`;
   const logger = getLogger();
-
-  const context = getBotContext();
   const payload = context.payload as Payload;
   const issue = payload.issue;
 
@@ -169,9 +167,8 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
   };
 };
 
-export const calculatePullRequestReviewsReward = async (incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> => {
+export const calculatePullRequestReviewsReward = async (context: BotContext, incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> => {
   const logger = getLogger();
-  const context = getBotContext();
   const title = "Reviewer";
 
   const linkedPullRequest = await gitLinkedPrParser({

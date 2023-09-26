@@ -1,5 +1,5 @@
-import { getAdapters, getBotContext, Logger } from "../../../bindings";
-import { Payload, LogLevel } from "../../../types";
+import { getAdapters, Logger } from "../../../bindings";
+import { Payload, LogLevel, BotContext } from "../../../types";
 import { getOrgAndRepoFromPath } from "../../../utils/private";
 
 interface Log {
@@ -43,13 +43,15 @@ export class GitHubLogger implements Logger {
   private retryDelay = 1000; // Delay between retries in milliseconds
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
+  private context;
 
-  constructor(app: string, logEnvironment: string, maxLevel: LogLevel, retryLimit: number) {
+  constructor(context: BotContext, app: string, logEnvironment: string, maxLevel: LogLevel, retryLimit: number) {
     this.app = app;
     this.logEnvironment = logEnvironment;
     this.maxLevel = getNumericLevel(maxLevel);
     this.retryLimit = retryLimit;
     this.supabase = getAdapters().supabase;
+    this.context = context;
   }
 
   async sendLogsToSupabase({ repo, org, commentId, issueNumber, logMessage, level, timestamp }: Log) {
@@ -132,8 +134,7 @@ export class GitHubLogger implements Logger {
   private save(logMessage: string | object, level: LogLevel, errorPayload?: string | object) {
     if (getNumericLevel(level) > this.maxLevel) return; // only return errors lower than max level
 
-    const context = getBotContext();
-    const payload = context.payload as Payload;
+    const payload = this.context.payload as Payload;
     const timestamp = new Date().toUTCString();
 
     const { comment, issue, repository } = payload;

@@ -1,6 +1,6 @@
 import { BigNumber, ethers } from "ethers";
 import { getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from "../../adapters/supabase";
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
 import {
   addLabelToIssue,
   checkUserPermissionForRepoAndOrg,
@@ -14,7 +14,7 @@ import {
   getAllIssueAssignEvents,
   addCommentToIssue,
 } from "../../helpers";
-import { UserType, Payload, StateReason, Comment, User, Incentives, Issue } from "../../types";
+import { UserType, Payload, StateReason, Comment, User, Incentives, Issue, BotContext } from "../../types";
 import { shortenEthAddress } from "../../utils";
 import { bountyInfo } from "../wildcard";
 import Decimal from "decimal.js";
@@ -61,14 +61,13 @@ export interface RewardByUser {
  * Collect the information required for the permit generation and error handling
  */
 
-export const incentivesCalculation = async (): Promise<IncentivesCalculationResult> => {
-  const context = getBotContext();
+export const incentivesCalculation = async (context: BotContext): Promise<IncentivesCalculationResult> => {
   const {
     payout: { paymentToken, rpc, permitBaseUrl, networkId, privateKey },
     mode: { incentiveMode, paymentPermitMaxPrice },
     price: { incentives, issueCreatorMultiplier, baseMultiplier },
     accessControl,
-  } = getBotConfig();
+  } = context.botConfig;
   const logger = getLogger();
   const payload = context.payload as Payload;
   const issue = payload.issue;
@@ -309,6 +308,7 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
 };
 
 export const handleIssueClosed = async (
+  context: BotContext,
   creatorReward: RewardsResponse,
   assigneeReward: RewardsResponse,
   conversationRewards: RewardsResponse,
@@ -316,7 +316,7 @@ export const handleIssueClosed = async (
   incentivesCalculation: IncentivesCalculationResult
 ): Promise<{ error: string }> => {
   const logger = getLogger();
-  const { comments } = getBotConfig();
+  const { comments } = context.botConfig;
   const issueNumber = incentivesCalculation.issue.number;
 
   let commentersComment = "",

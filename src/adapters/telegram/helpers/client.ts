@@ -15,7 +15,7 @@ export function messageFormatter(messagePayload: TLMessagePayload) {
   return msgObj;
 }
 
-export async function telegramFormattedNotifier(messagePayload: TLMessageFormattedPayload, context: BotContext) {
+export async function telegramFormattedNotifier(context: BotContext, messagePayload: TLMessageFormattedPayload) {
   const {
     telegram: { delay },
   } = context.botConfig;
@@ -41,14 +41,14 @@ export async function telegramFormattedNotifier(messagePayload: TLMessageFormatt
   sendHandler();
 }
 
-export async function telegramNotifier(messagePayload: TLMessagePayload, context: BotContext) {
+export async function telegramNotifier(context: BotContext, messagePayload: TLMessagePayload) {
   const messageString = messageFormatter(messagePayload);
   const messageObj: TLMessageFormattedPayload = {
     chatIds: messagePayload.chatIds,
     text: messageString,
     parseMode: "HTML",
   };
-  await telegramFormattedNotifier(messageObj, context);
+  await telegramFormattedNotifier(context, messageObj);
 }
 
 export async function telegramPhotoNotifier(messagePayload: TLPhotoPayload) {

@@ -1,6 +1,6 @@
-import { getBotContext, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
 import { createCommitComment, getFileContent } from "../../helpers";
-import { CommitsPayload, PushPayload, WideConfigSchema } from "../../types";
+import { BotContext, CommitsPayload, PushPayload, WideConfigSchema } from "../../types";
 import { parseYAML } from "../../utils/private";
 import { updateBaseRate } from "./update-base";
 import { validate } from "../../utils/ajv";
@@ -22,10 +22,8 @@ function getCommitChanges(commits: CommitsPayload[]) {
   return changes;
 }
 
-export const runOnPush = async () => {
+export const runOnPush = async (context: BotContext) => {
   const logger = getLogger();
-
-  const context = getBotContext();
   const payload = context.payload as PushPayload;
 
   // if zero sha, push is a pr change
@@ -49,10 +47,8 @@ export const runOnPush = async () => {
   }
 };
 
-export const validateConfigChange = async () => {
+export const validateConfigChange = async (context: BotContext) => {
   const logger = getLogger();
-
-  const context = getBotContext();
   const payload = context.payload as PushPayload;
 
   if (!payload.ref.startsWith("refs/heads/")) {

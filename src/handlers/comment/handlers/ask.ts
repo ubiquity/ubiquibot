@@ -1,5 +1,5 @@
-import { getBotContext, getLogger } from "../../../bindings";
-import { Payload, StreamlinedComment, UserType } from "../../../types";
+import { getLogger } from "../../../bindings";
+import { BotContext, Payload, StreamlinedComment, UserType } from "../../../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { askGPT, decideContextGPT, sysMsg } from "../../../helpers/gpt";
@@ -8,8 +8,7 @@ import { ErrorDiff } from "../../../utils/helpers";
 /**
  * @param body The question to ask
  */
-export const ask = async (body: string) => {
-  const context = getBotContext();
+export const ask = async (context: BotContext, body: string) => {
   const logger = getLogger();
 
   const payload = context.payload as Payload;

@@ -1,13 +1,12 @@
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
 import { addCommentToIssue, closePullRequest, calculateWeight, calculateDuration } from "../../helpers";
 import { gitLinkedPrParser } from "../../helpers/parser";
-import { Payload, LabelItem } from "../../types";
+import { Payload, LabelItem, BotContext } from "../../types";
 import { deadLinePrefix } from "../shared";
 
 const exclude_accounts: string[] = [];
-export const commentWithAssignMessage = async (): Promise<void> => {
-  const context = getBotContext();
-  const config = getBotConfig();
+export const commentWithAssignMessage = async (context: BotContext): Promise<void> => {
+  const config = context.botConfig;
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.issue) {
@@ -67,8 +66,7 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   await addCommentToIssue(commit_msg, payload.issue?.number);
 };
 
-export const closePullRequestForAnIssue = async (): Promise<void> => {
-  const context = getBotContext();
+export const closePullRequestForAnIssue = async (context: BotContext): Promise<void> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.issue?.number) return;

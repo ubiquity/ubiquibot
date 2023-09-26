@@ -1,8 +1,8 @@
 import { ethers } from "ethers";
 import { upsertWalletAddress } from "../../../adapters/supabase";
-import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
+import { getLogger } from "../../../bindings";
 import { resolveAddress } from "../../../helpers";
-import { Payload } from "../../../types";
+import { BotContext, Payload } from "../../../types";
 import { formatEthAddress } from "../../../utils";
 import { IssueCommentCommands } from "../commands";
 import { constants } from "ethers";
@@ -22,9 +22,9 @@ const extractEnsName = (text: string): string | undefined => {
   return undefined;
 };
 
-export const registerWallet = async (body: string) => {
-  const { payload: _payload } = getBotContext();
-  const config = getBotConfig();
+export const registerWallet = async (context: BotContext, body: string) => {
+  const { payload: _payload } = context;
+  const config = context.botConfig;
   const logger = getLogger();
   const payload = _payload as Payload;
   const sender = payload.sender.login;

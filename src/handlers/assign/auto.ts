@@ -1,11 +1,10 @@
-import { getBotContext, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
 import { addAssignees, getAllPullRequests, getIssueByNumber, getPullByNumber } from "../../helpers";
 import { gitLinkedIssueParser } from "../../helpers/parser";
-import { Payload } from "../../types";
+import { BotContext, Payload } from "../../types";
 
 // Check for pull requests linked to their respective issues but not assigned to them
-export const checkPullRequests = async () => {
-  const context = getBotContext();
+export const checkPullRequests = async (context: BotContext) => {
   const logger = getLogger();
   const pulls = await getAllPullRequests(context);
 

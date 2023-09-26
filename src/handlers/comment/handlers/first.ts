@@ -1,17 +1,16 @@
-import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
+import { getLogger } from "../../../bindings";
 import { upsertCommentToIssue } from "../../../helpers";
-import { Payload } from "../../../types";
+import { BotContext, Payload } from "../../../types";
 import { generateHelpMenu } from "./help";
 
-export const verifyFirstCheck = async (): Promise<void> => {
-  const context = getBotContext();
+export const verifyFirstCheck = async (context: BotContext): Promise<void> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   let msg = "";
   if (!payload.issue) return;
   const {
     newContributorGreeting: { header, helpMenu, footer, enabled },
-  } = getBotConfig();
+  } = context.botConfig;
   try {
     const response_issue = await context.octokit.rest.search.issuesAndPullRequests({
       q: `is:issue repo:${payload.repository.owner.login}/${payload.repository.name} commenter:${payload.sender.login}`,
@@ -37,7 +36,7 @@ export const verifyFirstCheck = async (): Promise<void> => {
           msg += `${header}\n`;
         }
         if (helpMenu) {
-          msg += `${generateHelpMenu()}\n@${payload.sender.login}\n`;
+          msg += `${generateHelpMenu(context)}\n@${payload.sender.login}\n`;
         }
         if (footer) {
           msg += `${footer}`;

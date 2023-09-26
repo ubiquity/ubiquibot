@@ -1,5 +1,5 @@
-import { getBotContext, getLogger } from "../../../bindings";
-import { Payload } from "../../../types";
+import { getLogger } from "../../../bindings";
+import { BotContext, Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import {
   calculateIssueAssigneeReward,
@@ -12,8 +12,8 @@ import {
 import { getAllIssueComments, getUserPermission } from "../../../helpers";
 import { GLOBAL_STRINGS } from "../../../configs";
 
-export const payout = async (body: string) => {
-  const { payload: _payload } = getBotContext();
+export const payout = async (context: BotContext, body: string) => {
+  const { payload: _payload } = context;
   const logger = getLogger();
   if (body != IssueCommentCommands.PAYOUT && body.replace(/`/g, "") != IssueCommentCommands.PAYOUT) {
     logger.info(`Skipping to payout. body: ${body}`);
@@ -46,18 +46,17 @@ export const payout = async (body: string) => {
   }
 
   // assign function incentivesCalculation to a variable
-  const calculateIncentives = await incentivesCalculation();
+  const calculateIncentives = await incentivesCalculation(context);
 
   const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
   const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
   const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
   const pullRequestReviewersReward = await calculatePullRequestReviewsReward(calculateIncentives);
 
-  return await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, pullRequestReviewersReward, calculateIncentives);
+  return await handleIssueClosed(context, creatorReward, assigneeReward, conversationRewards, pullRequestReviewersReward, calculateIncentives);
 };
 
-export const autoPay = async (body: string) => {
-  const context = getBotContext();
+export const autoPay = async (context: BotContext, body: string) => {
   const _payload = context.payload;
   const logger = getLogger();
 

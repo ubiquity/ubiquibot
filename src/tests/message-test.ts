@@ -4,7 +4,7 @@ const chatIds = ["tg1", "tg2", "tg3"]; // SHOULD update chatIds with valid ones
 
 export async function messageTests(context: BotContext) {
   /**@method telegramNotifier - call unformatted issue */
-  await telegramNotifier({
+  await telegramNotifier(context, {
     chatIds: chatIds,
     action: `new issue`,
     title: `Optimize CI/CD Build Speed`,
@@ -12,10 +12,10 @@ export async function messageTests(context: BotContext) {
     id: `10`,
     ref: `https://github.com/ubiquity/ubiquity-dollar/issues/10`,
     user: `pavlovcik`,
-  }, context);
+  });
 
   /**@method telegramNotifier - call unformatted pull */
-  await telegramNotifier({
+  await telegramNotifier(context, {
     chatIds: chatIds,
     action: `new pull`,
     title: `Enhancement/styles`,
@@ -23,10 +23,10 @@ export async function messageTests(context: BotContext) {
     id: `246`,
     ref: `https://github.com/ubiquity/ubiquity-dollar/pull/246`,
     user: `pavlovcik`,
-  }, context);
+  });
 
   /**@method telegramFormattedNotifier - call formatted issue */
-  await telegramFormattedNotifier({
+  await telegramFormattedNotifier(context, {
     chatIds: chatIds,
     text:
       `<b>new issue: Optimize CI/CD Build Speed</b> ` +
@@ -35,10 +35,10 @@ export async function messageTests(context: BotContext) {
       `<a href="https://github.com/pavlovcik">pavlovcik</a>\n` +
       `<code>I worked through getting the build process to work by force \nmoving all dev dependencies into dependencies, but \nnow the build process is extremely slow on vercel.</code>`,
     parseMode: "HTML",
-  }, context);
+  });
 
   /**@method telegramFormattedNotifier - call formatted pull */
-  await telegramFormattedNotifier({
+  await telegramFormattedNotifier(context, {
     chatIds: chatIds,
     text:
       `<b>new pull: Enhancement/styles</b> ` +
@@ -47,5 +47,5 @@ export async function messageTests(context: BotContext) {
       `<a href="https://github.com/pavlovcik">pavlovcik</a>\n` +
       `<code>Small enhancements but mostly renamed the \ninternal smart contract references, and \nadded support for DAI and USDT in the inventory.</code>`,
     parseMode: "HTML",
-  }, context);
+  });
 }
