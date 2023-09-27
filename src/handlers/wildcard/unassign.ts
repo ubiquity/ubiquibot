@@ -1,4 +1,3 @@
-import { closePullRequestForAnIssue } from "../assign";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs/strings";
 import {
@@ -75,7 +74,6 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
       logger.info(
         `Unassigning... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
       );
-      await closePullRequestForAnIssue();
       // remove assignees from the issue
       await removeAssignees(issue.number, assignees);
       await addCommentToIssue(`@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);

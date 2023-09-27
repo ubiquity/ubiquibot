@@ -25,6 +25,9 @@ export enum GithubEvent {
 
   // push event
   PUSH_EVENT = "push",
+
+  // label
+  LABEL_EDITED = "label.edited",
 }
 
 export enum UserType {
@@ -257,6 +260,12 @@ export const AssignEventSchema = Type.Object({
 
 export type AssignEvent = Static<typeof AssignEventSchema>;
 
+const ChangesSchema = Type.Object({
+  name: Type.Object({
+    from: Type.String(),
+  }),
+});
+
 export const PayloadSchema = Type.Object({
   action: Type.String(),
   issue: Type.Optional(IssueSchema),
@@ -267,6 +276,7 @@ export const PayloadSchema = Type.Object({
   organization: Type.Optional(OrganizationSchema),
   installation: Type.Optional(InstallationSchema),
   repositories_added: Type.Optional(Type.Array(RepositorySchema)),
+  changes: Type.Optional(ChangesSchema),
 });
 
 export type Payload = Static<typeof PayloadSchema>;
