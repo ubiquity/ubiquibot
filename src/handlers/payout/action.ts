@@ -451,8 +451,6 @@ export const handleIssueClosed = async (
 
   // CREATE PERMIT URL FOR EACH USER
   for (const reward of rewards) {
-    let comment;
-
     if (!reward.user || !reward.userId) {
       logger.info(`Skipping to generate a permit url for missing user. fallback: ${reward.user}`);
       continue;
@@ -486,31 +484,9 @@ export const handleIssueClosed = async (
 
     const { payoutUrl, txData } = await generatePermit2Signature(reward.account, reward.priceInEth, reward.issueId, reward.userId?.toString());
 
-    const mergedType = reward.type.join(",");
     const price = `${reward.priceInEth} ${incentivesCalculation.tokenSymbol.toUpperCase()}`;
 
-    switch (mergedType) {
-      case "Issue-Comments,Review-Reviewer":
-        comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
-        break;
-      case "Issue-Comments":
-        comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
-        break;
-      case "Review-Reviewer":
-        comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
-        break;
-      case "Issue-Creation,Issue-Assignee":
-        comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
-        break;
-      case "Issue-Assignee":
-        comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
-        break;
-      case "Issue-Creation":
-        comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
-        break;
-      default:
-        break;
-    }
+    const comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
 
     await savePermitToDB(Number(reward.userId), txData);
     permitComment += comment;
