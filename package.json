@@ -23,7 +23,7 @@
     "utils:cspell": "cspell --config .cspell.json 'src/**/*.{js,ts,json,md,yml}'",
     "start": "probot run ./dist/index.js",
     "prepare": "husky install",
-    "test:e2e": "jest"
+    "test": "jest"
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
