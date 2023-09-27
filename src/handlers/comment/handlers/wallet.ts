@@ -79,7 +79,10 @@ export const registerWallet = async (body: string) => {
       logger.info("Skipping to register a wallet address because user is trying to set their address to null address");
       return `Cannot set address to null address`;
     }
-    await upsertWalletAddress(sender, address);
+    // get me the node_id of the comment that was just created
+    const node_id = payload?.comment?.node_id;
+
+    await upsertWalletAddress(sender, address, node_id);
     return `Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`;
   }
 
