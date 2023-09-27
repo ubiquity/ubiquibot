@@ -8,8 +8,10 @@ export interface Database {
           created: string | null;
           id: number;
           labels: Json | null;
-          location_id: number;
+          location_id: number | null;
           multiplier: number;
+          node_id: string | null;
+          node_type: string | null;
           updated: string | null;
           user_id: number;
         };
@@ -17,8 +19,10 @@ export interface Database {
           created?: string | null;
           id?: number;
           labels?: Json | null;
-          location_id: number;
+          location_id?: number | null;
           multiplier?: number;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
           user_id: number;
         };
@@ -26,22 +30,24 @@ export interface Database {
           created?: string | null;
           id?: number;
           labels?: Json | null;
-          location_id?: number;
+          location_id?: number | null;
           multiplier?: number;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
           user_id?: number;
         };
         Relationships: [
           {
-            foreignKeyName: "access_location_id_fkey";
-            columns: ["location_id"];
-            referencedRelation: "location";
-            referencedColumns: ["id"];
-          },
-          {
             foreignKeyName: "access_user_id_fkey";
             columns: ["user_id"];
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fk_access_location";
+            columns: ["location_id"];
+            referencedRelation: "location";
             referencedColumns: ["id"];
           }
         ];
@@ -51,6 +57,9 @@ export interface Database {
           amount: number;
           created: string | null;
           id: number;
+          location_id: number | null;
+          node_id: string | null;
+          node_type: string | null;
           permit_id: number | null;
           updated: string | null;
         };
@@ -58,6 +67,9 @@ export interface Database {
           amount: number;
           created?: string | null;
           id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
           permit_id?: number | null;
           updated?: string | null;
         };
@@ -65,10 +77,19 @@ export interface Database {
           amount?: number;
           created?: string | null;
           id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
           permit_id?: number | null;
           updated?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "credits_location_id_fkey";
+            columns: ["location_id"];
+            referencedRelation: "location";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "credits_permit_id_fkey";
             columns: ["permit_id"];
@@ -83,6 +104,8 @@ export interface Database {
           created: string | null;
           id: number;
           location_id: number | null;
+          node_id: string | null;
+          node_type: string | null;
           updated: string | null;
         };
         Insert: {
@@ -90,6 +113,8 @@ export interface Database {
           created?: string | null;
           id?: number;
           location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
         };
         Update: {
@@ -97,11 +122,13 @@ export interface Database {
           created?: string | null;
           id?: number;
           location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
         };
         Relationships: [
           {
-            foreignKeyName: "debits_location_id_fkey";
+            foreignKeyName: "fk_debits_location";
             columns: ["location_id"];
             referencedRelation: "location";
             referencedColumns: ["id"];
@@ -112,32 +139,23 @@ export interface Database {
         Row: {
           created: string | null;
           id: number;
-          node_id_comment: string | null;
-          node_id_issue: string | null;
-          node_id_organization: string | null;
-          node_id_repository: string | null;
+          node_id: string | null;
+          node_type: string | null;
           updated: string | null;
-          url: string | null;
         };
         Insert: {
           created?: string | null;
           id?: number;
-          node_id_comment?: string | null;
-          node_id_issue?: string | null;
-          node_id_organization?: string | null;
-          node_id_repository?: string | null;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
-          url?: string | null;
         };
         Update: {
           created?: string | null;
           id?: number;
-          node_id_comment?: string | null;
-          node_id_issue?: string | null;
-          node_id_organization?: string | null;
-          node_id_repository?: string | null;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
-          url?: string | null;
         };
         Relationships: [];
       };
@@ -147,6 +165,8 @@ export interface Database {
           id: number;
           location_id: number | null;
           log_entry: string;
+          node_id: string | null;
+          node_type: string | null;
           updated: string | null;
         };
         Insert: {
@@ -154,6 +174,8 @@ export interface Database {
           id?: number;
           location_id?: number | null;
           log_entry: string;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
         };
         Update: {
@@ -161,11 +183,13 @@ export interface Database {
           id?: number;
           location_id?: number | null;
           log_entry?: string;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
         };
         Relationships: [
           {
-            foreignKeyName: "logs_location_id_fkey";
+            foreignKeyName: "fk_logs_location";
             columns: ["location_id"];
             referencedRelation: "location";
             referencedColumns: ["id"];
@@ -176,27 +200,33 @@ export interface Database {
         Row: {
           created: string | null;
           id: number;
-          location_id: number;
+          location_id: number | null;
+          node_id: string | null;
+          node_type: string | null;
           updated: string | null;
           wallet_id: number | null;
         };
         Insert: {
           created?: string | null;
           id?: number;
-          location_id: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
           wallet_id?: number | null;
         };
         Update: {
           created?: string | null;
           id?: number;
-          location_id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
           wallet_id?: number | null;
         };
         Relationships: [
           {
-            foreignKeyName: "partners_location_id_fkey";
+            foreignKeyName: "fk_partners_location";
             columns: ["location_id"];
             referencedRelation: "location";
             referencedColumns: ["id"];
@@ -217,6 +247,8 @@ export interface Database {
           deadline: number;
           id: number;
           location_id: number | null;
+          node_id: string | null;
+          node_type: string | null;
           nonce: number;
           partner_id: number | null;
           signature: string;
@@ -231,6 +263,8 @@ export interface Database {
           deadline: number;
           id?: number;
           location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
           nonce: number;
           partner_id?: number | null;
           signature: string;
@@ -245,6 +279,8 @@ export interface Database {
           deadline?: number;
           id?: number;
           location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
           nonce?: number;
           partner_id?: number | null;
           signature?: string;
@@ -254,15 +290,15 @@ export interface Database {
         };
         Relationships: [
           {
-            foreignKeyName: "permits_beneficiary_id_fkey";
-            columns: ["beneficiary_id"];
-            referencedRelation: "users";
+            foreignKeyName: "fk_permits_location";
+            columns: ["location_id"];
+            referencedRelation: "location";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "permits_location_id_fkey";
-            columns: ["location_id"];
-            referencedRelation: "location";
+            foreignKeyName: "permits_beneficiary_id_fkey";
+            columns: ["beneficiary_id"];
+            referencedRelation: "users";
             referencedColumns: ["id"];
           },
           {
@@ -286,6 +322,8 @@ export interface Database {
           debit_id: number | null;
           id: number;
           location_id: number | null;
+          node_id: string | null;
+          node_type: string | null;
           updated: string | null;
           user_id: number;
         };
@@ -295,6 +333,8 @@ export interface Database {
           debit_id?: number | null;
           id?: number;
           location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
           user_id: number;
         };
@@ -304,10 +344,18 @@ export interface Database {
           debit_id?: number | null;
           id?: number;
           location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
           user_id?: number;
         };
         Relationships: [
+          {
+            foreignKeyName: "fk_settlements_location";
+            columns: ["location_id"];
+            referencedRelation: "location";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "settlements_credit_id_fkey";
             columns: ["credit_id"];
@@ -318,12 +366,6 @@ export interface Database {
             foreignKeyName: "settlements_debit_id_fkey";
             columns: ["debit_id"];
             referencedRelation: "debits";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "settlements_location_id_fkey";
-            columns: ["location_id"];
-            referencedRelation: "location";
             referencedColumns: ["id"];
           },
           {
@@ -339,45 +381,76 @@ export interface Database {
           address: string;
           created: string | null;
           id: number;
+          location_id: number | null;
           network: number;
+          node_id: string | null;
+          node_type: string | null;
           updated: string | null;
         };
         Insert: {
           address: string;
           created?: string | null;
           id?: number;
+          location_id?: number | null;
           network?: number;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
         };
         Update: {
           address?: string;
           created?: string | null;
           id?: number;
+          location_id?: number | null;
           network?: number;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "tokens_location_id_fkey";
+            columns: ["location_id"];
+            referencedRelation: "location";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       users: {
         Row: {
           created: string | null;
           id: number;
+          location_id: number | null;
+          node_id: string | null;
+          node_type: string | null;
           updated: string | null;
           wallet_id: number | null;
         };
         Insert: {
           created?: string | null;
-          id: number;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
           wallet_id?: number | null;
         };
         Update: {
           created?: string | null;
           id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
           wallet_id?: number | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "users_location_id_fkey";
+            columns: ["location_id"];
+            referencedRelation: "location";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "users_wallet_id_fkey";
             columns: ["wallet_id"];
@@ -391,21 +464,37 @@ export interface Database {
           address: string | null;
           created: string | null;
           id: number;
+          location_id: number | null;
+          node_id: string | null;
+          node_type: string | null;
           updated: string | null;
         };
         Insert: {
           address?: string | null;
           created?: string | null;
           id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
         };
         Update: {
           address?: string | null;
           created?: string | null;
           id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
           updated?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "wallets_location_id_fkey";
+            columns: ["location_id"];
+            referencedRelation: "location";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
     Views: {
