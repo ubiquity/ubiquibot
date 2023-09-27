@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { getAdapters, getLogger } from "../../../bindings";
 import { Issue, UserProfile } from "../../../types";
 import { Database } from "../types";
@@ -19,7 +19,7 @@ interface AccessLevels {
  * @param key - The supabase project key
  * @returns - The supabase client
  */
-export const supabase = (url: string, key: string): SupabaseClient => {
+export const supabase = (url: string, key: string) => {
   return createClient<Database>(url, key, { auth: { persistSession: false } });
 };
 

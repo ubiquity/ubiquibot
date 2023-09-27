@@ -3,7 +3,6 @@ import { createAdapters } from "../adapters";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
 import { BotConfig, GithubEvent, Payload, PayloadSchema, LogLevel } from "../types";
-import { Adapters } from "../types/adapters";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
 import { GitHubLogger } from "../adapters/supabase";
@@ -15,7 +14,7 @@ export const getBotContext = () => botContext;
 let botConfig: BotConfig = {} as BotConfig;
 export const getBotConfig = () => botConfig;
 
-let adapters: Adapters = {} as Adapters;
+let adapters = {} as ReturnType<typeof createAdapters>;
 export const getAdapters = () => adapters;
 
 export type Logger = {
