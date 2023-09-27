@@ -569,7 +569,7 @@ export const getReviewRequests = async (context: Context, pull_number: number, o
     });
     return response.data;
   } catch (e: unknown) {
-    logger.error(`Error: could not get requested reviewers, reason: ${e}`);
+    logger.error(`Could not get requested reviewers, reason: ${e}`);
     return null;
   }
 };
