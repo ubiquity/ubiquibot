@@ -40,3 +40,48 @@ export const parseComments = (comments: string[], itemsToExclude: string[]): Rec
 
   return result;
 };
+
+export const createDetailsTable = (
+  amount: string,
+  paymentURL: string,
+  username: string,
+  values: { title: string; subtitle: string; value: string }[]
+): string => {
+  // Generate the table rows based on the values array
+  const tableRows = values
+    .map(({ title, value, subtitle }) => {
+      if (!subtitle || !value) {
+        return "";
+      }
+      return `<tr>
+          <td>${title || ""}</td>
+          <td>${subtitle}</td>
+          <td>${value}</td>
+        </tr>`;
+    })
+    .join("");
+
+  // Construct the complete HTML structure
+  const html = `
+    <details>
+      <summary>
+        <b>
+          <h3>
+            <a href="${paymentURL}">[ ${amount} ]</a>
+          </h3>
+          <h6>&nbsp;@${username}</h6>
+        </b>
+      </summary>
+      <table>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+    </details>
+  `;
+
+  // Remove spaces and line breaks from the HTML, ignoring the attributes like <a href="..."> and [ ... ]
+  const cleanedHtml = html.replace(/>\s+</g, "><").replace(/[\r\n]+/g, "");
+
+  return cleanedHtml;
+};
