@@ -58,31 +58,33 @@ export class GitHubLogger implements Logger {
   // }
 
   // Function to insert a new log entry with a GitHub node ID and type
-  async sendLogsToSupabase(githubNodeId: string, githubNodeType: GithubNodeType, logMessage: string) {
-    // Check if a location with the same GitHub node ID and type exists
-    const { data: existingLocation, error } = await this.supabase.from("location").select("id").eq(`node_id_${githubNodeType}`, githubNodeId).single();
+  async sendLogsToSupabase({ githubNodeId, githubNodeType, logMessage }: { githubNodeId?: string; githubNodeType?: GithubNodeType; logMessage: string }) {
+    let locationId: number | undefined;
 
-    let locationId: number;
+    if (githubNodeId && githubNodeType) {
+      // Check if a location with the same GitHub node ID and type exists
+      const { data: existingLocation, error } = await this.supabase.from("location").select("id").eq(`node_id_${githubNodeType}`, githubNodeId).single();
 
-    if (error) {
-      console.error("Error checking existing location:", error);
-      return null;
-    } else if (existingLocation) {
-      // If the location already exists, use its ID
-      locationId = existingLocation.id;
-    } else {
-      // If the location doesn't exist, create a new one
-      const { data: newLocation, error: locationError } = await this.supabase
-        .from("location")
-        .insert([{ [`node_id_${githubNodeType}`]: githubNodeId }])
-        .single();
-
-      if (locationError || !newLocation) {
-        console.error("Error creating a new location:", locationError);
+      if (error) {
+        console.error("Error checking existing location:", error);
         return null;
-      }
+      } else if (existingLocation) {
+        // If the location already exists, use its ID
+        locationId = existingLocation.id;
+      } else {
+        // If the location doesn't exist, create a new one
+        const { data: newLocation, error: locationError } = await this.supabase
+          .from("location")
+          .insert([{ [`node_id_${githubNodeType}`]: githubNodeId }])
+          .single();
 
-      locationId = (newLocation as Database["public"]["Tables"]["location"]["Row"]).id;
+        if (locationError || !newLocation) {
+          console.error("Error creating a new location:", locationError);
+          return null;
+        }
+
+        locationId = (newLocation as Database["public"]["Tables"]["location"]["Row"]).id;
+      }
     }
 
     // Insert the log entry with the retrieved or newly created location ID
@@ -106,7 +108,7 @@ export class GitHubLogger implements Logger {
 
   async processLogs(log: InsertLogs) {
     try {
-      await this.sendLogsToSupabase(nodeId, nodeType, logMessage);
+      await this.sendLogsToSupabase({ logMessage: log.log_entry });
     } catch (error) {
       console.error("Error sending log, retrying:", error);
       return this.retryLimit > 0 ? await this.retryLog(log) : null;
@@ -122,7 +124,7 @@ export class GitHubLogger implements Logger {
     await new Promise((resolve) => setTimeout(resolve, this.retryDelay));
 
     try {
-      await this.sendLogsToSupabase(log);
+      await this.sendLogsToSupabase({ logMessage: log.log_entry });
     } catch (error) {
       console.error("Error sending log (after retry):", error);
       await this.retryLog(log, retryCount + 1);
