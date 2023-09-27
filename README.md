@@ -1,6 +1,21 @@
-# The UbiquiBot
+# UbiquiBot
 
-Ubiquity DAO's GitHub Bot to automate DevPool management.
+Ubiquity DAO's GitHub Bot for Automating DevPool Management.
+
+## Table of Contents
+1. [Quickstart](#quickstart)
+2. [Environment Variables](#environment-variables)
+3. [Overview](#overview)
+4. [How to Use](#how-to-use)
+5. [Configuration](#configuration)
+6. [How to Run Locally](#how-to-run-locally)
+7. [Supabase Database](#supabase-database)
+8. [Logs](#logs)
+9. [Payments Permits in a Local Instance](#payments-permits-in-a-local-instance)
+10. [How to QA Additions to the Bot](#how-to-qa-additions-to-the-bot)
+11. [How to Create a New Release](#how-to-create-a-new-release)
+12. [Architecture Overview](#architecture-overview)
+13. [Default Config Notes (`ubiquibot-config-default.ts`)](#default-config-notes-ubiquibot-config-defaultts)
 
 ## Quickstart
 
@@ -16,7 +31,7 @@ yarn start:watch
 
 ## Environment Variables
 
-- Copy `.env.example` to `.env`
+- Copy `.env.example` to `.env` (do not rname .env.example, just make a copy)
 - Update `.env` with the following fields:
 - `SUPABASE_URL`: Add your Supabase project URL.
 - `SUPABASE_KEY`: Add your Supabase project API key.
@@ -54,7 +69,7 @@ To test the bot, you can:
 
 1. Create a new issue
 2. Add a time label, ex: `Time: <1 Day`
-3. Add a priority label, ex: `Priority: 0 (Normal)`
+3. Add a priority label, ex: `Priority: 1 (Normal)`
 4. At this point the bot should add a price label.
 
 ## Configuration
@@ -106,6 +121,10 @@ To test the bot, you can:
 
 ## How to run locally
 
+## Supase Database
+
+### Option 1
+
 1. Create a new project at [Supabase](https://supabase.com/). Add `Project URL` and `API Key` to the `.env` file:
 
 ```
@@ -115,7 +134,15 @@ SUPABASE_KEY="XXX"
 
 ```
 
-2. Create a new organization at [Memzo](https://app.mezmo.com/). Add `LOGDNA_INGESTION_KEY` to the `.env` file:
+### Option 2
+### This options will require you to have a local Docker installation (under the hood it is required by Supabase) refer to Supabase Docs for more info
+```
+yarn supabase start
+```
+
+## Logs
+
+2. Create a new organization at [Mezmo](https://app.mezmo.com/). Add `LOGDNA_INGESTION_KEY` to the `.env` file:
 
 ```
 
@@ -132,7 +159,7 @@ DISQUALIFY_TIME="7 days" // 7 days
 
 ```
 
-4. `yarn install`
+4. `Make sure you have Node => 20 && yarn`
 5. Open 2 terminal instances:
    - in one instance run `yarn build --watch` (compiles the Typescript code)
    - in another instance run `yarn start:watch` (runs the bot locally)
@@ -141,22 +168,24 @@ DISQUALIFY_TIME="7 days" // 7 days
 At this point the `.env` files auto-fill the empty fields (`PRIVATE_KEY` and `APP_ID`) if it is not previously filled.
 Now you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react.
 
+7. After adding the bot (as a installed app) to your github you will need to restart the aforemention yarn start:watch so CTRL-C to stop the node daemon and `yarn start:watch` again
+
 You can, for example:
 
 1. Create a new issue
 2. Add a time label, ex: `Time: <1 Day`
-3. Add a priority label, ex: `Priority: 0 (Normal)`
-4. At this point the bot should add a price label, you should see event logs in one of your opened terminals
+3. Add a priority label, ex: `Priority: 1 (Normal)`
+4. the bot should add a price label, you should see event logs in your opened bot terminals
 
 ## How it works
 
-Bounty bot is built using the [probot](https://probot.github.io/) framework so initially the bot is a github app. But thanks to the [probot/adapter-github-actions](https://github.com/probot/adapter-github-actions) you can also use the bot as a github action.
+UbiquityBot is built using the [probot](https://probot.github.io/) framework so in fact the bot is a github app. But thanks to the [probot/adapter-github-actions](https://github.com/probot/adapter-github-actions) you can also use the bot as a github action.
 
-You can use the bounty bot as a [github app](https://github.com/marketplace/ubiquibot).
+UbiquityBot it's also available as a [Github app](https://github.com/marketplace/ubiquibot) on the Githut Marketplace.
 
 When using as a github app the flow is the following:
 
-1. Bounty bot is added to a repository as a github app
+1. UbiquityBot is added to a repository as a github app
 2. You run the bot "backend" (for example on your local machine)
 3. Some event happens in a repository and the bot should react somehow (for example: on adding a time label to an issue the bot should add a price label)
 4. Event details are sent to your deployed bot instance (to a webhook URL that was set in github app's settings)
