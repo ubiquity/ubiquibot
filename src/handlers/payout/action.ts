@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from "ethers";
-import { getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from "../../adapters/supabase";
+import { getLabelChanges, getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import {
   addLabelToIssue,
@@ -193,6 +193,17 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
   if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timelabel) {
     logger.info(`Skipping... its not a bounty`);
     throw new Error(`Permit generation disabled because this issue didn't qualify as bounty.`);
+  }
+
+  // check for label altering here
+  const labelChanges = await getLabelChanges(repository.full_name, [issueDetailed.priceLabel, issueDetailed.priorityLabel, issueDetailed.timelabel]);
+
+  if (labelChanges) {
+    // if approved is still false, it means user was certainly not authorized for that edit
+    if (!labelChanges.approved) {
+      logger.info(`Skipping... label was changed by unauthorized user`);
+      throw new Error(`Permit generation disabled because label: "${labelChanges.label_to}" was modified by an unauthorized user`);
+    }
   }
 
   const assignees = issue?.assignees ?? [];
