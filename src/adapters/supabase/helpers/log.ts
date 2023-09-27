@@ -98,8 +98,8 @@ export class GitHubLogger implements Logger {
 
     return new Promise((resolve, reject) => {
       try {
-        if (!this.logNotification.enabled) {
-          throw new Error("Telegram Log Notification is disabled, please check that url, secret and group is provided");
+        if (!this.logNotification?.enabled) {
+          reject("Telegram Log Notification is disabled, please check that url, secret and group is provided");
         }
 
         if (typeof message === "object") {
