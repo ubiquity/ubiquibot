@@ -41,20 +41,20 @@ export const handleComment = async (context: BotContext): Promise<void> => {
 
       if (!feature?.enabled && id !== IssueCommentCommands.HELP) {
         logger.info(`Skipping '${id}' because it is disabled on this repo.`);
-        await callback(issue.number, `Skipping \`${id}\` because it is disabled on this repo.`, payload.action, payload.comment);
+        await callback(context, issue.number, `Skipping \`${id}\` because it is disabled on this repo.`, payload.action, payload.comment);
         continue;
       }
 
       try {
-        const response = await handler(body);
+        const response = await handler(context, body);
         const callbackComment = response ?? successComment ?? "";
-        if (callbackComment) await callback(issue.number, callbackComment, payload.action, payload.comment);
+        if (callbackComment) await callback(context, issue.number, callbackComment, payload.action, payload.comment);
       } catch (err: unknown) {
         // Use failureComment for failed command if it is available
         if (failureComment) {
-          await callback(issue.number, failureComment, payload.action, payload.comment);
+          await callback(context, issue.number, failureComment, payload.action, payload.comment);
         }
-        await callback(issue.number, ErrorDiff(err), payload.action, payload.comment);
+        await callback(context, issue.number, ErrorDiff(err), payload.action, payload.comment);
       }
     } else {
       logger.info(`Skipping for a command: ${command}`);

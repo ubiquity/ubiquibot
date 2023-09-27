@@ -71,7 +71,7 @@ export const collectAnalytics = async (context: BotContext): Promise<void> => {
     const assigneesToUpsert = assignees.filter((assignee, pos) => tmp.indexOf(assignee.login) == pos);
     const userProfilesToUpsert = await Promise.all(
       assigneesToUpsert.map(async (assignee) => {
-        const res = await getUser(assignee.login);
+        const res = await getUser(context, assignee.login);
         return res as UserProfile;
       })
     );

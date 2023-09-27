@@ -113,18 +113,18 @@ export const bindEvents = async (context: BotContext): Promise<void> => {
   // Run pre-handlers
   logger.info(`Running pre handlers: ${pre.map((fn) => fn.name)}, event: ${eventName}`);
   for (const preAction of pre) {
-    await preAction();
+    await preAction(context);
   }
   // Run main handlers
   logger.info(`Running main handlers: ${action.map((fn) => fn.name)}, event: ${eventName}`);
   for (const mainAction of action) {
-    await mainAction();
+    await mainAction(context);
   }
 
   // Run post-handlers
   logger.info(`Running post handlers: ${post.map((fn) => fn.name)}, event: ${eventName}`);
   for (const postAction of post) {
-    await postAction();
+    await postAction(context);
   }
 
   // Skip wildcard handlers for installation event and push event
@@ -132,7 +132,7 @@ export const bindEvents = async (context: BotContext): Promise<void> => {
     // Run wildcard handlers
     logger.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
     for (const wildcardProcessor of wildcardProcessors) {
-      await wildcardProcessor();
+      await wildcardProcessor(context);
     }
   }
 };
