@@ -135,6 +135,49 @@ export interface Database {
           }
         ];
       };
+      labels: {
+        Row: {
+          authorized: boolean | null;
+          created: string | null;
+          id: number;
+          label_from: string | null;
+          label_to: string | null;
+          location_id: number | null;
+          node_id: number | null;
+          node_type: string | null;
+          updated: string | null;
+        };
+        Insert: {
+          authorized?: boolean | null;
+          created?: string | null;
+          id?: number;
+          label_from?: string | null;
+          label_to?: string | null;
+          location_id?: number | null;
+          node_id?: number | null;
+          node_type?: string | null;
+          updated?: string | null;
+        };
+        Update: {
+          authorized?: boolean | null;
+          created?: string | null;
+          id?: number;
+          label_from?: string | null;
+          label_to?: string | null;
+          location_id?: number | null;
+          node_id?: number | null;
+          node_type?: string | null;
+          updated?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "labels_location_id_fkey";
+            columns: ["location_id"];
+            referencedRelation: "location";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       location: {
         Row: {
           created: string | null;
