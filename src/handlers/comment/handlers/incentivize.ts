@@ -13,7 +13,7 @@ export const incentivize = async (body: string) => {
     logger.info(`Skipping '/incentivize' because of no issue instance`);
     return `Skipping '/incentivize' because of no issue instance`;
   }
-  const toggle = body.match(/^\/incentive @(\w+)/);
+  const toggle = body.match(/^\/incentivize @(\w+)/);
   if (!toggle) {
     return `invalid syntax for /incentivize \n usage /incentivize @user @user1... true|false \n ex /incentivize @user true`;
   } else {
