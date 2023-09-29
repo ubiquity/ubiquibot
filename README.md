@@ -33,10 +33,10 @@ yarn start:watch
 ## Environment Variables
 
 - Copy `.env.example` to `.env` (do not rname .env.example, just make a copy)
-- Update `.env` with the following fields:
+- Update the following fields on `.env`:
 - `SUPABASE_URL`: Add your Supabase project URL.
 - `SUPABASE_KEY`: Add your Supabase project API key.
-- `LOGDNA_INGESTION_KEY`: Get it from [Memzo](https://app.mezmo.com/) by creating an account, adding an organization, and copying the ingestion key on the next screen.
+- `LOGDNA_INGESTION_KEY`: Get it from [Mezmo](https://app.mezmo.com/) by creating an account, adding an organization, and copying the ingestion key.
 - `FOLLOWUP_TIME`: (optional) Set a custom follow-up time (default: 4 days).
 - `DISQUALIFY_TIME`: (optional) Set a custom disqualify time (default: 7 days).
 - `OPENAI_API_HOST`: (optional) Set OpenAI host url (default: https://api.openai.com).
@@ -293,6 +293,9 @@ Bounty bot is built using the [probot](https://probot.github.io/) framework so i
 |
 ├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/types">types</a> A set of schema and type definitions.<br> Why do we need schema? because we want to validate the unknown input and throw the error before the main execution.
 |
+
+├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/helpers">helpers</a> A set of schema and type definitions.<br> Why do we need schema? because we want to validate the unknown input and throw the error before the main execution.
+
 ├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/utils">utils</a> A set of utility functions
 </pre>
 
