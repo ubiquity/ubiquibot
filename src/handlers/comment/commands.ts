@@ -7,7 +7,7 @@ export enum IssueCommentCommands {
   MULTIPLIER = "/multiplier", // set bounty multiplier (for treasury)
   QUERY = "/query",
   ASK = "/ask", // ask GPT a question
-  COMMENTINCENTIVE = "/comment-incentive",
+  INCENTIVIZE = "/incentivize",
   // Access Controls
 
   ALLOW = "/allow",

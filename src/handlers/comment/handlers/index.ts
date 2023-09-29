@@ -10,7 +10,6 @@ import { approveLabelChange } from "./authorize";
 import { setAccess } from "./allow";
 import { ask } from "./ask";
 import { multiplier } from "./multiplier";
-import { commentIncentive } from "./comment-incentive";
 
 import { BigNumber, ethers } from "ethers";
 import { addPenalty } from "../../../adapters/supabase";
@@ -35,6 +34,7 @@ import {
   calculateIssueAssigneeReward,
   calculatePullRequestReviewsReward,
 } from "../../payout";
+import { incentivize } from "./incentivize";
 import { query } from "./query";
 import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
@@ -50,7 +50,7 @@ export * from "./multiplier";
 export * from "./query";
 export * from "./ask";
 export * from "./authorize";
-export * from "./comment-incentive";
+export * from "./incentivize";
 
 export interface RewardsResponse {
   error: string | null;
@@ -267,9 +267,9 @@ export const userCommands = (): UserCommands[] => {
       callback: commandCallback,
     },
     {
-      id: IssueCommentCommands.COMMENTINCENTIVE,
-      description: "Enables or Disables comment incentives for a user",
-      handler: commentIncentive,
+      id: IssueCommentCommands.INCENTIVIZE,
+      description: "Enables or Disables comment incentive for a user",
+      handler: incentivize,
       callback: commandCallback,
     },
     {
