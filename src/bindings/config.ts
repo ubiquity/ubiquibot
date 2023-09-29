@@ -37,6 +37,12 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     openAIKey,
     openAITokenLimit,
     newContributorGreeting,
+    timeRangeForMaxIssueEnabled,
+    timeRangeForMaxIssue,
+    permitBaseUrl,
+    botDelay,
+    followUpTime,
+    disqualifyTime,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -64,17 +70,17 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       rpc: rpc,
       privateKey: privateKey,
       paymentToken: paymentToken,
-      permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
+      permitBaseUrl: process.env.PERMIT_BASE_URL || permitBaseUrl,
     },
     unassign: {
       timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE
         ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE)
-        : DEFAULT_TIME_RANGE_FOR_MAX_ISSUE,
+        : timeRangeForMaxIssue,
       timeRangeForMaxIssueEnabled: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED
         ? process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED == "true"
-        : DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED,
-      followUpTime: ms(process.env.FOLLOW_UP_TIME || DEFAULT_FOLLOWUP_TIME),
-      disqualifyTime: ms(process.env.DISQUALIFY_TIME || DEFAULT_DISQUALIFY_TIME),
+        : timeRangeForMaxIssueEnabled,
+      followUpTime: ms(process.env.FOLLOW_UP_TIME || followUpTime),
+      disqualifyTime: ms(process.env.DISQUALIFY_TIME || disqualifyTime),
     },
     supabase: {
       url: process.env.SUPABASE_URL ?? "",
@@ -82,7 +88,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     telegram: {
       token: process.env.TELEGRAM_BOT_TOKEN ?? "",
-      delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
+      delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : botDelay,
     },
     logNotification: {
       url: process.env.LOG_WEBHOOK_BOT_URL || "",
