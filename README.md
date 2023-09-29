@@ -26,6 +26,7 @@ git clone https://github.com/ubiquity/ubiquibot.git
 cd ubiquibot
 yarn
 yarn build
+
 yarn start:watch
 ```
 
@@ -49,14 +50,56 @@ yarn start:watch
 - `IMPORTANT_WORDS_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for finding important words (default: 0).
 
 `APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for internal developers to use.
+
 If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically generated when you install the app on your repository.
+
+Should output:
+![setup](https://github.com/ubiquity/ubiquibot/assets/41552663/febf0e61-0402-4b25-838a-a64c1c385984)
+
+You may proceed to go to localhost:3000 and you should see
+
+![setup1](https://github.com/ubiquity/ubiquibot/assets/41552663/4b9d7565-8bd4-4e2a-864d-a086fedfe24d)
+
+Click on Register a Github App
+
+![setup3](https://github.com/ubiquity/ubiquibot/assets/41552663/0052feba-e823-419b-acde-d997d68ac553)
+
+Provide the bot a name
+
+![setup3](https://github.com/ubiquity/ubiquibot/assets/41552663/0052feba-e823-419b-acde-d997d68ac553)
+
+![setup4](https://github.com/ubiquity/ubiquibot/assets/41552663/f65e166b-c3fb-4e22-9f49-d622e3922eb7)
+
+Select a handle where to install the bot
+
+Select in which repo the bot shall be available
+
+![setup6](https://github.com/ubiquity/ubiquibot/assets/41552663/dce6b338-abd8-4b54-b990-2cc6cf686d30)
+
+After following the steps you should see
+
+![setup7](https://github.com/ubiquity/ubiquibot/assets/41552663/bbcf0e40-456c-4dd4-93e4-75de87d4d340)
+
+
+If you go again to localhost:3000 after the bot is installed on your handle you shall see
+
+![ubiquity](https://github.com/ubiquity/ubiquibot/assets/41552663/f06250b9-1e3f-44c2-8ee8-efcf34baadd8)
+
+Restart the server for the installation to take efect
+
+![setup10](https://github.com/ubiquity/ubiquibot/assets/41552663/916cc5c3-dfdc-45c7-8d10-65afdce25e29)
+
+After aforemoention steps then installation shall be complete
+
+![setup11](https://github.com/ubiquity/ubiquibot/assets/41552663/0e88fec0-fa8b-4d34-8cc8-024c99b5b640)
+
 
 **Note:** When setting up the project, please do not rename the `.env.example` file to `.env` as it will delete the environment example from the repository.
 Instead, it is recommended to make a copy of the `.env.example` file and replace the values with the appropriate ones.
 
 ## Overview
 
-- This bot is designed to exist as a GitHub Action.
+- This bot is available as a GitHub Action.
 - The code must be compiled using `@vercel/ncc` because all the dependencies (e.g. `node_modules`) must be included and committed on the repository for the GitHub Actions runner to use.
 
 ## How to use
