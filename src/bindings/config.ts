@@ -1,14 +1,6 @@
 import ms from "ms";
 
 import { BotConfig, BotConfigSchema, LogLevel } from "../types";
-import {
-  DEFAULT_BOT_DELAY,
-  DEFAULT_DISQUALIFY_TIME,
-  DEFAULT_FOLLOWUP_TIME,
-  DEFAULT_PERMIT_BASE_URL,
-  DEFAULT_TIME_RANGE_FOR_MAX_ISSUE,
-  DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED,
-} from "../configs";
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
