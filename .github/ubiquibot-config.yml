@@ -1,4 +1,4 @@
-priceMultiplier: 1.5
+price-multiplier: 1.5
 # newContributorGreeting:
 #  enabled: true
 #  header:  "Thank you for contributing to UbiquiBot! Please be sure to set your wallet address before completing your first bounty so that the automatic payout upon task completion will work for you."
