@@ -60,6 +60,7 @@ export interface RewardsResponse {
     penaltyAmount: BigNumber;
     user: string;
     userId: number;
+    debug: Record<string, Decimal>;
   }[];
   fallbackReward?: Record<string, Decimal>;
 }

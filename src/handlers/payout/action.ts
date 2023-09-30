@@ -324,6 +324,7 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
         account: account || "0x",
         user: "",
         userId: incentivesCalculation.assignee.id,
+        debug: {},
       },
     ],
   };

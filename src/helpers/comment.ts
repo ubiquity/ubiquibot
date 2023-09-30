@@ -85,3 +85,29 @@ export const createDetailsTable = (
 
   return cleanedHtml;
 };
+
+export const generateCollapsibleTable = (data: { element: string; units: string; reward: string }[]) => {
+  // Check if the data array is empty
+  if (data.length === 0) {
+    return "No data to display.";
+  }
+
+  // Create the table header row
+  const headerRow = "| element | units | reward |\n| --- | --- | --- |";
+
+  // Create the table rows from the data array
+  const tableRows = data.map((item) => `| ${item.element} | ${item.units} | ${item.reward} |`).join("\n");
+
+  // Create the complete Markdown table
+  const tableMarkdown = `
+<details>
+    <summary>Click to toggle table</summary>
+    
+${headerRow}
+${tableRows}
+    
+</details>
+  `;
+
+  return tableMarkdown;
+};
