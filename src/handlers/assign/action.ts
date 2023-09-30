@@ -58,13 +58,13 @@ export const commentWithAssignMessage = async (): Promise<void> => {
     return;
   }
 
-  const curDate = new Date();
-  const curDateInMillisecs = curDate.getTime();
-  const endDate = new Date(curDateInMillisecs + duration * 1000);
-  const commit_msg = `${flattened_assignees} ${deadLinePrefix} ${endDate.toUTCString().replace("GMT", "UTC")}`;
-  logger.debug(`Creating an issue comment, commit_msg: ${commit_msg}`);
+  const currentDate = new Date();
+  const currentDateInMilliseconds = currentDate.getTime();
+  const endDate = new Date(currentDateInMilliseconds + duration * 1000);
+  const commitMessage = `${flattened_assignees} ${deadLinePrefix} ${endDate.toUTCString().replace("GMT", "UTC")}`;
+  logger.debug(`Creating an issue comment, commit_msg: ${commitMessage}`);
 
-  await addCommentToIssue(commit_msg, payload.issue?.number);
+  await addCommentToIssue(commitMessage, payload.issue?.number);
 };
 
 export const closePullRequestForAnIssue = async (): Promise<void> => {

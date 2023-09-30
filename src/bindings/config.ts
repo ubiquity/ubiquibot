@@ -36,6 +36,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     enableAccessControl,
     openAIKey,
     openAITokenLimit,
+    newContributorGreeting,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -83,6 +84,13 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       token: process.env.TELEGRAM_BOT_TOKEN ?? "",
       delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
     },
+    logNotification: {
+      url: process.env.LOG_WEBHOOK_BOT_URL || "",
+      secret: process.env.LOG_WEBHOOK_SECRET || "",
+      groupId: Number(process.env.LOG_WEBHOOK_GROUP_ID) || 0,
+      topicId: Number(process.env.LOG_WEBHOOK_TOPIC_ID) || 0,
+      enabled: true,
+    },
     mode: {
       paymentPermitMaxPrice: paymentPermitMaxPrice,
       disableAnalytics: disableAnalytics,
@@ -103,13 +111,18 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     ask: {
       apiKey: openAIKey,
-      tokenLimit: openAITokenLimit,
+      tokenLimit: openAITokenLimit || 0,
     },
     accessControl: enableAccessControl,
+    newContributorGreeting: newContributorGreeting,
   };
 
   if (botConfig.payout.privateKey == "") {
     botConfig.mode.paymentPermitMaxPrice = 0;
+  }
+
+  if (botConfig.logNotification.secret == "" || botConfig.logNotification.groupId == 0 || botConfig.logNotification.url == "") {
+    botConfig.logNotification.enabled = false;
   }
 
   const validate = ajv.compile(BotConfigSchema);
