@@ -67,7 +67,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   const fallbackReward: Record<string, Decimal> = {};
 
   // array of awaiting permits to generate
-  const reward: { account: string; priceInEth: Decimal; userId: string; user: string; penaltyAmount: BigNumber }[] = [];
+  const reward: { account: string; priceInEth: Decimal; userId: number; user: string; penaltyAmount: BigNumber }[] = [];
   const users = await getIncentivizedUsers(calculateIncentives.issue.number);
   if (!users) return { error: "Error: Could not find any incentivized users" };
 
