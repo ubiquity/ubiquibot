@@ -17,13 +17,6 @@ import { getUserPermission } from "./issue";
 import { getBotContext, getLogger } from "../bindings";
 import { getAccessLevel } from "../adapters/supabase";
 
-// cspell:disable
-export const COLORS = {
-  default: "ededed",
-  price: "1f883d",
-};
-// cspell:enable
-
 // available tokens for payouts
 const PAYMENT_TOKEN_PER_NETWORK: Record<string, { rpc: string; token: string }> = {
   "1": {
