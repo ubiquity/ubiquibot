@@ -446,8 +446,6 @@ export const handleIssueClosed = async (
         assigneeReward.reward[0].penaltyAmount
       );
     }
-    
-    await savePermitToDB(txData);
   }
 
   // MERGE ALL REWARDS
@@ -507,7 +505,7 @@ export const handleIssueClosed = async (
 
     const comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue, reward.debug);
 
-    await savePermitToDB(Number(reward.userId), txData);
+    await savePermitToDB(txData);
     permitComment += comment;
 
     logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(conversationRewards.fallbackReward)}`);
