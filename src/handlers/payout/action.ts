@@ -56,6 +56,7 @@ export interface RewardByUser {
   type: (string | undefined)[];
   user: string | undefined;
   priceArray: string[];
+  debug: Record<string, { count: number; reward: Decimal }>;
 }
 
 /**
@@ -370,6 +371,7 @@ export const handleIssueClosed = async (
           type: [conversationRewards.title],
           user: permit.user,
           priceArray: [permit.priceInEth.toString()],
+          debug: permit.debug,
         });
       }
     });
@@ -388,6 +390,7 @@ export const handleIssueClosed = async (
           type: [pullRequestReviewersReward.title],
           user: permit.user,
           priceArray: [permit.priceInEth.toString()],
+          debug: permit.debug,
         });
       }
     });
@@ -404,6 +407,7 @@ export const handleIssueClosed = async (
       type: [creatorReward.title],
       user: creatorReward.username,
       priceArray: [creatorReward.reward[0].priceInEth.toString()],
+      debug: creatorReward.reward[0].debug,
     });
   } else if (creatorReward && creatorReward.reward && creatorReward.reward[0].account === "0x") {
     logger.info(`Skipping to generate a permit url for missing account. fallback: ${creatorReward.fallbackReward}`);
@@ -425,6 +429,7 @@ export const handleIssueClosed = async (
       type: title,
       user: assigneeReward.username,
       priceArray: [assigneeReward.reward[0].priceInEth.toString()],
+      debug: assigneeReward.reward[0].debug,
     });
 
     if (permitComments.length > 0) {
@@ -498,7 +503,7 @@ export const handleIssueClosed = async (
 
     const price = `${reward.priceInEth} ${incentivesCalculation.tokenSymbol.toUpperCase()}`;
 
-    const comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue);
+    const comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue, reward.debug);
 
     await savePermitToDB(Number(reward.userId), txData);
     permitComment += comment;

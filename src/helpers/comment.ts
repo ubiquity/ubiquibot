@@ -1,3 +1,5 @@
+import Decimal from "decimal.js";
+import { isEmpty } from "lodash";
 import * as parse5 from "parse5";
 
 type Node = {
@@ -41,12 +43,46 @@ export const parseComments = (comments: string[], itemsToExclude: string[]): Rec
   return result;
 };
 
+export const generateCollapsibleTable = (data: { element: string; units: number; reward: Decimal }[]) => {
+  // Check if the data array is empty
+  if (data.length === 0) {
+    return "No data to display.";
+  }
+
+  // Create the table header row
+  const headerRow = "| element | units | reward |\n| --- | --- | --- |";
+
+  // Create the table rows from the data array
+  const tableRows = data.map((item) => `| ${item.element} | ${item.units} | ${item.reward} |`).join("\n");
+
+  // Create the complete Markdown table
+  const tableMarkdown = `
+<details>
+  <summary>Details</summary>
+    
+${headerRow}
+${tableRows}
+    
+</details>
+  `;
+
+  return tableMarkdown;
+};
+
 export const createDetailsTable = (
   amount: string,
   paymentURL: string,
   username: string,
-  values: { title: string; subtitle: string; value: string }[]
+  values: { title: string; subtitle: string; value: string }[],
+  debug: Record<
+    string,
+    {
+      count: number;
+      reward: Decimal;
+    }
+  >
 ): string => {
+  let collapsibleTable = null;
   // Generate the table rows based on the values array
   const tableRows = values
     .map(({ title, value, subtitle }) => {
@@ -60,6 +96,19 @@ export const createDetailsTable = (
         </tr>`;
     })
     .join("");
+
+  if (!isEmpty(debug)) {
+    const data = Object.entries(debug)
+      .filter(([_, value]) => value.count > 0)
+      .map(([key, value]) => {
+        const element = key === "#text" ? "words" : key;
+        const units = value.count;
+        const reward = value.reward;
+        return { element, units, reward };
+      });
+
+    collapsibleTable = generateCollapsibleTable(data);
+  }
 
   // Construct the complete HTML structure
   const html = `
@@ -77,37 +126,15 @@ export const createDetailsTable = (
           ${tableRows}
         </tbody>
       </table>
+      ${collapsibleTable ? "COLLAPSIBLE_TABLE_PLACEHOLDER" : ""}
     </details>
   `;
 
   // Remove spaces and line breaks from the HTML, ignoring the attributes like <a href="..."> and [ ... ]
   const cleanedHtml = html.replace(/>\s+</g, "><").replace(/[\r\n]+/g, "");
 
-  return cleanedHtml;
-};
+  // Add collapsible table here to avoid compression
+  const finalHtml = cleanedHtml.replace("COLLAPSIBLE_TABLE_PLACEHOLDER", collapsibleTable || "");
 
-export const generateCollapsibleTable = (data: { element: string; units: string; reward: string }[]) => {
-  // Check if the data array is empty
-  if (data.length === 0) {
-    return "No data to display.";
-  }
-
-  // Create the table header row
-  const headerRow = "| element | units | reward |\n| --- | --- | --- |";
-
-  // Create the table rows from the data array
-  const tableRows = data.map((item) => `| ${item.element} | ${item.units} | ${item.reward} |`).join("\n");
-
-  // Create the complete Markdown table
-  const tableMarkdown = `
-<details>
-    <summary>Click to toggle table</summary>
-    
-${headerRow}
-${tableRows}
-    
-</details>
-  `;
-
-  return tableMarkdown;
+  return finalHtml;
 };

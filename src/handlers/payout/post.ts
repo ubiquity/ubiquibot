@@ -67,7 +67,14 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   const fallbackReward: Record<string, Decimal> = {};
 
   // array of awaiting permits to generate
-  const reward: { account: string; priceInEth: Decimal; userId: number; user: string; penaltyAmount: BigNumber; debug: Record<string, Decimal> }[] = [];
+  const reward: {
+    account: string;
+    priceInEth: Decimal;
+    userId: number;
+    user: string;
+    penaltyAmount: BigNumber;
+    debug: Record<string, { count: number; reward: Decimal }>;
+  }[] = [];
 
   for (const user of Object.keys(issueCommentsByUser)) {
     const commentsByUser = issueCommentsByUser[user];
@@ -77,7 +84,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
       logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`);
       continue;
     }
-    logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+    logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue.sum}`);
     const account = await getWalletAddress(user);
     const priceInEth = rewardValue.sum.mul(calculateIncentives.baseMultiplier);
     if (priceInEth.gt(calculateIncentives.paymentPermitMaxPrice)) {
@@ -85,7 +92,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
       continue;
     }
     if (account) {
-      reward.push({ account, priceInEth, userId: commentsByUser.id, user, penaltyAmount: BigNumber.from(0), debug: rewardValue.rewardSumByType });
+      reward.push({ account, priceInEth, userId: commentsByUser.id, user, penaltyAmount: BigNumber.from(0), debug: rewardValue.sumByType });
     } else {
       fallbackReward[user] = priceInEth;
     }
@@ -213,7 +220,14 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
   logger.info(`calculatePullRequestReviewsReward: Filtering by the user type done. commentsByUser: ${JSON.stringify(prReviewsByUser)}`);
 
   // array of awaiting permits to generate
-  const reward: { account: string; priceInEth: Decimal; userId: number; user: string; penaltyAmount: BigNumber; debug: Record<string, Decimal> }[] = [];
+  const reward: {
+    account: string;
+    priceInEth: Decimal;
+    userId: number;
+    user: string;
+    penaltyAmount: BigNumber;
+    debug: Record<string, { count: number; reward: Decimal }>;
+  }[] = [];
 
   // The mapping between gh handle and amount in ETH
   const fallbackReward: Record<string, Decimal> = {};
@@ -226,7 +240,9 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
       logger.info(`calculatePullRequestReviewsReward: Skipping to generate a permit url because the reward value is 0. user: ${user}`);
       continue;
     }
-    logger.info(`calculatePullRequestReviewsReward: Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+    logger.info(
+      `calculatePullRequestReviewsReward: Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue.sum}`
+    );
     const account = await getWalletAddress(user);
     const priceInEth = rewardValue.sum.mul(incentivesCalculation.baseMultiplier);
     if (priceInEth.gt(incentivesCalculation.paymentPermitMaxPrice)) {
@@ -235,7 +251,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
     }
 
     if (account) {
-      reward.push({ account, priceInEth, userId: commentByUser.id, user, penaltyAmount: BigNumber.from(0), debug: rewardValue.rewardSumByType });
+      reward.push({ account, priceInEth, userId: commentByUser.id, user, penaltyAmount: BigNumber.from(0), debug: rewardValue.sumByType });
     } else {
       fallbackReward[user] = priceInEth;
     }
@@ -261,7 +277,7 @@ const generatePermitForComments = async (
     logger.info(`No reward for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     return;
   }
-  logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+  logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue.sum}`);
   const account = await getWalletAddress(user);
   const amountInETH = rewardValue.sum.mul(multiplier);
   if (amountInETH.gt(paymentPermitMaxPrice)) {
@@ -281,16 +297,22 @@ const generatePermitForComments = async (
  * @param incentives - The basic price table for reward calculation
  * @returns - The reward value
  */
-const calculateRewardValue = (comments: Record<string, string[]>, incentives: Incentives): { sum: Decimal; rewardSumByType: Record<string, Decimal> } => {
+const calculateRewardValue = (
+  comments: Record<string, string[]>,
+  incentives: Incentives
+): { sum: Decimal; sumByType: Record<string, { count: number; reward: Decimal }> } => {
   let sum = new Decimal(0);
-  const sumPerType: Record<string, number> = {};
+  const sumByType: Record<string, { count: number; reward: Decimal }> = {};
 
   for (const key of Object.keys(comments)) {
     const value = comments[key];
 
     // Initialize the sum for this key if it doesn't exist
-    if (!sumPerType[key]) {
-      sumPerType[key] = 0;
+    if (!sumByType[key]) {
+      sumByType[key] = {
+        count: 0,
+        reward: new Decimal(0),
+      };
     }
 
     // if it's a text node calculate word count and multiply with the reward value
@@ -301,7 +323,8 @@ const calculateRewardValue = (comments: Record<string, string[]>, incentives: In
       const wordReward = new Decimal(incentives.comment.totals.word);
       const wordCount = value.map((str) => str.trim().split(" ").length).reduce((totalWords, wordCount) => totalWords + wordCount, 0);
       const reward = wordReward.mul(wordCount);
-      sumPerType[key] += wordCount;
+      sumByType[key].count += wordCount;
+      sumByType[key].reward = wordReward;
       sum = sum.add(reward);
     } else {
       if (!incentives.comment.elements[key]) {
@@ -309,16 +332,11 @@ const calculateRewardValue = (comments: Record<string, string[]>, incentives: In
       }
       const rewardValue = new Decimal(incentives.comment.elements[key]);
       const reward = rewardValue.mul(value.length);
-      sumPerType[key] += value.length;
+      sumByType[key].count += value.length;
+      sumByType[key].reward = rewardValue;
       sum = sum.add(reward);
     }
   }
 
-  // Convert the summed values back to Decimal
-  const rewardSumByType: Record<string, Decimal> = {};
-  for (const key of Object.keys(sum)) {
-    rewardSumByType[key] = new Decimal(sumPerType[key]);
-  }
-
-  return { sum, rewardSumByType };
+  return { sum, sumByType };
 };

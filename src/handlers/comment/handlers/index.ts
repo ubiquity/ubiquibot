@@ -60,7 +60,7 @@ export interface RewardsResponse {
     penaltyAmount: BigNumber;
     user: string;
     userId: number;
-    debug: Record<string, Decimal>;
+    debug: Record<string, { count: number; reward: Decimal }>;
   }[];
   fallbackReward?: Record<string, Decimal>;
 }
