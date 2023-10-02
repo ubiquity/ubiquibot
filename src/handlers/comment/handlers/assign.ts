@@ -5,7 +5,7 @@ import { deadLinePrefix } from "../../shared";
 import { getWalletAddress, getWalletMultiplier } from "../../../adapters/supabase";
 import { tableComment } from "./table";
 import { bountyInfo } from "../../wildcard";
-import { ASSIGN_COMMAND_ENABLED, GLOBAL_STRINGS } from "../../../configs";
+import { GLOBAL_STRINGS } from "../../../configs";
 import { isParentIssue } from "../../pricing";
 
 export const assign = async (body: string) => {
@@ -19,6 +19,7 @@ export const assign = async (body: string) => {
   const id = organization?.id || repository?.id; // repository?.id as fallback
 
   const staleBounty = config.assign.staleBountyTime;
+  const startEnabled = config.command.find((command) => command.name === "start");
 
   logger.info(`Received '/start' command from user: ${payload.sender.login}, body: ${body}`);
   const issue = (_payload as Payload).issue;
@@ -28,7 +29,7 @@ export const assign = async (body: string) => {
     return "Skipping '/start' because of no issue instance";
   }
 
-  if (!ASSIGN_COMMAND_ENABLED) {
+  if (!startEnabled?.enabled) {
     logger.info(`Ignore '/start' command from user: ASSIGN_COMMAND_ENABLED config is set false`);
     return GLOBAL_STRINGS.assignCommandDisabledComment;
   }
@@ -101,7 +102,7 @@ export const assign = async (body: string) => {
     commit: `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`,
     tips: `<h6>Tips:</h6>
     <ul>
-    <li>Use <code>/wallet 0x0000...0000</code> if you want to update your registered payment wallet address @user.</li>
+    <li>Use <code>/wallet 0x0000...0000</code> if you want to update your registered payment wallet address @${payload.sender.login}.</li>
     <li>Be sure to open a draft pull request as soon as possible to communicate updates on your progress.</li>
     <li>Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the bounty.</li>
     <ul>`,
