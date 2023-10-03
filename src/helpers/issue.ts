@@ -706,7 +706,6 @@ export const getCommitsOnPullRequest = async (pullNumber: number) => {
         per_page: 100,
         page: curPage,
       });
-      await checkRateLimitGit(response.headers);
       allCommits.push(...response.data);
       if (response.data.length < perPage) {
         fetchDone = true;
