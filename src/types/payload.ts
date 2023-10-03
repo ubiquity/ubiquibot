@@ -48,6 +48,12 @@ export enum StateReason {
   REOPENED = "reopened",
 }
 
+export enum PullRequestState {
+  DRAFT = "draft",
+  READY = "ready",
+  ALL = "all",
+}
+
 const UserSchema = Type.Object({
   login: Type.String(),
   id: Type.Number(),

@@ -9,7 +9,7 @@ import {
   listAllIssuesForRepo,
   removeAssignees,
 } from "../../helpers";
-import { Comment, Issue, IssueType, Payload, UserType } from "../../types";
+import { Comment, Issue, IssueType, Payload, PullRequestState, UserType } from "../../types";
 import { deadLinePrefix } from "../shared";
 
 /**
@@ -52,7 +52,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   const curTimestamp = new Date().getTime();
   const lastActivity = await lastActivityTime(issue, comments);
   const passedDuration = curTimestamp - lastActivity.getTime();
-  const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee.login, "ready");
+  const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee.login, PullRequestState.READY);
 
   if (pullRequest.length > 0) {
     const reviewRequests = await getReviewRequests(context, pullRequest[0].number, payload.repository.owner.login, payload.repository.name);

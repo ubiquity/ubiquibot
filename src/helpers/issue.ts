@@ -1,6 +1,6 @@
 import { Context } from "probot";
 import { getBotConfig, getBotContext, getLogger } from "../bindings";
-import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
+import { AssignEvent, Comment, IssueType, Payload, PullRequestState, StreamlinedComment, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
 
 export const getAllIssueEvents = async () => {
@@ -668,7 +668,7 @@ export const getAssignedIssues = async (username: string) => {
   return assigned_issues;
 };
 
-export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userName: string, state: "draft" | "ready" | "all") => {
+export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userName: string, state: PullRequestState) => {
   const pulls = await getOpenedPullRequests(userName, state);
 
   return pulls.filter((pull) => {
@@ -683,10 +683,12 @@ export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userN
   });
 };
 
-export const getOpenedPullRequests = async (username: string, state: "ready" | "draft" | "all") => {
+export const getOpenedPullRequests = async (username: string, state: PullRequestState) => {
   const context = getBotContext();
   const prs = await getAllPullRequests(context, "open");
-  return prs.filter((pr) => (state === "ready" ? !pr.draft : state === "draft" ? pr.draft : true) && (pr.user?.login === username || !username));
+  return prs.filter(
+    (pr) => (state === PullRequestState.READY ? !pr.draft : state === PullRequestState.DRAFT ? pr.draft : true) && (pr.user?.login === username || !username)
+  );
 };
 
 export const getCommitsOnPullRequest = async (pullNumber: number) => {
@@ -726,7 +728,7 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
   } = await getBotConfig();
   if (!timeRangeForMaxIssueEnabled) return [];
 
-  const opened_prs = await getOpenedPullRequests(username, "ready");
+  const opened_prs = await getOpenedPullRequests(username, PullRequestState.READY);
 
   const result = [];
 
