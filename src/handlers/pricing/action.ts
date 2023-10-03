@@ -37,48 +37,33 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
 
   const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
-  let hasPriceLabel = false;
-  let hasTargetPriceLabel = false;
 
   if (targetPriceLabel) {
-    labelNames.forEach((e) => {
-      if (e.includes("Price")) {
-        hasPriceLabel = true;
-      }
-    });
+    const _targetPriceLabel = labelNames.find((name) => name.includes("Price") && name.includes(targetPriceLabel));
 
-    labelNames.forEach((e) => {
-      if (e.includes(targetPriceLabel)) {
-        hasTargetPriceLabel = true;
-      }
-    });
+    if (_targetPriceLabel) {
+      // get all issue events of type "labeled" and the event label includes Price
+      let labeledEvents = await getAllLabeledEvents();
+      if (!labeledEvents) return;
 
-    if (hasPriceLabel) {
-      // below checks each label to see if theres a price
-      if (hasTargetPriceLabel) {
-        // get all issue events of type "labeled" and the event label includes Price
-        let labeledEvents = await getAllLabeledEvents();
-        if (!labeledEvents) return;
+      labeledEvents = labeledEvents.filter((event) => event.label?.name.includes("Price"));
+      if (!labeledEvents.length) return;
 
-        labeledEvents = labeledEvents.filter((event) => event.label?.name.includes("Price"));
-        if (!labeledEvents.length) return;
+      // check if the latest price label has been added by a user
+      if (labeledEvents[labeledEvents.length - 1].actor?.type == UserType.User) {
+        logger.info(`Skipping... already exists`);
+      } else {
+        // add price label to issue becuase wrong price has been added by bot
+        logger.info(`Adding price label to issue`);
+        await clearAllPriceLabelsOnIssue();
 
-        // check if the latest price label has been added by a user
-        if (labeledEvents[labeledEvents.length - 1].actor?.type == UserType.User) {
-          logger.info(`Skipping... already exists`);
-        } else {
-          // add price label to issue becuase wrong price has been added by bot
-          logger.info(`Adding price label to issue`);
-          await clearAllPriceLabelsOnIssue();
+        const exist = await getLabel(targetPriceLabel);
 
-          const exist = await getLabel(targetPriceLabel);
-
-          if (assistivePricing && !exist) {
-            logger.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
-            await createLabel(targetPriceLabel, "price");
-          }
-          await addLabelToIssue(targetPriceLabel);
+        if (assistivePricing && !exist) {
+          logger.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
+          await createLabel(targetPriceLabel, "price");
         }
+        await addLabelToIssue(targetPriceLabel);
       }
     } else {
       // add price if there is none
