@@ -3,6 +3,50 @@ import { getBotConfig, getBotContext, getLogger } from "../bindings";
 import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
 
+export const getAllIssueEvents = async () => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  if (!payload.issue) return;
+
+  let shouldFetch = true;
+  let page_number = 1;
+  const events = [];
+
+  try {
+    while (shouldFetch) {
+      // Fetch issue events
+      const response = await context.octokit.issues.listEvents({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.full_name,
+        issue_number: payload.issue.number,
+        per_page: 100,
+        page: page_number,
+      });
+
+      await checkRateLimitGit(response?.headers);
+
+      if (response?.data?.length > 0) {
+        events.push(...response.data);
+        page_number++;
+      } else {
+        shouldFetch = false;
+      }
+    }
+  } catch (e: unknown) {
+    shouldFetch = false;
+    logger.error(`Getting all issue events failed, reason: ${e}`);
+    return null;
+  }
+  return events;
+};
+
+export const getAllLabeledEvents = async () => {
+  const events = await getAllIssueEvents();
+  if (!events) return null;
+  return events.filter((event) => event.event === "labeled");
+};
+
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
@@ -23,7 +67,7 @@ export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
       name: issuePrices[0].name.toString(),
     });
   } catch (e: unknown) {
-    logger.debug(`Clearing all price labels failed!, reason: ${e}`);
+    logger.debug(`Clearing all price labels failed! reason: ${e}`);
   }
 };
 
@@ -44,7 +88,7 @@ export const addLabelToIssue = async (labelName: string) => {
       labels: [labelName],
     });
   } catch (e: unknown) {
-    logger.debug(`Adding a label to issue failed!, reason: ${e}`);
+    logger.debug(`Adding a label to issue failed! reason: ${e}`);
   }
 };
 
@@ -108,7 +152,7 @@ export const addCommentToIssue = async (msg: string, issue_number: number) => {
       body: msg,
     });
   } catch (e: unknown) {
-    logger.debug(`Adding a comment failed!, reason: ${e}`);
+    logger.debug(`Adding a comment failed! reason: ${e}`);
   }
 };
 
@@ -150,7 +194,7 @@ export const updateCommentOfIssue = async (msg: string, issue_number: number, re
       await addCommentToIssue(msg, issue_number);
     }
   } catch (e: unknown) {
-    logger.debug(`Upading a comment failed!, reason: ${e}`);
+    logger.debug(`Updating a comment failed! reason: ${e}`);
   }
 };
 
@@ -177,7 +221,7 @@ export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[
 
     if (response.data) result = response.data as Comment[];
   } catch (e: unknown) {
-    logger.debug(`Listing issue comments failed!, reason: ${e}`);
+    logger.debug(`Listing issue comments failed! reason: ${e}`);
   }
 
   return result;
@@ -212,7 +256,7 @@ export const getIssueDescription = async (issue_number: number, format: "raw" | 
         break;
     }
   } catch (e: unknown) {
-    logger.debug(`Getting issue description failed!, reason: ${e}`);
+    logger.debug(`Getting issue description failed! reason: ${e}`);
   }
   return result;
 };
@@ -334,7 +378,7 @@ export const removeAssignees = async (issue_number: number, assignees: string[])
       assignees,
     });
   } catch (e: unknown) {
-    logger.debug(`Removing assignees failed!, reason: ${e}`);
+    logger.debug(`Removing assignees failed! reason: ${e}`);
   }
 };
 
@@ -359,7 +403,7 @@ export const checkUserPermissionForRepo = async (username: string, context: Cont
 
     return res.status === 204;
   } catch (e: unknown) {
-    logger.error(`Checking if user permisson for repo failed!, reason: ${e}`);
+    logger.error(`Checking if user permisson for repo failed! reason: ${e}`);
     return false;
   }
 };
@@ -377,7 +421,7 @@ export const checkUserPermissionForOrg = async (username: string, context: Conte
     // skipping status check due to type error of checkMembershipForUser function of octokit
     return true;
   } catch (e: unknown) {
-    logger.error(`Checking if user permisson for org failed!, reason: ${e}`);
+    logger.error(`Checking if user permisson for org failed! reason: ${e}`);
     return false;
   }
 };
@@ -399,7 +443,7 @@ export const getUserPermission = async (username: string, context: Context): Pro
       return "";
     }
   } catch (e: unknown) {
-    logger.debug(`Checking if user is admin failed!, reason: ${e}`);
+    logger.debug(`Checking if user is admin failed! reason: ${e}`);
     return "";
   }
 };
@@ -417,7 +461,7 @@ export const addAssignees = async (issue_number: number, assignees: string[]): P
       assignees,
     });
   } catch (e: unknown) {
-    logger.debug(`Adding assignees failed!, reason: ${e}`);
+    logger.debug(`Adding assignees failed! reason: ${e}`);
   }
 };
 
@@ -439,7 +483,7 @@ export const deleteLabel = async (label: string): Promise<void> => {
       });
     }
   } catch (e: unknown) {
-    logger.debug(`Label deletion failed!, reason: ${e}`);
+    logger.debug(`Label deletion failed! reason: ${e}`);
   }
 };
 
@@ -460,7 +504,7 @@ export const removeLabel = async (name: string) => {
       name: name,
     });
   } catch (e: unknown) {
-    logger.debug(`Label removal failed!, reason: ${e}`);
+    logger.debug(`Label removal failed! reason: ${e}`);
   }
 };
 
@@ -494,7 +538,7 @@ export const getPullRequests = async (context: Context, state: "open" | "closed"
     });
     return pulls;
   } catch (e: unknown) {
-    logger.debug(`Fetching pull requests failed!, reason: ${e}`);
+    logger.debug(`Fetching pull requests failed! reason: ${e}`);
     return [];
   }
 };
@@ -511,7 +555,7 @@ export const closePullRequest = async (pull_number: number) => {
       state: "closed",
     });
   } catch (e: unknown) {
-    logger.debug(`Closing pull requests failed!, reason: ${e}`);
+    logger.debug(`Closing pull requests failed! reason: ${e}`);
   }
 };
 
@@ -554,7 +598,7 @@ export const getPullRequestReviews = async (
     });
     return reviews;
   } catch (e: unknown) {
-    logger.debug(`Fetching pull request reviews failed!, reason: ${e}`);
+    logger.debug(`Fetching pull request reviews failed! reason: ${e}`);
     return [];
   }
 };
@@ -585,7 +629,7 @@ export const getIssueByNumber = async (context: Context, issue_number: number) =
     });
     return issue;
   } catch (e: unknown) {
-    logger.debug(`Fetching issue failed!, reason: ${e}`);
+    logger.debug(`Fetching issue failed! reason: ${e}`);
     return;
   }
 };
@@ -597,7 +641,7 @@ export const getPullByNumber = async (context: Context, pull_number: number) => 
     const { data: pull } = await context.octokit.rest.pulls.get({ owner: payload.repository.owner.login, repo: payload.repository.name, pull_number });
     return pull;
   } catch (error) {
-    logger.debug(`Fetching pull failed!, reason: ${error}`);
+    logger.debug(`Fetching pull failed! reason: ${error}`);
     return;
   }
 };
@@ -671,7 +715,7 @@ export const getCommitsOnPullRequest = async (pullNumber: number) => {
     }
     return allCommits;
   } catch (e: unknown) {
-    logger.debug(`Fetching pull request commits failed!, reason: ${e}`);
+    logger.debug(`Fetching pull request commits failed! reason: ${e}`);
     return [];
   }
 };

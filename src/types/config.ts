@@ -63,6 +63,16 @@ export const TelegramBotConfigSchema = Type.Object({
   delay: Type.Number(),
 });
 
+export const LogNotificationSchema = Type.Object({
+  url: Type.String(),
+  secret: Type.String(),
+  groupId: Type.Number(),
+  topicId: Type.Number(),
+  enabled: Type.Boolean(),
+});
+
+export type LogNotification = Static<typeof LogNotificationSchema>;
+
 export const PayoutConfigSchema = Type.Object({
   networkId: Type.Number(),
   rpc: Type.String(),
@@ -139,6 +149,7 @@ export const BotConfigSchema = Type.Object({
   unassign: UnassignConfigSchema,
   supabase: SupabaseConfigSchema,
   telegram: TelegramBotConfigSchema,
+  logNotification: LogNotificationSchema,
   mode: ModeSchema,
   assign: AssignSchema,
   sodium: SodiumSchema,
@@ -225,6 +236,12 @@ export const MergedConfigSchema = Type.Object({
   openAITokenLimit: Type.Optional(Type.Number()),
   staleBountyTime: Type.String(),
   newContributorGreeting: NewContributorGreetingSchema,
+  timeRangeForMaxIssue: Type.Number(),
+  timeRangeForMaxIssueEnabled: Type.Boolean(),
+  permitBaseUrl: Type.String(),
+  botDelay: Type.Number(),
+  followUpTime: Type.String(),
+  disqualifyTime: Type.String(),
 });
 
 export type MergedConfig = Static<typeof MergedConfigSchema>;
