@@ -1,14 +1,6 @@
 import ms from "ms";
 
 import { BotConfig, BotConfigSchema, LogLevel } from "../types";
-import {
-  DEFAULT_BOT_DELAY,
-  DEFAULT_DISQUALIFY_TIME,
-  DEFAULT_FOLLOWUP_TIME,
-  DEFAULT_PERMIT_BASE_URL,
-  DEFAULT_TIME_RANGE_FOR_MAX_ISSUE,
-  DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED,
-} from "../configs";
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
@@ -34,6 +26,15 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     registerWalletWithVerification,
     staleBountyTime,
     enableAccessControl,
+    openAIKey,
+    openAITokenLimit,
+    newContributorGreeting,
+    timeRangeForMaxIssueEnabled,
+    timeRangeForMaxIssue,
+    permitBaseUrl,
+    botDelay,
+    followUpTime,
+    disqualifyTime,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -61,17 +62,17 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       rpc: rpc,
       privateKey: privateKey,
       paymentToken: paymentToken,
-      permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
+      permitBaseUrl: process.env.PERMIT_BASE_URL || permitBaseUrl,
     },
     unassign: {
       timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE
         ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE)
-        : DEFAULT_TIME_RANGE_FOR_MAX_ISSUE,
+        : timeRangeForMaxIssue,
       timeRangeForMaxIssueEnabled: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED
         ? process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED == "true"
-        : DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED,
-      followUpTime: ms(process.env.FOLLOW_UP_TIME || DEFAULT_FOLLOWUP_TIME),
-      disqualifyTime: ms(process.env.DISQUALIFY_TIME || DEFAULT_DISQUALIFY_TIME),
+        : timeRangeForMaxIssueEnabled,
+      followUpTime: ms(process.env.FOLLOW_UP_TIME || followUpTime),
+      disqualifyTime: ms(process.env.DISQUALIFY_TIME || disqualifyTime),
     },
     supabase: {
       url: process.env.SUPABASE_URL ?? "",
@@ -79,7 +80,14 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     },
     telegram: {
       token: process.env.TELEGRAM_BOT_TOKEN ?? "",
-      delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : DEFAULT_BOT_DELAY,
+      delay: process.env.TELEGRAM_BOT_DELAY ? Number(process.env.TELEGRAM_BOT_DELAY) : botDelay,
+    },
+    logNotification: {
+      url: process.env.LOG_WEBHOOK_BOT_URL || "",
+      secret: process.env.LOG_WEBHOOK_SECRET || "",
+      groupId: Number(process.env.LOG_WEBHOOK_GROUP_ID) || 0,
+      topicId: Number(process.env.LOG_WEBHOOK_TOPIC_ID) || 0,
+      enabled: true,
     },
     mode: {
       paymentPermitMaxPrice: paymentPermitMaxPrice,
@@ -99,11 +107,20 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     wallet: {
       registerWalletWithVerification: registerWalletWithVerification,
     },
+    ask: {
+      apiKey: openAIKey,
+      tokenLimit: openAITokenLimit || 0,
+    },
     accessControl: enableAccessControl,
+    newContributorGreeting: newContributorGreeting,
   };
 
   if (botConfig.payout.privateKey == "") {
     botConfig.mode.paymentPermitMaxPrice = 0;
+  }
+
+  if (botConfig.logNotification.secret == "" || botConfig.logNotification.groupId == 0 || botConfig.logNotification.url == "") {
+    botConfig.logNotification.enabled = false;
   }
 
   const validate = ajv.compile(BotConfigSchema);

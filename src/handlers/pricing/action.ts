@@ -1,7 +1,7 @@
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs";
-import { addCommentToIssue, addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel, calculateWeight } from "../../helpers";
-import { Payload } from "../../types";
+import { addCommentToIssue, addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel, calculateWeight, getAllLabeledEvents } from "../../helpers";
+import { Payload, UserType } from "../../types";
 import { handleLabelsAccess } from "../access";
 import { getTargetPriceLabel } from "../shared";
 
@@ -12,7 +12,7 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const payload = context.payload as Payload;
   if (!payload.issue) return;
   const labels = payload.issue.labels;
-
+  const labelNames = labels.map((i) => i.name);
   logger.info(`Checking if the issue is a parent issue.`);
   if (payload.issue.body && isParentIssue(payload.issue.body)) {
     logger.error("Identified as parent issue. Disabling price label.");
@@ -43,10 +43,36 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
 
   const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
+
   if (targetPriceLabel) {
-    if (labels.map((i) => i.name).includes(targetPriceLabel)) {
-      logger.info(`Skipping... already exists`);
+    const _targetPriceLabel = labelNames.find((name) => name.includes("Price") && name.includes(targetPriceLabel));
+
+    if (_targetPriceLabel) {
+      // get all issue events of type "labeled" and the event label includes Price
+      let labeledEvents = await getAllLabeledEvents();
+      if (!labeledEvents) return;
+
+      labeledEvents = labeledEvents.filter((event) => event.label?.name.includes("Price"));
+      if (!labeledEvents.length) return;
+
+      // check if the latest price label has been added by a user
+      if (labeledEvents[labeledEvents.length - 1].actor?.type == UserType.User) {
+        logger.info(`Skipping... already exists`);
+      } else {
+        // add price label to issue becuase wrong price has been added by bot
+        logger.info(`Adding price label to issue`);
+        await clearAllPriceLabelsOnIssue();
+
+        const exist = await getLabel(targetPriceLabel);
+
+        if (assistivePricing && !exist) {
+          logger.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
+          await createLabel(targetPriceLabel, "price");
+        }
+        await addLabelToIssue(targetPriceLabel);
+      }
     } else {
+      // add price if there is none
       logger.info(`Adding price label to issue`);
       await clearAllPriceLabelsOnIssue();
 
