@@ -162,6 +162,12 @@ export const getWideConfig = async (context: Context) => {
     openAITokenLimit: mergedConfigData.openAITokenLimit,
     staleBountyTime: mergedConfigData.staleBountyTime,
     newContributorGreeting: mergedConfigData.newContributorGreeting,
+    timeRangeForMaxIssue: mergedConfigData.timeRangeForMaxIssue,
+    timeRangeForMaxIssueEnabled: mergedConfigData.timeRangeForMaxIssueEnabled,
+    permitBaseUrl: mergedConfigData.permitBaseUrl,
+    botDelay: mergedConfigData.botDelay,
+    followUpTime: mergedConfigData.followUpTime,
+    disqualifyTime: mergedConfigData.disqualifyTime,
   };
 
   return configData;
