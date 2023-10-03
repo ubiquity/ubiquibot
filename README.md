@@ -119,9 +119,9 @@ To test the bot, you can:
 
 `evm-network-id` is ID of the EVM-compatible network that will be used for payouts.
 
-`price-multiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = price-multiplier * time-label-weight * priority-label-weight * 100`
+`priceMultiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = priceMultiplier * timeLabelWeight * priority-label-weight * 100`
 
-`time-labels` are labels for marking the time limit of the bounty:
+`timeLabels` are labels for marking the time limit of the bounty:
 
 - `name` is a human-readable name
 - `value` is number of seconds that corresponds to the time limit of the bounty
@@ -130,12 +130,12 @@ To test the bot, you can:
 
 - `name` is a human-readable name
 
-`command-settings` are setting to enable or disable a command
+`commandSettings` are setting to enable or disable a command
 
 - `name` is the name of the command
 - `enabled` is a `true` or `false` value to enable or disable a command
 
-`default-labels` are labels that are applied when an issue is created without any time or priority labels.
+`defaultLabels` are labels that are applied when an issue is created without any time or priority labels.
 
 `assistive-pricing` to create a new pricing label if it doesn't exist. Can be `true` or `false`.
 
@@ -163,8 +163,7 @@ To test the bot, you can:
 `promotion-comment` is a message that is appended to the payment permit comment.
 
 ## How to run locally
-
-## Supase Database
+### Supase Database
 
 ### Option 1
 
@@ -178,7 +177,8 @@ SUPABASE_KEY="XXX"
 ```
 
 ### Option 2
-### This options will require you to have a local Docker installation (under the hood it is required by Supabase) refer to Supabase Docs for more info
+### This options will require you to have a local Docker installation (under the hood it is required by Supabase) refer to [Supabase Docs](https://supabase.com/docs)
+
 ```
 yarn supabase start
 ```
@@ -224,7 +224,7 @@ You can, for example:
 
 UbiquityBot is built using the [probot](https://probot.github.io/) framework so in fact the bot is a github app. But thanks to the [probot/adapter-github-actions](https://github.com/probot/adapter-github-actions) you can also use the bot as a github action.
 
-UbiquityBot it's also available as a [Github app](https://github.com/marketplace/ubiquibot) on the Githut Marketplace.
+[UbiquityBot](https://github.com/marketplace/ubiquibot) it's also available ready to install on the Githut Marketplace.
 
 When using as a github app the flow is the following:
 
