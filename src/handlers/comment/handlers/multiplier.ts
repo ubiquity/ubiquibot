@@ -1,7 +1,8 @@
-import { getAccessLevel, upsertWalletMultiplier } from "../../../adapters/supabase";
+// import { getAccessLevel, upsertWalletMultiplier } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
 import { getUserPermission } from "../../../helpers";
 import { Payload } from "../../../types";
+import { getAdapters } from "../../../bindings/event";
 
 export const multiplier = async (body: string) => {
   const context = getBotContext();
@@ -61,6 +62,8 @@ export const multiplier = async (body: string) => {
     if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {
       logger.info(`Getting multiplier access for ${sender} on ${repo.full_name}`);
       // check db permission
+
+      // await getMultiplier(sender.id, repo.id);
       const accessible = await getAccessLevel(sender, repo.full_name, "multiplier");
 
       if (!accessible) {
@@ -85,3 +88,8 @@ export const multiplier = async (body: string) => {
     return `Invalid syntax for wallet command \n example usage: "/multiplier @user 0.5 'Multiplier reason'"`;
   }
 };
+
+async function getAccessLevel(userId: number) {
+  const { access } = getAdapters().supabase;
+  return await access.getAccess(userId);
+}

@@ -8,7 +8,7 @@ import { taskInfo } from "../../wildcard";
 import { ASSIGN_COMMAND_ENABLED, GLOBAL_STRINGS } from "../../../configs";
 import { isParentIssue } from "../../pricing";
 
-async function getWalletAddress(userId: number) {
+export async function getWalletAddress(userId: number) {
   const { wallet } = getAdapters().supabase;
   return await wallet.getAddress(userId);
 }
@@ -18,7 +18,7 @@ async function getUserMultiplier(userId: number, repoId: number) {
   return await user.getMultiplier(userId, repoId);
 }
 
-export const assign = async (body: string) => {
+export async function assign(body: string) {
   const { payload: _payload } = getBotContext();
   const logger = getLogger();
   const config = getBotConfig();
@@ -142,9 +142,9 @@ export const assign = async (body: string) => {
     return tableComment({ ...comment, multiplier, reason, task, isTaskStale, days }) + comment.tips;
   }
   return;
-};
+}
 
-const getMultiplierInfoToDisplay = async (senderId: number, repoId: number, issue: Issue) => {
+async function getMultiplierInfoToDisplay(senderId: number, repoId: number, issue: Issue) {
   const { reason, value } = await getUserMultiplier(senderId, repoId);
 
   const multiplier = value?.toFixed(2) || "1.00";
@@ -169,4 +169,4 @@ const getMultiplierInfoToDisplay = async (senderId: number, repoId: number, issu
     }
   }
   return { multiplier: _multiplierToDisplay, reason: _reasonToDisplay, task: _taskToDisplay };
-};
+}

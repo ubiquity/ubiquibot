@@ -241,6 +241,19 @@ export const CommentSchema = Type.Object({
   body: Type.String(),
   body_html: Type.Optional(Type.String()),
   body_text: Type.Optional(Type.String()),
+  reactions: Type.Object({
+    url: Type.String(),
+    total_count: Type.Number(),
+    "+1": Type.Number(),
+    "-1": Type.Number(),
+    laugh: Type.Number(),
+    hooray: Type.Number(),
+    confused: Type.Number(),
+    heart: Type.Number(),
+    rocket: Type.Number(),
+    eyes: Type.Number(),
+  }),
+  performed_via_github_app: Type.Optional(Type.Boolean()),
 });
 
 export type Comment = Static<typeof CommentSchema>;

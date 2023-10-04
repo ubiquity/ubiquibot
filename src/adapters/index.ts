@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { BotConfig } from "../types";
 import { Access } from "./supabase/helpers/classes/Access";
+import { Super } from "./supabase/helpers/classes/Super";
 import { User } from "./supabase/helpers/classes/User";
 import { Wallet } from "./supabase/helpers/classes/Wallet";
 import { Database } from "./supabase/types";
@@ -13,6 +14,7 @@ export const createAdapters = (config: BotConfig) => {
       access: new Access(client),
       wallet: new Wallet(client),
       user: new User(client),
+      super: new Super(client),
     },
   };
 };
