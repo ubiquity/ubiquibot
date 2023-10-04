@@ -1,12 +1,11 @@
-import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments, calculateWeight, calculateDuration } from "../../../helpers";
 import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../../bindings";
-import { Payload, LabelItem, Comment, IssueType, Issue } from "../../../types";
+import { addAssignees, calculateDuration, calculateWeight, getAllIssueComments, getAssignedIssues, getAvailableOpenedPullRequests } from "../../../helpers";
+import { Comment, Issue, IssueType, LabelItem, Payload } from "../../../types";
 import { deadLinePrefix } from "../../shared";
-// import { getWalletAddress, getUserMultiplier } from "../../../adapters/supabase";
-import { tableComment } from "./table";
-import { taskInfo } from "../../wildcard";
-import { ASSIGN_COMMAND_ENABLED, GLOBAL_STRINGS } from "../../../configs";
+import { GLOBAL_STRINGS } from "../../../configs";
 import { isParentIssue } from "../../pricing";
+import { taskInfo } from "../../wildcard";
+import { tableComment } from "./table";
 
 export async function getWalletAddress(userId: number) {
   const { wallet } = getAdapters().supabase;
@@ -29,6 +28,7 @@ export async function assign(body: string) {
   // const id = organization?.id || repository?.id; // repository?.id as fallback
 
   const staleTask = config.assign.staleTaskTime;
+  const startEnabled = config.command.find((command) => command.name === "start");
 
   logger.info(`Received '/start' command from user: ${payload.sender.login}, body: ${body}`);
   const issue = (_payload as Payload).issue;
@@ -38,7 +38,7 @@ export async function assign(body: string) {
     return "Skipping '/start' because of no issue instance";
   }
 
-  if (!ASSIGN_COMMAND_ENABLED) {
+  if (!startEnabled?.enabled) {
     logger.info(`Ignore '/start' command from user: ASSIGN_COMMAND_ENABLED config is set false`);
     return GLOBAL_STRINGS.assignCommandDisabledComment;
   }

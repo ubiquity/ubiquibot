@@ -11,7 +11,7 @@ import {
   // getCollaboratorUsername,
   getAdminUser,
   // getCollaboratorUser,
-} from "./commands.test";
+} from "./commands-test";
 import {
   //  addLabelToIssue,
   checkLastComment,

@@ -3,7 +3,51 @@ import { getBotConfig, getBotContext, getLogger } from "../bindings";
 import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
 
-export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
+export async function getAllIssueEvents() {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  if (!payload.issue) return;
+
+  let shouldFetch = true;
+  let page_number = 1;
+  const events = [];
+
+  try {
+    while (shouldFetch) {
+      // Fetch issue events
+      const response = await context.octokit.issues.listEvents({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.full_name,
+        issue_number: payload.issue.number,
+        per_page: 100,
+        page: page_number,
+      });
+
+      await checkRateLimitGit(response?.headers);
+
+      if (response?.data?.length > 0) {
+        events.push(...response.data);
+        page_number++;
+      } else {
+        shouldFetch = false;
+      }
+    }
+  } catch (e: unknown) {
+    shouldFetch = false;
+    logger.error(`Getting all issue events failed, reason: ${e}`);
+    return null;
+  }
+  return events;
+}
+
+export async function getAllLabeledEvents() {
+  const events = await getAllIssueEvents();
+  if (!events) return null;
+  return events.filter((event) => event.event === "labeled");
+}
+
+export async function clearAllPriceLabelsOnIssue(): Promise<void> {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -25,9 +69,9 @@ export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   } catch (e: unknown) {
     logger.debug(`Clearing all price labels failed! reason: ${e}`);
   }
-};
+}
 
-export const addLabelToIssue = async (labelName: string) => {
+export async function addLabelToIssue(labelName: string) {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -46,15 +90,15 @@ export const addLabelToIssue = async (labelName: string) => {
   } catch (e: unknown) {
     logger.debug(`Adding a label to issue failed! reason: ${e}`);
   }
-};
+}
 
-export const listIssuesForRepo = async (
+export async function listIssuesForRepo(
   state: "open" | "closed" | "all" = "open",
   per_page = 30,
   page = 1,
   sort: "created" | "updated" | "comments" = "created",
   direction: "desc" | "asc" = "desc"
-) => {
+) {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -75,9 +119,9 @@ export const listIssuesForRepo = async (
   } else {
     return [];
   }
-};
+}
 
-export const listAllIssuesForRepo = async (state: "open" | "closed" | "all" = "open") => {
+export async function listAllIssuesForRepo(state: "open" | "closed" | "all" = "open") {
   const issuesArr = [];
   let fetchDone = false;
   const perPage = 100;
@@ -93,9 +137,9 @@ export const listAllIssuesForRepo = async (state: "open" | "closed" | "all" = "o
   }
 
   return issuesArr;
-};
+}
 
-export const addCommentToIssue = async (msg: string, issue_number: number) => {
+export async function addCommentToIssue(msg: string, issue_number: number) {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -110,9 +154,9 @@ export const addCommentToIssue = async (msg: string, issue_number: number) => {
   } catch (e: unknown) {
     logger.debug(`Adding a comment failed! reason: ${e}`);
   }
-};
+}
 
-export const updateCommentOfIssue = async (msg: string, issue_number: number, reply_to: Comment) => {
+export async function updateCommentOfIssue(msg: string, issue_number: number, reply_to: Comment) {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -152,17 +196,17 @@ export const updateCommentOfIssue = async (msg: string, issue_number: number, re
   } catch (e: unknown) {
     logger.debug(`Updating a comment failed! reason: ${e}`);
   }
-};
+}
 
-export const upsertCommentToIssue = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
+export async function upsertCommentToIssue(issue_number: number, comment: string, action: string, reply_to?: Comment) {
   if (action == "edited" && reply_to) {
     await updateCommentOfIssue(comment, issue_number, reply_to);
   } else {
     await addCommentToIssue(comment, issue_number);
   }
-};
+}
 
-export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[]> => {
+export async function getCommentsOfIssue(issue_number: number): Promise<Comment[]> {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -181,9 +225,9 @@ export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[
   }
 
   return result;
-};
+}
 
-export const getIssueDescription = async (issue_number: number, format: "raw" | "html" | "text" = "raw"): Promise<string> => {
+export async function getIssueDescription(issue_number: number, format: "raw" | "html" | "text" = "raw"): Promise<string> {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -215,9 +259,9 @@ export const getIssueDescription = async (issue_number: number, format: "raw" | 
     logger.debug(`Getting issue description failed! reason: ${e}`);
   }
   return result;
-};
+}
 
-export const getAllIssueComments = async (issue_number: number, format: "raw" | "html" | "text" | "full" = "raw"): Promise<Comment[]> => {
+export async function getAllIssueComments(issue_number: number, format: "raw" | "html" | "text" | "full" = "raw"): Promise<Comment[]> {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -252,9 +296,9 @@ export const getAllIssueComments = async (issue_number: number, format: "raw" | 
   }
 
   return result;
-};
+}
 
-export const getAllIssueAssignEvents = async (issue_number: number): Promise<AssignEvent[]> => {
+export async function getAllIssueAssignEvents(issue_number: number): Promise<AssignEvent[]> {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -286,9 +330,9 @@ export const getAllIssueAssignEvents = async (issue_number: number): Promise<Ass
   }
 
   return result.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
-};
+}
 
-export const wasIssueReopened = async (issue_number: number): Promise<boolean> => {
+export async function wasIssueReopened(issue_number: number): Promise<boolean> {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -319,9 +363,9 @@ export const wasIssueReopened = async (issue_number: number): Promise<boolean> =
   }
 
   return false;
-};
+}
 
-export const removeAssignees = async (issue_number: number, assignees: string[]): Promise<void> => {
+export async function removeAssignees(issue_number: number, assignees: string[]): Promise<void> {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -336,17 +380,17 @@ export const removeAssignees = async (issue_number: number, assignees: string[])
   } catch (e: unknown) {
     logger.debug(`Removing assignees failed! reason: ${e}`);
   }
-};
+}
 
-export const checkUserPermissionForRepoAndOrg = async (username: string, context: Context): Promise<boolean> => {
+export async function checkUserPermissionForRepoAndOrg(username: string, context: Context): Promise<boolean> {
   const permissionForRepo = await checkUserPermissionForRepo(username, context);
   const permissionForOrg = await checkUserPermissionForOrg(username, context);
   const userPermission = await getUserPermission(username, context);
 
   return permissionForOrg || permissionForRepo || userPermission === "admin" || userPermission === "billing_manager";
-};
+}
 
-export const checkUserPermissionForRepo = async (username: string, context: Context): Promise<boolean> => {
+export async function checkUserPermissionForRepo(username: string, context: Context): Promise<boolean> {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -362,9 +406,9 @@ export const checkUserPermissionForRepo = async (username: string, context: Cont
     logger.error(`Checking if user permisson for repo failed! reason: ${e}`);
     return false;
   }
-};
+}
 
-export const checkUserPermissionForOrg = async (username: string, context: Context): Promise<boolean> => {
+export async function checkUserPermissionForOrg(username: string, context: Context): Promise<boolean> {
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.organization) return false;
@@ -380,9 +424,9 @@ export const checkUserPermissionForOrg = async (username: string, context: Conte
     logger.error(`Checking if user permisson for org failed! reason: ${e}`);
     return false;
   }
-};
+}
 
-export const getUserPermission = async (username: string, context: Context): Promise<string> => {
+export async function getUserPermission(username: string, context: Context): Promise<string> {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -402,9 +446,9 @@ export const getUserPermission = async (username: string, context: Context): Pro
     logger.debug(`Checking if user is admin failed! reason: ${e}`);
     return "";
   }
-};
+}
 
-export const addAssignees = async (issue_number: number, assignees: string[]): Promise<void> => {
+export async function addAssignees(issue_number: number, assignees: string[]): Promise<void> {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -419,9 +463,9 @@ export const addAssignees = async (issue_number: number, assignees: string[]): P
   } catch (e: unknown) {
     logger.debug(`Adding assignees failed! reason: ${e}`);
   }
-};
+}
 
-export const deleteLabel = async (label: string): Promise<void> => {
+export async function deleteLabel(label: string): Promise<void> {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -441,9 +485,9 @@ export const deleteLabel = async (label: string): Promise<void> => {
   } catch (e: unknown) {
     logger.debug(`Label deletion failed! reason: ${e}`);
   }
-};
+}
 
-export const removeLabel = async (name: string) => {
+export async function removeLabel(name: string) {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -462,9 +506,9 @@ export const removeLabel = async (name: string) => {
   } catch (e: unknown) {
     logger.debug(`Label removal failed! reason: ${e}`);
   }
-};
+}
 
-export const getAllPullRequests = async (context: Context, state: "open" | "closed" | "all" = "open") => {
+export async function getAllPullRequests(context: Context, state: "open" | "closed" | "all" = "open") {
   const prArr = [];
   let fetchDone = false;
   const perPage = 100;
@@ -479,9 +523,9 @@ export const getAllPullRequests = async (context: Context, state: "open" | "clos
     else curPage++;
   }
   return prArr;
-};
+}
 // Use `context.octokit.rest` to get the pull requests for the repository
-export const getPullRequests = async (context: Context, state: "open" | "closed" | "all" = "open", per_page: number, page: number) => {
+export async function getPullRequests(context: Context, state: "open" | "closed" | "all" = "open", per_page: number, page: number) {
   const logger = getLogger();
   const payload = context.payload as Payload;
   try {
@@ -497,9 +541,9 @@ export const getPullRequests = async (context: Context, state: "open" | "closed"
     logger.debug(`Fetching pull requests failed! reason: ${e}`);
     return [];
   }
-};
+}
 
-export const closePullRequest = async (pull_number: number) => {
+export async function closePullRequest(pull_number: number) {
   const context = getBotContext();
   const payload = context.payload as Payload;
   const logger = getLogger();
@@ -513,9 +557,9 @@ export const closePullRequest = async (pull_number: number) => {
   } catch (e: unknown) {
     logger.debug(`Closing pull requests failed! reason: ${e}`);
   }
-};
+}
 
-export const getAllPullRequestReviews = async (context: Context, pull_number: number, format: "raw" | "html" | "text" | "full" = "raw") => {
+export async function getAllPullRequestReviews(context: Context, pull_number: number, format: "raw" | "html" | "text" | "full" = "raw") {
   const prArr = [];
   let fetchDone = false;
   const perPage = 30;
@@ -530,15 +574,15 @@ export const getAllPullRequestReviews = async (context: Context, pull_number: nu
     else curPage++;
   }
   return prArr;
-};
+}
 
-export const getPullRequestReviews = async (
+export async function getPullRequestReviews(
   context: Context,
   pull_number: number,
   per_page: number,
   page: number,
   format: "raw" | "html" | "text" | "full" = "raw"
-) => {
+) {
   const logger = getLogger();
   const payload = context.payload as Payload;
   try {
@@ -557,9 +601,9 @@ export const getPullRequestReviews = async (
     logger.debug(`Fetching pull request reviews failed! reason: ${e}`);
     return [];
   }
-};
+}
 
-export const getReviewRequests = async (context: Context, pull_number: number, owner: string, repo: string) => {
+export async function getReviewRequests(context: Context, pull_number: number, owner: string, repo: string) {
   const logger = getLogger();
   try {
     const response = await context.octokit.pulls.listRequestedReviewers({
@@ -572,9 +616,9 @@ export const getReviewRequests = async (context: Context, pull_number: number, o
     logger.error(`Could not get requested reviewers, reason: ${e}`);
     return null;
   }
-};
+}
 // Get issues by issue number
-export const getIssueByNumber = async (context: Context, issue_number: number) => {
+export async function getIssueByNumber(context: Context, issue_number: number) {
   const logger = getLogger();
   const payload = context.payload as Payload;
   try {
@@ -588,9 +632,9 @@ export const getIssueByNumber = async (context: Context, issue_number: number) =
     logger.debug(`Fetching issue failed! reason: ${e}`);
     return;
   }
-};
+}
 
-export const getPullByNumber = async (context: Context, pull_number: number) => {
+export async function getPullByNumber(context: Context, pull_number: number) {
   const logger = getLogger();
   const payload = context.payload as Payload;
   try {
@@ -600,10 +644,10 @@ export const getPullByNumber = async (context: Context, pull_number: number) => 
     logger.debug(`Fetching pull failed! reason: ${error}`);
     return;
   }
-};
+}
 
 // Get issues assigned to a username
-export const getAssignedIssues = async (username: string) => {
+export async function getAssignedIssues(username: string) {
   const issuesArr = [];
   let fetchDone = false;
   const perPage = 30;
@@ -622,9 +666,9 @@ export const getAssignedIssues = async (username: string) => {
   const assigned_issues = issuesArr.filter((issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username);
 
   return assigned_issues;
-};
+}
 
-export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userName: string) => {
+export async function getOpenedPullRequestsForAnIssue(issueNumber: number, userName: string) {
   const pulls = await getOpenedPullRequests(userName);
 
   return pulls.filter((pull) => {
@@ -637,15 +681,15 @@ export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userN
     if (linkedIssueNumbers.indexOf(`${issueNumber}`) !== -1) return true;
     return false;
   });
-};
+}
 
-export const getOpenedPullRequests = async (username: string) => {
+export async function getOpenedPullRequests(username: string) {
   const context = getBotContext();
   const prs = await getAllPullRequests(context, "open");
   return prs.filter((pr) => !pr.draft && (pr.user?.login === username || !username));
-};
+}
 
-export const getCommitsOnPullRequest = async (pullNumber: number) => {
+export async function getCommitsOnPullRequest(pullNumber: number) {
   const logger = getLogger();
   const context = getBotContext();
   const payload = getBotContext().payload as Payload;
@@ -660,9 +704,9 @@ export const getCommitsOnPullRequest = async (pullNumber: number) => {
     logger.debug(`Fetching pull request commits failed! reason: ${e}`);
     return [];
   }
-};
+}
 
-export const getAvailableOpenedPullRequests = async (username: string) => {
+export async function getAvailableOpenedPullRequests(username: string) {
   const context = getBotContext();
   const {
     unassign: { timeRangeForMaxIssue, timeRangeForMaxIssueEnabled },
@@ -687,10 +731,10 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
     }
   }
   return result;
-};
+}
 
 // Strips out all links from the body of an issue or pull request and fetches the conversational context from each linked issue or pull request
-export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
+export async function getAllLinkedIssuesAndPullsInBody(issueNumber: number) {
   const context = getBotContext();
   const logger = getLogger();
 
@@ -793,4 +837,4 @@ export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
       linkedPrs: [],
     };
   }
-};
+}

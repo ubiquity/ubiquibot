@@ -10,10 +10,10 @@ import {
   setAdminUser,
   setCollaboratorUser,
   setServer,
-} from "./commands.test";
+} from "./commands-test";
 import { repoConfig } from "./test-repo-config";
 import { updateConfig, waitForNWebhooks, webhookEventEmitter } from "./utils";
-import { getAdminUser, getAdminUsername, getCollaboratorUser, getCollaboratorUsername } from "./commands.test";
+import { getAdminUser, getAdminUsername, getCollaboratorUser, getCollaboratorUsername } from "./commands-test";
 import { GithubEvent } from "../types/payload";
 import { bindEvents } from "../bindings/event";
 

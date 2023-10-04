@@ -18,10 +18,10 @@ let adapters = {} as ReturnType<typeof createAdapters>;
 export const getAdapters = () => adapters;
 
 export type Logger = {
-  info: (msg: string | object, options?: JSON) => string;
-  debug: (msg: string | object, options?: JSON) => string;
-  warn: (msg: string | object, options?: JSON) => string;
-  error: (msg: string | object, options?: JSON) => string;
+  info: (msg: string, options?: JSON) => string;
+  debug: (msg: string, options?: JSON) => string;
+  warn: (msg: string, options?: JSON) => string;
+  error: (msg: string, options?: JSON) => string;
 };
 
 let logger: Logger;
@@ -49,7 +49,8 @@ export const bindEvents = async (context: Context): Promise<void> => {
     // contributors will see logs in console while on development environment
     botConfig?.log?.logEnvironment ?? "development",
     botConfig?.log?.level ?? LogLevel.DEBUG,
-    botConfig?.log?.retryLimit ?? 0
+    botConfig?.log?.retryLimit ?? 0,
+    botConfig.logNotification
   );
   if (!logger) {
     return;
@@ -83,7 +84,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
     const valid = validate(payload);
     if (!valid) {
       logger.info("Payload schema validation failed!", payload);
-      if (validate.errors) logger.warn(validate.errors);
+      if (validate.errors) logger.warn(JSON.stringify(validate.errors));
       return;
     }
 

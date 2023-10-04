@@ -1,13 +1,7 @@
 import ms from "ms";
 
 import { BotConfig, BotConfigSchema, LogLevel } from "../types";
-import {
-  DEFAULT_DISQUALIFY_TIME,
-  DEFAULT_FOLLOWUP_TIME,
-  DEFAULT_PERMIT_BASE_URL,
-  DEFAULT_TIME_RANGE_FOR_MAX_ISSUE,
-  DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED,
-} from "../configs";
+
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
@@ -25,7 +19,6 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     incentives,
     issueCreatorMultiplier,
     maxConcurrentTasks,
-    newContributorGreeting,
     openAIKey,
     openAITokenLimit,
     permitMaxPrice,
@@ -36,6 +29,12 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     registerWalletWithVerification,
     staleTaskTime,
     timeLabels,
+    newContributorGreeting,
+    timeRangeForMaxIssueEnabled,
+    timeRangeForMaxIssue,
+    permitBaseUrl,
+    followUpTime,
+    disqualifyTime,
   } = await getConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -54,20 +53,29 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       rpc: rpc,
       privateKey: privateKey,
       paymentToken: paymentToken,
-      permitBaseUrl: process.env.PERMIT_BASE_URL || DEFAULT_PERMIT_BASE_URL,
+      permitBaseUrl: process.env.PERMIT_BASE_URL || permitBaseUrl,
     },
     unassign: {
-      timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE
-        ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE)
-        : DEFAULT_TIME_RANGE_FOR_MAX_ISSUE,
+      timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE) : timeRangeForMaxIssue,
       timeRangeForMaxIssueEnabled: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED
         ? process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED == "true"
-        : DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED,
-      followUpTime: ms(process.env.FOLLOW_UP_TIME || DEFAULT_FOLLOWUP_TIME),
-      disqualifyTime: ms(process.env.DISQUALIFY_TIME || DEFAULT_DISQUALIFY_TIME),
+        : timeRangeForMaxIssueEnabled,
+      followUpTime: ms(process.env.FOLLOW_UP_TIME || followUpTime),
+      disqualifyTime: ms(process.env.DISQUALIFY_TIME || disqualifyTime),
     },
-    supabase: { url: process.env.SUPABASE_URL ?? "", key: process.env.SUPABASE_KEY ?? "" },
-    mode: { permitMaxPrice: permitMaxPrice, disableAnalytics: disableAnalytics, incentiveMode: incentiveMode, assistivePricing: assistivePricing },
+    supabase: {
+      url: process.env.SUPABASE_URL ?? "",
+      key: process.env.SUPABASE_KEY ?? "",
+    },
+
+    logNotification: {
+      url: process.env.LOG_WEBHOOK_BOT_URL || "",
+      secret: process.env.LOG_WEBHOOK_SECRET || "",
+      groupId: Number(process.env.LOG_WEBHOOK_GROUP_ID) || 0,
+      topicId: Number(process.env.LOG_WEBHOOK_TOPIC_ID) || 0,
+      enabled: true,
+    },
+    mode: { permitMaxPrice, disableAnalytics, incentiveMode, assistivePricing },
     command: commandSettings,
     assign: { maxConcurrentTasks: maxConcurrentTasks, staleTaskTime: ms(staleTaskTime) },
     sodium: { privateKey: process.env.X25519_PRIVATE_KEY ?? "", publicKey: publicKey ?? "" },
@@ -79,6 +87,10 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
 
   if (botConfig.payout.privateKey == "") {
     botConfig.mode.permitMaxPrice = 0;
+  }
+
+  if (botConfig.logNotification.secret == "" || botConfig.logNotification.groupId == 0 || botConfig.logNotification.url == "") {
+    botConfig.logNotification.enabled = false;
   }
 
   const validate = ajv.compile(BotConfigSchema);
