@@ -10,28 +10,26 @@ if (!SUPABASE_URL) throw new Error("SUPABASE_URL is not defined");
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 if (!SUPABASE_KEY) throw new Error("SUPABASE_KEY is not defined");
 
-async function test(context: Context) {
+const mockContext = { supabase: { url: SUPABASE_URL, key: SUPABASE_KEY } } as unknown as Context;
+
+async function getWalletAddressAndUrlTest(context: Context) {
   const botConfig = await loadConfig(context);
-  const { supabase } = createAdapters(botConfig);
+  const { wallet } = createAdapters(botConfig).supabase;
   const userId = 4975670 as GitHubUser["id"];
   const results = [] as unknown[];
   try {
-    const wallet = new Wallet(supabase);
+    // const wallet = new Wallet(supabase);
     const address = await wallet.getAddress(userId);
     const url = await wallet.getWalletRegistrationUrl(userId);
     results.push(address);
     results.push(url);
-    // console.trace(address);
-    // console.trace(url);
   } catch (e) {
     console.error(e);
   }
   console.trace(results);
 }
 
-const mockContext = { supabase: { url: SUPABASE_URL, key: SUPABASE_KEY } } as unknown as Context;
-
-void test(mockContext);
+void getWalletAddressAndUrlTest(mockContext);
 
 interface GitHubUser {
   login: "pavlovcik";

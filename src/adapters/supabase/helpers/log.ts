@@ -180,18 +180,22 @@ export class GitHubLogger implements Logger {
 
   public info(message: string | object, errorPayload?: string | object) {
     this._save(message, LogLevel.INFO, errorPayload);
+    return message;
   }
 
   public warn(message: string | object, errorPayload?: string | object) {
     this._save(message, LogLevel.WARN, errorPayload);
+    return message;
   }
 
   public debug(message: string | object, errorPayload?: string | object) {
     this._save(message, LogLevel.DEBUG, errorPayload);
+    return message;
   }
 
   public error(message: string | object, errorPayload?: string | object) {
     this._save(message, LogLevel.ERROR, errorPayload);
+    return message;
   }
 
   // private async _get() {

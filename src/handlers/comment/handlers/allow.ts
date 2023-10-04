@@ -1,5 +1,4 @@
-import { upsertAccessControl } from "../../../adapters/supabase";
-import { getBotContext, getLogger } from "../../../bindings";
+import { getAdapters, getBotContext, getLogger } from "../../../bindings";
 import { getUserPermission } from "../../../helpers";
 import { Payload } from "../../../types";
 
@@ -9,54 +8,55 @@ export const setAccess = async (body: string) => {
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
 
-  const validAccessString = ["priority", "time", "price", "multiplier"];
+  const permissionLevel = await getUserPermission(sender, context);
+  if (permissionLevel !== "admin") return logger.info(`You are not an admin and do not have the required permissions to access this function.`); // if sender is not admin, return
 
-  logger.info(`Received '/allow' command from user: ${sender}`);
+  // const validAccessString = ["priority", "time", "price", "multiplier"];
 
-  const issue = payload.issue;
-  const repo = payload.repository;
-  if (!issue) {
-    logger.info(`Skipping '/allow' because of no issue instance`);
-    return;
-  }
+  if (!payload.issue) return logger.info(`Skipping '/allow' because of no issue instance`);
 
-  const regex = /\/allow\s+(\S+)\s+(\S+)\s+(\S+)/;
-  const matches = body.match(regex);
+  if (body.startsWith("/allow")) {
+    logger.info(`Received '/allow' command from user: ${sender}`);
 
-  if (matches) {
-    let accessType, username, bool;
-    matches.slice(1).forEach((part) => {
-      if (part.startsWith("@")) username = part.slice(1);
-      else if (part.startsWith("set-")) accessType = part.slice(4);
-      else if (part === "true" || part === "false") bool = part;
-    });
-    if (!accessType || !username || !bool) {
-      logger.error("Invalid body for allow command");
-      return `Invalid syntax for allow \n usage: '/allow set-(access type) @user true|false' \n  ex-1 /allow set-multiplier @user false`;
-    }
-    // Check if access control demand is valid
-    if (!validAccessString.includes(accessType)) {
-      logger.info(`Access control setting for ${accessType} does not exist.`);
-      return `Access control setting for ${accessType} does not exist.`;
-    }
+    // const bodyArray = body.split(" ");
+    const { username, labels } = parseComment(body);
+    // const gitHubUserName = body.split("@")[1].split(" ")[0];
 
-    // check if sender is admin
-    // passing in context so we don't have to make another request to get the user
-    const permissionLevel = await getUserPermission(sender, context);
+    const { access, user } = getAdapters().supabase;
+    const url = payload.comment?.html_url as string;
+    if (!url) throw new Error("Comment url is undefined");
 
-    // if sender is not admin, return
-    if (permissionLevel !== "admin") {
-      logger.info(`User ${sender} is not an admin`);
-      return `You are not an admin and do not have the required permissions to access this function.`;
-    }
+    const nodeInfo = {
+      id: payload.comment?.node_id,
+      type: "IssueComment" as const,
+      url,
+    };
 
-    // convert accessType to valid table
-    const tableName = `${accessType}_access`;
-
-    await upsertAccessControl(username, repo.full_name, tableName, bool === "true");
-    return `Updated access for @${username} successfully!\t Access: **${accessType}** for "${repo.full_name}"`;
+    const userId = await user.getUserId(username);
+    return await access.setAccess(labels, nodeInfo, userId);
   } else {
     logger.error("Invalid body for allow command");
     return `Invalid syntax for allow \n usage: '/allow set-(access type) @user true|false' \n  ex-1 /allow set-multiplier @user false`;
   }
 };
+
+function parseComment(comment: string): { username: string; labels: string[] } {
+  // Extract the @username using a regular expression
+  const usernameMatch = comment.match(/@(\w+)/);
+  if (!usernameMatch) throw new Error("Username not found in comment");
+  const username = usernameMatch[1];
+
+  // Split the comment into words and filter out the command and the username
+  const labels = comment.split(/\s+/).filter((word) => word !== "/allow" && !word.startsWith("@"));
+  if (!labels.length) throw new Error("No labels found in comment");
+
+  return {
+    username: username,
+    labels: labels,
+  };
+}
+
+// // Example usage:
+// const comment = "/allow @user time price priority";
+// const parsed = parseComment(comment);
+// console.log(parsed);
