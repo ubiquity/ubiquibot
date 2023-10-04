@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from "ethers";
-// import { getLabelChanges, getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from "../../adapters/supabase";
+// import { getLabelChanges, getPenalty, getWalletAddress, getUserMultiplier, removePenalty } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import {
   addLabelToIssue,
@@ -20,7 +20,7 @@ import { taskInfo } from "../wildcard";
 import Decimal from "decimal.js";
 import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
-import { RewardsResponse } from "../comment";
+import { getUserMultiplier, getWalletAddress, RewardsResponse } from "../comment";
 import { isEmpty } from "lodash";
 
 export interface IncentivesCalculationResult {
@@ -223,7 +223,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     throw new Error(`Permit generation skipped because recipient address is missing`);
   }
 
-  const { value: multiplier } = await getWalletMultiplier(assignee.login, id?.toString());
+  const { value: multiplier } = await getUserMultiplier(assignee.id);
 
   if (multiplier === 0) {
     const errMsg = "Refusing to generate the payment permit because " + `@${assignee.login}` + "'s payment `multiplier` is `0`";
@@ -301,7 +301,7 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
     priceInBigNumber = new Decimal(ethers.utils.formatUnits(taskAmountAfterPenalty, 18));
   }
 
-  const account = await getWalletAddress(assigneeLogin);
+  const account = await getWalletAddress(incentivesCalculation.assignee.id);
 
   return {
     error: "",

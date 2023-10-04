@@ -2,7 +2,7 @@ import { getAdapters, getBotContext, getLogger } from "../../../bindings";
 import { getUserPermission } from "../../../helpers";
 import { Payload } from "../../../types";
 
-export const setAccess = async (body: string) => {
+export async function setAccess(body: string): Promise<string> {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -12,7 +12,6 @@ export const setAccess = async (body: string) => {
   if (permissionLevel !== "admin") return logger.info(`You are not an admin and do not have the required permissions to access this function.`); // if sender is not admin, return
 
   // const validAccessString = ["priority", "time", "price", "multiplier"];
-
   if (!payload.issue) return logger.info(`Skipping '/allow' because of no issue instance`);
 
   if (body.startsWith("/allow")) {
@@ -21,7 +20,6 @@ export const setAccess = async (body: string) => {
     // const bodyArray = body.split(" ");
     const { username, labels } = parseComment(body);
     // const gitHubUserName = body.split("@")[1].split(" ")[0];
-
     const { access, user } = getAdapters().supabase;
     const url = payload.comment?.html_url as string;
     if (!url) throw new Error("Comment url is undefined");
@@ -33,12 +31,12 @@ export const setAccess = async (body: string) => {
     };
 
     const userId = await user.getUserId(username);
-    return await access.setAccess(labels, nodeInfo, userId);
+    await access.setAccess(labels, nodeInfo, userId);
+    return logger.info(`Successfully set access for ${username} to ${labels.join(", ")}`);
   } else {
-    logger.error("Invalid body for allow command");
-    return `Invalid syntax for allow \n usage: '/allow set-(access type) @user true|false' \n  ex-1 /allow set-multiplier @user false`;
+    return logger.error(`Invalid syntax for allow \n usage: '/allow set-(access type) @user true|false' \n  ex-1 /allow set-multiplier @user false`);
   }
-};
+}
 
 function parseComment(comment: string): { username: string; labels: string[] } {
   // Extract the @username using a regular expression

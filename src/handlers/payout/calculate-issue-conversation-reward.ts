@@ -15,21 +15,19 @@ import { ItemsToExclude } from "./post";
  * The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
  */
 
-export async function calculateIssueConversationReward(calculateIncentives: IncentivesCalculationResult): Promise<RewardsResponse | string> {
+export async function calculateIssueConversationReward(calculateIncentives: IncentivesCalculationResult): Promise<RewardsResponse> {
   const title = `Conversation`;
   const logger = getLogger();
 
   const context = getBotContext();
   const payload = context.payload as Payload;
   const issue = payload.issue;
+  const user = payload.sender;
 
   const permitComments = calculateIncentives.comments.filter(
     (content) => content.body.includes(title) && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
   );
-  if (permitComments.length > 0) {
-    logger.info(`incentivizeComments: skip to generate a permit url because it has been already posted`);
-    return { error: `incentivizeComments: skip to generate a permit url because it has been already posted` };
-  }
+  if (permitComments.length > 0) throw logger.error(`incentivizeComments: skip to generate a permit url because it has been already posted`);
 
   for (const botComment of permitComments.filter((cmt) => cmt.user.type === UserType.Bot).reverse()) {
     const botCommentBody = botComment.body;
@@ -47,7 +45,7 @@ export async function calculateIssueConversationReward(calculateIncentives: Ince
 
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
-  if (!assignee) return logger.info("incentivizeComments: skipping payment permit generation because `assignee` is `undefined`.");
+  if (!assignee) throw logger.info("incentivizeComments: skipping payment permit generation because `assignee` is `undefined`.");
 
   const issueComments = await getAllIssueComments(calculateIncentives.issue.number, "raw");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
@@ -72,6 +70,7 @@ export async function calculateIssueConversationReward(calculateIncentives: Ince
       continue;
     }
     logger.debug(`Comment parsed for the user: ${_user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+
     const account = await getWalletAddress(user.id);
     const priceInBigNumber = rewardValue.mul(calculateIncentives.baseMultiplier);
     if (priceInBigNumber.gt(calculateIncentives.permitMaxPrice)) {

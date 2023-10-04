@@ -2,7 +2,7 @@ import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAll
 import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType, Issue } from "../../../types";
 import { deadLinePrefix } from "../../shared";
-// import { getWalletAddress, getWalletMultiplier } from "../../../adapters/supabase";
+// import { getWalletAddress, getUserMultiplier } from "../../../adapters/supabase";
 import { tableComment } from "./table";
 import { taskInfo } from "../../wildcard";
 import { ASSIGN_COMMAND_ENABLED, GLOBAL_STRINGS } from "../../../configs";
@@ -13,7 +13,7 @@ export async function getWalletAddress(userId: number) {
   return await wallet.getAddress(userId);
 }
 
-async function getUserMultiplier(userId: number, repoId: number) {
+export async function getUserMultiplier(userId: number, repoId: number) {
   const { user } = getAdapters().supabase;
   return await user.getMultiplier(userId, repoId);
 }
@@ -24,9 +24,9 @@ export async function assign(body: string) {
   const config = getBotConfig();
 
   const payload = _payload as Payload;
-  const { repository, organization } = payload;
+  // const { repository, organization } = payload;
 
-  const id = organization?.id || repository?.id; // repository?.id as fallback
+  // const id = organization?.id || repository?.id; // repository?.id as fallback
 
   const staleTask = config.assign.staleTaskTime;
 

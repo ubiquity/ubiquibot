@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { upsertWalletAddress } from "../../../adapters/supabase";
+// import { upsertWalletAddress } from "../../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { resolveAddress } from "../../../helpers";
 import { Payload } from "../../../types";

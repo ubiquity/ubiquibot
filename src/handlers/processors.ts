@@ -1,7 +1,7 @@
 import { GithubEvent, Handler, ActionHandler } from "../types";
 import { closePullRequestForAnIssue, commentWithAssignMessage } from "./assign";
 import { pricingLabelLogic, validatePriceLabels } from "./pricing";
-import { checkTasksToUnassign, collectAnalytics } from "./wildcard";
+import { checkTasksToUnassign } from "./wildcard";
 import { nullHandler } from "./shared";
 import { handleComment, issueClosedCallback, issueCreatedCallback, issueReopenedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
@@ -78,7 +78,4 @@ export const processors: Record<string, Handler> = {
   },
 };
 
-/**
- * @dev The handlers which will run on every event hooked
- */
-export const wildcardProcessors: ActionHandler[] = [checkTasksToUnassign, collectAnalytics];
+export const wildcardProcessors: ActionHandler[] = [checkTasksToUnassign]; // The handlers which will run after every event

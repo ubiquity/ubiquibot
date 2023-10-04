@@ -16,7 +16,7 @@ import { DEFAULT_RPC_ENDPOINT } from "../configs";
 import { PayoutConfigSchema } from "../types";
 import { getUserPermission } from "./issue";
 import { getBotContext, getLogger } from "../bindings";
-import { getAccessLevel } from "../adapters/supabase";
+// import { getAccessLevel } from "../adapters/supabase";
 
 // available tokens for payouts
 const PAYMENT_TOKEN_PER_NETWORK: Record<string, { rpc: string; token: string }> = {

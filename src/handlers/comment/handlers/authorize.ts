@@ -1,11 +1,11 @@
-import { _approveLabelChange, getLabelChanges } from "../../../adapters/supabase";
+// import { _approveLabelChange, getLabelChanges } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
 import { getUserPermission } from "../../../helpers";
 import { Payload } from "../../../types";
 import { ErrorDiff } from "../../../utils/helpers";
 import { taskInfo } from "../../wildcard";
 
-export const approveLabelChange = async () => {
+export async function approveLabelChange() {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -42,4 +42,4 @@ export const approveLabelChange = async () => {
   await _approveLabelChange(labelChanges.id);
 
   return `Label change has been approved, permit can now be generated`;
-};
+}

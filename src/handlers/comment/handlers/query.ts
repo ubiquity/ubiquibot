@@ -1,4 +1,4 @@
-import { getAllAccessLevels, getWalletInfo, upsertAccessControl } from "../../../adapters/supabase";
+// import { getAllAccessLevels, getWalletInfo, upsertAccessControl } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
 import { Payload } from "../../../types";
 import { ErrorDiff } from "../../../utils/helpers";

@@ -1,4 +1,4 @@
-import { saveLabelChange } from "../../adapters/supabase";
+// import { saveLabelChange } from "../../adapters/supabase";
 import { getBotContext, getLogger } from "../../bindings";
 import { hasLabelEditPermission } from "../../helpers";
 import { Payload } from "../../types";

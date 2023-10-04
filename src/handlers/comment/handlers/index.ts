@@ -11,7 +11,7 @@ import { setAccess } from "./allow";
 import { ask } from "./ask";
 import { multiplier } from "./multiplier";
 import { BigNumber, ethers } from "ethers";
-import { addPenalty } from "../../../adapters/supabase";
+// import { addPenalty } from "../../../adapters/supabase";
 import {
   addCommentToIssue,
   createLabel,
@@ -28,16 +28,19 @@ import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import {
   handleIssueClosed,
   incentivesCalculation,
-  calculateIssueConversationReward,
-  calculateIssueCreatorReward,
+  // calculateIssueConversationReward,
+  // calculateIssueCreatorReward,
   calculateIssueAssigneeReward,
-  calculatePullRequestReviewsReward,
+  // calculateReviewContributorRewards,
 } from "../../payout";
 import { query } from "./query";
 import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
 import Decimal from "decimal.js";
 import { ErrorDiff } from "../../../utils/helpers";
+import { calculateIssueConversationReward } from "../../payout/calculate-issue-conversation-reward";
+import { calculateIssueCreatorReward } from "../../payout/calculate-issue-creator-reward";
+import { calculateReviewContributorRewards } from "../../payout/calculate-review-contributor-rewards";
 
 export * from "./assign";
 export * from "./wallet";
@@ -101,7 +104,7 @@ export const issueClosedCallback = async (): Promise<void> => {
     const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
     const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
     const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
-    const pullRequestReviewersReward = await calculatePullRequestReviewsReward(calculateIncentives);
+    const pullRequestReviewersReward = await calculateReviewContributorRewards(calculateIncentives);
 
     const { error } = await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, pullRequestReviewersReward, calculateIncentives);
 

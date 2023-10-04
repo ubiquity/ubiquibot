@@ -4,7 +4,7 @@ import { getBotConfig, getBotContext, getLogger } from "../bindings";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 import Decimal from "decimal.js";
 import { Payload } from "../types";
-import { savePermit } from "../adapters/supabase";
+// import { savePermit } from "../adapters/supabase";
 
 const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on all networks
 

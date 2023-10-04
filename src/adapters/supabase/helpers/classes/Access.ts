@@ -26,7 +26,7 @@ export class Access extends Super {
     return userWithAccess[0].access;
   }
 
-  public async setAccess(access: string[], node: GitHubNode, userId: number): Promise<unknown> {
+  public async setAccess(access: string[], node: GitHubNode, userId: number): Promise<null> {
     const { data, error } = await this.client.from("access").upsert({ access, ...node, user_id: userId });
     if (error) throw error;
     return data;

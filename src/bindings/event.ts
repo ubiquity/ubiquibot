@@ -18,10 +18,10 @@ let adapters = {} as ReturnType<typeof createAdapters>;
 export const getAdapters = () => adapters;
 
 export type Logger = {
-  info: (msg: string | object, options?: JSON) => typeof msg;
-  debug: (msg: string | object, options?: JSON) => typeof msg;
-  warn: (msg: string | object, options?: JSON) => typeof msg;
-  error: (msg: string | object, options?: JSON) => typeof msg;
+  info: (msg: string | object, options?: JSON) => string;
+  debug: (msg: string | object, options?: JSON) => string;
+  warn: (msg: string | object, options?: JSON) => string;
+  error: (msg: string | object, options?: JSON) => string;
 };
 
 let logger: Logger;
