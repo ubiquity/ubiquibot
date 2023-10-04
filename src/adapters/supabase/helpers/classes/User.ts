@@ -2,6 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "../../types/database";
 import { GitHubNode } from "../client";
 import { Wallet, WalletResponse, WalletRow } from "./Wallet";
+
 // const { supabase } = getAdapters();
 type UserData = Database["public"]["Tables"]["users"]["Insert"] | Database["public"]["Tables"]["users"]["Update"];
 export type UserRow = Database["public"]["Tables"]["users"]["Row"];

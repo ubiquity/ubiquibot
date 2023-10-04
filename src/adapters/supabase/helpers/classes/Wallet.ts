@@ -17,19 +17,19 @@ export class Wallet extends User {
     super(supabase);
   }
 
-  async _getWallet(id: number): Promise<UserWithWallet> {
+  async _getUserWithWallet(id: number): Promise<UserWithWallet> {
     const { data, error } = await this.supabase.from("users").select("*, wallets(*)").filter("id", "eq", id);
     if (error) throw error;
     return data;
   }
 
   async getAddress(id: number): Promise<string> {
-    const data = await this._getWallet(id);
+    const data = await this._getUserWithWallet(id);
     if (data[0].wallets.address === null) throw new Error("Wallet address is null");
     return data[0].wallets.address;
   }
 
-  async getWalletCommentUrl(nodeId: string): Promise<string> {
+  async _getWalletCommentUrl(nodeId: string): Promise<string> {
     const response = await graphql(
       `query {
         node(id: "${nodeId}") {
@@ -45,6 +45,22 @@ export class Wallet extends User {
       }
     );
     return response.node.url;
+  }
+
+  async getWalletRegistrationUrl(id: number): Promise<string> {
+    const userWithWallet = await this._getUserWithWallet(id);
+    if (!userWithWallet[0].wallets.location_id) throw new Error("Location id of wallet registration comment is null");
+
+    const locationId = userWithWallet[0].wallets.location_id;
+
+    const { data, error } = await this.supabase.from("location").select("*").eq("id", locationId);
+    if (error) throw error;
+
+    const nodeId = data[0].node_id;
+    if (!nodeId) throw new Error("Node id of wallet registration comment is null");
+
+    const url = await this._getWalletCommentUrl(nodeId);
+    return url;
   }
 
   // async _get(id: string): Promise<WalletResponse> {

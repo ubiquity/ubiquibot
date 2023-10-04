@@ -16,8 +16,9 @@ async function test() {
   try {
     const wallet = new Wallet(supabase);
     const address = await wallet.getAddress(4975670 as GitHubUser["id"]);
-    const url = await wallet.getWalletCommentUrl("IC_kwDOJkWy-s5oEw1b" as GitHubComment["node_id"]);
-    console.trace(address, url);
+    console.trace(address);
+    const url = await wallet.getWalletRegistrationUrl(4975670 as GitHubUser["id"]);
+    console.trace(url);
   } catch (e) {
     console.error(e);
   }
