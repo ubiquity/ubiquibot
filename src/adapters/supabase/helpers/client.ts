@@ -1,8 +1,10 @@
 import { Database } from "../types/database";
 
 export type GitHubNode = {
-  id: string;
-  type: GitHubNodeType;
+  // will leave support for id and type until more research is completed to confirm that it can be removed
+  id?: string;
+  type?: GitHubNodeType;
+  // use HTML URL so that administrators can easily audit the location of the node
   url: string;
 };
 
