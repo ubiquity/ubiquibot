@@ -2,17 +2,17 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { createAdapters } from "../../..";
-import { User } from "./User";
+import { Context } from "probot";
+import { loadConfig } from "../../../../bindings/config";
 import { Wallet } from "./Wallet";
-
 const SUPABASE_URL = process.env.SUPABASE_URL;
 if (!SUPABASE_URL) throw new Error("SUPABASE_URL is not defined");
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 if (!SUPABASE_KEY) throw new Error("SUPABASE_KEY is not defined");
 
-const { supabase } = createAdapters({ supabase: { url: SUPABASE_URL, key: SUPABASE_KEY } });
-
-async function test() {
+async function test(context: Context) {
+  const botConfig = await loadConfig(context);
+  const { supabase } = createAdapters(botConfig);
   try {
     const wallet = new Wallet(supabase);
 
@@ -25,7 +25,9 @@ async function test() {
   }
 }
 
-void test();
+const mockContext = { supabase: { url: SUPABASE_URL, key: SUPABASE_KEY } } as unknown as Context;
+
+void test(mockContext);
 
 interface GitHubUser {
   login: "pavlovcik";
