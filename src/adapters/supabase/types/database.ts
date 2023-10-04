@@ -12,6 +12,7 @@ export interface Database {
           multiplier: number;
           node_id: string | null;
           node_type: string | null;
+          node_url: string | null;
           updated: string | null;
           user_id: number;
         };
@@ -23,6 +24,7 @@ export interface Database {
           multiplier?: number;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
           user_id: number;
         };
@@ -34,6 +36,7 @@ export interface Database {
           multiplier?: number;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
           user_id?: number;
         };
@@ -60,6 +63,7 @@ export interface Database {
           location_id: number | null;
           node_id: string | null;
           node_type: string | null;
+          node_url: string | null;
           permit_id: number | null;
           updated: string | null;
         };
@@ -70,6 +74,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           permit_id?: number | null;
           updated?: string | null;
         };
@@ -80,6 +85,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           permit_id?: number | null;
           updated?: string | null;
         };
@@ -106,6 +112,7 @@ export interface Database {
           location_id: number | null;
           node_id: string | null;
           node_type: string | null;
+          node_url: string | null;
           updated: string | null;
         };
         Insert: {
@@ -115,6 +122,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
         };
         Update: {
@@ -124,6 +132,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
         };
         Relationships: [
@@ -145,6 +154,7 @@ export interface Database {
           location_id: number | null;
           node_id: number | null;
           node_type: string | null;
+          node_url: string | null;
           updated: string | null;
         };
         Insert: {
@@ -156,6 +166,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: number | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
         };
         Update: {
@@ -167,6 +178,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: number | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
         };
         Relationships: [
@@ -213,6 +225,7 @@ export interface Database {
           log_entry: string;
           node_id: string | null;
           node_type: string | null;
+          node_url: string | null;
           updated: string | null;
         };
         Insert: {
@@ -222,6 +235,7 @@ export interface Database {
           log_entry: string;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
         };
         Update: {
@@ -231,6 +245,7 @@ export interface Database {
           log_entry?: string;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
         };
         Relationships: [
@@ -249,6 +264,7 @@ export interface Database {
           location_id: number | null;
           node_id: string | null;
           node_type: string | null;
+          node_url: string | null;
           updated: string | null;
           wallet_id: number | null;
         };
@@ -258,6 +274,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
           wallet_id?: number | null;
         };
@@ -267,6 +284,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
           wallet_id?: number | null;
         };
@@ -295,6 +313,7 @@ export interface Database {
           location_id: number | null;
           node_id: string | null;
           node_type: string | null;
+          node_url: string | null;
           nonce: number;
           partner_id: number | null;
           signature: string;
@@ -311,6 +330,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           nonce: number;
           partner_id?: number | null;
           signature: string;
@@ -327,6 +347,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           nonce?: number;
           partner_id?: number | null;
           signature?: string;
@@ -370,6 +391,7 @@ export interface Database {
           location_id: number | null;
           node_id: string | null;
           node_type: string | null;
+          node_url: string | null;
           updated: string | null;
           user_id: number;
         };
@@ -381,6 +403,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
           user_id: number;
         };
@@ -392,6 +415,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
           user_id?: number;
         };
@@ -431,6 +455,7 @@ export interface Database {
           network: number;
           node_id: string | null;
           node_type: string | null;
+          node_url: string | null;
           updated: string | null;
         };
         Insert: {
@@ -441,6 +466,7 @@ export interface Database {
           network?: number;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
         };
         Update: {
@@ -451,6 +477,7 @@ export interface Database {
           network?: number;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
         };
         Relationships: [
@@ -469,6 +496,7 @@ export interface Database {
           location_id: number | null;
           node_id: string | null;
           node_type: string | null;
+          node_url: string | null;
           updated: string | null;
           wallet_id: number | null;
         };
@@ -478,6 +506,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
           wallet_id?: number | null;
         };
@@ -487,6 +516,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
           wallet_id?: number | null;
         };
@@ -513,6 +543,7 @@ export interface Database {
           location_id: number | null;
           node_id: string | null;
           node_type: string | null;
+          node_url: string | null;
           updated: string | null;
         };
         Insert: {
@@ -522,6 +553,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
         };
         Update: {
@@ -531,6 +563,7 @@ export interface Database {
           location_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
         };
         Relationships: [

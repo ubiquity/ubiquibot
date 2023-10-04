@@ -9,7 +9,7 @@ const { supabase } = getAdapters();
 type WalletData = Database["public"]["Tables"]["wallets"]["Insert"] | Database["public"]["Tables"]["wallets"]["Update"];
 export type WalletRow = Database["public"]["Tables"]["wallets"]["Row"];
 export type WalletResponse = WalletRow[] | null;
-type UserWithWallet = (UserRow & { wallets: WalletRow })[];
+type UserWithWallet = (UserRow & { wallets: WalletRow | null })[];
 import { graphql } from "@octokit/graphql";
 
 // import supported graphql node types from github
@@ -48,9 +48,11 @@ export class Wallet extends User {
     return response.node.url;
   }
   public async getAddress(id: number): Promise<string> {
-    const data = await this._getUserWithWallet(id);
-    if (data[0].wallets.address === null) throw new Error("Wallet address is null");
-    return data[0].wallets.address;
+    const userWithWallet = await this._getUserWithWallet(id);
+    console.trace(userWithWallet);
+    if (userWithWallet[0]?.wallets?.address === undefined) throw new Error("Wallet address is undefined");
+    if (userWithWallet[0]?.wallets?.address === null) throw new Error("Wallet address is null");
+    return userWithWallet[0]?.wallets?.address;
   }
   // public async setAddress(node: GitHubNode, address: string): Promise<unknown> {
   //   const { data, error } = await this.supabase.from("wallets").upsert({ address, ...node });
@@ -59,6 +61,7 @@ export class Wallet extends User {
   // }
   public async getWalletRegistrationUrl(id: number): Promise<string> {
     const userWithWallet = await this._getUserWithWallet(id);
+
     if (!userWithWallet[0].wallets.location_id) throw new Error("Location id of wallet registration comment is null");
 
     const locationId = userWithWallet[0].wallets.location_id;
