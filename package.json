@@ -23,7 +23,8 @@
     "start:watch": "nodemon --exec 'yarn start'",
     "start": "probot run ./lib/src/index.js",
     "prepare": "husky install",
-    "test": "nyc ts-mocha --check-leaks --exit --timeout 120000 './test/**/*.spec.ts'"
+    "test": "nyc ts-mocha --check-leaks --exit --timeout 120000 './test/**/*.spec.ts'",
+    "utils:cspell": "cspell --config .cspell.json 'src/**/*.{js,ts,json,md,yml}'"
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
@@ -35,6 +36,7 @@
     "@sinclair/typebox": "^0.31.5",
     "@supabase/supabase-js": "^2.4.0",
     "@types/ms": "^0.7.31",
+    "@types/parse5": "^7.0.0",
     "@typescript-eslint/eslint-plugin": "^5.59.11",
     "@typescript-eslint/parser": "^5.59.11",
     "@uniswap/permit2-sdk": "^1.2.0",
@@ -43,12 +45,14 @@
     "ajv-formats": "^2.1.1",
     "axios": "^1.3.2",
     "copyfiles": "^2.4.1",
+    "cspell": "^7.0.0",
     "decimal.js": "^10.4.3",
     "ethers": "^5.7.2",
     "exponential-backoff": "^3.1.1",
     "husky": "^8.0.2",
     "jimp": "^0.22.4",
     "js-yaml": "^4.1.0",
+    "jsonwebtoken": "^9.0.2",
     "libsodium-wrappers": "^0.7.11",
     "lint-staged": "^13.1.0",
     "lodash": "^4.17.21",
@@ -56,6 +60,7 @@
     "node-html-parser": "^6.1.5",
     "node-html-to-image": "^3.3.0",
     "nodemon": "^2.0.19",
+    "openai": "^4.2.0",
     "parse5": "^7.1.2",
     "prettier": "^2.7.1",
     "probot": "^12.2.4",
@@ -100,6 +105,9 @@
   "lint-staged": {
     "*.{ts,json}": [
       "prettier --write"
+    ],
+    "src/**.{ts,json}": [
+      "cspell"
     ]
   },
   "nodemonConfig": {
