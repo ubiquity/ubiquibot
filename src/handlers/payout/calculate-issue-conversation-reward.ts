@@ -59,7 +59,7 @@ export async function calculateIssueConversationReward(calculateIncentives: Ince
   const fallbackReward: Record<string, Decimal> = {};
 
   // array of awaiting permits to generate
-  const reward: { account: string; priceInBigNumber: Decimal; userId: string; user: string; penaltyAmount: BigNumber }[] = [];
+  const reward: RewardsResponse["reward"] = [];
 
   for (const _user of Object.keys(issueCommentsByUser)) {
     const commentsByUser = issueCommentsByUser[_user];
@@ -78,11 +78,46 @@ export async function calculateIssueConversationReward(calculateIncentives: Ince
       continue;
     }
     if (account) {
-      reward.push({ account, priceInBigNumber, userId: commentsByUser.id, user: _user, penaltyAmount: BigNumber.from(0) });
+      // const debug = {};
+
+      reward.push({
+        account,
+        priceInBigNumber,
+        userId: parseInt(commentsByUser.id),
+        user: _user,
+        penaltyAmount: BigNumber.from(0),
+        debug: {
+          test: {
+            count: commentsByNode.length as number,
+            reward: rewardValue,
+          },
+        },
+      });
     } else {
       fallbackReward[_user] = priceInBigNumber;
     }
   }
-
-  return { error: "", title, reward, fallbackReward };
+  const debug: Record<string, { count: number; reward: Decimal }> = {};
+  return {
+    error: null,
+    title,
+    fallbackReward,
+    reward,
+    debug,
+  };
 }
+// export interface RewardsResponse {
+//   error: string | null;
+//   title?: string;
+//   userId?: number;
+//   username?: string;
+//   reward?: {
+//     account: string;
+//     priceInBigNumber: Decimal;
+//     penaltyAmount: BigNumber;
+//     user: string;
+//     userId: number;
+//     debug: Record<string, { count: number; reward: Decimal }>;
+//   }[];
+//   fallbackReward?: Record<string, Decimal>;
+// }
