@@ -3,7 +3,7 @@ import { Payload, LogLevel } from "../../../types";
 import { getOrgAndRepoFromPath } from "../../../utils/private";
 
 import { Database } from "../types/database";
-import { createAdapters } from "../../index";
+import { SupabaseClient } from "@supabase/supabase-js";
 type Logs = Database["public"]["Tables"]["logs"];
 type InsertLogs = Logs["Insert"];
 
@@ -31,7 +31,7 @@ export const getNumericLevel = (level: LogLevel) => {
 type GithubNodeType = Database["public"]["Enums"]["github_node_enum"];
 
 export class GitHubLogger implements Logger {
-  private supabase: ReturnType<typeof createAdapters>["supabase"];
+  private supabase: SupabaseClient<Database>; // ReturnType<typeof createAdapters>["supabase"];
   private maxLevel;
   private app;
   private logEnvironment;
