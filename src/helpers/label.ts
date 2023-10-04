@@ -1,10 +1,16 @@
 import { Context } from "probot";
 import { getBotConfig, getBotContext, getLogger } from "../bindings";
-import { COLORS } from "../configs";
 import { calculateTaskPrice } from "../handlers";
 import { Label, Payload } from "../types";
 import { deleteLabel } from "./issue";
 import { calculateWeight } from "../helpers";
+
+// cspell:disable
+export const COLORS = {
+  default: "ededed",
+  price: "1f883d",
+};
+// cspell:enable
 
 export const listLabelsForRepo = async (per_page?: number, page?: number): Promise<Label[]> => {
   const context = getBotContext();

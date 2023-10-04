@@ -1,6 +1,5 @@
 import { userCommands } from ".";
-import { getBotContext, getLogger } from "../../../bindings";
-import { ASSIGN_COMMAND_ENABLED } from "../../../configs";
+import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { IssueType, Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 
@@ -28,13 +27,15 @@ export const listAvailableCommands = async (body: string) => {
 };
 
 export const generateHelpMenu = () => {
+  const config = getBotConfig();
+  const startEnabled = config.command.find((command) => command.name === "start");
   let helpMenu = "### Available Commands\n```";
   const commands = userCommands();
   commands.map((command) => {
     // if first command, add a new line
     if (command.id === commands[0].id) {
       helpMenu += `\n`;
-      if (!ASSIGN_COMMAND_ENABLED) return;
+      if (!startEnabled) return;
     }
     helpMenu += `- ${command.id}: ${command.description}`;
     // if not last command, add a new line (fixes too much space below)
@@ -42,8 +43,7 @@ export const generateHelpMenu = () => {
       helpMenu += `\n`;
     }
   });
-  if (!ASSIGN_COMMAND_ENABLED) {
-    helpMenu += "\n***_To assign yourself to an issue, please open a draft pull request that is linked to it._***";
-  }
-  return helpMenu + "```";
+
+  if (!startEnabled) helpMenu += "```\n***_To assign yourself to an issue, please open a draft pull request that is linked to it._***";
+  return helpMenu;
 };

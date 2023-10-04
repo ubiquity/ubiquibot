@@ -16,7 +16,7 @@ const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
  * The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
  */
 export const calculateIssueConversationReward = async (calculateIncentives: IncentivesCalculationResult): Promise<RewardsResponse> => {
-  const title = `Conversation`;
+  const title = `Issue-Comments`;
   const logger = getLogger();
 
   const context = getBotContext();
@@ -54,7 +54,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
 
   const issueComments = await getAllIssueComments(calculateIncentives.issue.number, "full");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
-  const issueCommentsByUser: Record<string, { id: string; comments: string[] }> = {};
+  const issueCommentsByUser: Record<string, { id: number; comments: string[] }> = {};
   for (const issueComment of issueComments) {
     const user = issueComment.user;
     if (user.type == UserType.Bot || user.login == assignee.login) continue;
@@ -70,7 +70,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
 
     // Store the comment along with user's login and node_id
     if (!issueCommentsByUser[user.login]) {
-      issueCommentsByUser[user.login] = { id: user.node_id, comments: [] };
+      issueCommentsByUser[user.login] = { id: user.id, comments: [] };
     }
     issueCommentsByUser[user.login].comments.push(issueComment.body_html);
   }
@@ -80,25 +80,40 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   const fallbackReward: Record<string, Decimal> = {};
 
   // array of awaiting permits to generate
-  const reward: { account: string; priceInBigNumber: Decimal; userId: string; user: string; penaltyAmount: BigNumber }[] = [];
+
+  const reward: {
+    account: string;
+    priceInBigNumber: Decimal;
+    user: string;
+    penaltyAmount: BigNumber;
+    userId: number;
+    debug: Record<string, { count: number; reward: Decimal }>;
+  }[] = [];
 
   for (const user of Object.keys(issueCommentsByUser)) {
     const commentsByUser = issueCommentsByUser[user];
     const commentsByNode = parseComments(commentsByUser.comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, calculateIncentives.incentives);
-    if (rewardValue.equals(0)) {
+    if (rewardValue.sum.equals(0)) {
       logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`);
       continue;
     }
-    logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+    logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue.sum}`);
     const account = await getWalletAddress(user);
-    const priceInBigNumber = rewardValue.mul(calculateIncentives.baseMultiplier);
+    const priceInBigNumber = rewardValue.sum.mul(calculateIncentives.baseMultiplier);
     if (priceInBigNumber.gt(calculateIncentives.permitMaxPrice)) {
       logger.info(`Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
       continue;
     }
     if (account) {
-      reward.push({ account, priceInBigNumber, userId: commentsByUser.id, user, penaltyAmount: BigNumber.from(0) });
+      reward.push({
+        account,
+        priceInBigNumber,
+        userId: commentsByUser.id,
+        user,
+        penaltyAmount: BigNumber.from(0),
+        debug: rewardValue.sumByType,
+      });
     } else {
       fallbackReward[user] = priceInBigNumber;
     }
@@ -108,22 +123,13 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
 };
 
 export const calculateIssueCreatorReward = async (incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> => {
-  const title = `Task Creator`;
+  const title = `Issue-Creation`;
   const logger = getLogger();
 
   const issueDetailed = taskInfo(incentivesCalculation.issue);
   if (!issueDetailed.isTask) {
     logger.info(`incentivizeCreatorComment: its not a funded task`);
     return { error: `incentivizeCreatorComment: its not a funded task` };
-  }
-
-  const comments = await getAllIssueComments(incentivesCalculation.issue.number);
-  const permitComments = comments.filter(
-    (content) => content.body.includes(title) && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
-  );
-  if (permitComments.length > 0) {
-    logger.info(`incentivizeCreatorComment: skip to generate a permit url because it has been already posted`);
-    return { error: `incentivizeCreatorComment: skip to generate a permit url because it has been already posted` };
   }
 
   const assignees = incentivesCalculation.issue.assignees ?? [];
@@ -160,15 +166,16 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
   return {
     error: "",
     title,
-    userId: creator.node_id,
+    userId: creator.id,
     username: creator.login,
     reward: [
       {
         priceInBigNumber: result?.amountInBigNumber ?? new Decimal(0),
         account: result?.account,
-        userId: "",
+        userId: creator.id,
         user: "",
         penaltyAmount: BigNumber.from(0),
+        debug: {},
       },
     ],
   };
@@ -177,7 +184,7 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
 export const calculatePullRequestReviewsReward = async (incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> => {
   const logger = getLogger();
   const context = getBotContext();
-  const title = "Reviewer";
+  const title = "Review-Reviewer";
 
   const linkedPullRequest = await gitLinkedPrParser({
     owner: incentivesCalculation.payload.repository.owner.login,
@@ -192,15 +199,6 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
     return { error: `calculatePullRequestReviewsReward: No linked pull requests found` };
   }
 
-  const comments = await getAllIssueComments(incentivesCalculation.issue.number);
-  const permitComments = comments.filter(
-    (content) => content.body.includes(title) && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
-  );
-  if (permitComments.length > 0) {
-    logger.info(`calculatePullRequestReviewsReward: skip to generate a permit url because it has been already posted`);
-    return { error: `calculatePullRequestReviewsReward: skip to generate a permit url because it has been already posted` };
-  }
-
   const assignees = incentivesCalculation.issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
@@ -211,7 +209,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
   const prReviews = await getAllPullRequestReviews(context, latestLinkedPullRequest.number, "full");
   const prComments = await getAllIssueComments(latestLinkedPullRequest.number, "full");
   logger.info(`Getting the PR reviews done. comments: ${JSON.stringify(prReviews)}`);
-  const prReviewsByUser: Record<string, { id: string; comments: string[] }> = {};
+  const prReviewsByUser: Record<string, { id: number; comments: string[] }> = {};
   for (const review of prReviews) {
     const user = review.user;
     if (!user) continue;
@@ -221,7 +219,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
       continue;
     }
     if (!prReviewsByUser[user.login]) {
-      prReviewsByUser[user.login] = { id: user.node_id, comments: [] };
+      prReviewsByUser[user.login] = { id: user.id, comments: [] };
     }
     prReviewsByUser[user.login].comments.push(review.body_html);
   }
@@ -235,7 +233,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
       continue;
     }
     if (!prReviewsByUser[user.login]) {
-      prReviewsByUser[user.login] = { id: user.node_id, comments: [] };
+      prReviewsByUser[user.login] = { id: user.id, comments: [] };
     }
     prReviewsByUser[user.login].comments.push(comment.body_html);
   }
@@ -243,7 +241,14 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
   logger.info(`calculatePullRequestReviewsReward: Filtering by the user type done. commentsByUser: ${JSON.stringify(prReviewsByUser)}`);
 
   // array of awaiting permits to generate
-  const reward: { account: string; priceInBigNumber: Decimal; userId: string; user: string; penaltyAmount: BigNumber }[] = [];
+  const reward: {
+    account: string;
+    priceInBigNumber: Decimal;
+    userId: number;
+    user: string;
+    penaltyAmount: BigNumber;
+    debug: Record<string, { count: number; reward: Decimal }>;
+  }[] = [];
 
   // The mapping between gh handle and amount in big number
   const fallbackReward: Record<string, Decimal> = {};
@@ -252,20 +257,22 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
     const commentByUser = prReviewsByUser[user];
     const commentsByNode = parseComments(commentByUser.comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, incentivesCalculation.incentives);
-    if (rewardValue.equals(0)) {
+    if (rewardValue.sum.equals(0)) {
       logger.info(`calculatePullRequestReviewsReward: Skipping to generate a permit url because the reward value is 0. user: ${user}`);
       continue;
     }
-    logger.info(`calculatePullRequestReviewsReward: Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+    logger.info(
+      `calculatePullRequestReviewsReward: Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue.sum}`
+    );
     const account = await getWalletAddress(user);
-    const priceInBigNumber = rewardValue.mul(incentivesCalculation.baseMultiplier);
+    const priceInBigNumber = rewardValue.sum.mul(incentivesCalculation.baseMultiplier);
     if (priceInBigNumber.gt(incentivesCalculation.permitMaxPrice)) {
       logger.info(`calculatePullRequestReviewsReward: Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
       continue;
     }
 
     if (account) {
-      reward.push({ account, priceInBigNumber, userId: commentByUser.id, user, penaltyAmount: BigNumber.from(0) });
+      reward.push({ account, priceInBigNumber, userId: commentByUser.id, user, penaltyAmount: BigNumber.from(0), debug: rewardValue.sumByType });
     } else {
       fallbackReward[user] = priceInBigNumber;
     }
@@ -287,13 +294,13 @@ const generatePermitForComments = async (
   const logger = getLogger();
   const commentsByNode = parseComments(comments, ItemsToExclude);
   const rewardValue = calculateRewardValue(commentsByNode, incentives);
-  if (rewardValue.equals(0)) {
+  if (rewardValue.sum.equals(0)) {
     logger.info(`No reward for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
     return;
   }
-  logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+  logger.debug(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue.sum}`);
   const account = await getWalletAddress(user);
-  const amountInBigNumber = rewardValue.mul(multiplier);
+  const amountInBigNumber = rewardValue.sum.mul(multiplier);
   if (amountInBigNumber.gt(permitMaxPrice)) {
     logger.info(`Skipping issue creator reward for user ${user} because reward is higher than payment permit max price`);
     return;
@@ -311,10 +318,23 @@ const generatePermitForComments = async (
  * @param incentives - The basic price table for reward calculation
  * @returns - The reward value
  */
-const calculateRewardValue = (comments: Record<string, string[]>, incentives: Incentives): Decimal => {
+const calculateRewardValue = (
+  comments: Record<string, string[]>,
+  incentives: Incentives
+): { sum: Decimal; sumByType: Record<string, { count: number; reward: Decimal }> } => {
   let sum = new Decimal(0);
+  const sumByType: Record<string, { count: number; reward: Decimal }> = {};
+
   for (const key of Object.keys(comments)) {
     const value = comments[key];
+
+    // Initialize the sum for this key if it doesn't exist
+    if (!sumByType[key]) {
+      sumByType[key] = {
+        count: 0,
+        reward: new Decimal(0),
+      };
+    }
 
     // if it's a text node calculate word count and multiply with the reward value
     if (key == "#text") {
@@ -322,7 +342,10 @@ const calculateRewardValue = (comments: Record<string, string[]>, incentives: In
         continue;
       }
       const wordReward = new Decimal(incentives.comment.totals.word);
-      const reward = wordReward.mul(value.map((str) => str.trim().split(" ").length).reduce((totalWords, wordCount) => totalWords + wordCount, 0));
+      const wordCount = value.map((str) => str.trim().split(" ").length).reduce((totalWords, wordCount) => totalWords + wordCount, 0);
+      const reward = wordReward.mul(wordCount);
+      sumByType[key].count += wordCount;
+      sumByType[key].reward = wordReward;
       sum = sum.add(reward);
     } else {
       if (!incentives.comment.elements[key]) {
@@ -330,9 +353,11 @@ const calculateRewardValue = (comments: Record<string, string[]>, incentives: In
       }
       const rewardValue = new Decimal(incentives.comment.elements[key]);
       const reward = rewardValue.mul(value.length);
+      sumByType[key].count += value.length;
+      sumByType[key].reward = rewardValue;
       sum = sum.add(reward);
     }
   }
 
-  return sum;
+  return { sum, sumByType };
 };

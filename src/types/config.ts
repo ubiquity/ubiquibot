@@ -58,6 +58,16 @@ export const SupabaseConfigSchema = Type.Object({
   key: Type.String(),
 });
 
+export const LogNotificationSchema = Type.Object({
+  url: Type.String(),
+  secret: Type.String(),
+  groupId: Type.Number(),
+  topicId: Type.Number(),
+  enabled: Type.Boolean(),
+});
+
+export type LogNotification = Static<typeof LogNotificationSchema>;
+
 export const PayoutConfigSchema = Type.Object({
   evmNetworkId: Type.Number(),
   rpc: Type.String(),
@@ -133,6 +143,7 @@ export const BotConfigSchema = Type.Object({
   payout: PayoutConfigSchema,
   unassign: UnassignConfigSchema,
   supabase: SupabaseConfigSchema,
+  logNotification: LogNotificationSchema,
   mode: ModeSchema,
   assign: AssignSchema,
   sodium: SodiumSchema,
@@ -219,6 +230,13 @@ export const MergedConfigSchema = Type.Object({
   registerWalletWithVerification: Type.Boolean(),
   staleTaskTime: Type.String(),
   timeLabels: Type.Array(LabelItemSchema),
+  staleBountyTime: Type.String(),
+  timeRangeForMaxIssue: Type.Number(),
+  timeRangeForMaxIssueEnabled: Type.Boolean(),
+  permitBaseUrl: Type.String(),
+  botDelay: Type.Number(),
+  followUpTime: Type.String(),
+  disqualifyTime: Type.String(),
 });
 
 export type MergedConfig = Static<typeof MergedConfigSchema>;

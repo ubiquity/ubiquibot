@@ -1,12 +1,12 @@
-import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments, calculateWeight, calculateDuration } from "../../../helpers";
-import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
-import { Payload, LabelItem, Comment, IssueType, Issue } from "../../../types";
-import { deadLinePrefix } from "../../shared";
 import { getWalletAddress, getWalletMultiplier } from "../../../adapters/supabase";
-import { tableComment } from "./table";
-import { taskInfo } from "../../wildcard";
-import { ASSIGN_COMMAND_ENABLED, GLOBAL_STRINGS } from "../../../configs";
+import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
+import { GLOBAL_STRINGS } from "../../../configs";
+import { addAssignees, calculateDuration, calculateWeight, getAllIssueComments, getAssignedIssues, getAvailableOpenedPullRequests } from "../../../helpers";
+import { Comment, Issue, IssueType, LabelItem, Payload } from "../../../types";
 import { isParentIssue } from "../../pricing";
+import { deadLinePrefix } from "../../shared";
+import { taskInfo } from "../../wildcard";
+import { tableComment } from "./table";
 
 export const assign = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -19,6 +19,7 @@ export const assign = async (body: string) => {
   const id = organization?.id || repository?.id; // repository?.id as fallback
 
   const staleTask = config.assign.staleTaskTime;
+  const startEnabled = config.command.find((command) => command.name === "start");
 
   logger.info(`Received '/start' command from user: ${payload.sender.login}, body: ${body}`);
   const issue = (_payload as Payload).issue;
@@ -28,7 +29,7 @@ export const assign = async (body: string) => {
     return "Skipping '/start' because of no issue instance";
   }
 
-  if (!ASSIGN_COMMAND_ENABLED) {
+  if (!startEnabled?.enabled) {
     logger.info(`Ignore '/start' command from user: ASSIGN_COMMAND_ENABLED config is set false`);
     return GLOBAL_STRINGS.assignCommandDisabledComment;
   }

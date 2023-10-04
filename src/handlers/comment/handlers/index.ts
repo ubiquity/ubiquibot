@@ -52,14 +52,15 @@ export * from "./authorize";
 export interface RewardsResponse {
   error: string | null;
   title?: string;
-  userId?: string;
+  userId?: number;
   username?: string;
   reward?: {
     account: string;
     priceInBigNumber: Decimal;
     penaltyAmount: BigNumber;
     user: string;
-    userId: string;
+    userId: number;
+    debug: Record<string, { count: number; reward: Decimal }>;
   }[];
   fallbackReward?: Record<string, Decimal>;
 }

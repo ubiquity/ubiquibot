@@ -162,6 +162,13 @@ export const getConfig = async (context: Context) => {
     registerWalletWithVerification: mergedConfigData.registerWalletWithVerification,
     staleTaskTime: mergedConfigData.staleTaskTime,
     timeLabels: mergedConfigData.timeLabels,
+    staleBountyTime: mergedConfigData.staleBountyTime,
+    timeRangeForMaxIssue: mergedConfigData.timeRangeForMaxIssue,
+    timeRangeForMaxIssueEnabled: mergedConfigData.timeRangeForMaxIssueEnabled,
+    permitBaseUrl: mergedConfigData.permitBaseUrl,
+    botDelay: mergedConfigData.botDelay,
+    followUpTime: mergedConfigData.followUpTime,
+    disqualifyTime: mergedConfigData.disqualifyTime,
   };
 
   return configData;

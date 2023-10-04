@@ -98,6 +98,11 @@ export const DefaultConfig: MergedConfig = {
     fundExternalClosedIssue: true,
   },
   staleTaskTime: "0d",
+  timeRangeForMaxIssue: 24, //24
+  timeRangeForMaxIssueEnabled: false,
+  permitBaseUrl: "https://pay.ubq.fi",
+  followUpTime: "4 days",
+  disqualifyTime: "7 days",
   newContributorGreeting: {
     enabled: false,
     header:
