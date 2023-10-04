@@ -14,7 +14,7 @@ const adapters = createAdapters({ supabase: { url: SUPABASE_URL, key: SUPABASE_K
 async function test() {
   try {
     const user = new User(adapters.supabase);
-    const wallet = await user.getWallet(4975670 as GitHubUser["id"]);
+    const wallet = await user.getWalletAddress(4975670 as GitHubUser["id"]);
     console.trace(wallet);
   } catch (e) {
     console.error(e);

@@ -1,10 +1,7 @@
-// import { getLogger } from "../../../bindings";
-
-// const logger = getLogger();
-
 export type GitHubNode = {
   id: string;
   type: GitHubNodeTypes;
+  url?: string; // not yet implemented, needs database triggers and database columns to be added
 };
 
 enum GitHubNodeTypes {
