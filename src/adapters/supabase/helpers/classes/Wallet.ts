@@ -1,19 +1,15 @@
+import { SupabaseClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
-dotenv.config();
-import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
-import { getAdapters } from "../../../../bindings/event";
+// import { getAdapters } from "../../../../bindings/event";
 import { Database } from "../../types/database";
-import { GitHubNode } from "../client";
 import { User, UserRow } from "./User";
-const { supabase } = getAdapters();
-type WalletData = Database["public"]["Tables"]["wallets"]["Insert"] | Database["public"]["Tables"]["wallets"]["Update"];
+dotenv.config();
+// const { supabase } = getAdapters();
+// type WalletData = Database["public"]["Tables"]["wallets"]["Insert"] | Database["public"]["Tables"]["wallets"]["Update"];
 export type WalletRow = Database["public"]["Tables"]["wallets"]["Row"];
 export type WalletResponse = WalletRow[] | null;
 type UserWithWallet = (UserRow & { wallets: WalletRow | null })[];
 // import { graphql } from "@octokit/graphql";
-
-// import supported graphql node types from github
-import { GitHubNodeType } from "../client";
 
 export class Wallet extends User {
   constructor(supabase: SupabaseClient) {

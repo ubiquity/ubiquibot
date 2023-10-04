@@ -13,16 +13,20 @@ if (!SUPABASE_KEY) throw new Error("SUPABASE_KEY is not defined");
 async function test(context: Context) {
   const botConfig = await loadConfig(context);
   const { supabase } = createAdapters(botConfig);
+  const userId = 4975670 as GitHubUser["id"];
+  const results = [] as unknown[];
   try {
     const wallet = new Wallet(supabase);
-
-    const address = await wallet.getAddress(4975670 as GitHubUser["id"]);
-    console.trace(address);
-    const url = await wallet.getWalletRegistrationUrl(4975670 as GitHubUser["id"]);
-    console.trace(url);
+    const address = await wallet.getAddress(userId);
+    const url = await wallet.getWalletRegistrationUrl(userId);
+    results.push(address);
+    results.push(url);
+    // console.trace(address);
+    // console.trace(url);
   } catch (e) {
     console.error(e);
   }
+  console.trace(results);
 }
 
 const mockContext = { supabase: { url: SUPABASE_URL, key: SUPABASE_KEY } } as unknown as Context;
@@ -63,7 +67,7 @@ interface GitHubUser {
   created_at: "2013-07-09T18:20:01Z";
   updated_at: "2023-10-03T18:27:08Z";
 }
-
+/*
 interface GitHubComment {
   url: "https://api.github.com/repos/ubiquibot/staging/issues/comments/1746079067";
   html_url: "https://github.com/ubiquibot/staging/issues/186#issuecomment-1746079067";
@@ -108,7 +112,7 @@ interface GitHubComment {
   };
   performed_via_github_app: null;
 }
-
+*/
 /*
 {
   node(id: "IC_kwDOJkWy-s5oEw1b") {

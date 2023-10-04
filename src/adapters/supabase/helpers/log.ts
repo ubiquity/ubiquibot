@@ -4,6 +4,7 @@ import { getOrgAndRepoFromPath } from "../../../utils/private";
 
 import { Database } from "../types/database";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { GitHubNode } from "./client";
 type Logs = Database["public"]["Tables"]["logs"];
 type InsertLogs = Logs["Insert"];
 
@@ -55,42 +56,21 @@ export class GitHubLogger implements Logger {
   // }
 
   // Function to insert a new log entry with a GitHub node ID and type
-  private async _insert({ githubNodeId, githubNodeType, logMessage }: { githubNodeId?: string; githubNodeType?: GithubNodeType; logMessage: string }) {
-    let locationId: number | undefined;
+  private async _insert({ gitHubNode, logEntry }: { gitHubNode: GitHubNode | null; logEntry: string }) {
+    let id, type, url;
 
-    if (githubNodeId && githubNodeType) {
-      // Check if a location with the same GitHub node ID and type exists
-      const { data: existingLocation, error } = await this.supabase.from("locations").select("id").eq(`node_id_${githubNodeType}`, githubNodeId).single();
-
-      if (error) {
-        console.error("Error checking existing location:", error);
-        return null;
-      } else if (existingLocation) {
-        // If the location already exists, use its ID
-        locationId = existingLocation.id;
-      } else {
-        // If the location doesn't exist, create a new one
-        const { data: newLocation, error: locationError } = await this.supabase
-          .from("locations")
-          .insert([{ [`node_id_${githubNodeType}`]: githubNodeId }])
-          .single();
-
-        if (locationError || !newLocation) {
-          console.error("Error creating a new location:", locationError);
-          return null;
-        }
-
-        locationId = (newLocation as Database["public"]["Tables"]["locations"]["Row"]).id;
-      }
+    if (gitHubNode) {
+      id = gitHubNode.id;
+      type = gitHubNode.type;
+      url = gitHubNode.url;
     }
 
-    // Insert the log entry with the retrieved or newly created location ID
     const { data: insertedData, error: logError } = await this.supabase.from("logs").insert([
       {
-        // github_node_id: githubNodeId,
-        github_node_type: githubNodeType,
-        log_entry: logMessage,
-        location_id: locationId,
+        node_id: id,
+        node_type: type,
+        node_url: url,
+        log_entry: logEntry,
       },
     ]);
 
@@ -103,9 +83,12 @@ export class GitHubLogger implements Logger {
     }
   }
 
-  private async _processLogs(log: InsertLogs) {
+  private async _processLogs({ log, gitHubNode = null }: { log: InsertLogs; gitHubNode?: GitHubNode | null }) {
     try {
-      await this._insert({ logMessage: log.log_entry });
+      await this._insert({
+        gitHubNode,
+        logEntry: log.log_entry,
+      });
     } catch (error) {
       console.error("Error sending log, retrying:", error);
       return this.retryLimit > 0 ? await this._retryInsert(log) : null;
@@ -121,7 +104,7 @@ export class GitHubLogger implements Logger {
     await new Promise((resolve) => setTimeout(resolve, this.retryDelay));
 
     try {
-      await this._insert({ logMessage: log.log_entry });
+      await this._insert({ logEntry: log.log_entry, gitHubNode: null });
     } catch (error) {
       console.error("Error sending log (after retry):", error);
       await this._retryInsert(log, retryCount + 1);
@@ -134,7 +117,7 @@ export class GitHubLogger implements Logger {
       if (!log) {
         continue;
       }
-      await this._processLogs(log);
+      await this._processLogs({ log });
     }
   }
 
@@ -161,7 +144,7 @@ export class GitHubLogger implements Logger {
     }
   }
 
-  private _save(logMessage: string | object, level: LogLevel, errorPayload?: string | object) {
+  private _save(logEntry: string | object, level: LogLevel, errorPayload?: string | object) {
     if (getNumericLevel(level) > this.maxLevel) return; // only return errors lower than max level
 
     const context = getBotContext();
@@ -175,14 +158,14 @@ export class GitHubLogger implements Logger {
 
     const { org, repo } = getOrgAndRepoFromPath(repoFullName);
 
-    if (!logMessage) return;
+    if (!logEntry) return;
 
-    if (typeof logMessage === "object") {
+    if (typeof logEntry === "object") {
       // pass log as json stringified
-      logMessage = JSON.stringify(logMessage);
+      logEntry = JSON.stringify(logEntry);
     }
 
-    this._addToQueue({ log_entry: logMessage })
+    this._addToQueue({ log_entry: logEntry })
       .then(() => {
         return;
       })
@@ -191,7 +174,7 @@ export class GitHubLogger implements Logger {
       });
 
     if (this.logEnvironment === "development") {
-      console.log(this.app, logMessage, errorPayload, level, repo, org, commentId, issueNumber);
+      console.log(logEntry, errorPayload, level, repo, org, commentId, issueNumber);
     }
   }
 
