@@ -4,7 +4,7 @@ dotenv.config();
 import { createAdapters } from "../../..";
 import { Context } from "probot";
 import { loadConfig } from "../../../../bindings/config";
-import { Wallet } from "./Wallet";
+// import { Wallet } from "./Wallet";
 const SUPABASE_URL = process.env.SUPABASE_URL;
 if (!SUPABASE_URL) throw new Error("SUPABASE_URL is not defined");
 const SUPABASE_KEY = process.env.SUPABASE_KEY;

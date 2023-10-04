@@ -1,7 +1,8 @@
-import { getAccessLevel } from "../../adapters/supabase";
+// import { getAccessLevel } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { addCommentToIssue, getUserPermission, removeLabel, addLabelToIssue } from "../../helpers";
 import { Payload, UserType } from "../../types";
+import { getAdapters } from "../../bindings/event";
 
 export const handleLabelsAccess = async () => {
   const { publicAccessControl } = getBotConfig();
@@ -10,9 +11,11 @@ export const handleLabelsAccess = async () => {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
+
   if (!payload.issue) return;
   if (!payload.label?.name) return;
   if (payload.sender.type === UserType.Bot) return true;
+
   const sender = payload.sender.login;
   const repo = payload.repository;
   const permissionLevel = await getUserPermission(sender, context);
@@ -27,7 +30,10 @@ export const handleLabelsAccess = async () => {
   if (permissionLevel !== "admin") {
     logger.info(`Getting ${label_type} access for ${sender} on ${repo.full_name}`);
     // check permission
-    const accessible = await getAccessLevel(sender, repo.full_name, label_type);
+    const { access, user } = getAdapters().supabase;
+    const userId = await user.getUserId(sender);
+    const accessible = await access.getAccess(userId);
+    // const accessible = await access.getAccessLevel(sender, repo.full_name, label_type);
 
     if (accessible) {
       return true;

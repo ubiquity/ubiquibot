@@ -1,13 +1,12 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "../../types/database";
-import { GitHubNode } from "../client";
 import fetch from "node-fetch";
+import { Database } from "../../types/database";
 // import { Wallet, WalletResponse, WalletRow } from "./Wallet";
 
 // const { supabase } = getAdapters();
-type UserData = Database["public"]["Tables"]["users"]["Insert"] | Database["public"]["Tables"]["users"]["Update"];
+// type UserData = Database["public"]["Tables"]["users"]["Insert"] | Database["public"]["Tables"]["users"]["Update"];
 export type UserRow = Database["public"]["Tables"]["users"]["Row"];
-type UserResponse = UserRow[] | null;
+// type UserResponse = UserRow[] | null;
 
 export class User {
   supabase: SupabaseClient;

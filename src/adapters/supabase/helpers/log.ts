@@ -43,7 +43,7 @@ export class GitHubLogger implements Logger {
     this.logEnvironment = logEnvironment;
     this.maxLevel = getNumericLevel(maxLevel);
     this.retryLimit = retryLimit;
-    this.supabase = getAdapters().supabase;
+    this.supabase = getAdapters().supabase.client;
   }
 
   // async sendLogsToSupabase(log: InsertLogs) {
