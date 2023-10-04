@@ -236,6 +236,12 @@ export const MergedConfigSchema = Type.Object({
   openAITokenLimit: Type.Optional(Type.Number()),
   staleBountyTime: Type.String(),
   newContributorGreeting: NewContributorGreetingSchema,
+  timeRangeForMaxIssue: Type.Number(),
+  timeRangeForMaxIssueEnabled: Type.Boolean(),
+  permitBaseUrl: Type.String(),
+  botDelay: Type.Number(),
+  followUpTime: Type.String(),
+  disqualifyTime: Type.String(),
 });
 
 export type MergedConfig = Static<typeof MergedConfigSchema>;
