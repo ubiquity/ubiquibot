@@ -3,19 +3,21 @@ dotenv.config();
 
 import { createAdapters } from "../../..";
 import { User } from "./User";
+import { Wallet } from "./Wallet";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 if (!SUPABASE_URL) throw new Error("SUPABASE_URL is not defined");
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 if (!SUPABASE_KEY) throw new Error("SUPABASE_KEY is not defined");
 
-const adapters = createAdapters({ supabase: { url: SUPABASE_URL, key: SUPABASE_KEY } });
+const { supabase } = createAdapters({ supabase: { url: SUPABASE_URL, key: SUPABASE_KEY } });
 
 async function test() {
   try {
-    const user = new User(adapters.supabase);
-    const wallet = await user.getWalletAddress(4975670 as GitHubUser["id"]);
-    console.trace(wallet);
+    const wallet = new Wallet(supabase);
+    const address = await wallet.getAddress(4975670 as GitHubUser["id"]);
+    const url = await wallet.getWalletCommentUrl("IC_kwDOJkWy-s5oEw1b" as GitHubComment["node_id"]);
+    console.trace(address, url);
   } catch (e) {
     console.error(e);
   }
