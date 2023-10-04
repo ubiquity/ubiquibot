@@ -1,9 +1,9 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 // import { getAdapters } from "../../../../bindings/event";
 import { Database } from "../../types/database";
 import { User, UserRow } from "./User";
-dotenv.config();
+// dotenv.config();
 // const { supabase } = getAdapters();
 // type WalletData = Database["public"]["Tables"]["wallets"]["Insert"] | Database["public"]["Tables"]["wallets"]["Update"];
 export type WalletRow = Database["public"]["Tables"]["wallets"]["Row"];
@@ -17,7 +17,7 @@ export class Wallet extends User {
   }
 
   private async _getUserWithWallet(id: number): Promise<UserWithWallet> {
-    const { data, error } = await this.supabase.from("users").select("*, wallets(*)").filter("id", "eq", id);
+    const { data, error } = await this.supabase.from("users").select("*, wallets(*)").filter("user_id", "eq", id);
     if (error) throw error;
     return data;
   }
@@ -64,7 +64,7 @@ export class Wallet extends User {
 
     const locationId = userWithWallet[0].wallets.location_id;
 
-    const { data, error } = await this.supabase.from("locations").select("*").eq("id", locationId);
+    const { data, error } = await this.supabase.from("locations").select("*").eq("user_id", locationId);
     if (error) throw error;
     const nodeUrl = data[0].node_url;
     if (!nodeUrl) throw new Error("Node URL of wallet registration comment is null");

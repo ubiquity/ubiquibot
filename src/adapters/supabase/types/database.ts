@@ -10,6 +10,7 @@ export interface Database {
           labels: Json | null;
           location_id: number | null;
           multiplier: number;
+          multiplier_reason: string | null;
           node_id: string | null;
           node_type: string | null;
           node_url: string | null;
@@ -22,6 +23,7 @@ export interface Database {
           labels?: Json | null;
           location_id?: number | null;
           multiplier?: number;
+          multiplier_reason?: string | null;
           node_id?: string | null;
           node_type?: string | null;
           node_url?: string | null;
@@ -34,6 +36,7 @@ export interface Database {
           labels?: Json | null;
           location_id?: number | null;
           multiplier?: number;
+          multiplier_reason?: string | null;
           node_id?: string | null;
           node_type?: string | null;
           node_url?: string | null;

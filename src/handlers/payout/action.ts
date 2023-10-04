@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from "ethers";
-import { getLabelChanges, getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from "../../adapters/supabase";
+// import { getLabelChanges, getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import {
   addLabelToIssue,

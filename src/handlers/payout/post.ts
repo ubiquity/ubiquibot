@@ -1,4 +1,4 @@
-import { getWalletAddress } from "../../adapters/supabase";
+// import { getWalletAddress } from "../../adapters/supabase";
 import { getBotContext, getLogger } from "../../bindings";
 import { getAllIssueComments, getAllPullRequestReviews, getIssueDescription, parseComments } from "../../helpers";
 import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";

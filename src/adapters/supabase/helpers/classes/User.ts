@@ -46,4 +46,16 @@ export class User {
     const data = await response.json();
     return data.id;
   }
+
+  public async getMultiplier(user_id: number, repo_id: number): Promise<{ value: number; reason: string | null }> {
+    const { data, error } = await this.supabase.from("access").select("multiplier, multiplier_reason").eq("user_id", user_id).eq("repo_id", repo_id);
+    if (error) throw error;
+
+    const { multiplier, multiplier_reason } = data[0];
+
+    return {
+      value: multiplier ?? 1,
+      reason: multiplier_reason,
+    };
+  }
 }

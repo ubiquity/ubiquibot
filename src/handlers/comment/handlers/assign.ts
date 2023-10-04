@@ -1,12 +1,22 @@
 import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments, calculateWeight, calculateDuration } from "../../../helpers";
-import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
+import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, LabelItem, Comment, IssueType, Issue } from "../../../types";
 import { deadLinePrefix } from "../../shared";
-import { getWalletAddress, getWalletMultiplier } from "../../../adapters/supabase";
+// import { getWalletAddress, getWalletMultiplier } from "../../../adapters/supabase";
 import { tableComment } from "./table";
 import { taskInfo } from "../../wildcard";
 import { ASSIGN_COMMAND_ENABLED, GLOBAL_STRINGS } from "../../../configs";
 import { isParentIssue } from "../../pricing";
+
+async function getWalletAddress(userId: number) {
+  const { wallet } = getAdapters().supabase;
+  return await wallet.getAddress(userId);
+}
+
+async function getUserMultiplier(userId: number, repoId: number) {
+  const { user } = getAdapters().supabase;
+  return await user.getMultiplier(userId, repoId);
+}
 
 export const assign = async (body: string) => {
   const { payload: _payload } = getBotContext();
@@ -97,7 +107,7 @@ export const assign = async (body: string) => {
 
   const comment = {
     deadline: endTime.toUTCString().replace("GMT", "UTC"),
-    wallet: (await getWalletAddress(payload.sender.login)) || "Please set your wallet address to use `/wallet 0x0000...0000`",
+    wallet: (await getWalletAddress(payload.sender.id)) || "Please set your wallet address to use `/wallet 0x0000...0000`",
     commit: `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`,
     tips: `<h6>Tips:</h6>
     <ul>
@@ -128,14 +138,14 @@ export const assign = async (body: string) => {
   const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
-    const { multiplier, reason, task } = await getMultiplierInfoToDisplay(payload.sender.login, id?.toString(), issue);
+    const { multiplier, reason, task } = await getMultiplierInfoToDisplay(payload.sender.id, payload.repository.id, issue);
     return tableComment({ ...comment, multiplier, reason, task, isTaskStale, days }) + comment.tips;
   }
   return;
 };
 
-const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, issue: Issue) => {
-  const { reason, value } = await getWalletMultiplier(senderLogin, org_id);
+const getMultiplierInfoToDisplay = async (senderId: number, repoId: number, issue: Issue) => {
+  const { reason, value } = await getUserMultiplier(senderId, repoId);
 
   const multiplier = value?.toFixed(2) || "1.00";
 

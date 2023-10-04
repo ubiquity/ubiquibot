@@ -14,7 +14,7 @@ export class Access extends User {
   }
 
   private async _getUserWithAccess(id: number): Promise<UserWithAccess> {
-    const { data, error } = await this.supabase.from("access").select("*, access(*)").filter("id", "eq", id);
+    const { data, error } = await this.supabase.from("access").select("*, access(*)").filter("user_id", "eq", id);
     if (error) throw error;
     return data;
   }
@@ -40,7 +40,7 @@ export class Access extends User {
 
     const locationId = userWithAccess[0].access.location_id;
 
-    const { data, error } = await this.supabase.from("locations").select("*").eq("id", locationId);
+    const { data, error } = await this.supabase.from("locations").select("*").eq("user_id", locationId);
     if (error) throw error;
     const nodeUrl = data[0].node_url;
     if (!nodeUrl) throw new Error("Node URL of access registration comment is null");

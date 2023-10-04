@@ -10,7 +10,7 @@ export const tableComment = ({
   deadline: string;
   wallet: string;
   multiplier?: string;
-  reason?: string;
+  reason?: string | null;
   task?: string;
   isTaskStale?: boolean;
   days?: number;
