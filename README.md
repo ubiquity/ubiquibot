@@ -49,7 +49,7 @@ yarn start:watch
 - `MEASURE_SIMILARITY_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for measuring similarity (default: 0).
 - `IMPORTANT_WORDS_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for finding important words (default: 0).
 
-`APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for internal developers to use.
+`APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for core team developers to use.
 
 If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically generated when you install the app on your repository.
 
@@ -182,6 +182,15 @@ SUPABASE_KEY="XXX"
 ```
 yarn supabase start
 ```
+
+## Check Supabase Status (locally)
+```
+yarn supabase status
+```
+
+![supabase](https://github.com/ubiquity/ubiquibot/assets/41552663/e8709b8f-e7c3-49e0-876c-c15dde22c6d2)
+
+
 
 ## Logs
 
