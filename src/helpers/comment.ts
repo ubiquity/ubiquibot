@@ -1,7 +1,7 @@
 import Decimal from "decimal.js";
 import { isEmpty } from "lodash";
 import * as parse5 from "parse5";
-import { DefaultConfig } from "../configs";
+import { getBotConfig } from "../bindings";
 
 type Node = {
   nodeName: string;
@@ -17,7 +17,7 @@ const traverse = (result: Record<string, string[]>, node: Node): Record<string, 
 
   result[node.nodeName].push(node.value?.trim() ?? "");
 
-  if (node.childNodes && node.childNodes.length > 0 && !DefaultConfig.incentives.comment.ignore_children.includes(node.nodeName)) {
+  if (node.childNodes && node.childNodes.length > 0 && !getBotConfig().price.incentives.comment.ignore_children.includes(node.nodeName)) {
     node.childNodes.forEach((child) => traverse(result, child));
   }
 
