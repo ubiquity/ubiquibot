@@ -15,6 +15,7 @@ const { supabase } = createAdapters({ supabase: { url: SUPABASE_URL, key: SUPABA
 async function test() {
   try {
     const wallet = new Wallet(supabase);
+
     const address = await wallet.getAddress(4975670 as GitHubUser["id"]);
     console.trace(address);
     const url = await wallet.getWalletRegistrationUrl(4975670 as GitHubUser["id"]);

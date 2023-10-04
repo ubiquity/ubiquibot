@@ -45,17 +45,12 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   adapters = createAdapters(botConfig);
 
-  const options = {
-    app: "UbiquiBot",
-    // level: botConfig.log.level,
-  };
-
   logger = new GitHubLogger(
-    options.app,
+    // contributors will see logs in console while on development environment
     botConfig?.log?.logEnvironment ?? "development",
     botConfig?.log?.level ?? LogLevel.DEBUG,
     botConfig?.log?.retryLimit ?? 0
-  ); // contributors will see logs in console while on development env
+  );
   if (!logger) {
     return;
   }

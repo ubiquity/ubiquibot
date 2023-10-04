@@ -47,7 +47,7 @@ export interface Database {
           {
             foreignKeyName: "fk_access_location";
             columns: ["location_id"];
-            referencedRelation: "location";
+            referencedRelation: "locations";
             referencedColumns: ["id"];
           }
         ];
@@ -87,7 +87,7 @@ export interface Database {
           {
             foreignKeyName: "credits_location_id_fkey";
             columns: ["location_id"];
-            referencedRelation: "location";
+            referencedRelation: "locations";
             referencedColumns: ["id"];
           },
           {
@@ -130,7 +130,7 @@ export interface Database {
           {
             foreignKeyName: "fk_debits_location";
             columns: ["location_id"];
-            referencedRelation: "location";
+            referencedRelation: "locations";
             referencedColumns: ["id"];
           }
         ];
@@ -173,17 +173,18 @@ export interface Database {
           {
             foreignKeyName: "labels_location_id_fkey";
             columns: ["location_id"];
-            referencedRelation: "location";
+            referencedRelation: "locations";
             referencedColumns: ["id"];
           }
         ];
       };
-      location: {
+      locations: {
         Row: {
           created: string | null;
           id: number;
           node_id: string | null;
           node_type: string | null;
+          node_url: string | null;
           updated: string | null;
         };
         Insert: {
@@ -191,6 +192,7 @@ export interface Database {
           id?: number;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
         };
         Update: {
@@ -198,6 +200,7 @@ export interface Database {
           id?: number;
           node_id?: string | null;
           node_type?: string | null;
+          node_url?: string | null;
           updated?: string | null;
         };
         Relationships: [];
@@ -234,7 +237,7 @@ export interface Database {
           {
             foreignKeyName: "fk_logs_location";
             columns: ["location_id"];
-            referencedRelation: "location";
+            referencedRelation: "locations";
             referencedColumns: ["id"];
           }
         ];
@@ -271,7 +274,7 @@ export interface Database {
           {
             foreignKeyName: "fk_partners_location";
             columns: ["location_id"];
-            referencedRelation: "location";
+            referencedRelation: "locations";
             referencedColumns: ["id"];
           },
           {
@@ -335,7 +338,7 @@ export interface Database {
           {
             foreignKeyName: "fk_permits_location";
             columns: ["location_id"];
-            referencedRelation: "location";
+            referencedRelation: "locations";
             referencedColumns: ["id"];
           },
           {
@@ -396,7 +399,7 @@ export interface Database {
           {
             foreignKeyName: "fk_settlements_location";
             columns: ["location_id"];
-            referencedRelation: "location";
+            referencedRelation: "locations";
             referencedColumns: ["id"];
           },
           {
@@ -454,7 +457,7 @@ export interface Database {
           {
             foreignKeyName: "tokens_location_id_fkey";
             columns: ["location_id"];
-            referencedRelation: "location";
+            referencedRelation: "locations";
             referencedColumns: ["id"];
           }
         ];
@@ -491,7 +494,7 @@ export interface Database {
           {
             foreignKeyName: "users_location_id_fkey";
             columns: ["location_id"];
-            referencedRelation: "location";
+            referencedRelation: "locations";
             referencedColumns: ["id"];
           },
           {
@@ -534,7 +537,7 @@ export interface Database {
           {
             foreignKeyName: "wallets_location_id_fkey";
             columns: ["location_id"];
-            referencedRelation: "location";
+            referencedRelation: "locations";
             referencedColumns: ["id"];
           }
         ];
@@ -544,30 +547,73 @@ export interface Database {
       [_ in never]: never;
     };
     Functions: {
-      add_penalty: {
-        Args: {
-          _username: string;
-          _repository_name: string;
-          _network_id: string;
-          _token_address: string;
-          _penalty_amount: string;
-        };
-        Returns: string;
-      };
-      remove_penalty: {
-        Args: {
-          _username: string;
-          _repository_name: string;
-          _network_id: string;
-          _token_address: string;
-          _penalty_amount: string;
-        };
-        Returns: string;
-      };
+      [_ in never]: never;
     };
     Enums: {
-      github_node_enum: "organization" | "repository" | "issue" | "comment";
-      issue_status: "READY_TO_START" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
+      github_node_type:
+        | "App"
+        | "Bot"
+        | "CheckRun"
+        | "CheckSuite"
+        | "ClosedEvent"
+        | "CodeOfConduct"
+        | "Commit"
+        | "CommitComment"
+        | "CommitContributionsByRepository"
+        | "ContributingGuidelines"
+        | "ConvertToDraftEvent"
+        | "CreatedCommitContribution"
+        | "CreatedIssueContribution"
+        | "CreatedPullRequestContribution"
+        | "CreatedPullRequestReviewContribution"
+        | "CreatedRepositoryContribution"
+        | "CrossReferencedEvent"
+        | "Discussion"
+        | "DiscussionComment"
+        | "Enterprise"
+        | "EnterpriseUserAccount"
+        | "FundingLink"
+        | "Gist"
+        | "Issue"
+        | "IssueComment"
+        | "JoinedGitHubContribution"
+        | "Label"
+        | "License"
+        | "Mannequin"
+        | "MarketplaceCategory"
+        | "MarketplaceListing"
+        | "MergeQueue"
+        | "MergedEvent"
+        | "MigrationSource"
+        | "Milestone"
+        | "Organization"
+        | "PackageFile"
+        | "Project"
+        | "ProjectCard"
+        | "ProjectColumn"
+        | "ProjectV2"
+        | "PullRequest"
+        | "PullRequestCommit"
+        | "PullRequestReview"
+        | "PullRequestReviewComment"
+        | "ReadyForReviewEvent"
+        | "Release"
+        | "ReleaseAsset"
+        | "Repository"
+        | "RepositoryContactLink"
+        | "RepositoryTopic"
+        | "RestrictedContribution"
+        | "ReviewDismissedEvent"
+        | "SecurityAdvisoryReference"
+        | "SocialAccount"
+        | "SponsorsListing"
+        | "Team"
+        | "TeamDiscussion"
+        | "TeamDiscussionComment"
+        | "User"
+        | "Workflow"
+        | "WorkflowRun"
+        | "WorkflowRunFile";
     };
     CompositeTypes: {
       [_ in never]: never;

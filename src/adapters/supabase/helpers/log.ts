@@ -28,12 +28,9 @@ export const getNumericLevel = (level: LogLevel) => {
   }
 };
 
-type GithubNodeType = Database["public"]["Enums"]["github_node_enum"];
-
 export class GitHubLogger implements Logger {
-  private supabase: SupabaseClient<Database>; // ReturnType<typeof createAdapters>["supabase"];
+  private supabase: SupabaseClient<Database>;
   private maxLevel;
-  private app;
   private logEnvironment;
   private logQueue: InsertLogs[] = []; // Your log queue
   private maxConcurrency = 6; // Maximum concurrent requests
@@ -41,8 +38,7 @@ export class GitHubLogger implements Logger {
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
 
-  constructor(app: string, logEnvironment: string, maxLevel: LogLevel, retryLimit: number) {
-    this.app = app;
+  constructor(logEnvironment: string, maxLevel: LogLevel, retryLimit: number) {
     this.logEnvironment = logEnvironment;
     this.maxLevel = getNumericLevel(maxLevel);
     this.retryLimit = retryLimit;
@@ -59,12 +55,12 @@ export class GitHubLogger implements Logger {
   // }
 
   // Function to insert a new log entry with a GitHub node ID and type
-  async sendLogsToSupabase({ githubNodeId, githubNodeType, logMessage }: { githubNodeId?: string; githubNodeType?: GithubNodeType; logMessage: string }) {
+  private async _insert({ githubNodeId, githubNodeType, logMessage }: { githubNodeId?: string; githubNodeType?: GithubNodeType; logMessage: string }) {
     let locationId: number | undefined;
 
     if (githubNodeId && githubNodeType) {
       // Check if a location with the same GitHub node ID and type exists
-      const { data: existingLocation, error } = await this.supabase.from("location").select("id").eq(`node_id_${githubNodeType}`, githubNodeId).single();
+      const { data: existingLocation, error } = await this.supabase.from("locations").select("id").eq(`node_id_${githubNodeType}`, githubNodeId).single();
 
       if (error) {
         console.error("Error checking existing location:", error);
@@ -75,7 +71,7 @@ export class GitHubLogger implements Logger {
       } else {
         // If the location doesn't exist, create a new one
         const { data: newLocation, error: locationError } = await this.supabase
-          .from("location")
+          .from("locations")
           .insert([{ [`node_id_${githubNodeType}`]: githubNodeId }])
           .single();
 
@@ -84,7 +80,7 @@ export class GitHubLogger implements Logger {
           return null;
         }
 
-        locationId = (newLocation as Database["public"]["Tables"]["location"]["Row"]).id;
+        locationId = (newLocation as Database["public"]["Tables"]["locations"]["Row"]).id;
       }
     }
 
@@ -107,16 +103,16 @@ export class GitHubLogger implements Logger {
     }
   }
 
-  async processLogs(log: InsertLogs) {
+  private async _processLogs(log: InsertLogs) {
     try {
-      await this.sendLogsToSupabase({ logMessage: log.log_entry });
+      await this._insert({ logMessage: log.log_entry });
     } catch (error) {
       console.error("Error sending log, retrying:", error);
-      return this.retryLimit > 0 ? await this.retryLog(log) : null;
+      return this.retryLimit > 0 ? await this._retryInsert(log) : null;
     }
   }
 
-  async retryLog(log: InsertLogs, retryCount = 0) {
+  private async _retryInsert(log: InsertLogs, retryCount = 0) {
     if (retryCount >= this.retryLimit) {
       console.error("Max retry limit reached for log:", log);
       return;
@@ -125,47 +121,47 @@ export class GitHubLogger implements Logger {
     await new Promise((resolve) => setTimeout(resolve, this.retryDelay));
 
     try {
-      await this.sendLogsToSupabase({ logMessage: log.log_entry });
+      await this._insert({ logMessage: log.log_entry });
     } catch (error) {
       console.error("Error sending log (after retry):", error);
-      await this.retryLog(log, retryCount + 1);
+      await this._retryInsert(log, retryCount + 1);
     }
   }
 
-  async processLogQueue() {
+  private async _processLogQueue() {
     while (this.logQueue.length > 0) {
       const log = this.logQueue.shift();
       if (!log) {
         continue;
       }
-      await this.processLogs(log);
+      await this._processLogs(log);
     }
   }
 
-  async throttle() {
+  private async _throttle() {
     if (this.throttleCount >= this.maxConcurrency) {
       return;
     }
 
     this.throttleCount++;
     try {
-      await this.processLogQueue();
+      await this._processLogQueue();
     } finally {
       this.throttleCount--;
       if (this.logQueue.length > 0) {
-        await this.throttle();
+        await this._throttle();
       }
     }
   }
 
-  async addToQueue(log: InsertLogs) {
+  private async _addToQueue(log: InsertLogs) {
     this.logQueue.push(log);
     if (this.throttleCount < this.maxConcurrency) {
-      await this.throttle();
+      await this._throttle();
     }
   }
 
-  private save(logMessage: string | object, level: LogLevel, errorPayload?: string | object) {
+  private _save(logMessage: string | object, level: LogLevel, errorPayload?: string | object) {
     if (getNumericLevel(level) > this.maxLevel) return; // only return errors lower than max level
 
     const context = getBotContext();
@@ -186,7 +182,7 @@ export class GitHubLogger implements Logger {
       logMessage = JSON.stringify(logMessage);
     }
 
-    this.addToQueue({ log_entry: logMessage })
+    this._addToQueue({ log_entry: logMessage })
       .then(() => {
         return;
       })
@@ -199,44 +195,40 @@ export class GitHubLogger implements Logger {
     }
   }
 
-  info(message: string | object, errorPayload?: string | object) {
-    this.save(message, LogLevel.INFO, errorPayload);
+  public info(message: string | object, errorPayload?: string | object) {
+    this._save(message, LogLevel.INFO, errorPayload);
   }
 
-  warn(message: string | object, errorPayload?: string | object) {
-    this.save(message, LogLevel.WARN, errorPayload);
+  public warn(message: string | object, errorPayload?: string | object) {
+    this._save(message, LogLevel.WARN, errorPayload);
   }
 
-  debug(message: string | object, errorPayload?: string | object) {
-    this.save(message, LogLevel.DEBUG, errorPayload);
+  public debug(message: string | object, errorPayload?: string | object) {
+    this._save(message, LogLevel.DEBUG, errorPayload);
   }
 
-  error(message: string | object, errorPayload?: string | object) {
-    this.save(message, LogLevel.ERROR, errorPayload);
+  public error(message: string | object, errorPayload?: string | object) {
+    this._save(message, LogLevel.ERROR, errorPayload);
   }
 
-  async get() {
-    try {
-      const { data, error } = await this.supabase.from("logs").select("*");
+  // private async _get() {
+  //   try {
+  //     const { data, error } = await this.supabase.from("logs").select("*");
 
-      if (error) {
-        console.error("Error retrieving logs from Supabase:", error.message);
-        return [];
-      }
+  //     if (error) {
+  //       console.error("Error retrieving logs from Supabase:", error.message);
+  //       return [];
+  //     }
 
-      return data;
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error("An error occurred:", error.message);
-        return;
-      }
+  //     return data;
+  //   } catch (error) {
+  //     if (error instanceof Error) {
+  //       console.error("An error occurred:", error.message);
+  //       return;
+  //     }
 
-      console.log("Unexpected error", error);
-      return [];
-    }
-  }
+  //     console.log("Unexpected error", error);
+  //     return [];
+  //   }
+  // }
 }
-
-//
-// addLogEntryWithLocation('example_node_id_3', 'organization', 'A new log entry.');
-//
