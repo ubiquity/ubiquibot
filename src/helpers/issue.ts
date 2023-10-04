@@ -699,22 +699,21 @@ export const getCommitsOnPullRequest = async (pullNumber: number) => {
     const perPage = 100;
     let curPage = 1;
     const allCommits = [];
-    let fetchDone = false;
-    while (!fetchDone) {
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
       const response = await context.octokit.rest.pulls.listCommits({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
         pull_number: pullNumber,
-        per_page: 100,
+        per_page: perPage,
         page: curPage,
       });
       allCommits.push(...response.data);
       if (response.data.length < perPage) {
-        fetchDone = true;
         return allCommits;
       } else curPage++;
     }
-    return allCommits;
   } catch (e: unknown) {
     logger.debug(`Fetching pull request commits failed! reason: ${e}`);
     return [];
