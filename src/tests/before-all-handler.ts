@@ -1,21 +1,25 @@
 import { EmitterWebhookEventName } from "@octokit/webhooks";
 import { Probot, run } from "probot";
-import {
-  CustomOctokit,
-  orgConfig,
-  owner,
-  repo,
-  setAdminUsername,
-  setCollaboratorUsername,
-  setAdminUser,
-  setCollaboratorUser,
-  setServer,
-} from "./commands-test";
+
 import { repoConfig } from "./test-repo-config";
 import { updateConfig, waitForNWebhooks, webhookEventEmitter } from "./utils";
-import { getAdminUser, getAdminUsername, getCollaboratorUser, getCollaboratorUsername } from "./commands-test";
 import { GithubEvent } from "../types/payload";
 import { bindEvents } from "../bindings/event";
+import {
+  setAdminUser,
+  CustomOctokit,
+  getAdminUser,
+  setAdminUsername,
+  repo,
+  owner,
+  getAdminUsername,
+  setCollaboratorUser,
+  getCollaboratorUser,
+  setCollaboratorUsername,
+  getCollaboratorUsername,
+  setServer,
+  orgConfig,
+} from "./commands-test";
 
 export function beforeAllHandler(): jest.ProvidesHookCallback {
   return async () => {
