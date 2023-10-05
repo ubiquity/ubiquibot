@@ -253,7 +253,7 @@ export class GitHubLogger implements Logger {
 
   public warn(message: string) {
     this._save(message, LogLevel.WARN);
-    this.telegramLog(message).finally(() => {});
+    this.telegramLog(message).catch((error) => this._save(`Log Notification Error: ${error}`, LogLevel.DEBUG));
     if (typeof message === "object") message = JSON.stringify(message);
     return message;
   }

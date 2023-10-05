@@ -1,4 +1,3 @@
-// import { _approveLabelChange, getLabelChanges } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
 import { getUserPermission } from "../../../helpers";
 import { Payload } from "../../../types";

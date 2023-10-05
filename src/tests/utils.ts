@@ -1,6 +1,7 @@
+import { RequestError } from "@octokit/request-error";
+import EventEmitter from "events";
 import { Octokit } from "octokit";
 import YAML from "yaml";
-import EventEmitter from "events";
 import { RepositoryConfig } from "../types";
 
 export const webhookEventEmitter = new EventEmitter();
@@ -22,7 +23,6 @@ export function waitForNWebhooks(n = 1) {
     });
   });
 }
-
 export async function createLabel(octokit: Octokit, owner: string, repo: string, label: string, color?: string) {
   try {
     await octokit.rest.issues.createLabel({
@@ -31,9 +31,11 @@ export async function createLabel(octokit: Octokit, owner: string, repo: string,
       name: label,
       color,
     });
-  } catch (err: any) {
-    expect(err).toBeDefined();
-    expect(err?.status).toBe(422);
+  } catch (err: unknown) {
+    if (err instanceof RequestError) {
+      expect(err).toBeDefined();
+      expect(err?.status).toBe(422);
+    }
   }
 }
 
@@ -62,9 +64,11 @@ export async function createAndAddLabel(octokit: Octokit, owner: string, repo: s
       repo,
       name: label,
     });
-  } catch (err: any) {
-    expect(err).toBeDefined();
-    expect(err?.status).toBe(422);
+  } catch (err: unknown) {
+    if (err instanceof RequestError) {
+      expect(err).toBeDefined();
+      expect(err?.status).toBe(422);
+    }
   } finally {
     await octokit.rest.issues.addLabels({
       owner,
@@ -91,9 +95,11 @@ export async function updateConfig(octokit: Octokit, owner: string, repo: string
       throw new Error("ubiquibot-config.yml is not a file");
     }
     sha = fileContent.data.sha;
-  } catch (error: any) {
-    expect(error).toBeDefined();
-    expect(error?.status).toBe(404);
+  } catch (err: unknown) {
+    if (err instanceof RequestError) {
+      expect(err).toBeDefined();
+      expect(err?.status).toBe(404);
+    }
   }
 
   await octokit.rest.repos.createOrUpdateFileContents({

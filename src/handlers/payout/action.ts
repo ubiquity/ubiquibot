@@ -1,5 +1,6 @@
 import { BigNumber, ethers } from "ethers";
 // import { getLabelChanges, getPenalty, getWalletAddress, getUserMultiplier, removePenalty } from "../../adapters/supabase";
+import * as shims from "./shims";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import {
   addLabelToIssue,
@@ -16,13 +17,11 @@ import {
   savePermitToDB,
 } from "../../helpers";
 import { UserType, Payload, StateReason, Comment, User, Incentives, Issue } from "../../types";
-import { shortenEthAddress } from "../../utils";
 import { taskInfo } from "../wildcard";
 import Decimal from "decimal.js";
 import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
 import { getUserMultiplier, getWalletAddress, RewardsResponse } from "../comment";
-import { isEmpty } from "lodash";
 
 export interface IncentivesCalculationResult {
   id: number;
@@ -134,7 +133,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     const assignee = events[0].assignee.login;
 
     try {
-      await removePenalty(assignee, payload.repository.full_name, tokenAddress, evmNetworkId, amount);
+      await shims.removePenalty(assignee, payload.repository.full_name, tokenAddress, evmNetworkId, amount);
     } catch (err) {
       logger.error(`Failed to remove penalty: ${err}`);
       throw new Error("Permit generation skipped because failed to remove penalty");
