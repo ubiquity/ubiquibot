@@ -1,8 +1,11 @@
-import { getBotContext, getLogger } from "../../../bindings";
+import { createAdapters } from "../../../adapters";
+import { getAdapters, getBotContext, getLogger } from "../../../bindings";
 import { getUserPermission } from "../../../helpers";
 import { Payload } from "../../../types";
 import { ErrorDiff } from "../../../utils/helpers";
 import { taskInfo } from "../../wildcard";
+
+const { label } = getAdapters().supabase;
 
 export async function approveLabelChange() {
   const context = getBotContext();
@@ -37,14 +40,14 @@ export async function approveLabelChange() {
     return ErrorDiff(`No valid task label on this issue`);
   }
 
-  // check for label altering here
-  const labelChanges = await getLabelChanges(repository.full_name, [
-    issueDetailed.priceLabel,
-    issueDetailed.priorityLabel,
-    issueDetailed.timelabel,
-  ]);
+  // get current repository node id from payload and pass it to getLabelChanges function to get label changes
+  const labelChanges = await label.getLabelChanges(repository.node_id);
 
-  await _approveLabelChange(labelChanges.id);
+  // Approve label changes
+  labelChanges.forEach(async (labelChange) => {
+    logger.info(`Approving label change for ${labelChange.label_from} -> ${labelChange.label_to}`);
+    await label.approveLabelChange(labelChange.id);
+  });
 
   return `Label change has been approved, permit can now be generated`;
 }

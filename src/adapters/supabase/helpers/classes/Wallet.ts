@@ -3,7 +3,7 @@ import { Database } from "../../types/database";
 import { Super } from "./Super";
 import { UserRow } from "./User";
 
-type WalletRow = Database["public"]["Tables"]["wallets"]["Row"];
+export type WalletRow = Database["public"]["Tables"]["wallets"]["Row"];
 // type WalletResponse = WalletRow[] | null;
 type UserWithWallet = (UserRow & { wallets: WalletRow | null })[];
 export class Wallet extends Super {

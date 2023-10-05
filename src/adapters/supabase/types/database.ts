@@ -5,7 +5,7 @@ export interface Database {
     Tables: {
       access: {
         Row: {
-          created: string | null;
+          created: string;
           id: number;
           labels: Json | null;
           location_id: number | null;
@@ -18,7 +18,7 @@ export interface Database {
           user_id: number;
         };
         Insert: {
-          created?: string | null;
+          created?: string;
           id?: number;
           labels?: Json | null;
           location_id?: number | null;
@@ -31,7 +31,7 @@ export interface Database {
           user_id: number;
         };
         Update: {
-          created?: string | null;
+          created?: string;
           id?: number;
           labels?: Json | null;
           location_id?: number | null;
@@ -61,7 +61,7 @@ export interface Database {
       credits: {
         Row: {
           amount: number;
-          created: string | null;
+          created: string;
           id: number;
           location_id: number | null;
           node_id: string | null;
@@ -72,7 +72,7 @@ export interface Database {
         };
         Insert: {
           amount: number;
-          created?: string | null;
+          created?: string;
           id?: number;
           location_id?: number | null;
           node_id?: string | null;
@@ -83,7 +83,7 @@ export interface Database {
         };
         Update: {
           amount?: number;
-          created?: string | null;
+          created?: string;
           id?: number;
           location_id?: number | null;
           node_id?: string | null;
@@ -110,7 +110,7 @@ export interface Database {
       debits: {
         Row: {
           amount: number;
-          created: string | null;
+          created: string;
           id: number;
           location_id: number | null;
           node_id: string | null;
@@ -120,7 +120,7 @@ export interface Database {
         };
         Insert: {
           amount: number;
-          created?: string | null;
+          created?: string;
           id?: number;
           location_id?: number | null;
           node_id?: string | null;
@@ -130,7 +130,7 @@ export interface Database {
         };
         Update: {
           amount?: number;
-          created?: string | null;
+          created?: string;
           id?: number;
           location_id?: number | null;
           node_id?: string | null;
@@ -150,37 +150,37 @@ export interface Database {
       labels: {
         Row: {
           authorized: boolean | null;
-          created: string | null;
+          created: string;
           id: number;
           label_from: string | null;
           label_to: string | null;
           location_id: number | null;
-          node_id: number | null;
-          node_type: string | null;
+          node_id: string | null;
+          node_type: Database["public"]["Enums"]["github_node_type"] | null;
           node_url: string | null;
           updated: string | null;
         };
         Insert: {
           authorized?: boolean | null;
-          created?: string | null;
+          created?: string;
           id?: number;
           label_from?: string | null;
           label_to?: string | null;
           location_id?: number | null;
-          node_id?: number | null;
-          node_type?: string | null;
+          node_id?: string | null;
+          node_type?: Database["public"]["Enums"]["github_node_type"] | null;
           node_url?: string | null;
           updated?: string | null;
         };
         Update: {
           authorized?: boolean | null;
-          created?: string | null;
+          created?: string;
           id?: number;
           label_from?: string | null;
           label_to?: string | null;
           location_id?: number | null;
-          node_id?: number | null;
-          node_type?: string | null;
+          node_id?: string | null;
+          node_type?: Database["public"]["Enums"]["github_node_type"] | null;
           node_url?: string | null;
           updated?: string | null;
         };
@@ -195,34 +195,49 @@ export interface Database {
       };
       locations: {
         Row: {
-          created: string | null;
+          comment_id: number | null;
+          created: string;
           id: number;
+          issue_id: number | null;
           node_id: string | null;
           node_type: string | null;
           node_url: string | null;
+          organization_id: number | null;
+          repository_id: number | null;
           updated: string | null;
+          user_id: number | null;
         };
         Insert: {
-          created?: string | null;
+          comment_id?: number | null;
+          created?: string;
           id?: number;
+          issue_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
           node_url?: string | null;
+          organization_id?: number | null;
+          repository_id?: number | null;
           updated?: string | null;
+          user_id?: number | null;
         };
         Update: {
-          created?: string | null;
+          comment_id?: number | null;
+          created?: string;
           id?: number;
+          issue_id?: number | null;
           node_id?: string | null;
           node_type?: string | null;
           node_url?: string | null;
+          organization_id?: number | null;
+          repository_id?: number | null;
           updated?: string | null;
+          user_id?: number | null;
         };
         Relationships: [];
       };
       logs: {
         Row: {
-          created: string | null;
+          created: string;
           id: number;
           location_id: number | null;
           log_entry: string;
@@ -232,7 +247,7 @@ export interface Database {
           updated: string | null;
         };
         Insert: {
-          created?: string | null;
+          created?: string;
           id?: number;
           location_id?: number | null;
           log_entry: string;
@@ -242,7 +257,7 @@ export interface Database {
           updated?: string | null;
         };
         Update: {
-          created?: string | null;
+          created?: string;
           id?: number;
           location_id?: number | null;
           log_entry?: string;
@@ -262,7 +277,7 @@ export interface Database {
       };
       partners: {
         Row: {
-          created: string | null;
+          created: string;
           id: number;
           location_id: number | null;
           node_id: string | null;
@@ -272,7 +287,7 @@ export interface Database {
           wallet_id: number | null;
         };
         Insert: {
-          created?: string | null;
+          created?: string;
           id?: number;
           location_id?: number | null;
           node_id?: string | null;
@@ -282,7 +297,7 @@ export interface Database {
           wallet_id?: number | null;
         };
         Update: {
-          created?: string | null;
+          created?: string;
           id?: number;
           location_id?: number | null;
           node_id?: string | null;
@@ -310,7 +325,7 @@ export interface Database {
         Row: {
           amount: number | null;
           beneficiary_id: number;
-          created: string | null;
+          created: string;
           deadline: number;
           id: number;
           location_id: number | null;
@@ -327,7 +342,7 @@ export interface Database {
         Insert: {
           amount?: number | null;
           beneficiary_id: number;
-          created?: string | null;
+          created?: string;
           deadline: number;
           id?: number;
           location_id?: number | null;
@@ -344,7 +359,7 @@ export interface Database {
         Update: {
           amount?: number | null;
           beneficiary_id?: number;
-          created?: string | null;
+          created?: string;
           deadline?: number;
           id?: number;
           location_id?: number | null;
@@ -387,7 +402,7 @@ export interface Database {
       };
       settlements: {
         Row: {
-          created: string | null;
+          created: string;
           credit_id: number | null;
           debit_id: number | null;
           id: number;
@@ -399,7 +414,7 @@ export interface Database {
           user_id: number;
         };
         Insert: {
-          created?: string | null;
+          created?: string;
           credit_id?: number | null;
           debit_id?: number | null;
           id?: number;
@@ -411,7 +426,7 @@ export interface Database {
           user_id: number;
         };
         Update: {
-          created?: string | null;
+          created?: string;
           credit_id?: number | null;
           debit_id?: number | null;
           id?: number;
@@ -452,7 +467,7 @@ export interface Database {
       tokens: {
         Row: {
           address: string;
-          created: string | null;
+          created: string;
           id: number;
           location_id: number | null;
           network: number;
@@ -463,7 +478,7 @@ export interface Database {
         };
         Insert: {
           address: string;
-          created?: string | null;
+          created?: string;
           id?: number;
           location_id?: number | null;
           network?: number;
@@ -474,7 +489,7 @@ export interface Database {
         };
         Update: {
           address?: string;
-          created?: string | null;
+          created?: string;
           id?: number;
           location_id?: number | null;
           network?: number;
@@ -494,7 +509,7 @@ export interface Database {
       };
       users: {
         Row: {
-          created: string | null;
+          created: string;
           id: number;
           location_id: number | null;
           node_id: string | null;
@@ -504,7 +519,7 @@ export interface Database {
           wallet_id: number | null;
         };
         Insert: {
-          created?: string | null;
+          created?: string;
           id?: number;
           location_id?: number | null;
           node_id?: string | null;
@@ -514,7 +529,7 @@ export interface Database {
           wallet_id?: number | null;
         };
         Update: {
-          created?: string | null;
+          created?: string;
           id?: number;
           location_id?: number | null;
           node_id?: string | null;
@@ -541,7 +556,7 @@ export interface Database {
       wallets: {
         Row: {
           address: string | null;
-          created: string | null;
+          created: string;
           id: number;
           location_id: number | null;
           node_id: string | null;
@@ -551,7 +566,7 @@ export interface Database {
         };
         Insert: {
           address?: string | null;
-          created?: string | null;
+          created?: string;
           id?: number;
           location_id?: number | null;
           node_id?: string | null;
@@ -561,7 +576,7 @@ export interface Database {
         };
         Update: {
           address?: string | null;
-          created?: string | null;
+          created?: string;
           id?: number;
           location_id?: number | null;
           node_id?: string | null;
