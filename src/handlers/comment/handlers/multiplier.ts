@@ -4,23 +4,21 @@ import { getUserPermission } from "../../../helpers";
 import { Payload } from "../../../types";
 import { getAdapters } from "../../../bindings/event";
 
-export const multiplier = async (body: string) => {
+export async function multiplier(body: string) {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
   const repo = payload.repository;
-  const { repository, organization } = payload;
+  const comment = payload.comment;
 
-  const id = organization?.id || repository?.id; // repository?.id as fallback
+  if (!comment) return logger.info(`Skipping '/multiplier' because of no comment instance`);
+
+  const issue = payload.issue;
 
   logger.info(`Received '/multiplier' command from user: ${sender}`);
 
-  const issue = payload.issue;
-  if (!issue) {
-    logger.info(`Skipping '/multiplier' because of no issue instance`);
-    return `Skipping '/multiplier' because of no issue instance`;
-  }
+  if (!issue) return logger.info(`Skipping '/multiplier' because of no issue instance`);
 
   const regex = /(".*?"|[^"\s]+)(?=\s*|\s*$)/g;
   /** You can use this command to set a multiplier for a user.
@@ -34,7 +32,6 @@ export const multiplier = async (body: string) => {
    * /multiplier @user "Multiplier reason" 0.5
    *
    **/
-
   const matches = body.match(regex);
 
   matches?.shift();
@@ -62,7 +59,6 @@ export const multiplier = async (body: string) => {
     if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {
       logger.info(`Getting multiplier access for ${sender} on ${repo.full_name}`);
       // check db permission
-
       // await getMultiplier(sender.id, repo.id);
       const accessible = await getAccessLevel(
         payload.sender.id
@@ -79,7 +75,7 @@ export const multiplier = async (body: string) => {
     );
 
     const { access } = getAdapters().supabase;
-    await access.upsertMultiplier(payload.sender.id, taskMultiplier, reason, issue);
+    await access.upsertMultiplier(payload.sender.id, taskMultiplier, reason, comment);
 
     if (taskMultiplier > 1) {
       return `Successfully changed the payout multiplier for @${username} to ${taskMultiplier}. The reason ${
@@ -94,7 +90,7 @@ export const multiplier = async (body: string) => {
     logger.error("Invalid body for taskMultiplier command");
     return `Invalid syntax for wallet command \n example usage: "/multiplier @user 0.5 'Multiplier reason'"`;
   }
-};
+}
 
 async function getAccessLevel(userId: number) {
   const { access } = getAdapters().supabase;

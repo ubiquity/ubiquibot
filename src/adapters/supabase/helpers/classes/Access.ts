@@ -1,4 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import { Comment } from "../../../../types/payload";
 import { Database } from "../../types/database";
 import { GitHubNode } from "../client";
 import { Super } from "./Super";
@@ -56,15 +57,15 @@ export class Access extends Super {
   //   return nodeUrl;
   // }
 
-  async upsertMultiplier(userId: number, multiplier: number, reason: string, commentInfo: any): Promise<void> {
+  async upsertMultiplier(userId: number, multiplier: number, reason: string, comment: Comment): Promise<void> {
     try {
       const accessData: _Access = {
         user_id: userId,
         multiplier: multiplier,
         multiplier_reason: reason,
-        node_id: commentInfo.node_id,
+        node_id: comment.node_id,
         node_type: "IssueComment",
-        node_url: commentInfo.html_url,
+        node_url: comment.html_url,
       };
 
       // Upsert into the access table
