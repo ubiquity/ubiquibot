@@ -1,4 +1,3 @@
-import { createAdapters } from "../../../adapters";
 import { getAdapters, getBotContext, getLogger } from "../../../bindings";
 import { getUserPermission } from "../../../helpers";
 import { Payload } from "../../../types";

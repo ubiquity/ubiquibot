@@ -24,14 +24,8 @@ import {
   getAllIssueAssignEvents,
   calculateWeight,
 } from "../../../helpers";
-import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
-import {
-  incentivesCalculation,
-  // calculateIssueConversationReward,
-  // calculateIssueCreatorReward,
-  calculateIssueAssigneeReward,
-  // calculateReviewContributorRewards,
-} from "../../payout";
+import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../../bindings";
+
 import { query } from "./query";
 import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
@@ -41,6 +35,8 @@ import { calculateIssueConversationReward } from "../../payout/calculate-issue-c
 import { calculateIssueCreatorReward } from "../../payout/calculate-issue-creator-reward";
 import { calculateReviewContributorRewards } from "../../payout/calculate-review-contributor-rewards";
 import { handleIssueClosed } from "../../payout/handle-issue-closed";
+import { incentivesCalculation } from "../../payout/incentives-calculation";
+import { calculateIssueAssigneeReward } from "../../payout/calculate-issue-assignee-reward";
 
 export * from "./assign";
 export * from "./wallet";
@@ -230,8 +226,10 @@ export const issueReopenedCallback = async (): Promise<void> => {
 
     if (parseFloat(formattedAmount) > 0) {
       // write penalty to db
+      const { debit } = getAdapters().supabase;
+
       try {
-        await addPenalty(assignee, repository.full_name, tokenAddress, networkId.toString(), amount);
+        await debit.addPenalty(events[0].assignee.id, parseFloat(formattedAmount), permitComment);
       } catch (err) {
         logger.error(`Error writing penalty to db: ${err}`);
         return;
