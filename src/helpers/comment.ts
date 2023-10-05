@@ -17,7 +17,7 @@ const traverse = (result: Record<string, string[]>, node: Node): Record<string, 
 
   result[node.nodeName].push(node.value?.trim() ?? "");
 
-  if (node.childNodes && node.childNodes.length > 0 && !getBotConfig().price.incentives.comment.ignore_children.includes(node.nodeName)) {
+  if (node.childNodes && node.childNodes.length > 0 && !getBotConfig().price.incentives.comment.ignore_children?.includes(node.nodeName)) {
     node.childNodes.forEach((child) => traverse(result, child));
   }
 
