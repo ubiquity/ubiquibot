@@ -37,11 +37,7 @@ export const getIncentivizedUsers = async (issue_number: number) => {
     const toggle: RegExpMatchArray | null = incentiveComment.body.match(/\b(true|false)\b/);
 
     if (!toggle) {
-      for (const part of parts) {
-        if (part.startsWith("@")) {
-          users[part.substring(1)] = false;
-        }
-      }
+      return undefined;
     } else {
       for (const part of parts) {
         if (part.startsWith("@")) {
