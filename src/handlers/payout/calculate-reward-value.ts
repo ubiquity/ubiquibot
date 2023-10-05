@@ -13,7 +13,9 @@ export function calculateRewardValue(comments: Record<string, string[]>, incenti
         continue;
       }
       const wordReward = new Decimal(incentives.comment.totals.word);
-      const reward = wordReward.mul(value.map((str) => str.trim().split(" ").length).reduce((totalWords, wordCount) => totalWords + wordCount, 0));
+      const reward = wordReward.mul(
+        value.map((str) => str.trim().split(" ").length).reduce((totalWords, wordCount) => totalWords + wordCount, 0)
+      );
       sum = sum.add(reward);
     } else {
       if (!incentives.comment.elements[key]) {

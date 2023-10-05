@@ -23,7 +23,11 @@ export class User extends Super {
   }
 
   public async getMultiplier(user_id: number, repo_id: number): Promise<{ value: number; reason: string | null }> {
-    const { data, error } = await this.client.from("access").select("multiplier, multiplier_reason").eq("user_id", user_id).eq("repo_id", repo_id);
+    const { data, error } = await this.client
+      .from("access")
+      .select("multiplier, multiplier_reason")
+      .eq("user_id", user_id)
+      .eq("repo_id", repo_id);
     if (error) throw error;
 
     const { multiplier, multiplier_reason } = data[0];

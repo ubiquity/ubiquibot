@@ -9,7 +9,8 @@ export async function setAccess(body: string): Promise<string> {
   const sender = payload.sender.login;
 
   const permissionLevel = await getUserPermission(sender, context);
-  if (permissionLevel !== "admin") return logger.info(`You are not an admin and do not have the required permissions to access this function.`); // if sender is not admin, return
+  if (permissionLevel !== "admin")
+    return logger.info(`You are not an admin and do not have the required permissions to access this function.`); // if sender is not admin, return
 
   // const validAccessString = ["priority", "time", "price", "multiplier"];
   if (!payload.issue) return logger.info(`Skipping '/allow' because of no issue instance`);
@@ -34,7 +35,9 @@ export async function setAccess(body: string): Promise<string> {
     await access.setAccess(labels, nodeInfo, userId);
     return logger.info(`Successfully set access for ${username} to ${labels.join(", ")}`);
   } else {
-    return logger.error(`Invalid syntax for allow \n usage: '/allow set-(access type) @user true|false' \n  ex-1 /allow set-multiplier @user false`);
+    return logger.error(
+      `Invalid syntax for allow \n usage: '/allow set-(access type) @user true|false' \n  ex-1 /allow set-multiplier @user false`
+    );
   }
 }
 

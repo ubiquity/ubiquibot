@@ -84,7 +84,11 @@ export const getLatestPullRequest = async (prs: LinkedPR[]) => {
     if (!pr || !pr.merged) continue;
 
     if (!linkedPullRequest) linkedPullRequest = pr;
-    else if (linkedPullRequest.merged_at && pr.merged_at && new Date(linkedPullRequest.merged_at) < new Date(pr.merged_at)) {
+    else if (
+      linkedPullRequest.merged_at &&
+      pr.merged_at &&
+      new Date(linkedPullRequest.merged_at) < new Date(pr.merged_at)
+    ) {
       linkedPullRequest = pr;
     }
   }

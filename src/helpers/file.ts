@@ -60,7 +60,13 @@ export async function getPreviousFileContent(owner: string, repo: string, branch
   }
 }
 
-export async function getFileContent(owner: string, repo: string, branch: string, filePath: string, commitSha?: string): Promise<string | null> {
+export async function getFileContent(
+  owner: string,
+  repo: string,
+  branch: string,
+  filePath: string,
+  commitSha?: string
+): Promise<string | null> {
   const logger = getLogger();
   const context = getBotContext();
 

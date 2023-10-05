@@ -23,8 +23,14 @@ export const taskInfo = (
 
   const isTask = timeLabels.length > 0 && priorityLabels.length > 0;
 
-  const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
-  const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
+  const minTimeLabel =
+    timeLabels.length > 0
+      ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name
+      : undefined;
+  const minPriorityLabel =
+    priorityLabels.length > 0
+      ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name
+      : undefined;
 
   const priceLabel = labels.find((label) => label.name.includes("Price"))?.name;
 

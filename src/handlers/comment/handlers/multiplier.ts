@@ -74,7 +74,9 @@ export const multiplier = async (body: string) => {
         return "Insufficient permissions to update the payout multiplier. You are not an `admin` or `billing_manager`";
       }
     }
-    logger.info(`Upserting to the wallet table, username: ${username}, taskMultiplier: ${taskMultiplier}, reason: ${reason}}`);
+    logger.info(
+      `Upserting to the wallet table, username: ${username}, taskMultiplier: ${taskMultiplier}, reason: ${reason}}`
+    );
 
     await upsertWalletMultiplier(username, taskMultiplier?.toString(), reason, id?.toString());
     if (taskMultiplier > 1) {

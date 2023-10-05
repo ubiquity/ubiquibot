@@ -29,17 +29,24 @@ export const ajv = addFormats(new Ajv(), {
 });
 
 export function getAdditionalProperties() {
-  return ajv.errors?.filter((error) => error.keyword === "additionalProperties").map((error) => error.params.additionalProperty);
+  return ajv.errors
+    ?.filter((error) => error.keyword === "additionalProperties")
+    .map((error) => error.params.additionalProperty);
 }
 
-export function validate(scheme: string | Schema, data: unknown): { valid: true; error: undefined } | { valid: false; error: string } {
+export function validate(
+  scheme: string | Schema,
+  data: unknown
+): { valid: true; error: undefined } | { valid: false; error: string } {
   const valid = ajv.validate(scheme, data);
   if (!valid) {
     const additionalProperties = getAdditionalProperties();
     return {
       valid: false,
       error: `${ajv.errorsText()}. ${
-        additionalProperties && additionalProperties.length > 0 ? `Unnecessary properties: ${additionalProperties.join(", ")}` : ""
+        additionalProperties && additionalProperties.length > 0
+          ? `Unnecessary properties: ${additionalProperties.join(", ")}`
+          : ""
       }`,
     };
   }

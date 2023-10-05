@@ -17,14 +17,20 @@ export async function generatePermitForComment(
   const commentsByNode = parseComments(comments, ItemsToExclude);
   const rewardValue = calculateRewardValue(commentsByNode, incentives);
   if (rewardValue.equals(0)) {
-    logger.info(`No reward for the user: ${user.login}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+    logger.info(
+      `No reward for the user: ${user.login}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`
+    );
     return;
   }
-  logger.debug(`Comment parsed for the user: ${user.login}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+  logger.debug(
+    `Comment parsed for the user: ${user.login}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`
+  );
   const account = await getWalletAddress(user.id);
   const amountInBigNumber = rewardValue.mul(multiplier);
   if (amountInBigNumber.gt(permitMaxPrice)) {
-    logger.info(`Skipping issue creator reward for user ${user.login} because reward is higher than payment permit max price`);
+    logger.info(
+      `Skipping issue creator reward for user ${user.login} because reward is higher than payment permit max price`
+    );
     return;
   }
   if (account) {

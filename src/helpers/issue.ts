@@ -227,7 +227,10 @@ export async function getCommentsOfIssue(issue_number: number): Promise<Comment[
   return result;
 }
 
-export async function getIssueDescription(issue_number: number, format: "raw" | "html" | "text" = "raw"): Promise<string> {
+export async function getIssueDescription(
+  issue_number: number,
+  format: "raw" | "html" | "text" = "raw"
+): Promise<string> {
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
@@ -261,7 +264,10 @@ export async function getIssueDescription(issue_number: number, format: "raw" | 
   return result;
 }
 
-export async function getAllIssueComments(issue_number: number, format: "raw" | "html" | "text" | "full" = "raw"): Promise<Comment[]> {
+export async function getAllIssueComments(
+  issue_number: number,
+  format: "raw" | "html" | "text" | "full" = "raw"
+): Promise<Comment[]> {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
@@ -525,7 +531,12 @@ export async function getAllPullRequests(context: Context, state: "open" | "clos
   return prArr;
 }
 // Use `context.octokit.rest` to get the pull requests for the repository
-export async function getPullRequests(context: Context, state: "open" | "closed" | "all" = "open", per_page: number, page: number) {
+export async function getPullRequests(
+  context: Context,
+  state: "open" | "closed" | "all" = "open",
+  per_page: number,
+  page: number
+) {
   const logger = getLogger();
   const payload = context.payload as Payload;
   try {
@@ -559,7 +570,11 @@ export async function closePullRequest(pull_number: number) {
   }
 }
 
-export async function getAllPullRequestReviews(context: Context, pull_number: number, format: "raw" | "html" | "text" | "full" = "raw") {
+export async function getAllPullRequestReviews(
+  context: Context,
+  pull_number: number,
+  format: "raw" | "html" | "text" | "full" = "raw"
+) {
   const prArr = [];
   let fetchDone = false;
   const perPage = 30;
@@ -638,7 +653,11 @@ export async function getPullByNumber(context: Context, pull_number: number) {
   const logger = getLogger();
   const payload = context.payload as Payload;
   try {
-    const { data: pull } = await context.octokit.rest.pulls.get({ owner: payload.repository.owner.login, repo: payload.repository.name, pull_number });
+    const { data: pull } = await context.octokit.rest.pulls.get({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number,
+    });
     return pull;
   } catch (error) {
     logger.debug(`Fetching pull failed! reason: ${error}`);
@@ -663,7 +682,9 @@ export async function getAssignedIssues(username: string) {
   }
 
   // get only issues assigned to username
-  const assigned_issues = issuesArr.filter((issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username);
+  const assigned_issues = issuesArr.filter(
+    (issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username
+  );
 
   return assigned_issues;
 }
@@ -726,7 +747,10 @@ export async function getAvailableOpenedPullRequests(username: string) {
       if (approvedReviews) result.push(pr);
     }
 
-    if (reviews.length === 0 && (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= timeRangeForMaxIssue) {
+    if (
+      reviews.length === 0 &&
+      (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= timeRangeForMaxIssue
+    ) {
       result.push(pr);
     }
   }
@@ -789,7 +813,10 @@ export async function getAllLinkedIssuesAndPullsInBody(issueNumber: number) {
             const prComments = await getAllIssueComments(linkedPrs[i]);
             const prCommentsRaw = await getAllIssueComments(linkedPrs[i], "raw");
             prComments.forEach(async (comment, i) => {
-              if (comment.user.type == UserType.User || prCommentsRaw[i].body.includes("<!--- { 'UbiquiBot': 'answer' } --->")) {
+              if (
+                comment.user.type == UserType.User ||
+                prCommentsRaw[i].body.includes("<!--- { 'UbiquiBot': 'answer' } --->")
+              ) {
                 linkedPRStreamlined.push({
                   login: comment.user.login,
                   body: comment.body,
@@ -811,7 +838,10 @@ export async function getAllLinkedIssuesAndPullsInBody(issueNumber: number) {
             const issueComments = await getAllIssueComments(linkedIssues[i]);
             const issueCommentsRaw = await getAllIssueComments(linkedIssues[i], "raw");
             issueComments.forEach(async (comment, i) => {
-              if (comment.user.type == UserType.User || issueCommentsRaw[i].body.includes("<!--- { 'UbiquiBot': 'answer' } --->")) {
+              if (
+                comment.user.type == UserType.User ||
+                issueCommentsRaw[i].body.includes("<!--- { 'UbiquiBot': 'answer' } --->")
+              ) {
                 linkedIssueStreamlined.push({
                   login: comment.user.login,
                   body: comment.body,

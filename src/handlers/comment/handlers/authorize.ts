@@ -25,7 +25,9 @@ export async function approveLabelChange() {
   // if sender is not admin, return
   if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {
     logger.info(`User ${sender} is not an admin/billing_manager`);
-    return ErrorDiff(`You are not an admin/billing_manager and do not have the required permissions to access this function.`);
+    return ErrorDiff(
+      `You are not an admin/billing_manager and do not have the required permissions to access this function.`
+    );
   }
 
   const issueDetailed = taskInfo(issue);
@@ -36,7 +38,11 @@ export async function approveLabelChange() {
   }
 
   // check for label altering here
-  const labelChanges = await getLabelChanges(repository.full_name, [issueDetailed.priceLabel, issueDetailed.priorityLabel, issueDetailed.timelabel]);
+  const labelChanges = await getLabelChanges(repository.full_name, [
+    issueDetailed.priceLabel,
+    issueDetailed.priorityLabel,
+    issueDetailed.timelabel,
+  ]);
 
   await _approveLabelChange(labelChanges.id);
 

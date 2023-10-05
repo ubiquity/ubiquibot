@@ -1,5 +1,12 @@
 import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../../bindings";
-import { addAssignees, calculateDuration, calculateWeight, getAllIssueComments, getAssignedIssues, getAvailableOpenedPullRequests } from "../../../helpers";
+import {
+  addAssignees,
+  calculateDuration,
+  calculateWeight,
+  getAllIssueComments,
+  getAssignedIssues,
+  getAvailableOpenedPullRequests,
+} from "../../../helpers";
 import { Comment, Issue, IssueType, LabelItem, Payload } from "../../../types";
 import { deadLinePrefix } from "../../shared";
 import { GLOBAL_STRINGS } from "../../../configs";
@@ -49,7 +56,11 @@ export async function assign(body: string) {
   }
 
   const openedPullRequests = await getAvailableOpenedPullRequests(payload.sender.login);
-  logger.info(`Opened Pull Requests with approved reviews or with no reviews but over 24 hours have passed: ${JSON.stringify(openedPullRequests)}`);
+  logger.info(
+    `Opened Pull Requests with approved reviews or with no reviews but over 24 hours have passed: ${JSON.stringify(
+      openedPullRequests
+    )}`
+  );
 
   const assignedIssues = await getAssignedIssues(payload.sender.login);
   logger.info(`Max issue allowed is ${config.assign.maxConcurrentTasks}`);
@@ -67,7 +78,11 @@ export async function assign(body: string) {
   const assignees = _assignees ?? [];
 
   if (assignees.length !== 0) {
-    logger.info(`Skipping '/start', reason: already assigned. assignees: ${assignees.length > 0 ? assignees.map((i) => i.login).join() : "NoAssignee"}`);
+    logger.info(
+      `Skipping '/start', reason: already assigned. assignees: ${
+        assignees.length > 0 ? assignees.map((i) => i.login).join() : "NoAssignee"
+      }`
+    );
     return "Skipping `/start` since the issue is already assigned";
   }
 
@@ -107,7 +122,8 @@ export async function assign(body: string) {
 
   const comment = {
     deadline: endTime.toUTCString().replace("GMT", "UTC"),
-    wallet: (await getWalletAddress(payload.sender.id)) || "Please set your wallet address to use `/wallet 0x0000...0000`",
+    wallet:
+      (await getWalletAddress(payload.sender.id)) || "Please set your wallet address to use `/wallet 0x0000...0000`",
     commit: `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`,
     tips: `<h6>Tips:</h6>
     <ul>
@@ -135,10 +151,16 @@ export async function assign(body: string) {
   // double check whether the assign message has been already posted or not
   logger.info(`Creating an issue comment: ${comment.commit}`);
   const issueComments = await getAllIssueComments(issue.number);
-  const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const comments = issueComments.sort(
+    (a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
-    const { multiplier, reason, task } = await getMultiplierInfoToDisplay(payload.sender.id, payload.repository.id, issue);
+    const { multiplier, reason, task } = await getMultiplierInfoToDisplay(
+      payload.sender.id,
+      payload.repository.id,
+      issue
+    );
     return tableComment({ ...comment, multiplier, reason, task, isTaskStale, days }) + comment.tips;
   }
   return;
@@ -165,7 +187,8 @@ async function getMultiplierInfoToDisplay(senderId: number, repoId: number, issu
     _taskToDisplay = `Permit generation disabled because price label is not set.`;
     const issueDetailed = taskInfo(issue);
     if (issueDetailed.priceLabel) {
-      _taskToDisplay = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString() + " USD";
+      _taskToDisplay =
+        (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString() + " USD";
     }
   }
   return { multiplier: _multiplierToDisplay, reason: _reasonToDisplay, task: _taskToDisplay };

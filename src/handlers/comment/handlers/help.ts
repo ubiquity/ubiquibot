@@ -44,6 +44,7 @@ export const generateHelpMenu = () => {
     }
   });
 
-  if (!startEnabled) helpMenu += "```\n***_To assign yourself to an issue, please open a draft pull request that is linked to it._***";
+  if (!startEnabled)
+    helpMenu += "```\n***_To assign yourself to an issue, please open a draft pull request that is linked to it._***";
   return helpMenu;
 };

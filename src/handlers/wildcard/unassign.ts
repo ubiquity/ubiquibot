@@ -48,14 +48,22 @@ const checkTaskToUnassign = async (issue: Issue): Promise<boolean> => {
     .filter((comment: Comment) => comment.body.includes(askUpdate))
     .sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-  const lastAskTime = askUpdateComments.length > 0 ? new Date(askUpdateComments[0].created_at).getTime() : new Date(issue.created_at).getTime();
+  const lastAskTime =
+    askUpdateComments.length > 0
+      ? new Date(askUpdateComments[0].created_at).getTime()
+      : new Date(issue.created_at).getTime();
   const curTimestamp = new Date().getTime();
   const lastActivity = await lastActivityTime(issue, comments);
   const passedDuration = curTimestamp - lastActivity.getTime();
   const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee.login);
 
   if (pullRequest.length > 0) {
-    const reviewRequests = await getReviewRequests(context, pullRequest[0].number, payload.repository.owner.login, payload.repository.name);
+    const reviewRequests = await getReviewRequests(
+      context,
+      pullRequest[0].number,
+      payload.repository.owner.login,
+      payload.repository.name
+    );
     if (!reviewRequests || reviewRequests.users?.length > 0) {
       return false;
     }
@@ -68,7 +76,10 @@ const checkTaskToUnassign = async (issue: Issue): Promise<boolean> => {
       );
       // remove assignees from the issue
       await removeAssignees(issue.number, assignees);
-      await addCommentToIssue(`@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
+      await addCommentToIssue(
+        `@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`,
+        issue.number
+      );
 
       return true;
     } else if (passedDuration >= followUpTime) {
@@ -99,7 +110,12 @@ const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date
   const activities: Date[] = [new Date(issue.created_at)];
 
   const lastAssignCommentOfHunter = comments
-    .filter((comment) => comment.user.type === UserType.Bot && comment.body.includes(assignees[0]) && comment.body.includes(deadLinePrefix))
+    .filter(
+      (comment) =>
+        comment.user.type === UserType.Bot &&
+        comment.body.includes(assignees[0]) &&
+        comment.body.includes(deadLinePrefix)
+    )
     .sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   if (lastAssignCommentOfHunter.length > 0) activities.push(new Date(lastAssignCommentOfHunter[0].created_at));
 
@@ -116,7 +132,9 @@ const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date
   if (pr) {
     const commits = (await getCommitsOnPullRequest(pr.number))
       .filter((it) => it.commit.committer?.date)
-      .sort((a, b) => new Date(b.commit.committer?.date ?? 0).getTime() - new Date(a.commit.committer?.date ?? 0).getTime());
+      .sort(
+        (a, b) => new Date(b.commit.committer?.date ?? 0).getTime() - new Date(a.commit.committer?.date ?? 0).getTime()
+      );
     const prComments = (await getAllIssueComments(pr.number))
       .filter((comment) => comment.user.login === assignees[0])
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());

@@ -9,7 +9,10 @@ export const calculateTaskPrice = (timeValue: number, priorityValue: number, bas
   return price;
 };
 
-export const getTargetPriceLabel = (timeLabel: string | undefined, priorityLabel: string | undefined): string | undefined => {
+export const getTargetPriceLabel = (
+  timeLabel: string | undefined,
+  priorityLabel: string | undefined
+): string | undefined => {
   const botConfig = getBotConfig();
   let targetPriceLabel: string | undefined = undefined;
   if (timeLabel && priorityLabel) {

@@ -104,7 +104,13 @@ function allTests(): () => void {
           `Successfully changed the payout multiplier for @${getAdminUsername()} to 2. The reason is not provided. This feature is designed to limit the contributor's compensation for any task on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a price multiplier above 1?`
         );
 
-        await createComment(getAdminUser(), owner, repo, issue.number, `/multiplier @${getAdminUsername()} 2 "Testing reason"`);
+        await createComment(
+          getAdminUser(),
+          owner,
+          repo,
+          issue.number,
+          `/multiplier @${getAdminUsername()} 2 "Testing reason"`
+        );
         await waitForNWebhooks(2);
 
         await checkLastComment(
@@ -148,14 +154,22 @@ function allTests(): () => void {
         await waitForNWebhooks(2);
 
         const multiplier = "5";
-        await createComment(getAdminUser(), owner, repo, issue.number, `/multiplier @${getAdminUsername()} ${multiplier} 'Testing'`);
+        await createComment(
+          getAdminUser(),
+          owner,
+          repo,
+          issue.number,
+          `/multiplier @${getAdminUsername()} ${multiplier} 'Testing'`
+        );
         await waitForNWebhooks(2);
 
         await createComment(getAdminUser(), owner, repo, issue.number, `/query @${getAdminUsername()}`);
         await waitForNWebhooks(2);
 
         const lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        expect(lastComment.body).toContain(`@${getAdminUsername()}'s wallet address is ${newWallet}, multiplier is ${multiplier}`);
+        expect(lastComment.body).toContain(
+          `@${getAdminUsername()}'s wallet address is ${newWallet}, multiplier is ${multiplier}`
+        );
       },
       SIX_HOURS
     );
@@ -166,7 +180,13 @@ function allTests(): () => void {
         await createComment(getAdminUser(), owner, repo, issue.number, `/query @INVALID_$USERNAME`);
         await waitForNWebhooks(2);
 
-        await checkLastComment(getAdminUser(), owner, repo, issue.number, `Invalid syntax for query command \n usage /query @user`);
+        await checkLastComment(
+          getAdminUser(),
+          owner,
+          repo,
+          issue.number,
+          `Invalid syntax for query command \n usage /query @user`
+        );
       },
       SIX_HOURS
     );

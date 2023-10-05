@@ -1,7 +1,13 @@
 import { getBotContext } from "../bindings";
 import { Payload } from "../types";
 
-export async function createCommitComment(body: string, commitSha: string, path?: string, owner?: string, repo?: string) {
+export async function createCommitComment(
+  body: string,
+  commitSha: string,
+  path?: string,
+  owner?: string,
+  repo?: string
+) {
   const context = getBotContext();
   const payload = context.payload as Payload;
   if (!owner) {

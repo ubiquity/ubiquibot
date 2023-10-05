@@ -22,7 +22,11 @@ export const validatePriceLabels = async (): Promise<void> => {
   const aiLabels: string[] = [];
   for (const timeLabel of config.price.timeLabels) {
     for (const priorityLabel of config.price.priorityLabels) {
-      const targetPrice = calculateTaskPrice(calculateWeight(timeLabel), calculateWeight(priorityLabel), config.price.baseMultiplier);
+      const targetPrice = calculateTaskPrice(
+        calculateWeight(timeLabel),
+        calculateWeight(priorityLabel),
+        config.price.baseMultiplier
+      );
       const targetPriceLabel = `Price: ${targetPrice} USD`;
       aiLabels.push(targetPriceLabel);
     }

@@ -26,7 +26,6 @@ import {
 } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import {
-  handleIssueClosed,
   incentivesCalculation,
   // calculateIssueConversationReward,
   // calculateIssueCreatorReward,
@@ -41,6 +40,7 @@ import { ErrorDiff } from "../../../utils/helpers";
 import { calculateIssueConversationReward } from "../../payout/calculate-issue-conversation-reward";
 import { calculateIssueCreatorReward } from "../../payout/calculate-issue-creator-reward";
 import { calculateReviewContributorRewards } from "../../payout/calculate-review-contributor-rewards";
+import { handleIssueClosed } from "../../payout/handle-issue-closed";
 
 export * from "./assign";
 export * from "./wallet";
@@ -107,7 +107,13 @@ export const issueClosedCallback = async (): Promise<void> => {
     const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
     const pullRequestReviewersReward = await calculateReviewContributorRewards(calculateIncentives);
 
-    const { error } = await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, pullRequestReviewersReward, calculateIncentives);
+    const { error } = await handleIssueClosed({
+      creatorReward,
+      assigneeReward,
+      conversationRewards,
+      pullRequestReviewersReward,
+      incentivesCalculation: calculateIncentives,
+    });
 
     if (error) {
       throw new Error(error);
@@ -141,9 +147,13 @@ export const issueCreatedCallback = async (): Promise<void> => {
     const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
     const minTimeLabel =
-      timeLabels.length > 0 ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : config.price.defaultLabels[0];
+      timeLabels.length > 0
+        ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name
+        : config.price.defaultLabels[0];
     const minPriorityLabel =
-      priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : config.price.defaultLabels[1];
+      priorityLabels.length > 0
+        ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name
+        : config.price.defaultLabels[1];
     if (!timeLabels.length) await addLabelToIssue(minTimeLabel);
     if (!priorityLabels.length) await addLabelToIssue(minPriorityLabel);
 

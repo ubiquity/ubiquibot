@@ -65,7 +65,13 @@ export const getLabel = async (name: string): Promise<boolean> => {
 };
 
 // Function to update labels based on the base rate difference
-export const updateLabelsFromBaseRate = async (owner: string, repo: string, context: Context, labels: Label[], previousBaseRate: number) => {
+export const updateLabelsFromBaseRate = async (
+  owner: string,
+  repo: string,
+  context: Context,
+  labels: Label[],
+  previousBaseRate: number
+) => {
   const logger = getLogger();
   const config = getBotConfig();
 
@@ -74,11 +80,19 @@ export const updateLabelsFromBaseRate = async (owner: string, repo: string, cont
 
   for (const timeLabel of config.price.timeLabels) {
     for (const priorityLabel of config.price.priorityLabels) {
-      const targetPrice = calculateTaskPrice(calculateWeight(timeLabel), calculateWeight(priorityLabel), config.price.baseMultiplier);
+      const targetPrice = calculateTaskPrice(
+        calculateWeight(timeLabel),
+        calculateWeight(priorityLabel),
+        config.price.baseMultiplier
+      );
       const targetPriceLabel = `Price: ${targetPrice} USD`;
       newLabels.push(targetPriceLabel);
 
-      const previousTargetPrice = calculateTaskPrice(calculateWeight(timeLabel), calculateWeight(priorityLabel), previousBaseRate);
+      const previousTargetPrice = calculateTaskPrice(
+        calculateWeight(timeLabel),
+        calculateWeight(priorityLabel),
+        previousBaseRate
+      );
       const previousTargetPriceLabel = `Price: ${previousTargetPrice} USD`;
       previousLabels.push(previousTargetPriceLabel);
     }

@@ -79,7 +79,11 @@ export const generatePermit2Signature = async (
     deadline: MaxUint256,
   };
 
-  const { domain, types, values } = SignatureTransfer.getPermitData(permitTransferFromData, PERMIT2_ADDRESS, evmNetworkId);
+  const { domain, types, values } = SignatureTransfer.getPermitData(
+    permitTransferFromData,
+    PERMIT2_ADDRESS,
+    evmNetworkId
+  );
 
   const signature = await adminWallet._signTypedData(domain, types, values);
   const txData: TxData = {

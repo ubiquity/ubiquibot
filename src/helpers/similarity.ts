@@ -48,7 +48,12 @@ const ChoicesSchema = Type.Object({
 
 type Choices = Static<typeof ChoicesSchema>;
 
-export const getAnswerFromChatGPT = async (systemPrompt: string, userPrompt: string, temperature = 0, max_tokens = 1500): Promise<string> => {
+export const getAnswerFromChatGPT = async (
+  systemPrompt: string,
+  userPrompt: string,
+  temperature = 0,
+  max_tokens = 1500
+): Promise<string> => {
   const logger = getLogger();
   const body = JSON.stringify({
     model: "gpt-3.5-turbo",

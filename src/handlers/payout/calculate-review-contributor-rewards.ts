@@ -9,7 +9,9 @@ import { BigNumber } from "ethers";
 import { ItemsToExclude } from "./post";
 import { calculateRewardValue } from "./calculate-reward-value";
 
-export async function calculateReviewContributorRewards(incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> {
+export async function calculateReviewContributorRewards(
+  incentivesCalculation: IncentivesCalculationResult
+): Promise<RewardsResponse> {
   const logger = getLogger();
   const context = getBotContext();
   const title = "Reviewer";
@@ -30,18 +32,27 @@ export async function calculateReviewContributorRewards(incentivesCalculation: I
 
   const comments = await getAllIssueComments(incentivesCalculation.issue.number);
   const permitComments = comments.filter(
-    (content) => content.body.includes(title) && content.body.includes("https://pay.ubq.fi?claim=") && content.user.type == UserType.Bot
+    (content) =>
+      content.body.includes(title) &&
+      content.body.includes("https://pay.ubq.fi?claim=") &&
+      content.user.type == UserType.Bot
   );
   if (permitComments.length > 0) {
     logger.info(`calculateReviewContributorRewards: skip to generate a permit url because it has been already posted`);
-    return { error: `calculateReviewContributorRewards: skip to generate a permit url because it has been already posted` };
+    return {
+      error: `calculateReviewContributorRewards: skip to generate a permit url because it has been already posted`,
+    };
   }
 
   const assignees = incentivesCalculation.issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
-    logger.info("calculateReviewContributorRewards: skipping payment permit generation because `assignee` is `undefined`.");
-    return { error: "calculateReviewContributorRewards: skipping payment permit generation because `assignee` is `undefined`." };
+    logger.info(
+      "calculateReviewContributorRewards: skipping payment permit generation because `assignee` is `undefined`."
+    );
+    return {
+      error: "calculateReviewContributorRewards: skipping payment permit generation because `assignee` is `undefined`.",
+    };
   }
 
   const prReviews = await getAllPullRequestReviews(context, latestLinkedPullRequest.number, "full");
@@ -53,7 +64,11 @@ export async function calculateReviewContributorRewards(incentivesCalculation: I
     if (!user) continue;
     if (user.type == UserType.Bot || user.login == assignee) continue;
     if (!review.body_html) {
-      logger.info(`calculateReviewContributorRewards: Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(review)}`);
+      logger.info(
+        `calculateReviewContributorRewards: Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(
+          review
+        )}`
+      );
       continue;
     }
     if (!prReviewsByUser[user.login]) {
@@ -67,7 +82,11 @@ export async function calculateReviewContributorRewards(incentivesCalculation: I
     if (!user) continue;
     if (user.type == UserType.Bot || user.login == assignee) continue;
     if (!comment.body_html) {
-      logger.info(`calculateReviewContributorRewards: Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(comment)}`);
+      logger.info(
+        `calculateReviewContributorRewards: Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(
+          comment
+        )}`
+      );
       continue;
     }
     if (!prReviewsByUser[user.login]) {
@@ -76,10 +95,20 @@ export async function calculateReviewContributorRewards(incentivesCalculation: I
     prReviewsByUser[user.login].comments.push(comment.body_html);
   }
 
-  logger.info(`calculateReviewContributorRewards: Filtering by the user type done. commentsByUser: ${JSON.stringify(prReviewsByUser)}`);
+  logger.info(
+    `calculateReviewContributorRewards: Filtering by the user type done. commentsByUser: ${JSON.stringify(
+      prReviewsByUser
+    )}`
+  );
 
   // array of awaiting permits to generate
-  const reward: { account: string; priceInBigNumber: Decimal; userId: string; user: string; penaltyAmount: BigNumber }[] = [];
+  const reward: {
+    account: string;
+    priceInBigNumber: Decimal;
+    userId: string;
+    user: string;
+    penaltyAmount: BigNumber;
+  }[] = [];
 
   // The mapping between gh handle and amount in big number
   const fallbackReward: Record<string, Decimal> = {};
@@ -89,26 +118,48 @@ export async function calculateReviewContributorRewards(incentivesCalculation: I
     const commentsByNode = parseComments(commentByUser.comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, incentivesCalculation.incentives);
     if (rewardValue.equals(0)) {
-      logger.info(`calculateReviewContributorRewards: Skipping to generate a permit url because the reward value is 0. user: ${_user}`);
+      logger.info(
+        `calculateReviewContributorRewards: Skipping to generate a permit url because the reward value is 0. user: ${_user}`
+      );
       continue;
     }
-    logger.info(`calculateReviewContributorRewards: Comment parsed for the user: ${_user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`);
+    logger.info(
+      `calculateReviewContributorRewards: Comment parsed for the user: ${_user}. comments: ${JSON.stringify(
+        commentsByNode
+      )}, sum: ${rewardValue}`
+    );
     const account = await getWalletAddress(user.id);
     const priceInBigNumber = rewardValue.mul(incentivesCalculation.baseMultiplier);
     if (priceInBigNumber.gt(incentivesCalculation.permitMaxPrice)) {
-      logger.info(`calculateReviewContributorRewards: Skipping comment reward for user ${_user} because reward is higher than payment permit max price`);
+      logger.info(
+        `calculateReviewContributorRewards: Skipping comment reward for user ${_user} because reward is higher than payment permit max price`
+      );
       continue;
     }
 
     if (account) {
-      reward.push({ account, priceInBigNumber, userId: commentByUser.id, user: _user, penaltyAmount: BigNumber.from(0) });
+      reward.push({
+        account,
+        priceInBigNumber,
+        userId: commentByUser.id,
+        user: _user,
+        penaltyAmount: BigNumber.from(0),
+      });
     } else {
       fallbackReward[_user] = priceInBigNumber;
     }
   }
 
-  logger.info(`calculateReviewContributorRewards: Permit url generated for pull request reviewers. reward: ${JSON.stringify(reward)}`);
-  logger.info(`calculateReviewContributorRewards: Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
+  logger.info(
+    `calculateReviewContributorRewards: Permit url generated for pull request reviewers. reward: ${JSON.stringify(
+      reward
+    )}`
+  );
+  logger.info(
+    `calculateReviewContributorRewards: Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(
+      fallbackReward
+    )}`
+  );
 
   return { error: "", title, reward, fallbackReward };
 }

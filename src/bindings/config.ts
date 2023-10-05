@@ -56,7 +56,9 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       permitBaseUrl: process.env.PERMIT_BASE_URL || permitBaseUrl,
     },
     unassign: {
-      timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE) : timeRangeForMaxIssue,
+      timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE
+        ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE)
+        : timeRangeForMaxIssue,
       timeRangeForMaxIssueEnabled: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED
         ? process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED == "true"
         : timeRangeForMaxIssueEnabled,
@@ -89,7 +91,11 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     botConfig.mode.permitMaxPrice = 0;
   }
 
-  if (botConfig.logNotification.secret == "" || botConfig.logNotification.groupId == 0 || botConfig.logNotification.url == "") {
+  if (
+    botConfig.logNotification.secret == "" ||
+    botConfig.logNotification.groupId == 0 ||
+    botConfig.logNotification.url == ""
+  ) {
     botConfig.logNotification.enabled = false;
   }
 
@@ -100,7 +106,9 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
   }
 
   if (botConfig.unassign.followUpTime < 0 || botConfig.unassign.disqualifyTime < 0) {
-    throw new Error(`Invalid time interval, followUpTime: ${botConfig.unassign.followUpTime}, disqualifyTime: ${botConfig.unassign.disqualifyTime}`);
+    throw new Error(
+      `Invalid time interval, followUpTime: ${botConfig.unassign.followUpTime}, disqualifyTime: ${botConfig.unassign.disqualifyTime}`
+    );
   }
 
   return botConfig;

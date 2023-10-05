@@ -39,7 +39,13 @@ export async function createLabel(octokit: Octokit, owner: string, repo: string,
   }
 }
 
-export async function addLabelToIssue(octokit: Octokit, owner: string, repo: string, issueNumber: number, label: string) {
+export async function addLabelToIssue(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  label: string
+) {
   await octokit.rest.issues.addLabels({
     owner,
     repo,
@@ -48,7 +54,13 @@ export async function addLabelToIssue(octokit: Octokit, owner: string, repo: str
   });
 }
 
-export async function removeLabelFromIssue(octokit: Octokit, owner: string, repo: string, issueNumber: number, label: string) {
+export async function removeLabelFromIssue(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  label: string
+) {
   await octokit.rest.issues.removeLabel({
     owner,
     repo,
@@ -57,7 +69,13 @@ export async function removeLabelFromIssue(octokit: Octokit, owner: string, repo
   });
 }
 
-export async function createAndAddLabel(octokit: Octokit, owner: string, repo: string, issueNumber: number, label: string) {
+export async function createAndAddLabel(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  label: string
+) {
   try {
     await octokit.rest.issues.createLabel({
       owner,
@@ -80,7 +98,13 @@ export async function createAndAddLabel(octokit: Octokit, owner: string, repo: s
   }
 }
 
-export async function updateConfig(octokit: Octokit, owner: string, repo: string, path: string, config: RepositoryConfig) {
+export async function updateConfig(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  path: string,
+  config: RepositoryConfig
+) {
   let sha: string | undefined = undefined;
   try {
     const fileContent = await octokit.rest.repos.getContent({
@@ -132,7 +156,13 @@ export async function getLastComment(octokit: Octokit, owner: string, repo: stri
   return data[data.length - 1];
 }
 
-export async function checkLastComment(octokit: Octokit, owner: string, repo: string, issueNumber: number, expectedComment: string) {
+export async function checkLastComment(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  expectedComment: string
+) {
   const lastComment = await getLastComment(octokit, owner, repo, issueNumber);
   expect(lastComment.body).toBe(expectedComment);
 }

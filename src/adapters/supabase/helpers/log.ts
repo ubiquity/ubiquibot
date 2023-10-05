@@ -113,7 +113,9 @@ export class GitHubLogger implements Logger {
 
     const { org, repo } = getOrgAndRepoFromPath(repoFullName);
 
-    const issueLink = `https://github.com/${org}/${repo}/issues/${issueNumber}${commentId ? `#issuecomment-${commentId}` : ""}`;
+    const issueLink = `https://github.com/${org}/${repo}/issues/${issueNumber}${
+      commentId ? `#issuecomment-${commentId}` : ""
+    }`;
 
     return new Promise((resolve, reject) => {
       try {

@@ -72,7 +72,12 @@ export const ask = async (body: string) => {
     }
 
     // let chatgpt deduce what is the most relevant context
-    const gptDecidedContext = await decideContextGPT(chatHistory, streamlined, linkedPRStreamlined, linkedIssueStreamlined);
+    const gptDecidedContext = await decideContextGPT(
+      chatHistory,
+      streamlined,
+      linkedPRStreamlined,
+      linkedIssueStreamlined
+    );
 
     if (linkedIssueStreamlined.length == 0 && linkedPRStreamlined.length == 0) {
       // No external context to add

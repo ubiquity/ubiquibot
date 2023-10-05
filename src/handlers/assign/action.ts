@@ -37,7 +37,8 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   const timeLabelsAssigned: LabelItem[] = [];
   for (const _label of labels) {
     const _label_type = typeof _label;
-    const _label_name = _label_type === "string" ? _label.toString() : _label_type === "object" ? _label.name : "unknown";
+    const _label_name =
+      _label_type === "string" ? _label.toString() : _label_type === "object" ? _label.name : "unknown";
 
     const timeLabel = timeLabelsDefined.find((item) => item.name === _label_name);
     if (timeLabel) {
