@@ -4,49 +4,49 @@ import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
 // Commented out until Gnosis Safe is integrated (https://github.com/ubiquity/ubiquibot/issues/353)
 // import { payout } from "./payout";
-import { unassign } from "./unassign";
-import { registerWallet } from "./wallet";
-import { approveLabelChange } from "./authorize";
+import { BigNumber, ethers } from "ethers";
 import { setAccess } from "./allow";
 import { ask } from "./ask";
+import { approveLabelChange } from "./authorize";
 import { multiplier } from "./multiplier";
-import { BigNumber, ethers } from "ethers";
+import { unassign } from "./unassign";
+import { registerWallet } from "./wallet";
 // import { addPenalty } from "../../../adapters/supabase";
+import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import {
   addCommentToIssue,
-  createLabel,
   addLabelToIssue,
-  getLabel,
-  upsertCommentToIssue,
+  calculateWeight,
+  createLabel,
+  getAllIssueAssignEvents,
   getAllIssueComments,
+  getLabel,
   getPayoutConfigByNetworkId,
   getTokenSymbol,
-  getAllIssueAssignEvents,
-  calculateWeight,
+  upsertCommentToIssue,
 } from "../../../helpers";
-import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../../bindings";
 
-import { query } from "./query";
-import { autoPay } from "./payout";
-import { getTargetPriceLabel } from "../../shared";
 import Decimal from "decimal.js";
 import { ErrorDiff } from "../../../utils/helpers";
+import { calculateIssueAssigneeReward } from "../../payout/calculate-issue-assignee-reward";
 import { calculateIssueConversationReward } from "../../payout/calculate-issue-conversation-reward";
 import { calculateIssueCreatorReward } from "../../payout/calculate-issue-creator-reward";
 import { calculateReviewContributorRewards } from "../../payout/calculate-review-contributor-rewards";
 import { handleIssueClosed } from "../../payout/handle-issue-closed";
 import { incentivesCalculation } from "../../payout/incentives-calculation";
-import { calculateIssueAssigneeReward } from "../../payout/calculate-issue-assignee-reward";
+import { getTargetPriceLabel } from "../../shared";
+import { autoPay } from "./payout";
+import { query } from "./query";
 
+export * from "./ask";
 export * from "./assign";
-export * from "./wallet";
-export * from "./unassign";
-export * from "./payout";
+export * from "./authorize";
 export * from "./help";
 export * from "./multiplier";
+export * from "./payout";
 export * from "./query";
-export * from "./ask";
-export * from "./authorize";
+export * from "./unassign";
+export * from "./wallet";
 
 export interface RewardsResponse {
   error: string | null;
@@ -175,7 +175,7 @@ export const issueReopenedCallback = async (): Promise<void> => {
   } = getBotConfig();
   const logger = getLogger();
   const issue = (_payload as Payload).issue;
-  const repository = (_payload as Payload).repository;
+  // const repository = (_payload as Payload).repository;
   if (!issue) return;
   try {
     // find permit comment from the bot

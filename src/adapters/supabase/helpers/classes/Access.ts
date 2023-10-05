@@ -7,6 +7,15 @@ type AccessRow = Database["public"]["Tables"]["access"]["Row"];
 // type AccessResponse = AccessRow[] | null;
 type UserWithAccess = (UserRow & { access: AccessRow | null })[];
 
+type _Access = {
+  user_id: number;
+  multiplier: number;
+  multiplier_reason: string;
+  node_id: string;
+  node_type: string;
+  node_url: string;
+};
+
 export class Access extends Super {
   constructor(supabase: SupabaseClient) {
     super(supabase);
@@ -32,18 +41,40 @@ export class Access extends Super {
     return data;
   }
 
-  public async getAccessRegistrationUrl(id: number): Promise<string> {
-    const userWithAccess = await this._getUserWithAccess(id);
-    if (!userWithAccess[0].access) throw new Error("Access of access registration comment is null");
-    if (!userWithAccess[0].access.location_id) throw new Error("Location id of access registration comment is null");
+  // public async getAccessRegistrationUrl(id: number): Promise<string> {
+  //   const userWithAccess = await this._getUserWithAccess(id);
+  //   if (!userWithAccess[0].access) throw new Error("Access of access registration comment is null");
+  //   if (!userWithAccess[0].access.location_id) throw new Error("Location id of access registration comment is null");
 
-    const locationId = userWithAccess[0].access.location_id;
+  //   const locationId = userWithAccess[0].access.location_id;
 
-    const { data, error } = await this.client.from("locations").select("*").eq("id", locationId);
-    if (error) throw error;
-    const nodeUrl = data[0].node_url;
-    if (!nodeUrl) throw new Error("Node URL of access registration comment is null");
+  //   const { data, error } = await this.client.from("locations").select("*").eq("id", locationId);
+  //   if (error) throw error;
+  //   const nodeUrl = data[0].node_url;
+  //   if (!nodeUrl) throw new Error("Node URL of access registration comment is null");
 
-    return nodeUrl;
+  //   return nodeUrl;
+  // }
+
+  async upsertMultiplier(userId: number, multiplier: number, reason: string, commentInfo: any): Promise<void> {
+    try {
+      const accessData: _Access = {
+        user_id: userId,
+        multiplier: multiplier,
+        multiplier_reason: reason,
+        node_id: commentInfo.node_id,
+        node_type: "IssueComment",
+        node_url: commentInfo.html_url,
+      };
+
+      // Upsert into the access table
+      //   .upsert(accessData, { onConflict: ["user_id", "node_id"] });
+      const { data, error } = await this.client.from("access").upsert(accessData, { onConflict: "location_id" });
+
+      if (error) throw error;
+      if (!data) throw new Error("Multiplier not upserted");
+    } catch (error) {
+      console.error("An error occurred while upserting multiplier:", error);
+    }
   }
 }

@@ -78,7 +78,9 @@ export const multiplier = async (body: string) => {
       `Upserting to the wallet table, username: ${username}, taskMultiplier: ${taskMultiplier}, reason: ${reason}}`
     );
 
-    await upsertWalletMultiplier(username, taskMultiplier?.toString(), reason, id?.toString());
+    const { access } = getAdapters().supabase;
+    await access.upsertMultiplier(payload.sender.id, taskMultiplier, reason, issue);
+
     if (taskMultiplier > 1) {
       return `Successfully changed the payout multiplier for @${username} to ${taskMultiplier}. The reason ${
         reason ? `provided is "${reason}"` : "is not provided"
