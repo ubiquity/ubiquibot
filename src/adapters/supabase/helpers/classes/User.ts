@@ -4,6 +4,7 @@ import { Database } from "../../types/database";
 import { Super } from "./Super";
 
 export type UserRow = Database["public"]["Tables"]["users"]["Row"];
+export type UserInsert = Database["public"]["Tables"]["users"]["Insert"];
 export class User extends Super {
   constructor(supabase: SupabaseClient) {
     super(supabase);

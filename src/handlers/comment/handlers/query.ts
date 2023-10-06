@@ -42,7 +42,7 @@ export async function query(body: string) {
     }
 
     if (accessData) {
-      const { multiplier, multiplier_reason, labels, location_id } = accessData;
+      const { multiplier, multiplier_reason, labels } = accessData;
       // const locationInfo = await await database.access.getAccessLocation(location_id);
       resultMessage += `@${user}'s access levels are set as follows:\n
   Multiplier: ${multiplier}\n

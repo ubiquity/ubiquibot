@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 // import { upsertWalletAddress } from "../../../adapters/supabase";
-import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
+import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { resolveAddress } from "../../../helpers";
 import { Payload } from "../../../types";
 import { formatEthAddress } from "../../../utils";
@@ -80,11 +80,16 @@ export const registerWallet = async (body: string) => {
       logger.info("Skipping to register a wallet address because user is trying to set their address to null address");
       return `Cannot set address to null address`;
     }
-    // get me the node_id of the comment that was just created
-    const node_id = payload?.comment?.node_id;
 
-    await upsertWalletAddress(sender, address, node_id);
-    return `Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`;
+    if (address && payload.comment) {
+      const { wallet } = getAdapters().supabase;
+      await wallet.upsertWalletAddress(address, { user: payload.sender, comment: payload.comment });
+      return logger.info(
+        `Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`
+      );
+    } else {
+      throw new Error("Payload comment is undefined");
+    }
   }
 
   return;
