@@ -27,6 +27,7 @@ cd ubiquibot
 yarn
 yarn build
 
+yarn build --watch
 yarn start:watch
 ```
 
@@ -48,6 +49,8 @@ yarn start:watch
 - `SIMILARITY_THRESHOLD`: (optional) Set similarity threshold (default: 80).
 - `MEASURE_SIMILARITY_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for measuring similarity (default: 0).
 - `IMPORTANT_WORDS_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for finding important words (default: 0).
+- `WEBHOOK_PROXY_URL`: (required) should be automatically filled when you install Ubiquibot
+- `WEBHOOK_SECRET`: (required) should be automatically filled when the app is installed
 
 `APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for core team developers to use.
 
@@ -137,7 +140,7 @@ To test the bot, you can:
 
 `defaultLabels` are labels that are applied when an issue is created without any time or priority labels.
 
-`assistive-pricing` to create a new pricing label if it doesn't exist. Can be `true` or `false`.
+`assistivePricing` to create a new pricing label if it doesn't exist. Can be `true` or `false`.
 
 `disableAnalytics` can be `true` or `false` that disables or enables weekly analytics collection by Ubiquity.
 
