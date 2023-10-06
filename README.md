@@ -234,13 +234,13 @@ You can, for example:
 
 ## How it works
 
-UbiquityBot is built using the [probot](https://probot.github.io/) framework so in fact the bot is a github app. But thanks to the [probot/adapter-github-actions](https://github.com/probot/adapter-github-actions) you can also use the bot as a github action.
+Ubiquibot is built using the [probot](https://probot.github.io/) framework so in fact the bot is a github app. But thanks to the [probot/adapter-github-actions](https://github.com/probot/adapter-github-actions) you can also use the bot as a github action.
 
-[UbiquityBot](https://github.com/marketplace/ubiquibot) it's also available ready to install on the Githut Marketplace.
+[Ubiquibot](https://github.com/marketplace/ubiquibot) it's also available ready to install on the Githut Marketplace.
 
 When using as a github app the flow is the following:
 
-1. UbiquityBot is added to a repository as a github app
+1. UbiquiBot is added to a repository as a github app
 2. You run the bot "backend" (for example on your local machine)
 3. Some event happens in a repository and the bot should react somehow (for example: on adding a time label to an issue the bot should add a price label)
 4. Event details are sent to your deployed bot instance (to a webhook URL that was set in github app's settings)
@@ -281,7 +281,7 @@ Make sure you have your local instance of ubiquibot running.
 
 ## Architecture Overview
 
-Bounty bot is built using the [probot](https://probot.github.io/) framework so initially the bot is a github app
+Ubiquibot is built using the [probot](https://probot.github.io/) framework, the bot is a github app
 
 <pre>
 &lt;root&gt;
