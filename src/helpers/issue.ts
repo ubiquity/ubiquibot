@@ -1,11 +1,14 @@
 import { Context } from "probot";
-import { getBotConfig, getBotContext, getLogger } from "../bindings";
+
 import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
 
+import { getBotConfig, getBotContext, getLogger } from "../bindings";
+const logger = getLogger();
+
 export async function getAllIssueEvents() {
   const context = getBotContext();
-  const logger = getLogger();
+
   const payload = context.payload as Payload;
   if (!payload.issue) return;
 
@@ -49,7 +52,7 @@ export async function getAllLabeledEvents() {
 
 export async function clearAllPriceLabelsOnIssue(): Promise<void> {
   const context = getBotContext();
-  const logger = getLogger();
+
   const payload = context.payload as Payload;
 
   if (!payload.issue) return;
@@ -73,7 +76,7 @@ export async function clearAllPriceLabelsOnIssue(): Promise<void> {
 
 export async function addLabelToIssue(labelName: string) {
   const context = getBotContext();
-  const logger = getLogger();
+
   const payload = context.payload as Payload;
   if (!payload.issue) {
     logger.debug("Issue object is null");
@@ -141,7 +144,7 @@ export async function listAllIssuesForRepo(state: "open" | "closed" | "all" = "o
 
 export async function addCommentToIssue(msg: string, issue_number: number) {
   const context = getBotContext();
-  const logger = getLogger();
+
   const payload = context.payload as Payload;
 
   try {
@@ -158,7 +161,7 @@ export async function addCommentToIssue(msg: string, issue_number: number) {
 
 export async function updateCommentOfIssue(msg: string, issue_number: number, reply_to: Comment) {
   const context = getBotContext();
-  const logger = getLogger();
+
   const payload = context.payload as Payload;
 
   try {
@@ -208,7 +211,7 @@ export async function upsertCommentToIssue(issue_number: number, comment: string
 
 export async function getCommentsOfIssue(issue_number: number): Promise<Comment[]> {
   const context = getBotContext();
-  const logger = getLogger();
+
   const payload = context.payload as Payload;
 
   let result: Comment[] = [];
@@ -232,7 +235,7 @@ export async function getIssueDescription(
   format: "raw" | "html" | "text" = "raw"
 ): Promise<string> {
   const context = getBotContext();
-  const logger = getLogger();
+
   const payload = context.payload as Payload;
 
   let result = "";
@@ -373,7 +376,7 @@ export async function wasIssueReopened(issue_number: number): Promise<boolean> {
 
 export async function removeAssignees(issue_number: number, assignees: string[]): Promise<void> {
   const context = getBotContext();
-  const logger = getLogger();
+
   const payload = context.payload as Payload;
 
   try {
@@ -391,13 +394,12 @@ export async function removeAssignees(issue_number: number, assignees: string[])
 export async function checkUserPermissionForRepoAndOrg(username: string, context: Context): Promise<boolean> {
   const permissionForRepo = await checkUserPermissionForRepo(username, context);
   const permissionForOrg = await checkUserPermissionForOrg(username, context);
-  const userPermission = await getUserPermission(username, context);
+  const userPermission = await isUserAdminOrBillingManager(username, context);
 
-  return permissionForOrg || permissionForRepo || userPermission === "admin" || userPermission === "billing_manager";
+  return permissionForOrg || permissionForRepo || userPermission === "admin";
 }
 
 export async function checkUserPermissionForRepo(username: string, context: Context): Promise<boolean> {
-  const logger = getLogger();
   const payload = context.payload as Payload;
 
   try {
@@ -415,7 +417,6 @@ export async function checkUserPermissionForRepo(username: string, context: Cont
 }
 
 export async function checkUserPermissionForOrg(username: string, context: Context): Promise<boolean> {
-  const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.organization) return false;
 
@@ -432,14 +433,21 @@ export async function checkUserPermissionForOrg(username: string, context: Conte
   }
 }
 
-export async function getUserPermission(
+export async function isUserAdminOrBillingManager(
   username: string,
   context: Context
-): Promise<"admin" | "write" | "read" | "none" | ""> {
-  const logger = getLogger();
+): Promise<"admin" | "billing_manager" | false> {
   const payload = context.payload as Payload;
 
-  try {
+  const isAdmin = await checkIfIsAdmin();
+  if (isAdmin) return "admin";
+
+  const isBillingManager = await checkIfIsBillingManager();
+  if (isBillingManager) return "billing_manager";
+
+  return false;
+
+  async function checkIfIsAdmin() {
     const response = await context.octokit.rest.repos.getCollaboratorPermissionLevel({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
@@ -449,17 +457,28 @@ export async function getUserPermission(
     if (response.status === 200) {
       return response.data.permission as "admin" | "write" | "read" | "none";
     } else {
-      return "";
+      return null;
     }
-  } catch (e: unknown) {
-    logger.debug(`Checking if user is admin failed! reason: ${e}`);
-    return "";
+  }
+
+  async function checkIfIsBillingManager() {
+    if (!payload.organization) throw logger.error(`No organization found in payload!`);
+    const { data: membership } = await context.octokit.rest.orgs.getMembershipForUser({
+      org: payload.organization.login,
+      username: payload.repository.owner.login,
+    });
+
+    if (membership.role === "billing_manager") {
+      return true;
+    } else {
+      return false;
+    }
   }
 }
 
 export async function addAssignees(issue_number: number, assignees: string[]): Promise<void> {
   const context = getBotContext();
-  const logger = getLogger();
+
   const payload = context.payload as Payload;
 
   try {
@@ -476,7 +495,7 @@ export async function addAssignees(issue_number: number, assignees: string[]): P
 
 export async function deleteLabel(label: string): Promise<void> {
   const context = getBotContext();
-  const logger = getLogger();
+
   const payload = context.payload as Payload;
 
   try {
@@ -498,7 +517,7 @@ export async function deleteLabel(label: string): Promise<void> {
 
 export async function removeLabel(name: string) {
   const context = getBotContext();
-  const logger = getLogger();
+
   const payload = context.payload as Payload;
   if (!payload.issue) {
     logger.debug("Invalid issue object");
@@ -540,7 +559,6 @@ export async function getPullRequests(
   per_page: number,
   page: number
 ) {
-  const logger = getLogger();
   const payload = context.payload as Payload;
   try {
     const { data: pulls } = await context.octokit.rest.pulls.list({
@@ -560,7 +578,7 @@ export async function getPullRequests(
 export async function closePullRequest(pull_number: number) {
   const context = getBotContext();
   const payload = context.payload as Payload;
-  const logger = getLogger();
+
   try {
     await getBotContext().octokit.rest.pulls.update({
       owner: payload.repository.owner.login,
@@ -601,7 +619,6 @@ export async function getPullRequestReviews(
   page: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ) {
-  const logger = getLogger();
   const payload = context.payload as Payload;
   try {
     const { data: reviews } = await context.octokit.rest.pulls.listReviews({
@@ -622,7 +639,6 @@ export async function getPullRequestReviews(
 }
 
 export async function getReviewRequests(context: Context, pull_number: number, owner: string, repo: string) {
-  const logger = getLogger();
   try {
     const response = await context.octokit.pulls.listRequestedReviewers({
       owner: owner,
@@ -637,7 +653,6 @@ export async function getReviewRequests(context: Context, pull_number: number, o
 }
 // Get issues by issue number
 export async function getIssueByNumber(context: Context, issue_number: number) {
-  const logger = getLogger();
   const payload = context.payload as Payload;
   try {
     const { data: issue } = await context.octokit.rest.issues.get({
@@ -653,7 +668,6 @@ export async function getIssueByNumber(context: Context, issue_number: number) {
 }
 
 export async function getPullByNumber(context: Context, pull_number: number) {
-  const logger = getLogger();
   const payload = context.payload as Payload;
   try {
     const { data: pull } = await context.octokit.rest.pulls.get({
@@ -714,7 +728,6 @@ export async function getOpenedPullRequests(username: string) {
 }
 
 export async function getCommitsOnPullRequest(pullNumber: number) {
-  const logger = getLogger();
   const context = getBotContext();
   const payload = getBotContext().payload as Payload;
   try {
@@ -763,7 +776,6 @@ export async function getAvailableOpenedPullRequests(username: string) {
 // Strips out all links from the body of an issue or pull request and fetches the conversational context from each linked issue or pull request
 export async function getAllLinkedIssuesAndPullsInBody(issueNumber: number) {
   const context = getBotContext();
-  const logger = getLogger();
 
   const issue = await getIssueByNumber(context, issueNumber);
 

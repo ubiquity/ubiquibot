@@ -14,7 +14,7 @@ import { GLOBAL_STRINGS } from "../../../configs";
 // import { calculateIssueCreatorReward } from "../../payout/calculate-issue-creator-reward";
 // import { calculateIssueConversationReward } from "../../payout/calculate-issue-conversation-reward";
 // import { calculateReviewContributorRewards } from "../../payout/calculate-review-contributor-rewards";
-import { getUserPermission } from "../../../helpers/issue";
+import { isUserAdminOrBillingManager } from "../../../helpers/issue";
 
 // export async function payout(body: string) {
 //   const { payload: _payload } = getBotContext();
@@ -72,8 +72,8 @@ export async function autoPay(body: string) {
   const res = body.match(pattern);
 
   if (res) {
-    const userPermission = await getUserPermission(payload.sender.login, context);
-    if (userPermission !== "admin" && userPermission !== "billing_manager") {
+    const userCan = await isUserAdminOrBillingManager(payload.sender.login, context);
+    if (userCan) {
       return "You must be an `admin` or `billing_manager` to toggle automatic payments for completed issues.";
     }
     if (res.length > 1) {

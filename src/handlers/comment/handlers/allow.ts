@@ -1,5 +1,5 @@
 import { getAdapters, getBotContext, getLogger } from "../../../bindings";
-import { getUserPermission } from "../../../helpers";
+import { isUserAdminOrBillingManager } from "../../../helpers";
 import { Payload } from "../../../types";
 
 export async function setAccess(body: string): Promise<string> {
@@ -8,8 +8,8 @@ export async function setAccess(body: string): Promise<string> {
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
 
-  const permissionLevel = await getUserPermission(sender, context);
-  if (permissionLevel !== "admin")
+  const userCan = await isUserAdminOrBillingManager(sender, context);
+  if (userCan)
     return logger.info(`You are not an admin and do not have the required permissions to access this function.`); // if sender is not admin, return
 
   // const validAccessString = ["priority", "time", "price", "multiplier"];

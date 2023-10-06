@@ -1,5 +1,5 @@
 import { getAdapters, getBotContext, getLogger } from "../../../bindings";
-import { getUserPermission } from "../../../helpers";
+import { isUserAdminOrBillingManager } from "../../../helpers";
 import { Payload } from "../../../types";
 import { ErrorDiff } from "../../../utils/helpers";
 import { taskInfo } from "../../wildcard";
@@ -22,10 +22,10 @@ export async function approveLabelChange() {
 
   // check if sender is admin
   // passing in context so we don't have to make another request to get the user
-  const permissionLevel = await getUserPermission(sender, context);
+  const userCan = await isUserAdminOrBillingManager(sender, context);
 
   // if sender is not admin, return
-  if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {
+  if (userCan) {
     logger.info(`User ${sender} is not an admin/billing_manager`);
     return ErrorDiff(
       `You are not an admin/billing_manager and do not have the required permissions to access this function.`

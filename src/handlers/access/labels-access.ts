@@ -1,6 +1,6 @@
 // import { getAccessLevel } from "../../adapters/supabase";
 import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue, getUserPermission, removeLabel, addLabelToIssue } from "../../helpers";
+import { addCommentToIssue, isUserAdminOrBillingManager, removeLabel, addLabelToIssue } from "../../helpers";
 import { Payload, UserType } from "../../types";
 import { getAdapters } from "../../bindings/event";
 
@@ -18,7 +18,7 @@ export const handleLabelsAccess = async () => {
 
   const sender = payload.sender.login;
   const repo = payload.repository;
-  const permissionLevel = await getUserPermission(sender, context);
+  const userCan = await isUserAdminOrBillingManager(sender, context);
   // event in plain english
   const eventName = payload.action === "labeled" ? "add" : "remove";
   const labelName = payload.label.name;
@@ -27,7 +27,7 @@ export const handleLabelsAccess = async () => {
   const match = payload.label?.name?.split(":");
   if (match.length == 0) return;
   const label_type = match[0].toLowerCase();
-  if (permissionLevel !== "admin") {
+  if (userCan) {
     logger.info(`Getting ${label_type} access for ${sender} on ${repo.full_name}`);
     // check permission
     const { access, user } = getAdapters().supabase;

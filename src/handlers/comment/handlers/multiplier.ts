@@ -1,6 +1,6 @@
 // import { getAccessLevel, upsertWalletMultiplier } from "../../../adapters/supabase";
 import { getBotContext, getLogger } from "../../../bindings";
-import { getUserPermission } from "../../../helpers";
+import { isUserAdminOrBillingManager } from "../../../helpers";
 import { Payload } from "../../../types";
 import { getAdapters } from "../../../bindings/event";
 
@@ -53,10 +53,10 @@ export async function multiplier(body: string) {
     username = username || sender;
     // check if sender is admin or billing_manager
     // passing in context so we don't have to make another request to get the user
-    const permissionLevel = await getUserPermission(sender, context);
+    const userCan = await isUserAdminOrBillingManager(sender, context);
 
     // if sender is not admin or billing_manager, check db for access
-    if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {
+    if (userCan) {
       logger.info(`Getting multiplier access for ${sender} on ${repo.full_name}`);
       // check db permission
       // await getMultiplier(sender.id, repo.id);
