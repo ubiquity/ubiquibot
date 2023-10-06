@@ -87,8 +87,6 @@ export async function calculateIssueConversationReward(
       continue;
     }
     if (account) {
-      // const debug = {};
-
       reward.push({
         account,
         priceInBigNumber,
@@ -97,7 +95,7 @@ export async function calculateIssueConversationReward(
         penaltyAmount: BigNumber.from(0),
         debug: {
           test: {
-            count: commentsByNode.length as number,
+            count: Object.keys(commentsByNode).length,
             reward: rewardValue,
           },
         },
@@ -106,27 +104,10 @@ export async function calculateIssueConversationReward(
       fallbackReward[_user] = priceInBigNumber;
     }
   }
-  const debug: Record<string, { count: number; reward: Decimal }> = {};
   return {
     error: null,
     title,
     fallbackReward,
     reward,
-    debug,
   };
 }
-// export interface RewardsResponse {
-//   error: string | null;
-//   title?: string;
-//   userId?: number;
-//   username?: string;
-//   reward?: {
-//     account: string;
-//     priceInBigNumber: Decimal;
-//     penaltyAmount: BigNumber;
-//     user: string;
-//     userId: number;
-//     debug: Record<string, { count: number; reward: Decimal }>;
-//   }[];
-//   fallbackReward?: Record<string, Decimal>;
-// }

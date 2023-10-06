@@ -9,7 +9,7 @@ import {
   wasIssueReopened,
   getAllIssueAssignEvents,
 } from "../../helpers";
-import { UserType, Payload, StateReason } from "../../types";
+import { UserType, Payload, StateReason, Comment, Incentives, Issue, User } from "../../types";
 import { taskInfo } from "../wildcard";
 import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
@@ -171,7 +171,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   }
 
   // check for label altering here
-  const labelChanges = await getLabelChanges(repository.full_name, [
+  const labelChanges = await shims.getLabelChanges(repository.full_name, [
     issueDetailed.priceLabel,
     issueDetailed.priorityLabel,
     issueDetailed.timelabel,
@@ -199,7 +199,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     throw logger.info(`Recipient address is missing`);
   }
 
-  const { value: multiplier } = await getUserMultiplier(assignee.id);
+  const { value: multiplier } = await getUserMultiplier(assignee.id, repository.id);
 
   if (multiplier === 0) {
     const errMsg =
