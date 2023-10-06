@@ -74,7 +74,7 @@ export const createDetailsTable = (
   paymentURL: string,
   username: string,
   values: { title: string; subtitle: string; value: string }[],
-  debug: Record<
+  debug?: Record<
     string,
     {
       count: number;

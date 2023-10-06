@@ -4,9 +4,9 @@ import { UserType } from "../../types";
 import { RewardsResponse } from "../comment";
 import Decimal from "decimal.js";
 import { taskInfo } from "../wildcard";
-import { IncentivesCalculationResult } from "./action";
 import { BigNumber } from "ethers";
 import { generatePermitForComment } from "./generate-permit-for-comment";
+import { IncentivesCalculationResult } from "./incentives-calculation";
 
 export async function calculateIssueCreatorReward(
   incentivesCalculation: IncentivesCalculationResult
@@ -70,14 +70,14 @@ export async function calculateIssueCreatorReward(
   return {
     error: "",
     title,
-    userId: creator.node_id,
+    userId: creator.id,
     username: creator.login,
     reward: [
       {
         priceInBigNumber: result?.amountInBigNumber ?? new Decimal(0),
         account: result?.account,
-        userId: "",
-        user: "",
+        userId: -1,
+        user: null,
         penaltyAmount: BigNumber.from(0),
       },
     ],

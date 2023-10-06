@@ -57,9 +57,9 @@ export interface RewardsResponse {
     account: string;
     priceInBigNumber: Decimal;
     penaltyAmount: BigNumber;
-    user: string;
+    user: string | undefined;
     userId: number;
-    debug: Record<string, { count: number; reward: Decimal }>;
+    debug?: Record<string, { count: number; reward: Decimal }>;
   }[];
   fallbackReward?: Record<string, Decimal>;
 }

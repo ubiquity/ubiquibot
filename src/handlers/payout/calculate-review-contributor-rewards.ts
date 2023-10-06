@@ -4,10 +4,10 @@ import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
 import { UserType } from "../../types";
 import { RewardsResponse, getWalletAddress } from "../comment";
 import Decimal from "decimal.js";
-import { IncentivesCalculationResult } from "./action";
 import { BigNumber } from "ethers";
 import { ItemsToExclude } from "./post";
 import { calculateRewardValue } from "./calculate-reward-value";
+import { IncentivesCalculationResult } from "./incentives-calculation";
 
 export async function calculateReviewContributorRewards(
   incentivesCalculation: IncentivesCalculationResult
@@ -105,7 +105,7 @@ export async function calculateReviewContributorRewards(
   const reward: {
     account: string;
     priceInBigNumber: Decimal;
-    userId: string;
+    userId: number;
     user: string;
     penaltyAmount: BigNumber;
   }[] = [];
@@ -141,7 +141,7 @@ export async function calculateReviewContributorRewards(
       reward.push({
         account,
         priceInBigNumber,
-        userId: commentByUser.id,
+        userId: parseInt(commentByUser.id),
         user: _user,
         penaltyAmount: BigNumber.from(0),
       });

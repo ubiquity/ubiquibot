@@ -27,7 +27,7 @@ interface RewardByUser {
   type: (string | undefined)[];
   user: string | undefined;
   priceArray: string[];
-  debug: Record<string, { count: number; reward: Decimal }>;
+  debug: Record<string, { count: number; reward: Decimal }> | undefined;
 }
 export async function handleIssueClosed({
   creatorReward,
@@ -117,7 +117,7 @@ export async function handleIssueClosed({
 
   // ASSIGNEE REWARD HANDLER
   if (assigneeReward && assigneeReward.reward && assigneeReward.reward[0].account !== "0x") {
-    const permitComments = incentivesCalculation.comments.filter((content) => {
+    const permitComments = incentivesCalculation.comments.filter((content: { body: string }) => {
       const permitUrlMatches = content.body.match(incentivesCalculation.claimUrlRegex);
       if (!permitUrlMatches || permitUrlMatches.length < 2) return false;
       else return true;
