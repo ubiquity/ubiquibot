@@ -117,7 +117,7 @@ To test the bot, you can:
 
 ## Configuration
 
-`evm-network-id` is ID of the EVM-compatible network that will be used for payouts.
+`evmNetworkId` is ID of the EVM-compatible network that will be used for payouts.
 
 `priceMultiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = priceMultiplier * timeLabelWeight * priority-label-weight * 100`
 
@@ -126,7 +126,7 @@ To test the bot, you can:
 - `name` is a human-readable name
 - `value` is number of seconds that corresponds to the time limit of the bounty
 
-`priority-labels` are labels for marking the priority of the bounty:
+`priorityLabels` are labels for marking the priority of the bounty:
 
 - `name` is a human-readable name
 
@@ -139,13 +139,13 @@ To test the bot, you can:
 
 `assistive-pricing` to create a new pricing label if it doesn't exist. Can be `true` or `false`.
 
-`disable-analytics` can be `true` or `false` that disables or enables weekly analytics collection by Ubiquity.
+`disableAnalytics` can be `true` or `false` that disables or enables weekly analytics collection by Ubiquity.
 
-`payment-permit-max-price` sets the max amount for automatic payout of bounties when the issue is closed.
+`paymentPermitMaxPrice` sets the max amount for automatic payout of bounties when the issue is closed.
 
-`comment-incentives` can be `true` or `false` that enable or disable comment incentives. These are payments generated for comments in the issue by contributors, excluding the assignee.
+`commentIncentives` can be `true` or `false` that enable or disable comment incentives. These are payments generated for comments in the issue by contributors, excluding the assignee.
 
-`issue-creator-multiplier` is a number that defines a base multiplier for calculating incentive for the creator of the issue.
+`issueCreatorMultiplier` is a number that defines a base multiplier for calculating incentive for the creator of the issue.
 
 `comment-element-pricing` defines how much is a part of the comment worth. For example `text: 0.1` means that any text in the comment will add 0.1
 
@@ -156,11 +156,11 @@ To test the bot, you can:
   - `totals`:
     - `word` defines reward for each word in the comment
 
-`max-concurrent-assigns` is the maximum number of bounties that can be assigned to a bounty hunter at once. This excludes bounties with delayed or approved pull request reviews.
+`maxConcurrentAssigns` is the maximum number of bounties that can be assigned to a bounty hunter at once. This excludes bounties with delayed or approved pull request reviews.
 
-`register-wallet-with-verification` can be `true` or `false`. If enabled, it requires a signed message to set wallet address. This prevents users from setting wallet address from centralized exchanges, which would make payments impossible to claim.
+`registerWalletWithVerification` can be `true` or `false`. If enabled, it requires a signed message to set wallet address. This prevents users from setting wallet address from centralized exchanges, which would make payments impossible to claim.
 
-`promotion-comment` is a message that is appended to the payment permit comment.
+`promotionComment` is a message that is appended to the payment permit comment.
 
 ## How to run locally
 ### Supase Database
