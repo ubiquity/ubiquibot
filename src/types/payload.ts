@@ -119,7 +119,7 @@ const IssueSchema = Type.Object({
 });
 export type Issue = Static<typeof IssueSchema>;
 
-const RepositorySchema = Type.Object({
+export const RepositorySchema = Type.Object({
   id: Type.Number(),
   node_id: Type.String(),
   name: Type.String(),
@@ -197,6 +197,8 @@ const RepositorySchema = Type.Object({
   watchers: Type.Number(),
   default_branch: Type.String(),
 });
+
+export type Repository = Static<typeof RepositorySchema>;
 
 const OrganizationSchema = Type.Object({
   login: Type.String(),

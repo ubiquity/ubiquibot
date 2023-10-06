@@ -48,7 +48,7 @@ export const getPayoutConfigByNetworkId = (evmNetworkId: number): PayoutConfigPa
   };
 };
 
-export const hasLabelEditPermission = async (label: string, caller: string, repository: string) => {
+export async function hasLabelEditPermission(label: string, caller: string, repository: string) {
   const context = getBotContext();
   const logger = getLogger();
   const permissionLevel = await getUserPermission(caller, context);
@@ -58,17 +58,13 @@ export const hasLabelEditPermission = async (label: string, caller: string, repo
   if (match.length == 0) return false;
   const label_type = match[0].toLowerCase();
 
-  if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {
+  if (permissionLevel !== "admin") {
     // check permission
     const accessible = await getAccessLevel(caller, repository, label_type);
-
-    if (accessible) {
-      return true;
-    }
-
+    if (accessible) return true;
     logger.info(`@${caller} is not allowed to edit label ${label}`);
     return false;
   }
 
   return true;
-};
+}

@@ -1,10 +1,35 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import { Repository } from "../../../../types/payload";
 import { Database } from "../../types";
 import { Super } from "./Super";
 export type LabelRow = Database["public"]["Tables"]["labels"]["Row"];
 export class Label extends Super {
   constructor(supabase: SupabaseClient) {
     super(supabase);
+  }
+
+  async saveLabelChange({
+    previousLabel,
+    currentLabel,
+    authorized,
+    repository,
+  }: {
+    previousLabel: string;
+    currentLabel: string;
+    authorized: boolean;
+    repository: Repository;
+  }): Promise<null> {
+    const { data, error } = await this.client.from("labels").insert({
+      label_from: previousLabel,
+      label_to: currentLabel,
+      authorized: authorized,
+      node_id: repository.node_id,
+      node_type: "Repository",
+      node_url: repository.html_url,
+    });
+
+    if (error) throw error;
+    return data;
   }
 
   async getLabelChanges(repositoryNodeId: string): Promise<LabelRow[]> {

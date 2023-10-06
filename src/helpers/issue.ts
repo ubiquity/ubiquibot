@@ -432,7 +432,10 @@ export async function checkUserPermissionForOrg(username: string, context: Conte
   }
 }
 
-export async function getUserPermission(username: string, context: Context): Promise<string> {
+export async function getUserPermission(
+  username: string,
+  context: Context
+): Promise<"admin" | "write" | "read" | "none" | ""> {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -444,7 +447,7 @@ export async function getUserPermission(username: string, context: Context): Pro
     });
 
     if (response.status === 200) {
-      return response.data.permission;
+      return response.data.permission as "admin" | "write" | "read" | "none";
     } else {
       return "";
     }
