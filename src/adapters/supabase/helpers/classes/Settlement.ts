@@ -1,23 +1,11 @@
 import { PostgrestResponse, SupabaseClient } from "@supabase/supabase-js";
 import { Comment } from "../../../../types/payload";
+import { Database } from "../../types/database";
 import { Super } from "./Super";
 import { WalletRow } from "./Wallet";
 
-type _Debit = {
-  // id: number;
-  amount: number;
-  node_id: string;
-  node_type: string;
-  node_url: string;
-  // location_id: number;
-};
-
-type _Settlement = {
-  id: number;
-  debit_id: number;
-  user_id: number;
-  location_id: number;
-};
+type DebitInsert = Database["public"]["Tables"]["debits"]["Insert"];
+type SettlementInsert = Database["public"]["Tables"]["settlements"]["Insert"];
 
 export class Settlement extends Super {
   constructor(supabase: SupabaseClient) {
@@ -27,7 +15,7 @@ export class Settlement extends Super {
   public async addDebit(assignee: number, amount: number, comment: Comment): Promise<void> {
     try {
       // Insert into the debits table
-      const debitData: _Debit = {
+      const debitData: DebitInsert = {
         amount: amount,
         node_id: comment.node_id,
         node_type: "IssueComment",
@@ -44,7 +32,7 @@ export class Settlement extends Super {
       if (!debitInsertData) throw new Error("Debit not inserted");
 
       // Insert into the settlements table
-      const settlementData: _Settlement = {
+      const settlementData: SettlementInsert = {
         id: debitInsertData.id,
         debit_id: debitInsertData.id,
         user_id: assignee,
