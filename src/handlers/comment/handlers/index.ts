@@ -229,7 +229,7 @@ export const issueReopenedCallback = async (): Promise<void> => {
       const { debit } = getAdapters().supabase;
 
       try {
-        await debit.addPenalty(events[0].assignee.id, parseFloat(formattedAmount), permitComment);
+        await debit.addDebit(events[0].assignee.id, parseFloat(formattedAmount), permitComment);
       } catch (err) {
         logger.error(`Error writing penalty to db: ${err}`);
         return;

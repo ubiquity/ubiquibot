@@ -1,5 +1,5 @@
 import * as shims from "./shims";
-import { getBotConfig, getLogger } from "../../bindings";
+import { getAdapters, getBotConfig, getLogger } from "../../bindings";
 import {
   addLabelToIssue,
   deleteLabel,
@@ -188,14 +188,16 @@ export async function handleIssueClosed({
         return item;
       });
 
-    const { reason, value } = await getWalletMultiplier(reward.user, incentivesCalculation.id?.toString());
+    const access = await getAdapters().supabase.access.getAccess(reward.userId);
+
+    const multiplier = access.multiplier || 1;
+    const multiplier_reason = access.multiplier_reason || "";
 
     // if reason is not "", then add multiplier to detailsValue and multiply the price
-    if (reason) {
-      detailsValue.push({ title: "Multiplier", subtitle: "Amount", value: value.toString() });
-      detailsValue.push({ title: "", subtitle: "Reason", value: reason });
+    if (multiplier_reason) {
+      detailsValue.push({ title: "Multiplier", subtitle: "Amount", value: multiplier.toString() });
+      detailsValue.push({ title: "", subtitle: "Reason", value: multiplier_reason });
 
-      const multiplier = new Decimal(value);
       const price = new Decimal(reward.priceInBigNumber);
       // add multiplier to the price
       reward.priceInBigNumber = price.mul(multiplier);

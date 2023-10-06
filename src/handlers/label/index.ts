@@ -9,7 +9,7 @@ export const watchLabelChange = async () => {
 
   const payload = context.payload as Payload;
 
-  const { repository, label, changes, sender } = payload;
+  const { label, changes, sender } = payload;
 
   const previousLabel = changes?.name.from;
   const currentLabel = label?.name;
@@ -21,7 +21,7 @@ export const watchLabelChange = async () => {
   }
 
   // check if user is authorized to make the change
-  const hasAccess = await hasLabelEditPermission(currentLabel, triggerUser, repository.full_name);
+  const hasAccess = await hasLabelEditPermission(currentLabel, triggerUser);
 
   const { supabase } = getAdapters();
 
