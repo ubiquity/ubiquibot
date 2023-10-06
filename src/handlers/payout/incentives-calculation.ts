@@ -1,6 +1,6 @@
 import { BigNumber } from "ethers";
 import * as shims from "./shims";
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../bindings";
 import {
   checkUserPermissionForRepoAndOrg,
   clearAllPriceLabelsOnIssue,
@@ -171,17 +171,16 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   }
 
   // check for label altering here
-  const labelChanges = await shims.getLabelChanges(repository.full_name, [
-    issueDetailed.priceLabel,
-    issueDetailed.priorityLabel,
-    issueDetailed.timelabel,
-  ]);
+  const { label } = getAdapters().supabase;
+  const labelChanges = await label.getLabelChanges(repository.full_name);
 
   if (labelChanges) {
-    // if approved is still false, it means user was certainly not authorized for that edit
-    if (!labelChanges.approved) {
-      throw logger.info(`Skipping... label was changed by unauthorized user`);
-    }
+    // if authorized is still false, it means user was certainly not authorized for that edit
+    labelChanges.forEach((labelChange) => {
+      if (labelChange.authorized === false) {
+        throw logger.info(`Skipping... label was changed by unauthorized user`);
+      }
+    });
   }
 
   const assignees = issue?.assignees ?? [];

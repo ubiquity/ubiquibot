@@ -10,7 +10,7 @@ import {
 } from "../../helpers";
 import Decimal from "decimal.js";
 import { RewardsResponse } from "../comment";
-import { IncentivesCalculationResult } from "./action";
+import { IncentivesCalculationResult } from "./incentives-calculation";
 
 interface HandleIssueClosed {
   creatorReward: RewardsResponse;

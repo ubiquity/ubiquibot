@@ -77,7 +77,7 @@ export async function calculateIssueCreatorReward(
         priceInBigNumber: result?.amountInBigNumber ?? new Decimal(0),
         account: result?.account,
         userId: -1,
-        user: null,
+        user: undefined,
         penaltyAmount: BigNumber.from(0),
       },
     ],
