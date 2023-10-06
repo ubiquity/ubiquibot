@@ -25,9 +25,9 @@ Ubiquity DAO's GitHub Bot for Automating DevPool Management.
 git clone https://github.com/ubiquity/ubiquibot.git
 cd ubiquibot
 yarn
-yarn build
+yarn build (to compile your changes)
 
-yarn build --watch
+yarn build --watch (to locally auto compile your changes)
 yarn start:watch
 ```
 
