@@ -63,9 +63,7 @@ export const commentWithAssignMessage = async (context: BotContext): Promise<voi
   const commitMessage = `${flattened_assignees} ${deadLinePrefix} ${endDate.toUTCString().replace("GMT", "UTC")}`;
   logger.debug(`Creating an issue comment, commit_msg: ${commitMessage}`);
 
-
   await addCommentToIssue(context, commit_msg, payload.issue?.number);
-
 };
 
 export const closePullRequestForAnIssue = async (context: BotContext): Promise<void> => {

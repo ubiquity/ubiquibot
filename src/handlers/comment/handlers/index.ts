@@ -225,7 +225,7 @@ export const issueReopenedCallback = async (context: BotContext): Promise<void> 
       }
 
       await addCommentToIssue(
-        context, 
+        context,
         `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of **${formattedAmount} ${tokenSymbol}** will be deducted from your next bounty.`,
         issue.number
       );
@@ -245,7 +245,7 @@ export const issueReopenedCallback = async (context: BotContext): Promise<void> 
  * @param comment - Comment string
  */
 
-const commandCallback = async (context: BotContext ,issue_number: number, comment: string, action: string, reply_to?: Comment) => {
+const commandCallback = async (context: BotContext, issue_number: number, comment: string, action: string, reply_to?: Comment) => {
   await upsertCommentToIssue(context, issue_number, comment, action, reply_to);
 };
 

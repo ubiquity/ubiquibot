@@ -1,6 +1,6 @@
 import axios from "axios";
-import { getAdapters, getBotContext, Logger } from "../../../bindings";
-import { Payload, LogLevel, LogNotification } from "../../../types";
+import { getAdapters, Logger } from "../../../bindings";
+import { BotContext, Payload, LogLevel, LogNotification } from "../../../types";
 import { getOrgAndRepoFromPath } from "../../../utils/private";
 import jwt from "jsonwebtoken";
 interface Log {
@@ -57,7 +57,6 @@ export class GitHubLogger implements Logger {
 
     this.context = context;
     this.logNotification = logNotification;
-
   }
 
   async sendLogsToSupabase({ repo, org, commentId, issueNumber, logMessage, level, timestamp }: Log) {
@@ -88,8 +87,7 @@ export class GitHubLogger implements Logger {
     }
   }
 
-  private sendDataWithJwt(message: string | object, errorPayload?: string | object) {
-    const context = getBotContext();
+  private sendDataWithJwt(context: BotContext, message: string | object, errorPayload?: string | object) {
     const payload = context.payload as Payload;
 
     const { comment, issue, repository } = payload;
@@ -234,9 +232,9 @@ export class GitHubLogger implements Logger {
     this.save(message, LogLevel.INFO, errorPayload);
   }
 
-  warn(message: string | object, errorPayload?: string | object) {
+  warn(context: BotContext, message: string | object, errorPayload?: string | object) {
     this.save(message, LogLevel.WARN, errorPayload);
-    this.sendDataWithJwt(message, errorPayload)
+    this.sendDataWithJwt(context, message, errorPayload)
       .then((response) => {
         this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG, "");
       })
@@ -249,9 +247,9 @@ export class GitHubLogger implements Logger {
     this.save(message, LogLevel.DEBUG, errorPayload);
   }
 
-  error(message: string | object, errorPayload?: string | object) {
+  error(context: BotContext, message: string | object, errorPayload?: string | object) {
     this.save(message, LogLevel.ERROR, errorPayload);
-    this.sendDataWithJwt(message, errorPayload)
+    this.sendDataWithJwt(context, message, errorPayload)
       .then((response) => {
         this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG, "");
       })

@@ -76,7 +76,7 @@ export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser
   }
 };
 
-export const getLatestPullRequest = async (context: BotContext,prs: LinkedPR[]) => {
+export const getLatestPullRequest = async (context: BotContext, prs: LinkedPR[]) => {
   let linkedPullRequest = null;
   for (const _pr of prs) {
     if (Number.isNaN(_pr.prNumber)) return null;

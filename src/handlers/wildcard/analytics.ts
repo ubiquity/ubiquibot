@@ -8,7 +8,8 @@ import { BotContext, Issue, IssueType, User, UserProfile } from "../../types";
  * @param issue - The issue object
  * @returns If bounty - true, If issue - false
  */
-export const bountyInfo = (context: BotContext,
+export const bountyInfo = (
+  context: BotContext,
   issue: Issue
 ): {
   isBounty: boolean;

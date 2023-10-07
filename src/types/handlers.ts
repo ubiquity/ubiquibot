@@ -2,8 +2,8 @@ import { BotContext } from "./config";
 import { Comment } from "./payload";
 
 export type CommandsHandler = (context: BotContext, args: string) => Promise<string | undefined>;
-export type ActionHandler = (context: BotContext,args?: string) => Promise<void>;
-export type CallbackHandler = (context: BotContext,issue_number: number, text: string, action: string, reply_to?: Comment) => Promise<void>;
+export type ActionHandler = (context: BotContext, args?: string) => Promise<void>;
+export type CallbackHandler = (context: BotContext, issue_number: number, text: string, action: string, reply_to?: Comment) => Promise<void>;
 export type PreActionHandler = ActionHandler;
 export type PostActionHandler = ActionHandler;
 

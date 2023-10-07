@@ -32,7 +32,7 @@ export const getUser = async (context: BotContext, username: string): Promise<Us
  *
  * @returns The role name of a user in the organization. "admin" || "member" || "billing_manager"
  */
-export const getOrgMembershipOfUser = async (context: BotContext,org: string, username: string): Promise<string | undefined> => {
+export const getOrgMembershipOfUser = async (context: BotContext, org: string, username: string): Promise<string | undefined> => {
   const logger = getLogger();
   let membership: string | undefined = undefined;
 

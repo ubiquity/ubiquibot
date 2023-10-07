@@ -412,7 +412,6 @@ export const handleIssueClosed = async (
       priceArray: [creatorReward.reward[0].priceInEth.toString()],
       debug: creatorReward.reward[0].debug,
     });
-
   } else if (creatorReward && creatorReward.reward && creatorReward.reward[0].account === "0x") {
     logger.info(`Skipping to generate a permit url for missing account. fallback: ${creatorReward.fallbackReward}`);
   }
@@ -503,20 +502,20 @@ export const handleIssueClosed = async (
       reward.priceInEth = price.mul(multiplier);
     }
 
-    const { payoutUrl, txData } = await generatePermit2Signature(reward.account, reward.priceInEth, reward.issueId, reward.userId?.toString());
+    const { payoutUrl, txData } = await generatePermit2Signature(context, reward.account, reward.priceInEth, reward.issueId, reward.userId?.toString());
 
     const price = `${reward.priceInEth} ${incentivesCalculation.tokenSymbol.toUpperCase()}`;
 
     const comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue, reward.debug);
 
-    await savePermitToDB(Number(reward.userId), txData);
+    await savePermitToDB(context, Number(reward.userId), txData);
     permitComment += comment;
 
     logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(conversationRewards.fallbackReward)}`);
     logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(pullRequestReviewersReward.fallbackReward)}`);
   }
 
-  if (permitComment) await addCommentToIssue(permitComment.trim() + comments.promotionComment, issueNumber);
+  if (permitComment) await addCommentToIssue(context, permitComment.trim() + comments.promotionComment, issueNumber);
 
   await deleteLabel(context, incentivesCalculation.issueDetailed.priceLabel);
   await addLabelToIssue(context, "Permitted");

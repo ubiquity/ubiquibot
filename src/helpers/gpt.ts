@@ -143,7 +143,7 @@ export const decideContextGPT = async (
  * @param question the question to ask
  * @param chatHistory the conversational context to provide to GPT
  */
-export const askGPT = async (context: BotContext,question: string, chatHistory: CreateChatCompletionRequestMessage[]) => {
+export const askGPT = async (context: BotContext, question: string, chatHistory: CreateChatCompletionRequestMessage[]) => {
   const logger = getLogger();
   const config = context.botConfig;
 

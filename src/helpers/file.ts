@@ -2,7 +2,7 @@ import { getLogger } from "../bindings";
 import { BotContext } from "../types";
 
 // Get the previous file content
-export async function getPreviousFileContent(context: BotContext,owner: string, repo: string, branch: string, filePath: string) {
+export async function getPreviousFileContent(context: BotContext, owner: string, repo: string, branch: string, filePath: string) {
   const logger = getLogger();
 
   try {
@@ -60,7 +60,14 @@ export async function getPreviousFileContent(context: BotContext,owner: string, 
   }
 }
 
-export async function getFileContent(context: BotContext,owner: string, repo: string, branch: string, filePath: string, commitSha?: string): Promise<string | null> {
+export async function getFileContent(
+  context: BotContext,
+  owner: string,
+  repo: string,
+  branch: string,
+  filePath: string,
+  commitSha?: string
+): Promise<string | null> {
   const logger = getLogger();
 
   try {

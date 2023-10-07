@@ -42,7 +42,7 @@ export const pricingLabelLogic = async (context: BotContext): Promise<void> => {
 
     if (_targetPriceLabel) {
       // get all issue events of type "labeled" and the event label includes Price
-      let labeledEvents = await getAllLabeledEvents();
+      let labeledEvents = await getAllLabeledEvents(context);
       if (!labeledEvents) return;
 
       labeledEvents = labeledEvents.filter((event) => event.label?.name.includes("Price"));
@@ -54,15 +54,15 @@ export const pricingLabelLogic = async (context: BotContext): Promise<void> => {
       } else {
         // add price label to issue becuase wrong price has been added by bot
         logger.info(`Adding price label to issue`);
-        await clearAllPriceLabelsOnIssue();
+        await clearAllPriceLabelsOnIssue(context);
 
-        const exist = await getLabel(targetPriceLabel);
+        const exist = await getLabel(context, targetPriceLabel);
 
         if (assistivePricing && !exist) {
           logger.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
-          await createLabel(targetPriceLabel, "price");
+          await createLabel(context, targetPriceLabel, "price");
         }
-        await addLabelToIssue(targetPriceLabel);
+        await addLabelToIssue(context, targetPriceLabel);
       }
     } else {
       // add price if there is none

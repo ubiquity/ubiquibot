@@ -1,6 +1,6 @@
 import { BotContext, Payload } from "../types";
 
-export async function createCommitComment(context: BotContext,body: string, commitSha: string, path?: string, owner?: string, repo?: string) {
+export async function createCommitComment(context: BotContext, body: string, commitSha: string, path?: string, owner?: string, repo?: string) {
   const payload = context.payload as Payload;
   if (!owner) {
     owner = payload.repository.owner.login;

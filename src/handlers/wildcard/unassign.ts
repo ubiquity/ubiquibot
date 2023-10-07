@@ -81,7 +81,7 @@ const checkBountyToUnassign = async (context: BotContext, issue: Issue): Promise
         );
       } else {
         await addCommentToIssue(
-          context, 
+          context,
           `${askUpdate} @${assignees[0]}? If you would like to release the bounty back to the DevPool, please comment \`/stop\` \nLast activity time: ${lastActivity}`,
           issue.number
         );
@@ -92,7 +92,7 @@ const checkBountyToUnassign = async (context: BotContext, issue: Issue): Promise
   return false;
 };
 
-const lastActivityTime = async (context: BotContext,issue: Issue, comments: Comment[]): Promise<Date> => {
+const lastActivityTime = async (context: BotContext, issue: Issue, comments: Comment[]): Promise<Date> => {
   const logger = getLogger();
   logger.info(`Checking the latest activity for the issue, issue_number: ${issue.number}`);
   const assignees = issue.assignees.map((i) => i.login);

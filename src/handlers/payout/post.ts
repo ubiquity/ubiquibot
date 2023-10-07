@@ -108,7 +108,7 @@ export const calculateIssueCreatorReward = async (context: BotContext, incentive
     logger.info(`incentivizeCreatorComment: its not a bounty`);
     return { error: `incentivizeCreatorComment: its not a bounty` };
   }
-  
+
   const assignees = incentivesCalculation.issue.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {

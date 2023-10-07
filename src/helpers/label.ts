@@ -1,6 +1,6 @@
-import { getLogger } from "../bindings";
 import { calculateBountyPrice } from "../handlers";
-import { BotContext, Label, Payload, getLogger } from "../types";
+import { BotContext, Label, Payload } from "../types";
+import { getLogger } from "../bindings";
 import { deleteLabel } from "./issue";
 import { calculateWeight } from "../helpers";
 
@@ -28,7 +28,7 @@ export const listLabelsForRepo = async (context: BotContext, per_page?: number, 
   throw new Error(`Failed to fetch lists of labels, code: ${res.status}`);
 };
 
-export const createLabel = async (context: BotContext,name: string, labelType?: keyof typeof COLORS): Promise<void> => {
+export const createLabel = async (context: BotContext, name: string, labelType?: keyof typeof COLORS): Promise<void> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   try {

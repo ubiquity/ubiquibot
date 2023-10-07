@@ -40,8 +40,8 @@ export const getAllIssueEvents = async (context: BotContext) => {
   return events;
 };
 
-export const getAllLabeledEvents = async () => {
-  const events = await getAllIssueEvents();
+export const getAllLabeledEvents = async (context: BotContext) => {
+  const events = await getAllIssueEvents(context);
   if (!events) return null;
   return events.filter((event) => event.event === "labeled");
 };
@@ -69,7 +69,7 @@ export const clearAllPriceLabelsOnIssue = async (context: BotContext): Promise<v
   }
 };
 
-export const addLabelToIssue = async (context: BotContext,labelName: string) => {
+export const addLabelToIssue = async (context: BotContext, labelName: string) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.issue) {
@@ -118,7 +118,7 @@ export const listIssuesForRepo = async (
   }
 };
 
-export const listAllIssuesForRepo = async (context: BotContext,state: "open" | "closed" | "all" = "open") => {
+export const listAllIssuesForRepo = async (context: BotContext, state: "open" | "closed" | "all" = "open") => {
   const issuesArr = [];
   let fetchDone = false;
   const perPage = 100;
@@ -136,7 +136,7 @@ export const listAllIssuesForRepo = async (context: BotContext,state: "open" | "
   return issuesArr;
 };
 
-export const addCommentToIssue = async (context: BotContext,msg: string, issue_number: number) => {
+export const addCommentToIssue = async (context: BotContext, msg: string, issue_number: number) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -152,7 +152,7 @@ export const addCommentToIssue = async (context: BotContext,msg: string, issue_n
   }
 };
 
-export const updateCommentOfIssue = async (context: BotContext,msg: string, issue_number: number, reply_to: Comment) => {
+export const updateCommentOfIssue = async (context: BotContext, msg: string, issue_number: number, reply_to: Comment) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -193,7 +193,7 @@ export const updateCommentOfIssue = async (context: BotContext,msg: string, issu
   }
 };
 
-export const upsertCommentToIssue = async (context: BotContext,issue_number: number, comment: string, action: string, reply_to?: Comment) => {
+export const upsertCommentToIssue = async (context: BotContext, issue_number: number, comment: string, action: string, reply_to?: Comment) => {
   if (action == "edited" && reply_to) {
     await updateCommentOfIssue(context, comment, issue_number, reply_to);
   } else {

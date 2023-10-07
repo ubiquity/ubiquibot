@@ -1,6 +1,5 @@
 import { userCommands } from ".";
 import { getLogger } from "../../../bindings";
-import { ASSIGN_COMMAND_ENABLED } from "../../../configs";
 import { BotContext, IssueType, Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 
@@ -27,9 +26,7 @@ export const listAvailableCommands = async (context: BotContext, body: string) =
   return generateHelpMenu(context);
 };
 
-
 export const generateHelpMenu = (context: BotContext) => {
-
   const startEnabled = context.botConfig.command.find((command) => command.name === "start");
 
   let helpMenu = "### Available commands\n```";

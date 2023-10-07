@@ -1,11 +1,10 @@
 import { saveLabelChange } from "../../adapters/supabase";
-import { getBotContext, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
 import { hasLabelEditPermission } from "../../helpers";
-import { Payload } from "../../types";
+import { BotContext, Payload } from "../../types";
 
-export const watchLabelChange = async () => {
+export const watchLabelChange = async (context: BotContext) => {
   const logger = getLogger();
-  const context = getBotContext();
 
   const payload = context.payload as Payload;
 
