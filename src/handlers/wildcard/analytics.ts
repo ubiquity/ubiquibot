@@ -2,7 +2,6 @@ import { getMaxIssueNumber, upsertIssue, upsertUser } from "../../adapters/supab
 import { getLogger } from "../../bindings";
 import { listIssuesForRepo, getUser, calculateWeight } from "../../helpers";
 import { BotContext, Issue, IssueType, User, UserProfile } from "../../types";
-import { getTargetPriceLabel } from "../shared";
 
 /**
  * Checks the issue whether it's a bounty for hunters or an issue for not
@@ -19,6 +18,7 @@ export const bountyInfo = (context: BotContext,
 } => {
   const config = context.botConfig;
   const labels = issue.labels;
+
   const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
   const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
@@ -27,7 +27,7 @@ export const bountyInfo = (context: BotContext,
   const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
   const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
 
-  const priceLabel = getTargetPriceLabel(context, minTimeLabel, minPriorityLabel);
+  const priceLabel = labels.find((label) => label.name.includes("Price"))?.name;
 
   return {
     isBounty,

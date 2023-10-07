@@ -27,14 +27,18 @@ export const listAvailableCommands = async (context: BotContext, body: string) =
   return generateHelpMenu(context);
 };
 
+
 export const generateHelpMenu = (context: BotContext) => {
+
+  const startEnabled = context.botConfig.command.find((command) => command.name === "start");
+
   let helpMenu = "### Available commands\n```";
   const commands = userCommands(context);
   commands.map((command) => {
     // if first command, add a new line
     if (command.id === commands[0].id) {
       helpMenu += `\n`;
-      if (!ASSIGN_COMMAND_ENABLED) return;
+      if (!startEnabled) return;
     }
     helpMenu += `- ${command.id}: ${command.description}`;
     // if not last command, add a new line (fixes too much space below)
@@ -43,6 +47,6 @@ export const generateHelpMenu = (context: BotContext) => {
     }
   });
 
-  if (!ASSIGN_COMMAND_ENABLED) helpMenu += "```\n***_To assign yourself to an issue, please open a draft pull request that is linked to it._***";
+  if (!startEnabled) helpMenu += "```\n***_To assign yourself to an issue, please open a draft pull request that is linked to it._***";
   return helpMenu;
 };

@@ -1,7 +1,8 @@
-import { getAdapters, Logger } from "../../../bindings";
-import { Payload, LogLevel, BotContext } from "../../../types";
+import axios from "axios";
+import { getAdapters, getBotContext, Logger } from "../../../bindings";
+import { Payload, LogLevel, LogNotification } from "../../../types";
 import { getOrgAndRepoFromPath } from "../../../utils/private";
-
+import jwt from "jsonwebtoken";
 interface Log {
   repo: string | null;
   org: string | null;
@@ -43,15 +44,20 @@ export class GitHubLogger implements Logger {
   private retryDelay = 1000; // Delay between retries in milliseconds
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
-  private context;
 
-  constructor(context: BotContext, app: string, logEnvironment: string, maxLevel: LogLevel, retryLimit: number) {
+  private context;
+  private logNotification;
+
+  constructor(context: BotContext, app: string, logEnvironment: string, maxLevel: LogLevel, retryLimit: number, logNotification: LogNotification) {
     this.app = app;
     this.logEnvironment = logEnvironment;
     this.maxLevel = getNumericLevel(maxLevel);
     this.retryLimit = retryLimit;
     this.supabase = getAdapters().supabase;
+
     this.context = context;
+    this.logNotification = logNotification;
+
   }
 
   async sendLogsToSupabase({ repo, org, commentId, issueNumber, logMessage, level, timestamp }: Log) {
@@ -80,6 +86,66 @@ export class GitHubLogger implements Logger {
       console.error("Error sending log, retrying:", error);
       return this.retryLimit > 0 ? await this.retryLog(log) : null;
     }
+  }
+
+  private sendDataWithJwt(message: string | object, errorPayload?: string | object) {
+    const context = getBotContext();
+    const payload = context.payload as Payload;
+
+    const { comment, issue, repository } = payload;
+    const commentId = comment?.id;
+    const issueNumber = issue?.number;
+    const repoFullName = repository?.full_name;
+
+    const { org, repo } = getOrgAndRepoFromPath(repoFullName);
+
+    const issueLink = `https://github.com/${org}/${repo}/issues/${issueNumber}${commentId ? `#issuecomment-${commentId}` : ""}`;
+
+    return new Promise((resolve, reject) => {
+      try {
+        if (!this.logNotification?.enabled) {
+          reject("Telegram Log Notification is disabled, please check that url, secret and group is provided");
+        }
+
+        if (typeof message === "object") {
+          message = JSON.stringify(message);
+        }
+
+        if (errorPayload && typeof errorPayload === "object") {
+          errorPayload = JSON.stringify(errorPayload);
+        }
+
+        const errorMessage = `\`${message}${errorPayload ? " - " + errorPayload : ""}\`\n\nContext: ${issueLink}`;
+
+        // Step 1: Sign a JWT with the provided parameter
+        const jwtToken = jwt.sign(
+          {
+            group: this.logNotification.groupId,
+            topic: this.logNotification.topicId,
+            msg: errorMessage,
+          },
+          this.logNotification.secret,
+          { noTimestamp: true }
+        );
+
+        const apiUrl = `${this.logNotification.url}/sendLogs`;
+        const headers = {
+          Authorization: `${jwtToken}`,
+        };
+
+        axios
+          .get(apiUrl, { headers })
+          .then((response) => {
+            resolve(response.data);
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      } catch (error) {
+        // Reject the promise with the error
+        reject(error);
+      }
+    });
   }
 
   async retryLog(log: Log, retryCount = 0) {
@@ -170,6 +236,13 @@ export class GitHubLogger implements Logger {
 
   warn(message: string | object, errorPayload?: string | object) {
     this.save(message, LogLevel.WARN, errorPayload);
+    this.sendDataWithJwt(message, errorPayload)
+      .then((response) => {
+        this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG, "");
+      })
+      .catch((error) => {
+        this.save(`Log Notification Error: ${error}`, LogLevel.DEBUG, "");
+      });
   }
 
   debug(message: string | object, errorPayload?: string | object) {
@@ -178,6 +251,13 @@ export class GitHubLogger implements Logger {
 
   error(message: string | object, errorPayload?: string | object) {
     this.save(message, LogLevel.ERROR, errorPayload);
+    this.sendDataWithJwt(message, errorPayload)
+      .then((response) => {
+        this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG, "");
+      })
+      .catch((error) => {
+        this.save(`Log Notification Error: ${error}`, LogLevel.DEBUG, "");
+      });
   }
 
   async get() {

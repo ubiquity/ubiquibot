@@ -1,9 +1,15 @@
 import { getLogger } from "../bindings";
-import { COLORS } from "../configs";
 import { calculateBountyPrice } from "../handlers";
-import { BotContext, Label, Payload } from "../types";
+import { BotContext, Label, Payload, getLogger } from "../types";
 import { deleteLabel } from "./issue";
 import { calculateWeight } from "../helpers";
+
+// cspell:disable
+export const COLORS = {
+  default: "ededed",
+  price: "1f883d",
+};
+// cspell:enable
 
 export const listLabelsForRepo = async (context: BotContext, per_page?: number, page?: number): Promise<Label[]> => {
   const payload = context.payload as Payload;

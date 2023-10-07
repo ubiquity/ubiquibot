@@ -51,6 +51,8 @@ export const bindEvents = async (_context: ProbotContext): Promise<void> => {
     context.botConfig?.log?.logEnvironment ?? "development",
     context.botConfig?.log?.level ?? LogLevel.DEBUG,
     context.botConfig?.log?.retryLimit ?? 0
+    context.botConfig?.log?.logNotification
+
   ); // contributors will see logs in console while on development env
   if (!logger) {
     return;
