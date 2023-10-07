@@ -2,6 +2,7 @@ import { createAdapters } from "../adapters";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
 import { BotContext, GithubEvent, Payload, PayloadSchema, LogLevel } from "../types";
+import { Context as ProbotContext } from "probot";
 import { Adapters } from "../types/adapters";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
@@ -23,7 +24,8 @@ export const getLogger = (): Logger => logger;
 
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT as string, GithubEvent.PUSH_EVENT as string];
 
-export const bindEvents = async (context: BotContext): Promise<void> => {
+export const bindEvents = async (_context: ProbotContext): Promise<void> => {
+  const context = _context as BotContext;
   const { id, name } = context;
   const payload = context.payload as Payload;
   const allowedEvents = Object.values(GithubEvent) as string[];
