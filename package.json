@@ -17,6 +17,7 @@
     "clean": "rimraf ./dist ./node_modules",
     "preformat": "yarn lint:prettier",
     "format": "yarn lint:eslint",
+    "lint": "yarn lint:prettier:check && yarn lint:eslint",
     "lint:prettier:check": "prettier -c src/**/*.ts",
     "lint:prettier": "prettier --write src",
     "lint:eslint": "eslint --ext .ts ./src",
