@@ -1,8 +1,8 @@
-import { ethers } from "ethers";
-import { getLogger } from "../../bindings";
 import Decimal from "decimal.js";
+import { getAdapters, getLogger } from "../../bindings";
 import { getWalletAddress, RewardsResponse } from "../comment";
 import { IncentivesCalculationResult } from "./incentives-calculation";
+import { removePenalty } from "./shims";
 
 /**
  * Calculate the reward for the assignee
@@ -14,40 +14,50 @@ export async function calculateIssueAssigneeReward(
   const logger = getLogger();
   const assigneeLogin = incentivesCalculation.assignee.login;
 
-  let priceInBigNumber = new Decimal(
+  let taskAmount = new Decimal(
     incentivesCalculation.issueDetailed.priceLabel.substring(
       7,
       incentivesCalculation.issueDetailed.priceLabel.length - 4
     )
   ).mul(incentivesCalculation.multiplier);
-  if (priceInBigNumber.gt(incentivesCalculation.permitMaxPrice)) {
+  if (taskAmount.gt(incentivesCalculation.permitMaxPrice)) {
     throw logger.info("Skipping to proceed the payment because task payout is higher than permitMaxPrice.");
   }
 
   // if contributor has any penalty then deduct it from the task
-  const penaltyAmount = await getPenalty(
-    assigneeLogin,
-    incentivesCalculation.payload.repository.full_name,
-    incentivesCalculation.paymentToken,
-    incentivesCalculation.evmNetworkId.toString()
-  );
-  if (penaltyAmount.gt(0)) {
+
+  const userId = incentivesCalculation.assignee.id;
+  const amount = new Decimal(taskAmount);
+  const comment = incentivesCalculation.comments[incentivesCalculation.comments.length - 1]; // not sure if this is the right comment, might need to generate a new comment
+  const networkId = incentivesCalculation.evmNetworkId;
+  const address = incentivesCalculation.paymentToken;
+
+  await getAdapters().supabase.settlement.addDebit({ userId, amount, comment, networkId, address });
+
+  if (amount.gt(0)) {
     logger.info(`Deducting penalty from task`);
-    const taskAmount = ethers.utils.parseUnits(priceInBigNumber.toString(), 18);
-    const taskAmountAfterPenalty = taskAmount.sub(penaltyAmount);
+    const taskAmountAfterPenalty = taskAmount.sub(amount);
     if (taskAmountAfterPenalty.lte(0)) {
-      await removePenalty(
-        assigneeLogin,
-        incentivesCalculation.payload.repository.full_name,
-        incentivesCalculation.paymentToken,
-        incentivesCalculation.evmNetworkId.toString(),
-        taskAmount
-      );
+      // adds a settlement
+      // adds credit
+      await removePenalty({
+        userId: incentivesCalculation.assignee.id,
+        amount,
+        node: comment,
+        networkId,
+        tokenAddress: address,
+
+        // username: assigneeLogin,
+        // repoName: incentivesCalculation.payload.repository.full_name,
+        // tokenAddress: incentivesCalculation.paymentToken,
+        // networkId: incentivesCalculation.evmNetworkId,
+        // penalty: taskAmount,
+      });
       const msg = `Permit generation disabled because task amount after penalty is 0.`;
       logger.info(msg);
       return { error: msg };
     }
-    priceInBigNumber = new Decimal(ethers.utils.formatUnits(taskAmountAfterPenalty, 18));
+    taskAmount = new Decimal(taskAmountAfterPenalty);
   }
 
   const account = await getWalletAddress(incentivesCalculation.assignee.id);
@@ -59,8 +69,8 @@ export async function calculateIssueAssigneeReward(
     username: assigneeLogin,
     reward: [
       {
-        priceInBigNumber,
-        penaltyAmount,
+        priceInDecimal: taskAmount,
+        penaltyAmount: new Decimal(amount),
         account: account || "0x",
         user: "",
         userId: incentivesCalculation.assignee.id,

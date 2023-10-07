@@ -55,8 +55,8 @@ export interface RewardsResponse {
   username?: string;
   reward?: {
     account: string;
-    priceInBigNumber: Decimal;
-    penaltyAmount: BigNumber;
+    priceInDecimal: Decimal;
+    penaltyAmount: Decimal;
     user: string | undefined;
     userId: number;
     debug?: Record<string, { count: number; reward: Decimal }>;
@@ -229,7 +229,13 @@ export const issueReopenedCallback = async (): Promise<void> => {
       const { debit } = getAdapters().supabase;
 
       try {
-        await debit.addDebit(events[0].assignee.id, parseFloat(formattedAmount), permitComment);
+        await debit.addDebit({
+          userId: events[0].assignee.id,
+          amount: new Decimal(formattedAmount),
+          comment: permitComment,
+          networkId: Number(networkId),
+          address: tokenAddress,
+        });
       } catch (err) {
         logger.error(`Error writing penalty to db: ${err}`);
         return;

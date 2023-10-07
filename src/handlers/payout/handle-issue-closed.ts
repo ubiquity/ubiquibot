@@ -21,7 +21,7 @@ interface HandleIssueClosed {
 }
 interface RewardByUser {
   account: string;
-  priceInBigNumber: Decimal;
+  priceInDecimal: Decimal;
   userId: number | undefined;
   issueId: string;
   type: (string | undefined)[];
@@ -47,14 +47,14 @@ export async function handleIssueClosed({
   const rewardByUser: RewardByUser[] = [];
 
   // ASSIGNEE REWARD PRICE PROCESSOR
-  const priceInBigNumber = new Decimal(
+  const priceInDecimal = new Decimal(
     incentivesCalculation.issueDetailed.priceLabel.substring(
       7,
       incentivesCalculation.issueDetailed.priceLabel.length - 4
     )
   ).mul(incentivesCalculation.multiplier);
 
-  if (priceInBigNumber.gt(incentivesCalculation.permitMaxPrice)) {
+  if (priceInDecimal.gt(incentivesCalculation.permitMaxPrice)) {
     throw logger.info("Skipping to proceed the payment because task payout is higher than permitMaxPrice");
   }
 
@@ -65,12 +65,12 @@ export async function handleIssueClosed({
       if (permit.userId !== creatorReward.userId) {
         rewardByUser.push({
           account: permit.account,
-          priceInBigNumber: permit.priceInBigNumber,
+          priceInDecimal: permit.priceInDecimal,
           userId: permit.userId,
           issueId: incentivesCalculation.issue.node_id,
           type: [conversationRewards.title],
           user: permit.user,
-          priceArray: [permit.priceInBigNumber.toString()],
+          priceArray: [permit.priceInDecimal.toString()],
           debug: permit.debug,
         });
       }
@@ -84,12 +84,12 @@ export async function handleIssueClosed({
       if (permit.userId !== creatorReward.userId) {
         rewardByUser.push({
           account: permit.account,
-          priceInBigNumber: permit.priceInBigNumber,
+          priceInDecimal: permit.priceInDecimal,
           userId: permit.userId,
           issueId: incentivesCalculation.issue.node_id,
           type: [pullRequestReviewersReward.title],
           user: permit.user,
-          priceArray: [permit.priceInBigNumber.toString()],
+          priceArray: [permit.priceInDecimal.toString()],
           debug: permit.debug,
         });
       }
@@ -101,12 +101,12 @@ export async function handleIssueClosed({
   if (creatorReward && creatorReward.reward && creatorReward.reward[0].account !== "0x") {
     rewardByUser.push({
       account: creatorReward.reward[0].account,
-      priceInBigNumber: creatorReward.reward[0].priceInBigNumber,
+      priceInDecimal: creatorReward.reward[0].priceInDecimal,
       userId: creatorReward.userId,
       issueId: incentivesCalculation.issue.node_id,
       type: [creatorReward.title],
       user: creatorReward.username,
-      priceArray: [creatorReward.reward[0].priceInBigNumber.toString()],
+      priceArray: [creatorReward.reward[0].priceInDecimal.toString()],
       debug: creatorReward.reward[0].debug,
     });
   } else if (creatorReward && creatorReward.reward && creatorReward.reward[0].account === "0x") {
@@ -125,12 +125,12 @@ export async function handleIssueClosed({
 
     rewardByUser.push({
       account: assigneeReward.reward[0].account,
-      priceInBigNumber: assigneeReward.reward[0].priceInBigNumber,
+      priceInDecimal: assigneeReward.reward[0].priceInDecimal,
       userId: assigneeReward.userId,
       issueId: incentivesCalculation.issue.node_id,
       type: title,
       user: assigneeReward.username,
-      priceArray: [assigneeReward.reward[0].priceInBigNumber.toString()],
+      priceArray: [assigneeReward.reward[0].priceInDecimal.toString()],
       debug: assigneeReward.reward[0].debug,
     });
 
@@ -140,12 +140,19 @@ export async function handleIssueClosed({
     }
 
     if (assigneeReward.reward[0].penaltyAmount.gt(0)) {
+      if (!assigneeReward.userId) throw new Error("assigneeReward.userId is undefined");
       await shims.removePenalty({
-        username: incentivesCalculation.assignee.login,
-        repoName: incentivesCalculation.payload.repository.full_name,
+        userId: assigneeReward.userId,
+        amount: assigneeReward.reward[0].penaltyAmount,
+        node: incentivesCalculation.comments[incentivesCalculation.comments.length - 1],
+        networkId: incentivesCalculation.evmNetworkId,
         tokenAddress: incentivesCalculation.paymentToken,
-        networkId: incentivesCalculation.evmNetworkId.toString(),
-        penalty: assigneeReward.reward[0].penaltyAmount,
+
+        // username: incentivesCalculation.assignee.login,
+        // repoName: incentivesCalculation.payload.repository.full_name,
+        // tokenAddress: incentivesCalculation.paymentToken,
+        // networkId: incentivesCalculation.evmNetworkId,
+        // penalty: assigneeReward.reward[0].penaltyAmount,
       });
     }
   }
@@ -154,7 +161,7 @@ export async function handleIssueClosed({
   const rewards = rewardByUser.reduce((acc, curr) => {
     const existing = acc.find((item) => item.userId === curr.userId);
     if (existing) {
-      existing.priceInBigNumber = existing.priceInBigNumber.add(curr.priceInBigNumber);
+      existing.priceInDecimal = existing.priceInDecimal.add(curr.priceInDecimal);
       existing.priceArray = existing.priceArray.concat(curr.priceArray);
       existing.type = existing.type.concat(curr.type);
     } else {
@@ -165,7 +172,7 @@ export async function handleIssueClosed({
 
   // sort rewards by price
   rewards.sort((a, b) => {
-    return new Decimal(b.priceInBigNumber).cmp(new Decimal(a.priceInBigNumber));
+    return new Decimal(b.priceInDecimal).cmp(new Decimal(a.priceInDecimal));
   });
 
   // CREATE PERMIT URL FOR EACH USER
@@ -198,19 +205,18 @@ export async function handleIssueClosed({
       detailsValue.push({ title: "Multiplier", subtitle: "Amount", value: multiplier.toString() });
       detailsValue.push({ title: "", subtitle: "Reason", value: multiplier_reason });
 
-      const price = new Decimal(reward.priceInBigNumber);
       // add multiplier to the price
-      reward.priceInBigNumber = price.mul(multiplier);
+      reward.priceInDecimal = priceInDecimal.mul(multiplier);
     }
 
     const { payoutUrl, txData } = await generatePermit2Signature(
       reward.account,
-      reward.priceInBigNumber,
+      reward.priceInDecimal,
       reward.issueId,
       reward.userId?.toString()
     );
 
-    const price = `${reward.priceInBigNumber} ${incentivesCalculation.tokenSymbol.toUpperCase()}`;
+    const price = `${reward.priceInDecimal} ${incentivesCalculation.tokenSymbol.toUpperCase()}`;
 
     const comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue, reward.debug);
 

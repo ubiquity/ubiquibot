@@ -1,10 +1,9 @@
+import Decimal from "decimal.js";
 import { getLogger } from "../../bindings";
 import { getAllIssueComments, getIssueDescription } from "../../helpers";
 import { UserType } from "../../types";
 import { RewardsResponse } from "../comment";
-import Decimal from "decimal.js";
 import { taskInfo } from "../wildcard";
-import { BigNumber } from "ethers";
 import { generatePermitForComment } from "./generate-permit-for-comment";
 import { IncentivesCalculationResult } from "./incentives-calculation";
 
@@ -74,11 +73,11 @@ export async function calculateIssueCreatorReward(
     username: creator.login,
     reward: [
       {
-        priceInBigNumber: result?.amountInBigNumber ?? new Decimal(0),
+        priceInDecimal: result?.amountInBigNumber ?? new Decimal(0),
         account: result?.account,
         userId: -1,
         user: undefined,
-        penaltyAmount: BigNumber.from(0),
+        penaltyAmount: new Decimal(0),
       },
     ],
   };

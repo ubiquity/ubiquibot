@@ -116,6 +116,7 @@ export interface Database {
           node_id: string | null;
           node_type: string | null;
           node_url: string | null;
+          token_id: number | null;
           updated: string | null;
         };
         Insert: {
@@ -126,6 +127,7 @@ export interface Database {
           node_id?: string | null;
           node_type?: string | null;
           node_url?: string | null;
+          token_id?: number | null;
           updated?: string | null;
         };
         Update: {
@@ -136,9 +138,16 @@ export interface Database {
           node_id?: string | null;
           node_type?: string | null;
           node_url?: string | null;
+          token_id?: number | null;
           updated?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "debits_token_id_fkey";
+            columns: ["token_id"];
+            referencedRelation: "tokens";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "fk_debits_location";
             columns: ["location_id"];

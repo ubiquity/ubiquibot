@@ -1,14 +1,13 @@
+import Decimal from "decimal.js";
 import { getBotContext, getLogger } from "../../bindings";
+import { GLOBAL_STRINGS } from "../../configs";
 import { getAllIssueComments, parseComments } from "../../helpers";
 import { Comment, Payload, UserType } from "../../types";
-import { RewardsResponse, getWalletAddress } from "../comment";
-import Decimal from "decimal.js";
-import { BigNumber } from "ethers";
-import { GLOBAL_STRINGS } from "../../configs";
+import { getWalletAddress, RewardsResponse } from "../comment";
 import { calculateRewardValue } from "./calculate-reward-value";
-import { walkComments } from "./walk-comments";
-import { ItemsToExclude } from "./post";
 import { IncentivesCalculationResult } from "./incentives-calculation";
+import { ItemsToExclude } from "./post";
+import { walkComments } from "./walk-comments";
 
 /**
  * Incentivize the contributors based on their contribution.
@@ -81,18 +80,18 @@ export async function calculateIssueConversationReward(
     );
 
     const account = await getWalletAddress(user.id);
-    const priceInBigNumber = rewardValue.mul(calculateIncentives.baseMultiplier);
-    if (priceInBigNumber.gt(calculateIncentives.permitMaxPrice)) {
+    const priceInDecimal = rewardValue.mul(calculateIncentives.baseMultiplier);
+    if (priceInDecimal.gt(calculateIncentives.permitMaxPrice)) {
       logger.info(`Skipping comment reward for user ${_user} because reward is higher than payment permit max price`);
       continue;
     }
     if (account) {
       reward.push({
         account,
-        priceInBigNumber,
+        priceInDecimal,
         userId: parseInt(commentsByUser.id),
         user: _user,
-        penaltyAmount: BigNumber.from(0),
+        penaltyAmount: new Decimal(0),
         debug: {
           test: {
             count: Object.keys(commentsByNode).length,
@@ -101,7 +100,7 @@ export async function calculateIssueConversationReward(
         },
       });
     } else {
-      fallbackReward[_user] = priceInBigNumber;
+      fallbackReward[_user] = priceInDecimal;
     }
   }
   return {

@@ -1,34 +1,30 @@
-import { BigNumberish } from "ethers";
-import { getAdapters, getLogger } from "../../bindings/event";
+import Decimal from "decimal.js";
+import { getAdapters } from "../../bindings/event";
+import { Comment } from "../../types";
 interface RemovePenalty {
-  username: string;
-  repoName: string;
+  userId: number;
+  amount: Decimal;
+  node: Comment;
+  networkId: number;
   tokenAddress: string;
-  networkId: string;
-  penalty: BigNumberish;
 }
-export async function removePenalty({
-  username,
-  repoName,
-  tokenAddress,
-  networkId,
-  penalty,
-}: RemovePenalty): Promise<void> {
+export async function removePenalty({ userId, amount, node, networkId, tokenAddress }: RemovePenalty): Promise<void> {
   const { supabase } = getAdapters();
-  const logger = getLogger();
+  // const logger = getLogger();
 
-  const { error } = await supabase.rpc("remove_penalty", {
-    _username: username,
-    _repository_name: repoName,
-    _network_id: networkId,
-    _token_address: tokenAddress,
-    _penalty_amount: penalty.toString(),
+  await supabase.settlement.addCredit({
+    userId: userId,
+    amount: amount,
+    comment: node,
+    networkId: networkId,
+    address: tokenAddress,
   });
-  logger.debug(`Removing penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
 
-  if (error) {
-    throw new Error(`Error removing penalty: ${error.message}`);
-  }
+  // logger.debug(`Removing penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
+
+  // if (error) {
+  //   throw new Error(`Error removing penalty: ${error.message}`);
+  // }
 }
 
 //

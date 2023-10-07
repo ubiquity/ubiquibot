@@ -1,4 +1,3 @@
-import { BigNumber } from "ethers";
 import * as shims from "./shims";
 import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../bindings";
 import {
@@ -14,6 +13,7 @@ import { taskInfo } from "../wildcard";
 import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
 import { getUserMultiplier, getWalletAddress } from "../comment";
+import Decimal from "decimal.js";
 
 /**
  * Collect the information required for the permit generation and error handling
@@ -89,9 +89,14 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     if (!claimBase64) {
       throw logger.error(`Permit claim search parameter not found`);
     }
-    let evmNetworkId = url.searchParams.get("network");
+    const networkQuery = url.searchParams.get("network");
+    if (!networkQuery) {
+      throw logger.error(`Permit network search parameter not found`);
+    }
+
+    let evmNetworkId = parseInt(networkQuery);
     if (!evmNetworkId) {
-      evmNetworkId = "1";
+      evmNetworkId = 1;
     }
     let claim;
     try {
@@ -99,7 +104,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     } catch (err: unknown) {
       throw logger.error(`${err}`);
     }
-    const amount = BigNumber.from(claim.permit.permitted.amount);
+    const amount = new Decimal(claim.permit.permitted.amount);
     const tokenAddress = claim.permit.permitted.token;
 
     // extract assignee
@@ -107,15 +112,21 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     if (events.length === 0) {
       throw logger.error(`No assignment found`);
     }
-    const assignee = events[0].assignee.login;
+    const assignee = events[0].assignee;
 
     try {
       await shims.removePenalty({
-        username: assignee,
-        repoName: payload.repository.full_name,
+        userId: assignee.id,
+        amount,
+        node: permitComment,
         tokenAddress,
         networkId: evmNetworkId,
-        penalty: amount,
+
+        // username: assignee,
+        // repoName: payload.repository.full_name,
+        // tokenAddress,
+        // networkId: evmNetworkId,
+        // penalty: amount,
       });
     } catch (err) {
       throw logger.error(`Failed to remove penalty: ${err}`);

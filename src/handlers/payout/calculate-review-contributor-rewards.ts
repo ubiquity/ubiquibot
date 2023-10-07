@@ -1,13 +1,12 @@
+import Decimal from "decimal.js";
 import { getBotContext, getLogger } from "../../bindings";
 import { getAllIssueComments, getAllPullRequestReviews, parseComments } from "../../helpers";
 import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
 import { UserType } from "../../types";
-import { RewardsResponse, getWalletAddress } from "../comment";
-import Decimal from "decimal.js";
-import { BigNumber } from "ethers";
-import { ItemsToExclude } from "./post";
+import { getWalletAddress, RewardsResponse } from "../comment";
 import { calculateRewardValue } from "./calculate-reward-value";
 import { IncentivesCalculationResult } from "./incentives-calculation";
+import { ItemsToExclude } from "./post";
 
 export async function calculateReviewContributorRewards(
   incentivesCalculation: IncentivesCalculationResult
@@ -104,10 +103,10 @@ export async function calculateReviewContributorRewards(
   // array of awaiting permits to generate
   const reward: {
     account: string;
-    priceInBigNumber: Decimal;
+    priceInDecimal: Decimal;
     userId: number;
     user: string;
-    penaltyAmount: BigNumber;
+    penaltyAmount: Decimal;
   }[] = [];
 
   // The mapping between gh handle and amount in big number
@@ -129,8 +128,8 @@ export async function calculateReviewContributorRewards(
       )}, sum: ${rewardValue}`
     );
     const account = await getWalletAddress(user.id);
-    const priceInBigNumber = rewardValue.mul(incentivesCalculation.baseMultiplier);
-    if (priceInBigNumber.gt(incentivesCalculation.permitMaxPrice)) {
+    const priceInDecimal = rewardValue.mul(incentivesCalculation.baseMultiplier);
+    if (priceInDecimal.gt(incentivesCalculation.permitMaxPrice)) {
       logger.info(
         `calculateReviewContributorRewards: Skipping comment reward for user ${_user} because reward is higher than payment permit max price`
       );
@@ -140,13 +139,13 @@ export async function calculateReviewContributorRewards(
     if (account) {
       reward.push({
         account,
-        priceInBigNumber,
+        priceInDecimal,
         userId: parseInt(commentByUser.id),
         user: _user,
-        penaltyAmount: BigNumber.from(0),
+        penaltyAmount: new Decimal(0),
       });
     } else {
-      fallbackReward[_user] = priceInBigNumber;
+      fallbackReward[_user] = priceInDecimal;
     }
   }
 
