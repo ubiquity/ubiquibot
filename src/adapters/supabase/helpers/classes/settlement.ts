@@ -3,7 +3,7 @@ import Decimal from "decimal.js";
 import { GeneratedPermit } from "../../../../helpers/permit";
 import { Comment, Organization } from "../../../../types/payload";
 import { Database } from "../../types/database";
-import { Super } from "./_super";
+import { Super } from "./super";
 
 type DebitInsert = Database["public"]["Tables"]["debits"]["Insert"];
 type CreditInsert = Database["public"]["Tables"]["credits"]["Insert"];

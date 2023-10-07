@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Repository } from "../../../../types/payload";
 import { Database } from "../../types";
-import { Super } from "./_super";
+import { Super } from "./super";
 export type LabelRow = Database["public"]["Tables"]["labels"]["Row"];
 export class Label extends Super {
   constructor(supabase: SupabaseClient) {
