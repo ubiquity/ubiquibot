@@ -6,6 +6,7 @@ import { Super } from "./Super";
 
 type DebitInsert = Database["public"]["Tables"]["debits"]["Insert"];
 type CreditInsert = Database["public"]["Tables"]["credits"]["Insert"];
+type PermitInsert = Database["public"]["Tables"]["permits"]["Insert"];
 type SettlementInsert = Database["public"]["Tables"]["settlements"]["Insert"];
 type AddDebit = {
   userId: number;
@@ -14,6 +15,13 @@ type AddDebit = {
   networkId: number;
   address: string;
 };
+type AddCreditWithPermit = {
+  userId: number;
+  amount: Decimal;
+  comment: Comment;
+  permit?: PermitInsert;
+};
+
 export class Settlement extends Super {
   constructor(supabase: SupabaseClient) {
     super(supabase);
@@ -72,7 +80,7 @@ export class Settlement extends Super {
     if (!settlementInsertData) throw new Error("Settlement not inserted");
   }
 
-  public async addCredit({ userId, amount, comment }: AddDebit): Promise<void> {
+  public async addCredit({ userId, amount, comment, permit }: AddCreditWithPermit): Promise<void> {
     // Insert into the credits table
     const creditData: CreditInsert = {
       amount: amount.toNumber(),
@@ -89,6 +97,39 @@ export class Settlement extends Super {
 
     if (creditError) throw creditError;
     if (!creditInsertData) throw new Error("Credit not inserted");
+
+    // Insert into the permits table if permit data is provided
+    let permitInsertData;
+    if (permit) {
+      const permitData: PermitInsert = {
+        amount: permit.amount,
+        nonce: permit.nonce,
+        deadline: permit.deadline,
+        signature: permit.signature,
+        token_id: permit.token_id,
+        partner_id: permit.partner_id,
+        beneficiary_id: userId,
+        node_id: comment.node_id,
+        node_type: "IssueComment",
+        node_url: comment.html_url,
+      };
+
+      const permitResult = await this.client.from("permits").insert(permitData).select("*").single();
+
+      if (permitResult.error) throw permitResult.error;
+      if (!permitResult.data) throw new Error("Permit not inserted");
+      permitInsertData = permitResult.data;
+    }
+
+    // Update the credits table with permit_id if permit data is provided
+    if (permitInsertData) {
+      const { error: creditUpdateError } = await this.client
+        .from("credits")
+        .update({ permit_id: permitInsertData.id })
+        .eq("id", creditInsertData.id);
+
+      if (creditUpdateError) throw creditUpdateError;
+    }
 
     // Insert into the settlements table
     const settlementData: SettlementInsert = {

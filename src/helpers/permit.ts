@@ -44,15 +44,8 @@ type TxData = {
   signature: string;
 };
 
-/**
- * Generates permit2 signature data with `spender` and `amountInETH`
- *
- * @param spender The recipient address we're going to send tokens
- * @param amountInETH The token amount in ETH
- *
- * @returns Permit2 url including base64 encoded data
- */
 export const generatePermit2Signature = async (
+  // Generates permit2 signature data with `spender` and `amountInETH`
   spender: string,
   amountInEth: Decimal,
   identifier: string,
@@ -142,6 +135,7 @@ export const savePermitToDB = async (contributorId: number, txData: TxData): Pro
   };
 
   const savedPermit = await savePermit(permit);
+
   logger.info(`Saved permit to DB: ${JSON.stringify(savedPermit)}`);
   return savedPermit;
 };

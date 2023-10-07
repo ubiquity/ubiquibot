@@ -16,8 +16,8 @@ export async function removePenalty({ userId, amount, node, networkId, tokenAddr
     userId: userId,
     amount: amount,
     comment: node,
-    networkId: networkId,
-    address: tokenAddress,
+    // networkId: networkId,
+    // address: tokenAddress,
   });
 
   // logger.debug(`Removing penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
