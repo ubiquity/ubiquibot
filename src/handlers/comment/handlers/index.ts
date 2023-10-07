@@ -1,4 +1,4 @@
-import { Comment, Payload, UserCommands } from "../../../types";
+import { Comment, Organization, Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
@@ -72,7 +72,7 @@ export interface RewardsResponse {
  * @returns The list of command names the comment includes
  */
 
-export const commentParser = (body: string): IssueCommentCommands[] => {
+export function commentParser(body: string): IssueCommentCommands[] {
   const regex = /^\/(\w+)\b/; // Regex pattern to match the command at the beginning of the body
 
   const matches = regex.exec(body);
@@ -84,16 +84,22 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
   }
 
   return [];
-};
+}
 
 /**
  * Callback for issues closed - Processor
  */
 
-export const issueClosedCallback = async (): Promise<void> => {
-  const { payload: _payload } = getBotContext();
-  const issue = (_payload as Payload).issue;
-  if (!issue) return;
+export async function issueClosedCallback(): Promise<void> {
+  const context = getBotContext();
+  const payload = context.payload as Payload;
+  const issue = payload.issue;
+  const organization = payload.organization as Organization;
+
+  const logger = getLogger();
+
+  if (!organization) throw logger.error("Cannot save permit to DB, missing organization");
+  if (!issue) throw logger.error("Cannot save permit to DB, missing issue");
   try {
     // assign function incentivesCalculation to a variable
     const calculateIncentives = await incentivesCalculation();
@@ -109,6 +115,7 @@ export const issueClosedCallback = async (): Promise<void> => {
       conversationRewards,
       pullRequestReviewersReward,
       incentivesCalculation: calculateIncentives,
+      organization: organization,
     });
 
     if (error) {
@@ -117,13 +124,10 @@ export const issueClosedCallback = async (): Promise<void> => {
   } catch (err: unknown) {
     return await addCommentToIssue(ErrorDiff(err), issue.number);
   }
-};
+}
 
-/**
- * Callback for issues created - Processor
- */
-
-export const issueCreatedCallback = async (): Promise<void> => {
+export async function issueCreatedCallback(): Promise<void> {
+  // Callback for issues created - Processor
   const logger = getLogger();
   const { payload: _payload } = getBotContext();
   const config = getBotConfig();
@@ -162,13 +166,10 @@ export const issueCreatedCallback = async (): Promise<void> => {
   } catch (err: unknown) {
     await addCommentToIssue(ErrorDiff(err), issue.number);
   }
-};
+}
 
-/**
- * Callback for issues reopened - Processor
- */
-
-export const issueReopenedCallback = async (): Promise<void> => {
+export async function issueReopenedCallback(): Promise<void> {
+  // Callback for issues reopened - Processor
   const { payload: _payload } = getBotContext();
   const {
     payout: { permitBaseUrl },
@@ -251,21 +252,14 @@ export const issueReopenedCallback = async (): Promise<void> => {
   } catch (err: unknown) {
     await addCommentToIssue(ErrorDiff(err), issue.number);
   }
-};
+}
 
-/**
- * Default callback for slash commands
- *
- *
- * @param issue_number - The issue number
- * @param comment - Comment string
- */
-
-const commandCallback = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
+async function commandCallback(issue_number: number, comment: string, action: string, reply_to?: Comment) {
+  // Default callback for slash commands
   await upsertCommentToIssue(issue_number, comment, action, reply_to);
-};
+}
 
-export const userCommands = (): UserCommands[] => {
+export function userCommands(): UserCommands[] {
   return [
     {
       id: IssueCommentCommands.START,
@@ -335,4 +329,4 @@ export const userCommands = (): UserCommands[] => {
       callback: commandCallback,
     },
   ];
-};
+}

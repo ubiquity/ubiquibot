@@ -5,10 +5,8 @@ interface RemovePenalty {
   userId: number;
   amount: Decimal;
   node: Comment;
-  networkId: number;
-  tokenAddress: string;
 }
-export async function removePenalty({ userId, amount, node, networkId, tokenAddress }: RemovePenalty): Promise<void> {
+export async function removePenalty({ userId, amount, node }: RemovePenalty): Promise<void> {
   const { supabase } = getAdapters();
   // const logger = getLogger();
 
@@ -16,6 +14,10 @@ export async function removePenalty({ userId, amount, node, networkId, tokenAddr
     userId: userId,
     amount: amount,
     comment: node,
+    // networkId: 1,
+    // organization: {
+    //   login: "test",
+    // },
     // networkId: networkId,
     // address: tokenAddress,
   });

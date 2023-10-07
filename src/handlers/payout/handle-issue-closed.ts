@@ -11,6 +11,7 @@ import {
 import Decimal from "decimal.js";
 import { RewardsResponse } from "../comment";
 import { IncentivesCalculationResult } from "./incentives-calculation";
+import { Organization } from "../../types";
 
 interface HandleIssueClosed {
   creatorReward: RewardsResponse;
@@ -18,6 +19,7 @@ interface HandleIssueClosed {
   conversationRewards: RewardsResponse;
   pullRequestReviewersReward: RewardsResponse;
   incentivesCalculation: IncentivesCalculationResult;
+  organization: Organization;
 }
 interface RewardByUser {
   account: string;
@@ -145,8 +147,6 @@ export async function handleIssueClosed({
         userId: assigneeReward.userId,
         amount: assigneeReward.reward[0].penaltyAmount,
         node: incentivesCalculation.comments[incentivesCalculation.comments.length - 1],
-        networkId: incentivesCalculation.evmNetworkId,
-        tokenAddress: incentivesCalculation.paymentToken,
 
         // username: incentivesCalculation.assignee.login,
         // repoName: incentivesCalculation.payload.repository.full_name,
@@ -171,9 +171,7 @@ export async function handleIssueClosed({
   }, [] as RewardByUser[]);
 
   // sort rewards by price
-  rewards.sort((a, b) => {
-    return new Decimal(b.priceInDecimal).cmp(new Decimal(a.priceInDecimal));
-  });
+  rewards.sort((a, b) => new Decimal(b.priceInDecimal).cmp(new Decimal(a.priceInDecimal)));
 
   // CREATE PERMIT URL FOR EACH USER
   for (const reward of rewards) {
@@ -209,7 +207,7 @@ export async function handleIssueClosed({
       reward.priceInDecimal = priceInDecimal.mul(multiplier);
     }
 
-    const { payoutUrl, txData } = await generatePermit2Signature(
+    const { payoutUrl, permit } = await generatePermit2Signature(
       reward.account,
       reward.priceInDecimal,
       reward.issueId,
@@ -220,7 +218,12 @@ export async function handleIssueClosed({
 
     const comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue, reward.debug);
 
-    await savePermitToDB(Number(reward.userId), txData);
+    await savePermitToDB(
+      Number(reward.userId),
+      permit,
+      incentivesCalculation.evmNetworkId,
+      incentivesCalculation.payload.organization as Organization
+    );
     permitComment += comment;
 
     throw logger.info(

@@ -105,7 +105,6 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
       throw logger.error(`${err}`);
     }
     const amount = new Decimal(claim.permit.permitted.amount);
-    const tokenAddress = claim.permit.permitted.token;
 
     // extract assignee
     const events = await getAllIssueAssignEvents(issue.number);
@@ -119,8 +118,6 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
         userId: assignee.id,
         amount,
         node: permitComment,
-        tokenAddress,
-        networkId: evmNetworkId,
 
         // username: assignee,
         // repoName: payload.repository.full_name,

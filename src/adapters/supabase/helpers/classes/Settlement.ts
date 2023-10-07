@@ -1,12 +1,13 @@
 import { PostgrestResponse, SupabaseClient } from "@supabase/supabase-js";
 import Decimal from "decimal.js";
-import { Comment } from "../../../../types/payload";
+import { GeneratedPermit } from "../../../../helpers/permit";
+import { Comment, Organization } from "../../../../types/payload";
 import { Database } from "../../types/database";
 import { Super } from "./Super";
 
 type DebitInsert = Database["public"]["Tables"]["debits"]["Insert"];
 type CreditInsert = Database["public"]["Tables"]["credits"]["Insert"];
-type PermitInsert = Database["public"]["Tables"]["permits"]["Insert"];
+export type PermitInsert = Database["public"]["Tables"]["permits"]["Insert"];
 type SettlementInsert = Database["public"]["Tables"]["settlements"]["Insert"];
 type AddDebit = {
   userId: number;
@@ -19,14 +20,21 @@ type AddCreditWithPermit = {
   userId: number;
   amount: Decimal;
   comment: Comment;
-  permit?: PermitInsert;
+  permit?: GeneratedPermit;
+  networkId?: number;
+  organization?: Organization; // should be organization type from GitHub.
 };
 
 export class Settlement extends Super {
   constructor(supabase: SupabaseClient) {
     super(supabase);
   }
-
+  // private async _lookupPartnerId(organizationId: number): Promise<number> {
+  //   // Your logic to lookup the partnerId goes here.
+  //   // This is just a placeholder implementation.
+  //   const partnerId = organizationId; // Replace this with your actual logic.
+  //   return partnerId;
+  // }
   private async _lookupTokenId(networkId: number, address: string): Promise<number> {
     const { data: tokenData, error: tokenError } = await this.client
       .from("tokens")
@@ -80,7 +88,14 @@ export class Settlement extends Super {
     if (!settlementInsertData) throw new Error("Settlement not inserted");
   }
 
-  public async addCredit({ userId, amount, comment, permit }: AddCreditWithPermit): Promise<void> {
+  public async addCredit({
+    userId,
+    amount,
+    comment,
+    permit,
+    networkId,
+    organization,
+  }: AddCreditWithPermit): Promise<void> {
     // Insert into the credits table
     const creditData: CreditInsert = {
       amount: amount.toNumber(),
@@ -101,13 +116,16 @@ export class Settlement extends Super {
     // Insert into the permits table if permit data is provided
     let permitInsertData;
     if (permit) {
+      if (!organization) throw new Error("Organization not provided");
+      if (!networkId) throw new Error("Network ID not provided");
+
       const permitData: PermitInsert = {
-        amount: permit.amount,
-        nonce: permit.nonce,
-        deadline: permit.deadline,
+        amount: permit.permit.permitted.amount,
+        nonce: permit.permit.nonce,
+        deadline: permit.permit.deadline,
         signature: permit.signature,
-        token_id: permit.token_id,
-        partner_id: permit.partner_id,
+        token_id: await this._lookupTokenId(networkId, permit.permit.permitted.token),
+        partner_id: organization.id,
         beneficiary_id: userId,
         node_id: comment.node_id,
         node_type: "IssueComment",

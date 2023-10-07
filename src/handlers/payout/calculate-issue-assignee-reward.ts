@@ -44,8 +44,6 @@ export async function calculateIssueAssigneeReward(
         userId: incentivesCalculation.assignee.id,
         amount,
         node: comment,
-        networkId,
-        tokenAddress: address,
 
         // username: assigneeLogin,
         // repoName: incentivesCalculation.payload.repository.full_name,

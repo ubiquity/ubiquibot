@@ -332,16 +332,16 @@ export interface Database {
       };
       permits: {
         Row: {
-          amount: number | null;
+          amount: string;
           beneficiary_id: number;
           created: string;
-          deadline: number;
+          deadline: string;
           id: number;
           location_id: number | null;
           node_id: string | null;
-          node_type: string | null;
+          node_type: Database["public"]["Enums"]["github_node_type"] | null;
           node_url: string | null;
-          nonce: number;
+          nonce: string;
           partner_id: number | null;
           signature: string;
           token_id: number | null;
@@ -349,16 +349,16 @@ export interface Database {
           updated: string | null;
         };
         Insert: {
-          amount?: number | null;
+          amount: string;
           beneficiary_id: number;
           created?: string;
-          deadline: number;
+          deadline: string;
           id?: number;
           location_id?: number | null;
           node_id?: string | null;
-          node_type?: string | null;
+          node_type?: Database["public"]["Enums"]["github_node_type"] | null;
           node_url?: string | null;
-          nonce: number;
+          nonce: string;
           partner_id?: number | null;
           signature: string;
           token_id?: number | null;
@@ -366,16 +366,16 @@ export interface Database {
           updated?: string | null;
         };
         Update: {
-          amount?: number | null;
+          amount?: string;
           beneficiary_id?: number;
           created?: string;
-          deadline?: number;
+          deadline?: string;
           id?: number;
           location_id?: number | null;
           node_id?: string | null;
-          node_type?: string | null;
+          node_type?: Database["public"]["Enums"]["github_node_type"] | null;
           node_url?: string | null;
-          nonce?: number;
+          nonce?: string;
           partner_id?: number | null;
           signature?: string;
           token_id?: number | null;
