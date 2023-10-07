@@ -1,8 +1,8 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Comment, User } from "../../../../types";
 import { Database } from "../../types/database";
-import { Super } from "./Super";
-import { UserInsert, UserRow } from "./User";
+import { Super } from "./_super";
+import { UserInsert, UserRow } from "./_user";
 
 export type WalletRow = Database["public"]["Tables"]["wallets"]["Row"];
 export type WalletInsert = Database["public"]["Tables"]["wallets"]["Insert"];

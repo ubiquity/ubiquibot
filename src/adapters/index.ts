@@ -1,11 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { BotConfig } from "../types";
-import { Access } from "./supabase/helpers/classes/Access";
-import { Settlement } from "./supabase/helpers/classes/Settlement";
-import { Label } from "./supabase/helpers/classes/Label";
-import { Super } from "./supabase/helpers/classes/Super";
-import { User } from "./supabase/helpers/classes/User";
-import { Wallet } from "./supabase/helpers/classes/Wallet";
+import { Access } from "./supabase/helpers/classes/_access";
+import { Settlement } from "./supabase/helpers/classes/_settlement";
+import { Label } from "./supabase/helpers/classes/_label";
+import { Super } from "./supabase/helpers/classes/_super";
+import { User } from "./supabase/helpers/classes/_user";
+import { Wallet } from "./supabase/helpers/classes/wallet";
 import { Database } from "./supabase/types";
 
 export function createAdapters(config: BotConfig) {

@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import fetch from "node-fetch";
 import { Database } from "../../types/database";
-import { Super } from "./Super";
+import { Super } from "./_super";
 
 export type UserRow = Database["public"]["Tables"]["users"]["Row"];
 export type UserInsert = Database["public"]["Tables"]["users"]["Insert"];
