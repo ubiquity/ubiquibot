@@ -5,7 +5,7 @@ import { Settlement } from "./supabase/helpers/classes/settlement";
 import { Label } from "./supabase/helpers/classes/label";
 import { Super } from "./supabase/helpers/classes/super";
 import { User } from "./supabase/helpers/classes/user";
-import { Wallet } from "./supabase/helpers/classes/_wallet";
+import { Wallet } from "./supabase/helpers/classes/wallet";
 import { Database } from "./supabase/types";
 
 export function createAdapters(config: BotConfig) {
