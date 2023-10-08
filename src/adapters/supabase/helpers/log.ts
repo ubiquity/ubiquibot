@@ -141,25 +141,25 @@ export class GitHubLogger {
     }
   }
 
-  public info(message: string, errorPayload?: JSON) {
+  public info(message: string | object, errorPayload?: JSON) {
     prettyLogs.info(message);
     this.save(message, LogLevel.INFO, errorPayload);
     return message;
   }
 
-  public warn(message: string, errorPayload?: JSON) {
+  public warn(message: string | object, errorPayload?: JSON) {
     prettyLogs.warn(message);
     this.save(message, LogLevel.WARN, errorPayload);
     return message;
   }
 
-  public debug(message: string, errorPayload?: JSON) {
+  public debug(message: string | object, errorPayload?: JSON) {
     prettyLogs.debug(message);
     this.save(message, LogLevel.DEBUG, errorPayload);
     return message;
   }
 
-  public error(message: string, errorPayload?: JSON) {
+  public error(message: string | object, errorPayload?: JSON) {
     prettyLogs.error(message);
     this.save(message, LogLevel.ERROR, errorPayload);
     return message;

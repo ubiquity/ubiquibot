@@ -255,7 +255,7 @@ export const CommentSchema = Type.Object({
     rocket: Type.Number(),
     eyes: Type.Number(),
   }),
-  performed_via_github_app: Type.Optional(Type.Boolean()),
+  // performed_via_github_app: Type.Optional(Type.Boolean()),
 });
 
 export type Comment = Static<typeof CommentSchema>;

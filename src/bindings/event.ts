@@ -66,7 +66,7 @@ export async function bindEvents(context: Context): Promise<void> {
     const valid = validate(payload);
     if (!valid) {
       runtime.logger.info("Payload schema validation failed!", payload);
-      if (validate.errors) runtime.logger.warn(JSON.stringify(validate.errors));
+      if (validate.errors) runtime.logger.warn(validate.errors);
       return;
     }
 

@@ -1,34 +1,44 @@
 export const prettyLogs = {
   error: function errorLog(...args: unknown[]) {
-    // if the first arg is an instance of an error then just log the error
     if (args[0] instanceof Error) {
       console.error(args[0]);
+      if (args[0].stack) {
+        _log("error", formatStackTrace(args[0].stack, 3)); // Log the formatted stack trace
+      }
       return;
     }
 
     _log("error", ...args);
   },
+
   ok: function okLog(...args: unknown[]) {
     _log("ok", ...args);
   },
+
   warn: function warnLog(...args: unknown[]) {
     _log("warn", ...args);
+    const stack = new Error().stack;
+    if (stack) _log("warn", formatStackTrace(stack, 3)); // Log the formatted stack trace
   },
+
   info: function infoLog(...args: unknown[]) {
     _log("info", ...args);
   },
+
   debug: function debugLog(...args: unknown[]) {
-    _log("info", ...args);
+    _log("debug", ...args);
+    const stack = new Error().stack;
+    if (stack) _log("debug", formatStackTrace(stack, 3)); // Log the formatted stack trace
   },
 };
 
-function _log(type: "error" | "ok" | "warn" | "info", ...args: unknown[]) {
+function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown[]) {
   const defaultSymbols = {
     error: "×",
     ok: "✓",
     warn: "⚠",
-    info: " ",
-    debug: "🐛",
+    info: "›",
+    debug: "🔎",
   };
 
   // Extracting the optional symbol from the arguments
@@ -66,6 +76,7 @@ function _log(type: "error" | "ok" | "warn" | "info", ...args: unknown[]) {
     ok: ["log", "fgGreen"],
     warn: ["warn", "fgYellow"],
     info: ["info", "dim"],
+    debug: ["info", "dim"],
   };
   const _console = console[colorMap[type][0] as keyof typeof console] as (...args: string[]) => void;
   if (typeof _console === "function") {
@@ -104,4 +115,14 @@ const colors = {
 };
 export function colorizeText(text: string, color: keyof typeof colors): string {
   return colors[color].concat(text).concat(colors.reset);
+}
+
+function formatStackTrace(stack: string, linesToRemove = 0): string {
+  const lines = stack.split("\n");
+  for (let i = 0; i < linesToRemove; i++) {
+    lines.shift(); // Remove the top line
+  }
+  return lines
+    .map((line) => line.replace(/\s*at\s*/, "")) // Replace 'at'
+    .join("\n");
 }
