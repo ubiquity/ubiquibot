@@ -81,7 +81,7 @@ export async function registerWallet(body: string) {
 
     if (address && payload.comment) {
       const { wallet } = runtime.adapters.supabase;
-      await wallet.upsertWalletAddress(address, { user: payload.sender, comment: payload.comment });
+      await wallet.upsertWalletAddress(address);
       return logger.info(
         `Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`
       );

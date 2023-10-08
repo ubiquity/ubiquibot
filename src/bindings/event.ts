@@ -75,24 +75,23 @@ export async function bindEvents(eventContext: Context) {
   // Get the handlers for the action
   const handlers = processors[eventName];
   if (!handlers) {
-    runtime.logger.warn(`No handler configured for event: ${eventName}`);
-    return;
+    return runtime.logger.warn(`No handler configured for event: ${eventName}`);
   }
 
   const { pre, action, post } = handlers;
   // Run pre-handlers
-  runtime.logger.info(`Running pre handlers: ${pre.map((fn) => fn.name)}, event: ${eventName}`);
+  runtime.logger.info(`Running pre handlers: "${pre.map((fn) => fn.name)}" event: ${eventName}`);
   for (const preAction of pre) {
     await preAction();
   }
   // Run main handlers
-  runtime.logger.info(`Running main handlers: ${action.map((fn) => fn.name)}, event: ${eventName}`);
+  runtime.logger.info(`Running main handlers: "${action.map((fn) => fn.name)}" event: ${eventName}`);
   for (const mainAction of action) {
     await mainAction();
   }
 
   // Run post-handlers
-  runtime.logger.info(`Running post handlers: ${post.map((fn) => fn.name)}, event: ${eventName}`);
+  runtime.logger.info(`Running post handlers: "${post.map((fn) => fn.name)}" event: ${eventName}`);
   for (const postAction of post) {
     await postAction();
   }
