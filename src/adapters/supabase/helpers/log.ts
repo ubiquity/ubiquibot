@@ -1,16 +1,20 @@
 import axios from "axios";
-import { getAdapters, getBotContext, Logger } from "../../../bindings";
+import { getAdapters, getBotContext, getLogger, Logger } from "../../../bindings";
 import { Payload, LogLevel, LogNotification } from "../../../types";
 import { getOrgAndRepoFromPath } from "../../../utils/private";
 
 import { Database } from "../types/database";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { GitHubNode } from "./client";
-type Logs = Database["public"]["Tables"]["logs"];
-type LogEntry = Logs["Insert"]["log_entry"];
+
 import jwt from "jsonwebtoken";
 
-export const getNumericLevel = (level: LogLevel) => {
+type Logs = Database["public"]["Tables"]["logs"];
+type LogEntry = Logs["Insert"]["log_entry"];
+
+import { prettyLogs } from "./pretty-logs";
+
+export function getNumericLevel(level: LogLevel) {
   switch (level) {
     case LogLevel.ERROR:
       return 0;
@@ -29,7 +33,7 @@ export const getNumericLevel = (level: LogLevel) => {
     default:
       return -1; // Invalid level
   }
-};
+}
 
 export class GitHubLogger implements Logger {
   private supabase: SupabaseClient<Database>;
@@ -53,41 +57,25 @@ export class GitHubLogger implements Logger {
     this.logNotification = logNotification;
   }
 
-  // async sendLogsToSupabase(log: LogEntry) {
-  //   const { error } = await this.supabase.from("logs").insert([{ ...log }]);
-
-  //   if (error) {
-  //     console.error("Error logging to Supabase:", error.message);
-  //     return;
-  //   }
-  // }
-
   // Function to insert a new log entry with a GitHub node ID and type
   private async _insert({ gitHubNode, logEntry }: { gitHubNode: GitHubNode | null; logEntry: string }) {
-    let id, type, url;
+    const logger = getLogger();
 
-    if (gitHubNode) {
-      id = gitHubNode.id;
-      type = gitHubNode.type;
-      url = gitHubNode.url;
-    }
+    const logs = {
+      node_id: gitHubNode?.id,
+      node_type: gitHubNode?.type,
+      node_url: gitHubNode?.url,
+      log_entry: logEntry,
+    };
 
-    const { data: insertedData, error: logError } = await this.supabase.from("logs").insert([
-      {
-        node_id: id,
-        node_type: type,
-        node_url: url,
-        log_entry: logEntry,
-      },
-    ]);
+    const { error: logError } = await this.supabase.from("logs").insert(logs);
 
     if (logError) {
-      console.error("Error inserting log entry:", logError);
-      return null;
-    } else {
-      console.log("Inserted data:", insertedData);
-      return insertedData;
+      throw logger.error(JSON.stringify(logError));
+      // return null;
     }
+
+    // return logger.info(JSON.stringify(logs));
   }
 
   private async _processLogs({ log, gitHubNode = null }: { log: LogEntry; gitHubNode?: GitHubNode | null }) {
@@ -98,11 +86,11 @@ export class GitHubLogger implements Logger {
       });
     } catch (error) {
       console.error("Error sending log, retrying:", error);
-      return this.retryLimit > 0 ? await this._retryInsert(log) : null;
+      return this.retryLimit > 0 ? await this._retryInsertTelegram(log) : null;
     }
   }
 
-  private async _retryInsert(message: LogEntry) {
+  private async _retryInsertTelegram(message: LogEntry) {
     const context = getBotContext();
     const payload = context.payload as Payload;
 
@@ -164,22 +152,6 @@ export class GitHubLogger implements Logger {
     });
   }
 
-  async retryLog(log: LogEntry, retryCount = 0) {
-    if (retryCount >= this.retryLimit) {
-      console.error("Max retry limit reached for log:", log);
-      return;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, this.retryDelay));
-
-    try {
-      await this._insert({ logEntry: log, gitHubNode: null });
-    } catch (error) {
-      console.error("Error sending log (after retry):", error);
-      await this._retryInsert(log);
-    }
-  }
-
   private async _processLogQueue() {
     while (this.logQueue.length > 0) {
       const log = this.logQueue.shift();
@@ -220,10 +192,13 @@ export class GitHubLogger implements Logger {
     const payload = context.payload as Payload;
     // const timestamp = new Date().toUTCString();
 
-    const { comment, issue, repository } = payload;
-    const commentId = comment?.id;
-    const issueNumber = issue?.number;
-    const repoFullName = repository?.full_name;
+    // const { comment, issue, repository } = payload;
+
+    // console.trace(payload);
+
+    const commentId = payload?.comment?.id;
+    const issueNumber = payload?.issue?.number;
+    const repoFullName = payload?.repository?.full_name;
 
     const { org, repo } = getOrgAndRepoFromPath(repoFullName);
 
@@ -247,35 +222,65 @@ export class GitHubLogger implements Logger {
     }
   }
 
+  // private telegramLog(message: string) {
+  //   const response = this._retryInsert(message);
+  //   return response;
+  // }
+
+  async retryLog(log: LogEntry, retryCount = 0) {
+    if (retryCount >= this.retryLimit) {
+      console.error("Max retry limit reached for log:", log);
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, this.retryDelay));
+
+    try {
+      await this._insert({ logEntry: log, gitHubNode: null });
+    } catch (error) {
+      console.error("Error sending log (after retry):", error);
+      await this._retryInsertTelegram(log);
+    }
+  }
+
   public info(message: string) {
+    prettyLogs.info(message);
+
     this._save(message, LogLevel.INFO);
     if (typeof message === "object") message = JSON.stringify(message);
     return message;
   }
 
   public warn(message: string) {
+    prettyLogs.warn(message);
+
     this._save(message, LogLevel.WARN);
-    this.telegramLog(message).catch((error) => this._save(`Log Notification Error: ${error}`, LogLevel.DEBUG));
+
+    // try {
+    //   await this.telegramLog(message);
+    // } catch (error) {
+    //   this._save(`Log Notification Error: ${error}`, LogLevel.DEBUG);
+    // }
+
     if (typeof message === "object") message = JSON.stringify(message);
     return message;
   }
 
-  private telegramLog(message: string) {
-    const response = this._retryInsert(message);
-    return response;
-  }
-
   public debug(message: string) {
+    prettyLogs.ok(message);
+
     this._save(message, LogLevel.DEBUG);
     if (typeof message === "object") message = JSON.stringify(message);
     return message;
   }
 
   public error(message: string) {
+    prettyLogs.error(message);
+
     this._save(message, LogLevel.ERROR);
-    this.telegramLog(message)
-      .then((response) => this._save(`Log Notification Success: ${response}`, LogLevel.DEBUG))
-      .catch((error) => this._save(`Log Notification Error: ${error}`, LogLevel.DEBUG));
+    // this.telegramLog(message)
+    //   .then((response) => this._save(`Log Notification Success: ${response}`, LogLevel.DEBUG))
+    //   .catch((error) => this._save(`Log Notification Error: ${error}`, LogLevel.DEBUG));
     if (typeof message === "object") message = JSON.stringify(message);
     return message;
   }

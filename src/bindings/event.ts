@@ -27,9 +27,9 @@ export type Logger = {
 let logger: Logger;
 export const getLogger = (): Logger => logger;
 
-const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT as string, GithubEvent.PUSH_EVENT as string];
+const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT, GithubEvent.PUSH_EVENT] as string[];
 
-export const bindEvents = async (context: Context): Promise<void> => {
+export async function bindEvents(context: Context): Promise<void> {
   const { id, name } = context;
   botContext = context;
   const payload = context.payload as Payload;
@@ -44,7 +44,6 @@ export const bindEvents = async (context: Context): Promise<void> => {
   }
 
   adapters = createAdapters(botConfig);
-
   logger = new GitHubLogger(
     // contributors will see logs in console while on development environment
     botConfig?.log?.logEnvironment ?? "development",
@@ -66,9 +65,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   // Create adapters for supabase, twitter, discord, etc
   logger.info("Creating adapters for supabase, twitter, etc...");
-
   logger.info(`Config loaded! config: ${JSON.stringify(botConfig)}`);
-
   logger.info(`Started binding events... id: ${id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
 
   if (!allowedEvents.includes(eventName)) {
@@ -129,4 +126,4 @@ export const bindEvents = async (context: Context): Promise<void> => {
       await wildcardProcessor();
     }
   }
-};
+}

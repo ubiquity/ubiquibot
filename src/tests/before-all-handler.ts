@@ -66,15 +66,15 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
       throw new Error("TEST_OUTSIDE_COLLABORATOR_PAT does not have read access");
     }
 
-    setServer(
-      await run(function main(app: Probot) {
-        const allowedEvents = Object.values(GithubEvent) as EmitterWebhookEventName[];
-        app.on(allowedEvents, async (context) => {
-          await bindEvents(context);
-          webhookEventEmitter.emit("event", context.payload);
-        });
-      })
-    );
+    const server = await run(function main(app: Probot) {
+      const allowedEvents = Object.values(GithubEvent) as EmitterWebhookEventName[];
+      app.on(allowedEvents, async (context) => {
+        await bindEvents(context);
+        webhookEventEmitter.emit("event", context.payload);
+      });
+    });
+
+    setServer(server);
 
     await updateConfig(getAdminUser(), owner, "ubiquibot-config", ".github/ubiquibot-config.yml", orgConfig);
     await waitForNWebhooks(1);
