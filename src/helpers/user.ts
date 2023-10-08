@@ -1,7 +1,7 @@
 import Runtime from "../bindings/bot-runtime";
 import { User } from "../types";
 
-export async function getUser(username: string): Promise<User | undefined> {
+export async function getUser(username: string) {
   // Gets the publicly available information about `username`
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
@@ -12,9 +12,10 @@ export async function getUser(username: string): Promise<User | undefined> {
       username,
     });
 
-    if (res.status === 200) return res.data as User;
-    else {
-      logger.debug(`Unsatisfied response { status: ${res.status}, data: ${res.data}`);
+    if (res.status === 200) {
+      return res.data as User;
+    } else {
+      logger.debug({ message: `Unsatisfied response`, status: res.status, data: res.data });
     }
   } catch (err: unknown) {
     logger.info(`Getting user info failed! err: ${err}`);
@@ -39,7 +40,7 @@ export async function getOrgMembershipOfUser(org: string, username: string): Pro
     if (res.status === 200) {
       membership = res.data.role;
     } else {
-      logger.debug(`Unsatisfied response { status: ${res.status}, data: ${res.data}`);
+      logger.debug({ message: `Unsatisfied response`, status: res.status, data: res.data });
     }
   } catch (err: unknown) {
     logger.info(`Getting organization membership failed! err: ${err}`);

@@ -131,8 +131,8 @@ export async function listIssuesForRepo(
 
 export async function listAllIssuesForRepo(state: "open" | "closed" | "all" = "open") {
   const issuesArr = [];
-  let fetchDone = false;
   const perPage = 100;
+  let fetchDone = false;
   let curPage = 1;
   while (!fetchDone) {
     const issues = await listIssuesForRepo(state, perPage, curPage);
@@ -147,7 +147,7 @@ export async function listAllIssuesForRepo(state: "open" | "closed" | "all" = "o
   return issuesArr;
 }
 
-export async function addCommentToIssue(msg: string, issue_number: number) {
+export async function addCommentToIssue(message: string, issueNumber: number) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
 
@@ -157,15 +157,15 @@ export async function addCommentToIssue(msg: string, issue_number: number) {
     await context.octokit.issues.createComment({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number,
-      body: msg,
+      issue_number: issueNumber,
+      body: message,
     });
   } catch (e: unknown) {
     logger.debug(`Adding a comment failed! reason: ${e}`);
   }
 }
 
-export async function updateCommentOfIssue(msg: string, issue_number: number, reply_to: Comment) {
+export async function updateCommentOfIssue(msg: string, issueNumber: number, replyTo: Comment) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
 
@@ -182,17 +182,17 @@ export async function updateCommentOfIssue(msg: string, issue_number: number, re
     const comments = await context.octokit.issues.listComments({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number: issue_number,
-      since: reply_to.created_at,
+      issue_number: issueNumber,
+      since: replyTo.created_at,
       per_page: 30,
     });
 
     const commentToEdit = comments.data.find((comment) => {
-      return comment?.user?.login == editCommentBy && comment.id > reply_to.id;
+      return comment?.user?.login == editCommentBy && comment.id > replyTo.id;
     });
 
     if (commentToEdit) {
-      logger.info(`For comment_id: ${reply_to.id} found comment_to_edit with id: ${commentToEdit.id}`);
+      logger.info(`For comment_id: ${replyTo.id} found comment_to_edit with id: ${commentToEdit.id}`);
       await context.octokit.issues.updateComment({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
@@ -200,23 +200,23 @@ export async function updateCommentOfIssue(msg: string, issue_number: number, re
         body: msg,
       });
     } else {
-      logger.info(`Falling back to add comment. Couldn't find response to edit for comment_id: ${reply_to.id}`);
-      await addCommentToIssue(msg, issue_number);
+      logger.info(`Falling back to add comment. Couldn't find response to edit for comment_id: ${replyTo.id}`);
+      await addCommentToIssue(msg, issueNumber);
     }
   } catch (e: unknown) {
     logger.debug(`Updating a comment failed! reason: ${e}`);
   }
 }
 
-export async function upsertCommentToIssue(issue_number: number, comment: string, action: string, reply_to?: Comment) {
-  if (action == "edited" && reply_to) {
-    await updateCommentOfIssue(comment, issue_number, reply_to);
+export async function upsertCommentToIssue(issueNumber: number, comment: string, action?: string, replyTo?: Comment) {
+  if (action == "edited" && replyTo) {
+    await updateCommentOfIssue(comment, issueNumber, replyTo);
   } else {
-    await addCommentToIssue(comment, issue_number);
+    await addCommentToIssue(comment, issueNumber);
   }
 }
 
-export async function getCommentsOfIssue(issue_number: number): Promise<Comment[]> {
+export async function getCommentsOfIssue(issueNumber: number): Promise<Comment[]> {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
 
@@ -227,7 +227,7 @@ export async function getCommentsOfIssue(issue_number: number): Promise<Comment[
     const response = await context.octokit.rest.issues.listComments({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number,
+      issue_number: issueNumber,
     });
 
     if (response.data) result = response.data as Comment[];
@@ -239,7 +239,7 @@ export async function getCommentsOfIssue(issue_number: number): Promise<Comment[
 }
 
 export async function getIssueDescription(
-  issue_number: number,
+  issueNumber: number,
   format: "raw" | "html" | "text" = "raw"
 ): Promise<string> {
   const runtime = Runtime.getState();
@@ -252,7 +252,7 @@ export async function getIssueDescription(
     const response = await context.octokit.rest.issues.get({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number: issue_number,
+      issue_number: issueNumber,
       mediaType: {
         format,
       },
@@ -277,7 +277,7 @@ export async function getIssueDescription(
 }
 
 export async function getAllIssueComments(
-  issue_number: number,
+  issueNumber: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ): Promise<Comment[]> {
   const runtime = Runtime.getState();
@@ -292,7 +292,7 @@ export async function getAllIssueComments(
       const response = await context.octokit.rest.issues.listComments({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
-        issue_number: issue_number,
+        issue_number: issueNumber,
         per_page: 100,
         page: page_number,
         mediaType: {
@@ -319,7 +319,7 @@ export async function getAllIssueComments(
   return result;
 }
 
-export async function getAllIssueAssignEvents(issue_number: number): Promise<AssignEvent[]> {
+export async function getAllIssueAssignEvents(issueNumber: number): Promise<AssignEvent[]> {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const payload = context.payload as Payload;
@@ -332,7 +332,7 @@ export async function getAllIssueAssignEvents(issue_number: number): Promise<Ass
       const response = await context.octokit.rest.issues.listEvents({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
-        issue_number: issue_number,
+        issue_number: issueNumber,
         per_page: 100,
         page: page_number,
       });
@@ -354,7 +354,7 @@ export async function getAllIssueAssignEvents(issue_number: number): Promise<Ass
   return result.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
 }
 
-export async function wasIssueReopened(issue_number: number): Promise<boolean> {
+export async function wasIssueReopened(issueNumber: number): Promise<boolean> {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const payload = context.payload as Payload;
@@ -366,7 +366,7 @@ export async function wasIssueReopened(issue_number: number): Promise<boolean> {
       const response = await context.octokit.rest.issues.listEvents({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
-        issue_number: issue_number,
+        issue_number: issueNumber,
         per_page: 100,
         page: page_number,
       });
@@ -388,7 +388,7 @@ export async function wasIssueReopened(issue_number: number): Promise<boolean> {
   return false;
 }
 
-export async function removeAssignees(issue_number: number, assignees: string[]): Promise<void> {
+export async function removeAssignees(issueNumber: number, assignees: string[]): Promise<void> {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
 
@@ -398,7 +398,7 @@ export async function removeAssignees(issue_number: number, assignees: string[])
     await context.octokit.rest.issues.removeAssignees({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number,
+      issue_number: issueNumber,
       assignees,
     });
   } catch (e: unknown) {
@@ -491,7 +491,7 @@ export async function isUserAdminOrBillingManager(
   }
 }
 
-export async function addAssignees(issue_number: number, assignees: string[]): Promise<void> {
+export async function addAssignees(issueNumber: number, assignees: string[]): Promise<void> {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
 
@@ -501,7 +501,7 @@ export async function addAssignees(issue_number: number, assignees: string[]): P
     await context.octokit.rest.issues.addAssignees({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number,
+      issue_number: issueNumber,
       assignees,
     });
   } catch (e: unknown) {
@@ -671,13 +671,13 @@ export async function getReviewRequests(context: Context, pull_number: number, o
   }
 }
 // Get issues by issue number
-export async function getIssueByNumber(context: Context, issue_number: number) {
+export async function getIssueByNumber(context: Context, issueNumber: number) {
   const payload = context.payload as Payload;
   try {
     const { data: issue } = await context.octokit.rest.issues.get({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number,
+      issue_number: issueNumber,
     });
     return issue;
   } catch (e: unknown) {

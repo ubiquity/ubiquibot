@@ -1,7 +1,7 @@
 import Runtime from "../../bindings/bot-runtime";
 import { GithubContent, Payload } from "../../types";
 
-export const createDevPoolPR = async () => {
+export async function createDevPoolPR() {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
@@ -83,4 +83,4 @@ export const createDevPoolPR = async () => {
   });
 
   logger.info("Pull request created on DevPool Directory");
-};
+}

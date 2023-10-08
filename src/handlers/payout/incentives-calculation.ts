@@ -175,7 +175,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     throw logger.info(`Skipping... its not a task`);
   }
 
-  if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timelabel) {
+  if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timeLabel) {
     throw logger.info(`Skipping... its not a task`);
   }
 
@@ -242,7 +242,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     comments,
     issueDetailed: {
       isTask: issueDetailed.isTask,
-      timelabel: issueDetailed.timelabel,
+      timelabel: issueDetailed.timeLabel,
       priorityLabel: issueDetailed.priorityLabel,
       priceLabel: issueDetailed.priceLabel,
     },

@@ -64,14 +64,7 @@ export interface RewardsResponse {
   fallbackReward?: Record<string, Decimal>;
 }
 
-/**
- * Parses the comment body and figure out the command name a user wants
- *
- *
- * @param body - The comment body
- * @returns The list of command names the comment includes
- */
-
+// Parses the comment body and figure out the command name a user wants
 export function commentParser(body: string): IssueCommentCommands[] {
   const regex = /^\/(\w+)\b/; // Regex pattern to match the command at the beginning of the body
 
@@ -86,10 +79,7 @@ export function commentParser(body: string): IssueCommentCommands[] {
   return [];
 }
 
-/**
- * Callback for issues closed - Processor
- */
-
+// Callback for issues closed - Processor
 export async function issueClosedCallback(): Promise<void> {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
@@ -123,7 +113,7 @@ export async function issueClosedCallback(): Promise<void> {
       throw new Error(error);
     }
   } catch (err: unknown) {
-    return await addCommentToIssue(ErrorDiff(err), issue.number);
+    return await addCommentToIssue(ErrorDiff(err as Error), issue.number);
   }
 }
 
@@ -166,7 +156,7 @@ export async function issueCreatedCallback(): Promise<void> {
       await addLabelToIssue(targetPriceLabel);
     }
   } catch (err: unknown) {
-    await addCommentToIssue(ErrorDiff(err), issue.number);
+    await addCommentToIssue(ErrorDiff(err as Error), issue.number);
   }
 }
 
@@ -253,13 +243,13 @@ export async function issueReopenedCallback(): Promise<void> {
       logger.info(`Skipped penalty because amount is 0`);
     }
   } catch (err: unknown) {
-    await addCommentToIssue(ErrorDiff(err), issue.number);
+    await addCommentToIssue(ErrorDiff(err as Error), issue.number);
   }
 }
 
-async function commandCallback(issue_number: number, comment: string, action: string, reply_to?: Comment) {
+async function commandCallback(issue: number, comment: string, action: string, replyTo?: Comment) {
   // Default callback for slash commands
-  await upsertCommentToIssue(issue_number, comment, action, reply_to);
+  await upsertCommentToIssue(issue, comment, action, replyTo);
 }
 
 export function userCommands(): UserCommands[] {
@@ -327,7 +317,7 @@ export function userCommands(): UserCommands[] {
     },
     {
       id: IssueCommentCommands.WALLET,
-      description: `<WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>: Register your wallet address for payments.\n\tYour message to sign is: "DevPool"\n\tYou can generate SIGNATURE_HASH at https://etherscan.io/verifiedSignatures\n\te.g. "/wallet 0x16ce4d863eD687455137576da2A0cbaf4f1E8f76 0xe2a3e34a63f3def2c29605de82225b79e1398190b542be917ef88a8e93ff9dc91bdc3ef9b12ed711550f6d2cbbb50671aa3f14a665b709ec391f3e603d0899a41b"`,
+      description: `<WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>: Register your wallet address for payments.\n\tYour message to sign is: "UbiquiBot"\n\tYou can generate SIGNATURE_HASH at https://etherscan.io/verifiedSignatures\n\te.g. "/wallet 0x16ce4d863eD687455137576da2A0cbaf4f1E8f76 0xe2a3e34a63f3def2c29605de82225b79e1398190b542be917ef88a8e93ff9dc91bdc3ef9b12ed711550f6d2cbbb50671aa3f14a665b709ec391f3e603d0899a41b"`,
       handler: registerWallet,
       callback: commandCallback,
     },

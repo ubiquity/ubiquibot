@@ -28,7 +28,7 @@ export async function query(body: string) {
 
     // lookup user object from github api based on the username
     const { data: user } = await context.octokit.users.getByUsername({ username });
-    if (!user) return logger.error(`No user found for username: ${username}`);
+    if (!user) throw logger.error(`No user found for username: ${username}`);
 
     const accessData = await database.access.getAccess(user.id);
 
@@ -61,5 +61,5 @@ export async function query(body: string) {
     return resultMessage;
   }
 
-  return logger.error("Invalid body for query command \n usage /query @user");
+  throw logger.error("Invalid body for query command \n usage /query @user");
 }

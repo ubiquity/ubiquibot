@@ -3,7 +3,6 @@ import { Payload, StreamlinedComment, UserType } from "../../../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { askGPT, decideContextGPT, sysMsg } from "../../../helpers/gpt";
-import { ErrorDiff } from "../../../utils/helpers";
 
 export async function ask(body: string) {
   // The question to ask
@@ -40,8 +39,7 @@ export async function ask(body: string) {
     const commentsRaw = await getAllIssueComments(issue.number, "raw");
 
     if (!comments) {
-      logger.info(`Error getting issue comments`);
-      return ErrorDiff(`Error getting issue comments`);
+      throw logger.error(`Error getting issue comments`);
     }
 
     // add the first comment of the issue/pull request
@@ -119,7 +117,7 @@ export async function ask(body: string) {
     } else if (gptResponse.answer) {
       return gptResponse.answer;
     } else {
-      return ErrorDiff(`Error getting response from GPT`);
+      throw logger.error(`Error getting response from GPT`);
     }
   } else {
     return "Invalid syntax for ask \n usage: '/ask What is pi?";

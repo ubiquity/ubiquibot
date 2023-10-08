@@ -2,7 +2,8 @@ import { GithubEvent, Handler, ActionHandler } from "../types";
 import { closePullRequestForAnIssue, commentWithAssignMessage } from "./assign";
 import { pricingLabelLogic, validatePriceLabels } from "./pricing";
 import { checkTasksToUnassign } from "./wildcard";
-import { nullHandler } from "./shared";
+// import { nullHandler } from "./shared";
+
 import { handleComment, issueClosedCallback, issueCreatedCallback, issueReopenedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
@@ -12,69 +13,69 @@ import { watchLabelChange } from "./label";
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_OPENED]: {
-    pre: [nullHandler],
+    pre: [],
     action: [findDuplicateOne, issueCreatedCallback],
-    post: [nullHandler],
+    post: [],
   },
   [GithubEvent.ISSUES_REOPENED]: {
-    pre: [nullHandler],
+    pre: [],
     action: [issueReopenedCallback],
-    post: [nullHandler],
+    post: [],
   },
   [GithubEvent.ISSUES_LABELED]: {
     pre: [validatePriceLabels],
     action: [pricingLabelLogic],
-    post: [nullHandler],
+    post: [],
   },
   [GithubEvent.ISSUES_UNLABELED]: {
     pre: [validatePriceLabels],
     action: [pricingLabelLogic],
-    post: [nullHandler],
+    post: [],
   },
   [GithubEvent.ISSUES_ASSIGNED]: {
-    pre: [nullHandler],
+    pre: [],
     action: [commentWithAssignMessage],
-    post: [nullHandler],
+    post: [],
   },
   [GithubEvent.ISSUES_UNASSIGNED]: {
-    pre: [nullHandler],
+    pre: [],
     action: [closePullRequestForAnIssue],
-    post: [nullHandler],
+    post: [],
   },
   [GithubEvent.ISSUE_COMMENT_CREATED]: {
-    pre: [nullHandler],
+    pre: [],
     action: [handleComment],
-    post: [nullHandler],
+    post: [],
   },
   [GithubEvent.ISSUE_COMMENT_EDITED]: {
-    pre: [nullHandler],
+    pre: [],
     action: [handleComment],
-    post: [nullHandler],
+    post: [],
   },
   [GithubEvent.ISSUES_CLOSED]: {
-    pre: [nullHandler],
+    pre: [],
     action: [issueClosedCallback],
-    post: [nullHandler],
+    post: [],
   },
   [GithubEvent.PULL_REQUEST_OPENED]: {
-    pre: [nullHandler],
+    pre: [],
     action: [checkPullRequests],
-    post: [nullHandler],
+    post: [],
   },
   [GithubEvent.INSTALLATION_ADDED_EVENT]: {
-    pre: [nullHandler],
+    pre: [],
     action: [createDevPoolPR],
-    post: [nullHandler],
+    post: [],
   },
   [GithubEvent.PUSH_EVENT]: {
-    pre: [nullHandler],
+    pre: [],
     action: [validateConfigChange, runOnPush],
-    post: [nullHandler],
+    post: [],
   },
   [GithubEvent.LABEL_EDITED]: {
-    pre: [nullHandler],
+    pre: [],
     action: [watchLabelChange],
-    post: [nullHandler],
+    post: [],
   },
 };
 

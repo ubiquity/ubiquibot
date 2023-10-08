@@ -3,30 +3,29 @@ import { createAdapters } from "../adapters";
 import { GitHubLogger } from "../adapters/supabase";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
-import { shouldSkip } from "../helpers";
+import { shouldSkip, upsertCommentToIssue } from "../helpers";
 import { GithubEvent, LogLevel, Payload, PayloadSchema } from "../types";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
 
 import Runtime from "./bot-runtime";
+import { ErrorDiff } from "../utils/helpers";
 
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT, GithubEvent.PUSH_EVENT] as string[];
 
-export async function bindEvents(context: Context): Promise<void> {
+export async function bindEvents(eventContext: Context) {
   const runtime = Runtime.getState();
-  runtime.eventContext = context;
-
-  const { id, name } = context;
-  const payload = context.payload as Payload;
-  const allowedEvents = Object.values(GithubEvent) as string[];
-  const eventName = payload.action ? `${name}.${payload.action}` : name; // some events wont have actions as this grows
-
+  runtime.eventContext = eventContext;
   let botConfigError;
   try {
-    runtime.botConfig = await loadConfig(context);
+    runtime.botConfig = await loadConfig(eventContext);
   } catch (err) {
     botConfigError = err;
   }
+
+  const payload = eventContext.payload as Payload;
+  const allowedEvents = Object.values(GithubEvent) as string[];
+  const eventName = payload.action ? `${eventContext.name}.${payload.action}` : eventContext.name; // some events wont have actions as this grows
 
   runtime.adapters = createAdapters(runtime.botConfig);
   runtime.logger = new GitHubLogger(
@@ -37,7 +36,7 @@ export async function bindEvents(context: Context): Promise<void> {
     // botConfig.logNotification
   );
   if (!runtime.logger) {
-    return;
+    throw new Error("Failed to create logger");
   }
 
   if (botConfigError) {
@@ -45,15 +44,14 @@ export async function bindEvents(context: Context): Promise<void> {
     if (eventName === GithubEvent.PUSH_EVENT) {
       await validateConfigChange();
     }
-    return;
+    throw new Error("Failed to load config");
   }
 
-  runtime.logger.info(`Binding events... id: ${id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
+  runtime.logger.info(`Binding events... id: ${eventContext.id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
 
   if (!allowedEvents.includes(eventName)) {
     // just check if its on the watch list
-    runtime.logger.info(`Skipping the event. reason: not configured`);
-    return;
+    return runtime.logger.info(`Skipping the event. reason: not configured`);
   }
 
   // Skip validation for installation event and push
@@ -68,10 +66,9 @@ export async function bindEvents(context: Context): Promise<void> {
     }
 
     // Check if we should skip the event
-    const { skip, reason } = shouldSkip();
-    if (skip) {
-      runtime.logger.info(`Skipping the event. reason: ${reason}`);
-      return;
+    const should = shouldSkip();
+    if (should.stop) {
+      return runtime.logger.info(`Skipping the event because ${should.reason}`);
     }
   }
 
@@ -108,4 +105,12 @@ export async function bindEvents(context: Context): Promise<void> {
       await wildcardProcessor();
     }
   }
+
+  process.on("uncaughtException", async (event) => {
+    console.trace();
+    await upsertCommentToIssue(
+      eventContext.issue().issue_number ?? eventContext.pullRequest().pull_number,
+      ErrorDiff(event.message)
+    );
+  });
 }

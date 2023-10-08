@@ -1,13 +1,11 @@
-import { ethers } from "ethers";
-// import { upsertWalletAddress } from "../../../adapters/supabase";
+import { constants, ethers } from "ethers";
 import Runtime from "../../../bindings/bot-runtime";
 import { resolveAddress } from "../../../helpers";
 import { Payload } from "../../../types";
 import { formatEthAddress } from "../../../utils";
 import { IssueCommentCommands } from "../commands";
-import { constants } from "ethers";
 // Extracts ensname from raw text.
-const extractEnsName = (text: string): string | undefined => {
+function extractEnsName(text: string) {
   // Define a regular expression to match ENS names
   const ensRegex = /^(?=.{3,40}$)([a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/gm;
 
@@ -18,14 +16,12 @@ const extractEnsName = (text: string): string | undefined => {
     const ensName = match[0];
     return ensName.toLowerCase();
   }
+}
 
-  return undefined;
-};
-
-export const registerWallet = async (body: string) => {
+export async function registerWallet(body: string) {
   const runtime = Runtime.getState();
   const { payload: _payload } = runtime.eventContext;
-  const config = Runtime.getState().botConfig;
+  const config = runtime.botConfig;
   const logger = runtime.logger;
   const payload = _payload as Payload;
   const sender = payload.sender.login;
@@ -58,7 +54,7 @@ export const registerWallet = async (body: string) => {
     const sigHashMatches = body.match(regexForSigHash);
     const sigHash = sigHashMatches ? sigHashMatches[0] : null;
 
-    const messageToSign = "DevPool";
+    const messageToSign = "UbiquiBot";
     const failedSigLogMsg = `Skipping to register the wallet address because you have not provided a valid SIGNATURE_HASH.`;
     const failedSigResponse = `Skipping to register the wallet address because you have not provided a valid SIGNATURE_HASH. \nUse [etherscan](https://etherscan.io/verifiedSignatures) to sign the message \`${messageToSign}\` and register your wallet by appending the signature hash.\n\n**Usage:**\n/wallet <WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>\n\n**Example:**\n/wallet 0x0000000000000000000000000000000000000000 0x0830f316c982a7fd4ff050c8fdc1212a8fd92f6bb42b2337b839f2b4e156f05a359ef8f4acd0b57cdedec7874a865ee07076ab2c81dc9f9de28ced55228587f81c`;
     try {
@@ -78,12 +74,13 @@ export const registerWallet = async (body: string) => {
 
   if (address) {
     if (address == constants.AddressZero) {
-      logger.info("Skipping to register a wallet address because user is trying to set their address to null address");
-      return `Cannot set address to null address`;
+      return logger.info(
+        "Skipping to register a wallet address because user is trying to set their address to null address"
+      );
     }
 
     if (address && payload.comment) {
-      const { wallet } = Runtime.getState().adapters.supabase;
+      const { wallet } = runtime.adapters.supabase;
       await wallet.upsertWalletAddress(address, { user: payload.sender, comment: payload.comment });
       return logger.info(
         `Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`
@@ -92,6 +89,4 @@ export const registerWallet = async (body: string) => {
       throw new Error("Payload comment is undefined");
     }
   }
-
-  return;
-};
+}

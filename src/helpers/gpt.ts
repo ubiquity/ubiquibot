@@ -3,7 +3,6 @@ import { Payload, StreamlinedComment, UserType } from "../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../helpers";
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
-import { ErrorDiff } from "../utils/helpers";
 
 export const sysMsg = `You are the UbiquiBot, designed to provide accurate technical answers. \n
 Whenever appropriate, format your response using GitHub Flavored Markdown. Utilize tables, lists, and code blocks for clear and organized answers. \n
@@ -54,19 +53,13 @@ Example:[
 ]
 `;
 
-/**
- * @notice best used alongside getAllLinkedIssuesAndPullsInBody() in helpers/issue
- * @param chatHistory the conversational context to provide to GPT
- * @param streamlined an array of comments in the form of { login: string, body: string }
- * @param linkedPRStreamlined an array of comments in the form of { login: string, body: string }
- * @param linkedIssueStreamlined an array of comments in the form of { login: string, body: string }
- */
-export const decideContextGPT = async (
+// best used alongside getAllLinkedIssuesAndPullsInBody() in helpers/issue
+export async function decideContextGPT(
   chatHistory: CreateChatCompletionRequestMessage[],
   streamlined: StreamlinedComment[],
   linkedPRStreamlined: StreamlinedComment[],
   linkedIssueStreamlined: StreamlinedComment[]
-) => {
+) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const logger = runtime.logger;
@@ -137,7 +130,7 @@ export const decideContextGPT = async (
   const res = await askGPT("", chatHistory);
 
   return res;
-};
+}
 
 export async function askGPT(question: string, chatHistory: CreateChatCompletionRequestMessage[]) {
   // base askGPT function
@@ -146,8 +139,7 @@ export async function askGPT(question: string, chatHistory: CreateChatCompletion
   const config = runtime.botConfig;
 
   if (!config.ask.apiKey) {
-    logger.info(`No OpenAI API Key provided`);
-    return ErrorDiff(
+    throw logger.error(
       "You must configure the `openai-api-key` property in the bot configuration in order to use AI powered features."
     );
   }

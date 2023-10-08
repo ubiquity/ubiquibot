@@ -36,7 +36,7 @@ export async function setAccess(body: string): Promise<string> {
     await access.setAccess(labels, nodeInfo, userId);
     return logger.info(`Successfully set access for ${username} to ${labels.join(", ")}`);
   } else {
-    return logger.error(
+    throw logger.error(
       `Invalid syntax for allow \n usage: '/allow set-(access type) @user true|false' \n  ex-1 /allow set-multiplier @user false`
     );
   }

@@ -1,7 +1,6 @@
 import Runtime from "../../../bindings/bot-runtime";
 import { isUserAdminOrBillingManager } from "../../../helpers";
 import { Payload } from "../../../types";
-import { ErrorDiff } from "../../../utils/helpers";
 import { taskInfo } from "../../wildcard";
 
 export async function approveLabelChange() {
@@ -16,8 +15,7 @@ export async function approveLabelChange() {
 
   const { issue, repository } = payload;
   if (!issue) {
-    logger.info(`Skipping '/authorize' because of no issue instance`);
-    return;
+    return logger.info(`Skipping '/authorize' because of no issue instance`);
   }
 
   // check if sender is admin
@@ -26,17 +24,15 @@ export async function approveLabelChange() {
 
   // if sender is not admin, return
   if (userCan) {
-    logger.info(`User ${sender} is not an admin/billing_manager`);
-    return ErrorDiff(
-      `You are not an admin/billing_manager and do not have the required permissions to access this function.`
+    throw new Error(
+      `User ${sender} is not an admin/billing_manager and do not have the required permissions to access this function.`
     );
   }
 
   const issueDetailed = taskInfo(issue);
 
-  if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timelabel) {
-    logger.info(`Skipping... its not a task`);
-    return ErrorDiff(`No valid task label on this issue`);
+  if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timeLabel) {
+    throw new Error(`No valid task label on this issue`);
   }
 
   // get current repository node id from payload and pass it to getLabelChanges function to get label changes
@@ -44,8 +40,8 @@ export async function approveLabelChange() {
 
   // Approve label changes
   labelChanges.forEach(async (labelChange) => {
-    logger.info(`Approving label change for ${labelChange.label_from} -> ${labelChange.label_to}`);
     await label.approveLabelChange(labelChange.id);
+    return logger.info(`Approved label change for ${labelChange.label_from} -> ${labelChange.label_to}`);
   });
 
   return `Label change has been approved, permit can now be generated`;

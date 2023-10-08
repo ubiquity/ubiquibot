@@ -43,18 +43,14 @@ export class GitHubLogger {
     this.supabase = Runtime.getState().adapters.supabase;
   }
 
-  async sendLogsToSupabase({ logMessage }: Log) {
+  private async _sendLogsToSupabase({ logMessage }: Log) {
     const { error } = await this.supabase.client.from("logs").insert({ log_entry: logMessage });
-
-    if (error) {
-      prettyLogs.error("Error logging to Supabase:", error.message);
-      return;
-    }
+    if (error) throw prettyLogs.error("Error logging to Supabase:", error.message);
   }
 
   async processLogs(log: Log) {
     try {
-      await this.sendLogsToSupabase(log);
+      await this._sendLogsToSupabase(log);
     } catch (error) {
       prettyLogs.error("Error sending log, retrying:", error);
       return this.retryLimit > 0 ? await this.retryLog(log) : null;
@@ -70,7 +66,7 @@ export class GitHubLogger {
     await new Promise((resolve) => setTimeout(resolve, this.retryDelay));
 
     try {
-      await this.sendLogsToSupabase(log);
+      await this._sendLogsToSupabase(log);
     } catch (error) {
       prettyLogs.error("Error sending log (after retry):", error);
       await this.retryLog(log, retryCount + 1);
@@ -141,31 +137,31 @@ export class GitHubLogger {
     }
   }
 
-  public ok(message: string | object, metadata?: object) {
+  public ok<T extends string | object>(message: T, metadata?: object): T {
     prettyLogs.ok(message, metadata);
     this.save(message, LogLevel.VERBOSE, metadata);
     return message;
   }
 
-  public info(message: string | object, metadata?: object) {
+  public info<T extends string | object>(message: T, metadata?: object): T {
     prettyLogs.info(message, metadata);
     this.save(message, LogLevel.INFO, metadata);
     return message;
   }
 
-  public warn(message: string | object, metadata?: object) {
+  public warn<T extends string | object>(message: T, metadata?: object): T {
     prettyLogs.warn(message, metadata);
     this.save(message, LogLevel.WARN, metadata);
     return message;
   }
 
-  public debug(message: string | object, metadata?: object) {
+  public debug<T extends string | object>(message: T, metadata?: object): T {
     prettyLogs.debug(message, metadata);
     this.save(message, LogLevel.DEBUG, metadata);
     return message;
   }
 
-  public error(message: string | object, metadata?: object) {
+  public error<T extends string | object>(message: T, metadata?: object): T {
     prettyLogs.error(message, metadata);
     this.save(message, LogLevel.ERROR, metadata);
     return message;
@@ -183,9 +179,7 @@ export class GitHubLogger {
       return data;
     } catch (error) {
       if (error instanceof Error) {
-        prettyLogs.error("An error occurred:", error.message);
-
-        return;
+        throw prettyLogs.error("An error occurred:", error.message);
       }
 
       prettyLogs.error("Unexpected error", error);
