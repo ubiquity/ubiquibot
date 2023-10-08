@@ -4,9 +4,9 @@ import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType 
 import { checkRateLimitGit } from "../utils";
 
 import { getBotConfig, getBotContext, getLogger } from "../bindings";
-const logger = getLogger();
 
 export async function getAllIssueEvents() {
+  const logger = getLogger();
   const context = getBotContext();
 
   const payload = context.payload as Payload;

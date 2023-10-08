@@ -4,9 +4,8 @@ import { Payload } from "../../../types";
 import { ErrorDiff } from "../../../utils/helpers";
 import { taskInfo } from "../../wildcard";
 
-const { label } = getAdapters().supabase;
-
 export async function approveLabelChange() {
+  const { label } = getAdapters().supabase;
   const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
