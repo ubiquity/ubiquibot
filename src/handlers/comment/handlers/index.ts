@@ -317,7 +317,7 @@ export function userCommands(): UserCommands[] {
     },
     {
       id: IssueCommentCommands.WALLET,
-      description: `<WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>: Register your wallet address for payments.\n\tYour message to sign is: "UbiquiBot"\n\tYou can generate SIGNATURE_HASH at https://etherscan.io/verifiedSignatures\n\te.g. "/wallet 0x16ce4d863eD687455137576da2A0cbaf4f1E8f76 0xe2a3e34a63f3def2c29605de82225b79e1398190b542be917ef88a8e93ff9dc91bdc3ef9b12ed711550f6d2cbbb50671aa3f14a665b709ec391f3e603d0899a41b"`,
+      description: `<WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>: Register your wallet address for payments.\n\tYour message to sign is: "UbiquiBot"\n\tYou can generate SIGNATURE_HASH at https://etherscan.io/verifiedSignatures\n\te.g. "/wallet 0x0000000000000000000000000000000000000000 0xe2a3e34a63f3def2c29605de82225b79e1398190b542be917ef88a8e93ff9dc91bdc3ef9b12ed711550f6d2cbbb50671aa3f14a665b709ec391f3e603d0899a41b"`,
       handler: registerWallet,
       callback: commandCallback,
     },
