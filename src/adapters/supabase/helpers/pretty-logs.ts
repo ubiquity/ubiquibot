@@ -38,7 +38,7 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
     ok: "✓",
     warn: "⚠",
     info: "›",
-    debug: "🔎",
+    debug: "↳",
   };
 
   // Extracting the optional symbol from the arguments

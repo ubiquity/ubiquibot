@@ -47,7 +47,7 @@ export class GitHubLogger {
     const { error } = await this.supabase.client.from("logs").insert({ log_entry: logMessage });
 
     if (error) {
-      console.error("Error logging to Supabase:", error.message);
+      prettyLogs.error("Error logging to Supabase:", error.message);
       return;
     }
   }
@@ -56,14 +56,14 @@ export class GitHubLogger {
     try {
       await this.sendLogsToSupabase(log);
     } catch (error) {
-      console.error("Error sending log, retrying:", error);
+      prettyLogs.error("Error sending log, retrying:", error);
       return this.retryLimit > 0 ? await this.retryLog(log) : null;
     }
   }
 
   async retryLog(log: Log, retryCount = 0) {
     if (retryCount >= this.retryLimit) {
-      console.error("Max retry limit reached for log:", log);
+      prettyLogs.error("Max retry limit reached for log:", log);
       return;
     }
 
@@ -72,7 +72,7 @@ export class GitHubLogger {
     try {
       await this.sendLogsToSupabase(log);
     } catch (error) {
-      console.error("Error sending log (after retry):", error);
+      prettyLogs.error("Error sending log (after retry):", error);
       await this.retryLog(log, retryCount + 1);
     }
   }
@@ -110,7 +110,7 @@ export class GitHubLogger {
     }
   }
 
-  private save(logMessage: string | object, level: LogLevel, errorPayload?: string | object) {
+  private save(logMessage: string | object, level: LogLevel, metadata?: string | object) {
     if (getNumericLevel(level) > this.maxLevel) return; // only return errors lower than max level
 
     const runtime = Runtime.getState();
@@ -134,34 +134,40 @@ export class GitHubLogger {
 
     this.addToQueue({ logMessage })
       .then(() => void 0)
-      .catch(() => console.log("Error adding logs to queue"));
+      .catch(() => prettyLogs.error("Error adding logs to queue"));
 
     if (this.logEnvironment === "development") {
-      console.log(logMessage, errorPayload, level, repo, org, commentId, issueNumber);
+      prettyLogs.ok(logMessage, metadata, level, repo, org, commentId, issueNumber);
     }
   }
 
-  public info(message: string | object, errorPayload?: JSON) {
-    prettyLogs.info(message);
-    this.save(message, LogLevel.INFO, errorPayload);
+  public ok(message: string | object, metadata?: object) {
+    prettyLogs.ok(message, metadata);
+    this.save(message, LogLevel.VERBOSE, metadata);
     return message;
   }
 
-  public warn(message: string | object, errorPayload?: JSON) {
-    prettyLogs.warn(message);
-    this.save(message, LogLevel.WARN, errorPayload);
+  public info(message: string | object, metadata?: object) {
+    prettyLogs.info(message, metadata);
+    this.save(message, LogLevel.INFO, metadata);
     return message;
   }
 
-  public debug(message: string | object, errorPayload?: JSON) {
-    prettyLogs.debug(message);
-    this.save(message, LogLevel.DEBUG, errorPayload);
+  public warn(message: string | object, metadata?: object) {
+    prettyLogs.warn(message, metadata);
+    this.save(message, LogLevel.WARN, metadata);
     return message;
   }
 
-  public error(message: string | object, errorPayload?: JSON) {
-    prettyLogs.error(message);
-    this.save(message, LogLevel.ERROR, errorPayload);
+  public debug(message: string | object, metadata?: object) {
+    prettyLogs.debug(message, metadata);
+    this.save(message, LogLevel.DEBUG, metadata);
+    return message;
+  }
+
+  public error(message: string | object, metadata?: object) {
+    prettyLogs.error(message, metadata);
+    this.save(message, LogLevel.ERROR, metadata);
     return message;
   }
 
@@ -170,20 +176,19 @@ export class GitHubLogger {
       const { data, error } = await this.supabase.client.from("logs").select("*");
 
       if (error) {
-        console.error("Error retrieving logs from Supabase:", error.message);
+        prettyLogs.error("Error retrieving logs from Supabase:", error.message);
         return [];
       }
 
       return data;
     } catch (error) {
       if (error instanceof Error) {
-        // 👉️ err is type Error here
-        console.error("An error occurred:", error.message);
+        prettyLogs.error("An error occurred:", error.message);
 
         return;
       }
 
-      console.log("Unexpected error", error);
+      prettyLogs.error("Unexpected error", error);
       return [];
     }
   }

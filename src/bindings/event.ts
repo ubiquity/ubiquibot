@@ -14,9 +14,9 @@ const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT, GithubEvent.PUSH_EV
 
 export async function bindEvents(context: Context): Promise<void> {
   const runtime = Runtime.getState();
+  runtime.eventContext = context;
 
   const { id, name } = context;
-  runtime.eventContext = context;
   const payload = context.payload as Payload;
   const allowedEvents = Object.values(GithubEvent) as string[];
   const eventName = payload.action ? `${name}.${payload.action}` : name; // some events wont have actions as this grows
@@ -48,10 +48,7 @@ export async function bindEvents(context: Context): Promise<void> {
     return;
   }
 
-  // Create adapters for supabase, twitter, discord, etc
-  runtime.logger.info("Creating adapters for supabase, twitter, etc...");
-  runtime.logger.info(`Config loaded! config: ${JSON.stringify(runtime.botConfig)}`);
-  runtime.logger.info(`Started binding events... id: ${id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
+  runtime.logger.info(`Binding events... id: ${id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
 
   if (!allowedEvents.includes(eventName)) {
     // just check if its on the watch list
