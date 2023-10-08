@@ -17,15 +17,8 @@ export const getBotConfig = () => botConfig;
 let adapters = {} as ReturnType<typeof createAdapters>;
 export const getAdapters = () => adapters;
 
-export type Logger = {
-  info: (msg: string, options?: JSON) => string;
-  debug: (msg: string, options?: JSON) => string;
-  warn: (msg: string, options?: JSON) => string;
-  error: (msg: string, options?: JSON) => string;
-};
-
-let logger: Logger;
-export const getLogger = (): Logger => logger;
+let logger: GitHubLogger;
+export const getLogger = (): GitHubLogger => logger;
 
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT, GithubEvent.PUSH_EVENT] as string[];
 
@@ -48,8 +41,8 @@ export async function bindEvents(context: Context): Promise<void> {
     // contributors will see logs in console while on development environment
     botConfig?.log?.logEnvironment ?? "development",
     botConfig?.log?.level ?? LogLevel.DEBUG,
-    botConfig?.log?.retryLimit ?? 0,
-    botConfig.logNotification
+    botConfig?.log?.retryLimit ?? 0
+    // botConfig.logNotification
   );
   if (!logger) {
     return;

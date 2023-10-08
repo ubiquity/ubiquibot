@@ -1,11 +1,11 @@
-import { Logger } from "../../bindings";
 import { User, UserType } from "../../types";
 import { commentParser } from "../comment";
 import { Comment } from "../../types";
+import { GitHubLogger } from "../../adapters/supabase";
 interface WalkComments {
   issueComments: Comment[];
   assignee: User;
-  logger: Logger;
+  logger: GitHubLogger;
   issueCommentsByUser: Record<string, { id: string; comments: string[] }>;
 }
 

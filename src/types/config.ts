@@ -143,7 +143,7 @@ export const BotConfigSchema = Type.Object({
   payout: PayoutConfigSchema,
   unassign: UnassignConfigSchema,
   supabase: SupabaseConfigSchema,
-  logNotification: LogNotificationSchema,
+  // logNotification: LogNotificationSchema,
   mode: ModeSchema,
   assign: AssignSchema,
   sodium: SodiumSchema,

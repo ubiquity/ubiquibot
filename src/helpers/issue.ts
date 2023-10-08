@@ -1,9 +1,10 @@
 import { Context } from "probot";
 import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
-import { getBotConfig, getBotContext, getLogger, Logger } from "../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../bindings";
+import { GitHubLogger } from "../adapters/supabase";
 
-let logger: Logger;
+let logger: GitHubLogger;
 
 export async function getAllIssueEvents() {
   logger = getLogger();

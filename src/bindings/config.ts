@@ -70,13 +70,13 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       key: process.env.SUPABASE_KEY ?? "",
     },
 
-    logNotification: {
-      url: process.env.LOG_WEBHOOK_BOT_URL || "",
-      secret: process.env.LOG_WEBHOOK_SECRET || "",
-      groupId: Number(process.env.LOG_WEBHOOK_GROUP_ID) || 0,
-      topicId: Number(process.env.LOG_WEBHOOK_TOPIC_ID) || 0,
-      enabled: true,
-    },
+    // logNotification: {
+    //   url: process.env.LOG_WEBHOOK_BOT_URL || "",
+    //   secret: process.env.LOG_WEBHOOK_SECRET || "",
+    //   groupId: Number(process.env.LOG_WEBHOOK_GROUP_ID) || 0,
+    //   topicId: Number(process.env.LOG_WEBHOOK_TOPIC_ID) || 0,
+    //   enabled: true,
+    // },
     mode: { permitMaxPrice, disableAnalytics, incentiveMode, assistivePricing },
     command: commandSettings,
     assign: { maxConcurrentTasks: maxConcurrentTasks, staleTaskTime: ms(staleTaskTime) },
@@ -91,13 +91,13 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     botConfig.mode.permitMaxPrice = 0;
   }
 
-  if (
-    botConfig.logNotification.secret == "" ||
-    botConfig.logNotification.groupId == 0 ||
-    botConfig.logNotification.url == ""
-  ) {
-    botConfig.logNotification.enabled = false;
-  }
+  // if (
+  //   botConfig.logNotification.secret == "" ||
+  //   botConfig.logNotification.groupId == 0 ||
+  //   botConfig.logNotification.url == ""
+  // ) {
+  //   botConfig.logNotification.enabled = false;
+  // }
 
   const validate = ajv.compile(BotConfigSchema);
   const valid = validate(botConfig);
