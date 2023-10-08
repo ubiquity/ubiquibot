@@ -1,3 +1,5 @@
+import sourceMapSupport from "source-map-support";
+sourceMapSupport.install();
 import { Probot } from "probot";
 import { EmitterWebhookEventName } from "@octokit/webhooks";
 import { bindEvents } from "./bindings";
