@@ -1,12 +1,12 @@
 import { Context } from "probot";
-
 import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
+import { getBotConfig, getBotContext, getLogger, Logger } from "../bindings";
 
-import { getBotConfig, getBotContext, getLogger } from "../bindings";
+let logger: Logger;
 
 export async function getAllIssueEvents() {
-  const logger = getLogger();
+  logger = getLogger();
   const context = getBotContext();
 
   const payload = context.payload as Payload;
