@@ -1,6 +1,7 @@
-import { getAdapters, getBotContext } from "../../../bindings";
+import Runtime from "../../../bindings/bot-runtime";
 import { LogLevel, Payload } from "../../../types";
 import { getOrgAndRepoFromPath } from "../../../utils/private";
+import { prettyLogs } from "./pretty-logs";
 interface Log {
   logMessage: string;
 }
@@ -25,7 +26,6 @@ function getNumericLevel(level: LogLevel) {
       return -1; // Invalid level
   }
 }
-
 export class GitHubLogger {
   private supabase;
   private maxLevel;
@@ -40,7 +40,7 @@ export class GitHubLogger {
     this.logEnvironment = logEnvironment;
     this.maxLevel = getNumericLevel(maxLevel);
     this.retryLimit = retryLimit;
-    this.supabase = getAdapters().supabase;
+    this.supabase = Runtime.getState().adapters.supabase;
   }
 
   async sendLogsToSupabase({ logMessage }: Log) {
@@ -113,7 +113,8 @@ export class GitHubLogger {
   private save(logMessage: string | object, level: LogLevel, errorPayload?: string | object) {
     if (getNumericLevel(level) > this.maxLevel) return; // only return errors lower than max level
 
-    const context = getBotContext();
+    const runtime = Runtime.getState();
+    const context = runtime.eventContext;
     const payload = context.payload as Payload;
     // const timestamp = new Date().toUTCString();
 
@@ -140,22 +141,26 @@ export class GitHubLogger {
     }
   }
 
-  info(message: string, errorPayload?: JSON) {
+  public info(message: string, errorPayload?: JSON) {
+    prettyLogs.info(message);
     this.save(message, LogLevel.INFO, errorPayload);
     return message;
   }
 
-  warn(message: string, errorPayload?: JSON) {
+  public warn(message: string, errorPayload?: JSON) {
+    prettyLogs.warn(message);
     this.save(message, LogLevel.WARN, errorPayload);
     return message;
   }
 
-  debug(message: string, errorPayload?: JSON) {
+  public debug(message: string, errorPayload?: JSON) {
+    prettyLogs.debug(message);
     this.save(message, LogLevel.DEBUG, errorPayload);
     return message;
   }
 
-  error(message: string, errorPayload?: JSON) {
+  public error(message: string, errorPayload?: JSON) {
+    prettyLogs.error(message);
     this.save(message, LogLevel.ERROR, errorPayload);
     return message;
   }

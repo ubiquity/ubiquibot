@@ -1,5 +1,5 @@
 import Decimal from "decimal.js";
-import { getBotContext, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { getAllIssueComments, getAllPullRequestReviews, parseComments } from "../../helpers";
 import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
 import { UserType } from "../../types";
@@ -11,8 +11,9 @@ import { ItemsToExclude } from "./post";
 export async function calculateReviewContributorRewards(
   incentivesCalculation: IncentivesCalculationResult
 ): Promise<RewardsResponse> {
-  const logger = getLogger();
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+  const context = runtime.eventContext;
   const title = "Reviewer";
   const user = incentivesCalculation.issue.user;
 

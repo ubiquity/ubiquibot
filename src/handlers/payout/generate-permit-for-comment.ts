@@ -1,19 +1,26 @@
-import { getLogger } from "../../bindings";
 import { parseComments } from "../../helpers";
 import { Incentives, User } from "../../types";
 import { getWalletAddress } from "../comment";
 import Decimal from "decimal.js";
 import { ItemsToExclude } from "./post";
 import { calculateRewardValue } from "./calculate-reward-value";
-
-export async function generatePermitForComment(
-  user: User,
-  comments: string[],
-  multiplier: number,
-  incentives: Incentives,
-  permitMaxPrice: number
-): Promise<undefined | { account: string; amountInBigNumber: Decimal }> {
-  const logger = getLogger();
+import Runtime from "../../bindings/bot-runtime";
+type GeneratePermitForComment = {
+  user: User;
+  comments: string[];
+  multiplier: number;
+  incentives: Incentives;
+  permitMaxPrice: number;
+};
+export async function generatePermitForComment({
+  user,
+  comments,
+  multiplier,
+  incentives,
+  permitMaxPrice,
+}: GeneratePermitForComment) {
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
   const commentsByNode = parseComments(comments, ItemsToExclude);
   const rewardValue = calculateRewardValue(commentsByNode, incentives);
   if (rewardValue.equals(0)) {

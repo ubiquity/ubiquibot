@@ -1,10 +1,10 @@
-// import { getAllAccessLevels, getWalletInfo, upsertAccessControl } from "../../../adapters/supabase";
-import { getAdapters, getBotContext, getLogger } from "../../../bindings";
+import Runtime from "../../../bindings/bot-runtime";
 import { Payload } from "../../../types";
 
 export async function query(body: string) {
-  const context = getBotContext();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
   // const { repository, organization } = payload;
@@ -23,7 +23,7 @@ export async function query(body: string) {
 
   if (username) {
     // Get access levels from the access table
-    const database = getAdapters().supabase;
+    const database = Runtime.getState().adapters.supabase;
     // let accessData = await getAccessLevels(user, repo.full_name, id);
 
     // lookup user object from github api based on the username

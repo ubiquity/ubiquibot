@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 // import { upsertWalletAddress } from "../../../adapters/supabase";
-import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../../bindings";
+import Runtime from "../../../bindings/bot-runtime";
 import { resolveAddress } from "../../../helpers";
 import { Payload } from "../../../types";
 import { formatEthAddress } from "../../../utils";
@@ -23,9 +23,10 @@ const extractEnsName = (text: string): string | undefined => {
 };
 
 export const registerWallet = async (body: string) => {
-  const { payload: _payload } = getBotContext();
-  const config = getBotConfig();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const { payload: _payload } = runtime.eventContext;
+  const config = Runtime.getState().botConfig;
+  const logger = runtime.logger;
   const payload = _payload as Payload;
   const sender = payload.sender.login;
   const regexForAddress = /(0x[a-fA-F0-9]{40})/g;
@@ -82,7 +83,7 @@ export const registerWallet = async (body: string) => {
     }
 
     if (address && payload.comment) {
-      const { wallet } = getAdapters().supabase;
+      const { wallet } = Runtime.getState().adapters.supabase;
       await wallet.upsertWalletAddress(address, { user: payload.sender, comment: payload.comment });
       return logger.info(
         `Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`

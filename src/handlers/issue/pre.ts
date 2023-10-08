@@ -1,10 +1,11 @@
 import { extractImportantWords, upsertCommentToIssue, measureSimilarity } from "../../helpers";
-import { getBotContext, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { Issue, Payload } from "../../types";
 
 export const findDuplicateOne = async () => {
-  const logger = getLogger();
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
   const issue = payload.issue;
 

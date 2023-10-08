@@ -14,7 +14,7 @@
 import { Static } from "@sinclair/typebox";
 import { PayoutConfigSchema } from "../types";
 import { isUserAdminOrBillingManager } from "./issue";
-import { getAdapters, getBotContext, getLogger } from "../bindings";
+import Runtime from "../bindings/bot-runtime";
 // import { getAccessLevel } from "../adapters/supabase";
 
 // available tokens for payouts
@@ -49,8 +49,9 @@ export const getPayoutConfigByNetworkId = (evmNetworkId: number): PayoutConfigPa
 };
 
 export async function hasLabelEditPermission(label: string, caller: string) {
-  const context = getBotContext();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   const userCan = await isUserAdminOrBillingManager(caller, context);
 
   // get text before :
@@ -59,7 +60,7 @@ export async function hasLabelEditPermission(label: string, caller: string) {
 
   if (userCan) {
     // check permission
-    const { access, user } = getAdapters().supabase;
+    const { access, user } = Runtime.getState().adapters.supabase;
     const userId = await user.getUserId(caller);
     const accessible = await access.getAccess(userId);
     if (accessible) return true;

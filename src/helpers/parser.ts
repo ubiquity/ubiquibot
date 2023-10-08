@@ -1,7 +1,7 @@
 import axios from "axios";
 import { HTMLElement, parse } from "node-html-parser";
 import { getPullByNumber } from "./issue";
-import { getBotContext, getLogger } from "../bindings";
+import Runtime from "../bindings/bot-runtime";
 
 interface GitParser {
   owner: string;
@@ -18,7 +18,8 @@ export interface LinkedPR {
 }
 
 export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitParser) => {
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
   try {
     const { data } = await axios.get(`https://github.com/${owner}/${repo}/pull/${pull_number}`);
     const dom = parse(data);
@@ -38,7 +39,8 @@ export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitPars
 };
 
 export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser): Promise<LinkedPR[]> => {
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
   try {
     const prData = [];
     const { data } = await axios.get(`https://github.com/${owner}/${repo}/issues/${issue_number}`);
@@ -76,7 +78,8 @@ export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser
 };
 
 export const getLatestPullRequest = async (prs: LinkedPR[]) => {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   let linkedPullRequest = null;
   for (const _pr of prs) {
     if (Number.isNaN(_pr.prNumber)) return null;

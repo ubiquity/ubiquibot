@@ -1,11 +1,11 @@
-import { getLogger } from "../bindings";
+import Runtime from "../bindings/bot-runtime";
 import axios, { AxiosError } from "axios";
 import { ajv } from "../utils";
 import { Static, Type } from "@sinclair/typebox";
 import { backOff } from "exponential-backoff";
 import { Issue } from "../types";
 
-export const extractImportantWords = async (issue: Issue): Promise<string[]> => {
+export async function extractImportantWords(issue: Issue): Promise<string[]> {
   const res = await getAnswerFromChatGPT(
     "",
     `${
@@ -16,9 +16,9 @@ export const extractImportantWords = async (issue: Issue): Promise<string[]> => 
   );
   if (res === "") return [];
   return res.split(/[,# ]/);
-};
+}
 
-export const measureSimilarity = async (first: Issue, second: Issue): Promise<number> => {
+export async function measureSimilarity(first: Issue, second: Issue): Promise<number> {
   const res = await getAnswerFromChatGPT(
     "",
     `${(
@@ -32,7 +32,7 @@ export const measureSimilarity = async (first: Issue, second: Issue): Promise<nu
   const matches = res.match(/\d+/);
   const percent = matches && matches.length > 0 ? parseInt(matches[0]) || 0 : 0;
   return percent;
-};
+}
 
 const ChatMessageSchema = Type.Object({
   content: Type.String(),
@@ -54,7 +54,8 @@ export const getAnswerFromChatGPT = async (
   temperature = 0,
   max_tokens = 1500
 ): Promise<string> => {
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
   const body = JSON.stringify({
     model: "gpt-3.5-turbo",
     messages: [

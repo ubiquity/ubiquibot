@@ -12,7 +12,7 @@ import { multiplier } from "./multiplier";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
 // import { addPenalty } from "../../../adapters/supabase";
-import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../../bindings";
+import Runtime from "../../../bindings/bot-runtime";
 import {
   addCommentToIssue,
   addLabelToIssue,
@@ -91,12 +91,13 @@ export function commentParser(body: string): IssueCommentCommands[] {
  */
 
 export async function issueClosedCallback(): Promise<void> {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
   const issue = payload.issue;
   const organization = payload.organization as Organization;
 
-  const logger = getLogger();
+  const logger = runtime.logger;
 
   if (!organization) throw logger.error("Cannot save permit to DB, missing organization");
   if (!issue) throw logger.error("Cannot save permit to DB, missing issue");
@@ -128,9 +129,10 @@ export async function issueClosedCallback(): Promise<void> {
 
 export async function issueCreatedCallback(): Promise<void> {
   // Callback for issues created - Processor
-  const logger = getLogger();
-  const { payload: _payload } = getBotContext();
-  const config = getBotConfig();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+  const { payload: _payload } = runtime.eventContext;
+  const config = Runtime.getState().botConfig;
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   const labels = issue.labels;
@@ -170,11 +172,12 @@ export async function issueCreatedCallback(): Promise<void> {
 
 export async function issueReopenedCallback(): Promise<void> {
   // Callback for issues reopened - Processor
-  const { payload: _payload } = getBotContext();
+  const runtime = Runtime.getState();
+  const { payload: _payload } = runtime.eventContext;
   const {
     payout: { permitBaseUrl },
-  } = getBotConfig();
-  const logger = getLogger();
+  } = Runtime.getState().botConfig;
+  const logger = runtime.logger;
   const issue = (_payload as Payload).issue;
   // const repository = (_payload as Payload).repository;
   if (!issue) return;
@@ -227,7 +230,7 @@ export async function issueReopenedCallback(): Promise<void> {
 
     if (parseFloat(formattedAmount) > 0) {
       // write penalty to db
-      const { debit } = getAdapters().supabase;
+      const { debit } = Runtime.getState().adapters.supabase;
 
       try {
         await debit.addDebit({

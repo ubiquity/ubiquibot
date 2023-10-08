@@ -1,17 +1,15 @@
 import Decimal from "decimal.js";
-import { getAdapters, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { getWalletAddress, RewardsResponse } from "../comment";
 import { IncentivesCalculationResult } from "./incentives-calculation";
 import { removePenalty } from "./shims";
 
-/**
- * Calculate the reward for the assignee
- */
-
+// Calculate the reward for the assignee
 export async function calculateIssueAssigneeReward(
   incentivesCalculation: IncentivesCalculationResult
 ): Promise<RewardsResponse> {
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
   const assigneeLogin = incentivesCalculation.assignee.login;
 
   let taskAmount = new Decimal(
@@ -32,7 +30,7 @@ export async function calculateIssueAssigneeReward(
   const networkId = incentivesCalculation.evmNetworkId;
   const address = incentivesCalculation.paymentToken;
 
-  await getAdapters().supabase.settlement.addDebit({ userId, amount, comment, networkId, address });
+  await Runtime.getState().adapters.supabase.settlement.addDebit({ userId, amount, comment, networkId, address });
 
   if (amount.gt(0)) {
     logger.info(`Deducting penalty from task`);

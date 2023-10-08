@@ -17,6 +17,9 @@ export const prettyLogs = {
   info: function infoLog(...args: unknown[]) {
     _log("info", ...args);
   },
+  debug: function debugLog(...args: unknown[]) {
+    _log("info", ...args);
+  },
 };
 
 function _log(type: "error" | "ok" | "warn" | "info", ...args: unknown[]) {
@@ -25,6 +28,7 @@ function _log(type: "error" | "ok" | "warn" | "info", ...args: unknown[]) {
     ok: "✓",
     warn: "⚠",
     info: " ",
+    debug: "🐛",
   };
 
   // Extracting the optional symbol from the arguments

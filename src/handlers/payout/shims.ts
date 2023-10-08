@@ -1,5 +1,5 @@
 import Decimal from "decimal.js";
-import { getAdapters } from "../../bindings/event";
+import Runtime from "../../bindings/bot-runtime";
 import { Comment } from "../../types";
 interface RemovePenalty {
   userId: number;
@@ -7,8 +7,8 @@ interface RemovePenalty {
   node: Comment;
 }
 export async function removePenalty({ userId, amount, node }: RemovePenalty): Promise<void> {
-  const { supabase } = getAdapters();
-  // const logger = getLogger();
+  const { supabase } = Runtime.getState().adapters;
+  // const logger = runtime.logger;
 
   await supabase.settlement.addCredit({
     userId: userId,

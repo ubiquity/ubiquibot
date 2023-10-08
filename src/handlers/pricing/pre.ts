@@ -1,14 +1,13 @@
-import { getBotConfig, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { calculateWeight, createLabel, listLabelsForRepo } from "../../helpers";
 import { calculateTaskPrice } from "../shared";
 
-/**
- * @dev This just checks all the labels in the config have been set in gh issue
- *  If there's something missing, they will be added
- */
+// This just checks all the labels in the config have been set in gh issue
+// If there's something missing, they will be added
 export const validatePriceLabels = async (): Promise<void> => {
-  const config = getBotConfig();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const config = runtime.botConfig;
+  const logger = runtime.logger;
 
   const { assistivePricing } = config.mode;
 

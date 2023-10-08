@@ -2,7 +2,7 @@ import { MaxUint256, PermitTransferFrom, SignatureTransfer } from "@uniswap/perm
 import Decimal from "decimal.js";
 import { BigNumber, ethers } from "ethers";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
-import { getAdapters, getBotConfig, getBotContext, getLogger } from "../bindings";
+import Runtime from "../bindings/bot-runtime";
 import { Organization, Payload } from "../types";
 // import { savePermit } from "../adapters/supabase";
 
@@ -53,8 +53,9 @@ export const generatePermit2Signature = async (
 ): Promise<{ permit: GeneratedPermit; payoutUrl: string }> => {
   const {
     payout: { evmNetworkId, privateKey, permitBaseUrl, rpc, paymentToken },
-  } = getBotConfig();
-  const logger = getLogger();
+  } = Runtime.getState().botConfig;
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
   const provider = new ethers.providers.JsonRpcProvider(rpc);
   const adminWallet = new ethers.Wallet(privateKey, provider);
 
@@ -109,9 +110,10 @@ export async function savePermitToDB(
   evmNetworkId: number,
   organization: Organization
 ) {
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
 
-  const context = getBotContext();
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
   const comment = payload.comment;
   if (!comment) throw logger.error("Cannot save permit to DB, missing comment");
@@ -123,9 +125,9 @@ export async function savePermitToDB(
   //   logger.error("Cannot save permit to DB, missing issue, repository or organization");
   //   throw new Error("Cannot save permit to DB, missing issue, repository or organization");
   // }
-  // const { payout } = getBotConfig();
+  // const { payout } = Runtime.getState().botConfig;
   // const { evmNetworkId } = payout;
-  const settlement = getAdapters().supabase.settlement;
+  const settlement = Runtime.getState().adapters.supabase.settlement;
   const permit: GeneratedPermit = {
     ...txData,
     // amount: txData.permit.permitted.amount,

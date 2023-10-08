@@ -1,13 +1,14 @@
-import { getAdapters, getBotContext, getLogger } from "../../../bindings";
+import Runtime from "../../../bindings/bot-runtime";
 import { isUserAdminOrBillingManager } from "../../../helpers";
 import { Payload } from "../../../types";
 import { ErrorDiff } from "../../../utils/helpers";
 import { taskInfo } from "../../wildcard";
 
 export async function approveLabelChange() {
-  const { label } = getAdapters().supabase;
-  const context = getBotContext();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const { label } = runtime.adapters.supabase;
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
 

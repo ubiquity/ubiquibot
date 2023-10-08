@@ -1,4 +1,4 @@
-import { getBotConfig } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { calculateWeight } from "../../helpers";
 import { Issue } from "../../types";
 
@@ -15,7 +15,7 @@ export const taskInfo = (
   priorityLabel: string | undefined;
   priceLabel: string | undefined;
 } => {
-  const config = getBotConfig();
+  const config = Runtime.getState().botConfig;
   const labels = issue.labels;
 
   const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
@@ -46,10 +46,10 @@ export const taskInfo = (
  * Collects all the analytics information by scanning the issues opened | closed
  */
 // export const collectAnalytics = async (): Promise<void> => {
-//   const logger = getLogger();
+//   const logger = runtime.logger;
 //   const {
 //     mode: { disableAnalytics },
-//   } = getBotConfig();
+//   } = Runtime.getState().botConfig;
 //   if (disableAnalytics) {
 //     logger.info(`Skipping to collect analytics, reason: mode=${disableAnalytics}`);
 //     return;

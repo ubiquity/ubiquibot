@@ -1,11 +1,11 @@
-// import { saveLabelChange } from "../../adapters/supabase";
-import { getAdapters, getBotContext, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { hasLabelEditPermission } from "../../helpers";
 import { Payload } from "../../types";
 
 export const watchLabelChange = async () => {
-  const logger = getLogger();
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+  const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
 
@@ -23,7 +23,7 @@ export const watchLabelChange = async () => {
   // check if user is authorized to make the change
   const hasAccess = await hasLabelEditPermission(currentLabel, triggerUser);
 
-  const { supabase } = getAdapters();
+  const { supabase } = Runtime.getState().adapters;
 
   await supabase.label.saveLabelChange({
     previousLabel,

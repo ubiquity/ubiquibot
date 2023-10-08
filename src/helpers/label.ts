@@ -1,5 +1,5 @@
 import { Context } from "probot";
-import { getBotConfig, getBotContext, getLogger } from "../bindings";
+import Runtime from "../bindings/bot-runtime";
 import { calculateTaskPrice } from "../handlers";
 import { Label, Payload } from "../types";
 import { deleteLabel } from "./issue";
@@ -13,7 +13,8 @@ export const COLORS = {
 // cspell:enable
 
 export const listLabelsForRepo = async (per_page?: number, page?: number): Promise<Label[]> => {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
 
   const res = await context.octokit.rest.issues.listLabelsForRepo({
@@ -31,8 +32,9 @@ export const listLabelsForRepo = async (per_page?: number, page?: number): Promi
 };
 
 export const createLabel = async (name: string, labelType?: keyof typeof COLORS): Promise<void> => {
-  const context = getBotContext();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   try {
     await context.octokit.rest.issues.createLabel({
@@ -47,8 +49,9 @@ export const createLabel = async (name: string, labelType?: keyof typeof COLORS)
 };
 
 export const getLabel = async (name: string): Promise<boolean> => {
-  const context = getBotContext();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   try {
     const res = await context.octokit.rest.issues.getLabel({
@@ -72,8 +75,9 @@ export const updateLabelsFromBaseRate = async (
   labels: Label[],
   previousBaseRate: number
 ) => {
-  const logger = getLogger();
-  const config = getBotConfig();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+  const config = runtime.botConfig;
 
   const newLabels: string[] = [];
   const previousLabels: string[] = [];

@@ -1,5 +1,5 @@
 import * as shims from "./shims";
-import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import {
   checkUserPermissionForRepoAndOrg,
   clearAllPriceLabelsOnIssue,
@@ -46,14 +46,15 @@ export interface IncentivesCalculationResult {
 }
 
 export async function incentivesCalculation(): Promise<IncentivesCalculationResult> {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   const {
     payout: { paymentToken, rpc, permitBaseUrl, evmNetworkId, privateKey },
     mode: { incentiveMode, permitMaxPrice },
     price: { incentives, issueCreatorMultiplier, baseMultiplier },
     publicAccessControl: accessControl,
-  } = getBotConfig();
-  const logger = getLogger();
+  } = Runtime.getState().botConfig;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   const issue = payload.issue;
   const { repository, organization } = payload;
@@ -179,7 +180,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   }
 
   // check for label altering here
-  const { label } = getAdapters().supabase;
+  const { label } = Runtime.getState().adapters.supabase;
   const labelChanges = await label.getLabelChanges(repository.full_name);
 
   if (labelChanges) {

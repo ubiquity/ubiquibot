@@ -1,4 +1,4 @@
-import { getBotConfig, getBotContext, getLogger } from "../bindings";
+import Runtime from "../bindings/bot-runtime";
 import { Payload, StreamlinedComment, UserType } from "../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../helpers";
 import OpenAI from "openai";
@@ -67,8 +67,9 @@ export const decideContextGPT = async (
   linkedPRStreamlined: StreamlinedComment[],
   linkedIssueStreamlined: StreamlinedComment[]
 ) => {
-  const context = getBotContext();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
 
   const payload = context.payload as Payload;
   const issue = payload.issue;
@@ -138,14 +139,11 @@ export const decideContextGPT = async (
   return res;
 };
 
-/**
- * @notice base askGPT function
- * @param question the question to ask
- * @param chatHistory the conversational context to provide to GPT
- */
-export const askGPT = async (question: string, chatHistory: CreateChatCompletionRequestMessage[]) => {
-  const logger = getLogger();
-  const config = getBotConfig();
+export async function askGPT(question: string, chatHistory: CreateChatCompletionRequestMessage[]) {
+  // base askGPT function
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+  const config = runtime.botConfig;
 
   if (!config.ask.apiKey) {
     logger.info(`No OpenAI API Key provided`);
@@ -179,4 +177,4 @@ export const askGPT = async (question: string, chatHistory: CreateChatCompletion
   }
 
   return { answer, tokenUsage };
-};
+}

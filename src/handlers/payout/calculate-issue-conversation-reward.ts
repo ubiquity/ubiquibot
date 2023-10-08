@@ -1,5 +1,5 @@
 import Decimal from "decimal.js";
-import { getBotContext, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { GLOBAL_STRINGS } from "../../configs";
 import { getAllIssueComments, parseComments } from "../../helpers";
 import { Comment, Payload, UserType } from "../../types";
@@ -18,9 +18,10 @@ export async function calculateIssueConversationReward(
   calculateIncentives: IncentivesCalculationResult
 ): Promise<RewardsResponse> {
   const title = `Conversation`;
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
 
-  const context = getBotContext();
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
   const issue = payload.issue;
   const user = payload.sender;

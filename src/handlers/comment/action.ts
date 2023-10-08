@@ -1,4 +1,4 @@
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { Payload } from "../../types";
 import { ErrorDiff } from "../../utils/helpers";
 import { IssueCommentCommands } from "./commands";
@@ -6,9 +6,10 @@ import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCheck } from "./handlers/first";
 
 export const handleComment = async (): Promise<void> => {
-  const context = getBotContext();
-  const config = getBotConfig();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const config = runtime.botConfig;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
 
   logger.info(`Handling an issue comment on issue ${payload.issue?.number}`);
@@ -34,7 +35,7 @@ export const handleComment = async (): Promise<void> => {
       const { id, handler, callback, successComment, failureComment } = userCommand;
       logger.info(`Running a comment handler: ${handler.name}`);
 
-      const { payload: _payload } = getBotContext();
+      const { payload: _payload } = runtime.eventContext;
       const issue = (_payload as Payload).issue;
       if (!issue) continue;
 

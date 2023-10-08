@@ -1,12 +1,13 @@
-import { getBotContext, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { addAssignees, getAllPullRequests, getIssueByNumber, getPullByNumber } from "../../helpers";
 import { gitLinkedIssueParser } from "../../helpers/parser";
 import { Payload } from "../../types";
 
 // Check for pull requests linked to their respective issues but not assigned to them
-export const checkPullRequests = async () => {
-  const context = getBotContext();
-  const logger = getLogger();
+export async function checkPullRequests() {
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   const pulls = await getAllPullRequests(context);
 
   if (pulls.length === 0) {
@@ -57,4 +58,4 @@ export const checkPullRequests = async () => {
       logger.debug(`Assigned pull request #${pull.number} opener to issue ${linkedIssueNumber}.`);
     }
   }
-};
+}

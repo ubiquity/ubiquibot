@@ -1,4 +1,5 @@
-import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../../bindings";
+import Runtime from "../../../bindings/bot-runtime";
+
 import {
   addAssignees,
   calculateDuration,
@@ -15,19 +16,21 @@ import { taskInfo } from "../../wildcard";
 import { tableComment } from "./table";
 
 export async function getWalletAddress(userId: number) {
-  const { wallet } = getAdapters().supabase;
+  const { wallet } = Runtime.getState().adapters.supabase;
   return await wallet.getAddress(userId);
 }
 
 export async function getUserMultiplier(userId: number, repoId: number) {
-  const { user } = getAdapters().supabase;
+  const { user } = Runtime.getState().adapters.supabase;
   return await user.getMultiplier(userId, repoId);
 }
 
 export async function assign(body: string) {
-  const { payload: _payload } = getBotContext();
-  const logger = getLogger();
-  const config = getBotConfig();
+  const runtime = Runtime.getState();
+  const { payload: _payload } = runtime.eventContext;
+
+  const logger = runtime.logger;
+  const config = Runtime.getState().botConfig;
 
   const payload = _payload as Payload;
   // const { repository, organization } = payload;

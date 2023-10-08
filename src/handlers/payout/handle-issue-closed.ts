@@ -1,5 +1,5 @@
 import * as shims from "./shims";
-import { getAdapters, getBotConfig, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import {
   addLabelToIssue,
   deleteLabel,
@@ -38,8 +38,9 @@ export async function handleIssueClosed({
   pullRequestReviewersReward,
   incentivesCalculation,
 }: HandleIssueClosed): Promise<{ error: string }> {
-  const logger = getLogger();
-  const { comments } = getBotConfig();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+  const { comments } = runtime.botConfig;
   const issueNumber = incentivesCalculation.issue.number;
 
   let permitComment = "";
@@ -193,7 +194,7 @@ export async function handleIssueClosed({
         return item;
       });
 
-    const access = await getAdapters().supabase.access.getAccess(reward.userId);
+    const access = await Runtime.getState().adapters.supabase.access.getAccess(reward.userId);
 
     const multiplier = access.multiplier || 1;
     const multiplier_reason = access.multiplier_reason || "";

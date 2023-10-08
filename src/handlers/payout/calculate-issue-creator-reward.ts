@@ -1,5 +1,5 @@
 import Decimal from "decimal.js";
-import { getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { getAllIssueComments, getIssueDescription } from "../../helpers";
 import { UserType } from "../../types";
 import { RewardsResponse } from "../comment";
@@ -11,7 +11,8 @@ export async function calculateIssueCreatorReward(
   incentivesCalculation: IncentivesCalculationResult
 ): Promise<RewardsResponse> {
   const title = `Task Creator`;
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
 
   const issueDetailed = taskInfo(incentivesCalculation.issue);
   if (!issueDetailed.isTask) {
@@ -54,13 +55,13 @@ export async function calculateIssueCreatorReward(
     return { error: "Issue creator assigned their self or bot created this issue." };
   }
 
-  const result = await generatePermitForComment(
-    creator,
-    [description],
-    incentivesCalculation.issueCreatorMultiplier,
-    incentivesCalculation.incentives,
-    incentivesCalculation.permitMaxPrice
-  );
+  const result = await generatePermitForComment({
+    user: creator,
+    comments: [description],
+    multiplier: incentivesCalculation.issueCreatorMultiplier,
+    incentives: incentivesCalculation.incentives,
+    permitMaxPrice: incentivesCalculation.permitMaxPrice,
+  });
 
   if (!result || !result.account || !result.amountInBigNumber) {
     throw new Error("Failed to generate permit for issue creator because of missing account or amountInBigNumber");

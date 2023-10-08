@@ -1,12 +1,21 @@
-// import { getAccessLevel, upsertWalletMultiplier } from "../../../adapters/supabase";
-import { getBotContext, getLogger } from "../../../bindings";
+import Runtime from "../../../bindings/bot-runtime";
 import { isUserAdminOrBillingManager } from "../../../helpers";
 import { Payload } from "../../../types";
-import { getAdapters } from "../../../bindings/event";
-
+/**
+ * You can use this command to set a multiplier for a user.
+ * It will accept arguments in any order.
+ * Example usage:
+ *
+ * /multiplier @user 0.5 "Multiplier reason"
+ * /multiplier 0.5 @user "Multiplier reason"
+ * /multiplier "Multiplier reason" @user 0.5
+ * /multiplier 0.5 "Multiplier reason" @user
+ * /multiplier @user "Multiplier reason" 0.5
+ **/
 export async function multiplier(body: string) {
-  const context = getBotContext();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
   const repo = payload.repository;
@@ -21,17 +30,7 @@ export async function multiplier(body: string) {
   if (!issue) return logger.info(`Skipping '/multiplier' because of no issue instance`);
 
   const regex = /(".*?"|[^"\s]+)(?=\s*|\s*$)/g;
-  /** You can use this command to set a multiplier for a user.
-   * It will accept arguments in any order.
-   * Example usage:
-   *
-   * /multiplier @user 0.5 "Multiplier reason"
-   * /multiplier 0.5 @user "Multiplier reason"
-   * /multiplier "Multiplier reason" @user 0.5
-   * /multiplier 0.5 "Multiplier reason" @user
-   * /multiplier @user "Multiplier reason" 0.5
-   *
-   **/
+
   const matches = body.match(regex);
 
   matches?.shift();
@@ -74,7 +73,7 @@ export async function multiplier(body: string) {
       `Upserting to the wallet table, username: ${username}, taskMultiplier: ${taskMultiplier}, reason: ${reason}}`
     );
 
-    const { access } = getAdapters().supabase;
+    const { access } = Runtime.getState().adapters.supabase;
     await access.upsertMultiplier(payload.sender.id, taskMultiplier, reason, comment);
 
     if (taskMultiplier > 1) {
@@ -93,6 +92,6 @@ export async function multiplier(body: string) {
 }
 
 async function getAccessLevel(userId: number) {
-  const { access } = getAdapters().supabase;
+  const { access } = Runtime.getState().adapters.supabase;
   return await access.getAccess(userId);
 }

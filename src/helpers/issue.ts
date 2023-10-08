@@ -1,14 +1,15 @@
 import { Context } from "probot";
 import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
-import { getBotConfig, getBotContext, getLogger } from "../bindings";
+import Runtime from "../bindings/bot-runtime";
 import { GitHubLogger } from "../adapters/supabase";
 
 let logger: GitHubLogger;
 
 export async function getAllIssueEvents() {
-  logger = getLogger();
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+  const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
   if (!payload.issue) return;
@@ -52,7 +53,8 @@ export async function getAllLabeledEvents() {
 }
 
 export async function clearAllPriceLabelsOnIssue(): Promise<void> {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
 
@@ -76,7 +78,8 @@ export async function clearAllPriceLabelsOnIssue(): Promise<void> {
 }
 
 export async function addLabelToIssue(labelName: string) {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
   if (!payload.issue) {
@@ -103,7 +106,8 @@ export async function listIssuesForRepo(
   sort: "created" | "updated" | "comments" = "created",
   direction: "desc" | "asc" = "desc"
 ) {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
 
   const response = await context.octokit.issues.listForRepo({
@@ -144,7 +148,8 @@ export async function listAllIssuesForRepo(state: "open" | "closed" | "all" = "o
 }
 
 export async function addCommentToIssue(msg: string, issue_number: number) {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
 
@@ -161,7 +166,8 @@ export async function addCommentToIssue(msg: string, issue_number: number) {
 }
 
 export async function updateCommentOfIssue(msg: string, issue_number: number, reply_to: Comment) {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
 
@@ -181,16 +187,16 @@ export async function updateCommentOfIssue(msg: string, issue_number: number, re
       per_page: 30,
     });
 
-    const comment_to_edit = comments.data.find((comment) => {
+    const commentToEdit = comments.data.find((comment) => {
       return comment?.user?.login == editCommentBy && comment.id > reply_to.id;
     });
 
-    if (comment_to_edit) {
-      logger.info(`For comment_id: ${reply_to.id} found comment_to_edit with id: ${comment_to_edit.id}`);
+    if (commentToEdit) {
+      logger.info(`For comment_id: ${reply_to.id} found comment_to_edit with id: ${commentToEdit.id}`);
       await context.octokit.issues.updateComment({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
-        comment_id: comment_to_edit.id,
+        comment_id: commentToEdit.id,
         body: msg,
       });
     } else {
@@ -211,7 +217,8 @@ export async function upsertCommentToIssue(issue_number: number, comment: string
 }
 
 export async function getCommentsOfIssue(issue_number: number): Promise<Comment[]> {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
 
@@ -235,7 +242,8 @@ export async function getIssueDescription(
   issue_number: number,
   format: "raw" | "html" | "text" = "raw"
 ): Promise<string> {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
 
@@ -272,7 +280,8 @@ export async function getAllIssueComments(
   issue_number: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ): Promise<Comment[]> {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
 
   const result: Comment[] = [];
@@ -295,7 +304,9 @@ export async function getAllIssueComments(
 
       // Fixing infinite loop here, it keeps looping even when its an empty array
       if (response?.data?.length > 0) {
-        response.data.forEach((item) => result?.push(item as Comment));
+        response.data.forEach((item) => {
+          result.push(item as Comment);
+        });
         page_number++;
       } else {
         shouldFetch = false;
@@ -309,7 +320,8 @@ export async function getAllIssueComments(
 }
 
 export async function getAllIssueAssignEvents(issue_number: number): Promise<AssignEvent[]> {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
 
   const result: AssignEvent[] = [];
@@ -343,7 +355,8 @@ export async function getAllIssueAssignEvents(issue_number: number): Promise<Ass
 }
 
 export async function wasIssueReopened(issue_number: number): Promise<boolean> {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
 
   let shouldFetch = true;
@@ -376,7 +389,8 @@ export async function wasIssueReopened(issue_number: number): Promise<boolean> {
 }
 
 export async function removeAssignees(issue_number: number, assignees: string[]): Promise<void> {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
 
@@ -478,7 +492,8 @@ export async function isUserAdminOrBillingManager(
 }
 
 export async function addAssignees(issue_number: number, assignees: string[]): Promise<void> {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
 
@@ -495,7 +510,8 @@ export async function addAssignees(issue_number: number, assignees: string[]): P
 }
 
 export async function deleteLabel(label: string): Promise<void> {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
 
@@ -517,7 +533,8 @@ export async function deleteLabel(label: string): Promise<void> {
 }
 
 export async function removeLabel(name: string) {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
   if (!payload.issue) {
@@ -577,11 +594,12 @@ export async function getPullRequests(
 }
 
 export async function closePullRequest(pull_number: number) {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
 
   try {
-    await getBotContext().octokit.rest.pulls.update({
+    await context.octokit.rest.pulls.update({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       pull_number,
@@ -723,14 +741,16 @@ export async function getOpenedPullRequestsForAnIssue(issueNumber: number, userN
 }
 
 export async function getOpenedPullRequests(username: string) {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   const prs = await getAllPullRequests(context, "open");
   return prs.filter((pr) => !pr.draft && (pr.user?.login === username || !username));
 }
 
 export async function getCommitsOnPullRequest(pullNumber: number) {
-  const context = getBotContext();
-  const payload = getBotContext().payload as Payload;
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const payload = runtime.eventContext.payload as Payload;
   try {
     const { data: commits } = await context.octokit.rest.pulls.listCommits({
       owner: payload.repository.owner.login,
@@ -745,10 +765,11 @@ export async function getCommitsOnPullRequest(pullNumber: number) {
 }
 
 export async function getAvailableOpenedPullRequests(username: string) {
-  const context = getBotContext();
-  const {
-    unassign: { timeRangeForMaxIssue, timeRangeForMaxIssueEnabled },
-  } = await getBotConfig();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+
+  const unassignConfig = runtime.botConfig.unassign;
+  const { timeRangeForMaxIssue, timeRangeForMaxIssueEnabled } = unassignConfig;
   if (!timeRangeForMaxIssueEnabled) return [];
 
   const opened_prs = await getOpenedPullRequests(username);
@@ -776,7 +797,8 @@ export async function getAvailableOpenedPullRequests(username: string) {
 
 // Strips out all links from the body of an issue or pull request and fetches the conversational context from each linked issue or pull request
 export async function getAllLinkedIssuesAndPullsInBody(issueNumber: number) {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
 
   const issue = await getIssueByNumber(context, issueNumber);
 

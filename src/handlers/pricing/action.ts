@@ -1,4 +1,4 @@
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { GLOBAL_STRINGS } from "../../configs";
 import {
   addCommentToIssue,
@@ -14,9 +14,10 @@ import { handleLabelsAccess } from "../access";
 import { getTargetPriceLabel } from "../shared";
 
 export const pricingLabelLogic = async (): Promise<void> => {
-  const context = getBotContext();
-  const config = getBotConfig();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const config = Runtime.getState().botConfig;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   if (!payload.issue) return;
   const labels = payload.issue.labels;

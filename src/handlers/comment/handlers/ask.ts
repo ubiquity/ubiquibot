@@ -1,16 +1,15 @@
-import { getBotContext, getLogger } from "../../../bindings";
+import Runtime from "../../../bindings/bot-runtime";
 import { Payload, StreamlinedComment, UserType } from "../../../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { askGPT, decideContextGPT, sysMsg } from "../../../helpers/gpt";
 import { ErrorDiff } from "../../../utils/helpers";
 
-/**
- * @param body The question to ask
- */
-export const ask = async (body: string) => {
-  const context = getBotContext();
-  const logger = getLogger();
+export async function ask(body: string) {
+  // The question to ask
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
 
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
@@ -97,17 +96,17 @@ export const ask = async (body: string) => {
       chatHistory.push(
         {
           role: "system",
-          content: sysMsg, // provide the answer template
+          content: sysMsg,
           name: "UbiquiBot",
         } as CreateChatCompletionRequestMessage,
         {
           role: "system",
-          content: "Original Context: " + JSON.stringify(gptDecidedContext), // provide the context
+          content: "Original Context: " + JSON.stringify(gptDecidedContext),
           name: "system",
         } as CreateChatCompletionRequestMessage,
         {
           role: "user",
-          content: "Question: " + JSON.stringify(body), // provide the question
+          content: "Question: " + JSON.stringify(body),
           name: "user",
         } as CreateChatCompletionRequestMessage
       );
@@ -125,4 +124,4 @@ export const ask = async (body: string) => {
   } else {
     return "Invalid syntax for ask \n usage: '/ask What is pi?";
   }
-};
+}

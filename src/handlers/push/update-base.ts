@@ -1,11 +1,13 @@
 import { Context } from "probot";
-import { getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
+
 import { getPreviousFileContent, listLabelsForRepo, updateLabelsFromBaseRate } from "../../helpers";
 import { Label, PushPayload } from "../../types";
 import { parseYAML } from "../../utils/private";
 
 export const updateBaseRate = async (context: Context, payload: PushPayload, filePath: string) => {
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
   // Get default branch from ref
   const branch = payload.ref?.split("refs/heads/")[1];
   const owner = payload.repository.owner.login;

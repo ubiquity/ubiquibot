@@ -1,11 +1,12 @@
 import ms from "ms";
-import { getBotContext } from "../bindings";
+import Runtime from "../bindings/bot-runtime";
 import { LabelItem, Payload, UserType } from "../types";
 
 const contextNamesToSkip = ["workflow_run"];
 
 export const shouldSkip = (): { skip: boolean; reason: string } => {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   const { name } = context;
   const payload = context.payload as Payload;
   const res: { skip: boolean; reason: string } = { skip: false, reason: "" };

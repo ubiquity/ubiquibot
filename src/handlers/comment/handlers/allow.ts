@@ -1,10 +1,11 @@
-import { getAdapters, getBotContext, getLogger } from "../../../bindings";
+import Runtime from "../../../bindings/bot-runtime";
 import { isUserAdminOrBillingManager } from "../../../helpers";
 import { Payload } from "../../../types";
 
 export async function setAccess(body: string): Promise<string> {
-  const context = getBotContext();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
 
@@ -21,7 +22,7 @@ export async function setAccess(body: string): Promise<string> {
     // const bodyArray = body.split(" ");
     const { username, labels } = parseComment(body);
     // const gitHubUserName = body.split("@")[1].split(" ")[0];
-    const { access, user } = getAdapters().supabase;
+    const { access, user } = Runtime.getState().adapters.supabase;
     const url = payload.comment?.html_url as string;
     if (!url) throw new Error("Comment url is undefined");
 

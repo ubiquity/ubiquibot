@@ -1,14 +1,11 @@
-import { getBotContext, getLogger } from "../bindings";
+import Runtime from "../bindings/bot-runtime";
 import { User } from "../types";
 
-/**
- * @dev Gets the publicly available information about `username`
- *
- * @param username The username you're getting information for
- */
-export const getUser = async (username: string): Promise<User | undefined> => {
-  const context = getBotContext();
-  const logger = getLogger();
+export async function getUser(username: string): Promise<User | undefined> {
+  // Gets the publicly available information about `username`
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
 
   try {
     const res = await context.octokit.rest.users.getByUsername({
@@ -24,18 +21,13 @@ export const getUser = async (username: string): Promise<User | undefined> => {
   }
 
   return undefined;
-};
+}
 
-/**
- * @dev Gets organization membership of a user
- * @param orgname The organization name
- * @param username The user name
- *
- * @returns The role name of a user in the organization. "admin" || "member" || "billing_manager"
- */
-export const getOrgMembershipOfUser = async (org: string, username: string): Promise<string | undefined> => {
-  const context = getBotContext();
-  const logger = getLogger();
+export async function getOrgMembershipOfUser(org: string, username: string): Promise<string | undefined> {
+  // Gets organization membership of a user
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   let membership: string | undefined = undefined;
 
   try {
@@ -54,4 +46,4 @@ export const getOrgMembershipOfUser = async (org: string, username: string): Pro
   }
 
   return membership;
-};
+}

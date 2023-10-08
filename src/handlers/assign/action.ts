@@ -1,4 +1,4 @@
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { addCommentToIssue, closePullRequest, calculateWeight, calculateDuration } from "../../helpers";
 import { gitLinkedPrParser } from "../../helpers/parser";
 import { Payload, LabelItem } from "../../types";
@@ -6,9 +6,10 @@ import { deadLinePrefix } from "../shared";
 
 const exclude_accounts: string[] = [];
 export const commentWithAssignMessage = async (): Promise<void> => {
-  const context = getBotContext();
-  const config = getBotConfig();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const config = runtime.botConfig;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   if (!payload.issue) {
     logger.debug(`Empty issue object`);
@@ -69,8 +70,9 @@ export const commentWithAssignMessage = async (): Promise<void> => {
 };
 
 export const closePullRequestForAnIssue = async (): Promise<void> => {
-  const context = getBotContext();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   if (!payload.issue?.number) return;
 

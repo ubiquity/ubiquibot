@@ -1,11 +1,13 @@
 import { userCommands } from ".";
-import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
+import Runtime from "../../../bindings/bot-runtime";
+
 import { IssueType, Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 
 export const listAvailableCommands = async (body: string) => {
-  const { payload: _payload } = getBotContext();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const { payload: _payload } = runtime.eventContext;
+  const logger = runtime.logger;
   if (body != IssueCommentCommands.HELP && body.replace(/`/g, "") != IssueCommentCommands.HELP) {
     logger.info(`Skipping to list available commands. body: ${body}`);
     return;
@@ -27,7 +29,7 @@ export const listAvailableCommands = async (body: string) => {
 };
 
 export const generateHelpMenu = () => {
-  const config = getBotConfig();
+  const config = Runtime.getState().botConfig;
   const startEnabled = config.command.find((command) => command.name === "start");
   let helpMenu = "### Available Commands\n```";
   const commands = userCommands();

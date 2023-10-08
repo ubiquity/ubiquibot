@@ -1,4 +1,4 @@
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { GLOBAL_STRINGS } from "../../configs/strings";
 import {
   addCommentToIssue,
@@ -12,12 +12,11 @@ import {
 import { Comment, Issue, IssueType, Payload, UserType } from "../../types";
 import { deadLinePrefix } from "../shared";
 
-/**
- * @dev Check out the tasks which haven't been completed within the initial timeline
- *  and try to release the task back to dev pool
- */
-export const checkTasksToUnassign = async () => {
-  const logger = getLogger();
+export async function checkTasksToUnassign() {
+  // Check out the tasks which haven't been completed within the initial timeline
+  // and release the task back to dev pool
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
   logger.info(`Getting all the issues...`);
 
   // List all the issues in the repository. It may include `pull_request`
@@ -29,15 +28,16 @@ export const checkTasksToUnassign = async () => {
   // Checking the tasks in parallel
   const res = await Promise.all(assigned_issues.map(async (issue) => checkTaskToUnassign(issue as Issue)));
   logger.info(`Checking expired tasks done! total: ${res.length}, unassigned: ${res.filter((i) => i).length}`);
-};
+}
 
 const checkTaskToUnassign = async (issue: Issue): Promise<boolean> => {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
-  const logger = getLogger();
+  const logger = runtime.logger;
   const {
     unassign: { followUpTime, disqualifyTime },
-  } = getBotConfig();
+  } = Runtime.getState().botConfig;
   logger.info(`Checking the task to unassign, issue_number: ${issue.number}`);
   const { unassignComment, askUpdate } = GLOBAL_STRINGS;
   const assignees = issue.assignees.map((i) => i.login);
@@ -103,8 +103,9 @@ const checkTaskToUnassign = async (issue: Issue): Promise<boolean> => {
   return false;
 };
 
-const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date> => {
-  const logger = getLogger();
+async function lastActivityTime(issue: Issue, comments: Comment[]): Promise<Date> {
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
   logger.info(`Checking the latest activity for the issue, issue_number: ${issue.number}`);
   const assignees = issue.assignees.map((i) => i.login);
   const activities: Date[] = [new Date(issue.created_at)];
@@ -146,4 +147,4 @@ const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date
   activities.sort((a, b) => b.getTime() - a.getTime());
 
   return activities[0];
-};
+}
