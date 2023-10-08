@@ -264,7 +264,7 @@ For payment to work in your local instance, ubiquibot must be set up in a Github
 
 ## How to QA any additions to the bot
 
-Make sure you have your local instance of ubiquibot running.
+Make sure you have your local instance of [ubiquibot running](#quickstart).
 
 1. Fork the ubiquibot repo and add your local instance of ubiquibot to the forked repository.
 2. Enable Github action running on the forked repo and allow `issues` on the settings tab.
