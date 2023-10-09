@@ -1,7 +1,9 @@
+import { SupabaseClient } from "@supabase/supabase-js";
 import Runtime from "../../../bindings/bot-runtime";
 import { LogLevel, Payload } from "../../../types";
 import { getOrgAndRepoFromPath } from "../../../utils/private";
 import { prettyLogs } from "./pretty-logs";
+import { Super } from "./tables/super";
 interface Log {
   logMessage: string;
 }
@@ -26,8 +28,8 @@ function getNumericLevel(level: LogLevel) {
       return -1; // Invalid level
   }
 }
-export class GitHubLogger {
-  private supabase;
+export class GitHubLogger extends Super {
+  // private supabase;
   private maxLevel;
   private logEnvironment;
   private logQueue: Log[] = []; // Your log queue
@@ -36,15 +38,16 @@ export class GitHubLogger {
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
 
-  constructor(logEnvironment: string, maxLevel: LogLevel, retryLimit: number) {
+  constructor(supabase: SupabaseClient, logEnvironment: string, maxLevel: LogLevel, retryLimit: number) {
+    super(supabase);
     this.logEnvironment = logEnvironment;
     this.maxLevel = getNumericLevel(maxLevel);
     this.retryLimit = retryLimit;
-    this.supabase = Runtime.getState().adapters.supabase;
+    // this.supabase = Runtime.getState().adapters.supabase;
   }
 
   private async _sendLogsToSupabase({ logMessage }: Log) {
-    const { error } = await this.supabase.client.from("logs").insert({ log_entry: logMessage });
+    const { error } = await this.supabase.from("logs").insert({ log_entry: logMessage });
     if (error) throw prettyLogs.error("Error logging to Supabase:", error.message);
   }
 
@@ -137,39 +140,67 @@ export class GitHubLogger {
     }
   }
 
-  public ok<T extends string | object>(message: T, metadata?: object): T {
+  private _colorComment<T extends string | object>(type: string, message: T) {
+    // - text in red
+    // + text in green
+    // ! text in orange
+    // # text in gray
+    // @@ text in purple (and bold)@@
+
+    const diffKey = {
+      error: "-",
+      ok: "+",
+      warn: "!",
+      info: "#",
+      // debug: "@@@@",
+    };
+
+    const preamble = "```diff\n";
+    let serializedBody;
+    const postamble = "\n```";
+
+    if (typeof message === "object") serializedBody = JSON.stringify(message);
+    else serializedBody = message;
+
+    if (!diffKey[type as keyof typeof diffKey]) serializedBody = `@@ ${serializedBody} @@`; // debug: "@@@@",
+    else serializedBody = `${diffKey[type as keyof typeof diffKey]} ${serializedBody}`;
+
+    return `${preamble}${serializedBody}${postamble}`;
+  }
+
+  public ok<T extends string | object>(message: T, metadata?: object): string {
     prettyLogs.ok(message, metadata);
     this.save(message, LogLevel.VERBOSE, metadata);
-    return message;
+    return this._colorComment("ok", message);
   }
 
-  public info<T extends string | object>(message: T, metadata?: object): T {
+  public info<T extends string | object>(message: T, metadata?: object): string {
     prettyLogs.info(message, metadata);
     this.save(message, LogLevel.INFO, metadata);
-    return message;
+    return this._colorComment("info", message);
   }
 
-  public warn<T extends string | object>(message: T, metadata?: object): T {
+  public warn<T extends string | object>(message: T, metadata?: object): string {
     prettyLogs.warn(message, metadata);
     this.save(message, LogLevel.WARN, metadata);
-    return message;
+    return this._colorComment("warn", message);
   }
 
-  public debug<T extends string | object>(message: T, metadata?: object): T {
+  public debug<T extends string | object>(message: T, metadata?: object): string {
     prettyLogs.debug(message, metadata);
     this.save(message, LogLevel.DEBUG, metadata);
-    return message;
+    return this._colorComment("debug", message);
   }
 
-  public error<T extends string | object>(message: T, metadata?: object): T {
+  public error<T extends string | object>(message: T, metadata?: object): string {
     prettyLogs.error(message, metadata);
     this.save(message, LogLevel.ERROR, metadata);
-    return message;
+    return this._colorComment("error", message);
   }
 
   async get() {
     try {
-      const { data, error } = await this.supabase.client.from("logs").select("*");
+      const { data, error } = await this.supabase.from("logs").select("*");
 
       if (error) {
         prettyLogs.error("Error retrieving logs from Supabase:", error.message);

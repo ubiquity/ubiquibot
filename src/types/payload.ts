@@ -276,9 +276,16 @@ export const AssignEventSchema = Type.Object({
 export type AssignEvent = Static<typeof AssignEventSchema>;
 
 const ChangesSchema = Type.Object({
-  name: Type.Object({
-    from: Type.String(),
-  }),
+  body: Type.Optional(
+    Type.Object({
+      from: Type.String(),
+    })
+  ),
+  name: Type.Optional(
+    Type.Object({
+      from: Type.String(),
+    })
+  ),
 });
 
 export const PayloadSchema = Type.Object({

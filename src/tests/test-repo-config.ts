@@ -32,7 +32,7 @@ export const repoConfig: RepositoryConfig = {
     { name: "multiplier", enabled: true },
     { name: "query", enabled: true },
     { name: "autopay", enabled: true },
-    { name: "allow", enabled: true },
+    { name: "labels", enabled: true },
     { name: "help", enabled: true },
     { name: "payout", enabled: true },
   ],

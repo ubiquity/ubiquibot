@@ -52,10 +52,10 @@ export async function multiplier(body: string) {
     username = username || sender;
     // check if sender is admin or billing_manager
     // passing in context so we don't have to make another request to get the user
-    const userCan = await isUserAdminOrBillingManager(sender, context);
+    const sufficientPrivileges = await isUserAdminOrBillingManager(sender, context);
 
     // if sender is not admin or billing_manager, check db for access
-    if (userCan) {
+    if (sufficientPrivileges) {
       logger.info(`Getting multiplier access for ${sender} on ${repo.full_name}`);
       // check db permission
       // await getMultiplier(sender.id, repo.id);

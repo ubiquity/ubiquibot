@@ -204,7 +204,7 @@ function allTests(): () => void {
     );
 
     // test(
-    //   "/allow",
+    //   "/labels",
     //   async () => {
     //     await createLabel(getAdminUser(), owner, repo, TEST_PRIORITY_LABEL);
 
@@ -215,7 +215,7 @@ function allTests(): () => void {
     //       labels: [],
     //     });
 
-    //     await createComment(getAdminUser(), owner, repo, issue.number, `/allow set-priority @${getCollaboratorUsername()} false`);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, `/labels set-priority @${getCollaboratorUsername()} false`);
     //     await waitForNWebhooks(2);
 
     //     let lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
@@ -255,7 +255,7 @@ function allTests(): () => void {
     //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
     //     expect(lastComment.body).toContain(`@${getCollaboratorUsername()}, You are not allowed to remove Priority: 1 (Normal)`);
 
-    //     await createComment(getAdminUser(), owner, repo, issue.number, `/allow set-priority @${getCollaboratorUsername()} true`);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, `/labels set-priority @${getCollaboratorUsername()} true`);
     //     await waitForNWebhooks(2);
 
     //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);

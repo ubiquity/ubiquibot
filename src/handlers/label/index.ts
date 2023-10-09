@@ -2,7 +2,7 @@ import Runtime from "../../bindings/bot-runtime";
 import { hasLabelEditPermission } from "../../helpers";
 import { Payload } from "../../types";
 
-export const watchLabelChange = async () => {
+export async function watchLabelChange() {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   const context = runtime.eventContext;
@@ -11,12 +11,15 @@ export const watchLabelChange = async () => {
 
   const { label, changes, sender } = payload;
 
-  const previousLabel = changes?.name.from;
+  const previousLabel = changes?.name?.from;
+  if (!previousLabel) {
+    throw logger.error("previous label name is undefined");
+  }
   const currentLabel = label?.name;
   const triggerUser = sender.login;
 
   if (!previousLabel || !currentLabel) {
-    logger.debug("watchLabelChange: No label name change.. skipping");
+    logger.debug("No label name change.. skipping");
     return;
   }
 
@@ -31,5 +34,5 @@ export const watchLabelChange = async () => {
     authorized: hasAccess,
     repository: payload.repository,
   });
-  logger.debug("watchLabelChange: label name change saved to db");
-};
+  logger.debug("label name change saved to db");
+}

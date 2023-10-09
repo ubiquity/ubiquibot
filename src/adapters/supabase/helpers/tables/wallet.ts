@@ -31,7 +31,7 @@ export class Wallet extends Super {
 
     const locationId = userWithWallet[0].wallets.location_id;
 
-    const { data, error } = await this.client.from("locations").select("*").eq("id", locationId);
+    const { data, error } = await this.supabase.from("locations").select("*").eq("id", locationId);
     if (error) throw error;
     const nodeUrl = data[0].node_url;
     if (!nodeUrl) throw new Error("Node URL of wallet registration comment is null");
@@ -95,13 +95,13 @@ export class Wallet extends Super {
   }
 
   private async _getUserWithWallet(id: number): Promise<UserWithWallet> {
-    const { data, error } = await this.client.from("users").select("*, wallets(*)").filter("id", "eq", id);
+    const { data, error } = await this.supabase.from("users").select("*, wallets(*)").filter("id", "eq", id);
     if (error) throw error;
     return data;
   }
 
   private async _checkIfUserExists(userId: number) {
-    return await this.client.from("users").select("*").eq("id", userId).single();
+    return await this.supabase.from("users").select("*").eq("id", userId).single();
   }
 
   private async _registerNewUser(user: User) {
@@ -112,14 +112,14 @@ export class Wallet extends Super {
       node_url: user.html_url,
     };
 
-    const { data: newUserInsertData, error: newUserError } = await this.client.from("users").insert(newUser).single();
+    const { data: newUserInsertData, error: newUserError } = await this.supabase.from("users").insert(newUser).single();
 
     if (newUserError) throw newUserError;
     return newUserInsertData;
   }
 
   private async _checkIfWalletExists(userData: UserRow) {
-    return await this.client.from("wallets").select("*").eq("id", userData.wallet_id).single();
+    return await this.supabase.from("wallets").select("*").eq("id", userData.wallet_id).single();
   }
 
   private async _registerNewWallet({ address, locationMetaData, payload }: RegisterNewWallet) {
@@ -130,7 +130,7 @@ export class Wallet extends Super {
       node_url: payload.comment.html_url,
     };
 
-    const { data: walletInsertData, error: walletInsertError } = await this.client
+    const { data: walletInsertData, error: walletInsertError } = await this.supabase
       .from("wallets")
       .insert(newWallet)
       .single();
@@ -149,7 +149,7 @@ export class Wallet extends Super {
   }
 
   private async _updateWalletId(walletId: number, userId: number) {
-    await this.client.from("users").update({ wallet_id: walletId }).eq("id", userId);
+    await this.supabase.from("users").update({ wallet_id: walletId }).eq("id", userId);
   }
 
   private async _updateExistingWallet({ address, locationMetaData, payload, walletData }: UpdateExistingWallet) {
@@ -160,7 +160,7 @@ export class Wallet extends Super {
       node_url: payload.comment.html_url,
     } as WalletRow;
 
-    await this.client.from("wallets").update(basicLocationInfo).eq("id", walletData.id).single();
+    await this.supabase.from("wallets").update(basicLocationInfo).eq("id", walletData.id).single();
 
     if (walletData.location_id) {
       await this._enrichLocationMetaData(walletData, locationMetaData);
@@ -171,7 +171,7 @@ export class Wallet extends Super {
     const runtime = Runtime.getState();
     const logger = runtime.logger;
     logger.ok("Enriching wallet location metadata", locationMetaData);
-    await this.client.from("locations").update(locationMetaData).eq("id", walletData.location_id);
+    await this.supabase.from("locations").update(locationMetaData).eq("id", walletData.location_id);
   }
 }
 

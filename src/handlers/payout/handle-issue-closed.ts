@@ -196,8 +196,8 @@ export async function handleIssueClosed({
 
     const access = await Runtime.getState().adapters.supabase.access.getAccess(reward.userId);
 
-    const multiplier = access.multiplier || 1;
-    const multiplier_reason = access.multiplier_reason || "";
+    const multiplier = access?.multiplier || 1;
+    const multiplier_reason = access?.multiplier_reason || "";
 
     // if reason is not "", then add multiplier to detailsValue and multiply the price
     if (multiplier_reason) {

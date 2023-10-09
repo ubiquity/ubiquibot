@@ -18,7 +18,7 @@ export const handleLabelsAccess = async () => {
 
   const sender = payload.sender.login;
   const repo = payload.repository;
-  const userCan = await isUserAdminOrBillingManager(sender, eventContext);
+  const sufficientPrivileges = await isUserAdminOrBillingManager(sender, eventContext);
   // event in plain english
   const eventName = payload.action === "labeled" ? "add" : "remove";
   const labelName = payload.label.name;
@@ -27,7 +27,7 @@ export const handleLabelsAccess = async () => {
   const match = payload.label?.name?.split(":");
   if (match.length == 0) return;
   const label_type = match[0].toLowerCase();
-  if (userCan) {
+  if (sufficientPrivileges) {
     logger.info(`Getting ${label_type} access for ${sender} on ${repo.full_name}`);
     // check permission
     const { access, user } = runtime.adapters.supabase;

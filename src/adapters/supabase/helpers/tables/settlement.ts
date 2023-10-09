@@ -36,7 +36,7 @@ export class Settlement extends Super {
   //   return partnerId;
   // }
   private async _lookupTokenId(networkId: number, address: string): Promise<number> {
-    const { data: tokenData, error: tokenError } = await this.client
+    const { data: tokenData, error: tokenError } = await this.supabase
       .from("tokens")
       .select("id")
       .eq("network", networkId)
@@ -62,7 +62,7 @@ export class Settlement extends Super {
       token_id: tokenId,
     };
 
-    const { data: debitInsertData, error: debitError } = await this.client
+    const { data: debitInsertData, error: debitError } = await this.supabase
       .from("debits")
       .insert(debitData)
       .select("*")
@@ -79,7 +79,7 @@ export class Settlement extends Super {
       location_id: debitInsertData.location_id, // Should be updated by trigger
     };
 
-    const { data: settlementInsertData, error: settlementError } = await this.client
+    const { data: settlementInsertData, error: settlementError } = await this.supabase
       .from("settlements")
       .insert(settlementData)
       .single();
@@ -104,7 +104,7 @@ export class Settlement extends Super {
       node_url: comment.html_url,
     };
 
-    const { data: creditInsertData, error: creditError } = await this.client
+    const { data: creditInsertData, error: creditError } = await this.supabase
       .from("credits")
       .insert(creditData)
       .select("*")
@@ -132,7 +132,7 @@ export class Settlement extends Super {
         node_url: comment.html_url,
       };
 
-      const permitResult = await this.client.from("permits").insert(permitData).select("*").single();
+      const permitResult = await this.supabase.from("permits").insert(permitData).select("*").single();
 
       if (permitResult.error) throw permitResult.error;
       if (!permitResult.data) throw new Error("Permit not inserted");
@@ -141,7 +141,7 @@ export class Settlement extends Super {
 
     // Update the credits table with permit_id if permit data is provided
     if (permitInsertData) {
-      const { error: creditUpdateError } = await this.client
+      const { error: creditUpdateError } = await this.supabase
         .from("credits")
         .update({ permit_id: permitInsertData.id })
         .eq("id", creditInsertData.id);
@@ -157,7 +157,7 @@ export class Settlement extends Super {
       location_id: creditInsertData.location_id, // Should be updated by trigger
     };
 
-    const { data: settlementInsertData, error: settlementError } = await this.client
+    const { data: settlementInsertData, error: settlementError } = await this.supabase
       .from("settlements")
       .insert(settlementData)
       .single();
@@ -167,7 +167,7 @@ export class Settlement extends Super {
   }
 
   public async getDebit(debitId: number): Promise<PostgrestResponse<DebitInsert>> {
-    const { data: debitData, error: debitError } = await this.client
+    const { data: debitData, error: debitError } = await this.supabase
       .from("debits")
       .select("*")
       .eq("id", debitId)

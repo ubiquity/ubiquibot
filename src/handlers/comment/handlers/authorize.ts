@@ -20,10 +20,10 @@ export async function approveLabelChange() {
 
   // check if sender is admin
   // passing in context so we don't have to make another request to get the user
-  const userCan = await isUserAdminOrBillingManager(sender, context);
+  const sufficientPrivileges = await isUserAdminOrBillingManager(sender, context);
 
   // if sender is not admin, return
-  if (userCan) {
+  if (sufficientPrivileges) {
     throw new Error(
       `User ${sender} is not an admin/billing_manager and do not have the required permissions to access this function.`
     );

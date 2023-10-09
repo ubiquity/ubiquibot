@@ -77,7 +77,7 @@ export const DefaultConfig: MergedConfig = {
       enabled: false,
     },
     {
-      name: "allow",
+      name: "labels",
       enabled: false,
     },
     {

@@ -1,9 +1,12 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import Runtime from "../../../../bindings/bot-runtime";
 
 export class Super {
-  client: SupabaseClient;
+  supabase: SupabaseClient;
+  runtime: Runtime; // convenience accessor
 
   constructor(supabase: SupabaseClient) {
-    this.client = supabase;
+    this.supabase = supabase;
+    this.runtime = Runtime.getState();
   }
 }

@@ -19,7 +19,7 @@ export class Label extends Super {
     authorized: boolean;
     repository: Repository;
   }): Promise<null> {
-    const { data, error } = await this.client.from("labels").insert({
+    const { data, error } = await this.supabase.from("labels").insert({
       label_from: previousLabel,
       label_to: currentLabel,
       authorized: authorized,
@@ -39,14 +39,14 @@ export class Label extends Super {
   }
 
   async approveLabelChange(id: number): Promise<null> {
-    const { data, error } = await this.client.from("labels").update({ authorized: true }).eq("id", id);
+    const { data, error } = await this.supabase.from("labels").update({ authorized: true }).eq("id", id);
     if (error) throw error;
     return data;
   }
 
   private async _getUnauthorizedLabelChanges(locationId: number): Promise<LabelRow[]> {
     // Get label changes that are not authorized in the repository
-    const { data, error } = await this.client
+    const { data, error } = await this.supabase
       .from("labels")
       .select("*")
       .eq("location_id", locationId)
@@ -59,7 +59,7 @@ export class Label extends Super {
 
   private async _getRepositoryLocationId(nodeId: string) {
     // Get the location_id for the repository from the locations table
-    const { data: locationData, error: locationError } = await this.client
+    const { data: locationData, error: locationError } = await this.supabase
       .from("locations")
       .select("id")
       .eq("node_id", nodeId)

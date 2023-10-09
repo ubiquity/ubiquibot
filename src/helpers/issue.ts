@@ -2,9 +2,6 @@ import { Context } from "probot";
 import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
 import Runtime from "../bindings/bot-runtime";
-import { GitHubLogger } from "../adapters/supabase";
-
-let logger: GitHubLogger;
 
 export async function getAllIssueEvents() {
   const runtime = Runtime.getState();
@@ -73,7 +70,7 @@ export async function clearAllPriceLabelsOnIssue(): Promise<void> {
       name: issuePrices[0].name.toString(),
     });
   } catch (e: unknown) {
-    logger.debug(`Clearing all price labels failed! reason: ${e}`);
+    runtime.logger.debug(`Clearing all price labels failed! reason: ${e}`);
   }
 }
 
@@ -83,7 +80,7 @@ export async function addLabelToIssue(labelName: string) {
 
   const payload = context.payload as Payload;
   if (!payload.issue) {
-    logger.debug("Issue object is null");
+    runtime.logger.debug("Issue object is null");
     return;
   }
 
@@ -95,7 +92,7 @@ export async function addLabelToIssue(labelName: string) {
       labels: [labelName],
     });
   } catch (e: unknown) {
-    logger.debug(`Adding a label to issue failed! reason: ${e}`);
+    runtime.logger.debug(`Adding a label to issue failed! reason: ${e}`);
   }
 }
 
@@ -161,7 +158,7 @@ export async function addCommentToIssue(message: string, issueNumber: number) {
       body: message,
     });
   } catch (e: unknown) {
-    logger.debug(`Adding a comment failed! reason: ${e}`);
+    runtime.logger.debug(`Adding a comment failed! reason: ${e}`);
   }
 }
 
@@ -174,10 +171,10 @@ export async function updateCommentOfIssue(msg: string, issueNumber: number, rep
   try {
     const appResponse = await context.octokit.apps.getAuthenticated();
     const { name, slug } = appResponse.data;
-    logger.info(`App name/slug ${name}/${slug}`);
+    runtime.logger.info(`App name/slug ${name}/${slug}`);
 
     const editCommentBy = `${slug}[bot]`;
-    logger.info(`Bot slug: ${editCommentBy}`);
+    runtime.logger.info(`Bot slug: ${editCommentBy}`);
 
     const comments = await context.octokit.issues.listComments({
       owner: payload.repository.owner.login,
@@ -192,7 +189,7 @@ export async function updateCommentOfIssue(msg: string, issueNumber: number, rep
     });
 
     if (commentToEdit) {
-      logger.info(`For comment_id: ${replyTo.id} found comment_to_edit with id: ${commentToEdit.id}`);
+      runtime.logger.info(`For comment_id: ${replyTo.id} found comment_to_edit with id: ${commentToEdit.id}`);
       await context.octokit.issues.updateComment({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
@@ -200,17 +197,22 @@ export async function updateCommentOfIssue(msg: string, issueNumber: number, rep
         body: msg,
       });
     } else {
-      logger.info(`Falling back to add comment. Couldn't find response to edit for comment_id: ${replyTo.id}`);
+      runtime.logger.info(`Falling back to add comment. Couldn't find response to edit for comment_id: ${replyTo.id}`);
       await addCommentToIssue(msg, issueNumber);
     }
   } catch (e: unknown) {
-    logger.debug(`Updating a comment failed! reason: ${e}`);
+    runtime.logger.debug(`Updating a comment failed! reason: ${e}`);
   }
 }
 
-export async function upsertCommentToIssue(issueNumber: number, comment: string, action?: string, replyTo?: Comment) {
-  if (action == "edited" && replyTo) {
-    await updateCommentOfIssue(comment, issueNumber, replyTo);
+export async function upsertCommentToIssue(
+  issueNumber: number,
+  comment: string,
+  action?: string,
+  destination?: Comment
+) {
+  if (action == "edited" && destination) {
+    await updateCommentOfIssue(comment, issueNumber, destination);
   } else {
     await addCommentToIssue(comment, issueNumber);
   }
@@ -232,7 +234,7 @@ export async function getCommentsOfIssue(issueNumber: number): Promise<Comment[]
 
     if (response.data) result = response.data as Comment[];
   } catch (e: unknown) {
-    logger.debug(`Listing issue comments failed! reason: ${e}`);
+    runtime.logger.debug(`Listing issue comments failed! reason: ${e}`);
   }
 
   return result;
@@ -271,7 +273,7 @@ export async function getIssueDescription(
         break;
     }
   } catch (e: unknown) {
-    logger.debug(`Getting issue description failed! reason: ${e}`);
+    runtime.logger.debug(`Getting issue description failed! reason: ${e}`);
   }
   return result;
 }
@@ -402,7 +404,7 @@ export async function removeAssignees(issueNumber: number, assignees: string[]):
       assignees,
     });
   } catch (e: unknown) {
-    logger.debug(`Removing assignees failed! reason: ${e}`);
+    runtime.logger.debug(`Removing assignees failed! reason: ${e}`);
   }
 }
 
@@ -415,6 +417,8 @@ export async function checkUserPermissionForRepoAndOrg(username: string, context
 }
 
 export async function checkUserPermissionForRepo(username: string, context: Context): Promise<boolean> {
+  const runtime = Runtime.getState();
+
   const payload = context.payload as Payload;
 
   try {
@@ -426,12 +430,14 @@ export async function checkUserPermissionForRepo(username: string, context: Cont
 
     return res.status === 204;
   } catch (e: unknown) {
-    logger.error(`Checking if user permisson for repo failed! reason: ${e}`);
+    runtime.logger.error(`Checking if user permisson for repo failed! reason: ${e}`);
     return false;
   }
 }
 
 export async function checkUserPermissionForOrg(username: string, context: Context): Promise<boolean> {
+  const runtime = Runtime.getState();
+
   const payload = context.payload as Payload;
   if (!payload.organization) return false;
 
@@ -443,7 +449,7 @@ export async function checkUserPermissionForOrg(username: string, context: Conte
     // skipping status check due to type error of checkMembershipForUser function of octokit
     return true;
   } catch (e: unknown) {
-    logger.error(`Checking if user permisson for org failed! reason: ${e}`);
+    runtime.logger.error(`Checking if user permisson for org failed! reason: ${e}`);
     return false;
   }
 }
@@ -468,21 +474,23 @@ export async function isUserAdminOrBillingManager(
       repo: payload.repository.name,
       username,
     });
-
-    if (response.status === 200) {
-      return response.data.permission as "admin" | "write" | "read" | "none";
+    if (response.data.permission === "admin") {
+      return true;
     } else {
-      return null;
+      return false;
     }
   }
 
   async function checkIfIsBillingManager() {
-    if (!payload.organization) throw logger.error(`No organization found in payload!`);
+    const runtime = Runtime.getState();
+
+    if (!payload.organization) throw runtime.logger.error(`No organization found in payload!`);
     const { data: membership } = await context.octokit.rest.orgs.getMembershipForUser({
       org: payload.organization.login,
       username: payload.repository.owner.login,
     });
 
+    console.trace(membership);
     if (membership.role === "billing_manager") {
       return true;
     } else {
@@ -505,7 +513,7 @@ export async function addAssignees(issueNumber: number, assignees: string[]): Pr
       assignees,
     });
   } catch (e: unknown) {
-    logger.debug(`Adding assignees failed! reason: ${e}`);
+    runtime.logger.debug(`Adding assignees failed! reason: ${e}`);
   }
 }
 
@@ -528,7 +536,7 @@ export async function deleteLabel(label: string): Promise<void> {
       });
     }
   } catch (e: unknown) {
-    logger.debug(`Label deletion failed! reason: ${e}`);
+    runtime.logger.debug(`Label deletion failed! reason: ${e}`);
   }
 }
 
@@ -538,7 +546,7 @@ export async function removeLabel(name: string) {
 
   const payload = context.payload as Payload;
   if (!payload.issue) {
-    logger.debug("Invalid issue object");
+    runtime.logger.debug("Invalid issue object");
     return;
   }
 
@@ -550,7 +558,7 @@ export async function removeLabel(name: string) {
       name: name,
     });
   } catch (e: unknown) {
-    logger.debug(`Label removal failed! reason: ${e}`);
+    runtime.logger.debug(`Label removal failed! reason: ${e}`);
   }
 }
 
@@ -577,6 +585,8 @@ export async function getPullRequests(
   per_page: number,
   page: number
 ) {
+  const runtime = Runtime.getState();
+
   const payload = context.payload as Payload;
   try {
     const { data: pulls } = await context.octokit.rest.pulls.list({
@@ -588,7 +598,7 @@ export async function getPullRequests(
     });
     return pulls;
   } catch (e: unknown) {
-    logger.debug(`Fetching pull requests failed! reason: ${e}`);
+    runtime.logger.debug(`Fetching pull requests failed! reason: ${e}`);
     return [];
   }
 }
@@ -606,7 +616,7 @@ export async function closePullRequest(pull_number: number) {
       state: "closed",
     });
   } catch (e: unknown) {
-    logger.debug(`Closing pull requests failed! reason: ${e}`);
+    runtime.logger.debug(`Closing pull requests failed! reason: ${e}`);
   }
 }
 
@@ -638,6 +648,8 @@ export async function getPullRequestReviews(
   page: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ) {
+  const runtime = Runtime.getState();
+
   const payload = context.payload as Payload;
   try {
     const { data: reviews } = await context.octokit.rest.pulls.listReviews({
@@ -652,12 +664,14 @@ export async function getPullRequestReviews(
     });
     return reviews;
   } catch (e: unknown) {
-    logger.debug(`Fetching pull request reviews failed! reason: ${e}`);
+    runtime.logger.debug(`Fetching pull request reviews failed! reason: ${e}`);
     return [];
   }
 }
 
 export async function getReviewRequests(context: Context, pull_number: number, owner: string, repo: string) {
+  const runtime = Runtime.getState();
+
   try {
     const response = await context.octokit.pulls.listRequestedReviewers({
       owner: owner,
@@ -666,12 +680,14 @@ export async function getReviewRequests(context: Context, pull_number: number, o
     });
     return response.data;
   } catch (e: unknown) {
-    logger.error(`Could not get requested reviewers, reason: ${e}`);
+    runtime.logger.error(`Could not get requested reviewers, reason: ${e}`);
     return null;
   }
 }
 // Get issues by issue number
 export async function getIssueByNumber(context: Context, issueNumber: number) {
+  const runtime = Runtime.getState();
+
   const payload = context.payload as Payload;
   try {
     const { data: issue } = await context.octokit.rest.issues.get({
@@ -681,12 +697,14 @@ export async function getIssueByNumber(context: Context, issueNumber: number) {
     });
     return issue;
   } catch (e: unknown) {
-    logger.debug(`Fetching issue failed! reason: ${e}`);
+    runtime.logger.debug(`Fetching issue failed! reason: ${e}`);
     return;
   }
 }
 
 export async function getPullByNumber(context: Context, pull_number: number) {
+  const runtime = Runtime.getState();
+
   const payload = context.payload as Payload;
   try {
     const { data: pull } = await context.octokit.rest.pulls.get({
@@ -696,7 +714,7 @@ export async function getPullByNumber(context: Context, pull_number: number) {
     });
     return pull;
   } catch (error) {
-    logger.debug(`Fetching pull failed! reason: ${error}`);
+    runtime.logger.debug(`Fetching pull failed! reason: ${error}`);
     return;
   }
 }
@@ -759,7 +777,7 @@ export async function getCommitsOnPullRequest(pullNumber: number) {
     });
     return commits;
   } catch (e: unknown) {
-    logger.debug(`Fetching pull request commits failed! reason: ${e}`);
+    runtime.logger.debug(`Fetching pull request commits failed! reason: ${e}`);
     return [];
   }
 }
@@ -837,7 +855,7 @@ export async function getAllLinkedIssuesAndPullsInBody(issueNumber: number) {
           }
         });
       } else {
-        logger.info(`No linked issues or prs found`);
+        runtime.logger.info(`No linked issues or prs found`);
       }
 
       if (linkedPrs.length > 0) {
@@ -895,11 +913,11 @@ export async function getAllLinkedIssuesAndPullsInBody(issueNumber: number) {
         linkedPrs: linkedPRStreamlined,
       };
     } catch (error) {
-      logger.info(`Error getting linked issues or prs: ${error}`);
+      runtime.logger.info(`Error getting linked issues or prs: ${error}`);
       return `Error getting linked issues or prs: ${error}`;
     }
   } else {
-    logger.info(`No matches found`);
+    runtime.logger.info(`No matches found`);
     return {
       linkedIssues: [],
       linkedPrs: [],

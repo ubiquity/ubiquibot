@@ -52,13 +52,13 @@ export async function hasLabelEditPermission(label: string, caller: string) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const logger = runtime.logger;
-  const userCan = await isUserAdminOrBillingManager(caller, context);
+  const sufficientPrivileges = await isUserAdminOrBillingManager(caller, context);
 
   // get text before :
   const match = label.split(":");
   if (match.length == 0) return false;
 
-  if (userCan) {
+  if (sufficientPrivileges) {
     // check permission
     const { access, user } = Runtime.getState().adapters.supabase;
     const userId = await user.getUserId(caller);

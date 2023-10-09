@@ -29,6 +29,7 @@ export async function bindEvents(eventContext: Context) {
 
   runtime.adapters = createAdapters(runtime.botConfig);
   runtime.logger = new GitHubLogger(
+    runtime.adapters.supabase.client,
     // contributors will see logs in console while on development environment
     runtime.botConfig?.log?.logEnvironment ?? "development",
     runtime.botConfig?.log?.level ?? LogLevel.DEBUG,

@@ -1,5 +1,4 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import fetch from "node-fetch";
 import { Database } from "../../types/database";
 import { Super } from "./super";
 
@@ -10,21 +9,14 @@ export class User extends Super {
     super(supabase);
   }
 
-  public async getUserId(username: string, token?: string): Promise<number> {
-    const url = `https://api.github.com/users/${username}`;
-    const headers = token ? { Authorization: `token ${token}` } : undefined;
-
-    const response = await fetch(url, { headers });
-    if (!response.ok) {
-      throw new Error(`Failed to fetch user data: ${response.statusText}`);
-    }
-
-    const data = await response.json();
+  public async getUserId(username: string): Promise<number> {
+    const octokit = this.runtime.eventContext.octokit;
+    const { data } = await octokit.rest.users.getByUsername({ username });
     return data.id;
   }
 
   public async getMultiplier(user_id: number, repo_id: number): Promise<{ value: number; reason: string | null }> {
-    const { data, error } = await this.client
+    const { data, error } = await this.supabase
       .from("access")
       .select("multiplier, multiplier_reason")
       .eq("user_id", user_id)

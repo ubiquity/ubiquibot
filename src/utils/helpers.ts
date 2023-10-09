@@ -1,9 +1,10 @@
-export function ErrorDiff(message: string | Error) {
-  if (message instanceof Error) {
-    console.trace(message);
-    return "```diff\n! " + message.message + "\n- " + message.stack + "\n```";
+export function ErrorDiff(message: string, stack?: string) {
+  console.trace(message);
+  let buffer;
+  if (stack) {
+    buffer = "```diff\n! " + message + "\n" + stack + "\n```";
   } else {
-    console.trace("Received non-Error object:", message);
-    return "```diff\n! " + String(message) + "\n```";
+    buffer = "```diff\n! " + message + "\n```";
   }
+  return buffer;
 }

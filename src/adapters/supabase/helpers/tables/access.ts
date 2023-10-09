@@ -4,8 +4,8 @@ import { Database } from "../../types/database";
 import { GitHubNode } from "../client";
 import { Super } from "./super";
 import { UserRow } from "./user";
-type AccessRow = Database["public"]["Tables"]["access"]["Row"];
-// type AccessResponse = AccessRow[] | null;
+export type AccessRow = Database["public"]["Tables"]["access"]["Row"];
+export type AccessInsert = Database["public"]["Tables"]["access"]["Insert"];
 type UserWithAccess = (UserRow & { access: AccessRow | null })[];
 
 type _Access = {
@@ -23,39 +23,34 @@ export class Access extends Super {
   }
 
   private async _getUserWithAccess(id: number): Promise<UserWithAccess> {
-    const { data, error } = await this.client.from("access").select("*, access(*)").filter("id", "eq", id);
-    if (error) throw error;
+    const { data, error } = await this.supabase.from("access").select("*, users(*)").filter("id", "eq", id);
+
+    if (error) {
+      this.runtime.logger.error(error);
+      throw error;
+    }
     return data;
   }
 
-  public async getAccess(id: number): Promise<AccessRow> {
+  public async getAccess(id: number): Promise<AccessRow | null> {
     const userWithAccess = await this._getUserWithAccess(id);
-
-    if (userWithAccess[0]?.access === undefined) throw new Error("Access is undefined");
+    if (userWithAccess[0]?.access === undefined) {
+      this.runtime.logger.debug("Access is undefined");
+      return null;
+    }
     if (userWithAccess[0]?.access === null) throw new Error("Access is null");
     return userWithAccess[0].access;
   }
 
-  public async setAccess(access: string[], node: GitHubNode, userId: number): Promise<null> {
-    const { data, error } = await this.client.from("access").upsert({ access, ...node, id: userId });
+  public async setAccess(labels: string[], node: GitHubNode, userId?: number): Promise<null> {
+    const { data, error } = await this.supabase.from("access").upsert({
+      labels: labels,
+      ...node,
+      user_id: userId,
+    } as AccessInsert);
     if (error) throw error;
     return data;
   }
-
-  // public async getAccessRegistrationUrl(id: number): Promise<string> {
-  //   const userWithAccess = await this._getUserWithAccess(id);
-  //   if (!userWithAccess[0].access) throw new Error("Access of access registration comment is null");
-  //   if (!userWithAccess[0].access.location_id) throw new Error("Location id of access registration comment is null");
-
-  //   const locationId = userWithAccess[0].access.location_id;
-
-  //   const { data, error } = await this.client.from("locations").select("*").eq("id", locationId);
-  //   if (error) throw error;
-  //   const nodeUrl = data[0].node_url;
-  //   if (!nodeUrl) throw new Error("Node URL of access registration comment is null");
-
-  //   return nodeUrl;
-  // }
 
   async upsertMultiplier(userId: number, multiplier: number, reason: string, comment: Comment): Promise<void> {
     try {
@@ -68,9 +63,7 @@ export class Access extends Super {
         node_url: comment.html_url,
       };
 
-      // Upsert into the access table
-      //   .upsert(accessData, { onConflict: ["user_id", "node_id"] });
-      const { data, error } = await this.client.from("access").upsert(accessData, { onConflict: "location_id" });
+      const { data, error } = await this.supabase.from("access").upsert(accessData, { onConflict: "location_id" });
 
       if (error) throw error;
       if (!data) throw new Error("Multiplier not upserted");

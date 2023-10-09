@@ -24,6 +24,6 @@ export type UserCommands = {
   description: string;
   handler: CommandsHandler;
   callback: CallbackHandler;
-  successComment?: string;
-  failureComment?: string;
+  // successComment?: string;
+  // failureComment?: string;
 };

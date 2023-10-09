@@ -16,8 +16,8 @@ export async function autoPay(body: string) {
   const res = body.match(pattern);
 
   if (res) {
-    const userCan = await isUserAdminOrBillingManager(payload.sender.login, context);
-    if (userCan) {
+    const sufficientPrivileges = await isUserAdminOrBillingManager(payload.sender.login, context);
+    if (sufficientPrivileges) {
       return "You must be an `admin` or `billing_manager` to toggle automatic payments for completed issues.";
     }
     if (res.length > 1) {

@@ -3,6 +3,7 @@ import { Comment, Payload } from "../../types";
 import { IssueCommentCommands } from "./commands";
 import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCheck } from "./handlers/first";
+import { _renderErrorDiffWrapper } from "./handlers/";
 
 export async function handleComment(): Promise<void> {
   const runtime = Runtime.getState(),
@@ -31,16 +32,19 @@ export async function handleComment(): Promise<void> {
     const userCommand = allCommands.find((i) => i.id == command);
 
     if (userCommand) {
-      const { id, handler, callback, successComment, failureComment } = userCommand;
+      const { id, handler, callback } = userCommand;
       logger.info(`Running a comment handler: ${handler.name}`);
-
-      const { payload: _payload } = runtime.eventContext;
-      const issue = (_payload as Payload).issue;
-      if (!issue) continue;
+      const issue = payload.issue;
+      if (!issue) {
+        logger.error(`Issue is null. Skipping`);
+        return;
+      }
 
       const feature = config.command.find((e) => e.name === id.split("/")[1]);
 
-      if (!feature?.enabled && id !== IssueCommentCommands.HELP) {
+      console.trace(feature);
+
+      if (feature?.enabled === false && id !== IssueCommentCommands.HELP) {
         logger.info(`Skipping '${id}' because it is disabled on this repo.`);
         await callback(
           issue.number,
@@ -52,15 +56,12 @@ export async function handleComment(): Promise<void> {
       }
 
       try {
-        const response = await handler(body);
-        const callbackComment = response ?? successComment ?? "";
-        if (callbackComment) await callback(issue.number, callbackComment, payload.action, payload.comment);
-      } catch (err: unknown) {
-        // Use failureComment for failed command if it is available
-        if (failureComment) {
-          await callback(issue.number, failureComment, payload.action, payload.comment);
+        const callbackComment = await handler(body);
+        if (callbackComment) {
+          await callback(issue.number, callbackComment, payload.action, payload.comment);
         }
-        await callback(issue.number, String(err), payload.action, payload.comment);
+      } catch (err) {
+        return await _renderErrorDiffWrapper(err, issue);
       }
     } else {
       logger.info(`Skipping for a command: ${command}`);

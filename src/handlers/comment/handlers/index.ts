@@ -1,11 +1,11 @@
-import { Comment, Organization, Payload, UserCommands } from "../../../types";
+import { Comment, Issue, Organization, Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
 // Commented out until Gnosis Safe is integrated (https://github.com/ubiquity/ubiquibot/issues/353)
 // import { payout } from "./payout";
 import { BigNumber, ethers } from "ethers";
-import { setAccess } from "./allow";
+import { setLabels } from "./labels";
 import { ask } from "./ask";
 import { approveLabelChange } from "./authorize";
 import { multiplier } from "./multiplier";
@@ -112,9 +112,21 @@ export async function issueClosedCallback(): Promise<void> {
     if (error) {
       throw new Error(error);
     }
-  } catch (err: unknown) {
-    return await addCommentToIssue(ErrorDiff(err as Error), issue.number);
+  } catch (err) {
+    return await _renderErrorDiffWrapper(err, issue);
   }
+}
+
+export async function _renderErrorDiffWrapper(err: unknown, issue: Issue) {
+  let commentBody;
+  if (err instanceof Error) {
+    console.trace(err);
+    commentBody = `${err.message}\n\n${err.stack}`;
+  } else {
+    console.trace(err);
+    commentBody = JSON.stringify(err);
+  }
+  return await addCommentToIssue(ErrorDiff(commentBody), issue.number);
 }
 
 export async function issueCreatedCallback(): Promise<void> {
@@ -155,8 +167,8 @@ export async function issueCreatedCallback(): Promise<void> {
       if (!exist) await createLabel(targetPriceLabel, "price");
       await addLabelToIssue(targetPriceLabel);
     }
-  } catch (err: unknown) {
-    await addCommentToIssue(ErrorDiff(err as Error), issue.number);
+  } catch (err) {
+    return await _renderErrorDiffWrapper(err, issue);
   }
 }
 
@@ -242,8 +254,8 @@ export async function issueReopenedCallback(): Promise<void> {
     } else {
       logger.info(`Skipped penalty because amount is 0`);
     }
-  } catch (err: unknown) {
-    await addCommentToIssue(ErrorDiff(err as Error), issue.number);
+  } catch (err) {
+    return await _renderErrorDiffWrapper(err, issue);
   }
 }
 
@@ -304,9 +316,9 @@ export function userCommands(): UserCommands[] {
       callback: commandCallback,
     },
     {
-      id: IssueCommentCommands.ALLOW,
+      id: IssueCommentCommands.LABELS,
       description: `Set access control. Superuser only.`,
-      handler: setAccess,
+      handler: setLabels,
       callback: commandCallback,
     },
     {
