@@ -7,11 +7,10 @@ import { Super } from "./tables/super";
 interface Log {
   logMessage: string;
 }
-type LoggerParameterSimple = string;
-type LoggerParameterFull = { message: string | object; metadata?: object; postComment?: boolean };
-type LoggerParameters = LoggerParameterSimple | LoggerParameterFull;
+type LoggerParameterFull = { [key: string]: unknown } | string; // string | { message?: string; metadata?: unknown; postComment?: boolean };
 
-type LogFunction = (message: string | object, metadata?: object) => void;
+type LogFunction = (message?: string, metadata?: unknown) => void;
+
 function getNumericLevel(level: LogLevel) {
   switch (level) {
     case LogLevel.ERROR:
@@ -112,7 +111,7 @@ export class GitHubLogger extends Super {
     }
   }
 
-  private save(logMessage: string | object, level: LogLevel, metadata?: string | object) {
+  private save(logMessage: string, level: LogLevel, metadata?: unknown) {
     if (getNumericLevel(level) > this.maxLevel) return; // only return errors lower than max level
 
     const runtime = Runtime.getState();
@@ -143,7 +142,7 @@ export class GitHubLogger extends Super {
     }
   }
 
-  private _colorComment(type: string, message: string | object) {
+  private _colorComment(type: string, message: string) {
     const diffKey = {
       error: "-", // - text in red
       ok: "+", // + text in green
@@ -152,72 +151,69 @@ export class GitHubLogger extends Super {
       // debug: "@@@@",// @@ text in purple (and bold)@@
     };
 
-    const preamble = "```diff\n";
-    let serializedBody;
-    const postamble = "\n```";
-
-    if (typeof message === "object") serializedBody = JSON.stringify(message);
-    else serializedBody = message;
-
-    if (diffKey[type as keyof typeof diffKey])
-      serializedBody = `${diffKey[type as keyof typeof diffKey]} ${serializedBody}`;
-    else if (diffKey["debug" as keyof typeof diffKey]) serializedBody = `@@ ${serializedBody} @@`; // debug: "@@@@",
-    else {
-      serializedBody = `? ${serializedBody}`;
+    if (diffKey[type as keyof typeof diffKey]) {
+      message = `${diffKey[type as keyof typeof diffKey]} ${message}`;
+    } else if (diffKey["debug" as keyof typeof diffKey]) {
+      message = `@@ ${message} @@`; // debug: "@@@@",
+    } else {
+      message = `? ${message}`;
       console.trace(type);
     }
 
-    return `${preamble}${serializedBody}${postamble}`;
+    const preamble = "```diff\n";
+    const postamble = "\n```";
+
+    return `${preamble}${message}${postamble}`;
   }
 
-  private _log(args: LoggerParameters, level: LogLevel, logFunction: LogFunction): string {
-    // first detect if args is an object or a string
-    let message: string | object = args;
-    if (typeof args === "object") message = args.message;
-    if (!message) message = JSON.stringify(args);
+  private _log(level: LogLevel, logFunction: LogFunction, args: LoggerParameterFull): string {
+    let serializedMessage: string;
 
     let metadata;
-    let postComment = false;
-    if (typeof args === "object") {
-      metadata = args.metadata;
-      postComment = args.postComment || false;
+    let postComment;
+    if (typeof args === "string") {
+      serializedMessage = args;
+    } else {
+      serializedMessage = JSON.stringify(args, null, 2);
+      metadata = args?.metadata;
+      postComment = args?.postComment || false;
     }
 
-    logFunction(message, metadata);
-    this.save(message, level, metadata);
-    if (postComment) this._postComment(JSON.stringify(message));
-    return this._colorComment(level, message);
+    logFunction(serializedMessage, metadata);
+    this.save(serializedMessage, level, metadata);
+    if (postComment) {
+      this._postComment(JSON.stringify(serializedMessage));
+    }
+    return this._colorComment(level, serializedMessage);
   }
 
-  public ok(args: LoggerParameters): string {
-    return this._log(args, LogLevel.VERBOSE, prettyLogs.ok);
+  public ok(arg: LoggerParameterFull): string {
+    return this._log(LogLevel.VERBOSE, prettyLogs.ok, arg);
   }
 
-  public info(args: LoggerParameters): string {
-    return this._log(args, LogLevel.INFO, prettyLogs.info);
+  public info(arg: LoggerParameterFull): string {
+    return this._log(LogLevel.INFO, prettyLogs.info, arg);
   }
 
-  public warn(args: LoggerParameters): string {
-    return this._log(args, LogLevel.WARN, prettyLogs.warn);
+  public warn(arg: LoggerParameterFull): string {
+    return this._log(LogLevel.WARN, prettyLogs.warn, arg);
   }
 
-  public debug(args: LoggerParameters): string {
-    return this._log(args, LogLevel.DEBUG, prettyLogs.debug);
+  public debug(arg: LoggerParameterFull): string {
+    return this._log(LogLevel.DEBUG, prettyLogs.debug, arg);
   }
 
-  public error(args: LoggerParameters): string {
-    return this._log(args, LogLevel.ERROR, prettyLogs.error);
+  public error(arg: LoggerParameterFull): string {
+    return this._log(LogLevel.ERROR, prettyLogs.error, arg);
   }
 
-  private _postComment(message: string | object) {
-    const serializedBody = typeof message === "object" ? JSON.stringify(message) : message;
-
+  private _postComment(message: string) {
     this.runtime.eventContext.octokit.issues
       .createComment({
         owner: this.runtime.eventContext.issue().owner,
         repo: this.runtime.eventContext.issue().repo,
         issue_number: this.runtime.eventContext.issue().issue_number,
-        body: serializedBody,
+        body: message,
       })
       .then((x) => console.trace(x))
       .catch((x) => console.trace(x));

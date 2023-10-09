@@ -61,8 +61,10 @@ export async function bindEvents(eventContext: Context) {
     const validate = ajv.compile(PayloadSchema);
     const valid = validate(payload);
     if (!valid) {
-      runtime.logger.info("Payload schema validation failed!", payload);
-      if (validate.errors) runtime.logger.warn(validate.errors);
+      runtime.logger.info({ message: "Payload schema validation failed!", metadata: payload });
+      if (validate.errors) {
+        runtime.logger.warn({ metadata: validate.errors });
+      }
       return;
     }
 
