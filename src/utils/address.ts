@@ -13,6 +13,8 @@ export const shortenEthAddress = (address: string, len: number) => {
   return `${prefix}...${suffix}`;
 };
 
-export const formatEthAddress = (address: string) => {
-  return "`" + address + "`";
-};
+export function formatEthAddress(address: string) {
+  // return address;
+  return "'" + address + "'";
+  // return "`" + address + "`";
+}
