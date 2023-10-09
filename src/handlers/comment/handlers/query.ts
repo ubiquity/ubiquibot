@@ -1,63 +1,64 @@
-import { getAllAccessLevels, getWalletInfo, upsertAccessControl } from "../../../adapters/supabase";
-import { getBotContext, getLogger } from "../../../bindings";
+import Runtime from "../../../bindings/bot-runtime";
 import { Payload } from "../../../types";
-import { ErrorDiff } from "../../../utils/helpers";
+import _ from "lodash";
 
-export const query = async (body: string) => {
-  const context = getBotContext();
-  const logger = getLogger();
-  const payload = context.payload as Payload;
-  const sender = payload.sender.login;
-  const { repository, organization } = payload;
-
-  const id = organization?.id || repository?.id; // repository?.id as fallback
+export async function query(body: string) {
+  const runtime = Runtime.getState(),
+    context = runtime.eventContext,
+    logger = runtime.logger,
+    payload = context.payload as Payload,
+    sender = payload.sender.login;
 
   logger.info(`Received '/query' command from user: ${sender}`);
 
   const issue = payload.issue;
-  if (!issue) {
-    logger.info(`Skipping '/query' because of no issue instance`);
-    return `Skipping '/query' because of no issue instance`;
-  }
+  if (!issue) return logger.info(`Skipping '/query' because of no issue instance`);
 
   const regex = /^\/query\s+@([\w-]+)\s*$/;
   const matches = body.match(regex);
-  const user = matches?.[1];
-  const repo = payload.repository;
+  const username = matches?.[1];
 
-  if (user) {
-    let data = await getAllAccessLevels(user, repo.full_name);
-    if (!data) {
-      logger.info(`Access info does not exist for @${user}`);
-      try {
-        await upsertAccessControl(user, repo.full_name, "time_access", true);
-        data = {
-          multiplier: false,
-          priority: false,
-          time: true,
-          price: false,
-        };
-      } catch (e) {
-        ErrorDiff(e);
-        return `Error upserting access info for @${user}`;
+  if (!username) {
+    throw logger.error("Invalid body for query command \n usage /query @user");
+  }
+
+  const database = runtime.adapters.supabase;
+  const usernameResponse = await context.octokit.users.getByUsername({ username });
+  const user = usernameResponse.data;
+  if (!user) throw logger.error(`No user found for username: ${username}`);
+  const accessData = await database.access.getAccess(user.id);
+  const walletAddress = await database.wallet.getAddress(user.id);
+  const messageBuffer = [] as string[];
+
+  messageBuffer.push(renderMarkdownTableHeader());
+
+  if (!accessData && !walletAddress) return logger.warn(`No access or wallet information is set for @${user}`);
+  if (accessData) {
+    messageBuffer.push(appendToMarkdownTableBody(accessData));
+  }
+  if (walletAddress) {
+    messageBuffer.push(appendToMarkdownTableBody({ wallet: walletAddress }));
+  }
+
+  return messageBuffer.join("");
+
+  function appendToMarkdownTableBody(data: Record<string, any>, parentKey = ""): string {
+    let table = "";
+
+    for (const key in data) {
+      const decamelizedKey = _.startCase(_.toLower(key));
+      const value = data[key];
+      if (typeof value === "object" && value !== null) {
+        table += appendToMarkdownTableBody(value as Record<string, any>, `${parentKey}${decamelizedKey} - `);
+      } else {
+        table += `| ${parentKey}${decamelizedKey} | ${value} |\n`; // Table row
       }
     }
-    const walletInfo = await getWalletInfo(user, id?.toString());
-    if (!walletInfo?.address) {
-      return `Error retrieving multiplier and wallet address for @${user}`;
-    } else {
-      return `@${user}'s wallet address is ${walletInfo?.address}, multiplier is ${walletInfo?.multiplier} and access levels are
 
-| access type | access level        |
-| ----------- | ------------------- |
-| multiplier  | ${data.multiplier}  |
-| priority    | ${data.priority}    |
-| time        | ${data.time}        |
-| price       | ${data.price}       |
-      `;
-    }
-  } else {
-    logger.error("Invalid body for query command");
-    return `Invalid syntax for query command \n usage /query @user`;
+    return table;
   }
-};
+}
+
+function renderMarkdownTableHeader(): string {
+  return "| Property | Value |\n| --- | --- |\n"; // Table header
+}

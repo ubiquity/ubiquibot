@@ -77,7 +77,7 @@ export const DefaultConfig: MergedConfig = {
       enabled: false,
     },
     {
-      name: "allow",
+      name: "labels",
       enabled: false,
     },
     {
@@ -103,6 +103,7 @@ export const DefaultConfig: MergedConfig = {
   permitBaseUrl: "https://pay.ubq.fi",
   followUpTime: "4 days",
   disqualifyTime: "7 days",
+  staleBountyTime: "7 days",
   newContributorGreeting: {
     enabled: false,
     header:

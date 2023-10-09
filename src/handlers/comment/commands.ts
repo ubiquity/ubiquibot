@@ -9,7 +9,7 @@ export enum IssueCommentCommands {
   ASK = "/ask", // ask GPT a question
   // Access Controls
 
-  ALLOW = "/allow",
+  LABELS = "/labels",
   AUTOPAY = "/autopay",
   AUTHORIZE = "/authorize",
 }

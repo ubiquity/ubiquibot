@@ -1,14 +1,23 @@
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { GLOBAL_STRINGS } from "../../configs";
-import { addCommentToIssue, addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel, calculateWeight, getAllLabeledEvents } from "../../helpers";
+import {
+  addCommentToIssue,
+  addLabelToIssue,
+  clearAllPriceLabelsOnIssue,
+  createLabel,
+  getLabel,
+  calculateWeight,
+  getAllLabeledEvents,
+} from "../../helpers";
 import { Payload, UserType } from "../../types";
 import { handleLabelsAccess } from "../access";
 import { getTargetPriceLabel } from "../shared";
 
 export const pricingLabelLogic = async (): Promise<void> => {
-  const context = getBotContext();
-  const config = getBotConfig();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const config = Runtime.getState().botConfig;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   if (!payload.issue) return;
   const labels = payload.issue.labels;
@@ -33,8 +42,14 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
   const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
-  const minTimeLabel = timeLabels.length > 0 ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
-  const minPriorityLabel = priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : undefined;
+  const minTimeLabel =
+    timeLabels.length > 0
+      ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name
+      : undefined;
+  const minPriorityLabel =
+    priorityLabels.length > 0
+      ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name
+      : undefined;
 
   const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
 

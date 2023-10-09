@@ -119,7 +119,7 @@ const IssueSchema = Type.Object({
 });
 export type Issue = Static<typeof IssueSchema>;
 
-const RepositorySchema = Type.Object({
+export const RepositorySchema = Type.Object({
   id: Type.Number(),
   node_id: Type.String(),
   name: Type.String(),
@@ -198,6 +198,8 @@ const RepositorySchema = Type.Object({
   default_branch: Type.String(),
 });
 
+export type Repository = Static<typeof RepositorySchema>;
+
 const OrganizationSchema = Type.Object({
   login: Type.String(),
   id: Type.Number(),
@@ -241,6 +243,19 @@ export const CommentSchema = Type.Object({
   body: Type.String(),
   body_html: Type.Optional(Type.String()),
   body_text: Type.Optional(Type.String()),
+  reactions: Type.Object({
+    url: Type.String(),
+    total_count: Type.Number(),
+    "+1": Type.Number(),
+    "-1": Type.Number(),
+    laugh: Type.Number(),
+    hooray: Type.Number(),
+    confused: Type.Number(),
+    heart: Type.Number(),
+    rocket: Type.Number(),
+    eyes: Type.Number(),
+  }),
+  // performed_via_github_app: Type.Optional(Type.Boolean()),
 });
 
 export type Comment = Static<typeof CommentSchema>;
@@ -261,9 +276,16 @@ export const AssignEventSchema = Type.Object({
 export type AssignEvent = Static<typeof AssignEventSchema>;
 
 const ChangesSchema = Type.Object({
-  name: Type.Object({
-    from: Type.String(),
-  }),
+  body: Type.Optional(
+    Type.Object({
+      from: Type.String(),
+    })
+  ),
+  name: Type.Optional(
+    Type.Object({
+      from: Type.String(),
+    })
+  ),
 });
 
 export const PayloadSchema = Type.Object({
@@ -321,3 +343,68 @@ export const GithubContentSchema = Type.Object({
 });
 
 export type GithubContent = Static<typeof GithubContentSchema>;
+export type Organization = {
+  login: string;
+  id: number;
+  node_id: string;
+  url: string;
+  repos_url: string;
+  events_url: string;
+  hooks_url: string;
+  issues_url: string;
+  members_url: string;
+  public_members_url: string;
+  avatar_url: string;
+  description: string;
+};
+
+export type OrganizationPayload = {
+  action: string;
+  membership?: {
+    url: string;
+    state: string;
+    role: string;
+    organization_url: string;
+    user: {
+      login: string;
+      id: number;
+      node_id: string;
+      avatar_url: string;
+      gravatar_id: string;
+      url: string;
+      html_url: string;
+      followers_url: string;
+      following_url: string;
+      gists_url: string;
+      starred_url: string;
+      subscriptions_url: string;
+      organizations_url: string;
+      repos_url: string;
+      events_url: string;
+      received_events_url: string;
+      type: string;
+      site_admin: boolean;
+    };
+  };
+  organization: Organization;
+  sender: {
+    login: string;
+    id: number;
+    node_id: string;
+    avatar_url: string;
+    gravatar_id: string;
+    url: string;
+    html_url: string;
+    followers_url: string;
+    following_url: string;
+    gists_url: string;
+    starred_url: string;
+    subscriptions_url: string;
+    organizations_url: string;
+    repos_url: string;
+    events_url: string;
+    received_events_url: string;
+    type: string;
+    site_admin: boolean;
+  };
+};

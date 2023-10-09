@@ -1,12 +1,13 @@
 import { removeAssignees } from "../../../helpers";
-import { getBotContext, getLogger } from "../../../bindings";
+import Runtime from "../../../bindings/bot-runtime";
 import { Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { closePullRequestForAnIssue } from "../../assign/index";
 
 export const unassign = async (body: string) => {
-  const { payload: _payload } = getBotContext();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const { payload: _payload } = runtime.eventContext;
+  const logger = runtime.logger;
   if (body != IssueCommentCommands.STOP && body.replace(/`/g, "") != IssueCommentCommands.STOP) {
     logger.info(`Skipping to unassign. body: ${body}`);
     return;
@@ -25,7 +26,9 @@ export const unassign = async (body: string) => {
   const assignees = _assignees ?? [];
   if (assignees.length == 0) return;
   const shouldUnassign = payload.sender.login.toLowerCase() == assignees[0].login.toLowerCase();
-  logger.debug(`Unassigning sender: ${payload.sender.login.toLowerCase()}, assignee: ${assignees[0].login.toLowerCase()}, shouldUnassign: ${shouldUnassign}`);
+  logger.debug(
+    `Unassigning sender: ${payload.sender.login.toLowerCase()}, assignee: ${assignees[0].login.toLowerCase()}, shouldUnassign: ${shouldUnassign}`
+  );
 
   if (shouldUnassign) {
     await closePullRequestForAnIssue();
@@ -33,7 +36,7 @@ export const unassign = async (body: string) => {
       issue_number,
       assignees.map((i) => i.login)
     );
-    return `You have been unassigned from the task @${payload.sender.login}`;
+    return logger.ok(`You have been unassigned from the task ${payload.sender.login}`);
   }
   return;
 };

@@ -1,53 +1,52 @@
-import { Comment, Payload, UserCommands } from "../../../types";
+import { Comment, Issue, Organization, Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
 // Commented out until Gnosis Safe is integrated (https://github.com/ubiquity/ubiquibot/issues/353)
 // import { payout } from "./payout";
+import { BigNumber, ethers } from "ethers";
+import { setLabels } from "./labels";
+import { ask } from "./ask";
+import { approveLabelChange } from "./authorize";
+import { multiplier } from "./multiplier";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
-import { approveLabelChange } from "./authorize";
-import { setAccess } from "./allow";
-import { ask } from "./ask";
-import { multiplier } from "./multiplier";
-import { BigNumber, ethers } from "ethers";
-import { addPenalty } from "../../../adapters/supabase";
+// import { addPenalty } from "../../../adapters/supabase";
+import Runtime from "../../../bindings/bot-runtime";
 import {
   addCommentToIssue,
-  createLabel,
   addLabelToIssue,
-  getLabel,
-  upsertCommentToIssue,
+  calculateWeight,
+  createLabel,
+  getAllIssueAssignEvents,
   getAllIssueComments,
+  getLabel,
   getPayoutConfigByNetworkId,
   getTokenSymbol,
-  getAllIssueAssignEvents,
-  calculateWeight,
+  upsertCommentToIssue,
 } from "../../../helpers";
-import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
-import {
-  handleIssueClosed,
-  incentivesCalculation,
-  calculateIssueConversationReward,
-  calculateIssueCreatorReward,
-  calculateIssueAssigneeReward,
-  calculatePullRequestReviewsReward,
-} from "../../payout";
-import { query } from "./query";
-import { autoPay } from "./payout";
-import { getTargetPriceLabel } from "../../shared";
+
 import Decimal from "decimal.js";
 import { ErrorDiff } from "../../../utils/helpers";
+import { calculateIssueAssigneeReward } from "../../payout/calculate-issue-assignee-reward";
+import { calculateIssueConversationReward } from "../../payout/calculate-issue-conversation-reward";
+import { calculateIssueCreatorReward } from "../../payout/calculate-issue-creator-reward";
+import { calculateReviewContributorRewards } from "../../payout/calculate-review-contributor-rewards";
+import { handleIssueClosed } from "../../payout/handle-issue-closed";
+import { incentivesCalculation } from "../../payout/incentives-calculation";
+import { getTargetPriceLabel } from "../../shared";
+import { autoPay } from "./payout";
+import { query } from "./query";
 
+export * from "./ask";
 export * from "./assign";
-export * from "./wallet";
-export * from "./unassign";
-export * from "./payout";
+export * from "./authorize";
 export * from "./help";
 export * from "./multiplier";
+export * from "./payout";
 export * from "./query";
-export * from "./ask";
-export * from "./authorize";
+export * from "./unassign";
+export * from "./wallet";
 
 export interface RewardsResponse {
   error: string | null;
@@ -56,24 +55,17 @@ export interface RewardsResponse {
   username?: string;
   reward?: {
     account: string;
-    priceInBigNumber: Decimal;
-    penaltyAmount: BigNumber;
-    user: string;
+    priceInDecimal: Decimal;
+    penaltyAmount: Decimal;
+    user: string | undefined;
     userId: number;
-    debug: Record<string, { count: number; reward: Decimal }>;
+    debug?: Record<string, { count: number; reward: Decimal }>;
   }[];
   fallbackReward?: Record<string, Decimal>;
 }
 
-/**
- * Parses the comment body and figure out the command name a user wants
- *
- *
- * @param body - The comment body
- * @returns The list of command names the comment includes
- */
-
-export const commentParser = (body: string): IssueCommentCommands[] => {
+// Parses the comment body and figure out the command name a user wants
+export function commentParser(body: string): IssueCommentCommands[] {
   const regex = /^\/(\w+)\b/; // Regex pattern to match the command at the beginning of the body
 
   const matches = regex.exec(body);
@@ -85,16 +77,20 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
   }
 
   return [];
-};
+}
 
-/**
- * Callback for issues closed - Processor
- */
+// Callback for issues closed - Processor
+export async function issueClosedCallback(): Promise<void> {
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const payload = context.payload as Payload;
+  const issue = payload.issue;
+  const organization = payload.organization as Organization;
 
-export const issueClosedCallback = async (): Promise<void> => {
-  const { payload: _payload } = getBotContext();
-  const issue = (_payload as Payload).issue;
-  if (!issue) return;
+  const logger = runtime.logger;
+
+  if (!organization) throw logger.error("Cannot save permit to DB, missing organization");
+  if (!issue) throw logger.error("Cannot save permit to DB, missing issue");
   try {
     // assign function incentivesCalculation to a variable
     const calculateIncentives = await incentivesCalculation();
@@ -102,26 +98,43 @@ export const issueClosedCallback = async (): Promise<void> => {
     const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
     const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
     const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
-    const pullRequestReviewersReward = await calculatePullRequestReviewsReward(calculateIncentives);
+    const pullRequestReviewersReward = await calculateReviewContributorRewards(calculateIncentives);
 
-    const { error } = await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, pullRequestReviewersReward, calculateIncentives);
+    const { error } = await handleIssueClosed({
+      creatorReward,
+      assigneeReward,
+      conversationRewards,
+      pullRequestReviewersReward,
+      incentivesCalculation: calculateIncentives,
+      organization: organization,
+    });
 
     if (error) {
       throw new Error(error);
     }
-  } catch (err: unknown) {
-    return await addCommentToIssue(ErrorDiff(err), issue.number);
+  } catch (err) {
+    return await _renderErrorDiffWrapper(err, issue);
   }
-};
+}
 
-/**
- * Callback for issues created - Processor
- */
+export async function _renderErrorDiffWrapper(err: unknown, issue: Issue) {
+  let commentBody;
+  if (err instanceof Error) {
+    console.trace(err);
+    commentBody = `${err.message}${err.stack}`;
+  } else {
+    console.trace(err);
+    commentBody = JSON.stringify(err);
+  }
+  return await addCommentToIssue(ErrorDiff(commentBody), issue.number);
+}
 
-export const issueCreatedCallback = async (): Promise<void> => {
-  const logger = getLogger();
-  const { payload: _payload } = getBotContext();
-  const config = getBotConfig();
+export async function issueCreatedCallback(): Promise<void> {
+  // Callback for issues created - Processor
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+  const { payload: _payload } = runtime.eventContext;
+  const config = Runtime.getState().botConfig;
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   const labels = issue.labels;
@@ -138,9 +151,13 @@ export const issueCreatedCallback = async (): Promise<void> => {
     const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
     const minTimeLabel =
-      timeLabels.length > 0 ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : config.price.defaultLabels[0];
+      timeLabels.length > 0
+        ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name
+        : config.price.defaultLabels[0];
     const minPriorityLabel =
-      priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : config.price.defaultLabels[1];
+      priorityLabels.length > 0
+        ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name
+        : config.price.defaultLabels[1];
     if (!timeLabels.length) await addLabelToIssue(minTimeLabel);
     if (!priorityLabels.length) await addLabelToIssue(minPriorityLabel);
 
@@ -150,23 +167,21 @@ export const issueCreatedCallback = async (): Promise<void> => {
       if (!exist) await createLabel(targetPriceLabel, "price");
       await addLabelToIssue(targetPriceLabel);
     }
-  } catch (err: unknown) {
-    await addCommentToIssue(ErrorDiff(err), issue.number);
+  } catch (err) {
+    return await _renderErrorDiffWrapper(err, issue);
   }
-};
+}
 
-/**
- * Callback for issues reopened - Processor
- */
-
-export const issueReopenedCallback = async (): Promise<void> => {
-  const { payload: _payload } = getBotContext();
+export async function issueReopenedCallback(): Promise<void> {
+  // Callback for issues reopened - Processor
+  const runtime = Runtime.getState();
+  const { payload: _payload } = runtime.eventContext;
   const {
     payout: { permitBaseUrl },
-  } = getBotConfig();
-  const logger = getLogger();
+  } = Runtime.getState().botConfig;
+  const logger = runtime.logger;
   const issue = (_payload as Payload).issue;
-  const repository = (_payload as Payload).repository;
+  // const repository = (_payload as Payload).repository;
   if (!issue) return;
   try {
     // find permit comment from the bot
@@ -217,8 +232,16 @@ export const issueReopenedCallback = async (): Promise<void> => {
 
     if (parseFloat(formattedAmount) > 0) {
       // write penalty to db
+      const { debit } = Runtime.getState().adapters.supabase;
+
       try {
-        await addPenalty(assignee, repository.full_name, tokenAddress, networkId.toString(), amount);
+        await debit.addDebit({
+          userId: events[0].assignee.id,
+          amount: new Decimal(formattedAmount),
+          comment: permitComment,
+          networkId: Number(networkId),
+          address: tokenAddress,
+        });
       } catch (err) {
         logger.error(`Error writing penalty to db: ${err}`);
         return;
@@ -231,34 +254,29 @@ export const issueReopenedCallback = async (): Promise<void> => {
     } else {
       logger.info(`Skipped penalty because amount is 0`);
     }
-  } catch (err: unknown) {
-    await addCommentToIssue(ErrorDiff(err), issue.number);
+  } catch (err) {
+    return await _renderErrorDiffWrapper(err, issue);
   }
-};
+}
 
-/**
- * Default callback for slash commands
- *
- *
- * @param issue_number - The issue number
- * @param comment - Comment string
- */
+async function commandCallback(issue: number, comment: string, action: string, replyTo?: Comment) {
+  // Default callback for slash commands
+  await upsertCommentToIssue(issue, comment, action, replyTo);
+}
 
-const commandCallback = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
-  await upsertCommentToIssue(issue_number, comment, action, reply_to);
-};
-
-export const userCommands = (): UserCommands[] => {
+export function userCommands(): UserCommands[] {
   return [
     {
       id: IssueCommentCommands.START,
       description: "Assign yourself to the issue.",
+      example: void 0,
       handler: assign,
       callback: commandCallback,
     },
     {
       id: IssueCommentCommands.STOP,
       description: "Unassign yourself from the issue.",
+      example: void 0,
       handler: unassign,
       callback: commandCallback,
     },
@@ -266,6 +284,7 @@ export const userCommands = (): UserCommands[] => {
       handler: listAvailableCommands,
       id: IssueCommentCommands.HELP,
       description: "List all available commands.",
+      example: void 0,
       callback: commandCallback,
     },
     // Commented out until Gnosis Safe is integrated (https://github.com/ubiquity/ubiquibot/issues/353)
@@ -278,44 +297,52 @@ export const userCommands = (): UserCommands[] => {
     {
       id: IssueCommentCommands.AUTOPAY,
       description: "Toggle automatic payment for the completion of the current issue.",
+      example: void 0,
       handler: autoPay,
       callback: commandCallback,
     },
     {
       id: IssueCommentCommands.QUERY,
-      description: `Comments the users multiplier and address`,
+      description: `Comments the users multiplier and address.`,
+      example: void 0,
       handler: query,
       callback: commandCallback,
     },
     {
       id: IssueCommentCommands.ASK,
-      description: `Ask a technical question to UbiquiBot. \n  example usage: "/ask How do I do X?"`,
+      description: `Ask a technical question to UbiquiBot.`,
+      example: "/ask how do I do x?",
       handler: ask,
       callback: commandCallback,
     },
     {
       id: IssueCommentCommands.MULTIPLIER,
-      description: `Set the task payout multiplier for a specific contributor, and provide a reason for why.\n\te.g. /wallet @user 0.5 "Multiplier reason"`,
+      description: `Set the task payout multiplier for a specific contributor, and provide a reason for why.`,
+      example: '/wallet @user 0.5 "multiplier reason"',
       handler: multiplier,
       callback: commandCallback,
     },
     {
-      id: IssueCommentCommands.ALLOW,
-      description: `Set access control. Superuser only.`,
-      handler: setAccess,
+      id: IssueCommentCommands.LABELS,
+      description: `Set access control, for admins only.`,
+      example: void 0,
+      handler: setLabels,
       callback: commandCallback,
     },
     {
       id: IssueCommentCommands.AUTHORIZE,
-      description: `Approve a label change. Superuser only.`,
+      description: `Approve a label change, for admins only.`,
+      example: void 0,
       handler: approveLabelChange,
       callback: commandCallback,
     },
     {
       id: IssueCommentCommands.WALLET,
-      description: `<WALLET_ADDRESS | ENS_NAME> <SIGNATURE_HASH>: Register your wallet address for payments.\n\tYour message to sign is: "DevPool"\n\tYou can generate SIGNATURE_HASH at https://etherscan.io/verifiedSignatures\n\te.g. "/wallet 0x16ce4d863eD687455137576da2A0cbaf4f1E8f76 0xe2a3e34a63f3def2c29605de82225b79e1398190b542be917ef88a8e93ff9dc91bdc3ef9b12ed711550f6d2cbbb50671aa3f14a665b709ec391f3e603d0899a41b"`,
+      description: `Register your wallet address for payments. Your message to sign is: "UbiquiBot". You can generate a signature hash using https://etherscan.io/verifiedSignatures`,
+      example:
+        "/wallet ubq.eth 0xe2a3e34a63f3def2c29605de82225b79e1398190b542be917ef88a8e93ff9dc91bdc3ef9b12ed711550f6d2cbbb50671aa3f14a665b709ec391f3e603d0899a41b",
       handler: registerWallet,
       callback: commandCallback,
     },
   ];
-};
+}

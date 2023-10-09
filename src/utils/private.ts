@@ -13,7 +13,11 @@ const CONFIG_PATH = ".github/ubiquibot-config.yml";
 const KEY_NAME = "privateKeyEncrypted";
 const KEY_PREFIX = "HSK_";
 
-export const getConfigSuperset = async (context: Context, type: "org" | "repo", filePath: string): Promise<string | undefined> => {
+export const getConfigSuperset = async (
+  context: Context,
+  type: "org" | "repo",
+  filePath: string
+): Promise<string | undefined> => {
   try {
     const payload = context.payload as Payload;
     const repo = type === "org" ? CONFIG_REPO : payload.repository.name;
@@ -166,7 +170,6 @@ export const getConfig = async (context: Context) => {
     timeRangeForMaxIssue: mergedConfigData.timeRangeForMaxIssue,
     timeRangeForMaxIssueEnabled: mergedConfigData.timeRangeForMaxIssueEnabled,
     permitBaseUrl: mergedConfigData.permitBaseUrl,
-    botDelay: mergedConfigData.botDelay,
     followUpTime: mergedConfigData.followUpTime,
     disqualifyTime: mergedConfigData.disqualifyTime,
   };

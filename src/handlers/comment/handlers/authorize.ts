@@ -1,13 +1,13 @@
-import { _approveLabelChange, getLabelChanges } from "../../../adapters/supabase";
-import { getBotContext, getLogger } from "../../../bindings";
-import { getUserPermission } from "../../../helpers";
+import Runtime from "../../../bindings/bot-runtime";
+import { isUserAdminOrBillingManager } from "../../../helpers";
 import { Payload } from "../../../types";
-import { ErrorDiff } from "../../../utils/helpers";
 import { taskInfo } from "../../wildcard";
 
-export const approveLabelChange = async () => {
-  const context = getBotContext();
-  const logger = getLogger();
+export async function approveLabelChange() {
+  const runtime = Runtime.getState();
+  const { label } = runtime.adapters.supabase;
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
 
@@ -15,31 +15,34 @@ export const approveLabelChange = async () => {
 
   const { issue, repository } = payload;
   if (!issue) {
-    logger.info(`Skipping '/authorize' because of no issue instance`);
-    return;
+    return logger.info(`Skipping '/authorize' because of no issue instance`);
   }
 
   // check if sender is admin
   // passing in context so we don't have to make another request to get the user
-  const permissionLevel = await getUserPermission(sender, context);
+  const sufficientPrivileges = await isUserAdminOrBillingManager(sender, context);
 
   // if sender is not admin, return
-  if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {
-    logger.info(`User ${sender} is not an admin/billing_manager`);
-    return ErrorDiff(`You are not an admin/billing_manager and do not have the required permissions to access this function.`);
+  if (sufficientPrivileges) {
+    throw new Error(
+      `User ${sender} is not an admin/billing_manager and do not have the required permissions to access this function.`
+    );
   }
 
   const issueDetailed = taskInfo(issue);
 
-  if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timelabel) {
-    logger.info(`Skipping... its not a task`);
-    return ErrorDiff(`No valid task label on this issue`);
+  if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timeLabel) {
+    throw new Error(`No valid task label on this issue`);
   }
 
-  // check for label altering here
-  const labelChanges = await getLabelChanges(repository.full_name, [issueDetailed.priceLabel, issueDetailed.priorityLabel, issueDetailed.timelabel]);
+  // get current repository node id from payload and pass it to getLabelChanges function to get label changes
+  const labelChanges = await label.getLabelChanges(repository.node_id);
 
-  await _approveLabelChange(labelChanges.id);
+  // Approve label changes
+  labelChanges.forEach(async (labelChange) => {
+    await label.approveLabelChange(labelChange.id);
+    return logger.info(`Approved label change for ${labelChange.label_from} -> ${labelChange.label_to}`);
+  });
 
   return `Label change has been approved, permit can now be generated`;
-};
+}

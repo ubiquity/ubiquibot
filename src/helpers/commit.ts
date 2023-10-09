@@ -1,8 +1,15 @@
-import { getBotContext } from "../bindings";
+import Runtime from "../bindings/bot-runtime";
 import { Payload } from "../types";
 
-export async function createCommitComment(body: string, commitSha: string, path?: string, owner?: string, repo?: string) {
-  const context = getBotContext();
+export async function createCommitComment(
+  body: string,
+  commitSha: string,
+  path?: string,
+  owner?: string,
+  repo?: string
+) {
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
   if (!owner) {
     owner = payload.repository.owner.login;

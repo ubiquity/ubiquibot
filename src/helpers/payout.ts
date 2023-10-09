@@ -13,9 +13,9 @@
 
 import { Static } from "@sinclair/typebox";
 import { PayoutConfigSchema } from "../types";
-import { getUserPermission } from "./issue";
-import { getBotContext, getLogger } from "../bindings";
-import { getAccessLevel } from "../adapters/supabase";
+import { isUserAdminOrBillingManager } from "./issue";
+import Runtime from "../bindings/bot-runtime";
+// import { getAccessLevel } from "../adapters/supabase";
 
 // available tokens for payouts
 const PAYMENT_TOKEN_PER_NETWORK: Record<string, { rpc: string; token: string }> = {
@@ -48,27 +48,25 @@ export const getPayoutConfigByNetworkId = (evmNetworkId: number): PayoutConfigPa
   };
 };
 
-export const hasLabelEditPermission = async (label: string, caller: string, repository: string) => {
-  const context = getBotContext();
-  const logger = getLogger();
-  const permissionLevel = await getUserPermission(caller, context);
+export async function hasLabelEditPermission(label: string, caller: string) {
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
+  const sufficientPrivileges = await isUserAdminOrBillingManager(caller, context);
 
   // get text before :
   const match = label.split(":");
   if (match.length == 0) return false;
-  const label_type = match[0].toLowerCase();
 
-  if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {
+  if (sufficientPrivileges) {
     // check permission
-    const accessible = await getAccessLevel(caller, repository, label_type);
-
-    if (accessible) {
-      return true;
-    }
-
+    const { access, user } = Runtime.getState().adapters.supabase;
+    const userId = await user.getUserId(caller);
+    const accessible = await access.getAccess(userId);
+    if (accessible) return true;
     logger.info(`@${caller} is not allowed to edit label ${label}`);
     return false;
   }
 
   return true;
-};
+}

@@ -1,33 +1,33 @@
 import { MaxUint256, PermitTransferFrom, SignatureTransfer } from "@uniswap/permit2-sdk";
-import { BigNumber, ethers } from "ethers";
-import { getBotConfig, getBotContext, getLogger } from "../bindings";
-import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 import Decimal from "decimal.js";
-import { Payload } from "../types";
-import { savePermit } from "../adapters/supabase";
+import { BigNumber, ethers } from "ethers";
+import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
+import Runtime from "../bindings/bot-runtime";
+import { Organization, Payload } from "../types";
+// import { savePermit } from "../adapters/supabase";
 
 const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on all networks
 
-export type Permit = {
-  id: number;
-  createdAt: Date;
-  organizationId: number | null;
-  repositoryId: number;
-  issueId: number;
-  evmNetworkId: number;
-  contributorId: number;
-  contributorWallet: string;
-  tokenAddress: string;
-  payoutAmount: string;
-  nonce: string;
-  deadline: string;
-  signature: string;
-  partnerWallet: string;
-};
+// export type Permit = {
+//   id: number;
+//   createdAt: Date;
+//   organizationId: number | null;
+//   repositoryId: number;
+//   issueId: number;
+//   evmNetworkId: number;
+//   contributorId: number;
+//   contributorWallet: string;
+//   tokenAddress: string;
+//   payoutAmount: string;
+//   nonce: string;
+//   deadline: string;
+//   signature: string;
+//   partnerWallet: string;
+// };
 
-export type InsertPermit = Omit<Permit, "id" | "createdAt">;
+// export type InsertPermit = Omit<Permit, "id" | "createdAt">;
 
-type TxData = {
+export type GeneratedPermit = {
   permit: {
     permitted: {
       token: string;
@@ -44,24 +44,18 @@ type TxData = {
   signature: string;
 };
 
-/**
- * Generates permit2 signature data with `spender` and `amountInETH`
- *
- * @param spender The recipient address we're going to send tokens
- * @param amountInETH The token amount in ETH
- *
- * @returns Permit2 url including base64 encoded data
- */
 export const generatePermit2Signature = async (
+  // Generates permit2 signature data with `spender` and `amountInETH`
   spender: string,
   amountInEth: Decimal,
   identifier: string,
   userId = ""
-): Promise<{ txData: TxData; payoutUrl: string }> => {
+): Promise<{ permit: GeneratedPermit; payoutUrl: string }> => {
   const {
     payout: { evmNetworkId, privateKey, permitBaseUrl, rpc, paymentToken },
-  } = getBotConfig();
-  const logger = getLogger();
+  } = Runtime.getState().botConfig;
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
   const provider = new ethers.providers.JsonRpcProvider(rpc);
   const adminWallet = new ethers.Wallet(privateKey, provider);
 
@@ -79,10 +73,14 @@ export const generatePermit2Signature = async (
     deadline: MaxUint256,
   };
 
-  const { domain, types, values } = SignatureTransfer.getPermitData(permitTransferFromData, PERMIT2_ADDRESS, evmNetworkId);
+  const { domain, types, values } = SignatureTransfer.getPermitData(
+    permitTransferFromData,
+    PERMIT2_ADDRESS,
+    evmNetworkId
+  );
 
   const signature = await adminWallet._signTypedData(domain, types, values);
-  const txData: TxData = {
+  const txData: GeneratedPermit = {
     permit: {
       permitted: {
         token: permitTransferFromData.permitted.token,
@@ -103,41 +101,55 @@ export const generatePermit2Signature = async (
 
   const payoutUrl = `${permitBaseUrl}?claim=${base64encodedTxData}&network=${evmNetworkId}`;
   logger.info(`Generated permit2 url: ${payoutUrl}`);
-  return { txData, payoutUrl };
+  return { permit: txData, payoutUrl };
 };
 
-export const savePermitToDB = async (contributorId: number, txData: TxData): Promise<Permit> => {
-  const logger = getLogger();
+export async function savePermitToDB(
+  contributorId: number,
+  txData: GeneratedPermit,
+  evmNetworkId: number,
+  organization: Organization
+) {
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
 
-  const context = getBotContext();
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
-  const issue = payload.issue;
-  const repository = payload.repository;
-  const organization = payload.organization;
-  if (!issue || !repository) {
-    logger.error("Cannot save permit to DB, missing issue, repository or organization");
-    throw new Error("Cannot save permit to DB, missing issue, repository or organization");
-  }
+  const comment = payload.comment;
+  if (!comment) throw logger.error("Cannot save permit to DB, missing comment");
 
-  const { payout } = getBotConfig();
-  const { evmNetworkId } = payout;
+  // const issue = payload.issue;
+  // const repository = payload.repository;
+  // const organization = payload.organization;
+  // if (!issue || !repository) {
+  //   logger.error("Cannot save permit to DB, missing issue, repository or organization");
+  //   throw new Error("Cannot save permit to DB, missing issue, repository or organization");
+  // }
+  // const { payout } = Runtime.getState().botConfig;
+  // const { evmNetworkId } = payout;
+  const settlement = Runtime.getState().adapters.supabase.settlement;
+  const permit: GeneratedPermit = {
+    ...txData,
+    // amount: txData.permit.permitted.amount,
+    // nonce: txData.permit.nonce,
+    // deadline: txData.permit.deadline,
+    // signature: txData.signature,
+    // beneficiary_id: contributorId,
 
-  const permit: InsertPermit = {
-    organizationId: organization?.id ?? null,
-    repositoryId: repository?.id,
-    issueId: issue?.id,
-    evmNetworkId: evmNetworkId,
-    contributorId: contributorId,
-    tokenAddress: txData.permit.permitted.token,
-    payoutAmount: txData.permit.permitted.amount,
-    contributorWallet: txData.transferDetails.to,
-    nonce: txData.permit.nonce,
-    deadline: txData.permit.deadline,
-    signature: txData.signature,
-    partnerWallet: txData.owner,
+    // token_id: await settlement.lookupTokenId(evmNetworkId, txData.permit.permitted.token),
   };
 
-  const savedPermit = await savePermit(permit);
-  logger.info(`Saved permit to DB: ${JSON.stringify(savedPermit)}`);
-  return savedPermit;
-};
+  // const creditResponse =
+  await settlement.addCredit({
+    userId: contributorId,
+    amount: new Decimal(txData.transferDetails.requestedAmount),
+    comment: comment,
+    permit: permit,
+    networkId: evmNetworkId,
+    organization: organization,
+    // address: txData.permit.permitted.token,
+  });
+  // const savedPermit = await savePermit(permit);
+  logger.info(`Saved permit to DB: ${JSON.stringify(permit)}`);
+  return permit;
+}

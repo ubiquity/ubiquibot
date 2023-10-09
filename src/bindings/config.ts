@@ -56,7 +56,9 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       permitBaseUrl: process.env.PERMIT_BASE_URL || permitBaseUrl,
     },
     unassign: {
-      timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE) : timeRangeForMaxIssue,
+      timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE
+        ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE)
+        : timeRangeForMaxIssue,
       timeRangeForMaxIssueEnabled: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED
         ? process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED == "true"
         : timeRangeForMaxIssueEnabled,
@@ -68,13 +70,13 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       key: process.env.SUPABASE_KEY ?? "",
     },
 
-    logNotification: {
-      url: process.env.LOG_WEBHOOK_BOT_URL || "",
-      secret: process.env.LOG_WEBHOOK_SECRET || "",
-      groupId: Number(process.env.LOG_WEBHOOK_GROUP_ID) || 0,
-      topicId: Number(process.env.LOG_WEBHOOK_TOPIC_ID) || 0,
-      enabled: true,
-    },
+    // logNotification: {
+    //   url: process.env.LOG_WEBHOOK_BOT_URL || "",
+    //   secret: process.env.LOG_WEBHOOK_SECRET || "",
+    //   groupId: Number(process.env.LOG_WEBHOOK_GROUP_ID) || 0,
+    //   topicId: Number(process.env.LOG_WEBHOOK_TOPIC_ID) || 0,
+    //   enabled: true,
+    // },
     mode: { permitMaxPrice, disableAnalytics, incentiveMode, assistivePricing },
     command: commandSettings,
     assign: { maxConcurrentTasks: maxConcurrentTasks, staleTaskTime: ms(staleTaskTime) },
@@ -89,9 +91,13 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     botConfig.mode.permitMaxPrice = 0;
   }
 
-  if (botConfig.logNotification.secret == "" || botConfig.logNotification.groupId == 0 || botConfig.logNotification.url == "") {
-    botConfig.logNotification.enabled = false;
-  }
+  // if (
+  //   botConfig.logNotification.secret == "" ||
+  //   botConfig.logNotification.groupId == 0 ||
+  //   botConfig.logNotification.url == ""
+  // ) {
+  //   botConfig.logNotification.enabled = false;
+  // }
 
   const validate = ajv.compile(BotConfigSchema);
   const valid = validate(botConfig);
@@ -100,7 +106,9 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
   }
 
   if (botConfig.unassign.followUpTime < 0 || botConfig.unassign.disqualifyTime < 0) {
-    throw new Error(`Invalid time interval, followUpTime: ${botConfig.unassign.followUpTime}, disqualifyTime: ${botConfig.unassign.disqualifyTime}`);
+    throw new Error(
+      `Invalid time interval, followUpTime: ${botConfig.unassign.followUpTime}, disqualifyTime: ${botConfig.unassign.disqualifyTime}`
+    );
   }
 
   return botConfig;

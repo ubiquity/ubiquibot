@@ -2,7 +2,7 @@ import { Comment } from "./payload";
 
 export type CommandsHandler = (args: string) => Promise<string | undefined>;
 export type ActionHandler = (args?: string) => Promise<void>;
-export type CallbackHandler = (issue_number: number, text: string, action: string, reply_to?: Comment) => Promise<void>;
+export type CallbackHandler = (issueNumber: number, text: string, action: string, replyTo?: Comment) => Promise<void>;
 export type PreActionHandler = ActionHandler;
 export type PostActionHandler = ActionHandler;
 
@@ -22,8 +22,9 @@ export type Handler = {
 export type UserCommands = {
   id: string;
   description: string;
+  example?: string;
   handler: CommandsHandler;
   callback: CallbackHandler;
-  successComment?: string;
-  failureComment?: string;
+  // successComment?: string;
+  // failureComment?: string;
 };

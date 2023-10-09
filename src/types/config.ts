@@ -143,7 +143,7 @@ export const BotConfigSchema = Type.Object({
   payout: PayoutConfigSchema,
   unassign: UnassignConfigSchema,
   supabase: SupabaseConfigSchema,
-  logNotification: LogNotificationSchema,
+  // logNotification: LogNotificationSchema,
   mode: ModeSchema,
   assign: AssignSchema,
   sodium: SodiumSchema,
@@ -234,7 +234,6 @@ export const MergedConfigSchema = Type.Object({
   timeRangeForMaxIssue: Type.Number(),
   timeRangeForMaxIssueEnabled: Type.Boolean(),
   permitBaseUrl: Type.String(),
-  botDelay: Type.Number(),
   followUpTime: Type.String(),
   disqualifyTime: Type.String(),
 });

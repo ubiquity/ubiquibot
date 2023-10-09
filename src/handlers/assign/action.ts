@@ -1,14 +1,15 @@
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { addCommentToIssue, closePullRequest, calculateWeight, calculateDuration } from "../../helpers";
 import { gitLinkedPrParser } from "../../helpers/parser";
 import { Payload, LabelItem } from "../../types";
 import { deadLinePrefix } from "../shared";
 
 const exclude_accounts: string[] = [];
-export const commentWithAssignMessage = async (): Promise<void> => {
-  const context = getBotContext();
-  const config = getBotConfig();
-  const logger = getLogger();
+export async function commentWithAssignMessage(): Promise<void> {
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const config = runtime.botConfig;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   if (!payload.issue) {
     logger.debug(`Empty issue object`);
@@ -25,7 +26,7 @@ export const commentWithAssignMessage = async (): Promise<void> => {
     return;
   }
 
-  const flattened_assignees = assignees.reduce((acc, cur) => `${acc} @${cur.login}`, "");
+  const flattenedAssignees = assignees.reduce((acc, cur) => `${acc} @${cur.login}`, "");
 
   // get the time label from the `labels`
   const labels = payload.issue?.labels;
@@ -37,7 +38,8 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   const timeLabelsAssigned: LabelItem[] = [];
   for (const _label of labels) {
     const _label_type = typeof _label;
-    const _label_name = _label_type === "string" ? _label.toString() : _label_type === "object" ? _label.name : "unknown";
+    const _label_name =
+      _label_type === "string" ? _label.toString() : _label_type === "object" ? _label.name : "unknown";
 
     const timeLabel = timeLabelsDefined.find((item) => item.name === _label_name);
     if (timeLabel) {
@@ -61,15 +63,16 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   const currentDate = new Date();
   const currentDateInMilliseconds = currentDate.getTime();
   const endDate = new Date(currentDateInMilliseconds + duration * 1000);
-  const commitMessage = `${flattened_assignees} ${deadLinePrefix} ${endDate.toUTCString().replace("GMT", "UTC")}`;
+  const commitMessage = `${flattenedAssignees} ${deadLinePrefix} ${endDate.toUTCString().replace("GMT", "UTC")}`;
   logger.debug(`Creating an issue comment, commit_msg: ${commitMessage}`);
 
   await addCommentToIssue(commitMessage, payload.issue?.number);
-};
+}
 
 export const closePullRequestForAnIssue = async (): Promise<void> => {
-  const context = getBotContext();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   if (!payload.issue?.number) return;
 

@@ -1,385 +1,603 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export interface Database {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-          extensions?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       access: {
         Row: {
-          created_at: string | null;
-          multiplier_access: boolean | null;
-          price_access: boolean | null;
-          priority_access: boolean | null;
-          repository: string | null;
-          time_access: boolean | null;
-          updated_at: string | null;
-          user_name: string;
-        };
-        Insert: {
-          created_at?: string | null;
-          multiplier_access?: boolean | null;
-          price_access?: boolean | null;
-          priority_access?: boolean | null;
-          repository?: string | null;
-          time_access?: boolean | null;
-          updated_at?: string | null;
-          user_name: string;
-        };
-        Update: {
-          created_at?: string | null;
-          multiplier_access?: boolean | null;
-          price_access?: boolean | null;
-          priority_access?: boolean | null;
-          repository?: string | null;
-          time_access?: boolean | null;
-          updated_at?: string | null;
-          user_name?: string;
-        };
-        Relationships: [];
-      };
-      issues: {
-        Row: {
-          assignees: string[] | null;
-          closed_at: string | null;
-          comments_url: string;
-          completed_at: string | null;
-          created_at: string | null;
-          events_url: string;
+          created: string;
           id: number;
-          issue_number: number;
-          issue_url: string;
-          labels: string[] | null;
-          price: string | null;
-          priority: string | null;
-          recipient: string | null;
-          started_at: string | null;
-          status: Database["public"]["Enums"]["issue_status"];
-          timeline: string | null;
-          txhash: string[] | null;
-          updated_at: string | null;
+          labels: Json | null;
+          location_id: number | null;
+          multiplier: number;
+          multiplier_reason: string | null;
+          node_id: string | null;
+          node_type: string | null;
+          node_url: string | null;
+          updated: string | null;
+          user_id: number;
         };
         Insert: {
-          assignees?: string[] | null;
-          closed_at?: string | null;
-          comments_url: string;
-          completed_at?: string | null;
-          created_at?: string | null;
-          events_url: string;
+          created?: string;
           id?: number;
-          issue_number: number;
-          issue_url: string;
-          labels?: string[] | null;
-          price?: string | null;
-          priority?: string | null;
-          recipient?: string | null;
-          started_at?: string | null;
-          status?: Database["public"]["Enums"]["issue_status"];
-          timeline?: string | null;
-          txhash?: string[] | null;
-          updated_at?: string | null;
+          labels?: Json | null;
+          location_id?: number | null;
+          multiplier?: number;
+          multiplier_reason?: string | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          updated?: string | null;
+          user_id: number;
         };
         Update: {
-          assignees?: string[] | null;
-          closed_at?: string | null;
-          comments_url?: string;
-          completed_at?: string | null;
-          created_at?: string | null;
-          events_url?: string;
+          created?: string;
           id?: number;
-          issue_number?: number;
-          issue_url?: string;
-          labels?: string[] | null;
-          price?: string | null;
-          priority?: string | null;
-          recipient?: string | null;
-          started_at?: string | null;
-          status?: Database["public"]["Enums"]["issue_status"];
-          timeline?: string | null;
-          txhash?: string[] | null;
-          updated_at?: string | null;
-        };
-        Relationships: [];
-      };
-      users: {
-        Row: {
-          bio: string | null;
-          blog: string | null;
-          company: string | null;
-          contributions: string | null;
-          created_at: string | null;
-          email: string | null;
-          followers: number | null;
-          following: number | null;
-          percent_code_reviews: number | null;
-          percent_commits: number | null;
-          percent_issues: number | null;
-          percent_pull_requests: number | null;
-          public_repos: number | null;
-          twitter_username: string | null;
-          updated_at: string | null;
-          user_location: string | null;
-          user_login: string;
-          user_name: string;
-          user_type: string | null;
-          wallet_address: string | null;
-        };
-        Insert: {
-          bio?: string | null;
-          blog?: string | null;
-          company?: string | null;
-          contributions?: string | null;
-          created_at?: string | null;
-          email?: string | null;
-          followers?: number | null;
-          following?: number | null;
-          percent_code_reviews?: number | null;
-          percent_commits?: number | null;
-          percent_issues?: number | null;
-          percent_pull_requests?: number | null;
-          public_repos?: number | null;
-          twitter_username?: string | null;
-          updated_at?: string | null;
-          user_location?: string | null;
-          user_login: string;
-          user_name: string;
-          user_type?: string | null;
-          wallet_address?: string | null;
-        };
-        Update: {
-          bio?: string | null;
-          blog?: string | null;
-          company?: string | null;
-          contributions?: string | null;
-          created_at?: string | null;
-          email?: string | null;
-          followers?: number | null;
-          following?: number | null;
-          percent_code_reviews?: number | null;
-          percent_commits?: number | null;
-          percent_issues?: number | null;
-          percent_pull_requests?: number | null;
-          public_repos?: number | null;
-          twitter_username?: string | null;
-          updated_at?: string | null;
-          user_location?: string | null;
-          user_login?: string;
-          user_name?: string;
-          user_type?: string | null;
-          wallet_address?: string | null;
-        };
-        Relationships: [];
-      };
-      wallets: {
-        Row: {
-          created_at: string | null;
-          multiplier: number | null;
-          reason: string | null;
-          updated_at: string | null;
-          user_name: string;
-          wallet_address: string | null;
-        };
-        Insert: {
-          created_at?: string | null;
-          multiplier?: number | null;
-          reason?: string | null;
-          updated_at?: string | null;
-          user_name: string;
-          wallet_address?: string | null;
-        };
-        Update: {
-          created_at?: string | null;
-          multiplier?: number | null;
-          reason?: string | null;
-          updated_at?: string | null;
-          user_name?: string;
-          wallet_address?: string | null;
-        };
-        Relationships: [];
-      };
-      weekly: {
-        Row: {
-          created_at: string | null;
-          last_time: string | null;
-        };
-        Insert: {
-          created_at?: string | null;
-          last_time?: string | null;
-        };
-        Update: {
-          created_at?: string | null;
-          last_time?: string | null;
-        };
-        Relationships: [];
-      };
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      add_penalty: {
-        Args: {
-          username: string;
-          repository_name: string;
-          token_address: string;
-          penalty_amount: string;
-        };
-        Returns: string;
-      };
-      deduct_penalty: {
-        Args: {
-          username: string;
-          repository_name: string;
-          token_address: string;
-          penalty_amount: string;
-        };
-        Returns: string;
-      };
-    };
-    Enums: {
-      issue_status: "READY_TO_START" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-  storage: {
-    Tables: {
-      buckets: {
-        Row: {
-          allowed_mime_types: string[] | null;
-          avif_autodetection: boolean | null;
-          created_at: string | null;
-          file_size_limit: number | null;
-          id: string;
-          name: string;
-          owner: string | null;
-          public: boolean | null;
-          updated_at: string | null;
-        };
-        Insert: {
-          allowed_mime_types?: string[] | null;
-          avif_autodetection?: boolean | null;
-          created_at?: string | null;
-          file_size_limit?: number | null;
-          id: string;
-          name: string;
-          owner?: string | null;
-          public?: boolean | null;
-          updated_at?: string | null;
-        };
-        Update: {
-          allowed_mime_types?: string[] | null;
-          avif_autodetection?: boolean | null;
-          created_at?: string | null;
-          file_size_limit?: number | null;
-          id?: string;
-          name?: string;
-          owner?: string | null;
-          public?: boolean | null;
-          updated_at?: string | null;
+          labels?: Json | null;
+          location_id?: number | null;
+          multiplier?: number;
+          multiplier_reason?: string | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          updated?: string | null;
+          user_id?: number;
         };
         Relationships: [
           {
-            foreignKeyName: "buckets_owner_fkey";
-            columns: ["owner"];
+            foreignKeyName: "access_user_id_fkey";
+            columns: ["user_id"];
             referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
-      migrations: {
-        Row: {
-          executed_at: string | null;
-          hash: string;
-          id: number;
-          name: string;
-        };
-        Insert: {
-          executed_at?: string | null;
-          hash: string;
-          id: number;
-          name: string;
-        };
-        Update: {
-          executed_at?: string | null;
-          hash?: string;
-          id?: number;
-          name?: string;
-        };
-        Relationships: [];
-      };
-      objects: {
-        Row: {
-          bucket_id: string | null;
-          created_at: string | null;
-          id: string;
-          last_accessed_at: string | null;
-          metadata: Json | null;
-          name: string | null;
-          owner: string | null;
-          path_tokens: string[] | null;
-          updated_at: string | null;
-          version: string | null;
-        };
-        Insert: {
-          bucket_id?: string | null;
-          created_at?: string | null;
-          id?: string;
-          last_accessed_at?: string | null;
-          metadata?: Json | null;
-          name?: string | null;
-          owner?: string | null;
-          path_tokens?: string[] | null;
-          updated_at?: string | null;
-          version?: string | null;
-        };
-        Update: {
-          bucket_id?: string | null;
-          created_at?: string | null;
-          id?: string;
-          last_accessed_at?: string | null;
-          metadata?: Json | null;
-          name?: string | null;
-          owner?: string | null;
-          path_tokens?: string[] | null;
-          updated_at?: string | null;
-          version?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "objects_bucketId_fkey";
-            columns: ["bucket_id"];
-            referencedRelation: "buckets";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "objects_owner_fkey";
-            columns: ["owner"];
+            foreignKeyName: "fk_access_location";
+            columns: ["location_id"];
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      credits: {
+        Row: {
+          amount: number;
+          created: string;
+          id: number;
+          location_id: number | null;
+          node_id: string | null;
+          node_type: string | null;
+          node_url: string | null;
+          permit_id: number | null;
+          updated: string | null;
+        };
+        Insert: {
+          amount: number;
+          created?: string;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          permit_id?: number | null;
+          updated?: string | null;
+        };
+        Update: {
+          amount?: number;
+          created?: string;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          permit_id?: number | null;
+          updated?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "credits_location_id_fkey";
+            columns: ["location_id"];
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "credits_permit_id_fkey";
+            columns: ["permit_id"];
+            referencedRelation: "permits";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      debits: {
+        Row: {
+          amount: number;
+          created: string;
+          id: number;
+          location_id: number | null;
+          node_id: string | null;
+          node_type: string | null;
+          node_url: string | null;
+          token_id: number | null;
+          updated: string | null;
+        };
+        Insert: {
+          amount: number;
+          created?: string;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          token_id?: number | null;
+          updated?: string | null;
+        };
+        Update: {
+          amount?: number;
+          created?: string;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          token_id?: number | null;
+          updated?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "debits_token_id_fkey";
+            columns: ["token_id"];
+            referencedRelation: "tokens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fk_debits_location";
+            columns: ["location_id"];
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      labels: {
+        Row: {
+          authorized: boolean | null;
+          created: string;
+          id: number;
+          label_from: string | null;
+          label_to: string | null;
+          location_id: number | null;
+          node_id: string | null;
+          node_type: Database["public"]["Enums"]["github_node_type"] | null;
+          node_url: string | null;
+          updated: string | null;
+        };
+        Insert: {
+          authorized?: boolean | null;
+          created?: string;
+          id?: number;
+          label_from?: string | null;
+          label_to?: string | null;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: Database["public"]["Enums"]["github_node_type"] | null;
+          node_url?: string | null;
+          updated?: string | null;
+        };
+        Update: {
+          authorized?: boolean | null;
+          created?: string;
+          id?: number;
+          label_from?: string | null;
+          label_to?: string | null;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: Database["public"]["Enums"]["github_node_type"] | null;
+          node_url?: string | null;
+          updated?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "labels_location_id_fkey";
+            columns: ["location_id"];
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      locations: {
+        Row: {
+          comment_id: number | null;
+          created: string;
+          id: number;
+          issue_id: number | null;
+          node_id: string | null;
+          node_type: string | null;
+          node_url: string | null;
+          organization_id: number | null;
+          repository_id: number | null;
+          updated: string | null;
+          user_id: number | null;
+        };
+        Insert: {
+          comment_id?: number | null;
+          created?: string;
+          id?: number;
+          issue_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          organization_id?: number | null;
+          repository_id?: number | null;
+          updated?: string | null;
+          user_id?: number | null;
+        };
+        Update: {
+          comment_id?: number | null;
+          created?: string;
+          id?: number;
+          issue_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          organization_id?: number | null;
+          repository_id?: number | null;
+          updated?: string | null;
+          user_id?: number | null;
+        };
+        Relationships: [];
+      };
+      logs: {
+        Row: {
+          created: string;
+          id: number;
+          location_id: number | null;
+          log_entry: string;
+          node_id: string | null;
+          node_type: string | null;
+          node_url: string | null;
+          updated: string | null;
+        };
+        Insert: {
+          created?: string;
+          id?: number;
+          location_id?: number | null;
+          log_entry: string;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          updated?: string | null;
+        };
+        Update: {
+          created?: string;
+          id?: number;
+          location_id?: number | null;
+          log_entry?: string;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          updated?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fk_logs_location";
+            columns: ["location_id"];
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      partners: {
+        Row: {
+          created: string;
+          id: number;
+          location_id: number | null;
+          node_id: string | null;
+          node_type: string | null;
+          node_url: string | null;
+          updated: string | null;
+          wallet_id: number | null;
+        };
+        Insert: {
+          created?: string;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          updated?: string | null;
+          wallet_id?: number | null;
+        };
+        Update: {
+          created?: string;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          updated?: string | null;
+          wallet_id?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fk_partners_location";
+            columns: ["location_id"];
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "partners_wallet_id_fkey";
+            columns: ["wallet_id"];
+            referencedRelation: "wallets";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      permits: {
+        Row: {
+          amount: string;
+          beneficiary_id: number;
+          created: string;
+          deadline: string;
+          id: number;
+          location_id: number | null;
+          node_id: string | null;
+          node_type: Database["public"]["Enums"]["github_node_type"] | null;
+          node_url: string | null;
+          nonce: string;
+          partner_id: number | null;
+          signature: string;
+          token_id: number | null;
+          transaction: string | null;
+          updated: string | null;
+        };
+        Insert: {
+          amount: string;
+          beneficiary_id: number;
+          created?: string;
+          deadline: string;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: Database["public"]["Enums"]["github_node_type"] | null;
+          node_url?: string | null;
+          nonce: string;
+          partner_id?: number | null;
+          signature: string;
+          token_id?: number | null;
+          transaction?: string | null;
+          updated?: string | null;
+        };
+        Update: {
+          amount?: string;
+          beneficiary_id?: number;
+          created?: string;
+          deadline?: string;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: Database["public"]["Enums"]["github_node_type"] | null;
+          node_url?: string | null;
+          nonce?: string;
+          partner_id?: number | null;
+          signature?: string;
+          token_id?: number | null;
+          transaction?: string | null;
+          updated?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fk_permits_location";
+            columns: ["location_id"];
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "permits_beneficiary_id_fkey";
+            columns: ["beneficiary_id"];
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "permits_partner_id_fkey";
+            columns: ["partner_id"];
+            referencedRelation: "partners";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "permits_token_fkey";
+            columns: ["token_id"];
+            referencedRelation: "tokens";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      settlements: {
+        Row: {
+          created: string;
+          credit_id: number | null;
+          debit_id: number | null;
+          id: number;
+          location_id: number | null;
+          node_id: string | null;
+          node_type: string | null;
+          node_url: string | null;
+          updated: string | null;
+          user_id: number;
+        };
+        Insert: {
+          created?: string;
+          credit_id?: number | null;
+          debit_id?: number | null;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          updated?: string | null;
+          user_id: number;
+        };
+        Update: {
+          created?: string;
+          credit_id?: number | null;
+          debit_id?: number | null;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          updated?: string | null;
+          user_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fk_settlements_location";
+            columns: ["location_id"];
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "settlements_credit_id_fkey";
+            columns: ["credit_id"];
+            referencedRelation: "credits";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "settlements_debit_id_fkey";
+            columns: ["debit_id"];
+            referencedRelation: "debits";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "settlements_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      tokens: {
+        Row: {
+          address: string;
+          created: string;
+          id: number;
+          location_id: number | null;
+          network: number;
+          node_id: string | null;
+          node_type: string | null;
+          node_url: string | null;
+          updated: string | null;
+        };
+        Insert: {
+          address: string;
+          created?: string;
+          id?: number;
+          location_id?: number | null;
+          network?: number;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          updated?: string | null;
+        };
+        Update: {
+          address?: string;
+          created?: string;
+          id?: number;
+          location_id?: number | null;
+          network?: number;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          updated?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tokens_location_id_fkey";
+            columns: ["location_id"];
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      users: {
+        Row: {
+          created: string;
+          id: number;
+          location_id: number | null;
+          node_id: string | null;
+          node_type: string | null;
+          node_url: string | null;
+          updated: string | null;
+          wallet_id: number | null;
+        };
+        Insert: {
+          created?: string;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          updated?: string | null;
+          wallet_id?: number | null;
+        };
+        Update: {
+          created?: string;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          updated?: string | null;
+          wallet_id?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "users_location_id_fkey";
+            columns: ["location_id"];
+            referencedRelation: "locations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "users_wallet_id_fkey";
+            columns: ["wallet_id"];
+            referencedRelation: "wallets";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      wallets: {
+        Row: {
+          address: string | null;
+          created: string;
+          id: number;
+          location_id: number | null;
+          node_id: string | null;
+          node_type: string | null;
+          node_url: string | null;
+          updated: string | null;
+        };
+        Insert: {
+          address?: string | null;
+          created?: string;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          updated?: string | null;
+        };
+        Update: {
+          address?: string | null;
+          created?: string;
+          id?: number;
+          location_id?: number | null;
+          node_id?: string | null;
+          node_type?: string | null;
+          node_url?: string | null;
+          updated?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "wallets_location_id_fkey";
+            columns: ["location_id"];
+            referencedRelation: "locations";
             referencedColumns: ["id"];
           }
         ];
@@ -389,63 +607,73 @@ export interface Database {
       [_ in never]: never;
     };
     Functions: {
-      can_insert_object: {
-        Args: {
-          bucketid: string;
-          name: string;
-          owner: string;
-          metadata: Json;
-        };
-        Returns: undefined;
-      };
-      extension: {
-        Args: {
-          name: string;
-        };
-        Returns: string;
-      };
-      filename: {
-        Args: {
-          name: string;
-        };
-        Returns: string;
-      };
-      foldername: {
-        Args: {
-          name: string;
-        };
-        Returns: unknown;
-      };
-      get_size_by_bucket: {
-        Args: Record<PropertyKey, never>;
-        Returns: {
-          size: number;
-          bucket_id: string;
-        }[];
-      };
-      search: {
-        Args: {
-          prefix: string;
-          bucketname: string;
-          limits?: number;
-          levels?: number;
-          offsets?: number;
-          search?: string;
-          sortcolumn?: string;
-          sortorder?: string;
-        };
-        Returns: {
-          name: string;
-          id: string;
-          updated_at: string;
-          created_at: string;
-          last_accessed_at: string;
-          metadata: Json;
-        }[];
-      };
+      [_ in never]: never;
     };
     Enums: {
-      [_ in never]: never;
+      github_node_type:
+        | "App"
+        | "Bot"
+        | "CheckRun"
+        | "CheckSuite"
+        | "ClosedEvent"
+        | "CodeOfConduct"
+        | "Commit"
+        | "CommitComment"
+        | "CommitContributionsByRepository"
+        | "ContributingGuidelines"
+        | "ConvertToDraftEvent"
+        | "CreatedCommitContribution"
+        | "CreatedIssueContribution"
+        | "CreatedPullRequestContribution"
+        | "CreatedPullRequestReviewContribution"
+        | "CreatedRepositoryContribution"
+        | "CrossReferencedEvent"
+        | "Discussion"
+        | "DiscussionComment"
+        | "Enterprise"
+        | "EnterpriseUserAccount"
+        | "FundingLink"
+        | "Gist"
+        | "Issue"
+        | "IssueComment"
+        | "JoinedGitHubContribution"
+        | "Label"
+        | "License"
+        | "Mannequin"
+        | "MarketplaceCategory"
+        | "MarketplaceListing"
+        | "MergeQueue"
+        | "MergedEvent"
+        | "MigrationSource"
+        | "Milestone"
+        | "Organization"
+        | "PackageFile"
+        | "Project"
+        | "ProjectCard"
+        | "ProjectColumn"
+        | "ProjectV2"
+        | "PullRequest"
+        | "PullRequestCommit"
+        | "PullRequestReview"
+        | "PullRequestReviewComment"
+        | "ReadyForReviewEvent"
+        | "Release"
+        | "ReleaseAsset"
+        | "Repository"
+        | "RepositoryContactLink"
+        | "RepositoryTopic"
+        | "RestrictedContribution"
+        | "ReviewDismissedEvent"
+        | "SecurityAdvisoryReference"
+        | "SocialAccount"
+        | "SponsorsListing"
+        | "Team"
+        | "TeamDiscussion"
+        | "TeamDiscussionComment"
+        | "User"
+        | "Workflow"
+        | "WorkflowRun"
+        | "WorkflowRunFile";
     };
     CompositeTypes: {
       [_ in never]: never;

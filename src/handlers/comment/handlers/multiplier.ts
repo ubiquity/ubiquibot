@@ -1,38 +1,35 @@
-import { getAccessLevel, upsertWalletMultiplier } from "../../../adapters/supabase";
-import { getBotContext, getLogger } from "../../../bindings";
-import { getUserPermission } from "../../../helpers";
+import Runtime from "../../../bindings/bot-runtime";
+import { isUserAdminOrBillingManager } from "../../../helpers";
 import { Payload } from "../../../types";
-
-export const multiplier = async (body: string) => {
-  const context = getBotContext();
-  const logger = getLogger();
+/**
+ * You can use this command to set a multiplier for a user.
+ * It will accept arguments in any order.
+ * Example usage:
+ *
+ * /multiplier @user 0.5 "Multiplier reason"
+ * /multiplier 0.5 @user "Multiplier reason"
+ * /multiplier "Multiplier reason" @user 0.5
+ * /multiplier 0.5 "Multiplier reason" @user
+ * /multiplier @user "Multiplier reason" 0.5
+ **/
+export async function multiplier(body: string) {
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
   const repo = payload.repository;
-  const { repository, organization } = payload;
+  const comment = payload.comment;
 
-  const id = organization?.id || repository?.id; // repository?.id as fallback
+  if (!comment) return logger.info(`Skipping '/multiplier' because of no comment instance`);
+
+  const issue = payload.issue;
 
   logger.info(`Received '/multiplier' command from user: ${sender}`);
 
-  const issue = payload.issue;
-  if (!issue) {
-    logger.info(`Skipping '/multiplier' because of no issue instance`);
-    return `Skipping '/multiplier' because of no issue instance`;
-  }
+  if (!issue) return logger.info(`Skipping '/multiplier' because of no issue instance`);
 
   const regex = /(".*?"|[^"\s]+)(?=\s*|\s*$)/g;
-  /** You can use this command to set a multiplier for a user.
-   * It will accept arguments in any order.
-   * Example usage:
-   *
-   * /multiplier @user 0.5 "Multiplier reason"
-   * /multiplier 0.5 @user "Multiplier reason"
-   * /multiplier "Multiplier reason" @user 0.5
-   * /multiplier 0.5 "Multiplier reason" @user
-   * /multiplier @user "Multiplier reason" 0.5
-   *
-   **/
 
   const matches = body.match(regex);
 
@@ -55,22 +52,31 @@ export const multiplier = async (body: string) => {
     username = username || sender;
     // check if sender is admin or billing_manager
     // passing in context so we don't have to make another request to get the user
-    const permissionLevel = await getUserPermission(sender, context);
+    const sufficientPrivileges = await isUserAdminOrBillingManager(sender, context);
 
     // if sender is not admin or billing_manager, check db for access
-    if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {
+    if (sufficientPrivileges) {
       logger.info(`Getting multiplier access for ${sender} on ${repo.full_name}`);
       // check db permission
-      const accessible = await getAccessLevel(sender, repo.full_name, "multiplier");
+      // await getMultiplier(sender.id, repo.id);
+      const accessible = await getAccessLevel(
+        payload.sender.id
+        // , repo.full_name, "multiplier"
+      );
 
       if (!accessible) {
-        logger.info(`User ${sender} is not an admin or billing_manager`);
-        return "Insufficient permissions to update the payout multiplier. You are not an `admin` or `billing_manager`";
+        return logger.warn(
+          `Insufficient permissions to update the payout multiplier. ${sender} is not an 'admin' or 'billing_manager'`
+        );
       }
     }
-    logger.info(`Upserting to the wallet table, username: ${username}, taskMultiplier: ${taskMultiplier}, reason: ${reason}}`);
+    logger.info(
+      `Upserting to the wallet table, username: ${username}, taskMultiplier: ${taskMultiplier}, reason: ${reason}}`
+    );
 
-    await upsertWalletMultiplier(username, taskMultiplier?.toString(), reason, id?.toString());
+    const { access } = Runtime.getState().adapters.supabase;
+    await access.upsertMultiplier(payload.sender.id, taskMultiplier, reason, comment);
+
     if (taskMultiplier > 1) {
       return `Successfully changed the payout multiplier for @${username} to ${taskMultiplier}. The reason ${
         reason ? `provided is "${reason}"` : "is not provided"
@@ -84,4 +90,9 @@ export const multiplier = async (body: string) => {
     logger.error("Invalid body for taskMultiplier command");
     return `Invalid syntax for wallet command \n example usage: "/multiplier @user 0.5 'Multiplier reason'"`;
   }
-};
+}
+
+async function getAccessLevel(userId: number) {
+  const { access } = Runtime.getState().adapters.supabase;
+  return await access.getAccess(userId);
+}

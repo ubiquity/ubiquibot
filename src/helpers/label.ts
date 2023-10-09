@@ -1,5 +1,5 @@
 import { Context } from "probot";
-import { getBotConfig, getBotContext, getLogger } from "../bindings";
+import Runtime from "../bindings/bot-runtime";
 import { calculateTaskPrice } from "../handlers";
 import { Label, Payload } from "../types";
 import { deleteLabel } from "./issue";
@@ -13,7 +13,8 @@ export const COLORS = {
 // cspell:enable
 
 export const listLabelsForRepo = async (per_page?: number, page?: number): Promise<Label[]> => {
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
 
   const res = await context.octokit.rest.issues.listLabelsForRepo({
@@ -31,8 +32,9 @@ export const listLabelsForRepo = async (per_page?: number, page?: number): Promi
 };
 
 export const createLabel = async (name: string, labelType?: keyof typeof COLORS): Promise<void> => {
-  const context = getBotContext();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   try {
     await context.octokit.rest.issues.createLabel({
@@ -47,8 +49,9 @@ export const createLabel = async (name: string, labelType?: keyof typeof COLORS)
 };
 
 export const getLabel = async (name: string): Promise<boolean> => {
-  const context = getBotContext();
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
   const payload = context.payload as Payload;
   try {
     const res = await context.octokit.rest.issues.getLabel({
@@ -65,20 +68,35 @@ export const getLabel = async (name: string): Promise<boolean> => {
 };
 
 // Function to update labels based on the base rate difference
-export const updateLabelsFromBaseRate = async (owner: string, repo: string, context: Context, labels: Label[], previousBaseRate: number) => {
-  const logger = getLogger();
-  const config = getBotConfig();
+export const updateLabelsFromBaseRate = async (
+  owner: string,
+  repo: string,
+  context: Context,
+  labels: Label[],
+  previousBaseRate: number
+) => {
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+  const config = runtime.botConfig;
 
   const newLabels: string[] = [];
   const previousLabels: string[] = [];
 
   for (const timeLabel of config.price.timeLabels) {
     for (const priorityLabel of config.price.priorityLabels) {
-      const targetPrice = calculateTaskPrice(calculateWeight(timeLabel), calculateWeight(priorityLabel), config.price.baseMultiplier);
+      const targetPrice = calculateTaskPrice(
+        calculateWeight(timeLabel),
+        calculateWeight(priorityLabel),
+        config.price.baseMultiplier
+      );
       const targetPriceLabel = `Price: ${targetPrice} USD`;
       newLabels.push(targetPriceLabel);
 
-      const previousTargetPrice = calculateTaskPrice(calculateWeight(timeLabel), calculateWeight(priorityLabel), previousBaseRate);
+      const previousTargetPrice = calculateTaskPrice(
+        calculateWeight(timeLabel),
+        calculateWeight(priorityLabel),
+        previousBaseRate
+      );
       const previousTargetPriceLabel = `Price: ${previousTargetPrice} USD`;
       previousLabels.push(previousTargetPriceLabel);
     }

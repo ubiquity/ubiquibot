@@ -1,27 +1,29 @@
 import ms from "ms";
-import { getBotContext } from "../bindings";
+import Runtime from "../bindings/bot-runtime";
 import { LabelItem, Payload, UserType } from "../types";
 
 const contextNamesToSkip = ["workflow_run"];
 
-export const shouldSkip = (): { skip: boolean; reason: string } => {
-  const context = getBotContext();
-  const { name } = context;
+export function shouldSkip() {
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
   const payload = context.payload as Payload;
-  const res: { skip: boolean; reason: string } = { skip: false, reason: "" };
-  if (contextNamesToSkip.includes(name)) {
-    res.skip = true;
-    res.reason = `excluded context name: ${name}`;
+  const response = { stop: false, reason: "" };
+
+  if (contextNamesToSkip.includes(context.name)) {
+    response.stop = true;
+    response.reason = `excluded context name: ${context.name}`;
   } else if (payload.sender.type === UserType.Bot) {
-    res.skip = true;
-    res.reason = "sender is a bot";
+    response.stop = true;
+    response.reason = "sender is a bot";
   }
-  return res;
-};
+
+  return response;
+}
 
 export const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export const calculateWeight = (label: LabelItem | undefined): number => {
+export function calculateWeight(label: LabelItem | undefined): number {
   if (!label) return 0;
   const matches = label.name.match(/\d+/);
   const number = matches && matches.length > 0 ? parseInt(matches[0]) || 0 : 0;
@@ -32,9 +34,9 @@ export const calculateWeight = (label: LabelItem | undefined): number => {
   if (label.name.toLowerCase().includes("week")) return number + 1;
   if (label.name.toLowerCase().includes("month")) return 5 + (number - 1) * 8;
   return 0;
-};
+}
 
-export const calculateDuration = (label: LabelItem): number => {
+export function calculateDuration(label: LabelItem): number {
   if (!label) return 0;
   if (label.name.toLowerCase().includes("priority")) return 0;
 
@@ -43,4 +45,4 @@ export const calculateDuration = (label: LabelItem): number => {
   if (!result) return 0;
 
   return ms(result[1]) / 1000;
-};
+}

@@ -1,21 +1,24 @@
-import { getAccessLevel } from "../../adapters/supabase";
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { addCommentToIssue, getUserPermission, removeLabel, addLabelToIssue } from "../../helpers";
+import Runtime from "../../bindings/bot-runtime";
+import { addCommentToIssue, isUserAdminOrBillingManager, removeLabel, addLabelToIssue } from "../../helpers";
 import { Payload, UserType } from "../../types";
 
 export const handleLabelsAccess = async () => {
-  const { publicAccessControl } = getBotConfig();
+  const runtime = Runtime.getState();
+  const { publicAccessControl } = runtime.botConfig;
   if (!publicAccessControl.setLabel) return true;
 
-  const context = getBotContext();
-  const logger = getLogger();
-  const payload = context.payload as Payload;
+  const eventContext = runtime.eventContext;
+  const logger = runtime.logger;
+
+  const payload = eventContext.payload as Payload;
+
   if (!payload.issue) return;
   if (!payload.label?.name) return;
   if (payload.sender.type === UserType.Bot) return true;
+
   const sender = payload.sender.login;
   const repo = payload.repository;
-  const permissionLevel = await getUserPermission(sender, context);
+  const sufficientPrivileges = await isUserAdminOrBillingManager(sender, eventContext);
   // event in plain english
   const eventName = payload.action === "labeled" ? "add" : "remove";
   const labelName = payload.label.name;
@@ -24,10 +27,13 @@ export const handleLabelsAccess = async () => {
   const match = payload.label?.name?.split(":");
   if (match.length == 0) return;
   const label_type = match[0].toLowerCase();
-  if (permissionLevel !== "admin") {
+  if (sufficientPrivileges) {
     logger.info(`Getting ${label_type} access for ${sender} on ${repo.full_name}`);
     // check permission
-    const accessible = await getAccessLevel(sender, repo.full_name, label_type);
+    const { access, user } = runtime.adapters.supabase;
+    const userId = await user.getUserId(sender);
+    const accessible = await access.getAccess(userId);
+    // const accessible = await access.getAccessLevel(sender, repo.full_name, label_type);
 
     if (accessible) {
       return true;

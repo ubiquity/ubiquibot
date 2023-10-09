@@ -1,16 +1,14 @@
-import { getBotContext, getLogger } from "../../../bindings";
+import Runtime from "../../../bindings/bot-runtime";
 import { Payload, StreamlinedComment, UserType } from "../../../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { askGPT, decideContextGPT, sysMsg } from "../../../helpers/gpt";
-import { ErrorDiff } from "../../../utils/helpers";
 
-/**
- * @param body The question to ask
- */
-export const ask = async (body: string) => {
-  const context = getBotContext();
-  const logger = getLogger();
+export async function ask(body: string) {
+  // The question to ask
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
 
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
@@ -41,8 +39,7 @@ export const ask = async (body: string) => {
     const commentsRaw = await getAllIssueComments(issue.number, "raw");
 
     if (!comments) {
-      logger.info(`Error getting issue comments`);
-      return ErrorDiff(`Error getting issue comments`);
+      throw logger.error(`Error getting issue comments`);
     }
 
     // add the first comment of the issue/pull request
@@ -72,7 +69,12 @@ export const ask = async (body: string) => {
     }
 
     // let chatgpt deduce what is the most relevant context
-    const gptDecidedContext = await decideContextGPT(chatHistory, streamlined, linkedPRStreamlined, linkedIssueStreamlined);
+    const gptDecidedContext = await decideContextGPT(
+      chatHistory,
+      streamlined,
+      linkedPRStreamlined,
+      linkedIssueStreamlined
+    );
 
     if (linkedIssueStreamlined.length == 0 && linkedPRStreamlined.length == 0) {
       // No external context to add
@@ -92,17 +94,17 @@ export const ask = async (body: string) => {
       chatHistory.push(
         {
           role: "system",
-          content: sysMsg, // provide the answer template
+          content: sysMsg,
           name: "UbiquiBot",
         } as CreateChatCompletionRequestMessage,
         {
           role: "system",
-          content: "Original Context: " + JSON.stringify(gptDecidedContext), // provide the context
+          content: "Original Context: " + JSON.stringify(gptDecidedContext),
           name: "system",
         } as CreateChatCompletionRequestMessage,
         {
           role: "user",
-          content: "Question: " + JSON.stringify(body), // provide the question
+          content: "Question: " + JSON.stringify(body),
           name: "user",
         } as CreateChatCompletionRequestMessage
       );
@@ -115,9 +117,9 @@ export const ask = async (body: string) => {
     } else if (gptResponse.answer) {
       return gptResponse.answer;
     } else {
-      return ErrorDiff(`Error getting response from GPT`);
+      throw logger.error({ message: `Error getting response from GPT` });
     }
   } else {
-    return "Invalid syntax for ask \n usage: '/ask What is pi?";
+    return logger.warn("Invalid syntax for ask \n usage: '/ask What is pi?");
   }
-};
+}

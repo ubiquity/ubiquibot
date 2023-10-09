@@ -43,7 +43,7 @@ export const parseComments = (comments: string[], itemsToExclude: string[]): Rec
   return result;
 };
 
-export const generateCollapsibleTable = (data: { element: string; units: number; reward: Decimal }[]) => {
+export function generateCollapsibleTable(data: { element: string; units: number; reward: Decimal }[]) {
   // Check if the data array is empty
   if (data.length === 0) {
     return "No data to display.";
@@ -59,22 +59,22 @@ export const generateCollapsibleTable = (data: { element: string; units: number;
   const tableMarkdown = `
 <details>
   <summary>Details</summary>
-    
+
 ${headerRow}
 ${tableRows}
-    
+
 </details>
   `;
 
   return tableMarkdown;
-};
+}
 
 export const createDetailsTable = (
   amount: string,
   paymentURL: string,
   username: string,
   values: { title: string; subtitle: string; value: string }[],
-  debug: Record<
+  debug?: Record<
     string,
     {
       count: number;
@@ -99,7 +99,7 @@ export const createDetailsTable = (
 
   if (!isEmpty(debug)) {
     const data = Object.entries(debug)
-      .filter(([_, value]) => value.count > 0)
+      .filter(([, value]) => value.count > 0)
       .map(([key, value]) => {
         const element = key === "#text" ? "words" : key;
         const units = value.count;

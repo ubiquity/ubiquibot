@@ -1,9 +1,10 @@
-import { getBotContext, getLogger } from "../bindings";
+import Runtime from "../bindings/bot-runtime";
 
 // Get the previous file content
 export async function getPreviousFileContent(owner: string, repo: string, branch: string, filePath: string) {
-  const logger = getLogger();
-  const context = getBotContext();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+  const context = runtime.eventContext;
 
   try {
     // Get the latest commit of the branch
@@ -60,9 +61,16 @@ export async function getPreviousFileContent(owner: string, repo: string, branch
   }
 }
 
-export async function getFileContent(owner: string, repo: string, branch: string, filePath: string, commitSha?: string): Promise<string | null> {
-  const logger = getLogger();
-  const context = getBotContext();
+export async function getFileContent(
+  owner: string,
+  repo: string,
+  branch: string,
+  filePath: string,
+  commitSha?: string
+): Promise<string | null> {
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+  const context = runtime.eventContext;
 
   try {
     if (!commitSha) {

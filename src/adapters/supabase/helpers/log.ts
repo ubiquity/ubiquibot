@@ -1,19 +1,18 @@
-import axios from "axios";
-import { getAdapters, getBotContext, Logger } from "../../../bindings";
-import { Payload, LogLevel, LogNotification } from "../../../types";
+import { SupabaseClient } from "@supabase/supabase-js";
+import Runtime from "../../../bindings/bot-runtime";
+import { LogLevel, Payload } from "../../../types";
 import { getOrgAndRepoFromPath } from "../../../utils/private";
-import jwt from "jsonwebtoken";
+import { prettyLogs } from "./pretty-logs";
+import { Super } from "./tables/super";
 interface Log {
-  repo: string | null;
-  org: string | null;
-  commentId: number | undefined;
-  issueNumber: number | undefined;
   logMessage: string;
-  level: LogLevel;
-  timestamp: string;
 }
+type LoggerParameterSimple = string;
+type LoggerParameterFull = { message: string | object; metadata?: object; postComment?: boolean };
+type LoggerParameters = LoggerParameterSimple | LoggerParameterFull;
 
-export const getNumericLevel = (level: LogLevel) => {
+type LogFunction = (message: string | object, metadata?: object) => void;
+function getNumericLevel(level: LogLevel) {
   switch (level) {
     case LogLevel.ERROR:
       return 0;
@@ -32,129 +31,50 @@ export const getNumericLevel = (level: LogLevel) => {
     default:
       return -1; // Invalid level
   }
-};
-
-export class GitHubLogger implements Logger {
-  private supabase;
+}
+export class GitHubLogger extends Super {
+  // private supabase;
   private maxLevel;
-  private app;
   private logEnvironment;
   private logQueue: Log[] = []; // Your log queue
   private maxConcurrency = 6; // Maximum concurrent requests
   private retryDelay = 1000; // Delay between retries in milliseconds
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
-  private logNotification;
 
-  constructor(app: string, logEnvironment: string, maxLevel: LogLevel, retryLimit: number, logNotification: LogNotification) {
-    this.app = app;
+  constructor(supabase: SupabaseClient, logEnvironment: string, maxLevel: LogLevel, retryLimit: number) {
+    super(supabase);
     this.logEnvironment = logEnvironment;
     this.maxLevel = getNumericLevel(maxLevel);
     this.retryLimit = retryLimit;
-    this.supabase = getAdapters().supabase;
-    this.logNotification = logNotification;
   }
 
-  async sendLogsToSupabase({ repo, org, commentId, issueNumber, logMessage, level, timestamp }: Log) {
-    const { error } = await this.supabase.from("logs").insert([
-      {
-        repo_name: repo,
-        level: getNumericLevel(level),
-        org_name: org,
-        comment_id: commentId,
-        log_message: logMessage,
-        issue_number: issueNumber,
-        timestamp,
-      },
-    ]);
-
-    if (error) {
-      console.error("Error logging to Supabase:", error.message);
-      return;
-    }
+  private async _sendLogsToSupabase({ logMessage }: Log) {
+    const { error } = await this.supabase.from("logs").insert({ log_entry: logMessage });
+    if (error) throw prettyLogs.error("Error logging to Supabase:", error.message);
   }
 
   async processLogs(log: Log) {
     try {
-      await this.sendLogsToSupabase(log);
+      await this._sendLogsToSupabase(log);
     } catch (error) {
-      console.error("Error sending log, retrying:", error);
+      prettyLogs.error("Error sending log, retrying:", error);
       return this.retryLimit > 0 ? await this.retryLog(log) : null;
     }
   }
 
-  private sendDataWithJwt(message: string | object, errorPayload?: string | object) {
-    const context = getBotContext();
-    const payload = context.payload as Payload;
-
-    const { comment, issue, repository } = payload;
-    const commentId = comment?.id;
-    const issueNumber = issue?.number;
-    const repoFullName = repository?.full_name;
-
-    const { org, repo } = getOrgAndRepoFromPath(repoFullName);
-
-    const issueLink = `https://github.com/${org}/${repo}/issues/${issueNumber}${commentId ? `#issuecomment-${commentId}` : ""}`;
-
-    return new Promise((resolve, reject) => {
-      try {
-        if (!this.logNotification?.enabled) {
-          reject("Telegram Log Notification is disabled, please check that url, secret and group is provided");
-        }
-
-        if (typeof message === "object") {
-          message = JSON.stringify(message);
-        }
-
-        if (errorPayload && typeof errorPayload === "object") {
-          errorPayload = JSON.stringify(errorPayload);
-        }
-
-        const errorMessage = `\`${message}${errorPayload ? " - " + errorPayload : ""}\`\n\nContext: ${issueLink}`;
-
-        // Step 1: Sign a JWT with the provided parameter
-        const jwtToken = jwt.sign(
-          {
-            group: this.logNotification.groupId,
-            topic: this.logNotification.topicId,
-            msg: errorMessage,
-          },
-          this.logNotification.secret,
-          { noTimestamp: true }
-        );
-
-        const apiUrl = `${this.logNotification.url}/sendLogs`;
-        const headers = {
-          Authorization: `${jwtToken}`,
-        };
-
-        axios
-          .get(apiUrl, { headers })
-          .then((response) => {
-            resolve(response.data);
-          })
-          .catch((error) => {
-            reject(error);
-          });
-      } catch (error) {
-        // Reject the promise with the error
-        reject(error);
-      }
-    });
-  }
-
   async retryLog(log: Log, retryCount = 0) {
     if (retryCount >= this.retryLimit) {
-      console.error("Max retry limit reached for log:", log);
+      prettyLogs.error("Max retry limit reached for log:", log);
       return;
     }
 
     await new Promise((resolve) => setTimeout(resolve, this.retryDelay));
 
     try {
-      await this.sendLogsToSupabase(log);
+      await this._sendLogsToSupabase(log);
     } catch (error) {
-      console.error("Error sending log (after retry):", error);
+      prettyLogs.error("Error sending log (after retry):", error);
       await this.retryLog(log, retryCount + 1);
     }
   }
@@ -192,12 +112,13 @@ export class GitHubLogger implements Logger {
     }
   }
 
-  private save(logMessage: string | object, level: LogLevel, errorPayload?: string | object) {
+  private save(logMessage: string | object, level: LogLevel, metadata?: string | object) {
     if (getNumericLevel(level) > this.maxLevel) return; // only return errors lower than max level
 
-    const context = getBotContext();
+    const runtime = Runtime.getState();
+    const context = runtime.eventContext;
     const payload = context.payload as Payload;
-    const timestamp = new Date().toUTCString();
+    // const timestamp = new Date().toUTCString();
 
     const { comment, issue, repository } = payload;
     const commentId = comment?.id;
@@ -213,47 +134,93 @@ export class GitHubLogger implements Logger {
       logMessage = JSON.stringify(logMessage);
     }
 
-    this.addToQueue({ repo, org, commentId, issueNumber, logMessage, level, timestamp })
-      .then(() => {
-        return;
-      })
-      .catch(() => {
-        console.log("Error adding logs to queue");
-      });
+    this.addToQueue({ logMessage })
+      .then(() => void 0)
+      .catch(() => prettyLogs.error("Error adding logs to queue"));
 
     if (this.logEnvironment === "development") {
-      console.log(this.app, logMessage, errorPayload, level, repo, org, commentId, issueNumber);
+      prettyLogs.ok(logMessage, metadata, level, repo, org, commentId, issueNumber);
     }
   }
 
-  info(message: string | object, errorPayload?: string | object) {
-    this.save(message, LogLevel.INFO, errorPayload);
+  private _colorComment(type: string, message: string | object) {
+    const diffKey = {
+      error: "-", // - text in red
+      ok: "+", // + text in green
+      warn: "!", // ! text in orange
+      info: "#", // # text in gray
+      // debug: "@@@@",// @@ text in purple (and bold)@@
+    };
+
+    const preamble = "```diff\n";
+    let serializedBody;
+    const postamble = "\n```";
+
+    if (typeof message === "object") serializedBody = JSON.stringify(message);
+    else serializedBody = message;
+
+    if (diffKey[type as keyof typeof diffKey])
+      serializedBody = `${diffKey[type as keyof typeof diffKey]} ${serializedBody}`;
+    else if (diffKey["debug" as keyof typeof diffKey]) serializedBody = `@@ ${serializedBody} @@`; // debug: "@@@@",
+    else {
+      serializedBody = `? ${serializedBody}`;
+      console.trace(type);
+    }
+
+    return `${preamble}${serializedBody}${postamble}`;
   }
 
-  warn(message: string | object, errorPayload?: string | object) {
-    this.save(message, LogLevel.WARN, errorPayload);
-    this.sendDataWithJwt(message, errorPayload)
-      .then((response) => {
-        this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG, "");
+  private _log(args: LoggerParameters, level: LogLevel, logFunction: LogFunction): string {
+    // first detect if args is an object or a string
+    let message: string | object = args;
+    if (typeof args === "object") message = args.message;
+    if (!message) message = JSON.stringify(args);
+
+    let metadata;
+    let postComment = false;
+    if (typeof args === "object") {
+      metadata = args.metadata;
+      postComment = args.postComment || false;
+    }
+
+    logFunction(message, metadata);
+    this.save(message, level, metadata);
+    if (postComment) this._postComment(JSON.stringify(message));
+    return this._colorComment(level, message);
+  }
+
+  public ok(args: LoggerParameters): string {
+    return this._log(args, LogLevel.VERBOSE, prettyLogs.ok);
+  }
+
+  public info(args: LoggerParameters): string {
+    return this._log(args, LogLevel.INFO, prettyLogs.info);
+  }
+
+  public warn(args: LoggerParameters): string {
+    return this._log(args, LogLevel.WARN, prettyLogs.warn);
+  }
+
+  public debug(args: LoggerParameters): string {
+    return this._log(args, LogLevel.DEBUG, prettyLogs.debug);
+  }
+
+  public error(args: LoggerParameters): string {
+    return this._log(args, LogLevel.ERROR, prettyLogs.error);
+  }
+
+  private _postComment(message: string | object) {
+    const serializedBody = typeof message === "object" ? JSON.stringify(message) : message;
+
+    this.runtime.eventContext.octokit.issues
+      .createComment({
+        owner: this.runtime.eventContext.issue().owner,
+        repo: this.runtime.eventContext.issue().repo,
+        issue_number: this.runtime.eventContext.issue().issue_number,
+        body: serializedBody,
       })
-      .catch((error) => {
-        this.save(`Log Notification Error: ${error}`, LogLevel.DEBUG, "");
-      });
-  }
-
-  debug(message: string | object, errorPayload?: string | object) {
-    this.save(message, LogLevel.DEBUG, errorPayload);
-  }
-
-  error(message: string | object, errorPayload?: string | object) {
-    this.save(message, LogLevel.ERROR, errorPayload);
-    this.sendDataWithJwt(message, errorPayload)
-      .then((response) => {
-        this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG, "");
-      })
-      .catch((error) => {
-        this.save(`Log Notification Error: ${error}`, LogLevel.DEBUG, "");
-      });
+      .then((x) => console.trace(x))
+      .catch((x) => console.trace(x));
   }
 
   async get() {
@@ -261,20 +228,17 @@ export class GitHubLogger implements Logger {
       const { data, error } = await this.supabase.from("logs").select("*");
 
       if (error) {
-        console.error("Error retrieving logs from Supabase:", error.message);
+        prettyLogs.error("Error retrieving logs from Supabase:", error.message);
         return [];
       }
 
       return data;
     } catch (error) {
       if (error instanceof Error) {
-        // 👉️ err is type Error here
-        console.error("An error occurred:", error.message);
-
-        return;
+        throw prettyLogs.error("An error occurred:", error.message);
       }
 
-      console.log("Unexpected error", error);
+      prettyLogs.error("Unexpected error", error);
       return [];
     }
   }

@@ -1,86 +1,58 @@
 import { Context } from "probot";
 import { createAdapters } from "../adapters";
+import { GitHubLogger } from "../adapters/supabase";
 import { processors, wildcardProcessors } from "../handlers/processors";
-import { shouldSkip } from "../helpers";
-import { BotConfig, GithubEvent, Payload, PayloadSchema, LogLevel } from "../types";
-import { Adapters } from "../types/adapters";
+import { validateConfigChange } from "../handlers/push";
+import { shouldSkip, upsertCommentToIssue } from "../helpers";
+import { GithubEvent, LogLevel, Payload, PayloadSchema } from "../types";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
-import { GitHubLogger } from "../adapters/supabase";
-import { validateConfigChange } from "../handlers/push";
 
-let botContext: Context = {} as Context;
-export const getBotContext = () => botContext;
+import Runtime from "./bot-runtime";
+import { ErrorDiff } from "../utils/helpers";
 
-let botConfig: BotConfig = {} as BotConfig;
-export const getBotConfig = () => botConfig;
+const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT, GithubEvent.PUSH_EVENT] as string[];
 
-let adapters: Adapters = {} as Adapters;
-export const getAdapters = () => adapters;
-
-export type Logger = {
-  info: (msg: string | object, options?: JSON) => void;
-  debug: (msg: string | object, options?: JSON) => void;
-  warn: (msg: string | object, options?: JSON) => void;
-  error: (msg: string | object, options?: JSON) => void;
-};
-
-let logger: Logger;
-export const getLogger = (): Logger => logger;
-
-const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT as string, GithubEvent.PUSH_EVENT as string];
-
-export const bindEvents = async (context: Context): Promise<void> => {
-  const { id, name } = context;
-  botContext = context;
-  const payload = context.payload as Payload;
-  const allowedEvents = Object.values(GithubEvent) as string[];
-  const eventName = payload.action ? `${name}.${payload.action}` : name; // some events wont have actions as this grows
-
+export async function bindEvents(eventContext: Context) {
+  const runtime = Runtime.getState();
+  runtime.eventContext = eventContext;
   let botConfigError;
   try {
-    botConfig = await loadConfig(context);
+    runtime.botConfig = await loadConfig(eventContext);
   } catch (err) {
     botConfigError = err;
   }
 
-  adapters = createAdapters(botConfig);
+  const payload = eventContext.payload as Payload;
+  const allowedEvents = Object.values(GithubEvent) as string[];
+  const eventName = payload.action ? `${eventContext.name}.${payload.action}` : eventContext.name; // some events wont have actions as this grows
 
-  const options = {
-    app: "UbiquiBot",
-    // level: botConfig.log.level,
-  };
-
-  logger = new GitHubLogger(
-    options.app,
-    botConfig?.log?.logEnvironment ?? "development",
-    botConfig?.log?.level ?? LogLevel.DEBUG,
-    botConfig?.log?.retryLimit ?? 0,
-    botConfig.logNotification
-  ); // contributors will see logs in console while on development env
-  if (!logger) {
-    return;
+  runtime.adapters = createAdapters(runtime.botConfig);
+  runtime.logger = new GitHubLogger(
+    runtime.adapters.supabase.client,
+    // contributors will see logs in console while on development environment
+    runtime.botConfig?.log?.logEnvironment ?? "development",
+    runtime.botConfig?.log?.level ?? LogLevel.DEBUG,
+    runtime.botConfig?.log?.retryLimit ?? 0
+    // botConfig.logNotification
+  );
+  if (!runtime.logger) {
+    throw new Error("Failed to create logger");
   }
 
   if (botConfigError) {
-    logger.error(botConfigError.toString());
+    runtime.logger.error({ message: botConfigError.toString() });
     if (eventName === GithubEvent.PUSH_EVENT) {
       await validateConfigChange();
     }
-    return;
+    throw new Error("Failed to load config");
   }
 
-  // Create adapters for supabase, twitter, discord, etc
-  logger.info("Creating adapters for supabase, twitter, etc...");
-
-  logger.info(`Config loaded! config: ${JSON.stringify(botConfig)}`);
-
-  logger.info(`Started binding events... id: ${id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
+  runtime.logger.info(`Binding events... id: ${eventContext.id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
 
   if (!allowedEvents.includes(eventName)) {
     // just check if its on the watch list
-    logger.info(`Skipping the event. reason: not configured`);
-    return;
+    return runtime.logger.info(`Skipping the event. reason: not configured`);
   }
 
   // Skip validation for installation event and push
@@ -89,40 +61,38 @@ export const bindEvents = async (context: Context): Promise<void> => {
     const validate = ajv.compile(PayloadSchema);
     const valid = validate(payload);
     if (!valid) {
-      logger.info("Payload schema validation failed!", payload);
-      if (validate.errors) logger.warn(validate.errors);
+      runtime.logger.info("Payload schema validation failed!", payload);
+      if (validate.errors) runtime.logger.warn(validate.errors);
       return;
     }
 
     // Check if we should skip the event
-    const { skip, reason } = shouldSkip();
-    if (skip) {
-      logger.info(`Skipping the event. reason: ${reason}`);
-      return;
+    const should = shouldSkip();
+    if (should.stop) {
+      return runtime.logger.info(`Skipping the event because ${should.reason}`);
     }
   }
 
   // Get the handlers for the action
   const handlers = processors[eventName];
   if (!handlers) {
-    logger.warn(`No handler configured for event: ${eventName}`);
-    return;
+    return runtime.logger.warn(`No handler configured for event: ${eventName}`);
   }
 
   const { pre, action, post } = handlers;
   // Run pre-handlers
-  logger.info(`Running pre handlers: ${pre.map((fn) => fn.name)}, event: ${eventName}`);
+  runtime.logger.info(`Running pre handlers: "${pre.map((fn) => fn.name)}" event: ${eventName}`);
   for (const preAction of pre) {
     await preAction();
   }
   // Run main handlers
-  logger.info(`Running main handlers: ${action.map((fn) => fn.name)}, event: ${eventName}`);
+  runtime.logger.info(`Running main handlers: "${action.map((fn) => fn.name)}" event: ${eventName}`);
   for (const mainAction of action) {
     await mainAction();
   }
 
   // Run post-handlers
-  logger.info(`Running post handlers: ${post.map((fn) => fn.name)}, event: ${eventName}`);
+  runtime.logger.info(`Running post handlers: "${post.map((fn) => fn.name)}" event: ${eventName}`);
   for (const postAction of post) {
     await postAction();
   }
@@ -130,9 +100,17 @@ export const bindEvents = async (context: Context): Promise<void> => {
   // Skip wildcard handlers for installation event and push event
   if (eventName !== GithubEvent.INSTALLATION_ADDED_EVENT && eventName !== GithubEvent.PUSH_EVENT) {
     // Run wildcard handlers
-    logger.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
+    runtime.logger.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
     for (const wildcardProcessor of wildcardProcessors) {
       await wildcardProcessor();
     }
   }
-};
+
+  process.on("uncaughtException", async (event) => {
+    console.trace();
+    await upsertCommentToIssue(
+      eventContext.issue().issue_number ?? eventContext.pullRequest().pull_number,
+      ErrorDiff(event.message)
+    );
+  });
+}

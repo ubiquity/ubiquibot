@@ -12,9 +12,7 @@ import {
   getAdminUser,
   // getCollaboratorUser,
 } from "./commands-test";
-import {
-  //  addLabelToIssue,
-  checkLastComment,
+import checkLastComment, {
   createComment,
   // createLabel,
   getLastComment,
@@ -49,15 +47,21 @@ function allTests(): () => void {
       "/wallet correct address",
       async () => {
         const newWallet = "0x82AcFE58e0a6bE7100874831aBC56Ee13e2149e7";
-        await createComment(getAdminUser(), owner, repo, issue.number, `/wallet ${newWallet}`);
-        await waitForNWebhooks(2);
-        await checkLastComment(
-          getAdminUser(),
+        await createComment({
+          octokit: getAdminUser(),
           owner,
           repo,
-          issue.number,
-          `Updated the wallet address for @${getAdminUsername()} successfully!\t Your new address: \`${newWallet}\``
-        );
+          issueNumber: issue.number,
+          body: `/wallet ${newWallet}`,
+        });
+        await waitForNWebhooks(2);
+        await checkLastComment({
+          octokit: getAdminUser(),
+          owner,
+          repo,
+          issueNumber: issue.number,
+          expectedComment: `Updated the wallet address for @${getAdminUsername()} successfully!\t Your new address: \`${newWallet}\``,
+        });
       },
       SIX_HOURS
     );
@@ -66,15 +70,21 @@ function allTests(): () => void {
       "/wallet wrong address",
       async () => {
         const newWallet = "0x82AcFE58e0a6bE7100874831aBC56";
-        await createComment(getAdminUser(), owner, repo, issue.number, `/wallet ${newWallet}`);
-        await waitForNWebhooks(2);
-        await checkLastComment(
-          getAdminUser(),
+        await createComment({
+          octokit: getAdminUser(),
           owner,
           repo,
-          issue.number,
-          `Please include your wallet or ENS address.\n usage: /wallet 0x0000000000000000000000000000000000000000`
-        );
+          issueNumber: issue.number,
+          body: `/wallet ${newWallet}`,
+        });
+        await waitForNWebhooks(2);
+        await checkLastComment({
+          octokit: getAdminUser(),
+          owner,
+          repo,
+          issueNumber: issue.number,
+          expectedComment: `Please include your wallet or ENS address.\n usage: /wallet 0x0000000000000000000000000000000000000000`,
+        });
       },
       SIX_HOURS
     );
@@ -82,60 +92,90 @@ function allTests(): () => void {
     test(
       "/multiplier",
       async () => {
-        await createComment(getAdminUser(), owner, repo, issue.number, `/multiplier @${getAdminUsername()}`);
-        await waitForNWebhooks(2);
-
-        await checkLastComment(
-          getAdminUser(),
+        await createComment({
+          octokit: getAdminUser(),
           owner,
           repo,
-          issue.number,
-          `Successfully changed the payout multiplier for @${getAdminUsername()} to 1. The reason is not provided.`
-        );
-
-        await createComment(getAdminUser(), owner, repo, issue.number, `/multiplier @${getAdminUsername()} 2`);
+          issueNumber: issue.number,
+          body: `/multiplier @${getAdminUsername()}`,
+        });
         await waitForNWebhooks(2);
 
-        await checkLastComment(
-          getAdminUser(),
+        await checkLastComment({
+          octokit: getAdminUser(),
           owner,
           repo,
-          issue.number,
-          `Successfully changed the payout multiplier for @${getAdminUsername()} to 2. The reason is not provided. This feature is designed to limit the contributor's compensation for any task on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a price multiplier above 1?`
-        );
+          issueNumber: issue.number,
+          expectedComment: `Successfully changed the payout multiplier for @${getAdminUsername()} to 1. The reason is not provided.`,
+        });
 
-        await createComment(getAdminUser(), owner, repo, issue.number, `/multiplier @${getAdminUsername()} 2 "Testing reason"`);
+        await createComment({
+          octokit: getAdminUser(),
+          owner,
+          repo,
+          issueNumber: issue.number,
+          body: `/multiplier @${getAdminUsername()} 2`,
+        });
         await waitForNWebhooks(2);
 
-        await checkLastComment(
-          getAdminUser(),
+        await checkLastComment({
+          octokit: getAdminUser(),
           owner,
           repo,
-          issue.number,
-          `Successfully changed the payout multiplier for @${getAdminUsername()} to 2. The reason provided is "Testing reason". This feature is designed to limit the contributor's compensation for any task on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a price multiplier above 1?`
-        );
+          issueNumber: issue.number,
+          expectedComment: `Successfully changed the payout multiplier for @${getAdminUsername()} to 2. The reason is not provided. This feature is designed to limit the contributor's compensation for any task on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a price multiplier above 1?`,
+        });
 
-        await createComment(getAdminUser(), owner, repo, issue.number, `/multiplier @${getAdminUsername()} abcd`);
+        await createComment({
+          octokit: getAdminUser(),
+          owner,
+          repo,
+          issueNumber: issue.number,
+          body: `/multiplier @${getAdminUsername()} 2 "Testing reason"`,
+        });
         await waitForNWebhooks(2);
 
-        await checkLastComment(
-          getAdminUser(),
+        await checkLastComment({
+          octokit: getAdminUser(),
           owner,
           repo,
-          issue.number,
-          `Successfully changed the payout multiplier for @${getAdminUsername()} to 1. The reason provided is "abcd".`
-        );
+          issueNumber: issue.number,
+          expectedComment: `Successfully changed the payout multiplier for @${getAdminUsername()} to 2. The reason provided is "Testing reason". This feature is designed to limit the contributor's compensation for any task on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a price multiplier above 1?`,
+        });
 
-        await createComment(getAdminUser(), owner, repo, issue.number, `/multiplier abcd`);
+        await createComment({
+          octokit: getAdminUser(),
+          owner,
+          repo,
+          issueNumber: issue.number,
+          body: `/multiplier @${getAdminUsername()} abcd`,
+        });
         await waitForNWebhooks(2);
 
-        await checkLastComment(
-          getAdminUser(),
+        await checkLastComment({
+          octokit: getAdminUser(),
           owner,
           repo,
-          issue.number,
-          `Successfully changed the payout multiplier for @${getAdminUsername()} to 1. The reason provided is "abcd".`
-        );
+          issueNumber: issue.number,
+          expectedComment: `Successfully changed the payout multiplier for @${getAdminUsername()} to 1. The reason provided is "abcd".`,
+        });
+
+        await createComment({
+          octokit: getAdminUser(),
+          owner,
+          repo,
+          issueNumber: issue.number,
+          body: `/multiplier abcd`,
+        });
+        await waitForNWebhooks(2);
+
+        await checkLastComment({
+          octokit: getAdminUser(),
+          owner,
+          repo,
+          issueNumber: issue.number,
+          expectedComment: `Successfully changed the payout multiplier for @${getAdminUsername()} to 1. The reason provided is "abcd".`,
+        });
       },
       SIX_HOURS
     );
@@ -144,18 +184,38 @@ function allTests(): () => void {
       "/query",
       async () => {
         const newWallet = "0x82AcFE58e0a6bE7100874831aBC56Ee13e2149e7";
-        await createComment(getAdminUser(), owner, repo, issue.number, `/wallet ${newWallet}`);
+        await createComment({
+          octokit: getAdminUser(),
+          owner,
+          repo,
+          issueNumber: issue.number,
+          body: `/wallet ${newWallet}`,
+        });
         await waitForNWebhooks(2);
 
         const multiplier = "5";
-        await createComment(getAdminUser(), owner, repo, issue.number, `/multiplier @${getAdminUsername()} ${multiplier} 'Testing'`);
+        await createComment({
+          octokit: getAdminUser(),
+          owner,
+          repo,
+          issueNumber: issue.number,
+          body: `/multiplier @${getAdminUsername()} ${multiplier} 'Testing'`,
+        });
         await waitForNWebhooks(2);
 
-        await createComment(getAdminUser(), owner, repo, issue.number, `/query @${getAdminUsername()}`);
+        await createComment({
+          octokit: getAdminUser(),
+          owner,
+          repo,
+          issueNumber: issue.number,
+          body: `/query @${getAdminUsername()}`,
+        });
         await waitForNWebhooks(2);
 
-        const lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
-        expect(lastComment.body).toContain(`@${getAdminUsername()}'s wallet address is ${newWallet}, multiplier is ${multiplier}`);
+        const lastComment = await getLastComment({ octokit: getAdminUser(), owner, repo, issueNumber: issue.number });
+        expect(lastComment.body).toContain(
+          `@${getAdminUsername()}'s wallet address is ${newWallet}, multiplier is ${multiplier}`
+        );
       },
       SIX_HOURS
     );
@@ -163,10 +223,22 @@ function allTests(): () => void {
     test(
       "/query wrong username",
       async () => {
-        await createComment(getAdminUser(), owner, repo, issue.number, `/query @INVALID_$USERNAME`);
+        await createComment({
+          octokit: getAdminUser(),
+          owner,
+          repo,
+          issueNumber: issue.number,
+          body: `/query @INVALID_$USERNAME`,
+        });
         await waitForNWebhooks(2);
 
-        await checkLastComment(getAdminUser(), owner, repo, issue.number, `Invalid syntax for query command \n usage /query @user`);
+        await checkLastComment({
+          octokit: getAdminUser(),
+          owner,
+          repo,
+          issueNumber: issue.number,
+          expectedComment: `Invalid syntax for query command \n usage /query @user`,
+        });
       },
       SIX_HOURS
     );
@@ -174,17 +246,17 @@ function allTests(): () => void {
     test(
       "/help",
       async () => {
-        await createComment(getAdminUser(), owner, repo, issue.number, `/help`);
+        await createComment({ octokit: getAdminUser(), owner, repo, issueNumber: issue.number, body: `/help` });
         await waitForNWebhooks(2);
 
-        const lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
+        const lastComment = await getLastComment({ octokit: getAdminUser(), owner, repo, issueNumber: issue.number });
         expect(lastComment.body?.includes("Available Commands")).toBe(true);
       },
       SIX_HOURS
     );
 
     // test(
-    //   "/allow",
+    //   "/labels",
     //   async () => {
     //     await createLabel(getAdminUser(), owner, repo, TEST_PRIORITY_LABEL);
 
@@ -195,7 +267,7 @@ function allTests(): () => void {
     //       labels: [],
     //     });
 
-    //     await createComment(getAdminUser(), owner, repo, issue.number, `/allow set-priority @${getCollaboratorUsername()} false`);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, `/labels set-priority @${getCollaboratorUsername()} false`);
     //     await waitForNWebhooks(2);
 
     //     let lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
@@ -235,7 +307,7 @@ function allTests(): () => void {
     //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
     //     expect(lastComment.body).toContain(`@${getCollaboratorUsername()}, You are not allowed to remove Priority: 1 (Normal)`);
 
-    //     await createComment(getAdminUser(), owner, repo, issue.number, `/allow set-priority @${getCollaboratorUsername()} true`);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, `/labels set-priority @${getCollaboratorUsername()} true`);
     //     await waitForNWebhooks(2);
 
     //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
@@ -354,7 +426,7 @@ function allTests(): () => void {
     //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
     //     expect(lastComment.body).toContain("Automatic payment for this issue is enabled: **false**");
 
-    //     await createComment(getAdminUser(), owner, repo, issue.number, `/start`);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, '/start');
     //     await waitForNWebhooks(3);
 
     //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
@@ -370,7 +442,7 @@ function allTests(): () => void {
     //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
     //     expect(lastComment.body).toBe(`You have been unassigned from the task @${getAdminUsername()}`);
 
-    //     await createComment(getAdminUser(), owner, repo, issue.number, `/start`);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, '/start');
     //     await waitForNWebhooks(3);
 
     //     await getAdminUser().rest.issues.update({

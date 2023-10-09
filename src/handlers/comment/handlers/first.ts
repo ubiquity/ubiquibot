@@ -1,17 +1,18 @@
-import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
+import Runtime from "../../../bindings/bot-runtime";
 import { upsertCommentToIssue } from "../../../helpers";
 import { Payload } from "../../../types";
 import { generateHelpMenu } from "./help";
 
-export const verifyFirstCheck = async (): Promise<void> => {
-  const context = getBotContext();
-  const logger = getLogger();
-  const payload = context.payload as Payload;
+export async function verifyFirstCheck() {
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const logger = runtime.logger;
+  const payload = runtime.eventContext.payload as Payload;
   let msg = "";
   if (!payload.issue) return;
   const {
     newContributorGreeting: { header, helpMenu, footer, enabled },
-  } = getBotConfig();
+  } = Runtime.getState().botConfig;
   try {
     const response_issue = await context.octokit.rest.search.issuesAndPullRequests({
       q: `is:issue repo:${payload.repository.owner.login}/${payload.repository.name} commenter:${payload.sender.login}`,
@@ -48,4 +49,4 @@ export const verifyFirstCheck = async (): Promise<void> => {
   } catch (error: unknown) {
     logger.info(`First comment verification failed, reason: ${error}`);
   }
-};
+}

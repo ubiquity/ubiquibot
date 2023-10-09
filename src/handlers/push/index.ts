@@ -1,4 +1,4 @@
-import { getBotContext, getLogger } from "../../bindings";
+import Runtime from "../../bindings/bot-runtime";
 import { createCommitComment, getFileContent } from "../../helpers";
 import { CommitsPayload, PushPayload, ConfigSchema } from "../../types";
 import { parseYAML } from "../../utils/private";
@@ -23,9 +23,10 @@ function getCommitChanges(commits: CommitsPayload[]) {
 }
 
 export const runOnPush = async () => {
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
 
-  const context = getBotContext();
+  const context = runtime.eventContext;
   const payload = context.payload as PushPayload;
 
   // if zero sha, push is a pr change
@@ -50,9 +51,10 @@ export const runOnPush = async () => {
 };
 
 export const validateConfigChange = async () => {
-  const logger = getLogger();
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
 
-  const context = getBotContext();
+  const context = runtime.eventContext;
   const payload = context.payload as PushPayload;
 
   if (!payload.ref.startsWith("refs/heads/")) {
@@ -70,7 +72,9 @@ export const validateConfigChange = async () => {
 
   // check for modified or added files and check for specified file
   if (changes.includes(BASE_RATE_FILE)) {
-    const commitSha = payload.commits.filter((commit) => commit.modified.includes(BASE_RATE_FILE) || commit.added.includes(BASE_RATE_FILE)).reverse()[0]?.id;
+    const commitSha = payload.commits
+      .filter((commit) => commit.modified.includes(BASE_RATE_FILE) || commit.added.includes(BASE_RATE_FILE))
+      .reverse()[0]?.id;
     if (!commitSha) {
       logger.debug("Skipping push events, commit sha not found");
       return;
@@ -89,7 +93,11 @@ export const validateConfigChange = async () => {
       const config = parseYAML(decodedConfig);
       const { valid, error } = validate(ConfigSchema, config);
       if (!valid) {
-        await createCommitComment(`@${payload.sender.login} Config validation failed! ${error}`, commitSha, BASE_RATE_FILE);
+        await createCommitComment(
+          `@${payload.sender.login} Config validation failed! ${error}`,
+          commitSha,
+          BASE_RATE_FILE
+        );
       }
     }
   }

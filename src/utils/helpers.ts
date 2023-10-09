@@ -1,9 +1,12 @@
-export const ErrorDiff = (error: Error | unknown, message?: string) => {
-  if (error instanceof Error) {
-    console.trace(error, message);
-    return "```diff\n! " + error.message + "\n- " + error.stack + "\n```";
+import { formatStackTrace } from "../adapters/supabase/helpers/pretty-logs";
+
+export function ErrorDiff(message: string, stack?: string) {
+  console.trace(message);
+  let buffer;
+  if (stack) {
+    buffer = "```diff\n- " + message + "\n" + formatStackTrace(stack) + "\n```";
   } else {
-    console.trace("Received non-Error object:", error, message);
-    return "```diff\n! " + String(error) + "\n```";
+    buffer = "```diff\n- " + message + "\n" + formatStackTrace(new Error().stack as string, 3, "#\t") + "\n```";
   }
-};
+  return buffer;
+}

@@ -1,18 +1,19 @@
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
-import { Payload } from "../../types";
-import { ErrorDiff } from "../../utils/helpers";
+import Runtime from "../../bindings/bot-runtime";
+import { Comment, Payload } from "../../types";
 import { IssueCommentCommands } from "./commands";
 import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCheck } from "./handlers/first";
+import { _renderErrorDiffWrapper } from "./handlers/";
 
-export const handleComment = async (): Promise<void> => {
-  const context = getBotContext();
-  const config = getBotConfig();
-  const logger = getLogger();
-  const payload = context.payload as Payload;
+export async function handleComment(): Promise<void> {
+  const runtime = Runtime.getState(),
+    config = runtime.botConfig,
+    logger = runtime.logger,
+    context = runtime.eventContext,
+    payload = context.payload as Payload;
 
-  logger.info(`Handling an issue comment on issue ${payload.issue?.number}`);
-  const comment = payload.comment;
+  // logger.info(`Handling an issue comment on issue ${payload.issue?.number}`);
+  const comment = payload.comment as Comment;
   if (!comment) {
     logger.info(`Comment is null. Skipping`);
     return;
@@ -31,34 +32,37 @@ export const handleComment = async (): Promise<void> => {
     const userCommand = allCommands.find((i) => i.id == command);
 
     if (userCommand) {
-      const { id, handler, callback, successComment, failureComment } = userCommand;
+      const { id, handler, callback } = userCommand;
       logger.info(`Running a comment handler: ${handler.name}`);
-
-      const { payload: _payload } = getBotContext();
-      const issue = (_payload as Payload).issue;
-      if (!issue) continue;
+      const issue = payload.issue;
+      if (!issue) {
+        logger.error({ message: `Issue is null. Skipping` });
+        return;
+      }
 
       const feature = config.command.find((e) => e.name === id.split("/")[1]);
 
-      if (!feature?.enabled && id !== IssueCommentCommands.HELP) {
+      if (feature?.enabled === false && id !== IssueCommentCommands.HELP) {
         logger.info(`Skipping '${id}' because it is disabled on this repo.`);
-        await callback(issue.number, `Skipping \`${id}\` because it is disabled on this repo.`, payload.action, payload.comment);
+        await callback(
+          issue.number,
+          `Skipping \`${id}\` because it is disabled on this repo.`,
+          payload.action,
+          payload.comment
+        );
         continue;
       }
 
       try {
-        const response = await handler(body);
-        const callbackComment = response ?? successComment ?? "";
-        if (callbackComment) await callback(issue.number, callbackComment, payload.action, payload.comment);
-      } catch (err: Error | unknown) {
-        // Use failureComment for failed command if it is available
-        if (failureComment) {
-          await callback(issue.number, failureComment, payload.action, payload.comment);
+        const callbackComment = await handler(body);
+        if (callbackComment) {
+          await callback(issue.number, callbackComment, payload.action, payload.comment);
         }
-        await callback(issue.number, ErrorDiff(err), payload.action, payload.comment);
+      } catch (err) {
+        return await _renderErrorDiffWrapper(err, issue);
       }
     } else {
       logger.info(`Skipping for a command: ${command}`);
     }
   }
-};
+}

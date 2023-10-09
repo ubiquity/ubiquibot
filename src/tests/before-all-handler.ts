@@ -1,21 +1,25 @@
 import { EmitterWebhookEventName } from "@octokit/webhooks";
 import { Probot, run } from "probot";
-import {
-  CustomOctokit,
-  orgConfig,
-  owner,
-  repo,
-  setAdminUsername,
-  setCollaboratorUsername,
-  setAdminUser,
-  setCollaboratorUser,
-  setServer,
-} from "./commands-test";
+
 import { repoConfig } from "./test-repo-config";
 import { updateConfig, waitForNWebhooks, webhookEventEmitter } from "./utils";
-import { getAdminUser, getAdminUsername, getCollaboratorUser, getCollaboratorUsername } from "./commands-test";
 import { GithubEvent } from "../types/payload";
 import { bindEvents } from "../bindings/event";
+import {
+  setAdminUser,
+  CustomOctokit,
+  getAdminUser,
+  setAdminUsername,
+  repo,
+  owner,
+  getAdminUsername,
+  setCollaboratorUser,
+  getCollaboratorUser,
+  setCollaboratorUsername,
+  getCollaboratorUsername,
+  setServer,
+  orgConfig,
+} from "./commands-test";
 
 export function beforeAllHandler(): jest.ProvidesHookCallback {
   return async () => {
@@ -62,19 +66,31 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
       throw new Error("TEST_OUTSIDE_COLLABORATOR_PAT does not have read access");
     }
 
-    setServer(
-      await run(function main(app: Probot) {
-        const allowedEvents = Object.values(GithubEvent) as EmitterWebhookEventName[];
-        app.on(allowedEvents, async (context) => {
-          await bindEvents(context);
-          webhookEventEmitter.emit("event", context.payload);
-        });
-      })
-    );
+    const server = await run(function main(app: Probot) {
+      const allowedEvents = Object.values(GithubEvent) as EmitterWebhookEventName[];
+      app.on(allowedEvents, async (context) => {
+        await bindEvents(context);
+        webhookEventEmitter.emit("event", context.payload);
+      });
+    });
 
-    await updateConfig(getAdminUser(), owner, "ubiquibot-config", ".github/ubiquibot-config.yml", orgConfig);
+    setServer(server);
+
+    await updateConfig({
+      octokit: getAdminUser(),
+      owner,
+      repo: "ubiquibot-config",
+      path: ".github/ubiquibot-config.yml",
+      config: orgConfig,
+    });
     await waitForNWebhooks(1);
-    await updateConfig(getAdminUser(), owner, repo, ".github/ubiquibot-config.yml", repoConfig);
+    await updateConfig({
+      octokit: getAdminUser(),
+      owner,
+      repo,
+      path: ".github/ubiquibot-config.yml",
+      config: repoConfig,
+    });
     await waitForNWebhooks(1);
   };
 }
