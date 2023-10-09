@@ -21,7 +21,7 @@ export const ask = async (body: string) => {
   }
 
   if (!issue) {
-    return `This command can only be used on issues`;
+    return `This command can only be used on issues or pull requests`;
   }
 
   const chatHistory: CreateChatCompletionRequestMessage[] = [];

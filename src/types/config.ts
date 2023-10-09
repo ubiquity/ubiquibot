@@ -181,7 +181,7 @@ export const GPTResponseSchema = Type.Object({
 
 export type GPTResponse = Static<typeof GPTResponseSchema>;
 
-export const WideConfigSchema = Type.Object(
+export const ConfigSchema = Type.Object(
   {
     evmNetworkId: Type.Optional(Type.Number()),
     priceMultiplier: Type.Optional(Type.Number()),
@@ -210,9 +210,7 @@ export const WideConfigSchema = Type.Object(
   }
 );
 
-export type WideConfig = Static<typeof WideConfigSchema>;
-
-export type WideRepoConfig = WideConfig;
+export type Config = Static<typeof ConfigSchema>;
 
 export const MergedConfigSchema = Type.Object({
   evmNetworkId: Type.Number(),

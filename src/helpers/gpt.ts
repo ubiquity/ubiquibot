@@ -5,7 +5,7 @@ import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { ErrorDiff } from "../utils/helpers";
 
-export const sysMsg = `You are the UbiquityAI, designed to provide accurate technical answers. \n
+export const sysMsg = `You are the UbiquiBot, designed to provide accurate technical answers. \n
 Whenever appropriate, format your response using GitHub Flavored Markdown. Utilize tables, lists, and code blocks for clear and organized answers. \n
 Do not make up answers. If you are unsure, say so. \n
 Original Context exists only to provide you with additional information to the current question, use it to formulate answers. \n
@@ -14,7 +14,7 @@ All replies MUST end with "\n\n <!--- { 'UbiquityAI': 'answer' } ---> ".\n
 `;
 
 export const gptContextTemplate = `
-You are the UbiquityAI, designed to review and analyze pull requests.
+You are the UbiquiBot, designed to review and analyze pull requests.
 You have been provided with the spec of the issue and all linked issues or pull requests.
 Using this full context, Reply in pure JSON format, with the following structure omitting irrelvant information pertaining to the specification.
 You MUST provide the following structure, but you may add additional information if you deem it relevant.
@@ -118,17 +118,17 @@ export const decideContextGPT = async (
     {
       role: "system",
       content: "This issue/Pr context: \n" + JSON.stringify(streamlined),
-      name: "UbiquityAI",
+      name: "UbiquiBot",
     } as CreateChatCompletionRequestMessage,
     {
       role: "system",
       content: "Linked issue(s) context: \n" + JSON.stringify(linkedIssueStreamlined),
-      name: "UbiquityAI",
+      name: "UbiquiBot",
     } as CreateChatCompletionRequestMessage,
     {
       role: "system",
       content: "Linked Pr(s) context: \n" + JSON.stringify(linkedPRStreamlined),
-      name: "UbiquityAI",
+      name: "UbiquiBot",
     } as CreateChatCompletionRequestMessage
   );
 

@@ -291,7 +291,7 @@ export const userCommands = (): UserCommands[] => {
     },
     {
       id: IssueCommentCommands.ASK,
-      description: `Ask a technical question to the Ubiquity AI. \n  example usage: "/ask How do I do X?"`,
+      description: `Ask a technical question to UbiquiBot. \n  example usage: "/ask How do I do X?"`,
       handler: ask,
       callback: commandCallback,
     },
