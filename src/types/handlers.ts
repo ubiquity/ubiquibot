@@ -22,6 +22,7 @@ export type Handler = {
 export type UserCommands = {
   id: string;
   description: string;
+  example?: string;
   handler: CommandsHandler;
   callback: CallbackHandler;
   // successComment?: string;
