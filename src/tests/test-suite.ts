@@ -426,7 +426,7 @@ function allTests(): () => void {
     //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
     //     expect(lastComment.body).toContain("Automatic payment for this issue is enabled: **false**");
 
-    //     await createComment(getAdminUser(), owner, repo, issue.number, `/start`);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, '/start');
     //     await waitForNWebhooks(3);
 
     //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
@@ -442,7 +442,7 @@ function allTests(): () => void {
     //     lastComment = await getLastComment(getAdminUser(), owner, repo, issue.number);
     //     expect(lastComment.body).toBe(`You have been unassigned from the task @${getAdminUsername()}`);
 
-    //     await createComment(getAdminUser(), owner, repo, issue.number, `/start`);
+    //     await createComment(getAdminUser(), owner, repo, issue.number, '/start');
     //     await waitForNWebhooks(3);
 
     //     await getAdminUser().rest.issues.update({

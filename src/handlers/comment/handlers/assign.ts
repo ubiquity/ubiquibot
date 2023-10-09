@@ -44,18 +44,15 @@ export async function assign(body: string) {
   const issue = (_payload as Payload).issue;
 
   if (!issue) {
-    logger.info(`Skipping '/start' because of no issue instance`);
-    return "Skipping '/start' because of no issue instance";
+    return logger.info(`Skipping '/start' because of no issue instance`);
   }
 
   if (!startEnabled?.enabled) {
-    logger.info(`Ignore '/start' command from user: ASSIGN_COMMAND_ENABLED config is set false`);
-    return GLOBAL_STRINGS.assignCommandDisabledComment;
+    return logger.warn(GLOBAL_STRINGS.assignCommandDisabledComment);
   }
 
   if (issue.body && isParentIssue(issue.body)) {
-    logger.info(`Ignore '/start' command from user: identified as parent issue`);
-    return GLOBAL_STRINGS.ignoreStartCommandForParentIssueComment;
+    return logger.warn(GLOBAL_STRINGS.ignoreStartCommandForParentIssueComment);
   }
 
   const openedPullRequests = await getAvailableOpenedPullRequests(payload.sender.login);
@@ -74,8 +71,7 @@ export async function assign(body: string) {
   }
 
   if (issue.state == IssueType.CLOSED) {
-    logger.info("Skipping '/start', reason: closed ");
-    return "Skipping `/start` since the issue is closed";
+    return logger.warn("Skipping '/start' since the issue is closed");
   }
   const _assignees = payload.issue?.assignees;
   const assignees = _assignees ?? [];
@@ -86,14 +82,13 @@ export async function assign(body: string) {
         assignees.length > 0 ? assignees.map((i) => i.login).join() : "NoAssignee"
       }`
     );
-    return "Skipping `/start` since the issue is already assigned";
+    return logger.warn("Skipping '/start' since the issue is already assigned");
   }
 
   // get the time label from the `labels`
   const labels = payload.issue?.labels;
   if (!labels) {
-    logger.info(`No labels to calculate timeline`);
-    return "Skipping `/start` since no issue labels are set to calculate the timeline";
+    return logger.warn("Skipping '/start' since no issue labels are set to calculate the timeline");
   }
   const timeLabelsDefined = config.price.timeLabels;
   const timeLabelsAssigned: LabelItem[] = [];
@@ -108,16 +103,16 @@ export async function assign(body: string) {
   }
 
   if (timeLabelsAssigned.length == 0) {
-    logger.info(`No time labels to calculate timeline`);
-    return "Skipping `/start` since no time labels are set to calculate the timeline";
+    return logger.warn("Skipping '/start' since no time labels are set to calculate the timeline");
   }
 
   const sorted = timeLabelsAssigned.sort((a, b) => calculateWeight(a) - calculateWeight(b));
   const targetTimeLabel = sorted[0];
   const duration = calculateDuration(targetTimeLabel);
   if (!duration) {
-    logger.info(`Missing configure for time label: ${targetTimeLabel.name}`);
-    return "Skipping `/start` since configuration is missing for the following labels";
+    return logger.warn(
+      `Skipping '/start' since configuration is missing for the following labels: "${targetTimeLabel.name}"`
+    );
   }
 
   const startTime = new Date().getTime();

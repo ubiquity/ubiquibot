@@ -5,7 +5,7 @@ import { Payload, LabelItem } from "../../types";
 import { deadLinePrefix } from "../shared";
 
 const exclude_accounts: string[] = [];
-export const commentWithAssignMessage = async (): Promise<void> => {
+export async function commentWithAssignMessage(): Promise<void> {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const config = runtime.botConfig;
@@ -26,7 +26,7 @@ export const commentWithAssignMessage = async (): Promise<void> => {
     return;
   }
 
-  const flattened_assignees = assignees.reduce((acc, cur) => `${acc} @${cur.login}`, "");
+  const flattenedAssignees = assignees.reduce((acc, cur) => `${acc} @${cur.login}`, "");
 
   // get the time label from the `labels`
   const labels = payload.issue?.labels;
@@ -63,11 +63,11 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   const currentDate = new Date();
   const currentDateInMilliseconds = currentDate.getTime();
   const endDate = new Date(currentDateInMilliseconds + duration * 1000);
-  const commitMessage = `${flattened_assignees} ${deadLinePrefix} ${endDate.toUTCString().replace("GMT", "UTC")}`;
+  const commitMessage = `${flattenedAssignees} ${deadLinePrefix} ${endDate.toUTCString().replace("GMT", "UTC")}`;
   logger.debug(`Creating an issue comment, commit_msg: ${commitMessage}`);
 
   await addCommentToIssue(commitMessage, payload.issue?.number);
-};
+}
 
 export const closePullRequestForAnIssue = async (): Promise<void> => {
   const runtime = Runtime.getState();

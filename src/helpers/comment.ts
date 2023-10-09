@@ -43,7 +43,7 @@ export const parseComments = (comments: string[], itemsToExclude: string[]): Rec
   return result;
 };
 
-export const generateCollapsibleTable = (data: { element: string; units: number; reward: Decimal }[]) => {
+export function generateCollapsibleTable(data: { element: string; units: number; reward: Decimal }[]) {
   // Check if the data array is empty
   if (data.length === 0) {
     return "No data to display.";
@@ -67,7 +67,7 @@ ${tableRows}
   `;
 
   return tableMarkdown;
-};
+}
 
 export const createDetailsTable = (
   amount: string,

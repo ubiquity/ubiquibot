@@ -120,6 +120,6 @@ export async function ask(body: string) {
       throw logger.error(`Error getting response from GPT`);
     }
   } else {
-    return "Invalid syntax for ask \n usage: '/ask What is pi?";
+    return logger.warn("Invalid syntax for ask \n usage: '/ask What is pi?");
   }
 }

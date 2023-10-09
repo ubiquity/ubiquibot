@@ -65,8 +65,9 @@ export async function multiplier(body: string) {
       );
 
       if (!accessible) {
-        logger.info(`User ${sender} is not an admin or billing_manager`);
-        return "Insufficient permissions to update the payout multiplier. You are not an `admin` or `billing_manager`";
+        return logger.warn(
+          `Insufficient permissions to update the payout multiplier. ${sender} is not an 'admin' or 'billing_manager'`
+        );
       }
     }
     logger.info(
