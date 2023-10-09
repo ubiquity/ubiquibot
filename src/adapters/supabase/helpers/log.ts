@@ -49,7 +49,7 @@ export class GitHubLogger extends Super {
   }
 
   private async _sendLogsToSupabase({ logMessage }: Log) {
-    const { error } = await this.supabase.from("logs").insert({ log_entry: logMessage });
+    const { error } = await this.supabase.from("logs").insert({ log: logMessage });
     if (error) throw prettyLogs.error("Error logging to Supabase:", error.message);
   }
 
