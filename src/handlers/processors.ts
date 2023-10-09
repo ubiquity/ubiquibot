@@ -1,5 +1,5 @@
 import { GithubEvent, Handler, ActionHandler } from "../types";
-import { closePullRequestForAnIssue, commentWithAssignMessage } from "./assign";
+import { closePullRequestForAnIssue, startCommandHandler } from "./assign";
 import { pricingLabelLogic, validatePriceLabels } from "./pricing";
 import { checkTasksToUnassign } from "./wildcard";
 // import { nullHandler } from "./shared";
@@ -34,7 +34,7 @@ export const processors: Record<string, Handler> = {
   },
   [GithubEvent.ISSUES_ASSIGNED]: {
     pre: [],
-    action: [commentWithAssignMessage],
+    action: [startCommandHandler],
     post: [],
   },
   [GithubEvent.ISSUES_UNASSIGNED]: {

@@ -147,8 +147,15 @@ export class GitHubLogger extends Super {
       error: "-", // - text in red
       ok: "+", // + text in green
       warn: "!", // ! text in orange
-      info: "#", // # text in gray
+      // info: "#", // # text in gray
       // debug: "@@@@",// @@ text in purple (and bold)@@
+      // error: "",
+      // warn: "",
+      // info: "",
+      // http: "#",
+      verbose: "+",
+      // debug: "#",
+      // silly: "#",
     };
 
     if (diffKey[type as keyof typeof diffKey]) {
@@ -156,8 +163,8 @@ export class GitHubLogger extends Super {
     } else if (diffKey["debug" as keyof typeof diffKey]) {
       message = `@@ ${message} @@`; // debug: "@@@@",
     } else {
-      message = `? ${message}`;
-      console.trace(type);
+      message = `# ${message}`;
+      // console.trace(type);
     }
 
     const preamble = "```diff\n";

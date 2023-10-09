@@ -81,9 +81,10 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
   const _console = console[colorMap[type][0] as keyof typeof console] as (...args: string[]) => void;
   if (typeof _console === "function") {
     _console(colorizeText(logString, colorMap[type][1] as keyof typeof colors));
-  } else {
-    console.log(logString);
   }
+  // else {
+  //   console.log(logString);
+  // }
 }
 
 const colors = {
@@ -123,6 +124,6 @@ export function formatStackTrace(stack: string, linesToRemove = 0, prefix = ""):
     lines.shift(); // Remove the top line
   }
   return lines
-    .map((line) => `${prefix}${line.replace(/\s*at\s*/, "")}`) // Replace 'at' and prefix every line
+    .map((line) => `\t${prefix}${line.replace(/\s*at\s*/, "")}`) // Replace 'at' and prefix every line
     .join("\n");
 }

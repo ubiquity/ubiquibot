@@ -9,9 +9,15 @@ export async function getMultiplierInfoToDisplay(senderId: number, repoId: numbe
 
   let task = `Permit generation disabled because price label is not set.`;
   let price;
+
+  console.trace(value);
+
   if (value && value != 1) {
     const issueDetailed = taskInfo(issue);
     const priceLabel = issueDetailed.priceLabel;
+
+    console.trace(issueDetailed);
+
     if (priceLabel) {
       price = parsePrice(priceLabel);
       price.number *= value;

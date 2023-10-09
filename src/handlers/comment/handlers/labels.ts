@@ -55,8 +55,3 @@ function parseComment(comment: string): { username: string; labels: string[] } {
     labels: labels,
   };
 }
-
-// // Example usage:
-// const comment = "/labels @user time price priority";
-// const parsed = parseComment(comment);
-// console.log(parsed);
