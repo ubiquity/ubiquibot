@@ -25,16 +25,29 @@ jobs:
 
       - name: Test
         env:
-          LOG_ENVIRONMENT: "production"
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          X25519_PRIVATE_KEY: "QCDb30UHUkwJAGhLWC-R2N0PiEbd4vQY6qH2Wloybyo"
+
           APP_ID: ${{ secrets.APP_ID }}
+          # CHATGPT_USER_PROMPT_FOR_IMPORTANT_WORDS:
+          # CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY:
+          DISQUALIFY_TIME: "7 days"
+          FOLLOW_UP_TIME: "4 days"
+          # IMPORTANT_WORDS_AI_TEMPERATURE:
+          LOG_ENVIRONMENT: "production"
+          # LOG_LEVEL:
+          # MEASURE_SIMILARITY_AI_TEMPERATURE:
+          # OPENAI_API_HOST:
+          # OPENAI_API_KEY:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          # SIMILARITY_THRESHOLD:
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          # SUPABASE_PROJECT_ID:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          TEST_ADMIN_PAT: ${{ secrets.TEST_ADMIN_PAT }}
+          TEST_ORGANIZATION_NAME: ${{ secrets.TEST_ORGANIZATION_NAME }}
+          TEST_OUTSIDE_COLLABORATOR_PAT: ${{ secrets.TEST_OUTSIDE_COLLABORATOR_PAT }}
+          TEST_REPOSITORY_NAME: ${{ secrets.TEST_REPOSITORY_NAME }}
           WEBHOOK_PROXY_URL: ${{ secrets.WEBHOOK_PROXY_URL }}
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
-          TEST_ORGANIZATION_NAME: ${{ secrets.TEST_ORGANIZATION_NAME }}
-          TEST_REPOSITORY_NAME: ${{ secrets.TEST_REPOSITORY_NAME }}
-          TEST_ADMIN_PAT: ${{ secrets.TEST_ADMIN_PAT }}
-          TEST_OUTSIDE_COLLABORATOR_PAT: ${{ secrets.TEST_OUTSIDE_COLLABORATOR_PAT }}
-        run: "yarn test:e2e"
+          X25519_PRIVATE_KEY: "QCDb30UHUkwJAGhLWC-R2N0PiEbd4vQY6qH2Wloybyo"
+
+        run: "yarn test"
