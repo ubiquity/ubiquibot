@@ -31,7 +31,7 @@ export async function calculateIssueAssigneeReward(
   const networkId = incentivesCalculation.evmNetworkId;
   const address = incentivesCalculation.paymentToken;
 
-  await Runtime.getState().adapters.supabase.settlement.addDebit({ userId, amount, comment, networkId, address });
+  await Runtime.getState().adapters.supabase.settlement.addDebit({ userId, amount, networkId, address });
 
   if (amount.gt(0)) {
     logger.info(`Deducting penalty from task`);

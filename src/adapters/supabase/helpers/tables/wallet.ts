@@ -107,9 +107,9 @@ export class Wallet extends Super {
   private async _registerNewUser(user: User) {
     const newUser: UserInsert = {
       id: user.id,
-      node_id: user.node_id,
-      node_type: "User",
-      node_url: user.html_url,
+      // // node_id: user.node_id,
+      // node_type: "User",
+      // node_url: user.html_url,
     };
 
     const { data: newUserInsertData, error: newUserError } = await this.supabase.from("users").insert(newUser).single();
@@ -125,9 +125,9 @@ export class Wallet extends Super {
   private async _registerNewWallet({ address, locationMetaData, payload }: RegisterNewWallet) {
     const newWallet: WalletInsert = {
       address: address,
-      node_id: payload.comment.node_id,
-      node_type: "IssueComment",
-      node_url: payload.comment.html_url,
+      // // node_id: payload.comment.node_id,
+      // node_type: "IssueComment",
+      // node_url: payload.comment.html_url,
     };
 
     const { data: walletInsertData, error: walletInsertError } = await this.supabase
@@ -152,12 +152,12 @@ export class Wallet extends Super {
     await this.supabase.from("users").update({ wallet_id: walletId }).eq("id", userId);
   }
 
-  private async _updateExistingWallet({ address, locationMetaData, payload, walletData }: UpdateExistingWallet) {
+  private async _updateExistingWallet({ address, locationMetaData, walletData }: UpdateExistingWallet) {
     const basicLocationInfo = {
       address: address,
-      node_id: payload.comment.node_id,
-      node_type: "IssueComment",
-      node_url: payload.comment.html_url,
+      // // node_id: payload.comment.node_id,
+      // node_type: "IssueComment",
+      // node_url: payload.comment.html_url,
     } as WalletRow;
 
     await this.supabase.from("wallets").update(basicLocationInfo).eq("id", walletData.id).single();

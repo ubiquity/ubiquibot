@@ -12,7 +12,7 @@ type SettlementInsert = Database["public"]["Tables"]["settlements"]["Insert"];
 type AddDebit = {
   userId: number;
   amount: Decimal;
-  comment: Comment;
+  // comment: Comment;
   networkId: number;
   address: string;
 };
@@ -49,16 +49,16 @@ export class Settlement extends Super {
     return tokenData.id;
   }
 
-  public async addDebit({ userId, amount, comment, networkId, address }: AddDebit): Promise<void> {
+  public async addDebit({ userId, amount, networkId, address }: AddDebit): Promise<void> {
     // Lookup the tokenId
     const tokenId = await this._lookupTokenId(networkId, address);
 
     // Insert into the debits table
     const debitData: DebitInsert = {
       amount: amount.toNumber(),
-      node_id: comment.node_id,
-      node_type: "IssueComment",
-      node_url: comment.html_url,
+      // node_id: comment.node_id,
+      // node_type: "IssueComment",
+      // node_url: comment.html_url,
       token_id: tokenId,
     };
 
@@ -91,7 +91,7 @@ export class Settlement extends Super {
   public async addCredit({
     userId,
     amount,
-    comment,
+    // comment,
     permit,
     networkId,
     organization,
@@ -99,9 +99,9 @@ export class Settlement extends Super {
     // Insert into the credits table
     const creditData: CreditInsert = {
       amount: amount.toNumber(),
-      node_id: comment.node_id,
-      node_type: "IssueComment",
-      node_url: comment.html_url,
+      // // node_id: comment.node_id,
+      // node_type: "IssueComment",
+      // node_url: comment.html_url,
     };
 
     const { data: creditInsertData, error: creditError } = await this.supabase
@@ -127,9 +127,9 @@ export class Settlement extends Super {
         token_id: await this._lookupTokenId(networkId, permit.permit.permitted.token),
         partner_id: organization.id,
         beneficiary_id: userId,
-        node_id: comment.node_id,
-        node_type: "IssueComment",
-        node_url: comment.html_url,
+        // // node_id: comment.node_id,
+        // node_type: "IssueComment",
+        // node_url: comment.html_url,
       };
 
       const permitResult = await this.supabase.from("permits").insert(permitData).select("*").single();

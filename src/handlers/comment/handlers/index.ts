@@ -238,7 +238,7 @@ export async function issueReopenedCallback(): Promise<void> {
         await debit.addDebit({
           userId: events[0].assignee.id,
           amount: new Decimal(formattedAmount),
-          comment: permitComment,
+          // comment: permitComment,
           networkId: Number(networkId),
           address: tokenAddress,
         });
