@@ -12,13 +12,11 @@ import { UserType, Payload, StateReason, Comment, Incentives, Issue, User } from
 import { taskInfo } from "../wildcard";
 import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
-import { getUserMultiplier, getWalletAddress } from "../comment";
 import Decimal from "decimal.js";
+import { getUserMultiplier } from "../comment/handlers/assign/get-user-multiplier";
+import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
 
-/**
- * Collect the information required for the permit generation and error handling
- */
-
+// Collect the information required for the permit generation and error handling
 export interface IncentivesCalculationResult {
   id: number;
   paymentToken: string;
@@ -207,7 +205,13 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     throw logger.info(`Recipient address is missing`);
   }
 
-  const { value: multiplier } = await getUserMultiplier(assignee.id, repository.id);
+  const userMultiplier = await getUserMultiplier(assignee.id, repository.id);
+
+  if (!userMultiplier) {
+    throw logger.info(`User multiplier is missing`);
+  }
+
+  const multiplier = userMultiplier.value;
 
   if (multiplier === 0) {
     const errMsg =

@@ -12,7 +12,7 @@ export async function handleComment(): Promise<void> {
     context = runtime.eventContext,
     payload = context.payload as Payload;
 
-  logger.info(`Handling an issue comment on issue ${payload.issue?.number}`);
+  // logger.info(`Handling an issue comment on issue ${payload.issue?.number}`);
   const comment = payload.comment as Comment;
   if (!comment) {
     logger.info(`Comment is null. Skipping`);
@@ -36,13 +36,11 @@ export async function handleComment(): Promise<void> {
       logger.info(`Running a comment handler: ${handler.name}`);
       const issue = payload.issue;
       if (!issue) {
-        logger.error(`Issue is null. Skipping`);
+        logger.error({ message: `Issue is null. Skipping` });
         return;
       }
 
       const feature = config.command.find((e) => e.name === id.split("/")[1]);
-
-      console.trace(feature);
 
       if (feature?.enabled === false && id !== IssueCommentCommands.HELP) {
         logger.info(`Skipping '${id}' because it is disabled on this repo.`);

@@ -30,14 +30,14 @@ export async function checkTasksToUnassign() {
   logger.info(`Checking expired tasks done! total: ${res.length}, unassigned: ${res.filter((i) => i).length}`);
 }
 
-const checkTaskToUnassign = async (issue: Issue): Promise<boolean> => {
+async function checkTaskToUnassign(issue: Issue): Promise<boolean> {
   const runtime = Runtime.getState();
+  const logger = runtime.logger;
   const context = runtime.eventContext;
   const payload = context.payload as Payload;
-  const logger = runtime.logger;
-  const {
-    unassign: { followUpTime, disqualifyTime },
-  } = Runtime.getState().botConfig;
+  const unassign = runtime.botConfig.unassign;
+  const { disqualifyTime, followUpTime } = unassign;
+
   logger.info(`Checking the task to unassign, issue_number: ${issue.number}`);
   const { unassignComment, askUpdate } = GLOBAL_STRINGS;
   const assignees = issue.assignees.map((i) => i.login);
@@ -101,7 +101,7 @@ const checkTaskToUnassign = async (issue: Issue): Promise<boolean> => {
   }
 
   return false;
-};
+}
 
 async function lastActivityTime(issue: Issue, comments: Comment[]): Promise<Date> {
   const runtime = Runtime.getState();

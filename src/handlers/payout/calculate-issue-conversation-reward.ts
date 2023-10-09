@@ -3,17 +3,15 @@ import Runtime from "../../bindings/bot-runtime";
 import { GLOBAL_STRINGS } from "../../configs";
 import { getAllIssueComments, parseComments } from "../../helpers";
 import { Comment, Payload, UserType } from "../../types";
-import { getWalletAddress, RewardsResponse } from "../comment";
+import { RewardsResponse } from "../comment";
+import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
 import { calculateRewardValue } from "./calculate-reward-value";
 import { IncentivesCalculationResult } from "./incentives-calculation";
 import { ItemsToExclude } from "./post";
 import { walkComments } from "./walk-comments";
 
-/**
- * Incentivize the contributors based on their contribution.
- * The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
- */
-
+// Incentivize the contributors based on their contribution.
+// The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
 export async function calculateIssueConversationReward(
   calculateIncentives: IncentivesCalculationResult
 ): Promise<RewardsResponse> {
@@ -33,7 +31,9 @@ export async function calculateIssueConversationReward(
 
   const permitComments = calculateIncentives.comments.filter(isBotCommentWithClaim);
   if (permitComments.length > 0)
-    throw logger.error(`incentivizeComments: skip to generate a permit url because it has been already posted`);
+    throw logger.error({
+      message: `incentivizeComments: skip to generate a permit url because it has been already posted`,
+    });
 
   for (const botComment of permitComments.filter((comment: Comment) => comment.user.type === UserType.Bot).reverse()) {
     const botCommentBody = botComment.body;

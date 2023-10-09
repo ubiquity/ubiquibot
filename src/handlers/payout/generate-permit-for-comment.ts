@@ -1,10 +1,10 @@
 import { parseComments } from "../../helpers";
 import { Incentives, User } from "../../types";
-import { getWalletAddress } from "../comment";
 import Decimal from "decimal.js";
 import { ItemsToExclude } from "./post";
 import { calculateRewardValue } from "./calculate-reward-value";
 import Runtime from "../../bindings/bot-runtime";
+import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
 type GeneratePermitForComment = {
   user: User;
   comments: string[];

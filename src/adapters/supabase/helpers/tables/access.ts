@@ -26,7 +26,7 @@ export class Access extends Super {
     const { data, error } = await this.supabase.from("access").select("*, users(*)").filter("id", "eq", id);
 
     if (error) {
-      this.runtime.logger.error(error);
+      this.runtime.logger.error({ message: error });
       throw error;
     }
     return data;

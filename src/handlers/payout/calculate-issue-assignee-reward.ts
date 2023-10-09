@@ -1,6 +1,7 @@
 import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
-import { getWalletAddress, RewardsResponse } from "../comment";
+import { RewardsResponse } from "../comment";
+import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
 import { IncentivesCalculationResult } from "./incentives-calculation";
 import { removePenalty } from "./shims";
 

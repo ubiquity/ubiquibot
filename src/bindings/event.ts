@@ -41,7 +41,7 @@ export async function bindEvents(eventContext: Context) {
   }
 
   if (botConfigError) {
-    runtime.logger.error(botConfigError.toString());
+    runtime.logger.error({ message: botConfigError.toString() });
     if (eventName === GithubEvent.PUSH_EVENT) {
       await validateConfigChange();
     }
