@@ -23,7 +23,8 @@ export function waitForNWebhooks(n = 1) {
     });
   });
 }
-export async function createLabel(octokit: Octokit, owner: string, repo: string, label: string, color?: string) {
+
+export async function createLabel({ octokit, owner, repo, label, color }: CreateLabel) {
   try {
     await octokit.rest.issues.createLabel({
       owner,
@@ -39,13 +40,7 @@ export async function createLabel(octokit: Octokit, owner: string, repo: string,
   }
 }
 
-export async function addLabelToIssue(
-  octokit: Octokit,
-  owner: string,
-  repo: string,
-  issueNumber: number,
-  label: string
-) {
+export async function addLabelToIssue({ octokit, owner, repo, issueNumber, label }: LabelParams) {
   await octokit.rest.issues.addLabels({
     owner,
     repo,
@@ -54,13 +49,7 @@ export async function addLabelToIssue(
   });
 }
 
-export async function removeLabelFromIssue(
-  octokit: Octokit,
-  owner: string,
-  repo: string,
-  issueNumber: number,
-  label: string
-) {
+export async function removeLabelFromIssue({ octokit, owner, repo, issueNumber, label }: LabelParams) {
   await octokit.rest.issues.removeLabel({
     owner,
     repo,
@@ -68,14 +57,7 @@ export async function removeLabelFromIssue(
     name: label,
   });
 }
-
-export async function createAndAddLabel(
-  octokit: Octokit,
-  owner: string,
-  repo: string,
-  issueNumber: number,
-  label: string
-) {
+export async function createAndAddLabel({ octokit, owner, repo, issueNumber, label }: LabelParams) {
   try {
     await octokit.rest.issues.createLabel({
       owner,
@@ -98,13 +80,7 @@ export async function createAndAddLabel(
   }
 }
 
-export async function updateConfig(
-  octokit: Octokit,
-  owner: string,
-  repo: string,
-  path: string,
-  config: RepositoryConfig
-) {
+export async function updateConfig({ octokit, owner, repo, path, config }: UpdateConfig) {
   let sha: string | undefined = undefined;
   try {
     const fileContent = await octokit.rest.repos.getContent({
@@ -136,7 +112,7 @@ export async function updateConfig(
   });
 }
 
-export async function createComment(octokit: Octokit, owner: string, repo: string, issueNumber: number, body: string) {
+export async function createComment({ octokit, owner, repo, issueNumber, body }: CreateComment) {
   await octokit.rest.issues.createComment({
     repo,
     owner,
@@ -144,8 +120,13 @@ export async function createComment(octokit: Octokit, owner: string, repo: strin
     body: body,
   });
 }
-
-export async function getLastComment(octokit: Octokit, owner: string, repo: string, issueNumber: number) {
+interface GetLastComment {
+  octokit: Octokit;
+  owner: string;
+  repo: string;
+  issueNumber: number;
+}
+export async function getLastComment({ octokit, owner, repo, issueNumber }: GetLastComment) {
   const { data } = await octokit.rest.issues.listComments({
     repo,
     owner,
@@ -156,13 +137,44 @@ export async function getLastComment(octokit: Octokit, owner: string, repo: stri
   return data[data.length - 1];
 }
 
-export async function checkLastComment(
-  octokit: Octokit,
-  owner: string,
-  repo: string,
-  issueNumber: number,
-  expectedComment: string
-) {
-  const lastComment = await getLastComment(octokit, owner, repo, issueNumber);
+export default async function checkLastComment({
+  octokit,
+  owner,
+  repo,
+  issueNumber,
+  expectedComment,
+}: CheckLastComment) {
+  const lastComment = await getLastComment({ octokit, owner, repo, issueNumber });
   expect(lastComment.body).toBe(expectedComment);
+}
+
+interface OctokitParams {
+  octokit: Octokit;
+  owner: string;
+  repo: string;
+}
+
+interface IssueParams extends OctokitParams {
+  issueNumber: number;
+}
+
+interface LabelParams extends IssueParams {
+  label: string;
+}
+
+interface CreateLabel extends LabelParams {
+  color?: string;
+}
+
+interface UpdateConfig extends OctokitParams {
+  path: string;
+  config: RepositoryConfig;
+}
+
+interface CreateComment extends IssueParams {
+  body: string;
+}
+
+interface CheckLastComment extends IssueParams {
+  expectedComment: string;
 }

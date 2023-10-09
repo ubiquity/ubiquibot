@@ -76,9 +76,21 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
 
     setServer(server);
 
-    await updateConfig(getAdminUser(), owner, "ubiquibot-config", ".github/ubiquibot-config.yml", orgConfig);
+    await updateConfig({
+      octokit: getAdminUser(),
+      owner,
+      repo: "ubiquibot-config",
+      path: ".github/ubiquibot-config.yml",
+      config: orgConfig,
+    });
     await waitForNWebhooks(1);
-    await updateConfig(getAdminUser(), owner, repo, ".github/ubiquibot-config.yml", repoConfig);
+    await updateConfig({
+      octokit: getAdminUser(),
+      owner,
+      repo,
+      path: ".github/ubiquibot-config.yml",
+      config: repoConfig,
+    });
     await waitForNWebhooks(1);
   };
 }
