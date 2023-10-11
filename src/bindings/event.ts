@@ -121,8 +121,8 @@ export async function bindEvents(eventContext: Context) {
         runtime.logger.error(
           `wildcard action uncaught error`,
           {
-            error,
             action: wildcardProcessor.name,
+            error,
           },
           true
         );

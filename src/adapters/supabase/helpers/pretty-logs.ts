@@ -1,24 +1,38 @@
+import { convertErrorsIntoObjects } from "./tables/logs";
+
 export const prettyLogs = {
   error: function errorLog(...args: unknown[]) {
     if (args[0] instanceof Error) {
-      console.error(args[0]);
+      console.error(args[0].message); // Log the error message
       if (args[0].stack) {
-        _log("error", formatStackTrace(args[0].stack, 4)); // Log the formatted stack trace
+        console.error(formatStackTrace(args[0].stack, 4)); // Log the formatted stack trace separately
       }
+      _log("error", ...args); // Log the original error with metadata
+      return;
+    }
+
+    if (typeof args[0] === "object" && args[0] !== null && "stack" in args[0]) {
+      const { message, stack } = args[0] as { message: string; stack: string };
+      console.error(message); // Log the error message
+      console.error(formatStackTrace(stack, 4)); // Log the formatted stack trace separately
+      _log("error", ...args); // Log the original error with metadata
       return;
     }
 
     _log("error", ...args);
-  },
 
-  ok: function okLog(...args: unknown[]) {
-    _log("ok", ...args);
+    const stack = new Error().stack;
+    if (stack) _log("error", formatStackTrace(stack, 4)); // Log the formatted stack trace
   },
 
   warn: function warnLog(...args: unknown[]) {
     _log("warn", ...args);
     const stack = new Error().stack;
     if (stack) _log("warn", formatStackTrace(stack, 4)); // Log the formatted stack trace
+  },
+
+  ok: function okLog(...args: unknown[]) {
+    _log("ok", ...args);
   },
 
   info: function infoLog(...args: unknown[]) {
@@ -71,8 +85,20 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
     })
     .join("\n");
 
+  // Adding metadata logs
+  const metadataLogs = args
+    .slice(1)
+    .map((arg) => JSON.stringify(convertErrorsIntoObjects(arg), null, 2)) // Use 2 spaces for indentation
+    .join("\n");
+
+  // Constructing the full log string with the prefix symbol
+  let fullLogString = logString;
+  if (metadataLogs.trim() !== "" && !logString.includes(metadataLogs)) {
+    fullLogString += "\nMetadata:\n" + metadataLogs;
+  }
+
   const colorMap = {
-    error: ["trace", "fgRed"],
+    error: ["error", "fgRed"],
     ok: ["log", "fgGreen"],
     warn: ["warn", "fgYellow"],
     info: ["info", "dim"],
@@ -80,7 +106,9 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
   };
   const _console = console[colorMap[type][0] as keyof typeof console] as (...args: string[]) => void;
   if (typeof _console === "function") {
-    _console(colorizeText(logString, colorMap[type][1] as keyof typeof colors));
+    _console(colorizeText(fullLogString, colorMap[type][1] as keyof typeof colors));
+  } else {
+    throw new Error(fullLogString);
   }
 }
 
@@ -121,6 +149,6 @@ export function formatStackTrace(stack: string, linesToRemove = 0, prefix = ""):
     lines.shift(); // Remove the top line
   }
   return lines
-    .map((line) => `${prefix}${line.replace(/\s*at\s*/, "")}`) // Replace 'at' and prefix every line
+    .map((line) => `${prefix}${line.replace(/\s*at\s*/, "  ↳  ")}`) // Replace 'at' and prefix every line
     .join("\n");
 }

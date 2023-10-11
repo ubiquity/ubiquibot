@@ -109,8 +109,20 @@ export class Logs extends Super {
     }
   }
 
-  private _colorComment(type: string, message: string) {
-    const diffKey = {
+  private _diffColorCommentMetaData(metadata: unknown) {
+    const diffHeader = "```json";
+    const diffFooter = "```";
+
+    return [diffHeader, JSON.stringify(metadata, null, 2), diffFooter].join("\n");
+
+    // const serializedMetaData = JSON.stringify(metadata, replacer, 2);
+    // const prefixedPrettySerializedMetaData = prefixInformation(serializedMetaData, "# ");
+    // const colorizedComment = [diffHeader, prefixedPrettySerializedMetaData, diffFooter].join("\n");
+    // return colorizedComment;
+  }
+
+  private _diffColorCommentMessage(type: string, message: string) {
+    const diffPrefix = {
       error: "-", // - text in red
       ok: "+", // + text in green
       warn: "!", // ! text in orange
@@ -124,47 +136,57 @@ export class Logs extends Super {
       // debug: "#",
       // silly: "#",
     };
+    const selected = diffPrefix[type as keyof typeof diffPrefix];
 
-    if (diffKey[type as keyof typeof diffKey]) {
-      message = `${diffKey[type as keyof typeof diffKey]} ${message}`;
-    } else if (diffKey["debug" as keyof typeof diffKey]) {
-      message = `@@ ${message} @@`; // debug: "@@@@",
+    if (selected) {
+      message = message
+        .trim() // Remove leading and trailing whitespace
+        .split("\n")
+        .map((line) => `${selected} ${line}`)
+        .join("\n");
+    } else if (diffPrefix["debug" as keyof typeof diffPrefix]) {
+      // debug has special formatting
+      message = message
+        .split("\n")
+        .map((line) => `@@ ${line} @@`)
+        .join("\n"); // debug: "@@@@",
     } else {
-      message = `# ${message}`;
-      // console.trace(type);
+      // default to gray
+      message = message
+        .split("\n")
+        .map((line) => `# ${line}`)
+        .join("\n");
     }
 
-    const preamble = "```diff\n";
-    const postamble = "\n```";
+    const diffHeader = "```diff";
+    const diffFooter = "```";
 
-    return `${preamble}${message}${postamble}`;
+    return [diffHeader, message, diffFooter].join("\n");
   }
 
   private _log({ level, consoleLog, message, metadata, postComment }: _Log): string {
-    metadata = serializeErrors(metadata);
-
-    // get current location id from comment
-
-    const toSupabase = { log: message, level, metadata: metadata as Json } as LogInsert;
-
-    this._save(toSupabase, level);
-
     // needs to generate three versions of the information.
-    // they must all first serialize the error object
-    // 2. the comment to post on supabase (must be raw)
+    // they must all first serialize the error object if it exists
+    // 1. the comment to post on supabase (must be raw)
     // 1. the comment to post on github (must include diff syntax)
-    // 3. the comment to post on the console (must be colorized)
+    // 1. the comment to post on the console (must be colorized)
 
-    // const colorizedComment = this._colorComment(level, log);
-    // const comment = [colorizedComment];
-    // let serializedMetaData;
-    // if (metadata) serializedMetaData = handleMetaData(metadata, comment);
-    // const commentWithMetaData = comment.join("\n");
-    // consoleLog(log, metadata);
-    // // typecast for supabase
-
-    // if (postComment) this._postComment(commentWithMetaData);
-    // return commentWithMetaData;
+    if (metadata) {
+      metadata = convertErrorsIntoObjects(metadata);
+      const toSupabase = { log: message, level, metadata: metadata } as LogInsert;
+      this._save(toSupabase, level);
+      const colorizedCommentMessage = this._diffColorCommentMessage(level, message);
+      const commentMetaData = this._diffColorCommentMetaData(metadata);
+      if (postComment) this._postComment([colorizedCommentMessage, commentMetaData].join("\n"));
+      // consoleLog(message, metadata); // Log the message with the metadata
+      consoleLog(message.includes(JSON.stringify(metadata)) ? message : message + " " + JSON.stringify(metadata));
+    } else {
+      const toSupabase = { log: message, level } as LogInsert;
+      this._save(toSupabase, level);
+      if (postComment) this._postComment(message);
+      consoleLog(message);
+    }
+    return message;
   }
 
   public ok(log: string, metadata?: unknown, postComment?: boolean): string {
@@ -219,14 +241,14 @@ export class Logs extends Super {
     }
   }
 }
-function handleMetaData(metadata: unknown, fullComment: string[]) {
-  const prettySerializedMetaData = JSON.stringify(metadata, replacer, 2);
-  const prefixedPrettySerializedMetaData = prefixInformation(prettySerializedMetaData, "# ");
-  // const diffMetaData = ["<!--", prettySerializedMetaData, "-->"].join("\n");
-  // fullComment.push(diffMetaData);
-  fullComment.push(prefixedPrettySerializedMetaData);
-  return prettySerializedMetaData;
-}
+// function handleMetaData(metadata: unknown, fullComment: string[]) {
+//   const prettySerializedMetaData = JSON.stringify(metadata, replacer, 2);
+//   const prefixedPrettySerializedMetaData = prefixInformation(prettySerializedMetaData, "# ");
+//   // const diffMetaData = ["<!--", prettySerializedMetaData, "-->"].join("\n");
+//   // fullComment.push(diffMetaData);
+//   fullComment.push(prefixedPrettySerializedMetaData);
+//   return prettySerializedMetaData;
+// }
 
 function getNumericLevel(level: LogLevel) {
   switch (level) {
@@ -257,18 +279,18 @@ export function prefixInformation(information: string, prefix = ""): string {
     .join("\n");
 }
 
-function replacer(key, value) {
-  if (value instanceof Error) {
-    return {
-      // Convert Error to a plain object
-      message: value.message,
-      name: value.name,
-      stack: value.stack,
-    };
-  }
-  return value;
-}
-function serializeErrors(obj: unknown): unknown {
+// function replacer(key, value) {
+//   if (value instanceof Error) {
+//     return {
+//       // Convert Error to a plain object
+//       message: value.message,
+//       name: value.name,
+//       stack: value.stack,
+//     };
+//   }
+//   return value;
+// }
+export function convertErrorsIntoObjects(obj: unknown): unknown {
   if (obj instanceof Error) {
     return {
       message: obj.message,
@@ -278,7 +300,7 @@ function serializeErrors(obj: unknown): unknown {
   } else if (typeof obj === "object" && obj !== null) {
     const keys = Object.keys(obj);
     keys.forEach((key) => {
-      obj[key] = serializeErrors(obj[key]);
+      obj[key] = convertErrorsIntoObjects(obj[key]);
     });
   }
   return obj;
