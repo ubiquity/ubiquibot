@@ -207,19 +207,12 @@ export const upsertCommentToIssue = async (issue_number: number, comment: string
 };
 
 export const upsertLastCommentToIssue = async (issue_number: number, commentBody: string) => {
-  const context = getBotContext();
   const logger = getLogger();
-  const payload = context.payload as Payload;
 
   try {
-    const comments = await context.octokit.issues.listComments({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: issue_number,
-      per_page: 100,
-    });
+    const comments = await getAllIssueComments(issue_number, "json");
 
-    if (comments.data.length > 0 && comments.data[comments.data.length - 1].body !== commentBody) await addCommentToIssue(commentBody, issue_number);
+    if (comments.length > 0 && comments[comments.length - 1].body !== commentBody) await addCommentToIssue(commentBody, issue_number);
   } catch (e: unknown) {
     logger.debug(`Upserting last comment failed! reason: ${e}`);
   }
@@ -280,7 +273,7 @@ export const getIssueDescription = async (issue_number: number, format: "raw" | 
   return result;
 };
 
-export const getAllIssueComments = async (issue_number: number, format: "raw" | "html" | "text" | "full" = "raw"): Promise<Comment[]> => {
+export const getAllIssueComments = async (issue_number: number, format: "raw" | "html" | "text" | "full" | "json" = "raw"): Promise<Comment[]> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
