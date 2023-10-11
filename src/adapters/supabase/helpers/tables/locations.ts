@@ -17,7 +17,7 @@ export class Locations extends Super {
   constructor(supabase: SupabaseClient) {
     super(supabase);
   }
-  public async setLocations(issueCommentId: string) {
+  public async getLocationsMetaData(issueCommentId: string) {
     const graphQlQuery = `
     query {
         node(id: "${issueCommentId}") {

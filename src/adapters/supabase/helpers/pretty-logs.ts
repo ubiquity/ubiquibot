@@ -2,36 +2,27 @@ import { convertErrorsIntoObjects } from "./tables/logs";
 
 export const prettyLogs = {
   error: function errorLog(...args: unknown[]) {
-    _log("error", ...args);
-    const stack = new Error().stack;
-    if (stack) _log("error", formatStackTrace(stack, 4)); // Log the formatted stack trace
-    // if (args[0] instanceof Error) {
-    //   console.error(args[0].message); // Log the error message
-    //   if (args[0].stack) {
-    //     console.error(formatStackTrace(args[0].stack, 4)); // Log the formatted stack trace separately
-    //   }
-    //   _log("error", ...args); // Log the original error with metadata
-    //   return;
-    // }
-
-    // if (typeof args[0] === "object" && args[0] !== null && "stack" in args[0]) {
-    //   const { message, stack } = args[0] as { message: string; stack: string };
-    //   console.error(message); // Log the error message
-    //   console.error(formatStackTrace(stack, 4)); // Log the formatted stack trace separately
-    //   _log("error", ...args); // Log the original error with metadata
-    //   return;
-    // }
-
-    // _log("error", ...args);
-
+    if (args[1] && args[1].error) {
+      const stack = args.splice(1, 1)[0];
+      const prettyStack = formatStackTrace(stack.error.join("\n"));
+      const colorizedStack = colorizeText(prettyStack, "dim");
+      _log("error", ...args);
+      _log("error", colorizedStack);
+    } else {
+      _log("error", ...args);
+    }
     // const stack = new Error().stack;
-    // if (stack) _log("error", formatStackTrace(stack, 4)); // Log the formatted stack trace
+    // if (stack) _log("error", colorizeText(formatStackTrace(stack, 4), "dim")); // Log the formatted stack trace
   },
 
   warn: function warnLog(...args: unknown[]) {
-    _log("warn", ...args);
-    const stack = new Error().stack;
-    if (stack) _log("warn", formatStackTrace(stack, 4)); // Log the formatted stack trace
+    _log("warn", args[0]);
+    _log("warn", ...args.slice(1));
+    const error = new Error();
+    const stack = error.stack;
+    if (stack) {
+      _log("warn", colorizeText(formatStackTrace(stack, 4), "dim")); // Log the formatted stack trace
+    }
   },
 
   ok: function okLog(...args: unknown[]) {
@@ -45,7 +36,7 @@ export const prettyLogs = {
   debug: function debugLog(...args: unknown[]) {
     _log("debug", ...args);
     const stack = new Error().stack;
-    if (stack) _log("debug", formatStackTrace(stack, 4)); // Log the formatted stack trace
+    if (stack) _log("debug", colorizeText(formatStackTrace(stack, 4), "dim")); // Log the formatted stack trace
   },
 };
 
@@ -73,12 +64,12 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
       if (typeof arg === "string") {
         return arg;
       } else {
-        return JSON.stringify(arg, null, "  ");
+        return JSON.stringify(convertErrorsIntoObjects(arg), null, 2);
       }
     })
     .join(" ");
 
-  // Constructing the full log string with the prefix symbol
+  // // Constructing the full log string with the prefix symbol
   const lines = message.split("\n");
   const logString = lines
     .map((line, index) => {
@@ -88,17 +79,17 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
     })
     .join("\n");
 
-  // Adding metadata logs
-  const metadataLogs = args
-    .slice(1)
-    .map((arg) => JSON.stringify(convertErrorsIntoObjects(arg), null, 2)) // Use 2 spaces for indentation
-    .join("\n");
+  // // Adding metadata logs
+  // const metadataLogs = args
+  //   .slice(1)
+  //   .map((arg) => JSON.stringify(convertErrorsIntoObjects(arg), null, 2)) // Use 2 spaces for indentation
+  //   .join("\n");
 
-  // Constructing the full log string with the prefix symbol
+  // // Constructing the full log string with the prefix symbol
   let fullLogString = logString;
-  if (metadataLogs.trim() !== "" && !logString.includes(metadataLogs)) {
-    fullLogString += "\nMetadata:\n" + metadataLogs;
-  }
+  // if (metadataLogs.trim() !== "" && !logString.includes(metadataLogs)) {
+  //   fullLogString += "\nMetadata:\n" + metadataLogs;
+  // }
 
   const colorMap = {
     error: ["error", "fgRed"],

@@ -91,14 +91,14 @@ export async function bindEvents(eventContext: Context) {
     );
     for (const action of handlerType.actions) {
       try {
-        const response = await action(); // FIXME:
+        const response = await action();
         if (response) {
           runtime.logger.ok(response, null, true);
         }
       } catch (error: unknown) {
         const errorMetaData = {
           action: action.name,
-          error,
+          error: error,
         };
 
         // TODO: associate location metadata to `location` table

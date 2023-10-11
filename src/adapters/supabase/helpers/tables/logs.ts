@@ -1,8 +1,8 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import Runtime from "../../../../bindings/bot-runtime";
 import { LogLevel } from "../../../../types";
-import { Database, Json } from "../../types";
-import { formatStackTrace, prettyLogs } from "../pretty-logs";
+import { Database } from "../../types";
+import { prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
 
 type LogFunction = (message?: string, metadata?: unknown) => void;
@@ -31,7 +31,7 @@ export class Logs extends Super {
 
     this.environment = logConfig.logEnvironment;
     this.retryLimit = logConfig.retryLimit;
-    this.maxLevel = getNumericLevel(logConfig.level ?? LogLevel.DEBUG);
+    this.maxLevel = this._getNumericLevel(logConfig.level ?? LogLevel.DEBUG);
   }
 
   private async _sendLogsToSupabase(log: LogInsert) {
@@ -98,7 +98,7 @@ export class Logs extends Super {
   }
 
   private _save(log: LogInsert, level: LogLevel) {
-    if (getNumericLevel(level) > this.maxLevel) return; // filter out more verbose logs according to maxLevel set in config
+    if (this._getNumericLevel(level) > this.maxLevel) return; // filter out more verbose logs according to maxLevel set in config
 
     this.addToQueue(log)
       .then(() => void 0)
@@ -114,11 +114,6 @@ export class Logs extends Super {
     const diffFooter = "```";
 
     return [diffHeader, JSON.stringify(metadata, null, 2), diffFooter].join("\n");
-
-    // const serializedMetaData = JSON.stringify(metadata, replacer, 2);
-    // const prefixedPrettySerializedMetaData = prefixInformation(serializedMetaData, "# ");
-    // const colorizedComment = [diffHeader, prefixedPrettySerializedMetaData, diffFooter].join("\n");
-    // return colorizedComment;
   }
 
   private _diffColorCommentMessage(type: string, message: string) {
@@ -167,24 +162,31 @@ export class Logs extends Super {
   private _log({ level, consoleLog, message, metadata, postComment }: _Log): string {
     // needs to generate three versions of the information.
     // they must all first serialize the error object if it exists
-    // 1. the comment to post on supabase (must be raw)
-    // 1. the comment to post on github (must include diff syntax)
-    // 1. the comment to post on the console (must be colorized)
+    // - the comment to post on supabase (must be raw)
+    // - the comment to post on github (must include diff syntax)
+    // - the comment to post on the console (must be colorized)
 
     if (metadata) {
       metadata = convertErrorsIntoObjects(metadata);
+      consoleLog(message, metadata);
+      // consoleLog(message);
+      // consoleLog(message.includes(JSON.stringify(metadata)) ? message : message + " " + JSON.stringify(metadata));
+      if (postComment) {
+        const colorizedCommentMessage = this._diffColorCommentMessage(level, message);
+        const commentMetaData = this._diffColorCommentMetaData(metadata);
+        // enhanced location data analytics
+        this._postComment([colorizedCommentMessage, commentMetaData].join("\n"));
+      }
       const toSupabase = { log: message, level, metadata: metadata } as LogInsert;
       this._save(toSupabase, level);
-      const colorizedCommentMessage = this._diffColorCommentMessage(level, message);
-      const commentMetaData = this._diffColorCommentMetaData(metadata);
-      if (postComment) this._postComment([colorizedCommentMessage, commentMetaData].join("\n"));
-      // consoleLog(message, metadata); // Log the message with the metadata
-      consoleLog(message.includes(JSON.stringify(metadata)) ? message : message + " " + JSON.stringify(metadata));
     } else {
+      consoleLog(message);
+      if (postComment) {
+        // enhanced location data analytics
+        this._postComment(message);
+      }
       const toSupabase = { log: message, level } as LogInsert;
       this._save(toSupabase, level);
-      if (postComment) this._postComment(message);
-      consoleLog(message);
     }
     return message;
   }
@@ -240,37 +242,40 @@ export class Logs extends Super {
       return [];
     }
   }
-}
-// function handleMetaData(metadata: unknown, fullComment: string[]) {
-//   const prettySerializedMetaData = JSON.stringify(metadata, replacer, 2);
-//   const prefixedPrettySerializedMetaData = prefixInformation(prettySerializedMetaData, "# ");
-//   // const diffMetaData = ["<!--", prettySerializedMetaData, "-->"].join("\n");
-//   // fullComment.push(diffMetaData);
-//   fullComment.push(prefixedPrettySerializedMetaData);
-//   return prettySerializedMetaData;
-// }
 
-function getNumericLevel(level: LogLevel) {
-  switch (level) {
-    case LogLevel.ERROR:
-      return 0;
-    case LogLevel.WARN:
-      return 1;
-    case LogLevel.INFO:
-      return 2;
-    case LogLevel.HTTP:
-      return 3;
-    case LogLevel.VERBOSE:
-      return 4;
-    case LogLevel.DEBUG:
-      return 5;
-    case LogLevel.SILLY:
-      return 6;
-    default:
-      return -1; // Invalid level
+  private _getNumericLevel(level: LogLevel) {
+    switch (level) {
+      case LogLevel.ERROR:
+        return 0;
+      case LogLevel.WARN:
+        return 1;
+      case LogLevel.INFO:
+        return 2;
+      case LogLevel.HTTP:
+        return 3;
+      case LogLevel.VERBOSE:
+        return 4;
+      case LogLevel.DEBUG:
+        return 5;
+      case LogLevel.SILLY:
+        return 6;
+      default:
+        return -1; // Invalid level
+    }
   }
-}
 
+  // function replacer(key, value) {
+  //   if (value instanceof Error) {
+  //     return {
+  //       // Convert Error to a plain object
+  //       message: value.message,
+  //       name: value.name,
+  //       stack: value.stack,
+  //     };
+  //   }
+  //   return value;
+  // }
+}
 export function prefixInformation(information: string, prefix = ""): string {
   const lines = information.split("\n");
 
@@ -278,25 +283,14 @@ export function prefixInformation(information: string, prefix = ""): string {
     .map((line) => `${prefix}${line}`) // Replace 'at' and prefix every line
     .join("\n");
 }
-
-// function replacer(key, value) {
-//   if (value instanceof Error) {
-//     return {
-//       // Convert Error to a plain object
-//       message: value.message,
-//       name: value.name,
-//       stack: value.stack,
-//     };
-//   }
-//   return value;
-// }
 export function convertErrorsIntoObjects(obj: unknown): unknown {
   if (obj instanceof Error) {
-    return {
-      message: obj.message,
-      name: obj.name,
-      stack: obj.stack ? obj.stack.split("\n") : "", // split stack into lines for better readability
-    };
+    return obj.stack ? obj.stack.split("\n") : ""; // split stack into lines for better readability
+    // return {
+    //   message: obj.message,
+    //   name: obj.name,
+    //   stack: obj.stack ? obj.stack.split("\n") : "", // split stack into lines for better readability
+    // };
   } else if (typeof obj === "object" && obj !== null) {
     const keys = Object.keys(obj);
     keys.forEach((key) => {
