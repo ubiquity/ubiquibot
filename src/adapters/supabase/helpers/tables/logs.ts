@@ -36,7 +36,7 @@ export class Logs extends Super {
 
   private async _sendLogsToSupabase(log: LogInsert) {
     const { error } = await this.supabase.from("logs").insert(log);
-    if (error) throw prettyLogs.error("Error logging to Supabase:", error.message);
+    if (error) throw prettyLogs.error("Error logging to Supabase:", error);
   }
 
   async processLogs(log: LogInsert) {
@@ -285,12 +285,12 @@ export function prefixInformation(information: string, prefix = ""): string {
 }
 export function convertErrorsIntoObjects(obj: unknown): unknown {
   if (obj instanceof Error) {
-    return obj.stack ? obj.stack.split("\n") : ""; // split stack into lines for better readability
-    // return {
-    //   message: obj.message,
-    //   name: obj.name,
-    //   stack: obj.stack ? obj.stack.split("\n") : "", // split stack into lines for better readability
-    // };
+    // return obj.stack ? obj.stack.split("\n") : ""; // split stack into lines for better readability
+    return {
+      message: obj.message,
+      name: obj.name,
+      stack: obj.stack ? obj.stack.split("\n") : "", // split stack into lines for better readability
+    };
   } else if (typeof obj === "object" && obj !== null) {
     const keys = Object.keys(obj);
     keys.forEach((key) => {

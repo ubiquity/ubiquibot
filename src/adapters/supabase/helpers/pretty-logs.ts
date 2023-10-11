@@ -3,16 +3,23 @@ import { convertErrorsIntoObjects } from "./tables/logs";
 export const prettyLogs = {
   error: function errorLog(...args: unknown[]) {
     if (args[1] && args[1].error) {
-      const stack = args.splice(1, 1)[0];
-      const prettyStack = formatStackTrace(stack.error.join("\n"));
+      const metadata = args.splice(1, 1)[0];
+      const prettyStack = formatStackTrace(metadata.error.stack.join("\n"));
+      // delete metadata.error.stack;
       const colorizedStack = colorizeText(prettyStack, "dim");
+
+      // console.trace(JSON.stringify(
+      // [{ prettyStack }, { metadata }, { colorizedStack }, { args: [...args] }]
+      // ), null, 2);
+
       _log("error", ...args);
+      _log("error", metadata);
       _log("error", colorizedStack);
     } else {
       _log("error", ...args);
+      const stack = new Error().stack;
+      if (stack) _log("error", colorizeText(formatStackTrace(stack, 4), "dim")); // Log the formatted stack trace
     }
-    // const stack = new Error().stack;
-    // if (stack) _log("error", colorizeText(formatStackTrace(stack, 4), "dim")); // Log the formatted stack trace
   },
 
   warn: function warnLog(...args: unknown[]) {
@@ -46,7 +53,7 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
     ok: "✓",
     warn: "⚠",
     info: "›",
-    debug: "↳",
+    debug: "››",
   };
 
   // Extracting the optional symbol from the arguments
@@ -64,7 +71,8 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
       if (typeof arg === "string") {
         return arg;
       } else {
-        return JSON.stringify(convertErrorsIntoObjects(arg), null, 2);
+        return JSON.stringify(convertErrorsIntoObjects(arg));
+        // return JSON.stringify(convertErrorsIntoObjects(arg), null, 2);
       }
     })
     .join(" ");
@@ -86,7 +94,7 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
   //   .join("\n");
 
   // // Constructing the full log string with the prefix symbol
-  let fullLogString = logString;
+  const fullLogString = logString;
   // if (metadataLogs.trim() !== "" && !logString.includes(metadataLogs)) {
   //   fullLogString += "\nMetadata:\n" + metadataLogs;
   // }
