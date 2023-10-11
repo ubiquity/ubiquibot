@@ -219,7 +219,7 @@ export const upsertLastCommentToIssue = async (issue_number: number, commentBody
       per_page: 100,
     });
 
-    if (comments.data[comments.data.length - 1].body !== commentBody) await addCommentToIssue(commentBody, issue_number);
+    if (comments.data.length > 0 && comments.data[comments.data.length - 1].body !== commentBody) await addCommentToIssue(commentBody, issue_number);
   } catch (e: unknown) {
     logger.debug(`Upserting last comment failed! reason: ${e}`);
   }
