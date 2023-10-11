@@ -1,8 +1,7 @@
 {
   "files.exclude": {
     "dist": true,
-    "node_modules": true,
-    "tsconfig.tsbuildinfo": true
+    "node_modules": true
   },
   "explorer.excludeGitIgnore": false
 }

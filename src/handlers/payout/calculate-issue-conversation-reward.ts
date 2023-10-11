@@ -40,7 +40,7 @@ export async function calculateIssueConversationReward(
       const res = botCommentBody.match(pattern);
       if (res) {
         if (res[1] === "false") {
-          return { error: "autopay is disabled" };
+          throw logger.error("autopay is disabled");
         }
         break;
       }
@@ -103,7 +103,6 @@ export async function calculateIssueConversationReward(
     }
   }
   return {
-    error: null,
     title,
     fallbackReward,
     reward,

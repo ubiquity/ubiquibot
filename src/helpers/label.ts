@@ -3,7 +3,7 @@ import Runtime from "../bindings/bot-runtime";
 import { calculateTaskPrice } from "../handlers";
 import { Label, Payload } from "../types";
 import { deleteLabel } from "./issue";
-import { calculateWeight } from "../helpers";
+import { calculateLabelValue } from "../helpers";
 
 // cspell:disable
 export const COLORS = {
@@ -85,16 +85,16 @@ export const updateLabelsFromBaseRate = async (
   for (const timeLabel of config.price.timeLabels) {
     for (const priorityLabel of config.price.priorityLabels) {
       const targetPrice = calculateTaskPrice(
-        calculateWeight(timeLabel),
-        calculateWeight(priorityLabel),
+        calculateLabelValue(timeLabel),
+        calculateLabelValue(priorityLabel),
         config.price.baseMultiplier
       );
       const targetPriceLabel = `Price: ${targetPrice} USD`;
       newLabels.push(targetPriceLabel);
 
       const previousTargetPrice = calculateTaskPrice(
-        calculateWeight(timeLabel),
-        calculateWeight(priorityLabel),
+        calculateLabelValue(timeLabel),
+        calculateLabelValue(priorityLabel),
         previousBaseRate
       );
       const previousTargetPriceLabel = `Price: ${previousTargetPrice} USD`;

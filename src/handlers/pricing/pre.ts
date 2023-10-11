@@ -1,5 +1,5 @@
 import Runtime from "../../bindings/bot-runtime";
-import { calculateWeight, createLabel, listLabelsForRepo } from "../../helpers";
+import { calculateLabelValue, createLabel, listLabelsForRepo } from "../../helpers";
 import { calculateTaskPrice } from "../shared";
 
 // This just checks all the labels in the config have been set in gh issue
@@ -22,8 +22,8 @@ export const validatePriceLabels = async (): Promise<void> => {
   for (const timeLabel of config.price.timeLabels) {
     for (const priorityLabel of config.price.priorityLabels) {
       const targetPrice = calculateTaskPrice(
-        calculateWeight(timeLabel),
-        calculateWeight(priorityLabel),
+        calculateLabelValue(timeLabel),
+        calculateLabelValue(priorityLabel),
         config.price.baseMultiplier
       );
       const targetPriceLabel = `Price: ${targetPrice} USD`;

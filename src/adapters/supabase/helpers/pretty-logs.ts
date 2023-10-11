@@ -3,7 +3,7 @@ export const prettyLogs = {
     if (args[0] instanceof Error) {
       console.error(args[0]);
       if (args[0].stack) {
-        _log("error", formatStackTrace(args[0].stack, 3)); // Log the formatted stack trace
+        _log("error", formatStackTrace(args[0].stack, 4)); // Log the formatted stack trace
       }
       return;
     }
@@ -18,7 +18,7 @@ export const prettyLogs = {
   warn: function warnLog(...args: unknown[]) {
     _log("warn", ...args);
     const stack = new Error().stack;
-    if (stack) _log("warn", formatStackTrace(stack, 3)); // Log the formatted stack trace
+    if (stack) _log("warn", formatStackTrace(stack, 4)); // Log the formatted stack trace
   },
 
   info: function infoLog(...args: unknown[]) {
@@ -28,7 +28,7 @@ export const prettyLogs = {
   debug: function debugLog(...args: unknown[]) {
     _log("debug", ...args);
     const stack = new Error().stack;
-    if (stack) _log("debug", formatStackTrace(stack, 3)); // Log the formatted stack trace
+    if (stack) _log("debug", formatStackTrace(stack, 4)); // Log the formatted stack trace
   },
 };
 
@@ -51,16 +51,18 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
   }
 
   // Formatting the message
-  const message = messageArgs.map((arg) => {
-    if (typeof arg === "string") {
-      return arg;
-    } else {
-      return JSON.stringify(arg, null, "  ");
-    }
-  });
+  const message = messageArgs
+    .map((arg) => {
+      if (typeof arg === "string") {
+        return arg;
+      } else {
+        return JSON.stringify(arg, null, "  ");
+      }
+    })
+    .join(" ");
 
   // Constructing the full log string with the prefix symbol
-  const lines = message;
+  const lines = message.split("\n");
   const logString = lines
     .map((line, index) => {
       // Add the symbol only to the first line and keep the indentation for the rest
@@ -76,13 +78,9 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
     info: ["info", "dim"],
     debug: ["info", "dim"],
   };
-
   const _console = console[colorMap[type][0] as keyof typeof console] as (...args: string[]) => void;
-
   if (typeof _console === "function") {
     _console(colorizeText(logString, colorMap[type][1] as keyof typeof colors));
-  } else {
-    console.trace(logString);
   }
 }
 

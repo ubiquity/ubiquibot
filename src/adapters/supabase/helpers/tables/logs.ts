@@ -29,8 +29,6 @@ export class Logs extends Super {
     const runtime = Runtime.getState();
     const logConfig = runtime.botConfig.log;
 
-    console.trace(runtime);
-
     this.environment = logConfig.logEnvironment;
     this.retryLimit = logConfig.retryLimit;
     this.maxLevel = getNumericLevel(logConfig.level ?? LogLevel.DEBUG);

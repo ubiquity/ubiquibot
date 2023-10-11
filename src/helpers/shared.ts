@@ -21,11 +21,11 @@ export function shouldSkip() {
   return response;
 }
 
-export function calculateWeight(label?: LabelFromConfig): number {
-  if (!label) return 0;
+export function calculateLabelValue(label: LabelFromConfig): number {
   const matches = label.name.match(/\d+/);
   const number = matches && matches.length > 0 ? parseInt(matches[0]) || 0 : 0;
   if (label.name.toLowerCase().includes("priority")) return number;
+  // throw new Error(`Label ${label.name} is not a priority label`);
   if (label.name.toLowerCase().includes("minute")) return number * 0.002;
   if (label.name.toLowerCase().includes("hour")) return number * 0.125;
   if (label.name.toLowerCase().includes("day")) return 1 + (number - 1) * 0.25;
@@ -34,8 +34,19 @@ export function calculateWeight(label?: LabelFromConfig): number {
   return 0;
 }
 
-export function calculateDuration(label: LabelFromConfig): number | null {
-  const duration = label.name.split(":")[1];
-  if (!duration) return null;
-  return ms(duration) / 1000;
+export function calculateDurations(labels: LabelFromConfig[]): number[] {
+  // from shortest to longest
+  const durations: number[] = [];
+
+  labels.forEach((label) => {
+    const matches = label.name.match(/<(\d+)\s*(\w+)>/);
+    if (matches && matches.length >= 3) {
+      const number = parseInt(matches[1]);
+      const unit = matches[2];
+      const duration = ms(`${number} ${unit}`) / 1000;
+      durations.push(duration);
+    }
+  });
+
+  return durations.sort((a, b) => a - b);
 }

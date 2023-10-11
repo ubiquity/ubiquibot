@@ -2,7 +2,7 @@ import Runtime from "../../../../bindings/bot-runtime";
 import { GLOBAL_STRINGS } from "../../../../configs";
 import {
   addAssignees,
-  calculateDuration,
+  calculateDurations,
   getAllIssueComments,
   getAssignedIssues,
   getAvailableOpenedPullRequests,
@@ -13,7 +13,6 @@ import { assignTableComment } from "../table";
 import { checkTaskStale } from "./check-task-stale";
 import { generateAssignmentComment } from "./generate-assignment-comment";
 import { getMultiplierInfoToDisplay } from "./get-multiplier-info-to-display";
-import { getTimeLabel } from "./get-target-time-label";
 import { getTimeLabelsAssigned } from "./get-time-labels-assigned";
 
 export async function assign(body: string) {
@@ -33,11 +32,11 @@ export async function assign(body: string) {
   }
 
   if (!startEnabled?.enabled) {
-    return logger.warn(GLOBAL_STRINGS.assignCommandDisabledComment);
+    return logger.warn(GLOBAL_STRINGS.disabledAssigns);
   }
 
   if (issue.body && isParentIssue(issue.body)) {
-    return logger.warn(GLOBAL_STRINGS.ignoreStartCommandForParentIssueComment);
+    return logger.warn(GLOBAL_STRINGS.startDisabledOnParentIssues);
   }
 
   const openedPullRequests = await getAvailableOpenedPullRequests(payload.sender.login);
@@ -70,11 +69,15 @@ export async function assign(body: string) {
     return logger.warn("Skipping '/start' since no time labels are set to calculate the timeline");
   }
 
-  const targetTimeLabel = getTimeLabel(timeLabelsAssigned);
-  const duration = calculateDuration(targetTimeLabel);
-  if (!duration) {
-    return logger.warn(`Skipping '/start' because unable to parse the duration of "${targetTimeLabel.name}"`);
+  const durations = calculateDurations(timeLabelsAssigned);
+
+  if (durations.length == 0) {
+    return logger.warn("Skipping '/start' since no time labels are set to calculate the timeline");
+  } else if (durations.length > 1) {
+    logger.warn("Using the shortest duration time label", null, true); // post comment
   }
+
+  const duration = durations[0];
 
   const comment = await generateAssignmentComment(payload, duration);
 

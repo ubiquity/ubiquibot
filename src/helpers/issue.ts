@@ -158,7 +158,7 @@ export async function addCommentToIssue(message: string, issueNumber: number) {
       body: message,
     });
   } catch (e: unknown) {
-    runtime.logger.debug(`Adding a comment failed! reason: ${e}`);
+    runtime.logger.error("Adding a comment failed!", e);
   }
 }
 
@@ -702,21 +702,21 @@ export async function getIssueByNumber(context: Context, issueNumber: number) {
   }
 }
 
-export async function getPullByNumber(context: Context, pull_number: number) {
-  const runtime = Runtime.getState();
+export async function getPullByNumber(context: Context, pull: number) {
+  // const runtime = Runtime.getState();
 
   const payload = context.payload as Payload;
-  try {
-    const { data: pull } = await context.octokit.rest.pulls.get({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      pull_number,
-    });
-    return pull;
-  } catch (error) {
-    runtime.logger.debug(`Fetching pull failed! reason: ${error}`);
-    return;
-  }
+  // try {
+  const response = await context.octokit.rest.pulls.get({
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    pull_number: pull,
+  });
+  return response.data;
+  // } catch (error) {
+  //   runtime.logger.debug(`Fetching pull failed! reason: ${error}`);
+  //   return;
+  // }
 }
 
 // Get issues assigned to a username

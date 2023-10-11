@@ -39,20 +39,8 @@ export async function calculateIssueAssigneeReward(
     if (taskAmountAfterPenalty.lte(0)) {
       // adds a settlement
       // adds credit
-      await removePenalty({
-        userId: incentivesCalculation.assignee.id,
-        amount,
-        node: comment,
-
-        // username: assigneeLogin,
-        // repoName: incentivesCalculation.payload.repository.full_name,
-        // tokenAddress: incentivesCalculation.paymentToken,
-        // networkId: incentivesCalculation.evmNetworkId,
-        // penalty: taskAmount,
-      });
-      const msg = `Permit generation disabled because task amount after penalty is 0.`;
-      logger.info(msg);
-      return { error: msg };
+      await removePenalty({ userId: incentivesCalculation.assignee.id, amount, node: comment });
+      throw logger.error("Permit generation disabled because task amount after penalty is 0.");
     }
     taskAmount = new Decimal(taskAmountAfterPenalty);
   }
@@ -61,7 +49,6 @@ export async function calculateIssueAssigneeReward(
 
   return {
     title: "Issue-Assignee",
-    error: "",
     userId: incentivesCalculation.assignee.id,
     username: assigneeLogin,
     reward: [

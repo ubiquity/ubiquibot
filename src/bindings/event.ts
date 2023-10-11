@@ -13,6 +13,15 @@ import Runtime from "./bot-runtime";
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT, GithubEvent.PUSH_EVENT] as string[];
 
 export async function bindEvents(eventContext: Context) {
+  process.on("uncaughtException", async (event) => {
+    // this is a catch-all for errors. I'm unsure if this will ever be called
+    console.trace();
+    await upsertCommentToIssue(
+      eventContext.issue().issue_number ?? eventContext.pullRequest().pull_number,
+      ErrorDiff(event.message)
+    );
+  });
+
   const runtime = Runtime.getState();
   runtime.eventContext = eventContext;
 
@@ -105,12 +114,4 @@ export async function bindEvents(eventContext: Context) {
       await wildcardProcessor();
     }
   }
-
-  process.on("uncaughtException", async (event) => {
-    console.trace();
-    await upsertCommentToIssue(
-      eventContext.issue().issue_number ?? eventContext.pullRequest().pull_number,
-      ErrorDiff(event.message)
-    );
-  });
 }
