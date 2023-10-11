@@ -210,7 +210,7 @@ export const upsertLastCommentToIssue = async (issue_number: number, commentBody
   const logger = getLogger();
 
   try {
-    const comments = await getAllIssueComments(issue_number, "json");
+    const comments = await getAllIssueComments(issue_number);
 
     if (comments.length > 0 && comments[comments.length - 1].body !== commentBody) await addCommentToIssue(commentBody, issue_number);
   } catch (e: unknown) {
@@ -273,7 +273,7 @@ export const getIssueDescription = async (issue_number: number, format: "raw" | 
   return result;
 };
 
-export const getAllIssueComments = async (issue_number: number, format: "raw" | "html" | "text" | "full" | "json" = "raw"): Promise<Comment[]> => {
+export const getAllIssueComments = async (issue_number: number, format: "raw" | "html" | "text" | "full" = "raw"): Promise<Comment[]> => {
   const context = getBotContext();
   const payload = context.payload as Payload;
 
