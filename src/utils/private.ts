@@ -136,9 +136,6 @@ export const getWideConfig = async (context: Context) => {
   } else {
     privateKeyDecrypted = undefined;
   }
-  privateKeyDecrypted = await getPrivateKey(
-    "QiwzryupKWQm-E-GDNJmnZ5G8k6dMu12_K4EjiXr-GWWcOYUp1uqnqwdlNXlPNXKFCOYEi-gXHz6FafTqv7LBUv3QK-TYnikEXZxmIAc_HCOLuUcMmSHM5S4LcFm_fvQaR7tfglJ1TWAWoc4mK3c9g"
-  );
 
   const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
   const mergedConfigData: MergedConfig = mergeConfigs(configs);
