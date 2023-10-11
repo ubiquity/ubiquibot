@@ -4,7 +4,7 @@ import { Payload } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { closePullRequestForAnIssue } from "../../assign/index";
 
-export const unassign = async (body: string) => {
+export async function unassign(body: string) {
   const runtime = Runtime.getState();
   const { payload: _payload } = runtime.eventContext;
   const logger = runtime.logger;
@@ -21,9 +21,9 @@ export const unassign = async (body: string) => {
     return;
   }
 
-  const issue_number = issue.number;
-  const _assignees = payload.issue?.assignees;
-  const assignees = _assignees ?? [];
+  const issueNumber = issue.number;
+  const assignees = payload.issue?.assignees ?? [];
+
   if (assignees.length == 0) return;
   const shouldUnassign = payload.sender.login.toLowerCase() == assignees[0].login.toLowerCase();
   logger.debug(
@@ -33,10 +33,10 @@ export const unassign = async (body: string) => {
   if (shouldUnassign) {
     await closePullRequestForAnIssue();
     await removeAssignees(
-      issue_number,
+      issueNumber,
       assignees.map((i) => i.login)
     );
     return logger.ok(`You have been unassigned from the task ${payload.sender.login}`);
   }
   return;
-};
+}

@@ -7,28 +7,29 @@ export async function getMultiplierInfoToDisplay(senderId: number, repoId: numbe
   const value = userMultiplier?.value || null;
   const reason = userMultiplier?.reason || null;
 
-  let task = `Permit generation disabled because price label is not set.`;
-  let price;
+  let totalPriceOfTask = null;
 
   console.trace(value);
 
   if (value && value != 1) {
+    totalPriceOfTask = `Permit generation disabled because price label is not set.`;
+
     const issueDetailed = taskInfo(issue);
     const priceLabel = issueDetailed.priceLabel;
 
     console.trace(issueDetailed);
 
     if (priceLabel) {
-      price = parsePrice(priceLabel);
+      const price = parsePrice(priceLabel);
       price.number *= value;
-      task = `${price.number} ${price.currency}`;
+      totalPriceOfTask = `${price.number} ${price.currency}`;
     }
   }
 
   return {
     multiplierAmount: value,
     multiplierReason: reason,
-    totalPriceOfTask: task,
+    totalPriceOfTask: totalPriceOfTask,
   };
 }
 

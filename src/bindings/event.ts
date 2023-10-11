@@ -1,21 +1,25 @@
 import { Context } from "probot";
 import { createAdapters } from "../adapters";
-import { GitHubLogger } from "../adapters/supabase";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
 import { shouldSkip, upsertCommentToIssue } from "../helpers";
-import { GithubEvent, LogLevel, Payload, PayloadSchema } from "../types";
+import { GithubEvent, Payload, PayloadSchema } from "../types";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
 
-import Runtime from "./bot-runtime";
 import { ErrorDiff } from "../utils/helpers";
+import Runtime from "./bot-runtime";
 
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT, GithubEvent.PUSH_EVENT] as string[];
 
 export async function bindEvents(eventContext: Context) {
   const runtime = Runtime.getState();
   runtime.eventContext = eventContext;
+
+  if (!runtime.logger) {
+    throw new Error("Failed to create logger");
+  }
+
   let botConfigError;
   try {
     runtime.botConfig = await loadConfig(eventContext);
@@ -23,25 +27,19 @@ export async function bindEvents(eventContext: Context) {
     botConfigError = err;
   }
 
+  runtime.adapters = createAdapters(runtime.botConfig);
+  runtime.logger = runtime.adapters.supabase.logs;
+
   const payload = eventContext.payload as Payload;
   const allowedEvents = Object.values(GithubEvent) as string[];
   const eventName = payload.action ? `${eventContext.name}.${payload.action}` : eventContext.name; // some events wont have actions as this grows
 
-  runtime.adapters = createAdapters(runtime.botConfig);
-  runtime.logger = new GitHubLogger(
-    runtime.adapters.supabase.client,
-    // contributors will see logs in console while on development environment
-    runtime.botConfig?.log?.logEnvironment ?? "development",
-    runtime.botConfig?.log?.level ?? LogLevel.DEBUG,
-    runtime.botConfig?.log?.retryLimit ?? 0
-    // botConfig.logNotification
-  );
   if (!runtime.logger) {
     throw new Error("Failed to create logger");
   }
 
   if (botConfigError) {
-    runtime.logger.error({ message: botConfigError.toString() });
+    runtime.logger.error("Bot configuration error", botConfigError);
     if (eventName === GithubEvent.PUSH_EVENT) {
       await validateConfigChange();
     }
@@ -61,9 +59,9 @@ export async function bindEvents(eventContext: Context) {
     const validate = ajv.compile(PayloadSchema);
     const valid = validate(payload);
     if (!valid) {
-      runtime.logger.info({ message: "Payload schema validation failed!", metadata: payload });
+      runtime.logger.info("Payload schema validation failed!", payload);
       if (validate.errors) {
-        runtime.logger.warn({ metadata: validate.errors });
+        runtime.logger.warn("validation errors", validate.errors);
       }
       return;
     }

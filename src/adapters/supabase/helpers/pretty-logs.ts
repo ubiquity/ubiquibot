@@ -51,18 +51,16 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
   }
 
   // Formatting the message
-  const message = messageArgs
-    .map((arg) => {
-      if (typeof arg === "string") {
-        return arg;
-      } else {
-        return JSON.stringify(arg, null, "  ");
-      }
-    })
-    .join(" ");
+  const message = messageArgs.map((arg) => {
+    if (typeof arg === "string") {
+      return arg;
+    } else {
+      return JSON.stringify(arg, null, "  ");
+    }
+  });
 
   // Constructing the full log string with the prefix symbol
-  const lines = message.split("\n");
+  const lines = message;
   const logString = lines
     .map((line, index) => {
       // Add the symbol only to the first line and keep the indentation for the rest
@@ -78,13 +76,14 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
     info: ["info", "dim"],
     debug: ["info", "dim"],
   };
+
   const _console = console[colorMap[type][0] as keyof typeof console] as (...args: string[]) => void;
+
   if (typeof _console === "function") {
     _console(colorizeText(logString, colorMap[type][1] as keyof typeof colors));
+  } else {
+    console.trace(logString);
   }
-  // else {
-  //   console.log(logString);
-  // }
 }
 
 const colors = {

@@ -1,5 +1,5 @@
 import Runtime from "../bindings/bot-runtime";
-import { wait } from "../helpers";
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // Checks the rate limit for the GitHub API and waits if necessary
 export async function checkRateLimitGit(headers: { "x-ratelimit-remaining"?: string; "x-ratelimit-reset"?: string }) {

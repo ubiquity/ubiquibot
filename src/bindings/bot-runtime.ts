@@ -1,20 +1,20 @@
 import { Context } from "probot";
 import { BotConfig } from "../types";
 import { createAdapters } from "../adapters";
-import { GitHubLogger } from "../adapters/supabase";
+import { Logs } from "../adapters/supabase";
 
 class Runtime {
   private static instance: Runtime;
   private _eventContext: Context;
   private _botConfig: BotConfig;
   private _adapters: ReturnType<typeof createAdapters>;
-  private _logger: GitHubLogger;
+  private _logger: Logs;
 
   private constructor() {
     this._eventContext = {} as Context;
     this._botConfig = {} as BotConfig;
     this._adapters = {} as ReturnType<typeof createAdapters>;
-    this._logger = {} as GitHubLogger;
+    this._logger = {} as Logs;
   }
 
   public static getState(): Runtime {
@@ -48,11 +48,11 @@ class Runtime {
     this._adapters = adapters;
   }
 
-  public get logger(): GitHubLogger {
+  public get logger(): Logs {
     return this._logger;
   }
 
-  public set logger(logger: GitHubLogger) {
+  public set logger(logger: Logs) {
     this._logger = logger;
   }
 }

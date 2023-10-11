@@ -499,7 +499,7 @@ export async function isUserAdminOrBillingManager(
   }
 }
 
-export async function addAssignees(issueNumber: number, assignees: string[]): Promise<void> {
+export async function addAssignees(issue: number, assignees: string[]): Promise<void> {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
 
@@ -509,7 +509,7 @@ export async function addAssignees(issueNumber: number, assignees: string[]): Pr
     await context.octokit.rest.issues.addAssignees({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number: issueNumber,
+      issue_number: issue,
       assignees,
     });
   } catch (e: unknown) {

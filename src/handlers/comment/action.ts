@@ -36,8 +36,7 @@ export async function handleComment(): Promise<void> {
       logger.info(`Running a comment handler: ${handler.name}`);
       const issue = payload.issue;
       if (!issue) {
-        logger.error({ message: `Issue is null. Skipping` });
-        return;
+        throw logger.error("Issue is null. Skipping");
       }
 
       const feature = config.command.find((e) => e.name === id.split("/")[1]);

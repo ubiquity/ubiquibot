@@ -1,6 +1,6 @@
 import ms from "ms";
 import Runtime from "../bindings/bot-runtime";
-import { LabelItem, Payload, UserType } from "../types";
+import { LabelFromConfig, Payload, UserType } from "../types";
 
 const contextNamesToSkip = ["workflow_run"];
 
@@ -21,9 +21,7 @@ export function shouldSkip() {
   return response;
 }
 
-export const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-export function calculateWeight(label: LabelItem | undefined): number {
+export function calculateWeight(label?: LabelFromConfig): number {
   if (!label) return 0;
   const matches = label.name.match(/\d+/);
   const number = matches && matches.length > 0 ? parseInt(matches[0]) || 0 : 0;
@@ -36,13 +34,8 @@ export function calculateWeight(label: LabelItem | undefined): number {
   return 0;
 }
 
-export function calculateDuration(label: LabelItem): number {
-  if (!label) return 0;
-  if (label.name.toLowerCase().includes("priority")) return 0;
-
-  const pattern = /<(\d+\s\w+)/;
-  const result = label.name.match(pattern);
-  if (!result) return 0;
-
-  return ms(result[1]) / 1000;
+export function calculateDuration(label: LabelFromConfig): number | null {
+  const duration = label.name.split(":")[1];
+  if (!duration) return null;
+  return ms(duration) / 1000;
 }

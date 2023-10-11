@@ -1,7 +1,7 @@
 import Runtime from "../../bindings/bot-runtime";
 import { addCommentToIssue, closePullRequest, calculateWeight, calculateDuration } from "../../helpers";
 import { gitLinkedPrParser } from "../../helpers/parser";
-import { Payload, LabelItem } from "../../types";
+import { Payload, LabelFromConfig } from "../../types";
 import { deadLinePrefix } from "../shared";
 
 const exclude_accounts: string[] = [];
@@ -11,20 +11,17 @@ export async function startCommandHandler() {
   const config = runtime.botConfig;
   const logger = runtime.logger;
   const payload = context.payload as Payload;
-  if (!payload.issue) {
-    logger.debug(`Empty issue object`);
-    return;
-  }
 
-  logger.info(`Commenting timeline message for issue: ${payload.issue.number}`);
+  if (!payload.issue) {
+    throw new Error("Issue is not defined");
+  }
 
   // Extract assignees from payload and filter out excluded accounts
   const assignees = payload.issue?.assignees?.filter((assignee) => !exclude_accounts.includes(assignee.login)) || [];
 
   // If no valid assignees exist, log a debug message and return
   if (assignees.length === 0) {
-    logger.debug(`No assignees for comment`);
-    return;
+    throw new Error("No valid assignees");
   }
 
   // Flatten assignees into a string
@@ -40,7 +37,7 @@ export async function startCommandHandler() {
   }
 
   // Filter out labels that match the time labels defined in the config
-  const timeLabelsAssigned: LabelItem[] = labels.filter((label) =>
+  const timeLabelsAssigned: LabelFromConfig[] = labels.filter((label) =>
     typeof label === "string" || typeof label === "object"
       ? config.price.timeLabels.some((item) => item.name === label.name)
       : false

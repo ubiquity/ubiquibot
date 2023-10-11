@@ -35,7 +35,7 @@ interface AssignTableCommentParams {
   registeredWallet: string;
   multiplierAmount: number | null;
   multiplierReason: string | null;
-  totalPriceOfTask: string;
+  totalPriceOfTask: string | null;
   isTaskStale: boolean;
   daysElapsedSinceTaskCreation: number;
 }

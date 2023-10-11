@@ -7,29 +7,26 @@ import {
   getAssignedIssues,
   getAvailableOpenedPullRequests,
 } from "../../../../helpers";
-import { Comment, IssueType, Payload } from "../../../../types";
+import { Comment, IssueType, Payload, User } from "../../../../types";
 import { isParentIssue } from "../../../pricing";
 import { assignTableComment } from "../table";
 import { checkTaskStale } from "./check-task-stale";
 import { generateAssignmentComment } from "./generate-assignment-comment";
 import { getMultiplierInfoToDisplay } from "./get-multiplier-info-to-display";
-import { getTargetTimeLabel } from "./get-target-time-label";
+import { getTimeLabel } from "./get-target-time-label";
 import { getTimeLabelsAssigned } from "./get-time-labels-assigned";
 
 export async function assign(body: string) {
   const runtime = Runtime.getState();
-  const { payload: _payload } = runtime.eventContext;
-
   const logger = runtime.logger;
-  const config = Runtime.getState().botConfig;
-
-  const payload = _payload as Payload;
+  const config = runtime.botConfig;
+  const payload = runtime.eventContext.payload as Payload;
+  const issue = payload.issue;
 
   const staleTask = config.assign.staleTaskTime;
   const startEnabled = config.command.find((command) => command.name === "start");
 
   logger.info(`Received '/start' command from user: ${payload.sender.login}, body: ${body}`);
-  const issue = (_payload as Payload).issue;
 
   if (!issue) {
     return logger.info(`Skipping '/start' because of no issue instance`);
@@ -55,21 +52,15 @@ export async function assign(body: string) {
 
   // check for max and enforce max
   if (assignedIssues.length - openedPullRequests.length >= config.assign.maxConcurrentTasks) {
-    return `Too many assigned issues, you have reached your max of ${config.assign.maxConcurrentTasks}`;
+    return logger.warn(`Too many assigned issues, you have reached your max of ${config.assign.maxConcurrentTasks}`);
   }
 
   if (issue.state == IssueType.CLOSED) {
     return logger.warn("Skipping '/start' since the issue is closed");
   }
-  const _assignees = payload.issue?.assignees;
-  const assignees = _assignees ?? [];
+  const assignees: User[] = payload.issue?.assignees ?? [];
 
   if (assignees.length !== 0) {
-    logger.info(
-      `Skipping '/start', reason: already assigned. assignees: ${
-        assignees.length > 0 ? assignees.map((i) => i.login).join() : "NoAssignee"
-      }`
-    );
     return logger.warn("Skipping '/start' since the issue is already assigned");
   }
 
@@ -79,12 +70,10 @@ export async function assign(body: string) {
     return logger.warn("Skipping '/start' since no time labels are set to calculate the timeline");
   }
 
-  const targetTimeLabel = getTargetTimeLabel(timeLabelsAssigned);
+  const targetTimeLabel = getTimeLabel(timeLabelsAssigned);
   const duration = calculateDuration(targetTimeLabel);
   if (!duration) {
-    return logger.warn(
-      `Skipping '/start' since configuration is missing for the following labels: "${targetTimeLabel.name}"`
-    );
+    return logger.warn(`Skipping '/start' because unable to parse the duration of "${targetTimeLabel.name}"`);
   }
 
   const comment = await generateAssignmentComment(payload, duration);

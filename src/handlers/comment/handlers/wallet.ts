@@ -1,5 +1,5 @@
 import { constants, ethers } from "ethers";
-import { GitHubLogger } from "../../../adapters/supabase";
+import { Logs } from "../../../adapters/supabase";
 import Runtime from "../../../bindings/bot-runtime";
 import { resolveAddress } from "../../../helpers";
 import { Payload } from "../../../types";
@@ -63,7 +63,7 @@ export async function registerWallet(body: string) {
     throw new Error("Payload comment is undefined");
   }
 }
-function _registerWalletWithVerification(body: string, address: string, logger: GitHubLogger) {
+function _registerWalletWithVerification(body: string, address: string, logger: Logs) {
   const regexForSigHash = /(0x[a-fA-F0-9]{130})/g;
   const sigHashMatches = body.match(regexForSigHash);
   const sigHash = sigHashMatches ? sigHashMatches[0] : null;

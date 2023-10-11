@@ -117,9 +117,9 @@ export async function ask(body: string) {
     } else if (gptResponse.answer) {
       return gptResponse.answer;
     } else {
-      throw logger.error({ message: `Error getting response from GPT` });
+      throw logger.error("Error getting response from OpenAI");
     }
   } else {
-    return logger.warn("Invalid syntax for ask \n usage: '/ask What is pi?");
+    return logger.warn("Invalid syntax for ask. usage: '/ask What is pi?'");
   }
 }

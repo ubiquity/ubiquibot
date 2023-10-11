@@ -31,9 +31,7 @@ export async function calculateIssueConversationReward(
 
   const permitComments = calculateIncentives.comments.filter(isBotCommentWithClaim);
   if (permitComments.length > 0)
-    throw logger.error({
-      message: `incentivizeComments: skip to generate a permit url because it has been already posted`,
-    });
+    throw logger.error("Skipping payment permit generation because payment permit has already been posted.");
 
   for (const botComment of permitComments.filter((comment: Comment) => comment.user.type === UserType.Bot).reverse()) {
     const botCommentBody = botComment.body;

@@ -170,7 +170,7 @@ export class Wallet extends Super {
   private async _enrichLocationMetaData(walletData: WalletRow, locationMetaData: LocationMetaData) {
     const runtime = Runtime.getState();
     const logger = runtime.logger;
-    logger.ok({ message: "Enriching wallet location metadata", metadata: locationMetaData });
+    logger.ok("Enriching wallet location metadata", locationMetaData);
     await this.supabase.from("locations").update(locationMetaData).eq("id", walletData.location_id);
   }
 }
