@@ -66,13 +66,13 @@ export async function assign(body: string) {
   const timeLabelsAssigned = getTimeLabelsAssigned(payload, config);
 
   if (timeLabelsAssigned.length == 0) {
-    return logger.warn("Skipping '/start' since no time labels are set to calculate the timeline");
+    return logger.warn("Skipping '/start' since no time labels are set to calculate the timeline", timeLabelsAssigned);
   }
 
   const durations = calculateDurations(timeLabelsAssigned);
 
   if (durations.length == 0) {
-    return logger.warn("Skipping '/start' since no time labels are set to calculate the timeline");
+    return logger.warn("Skipping '/start' since no durations found to calculate the timeline", durations);
   } else if (durations.length > 1) {
     logger.warn("Using the shortest duration time label", null, true); // post comment
   }

@@ -2,26 +2,16 @@ import { Context } from "probot";
 import { createAdapters } from "../adapters";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
-import { shouldSkip, upsertCommentToIssue } from "../helpers";
+import { shouldSkip } from "../helpers";
 import { GithubEvent, Payload, PayloadSchema } from "../types";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
 
-import { ErrorDiff } from "../utils/helpers";
 import Runtime from "./bot-runtime";
 
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT, GithubEvent.PUSH_EVENT] as string[];
 
 export async function bindEvents(eventContext: Context) {
-  process.on("uncaughtException", async (event) => {
-    // this is a catch-all for errors. I'm unsure if this will ever be called
-    console.trace();
-    await upsertCommentToIssue(
-      eventContext.issue().issue_number ?? eventContext.pullRequest().pull_number,
-      ErrorDiff(event.message)
-    );
-  });
-
   const runtime = Runtime.getState();
   runtime.eventContext = eventContext;
 
@@ -89,29 +79,54 @@ export async function bindEvents(eventContext: Context) {
   }
 
   const { pre, action, post } = handlers;
-  // Run pre-handlers
-  runtime.logger.info(`Running pre handlers: "${pre.map((fn) => fn.name)}" event: ${eventName}`);
-  for (const preAction of pre) {
-    await preAction();
-  }
-  // Run main handlers
-  runtime.logger.info(`Running main handlers: "${action.map((fn) => fn.name)}" event: ${eventName}`);
-  for (const mainAction of action) {
-    await mainAction();
-  }
+  const handlerTypes = [
+    { type: "pre", actions: pre },
+    { type: "main", actions: action },
+    { type: "post", actions: post },
+  ];
 
-  // Run post-handlers
-  runtime.logger.info(`Running post handlers: "${post.map((fn) => fn.name)}" event: ${eventName}`);
-  for (const postAction of post) {
-    await postAction();
-  }
+  for (const handlerType of handlerTypes) {
+    runtime.logger.info(
+      `Running ${handlerType.type} handlers: "${handlerType.actions.map((fn) => fn.name)}" event: ${eventName}`
+    );
+    for (const action of handlerType.actions) {
+      try {
+        const response = await action();
+        if (response) {
+          runtime.logger.ok(response, null, true);
+        }
+      } catch (error: unknown) {
+        const errorMetaData = {
+          action: action.name,
+          error,
+        };
 
+        // TODO: associate location metadata to `location` table
+        runtime.logger.error(`${handlerType.type} action uncaught error`, errorMetaData, true);
+      }
+    }
+  }
   // Skip wildcard handlers for installation event and push event
   if (eventName !== GithubEvent.INSTALLATION_ADDED_EVENT && eventName !== GithubEvent.PUSH_EVENT) {
     // Run wildcard handlers
     runtime.logger.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
     for (const wildcardProcessor of wildcardProcessors) {
-      await wildcardProcessor();
+      try {
+        const response = await wildcardProcessor();
+        if (response) {
+          runtime.logger.ok(response, null, true);
+        }
+      } catch (error: unknown) {
+        // TODO: associate location metadata to `location` table
+        runtime.logger.error(
+          `wildcard action uncaught error`,
+          {
+            error,
+            action: wildcardProcessor.name,
+          },
+          true
+        );
+      }
     }
   }
 }

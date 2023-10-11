@@ -1,13 +1,13 @@
-import { Comment, Issue, Organization, Payload, UserCommands } from "../../../types";
+import { Comment, Organization, Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
 // Commented out until Gnosis Safe is integrated (https://github.com/ubiquity/ubiquibot/issues/353)
 // import { payout } from "./payout";
 import { BigNumber, ethers } from "ethers";
-import { setLabels } from "./labels";
 import { ask } from "./ask";
 import { approveLabelChange } from "./authorize";
+import { setLabels } from "./labels";
 import { multiplier } from "./multiplier";
 import { unassign } from "./unassign";
 import { registerWallet } from "./wallet";
@@ -27,7 +27,6 @@ import {
 } from "../../../helpers";
 
 import Decimal from "decimal.js";
-import { ErrorDiff } from "../../../utils/helpers";
 import { calculateIssueAssigneeReward } from "../../payout/calculate-issue-assignee-reward";
 import { calculateIssueConversationReward } from "../../payout/calculate-issue-conversation-reward";
 import { calculateIssueCreatorReward } from "../../payout/calculate-issue-creator-reward";
@@ -90,43 +89,38 @@ export async function issueClosedCallback(): Promise<void> {
 
   if (!organization) throw logger.error("Cannot save permit to DB, missing organization");
   if (!issue) throw logger.error("Cannot save permit to DB, missing issue");
-  try {
-    // assign function incentivesCalculation to a variable
-    const calculateIncentives = await incentivesCalculation();
+  // assign function incentivesCalculation to a variable
+  const calculateIncentives = await incentivesCalculation();
 
-    const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
-    const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
-    const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
-    const pullRequestReviewersReward = await calculateReviewContributorRewards(calculateIncentives);
+  const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
+  const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
+  const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
+  const pullRequestReviewersReward = await calculateReviewContributorRewards(calculateIncentives);
 
-    const { error } = await handleIssueClosed({
-      creatorReward,
-      assigneeReward,
-      conversationRewards,
-      pullRequestReviewersReward,
-      incentivesCalculation: calculateIncentives,
-      organization: organization,
-    });
+  const { error } = await handleIssueClosed({
+    creatorReward,
+    assigneeReward,
+    conversationRewards,
+    pullRequestReviewersReward,
+    incentivesCalculation: calculateIncentives,
+    organization: organization,
+  });
 
-    if (error) {
-      throw new Error(error);
-    }
-  } catch (err) {
-    return await _renderErrorDiffWrapper(err, issue);
+  if (error) {
+    throw logger.error(error);
   }
 }
 
-export async function _renderErrorDiffWrapper(err: unknown, issue: Issue) {
-  let commentBody;
-  if (err instanceof Error) {
-    console.trace(err);
-    commentBody = `${err.message}${err.stack}`;
-  } else {
-    console.trace(err);
-    commentBody = JSON.stringify(err);
-  }
-  return await addCommentToIssue(ErrorDiff(commentBody), issue.number);
-}
+// export async function _renderErrorDiffWrapper(err: unknown, issue: Issue) {
+//   let commentBody;
+//   if (err instanceof Error) {
+//     console.trace(err);
+//     commentBody = `${err.message}${err.stack}`;
+//   } else {
+//     commentBody = JSON.stringify(err);
+//   }
+//   return await addCommentToIssue(ErrorDiff(commentBody), issue.number);
+// }
 
 export async function issueCreatedCallback(): Promise<void> {
   // Callback for issues created - Processor
@@ -145,30 +139,30 @@ export async function issueCreatedCallback(): Promise<void> {
     return;
   }
 
-  try {
-    const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
-    const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
+  // try {
+  const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
+  const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
-    const minTimeLabel =
-      timeLabels.length > 0
-        ? timeLabels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b)).name
-        : config.price.defaultLabels[0];
-    const minPriorityLabel =
-      priorityLabels.length > 0
-        ? priorityLabels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b)).name
-        : config.price.defaultLabels[1];
-    if (!timeLabels.length) await addLabelToIssue(minTimeLabel);
-    if (!priorityLabels.length) await addLabelToIssue(minPriorityLabel);
+  const minTimeLabel =
+    timeLabels.length > 0
+      ? timeLabels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b)).name
+      : config.price.defaultLabels[0];
+  const minPriorityLabel =
+    priorityLabels.length > 0
+      ? priorityLabels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b)).name
+      : config.price.defaultLabels[1];
+  if (!timeLabels.length) await addLabelToIssue(minTimeLabel);
+  if (!priorityLabels.length) await addLabelToIssue(minPriorityLabel);
 
-    const targetPriceLabel = setPrice(minTimeLabel, minPriorityLabel);
-    if (targetPriceLabel && !labels.map((i) => i.name).includes(targetPriceLabel)) {
-      const exist = await getLabel(targetPriceLabel);
-      if (!exist) await createLabel(targetPriceLabel, "price");
-      await addLabelToIssue(targetPriceLabel);
-    }
-  } catch (err) {
-    return await _renderErrorDiffWrapper(err, issue);
+  const targetPriceLabel = setPrice(minTimeLabel, minPriorityLabel);
+  if (targetPriceLabel && !labels.map((i) => i.name).includes(targetPriceLabel)) {
+    const exist = await getLabel(targetPriceLabel);
+    if (!exist) await createLabel(targetPriceLabel, "price");
+    await addLabelToIssue(targetPriceLabel);
   }
+  // } catch (err) {
+  //   return await _renderErrorDiffWrapper(err, issue);
+  // }
 }
 
 export async function issueReopenedCallback(): Promise<void> {
@@ -182,80 +176,80 @@ export async function issueReopenedCallback(): Promise<void> {
   const issue = (_payload as Payload).issue;
   // const repository = (_payload as Payload).repository;
   if (!issue) return;
-  try {
-    // find permit comment from the bot
-    const comments = await getAllIssueComments(issue.number);
-    const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
-    const permitCommentIdx = comments.findIndex((e) => e.user.type === "Bot" && e.body.match(claimUrlRegex));
-    if (permitCommentIdx === -1) {
-      return;
-    }
-
-    // extract permit amount and token
-    const permitComment = comments[permitCommentIdx];
-    const permitUrl = permitComment.body.match(claimUrlRegex);
-    if (!permitUrl || permitUrl.length < 2) {
-      logger.error(`Permit URL not found`);
-      return;
-    }
-    const url = new URL(permitUrl[1]);
-    const claimBase64 = url.searchParams.get("claim");
-    if (!claimBase64) {
-      logger.error(`Permit claim search parameter not found`);
-      return;
-    }
-    let networkId = url.searchParams.get("network");
-    if (!networkId) {
-      networkId = "1";
-    }
-    const { rpc } = getPayoutConfigByNetworkId(Number(networkId));
-    let claim;
-    try {
-      claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
-    } catch (err: unknown) {
-      logger.error(`Error parsing claim: ${err}`);
-      return;
-    }
-    const amount = BigNumber.from(claim.permit.permitted.amount);
-    const formattedAmount = ethers.utils.formatUnits(amount, 18);
-    const tokenAddress = claim.permit.permitted.token;
-    const tokenSymbol = await getTokenSymbol(tokenAddress, rpc);
-
-    // find latest assignment before the permit comment
-    const events = await getAllIssueAssignEvents(issue.number);
-    if (events.length === 0) {
-      logger.error(`No assignment found`);
-      return;
-    }
-    const assignee = events[0].assignee.login;
-
-    if (parseFloat(formattedAmount) > 0) {
-      // write penalty to db
-      const { debit } = Runtime.getState().adapters.supabase;
-
-      try {
-        await debit.addDebit({
-          userId: events[0].assignee.id,
-          amount: new Decimal(formattedAmount),
-          // comment: permitComment,
-          networkId: Number(networkId),
-          address: tokenAddress,
-        });
-      } catch (err) {
-        logger.error(`Error writing penalty to db: ${err}`);
-        return;
-      }
-
-      await addCommentToIssue(
-        `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of **${formattedAmount} ${tokenSymbol}** will be deducted from your next task.`,
-        issue.number
-      );
-    } else {
-      logger.info(`Skipped penalty because amount is 0`);
-    }
-  } catch (err) {
-    return await _renderErrorDiffWrapper(err, issue);
+  // try {
+  // find permit comment from the bot
+  const comments = await getAllIssueComments(issue.number);
+  const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
+  const permitCommentIdx = comments.findIndex((e) => e.user.type === "Bot" && e.body.match(claimUrlRegex));
+  if (permitCommentIdx === -1) {
+    return;
   }
+
+  // extract permit amount and token
+  const permitComment = comments[permitCommentIdx];
+  const permitUrl = permitComment.body.match(claimUrlRegex);
+  if (!permitUrl || permitUrl.length < 2) {
+    logger.error(`Permit URL not found`);
+    return;
+  }
+  const url = new URL(permitUrl[1]);
+  const claimBase64 = url.searchParams.get("claim");
+  if (!claimBase64) {
+    logger.error(`Permit claim search parameter not found`);
+    return;
+  }
+  let networkId = url.searchParams.get("network");
+  if (!networkId) {
+    networkId = "1";
+  }
+  const { rpc } = getPayoutConfigByNetworkId(Number(networkId));
+  let claim;
+  try {
+    claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
+  } catch (err: unknown) {
+    logger.error(`Error parsing claim: ${err}`);
+    return;
+  }
+  const amount = BigNumber.from(claim.permit.permitted.amount);
+  const formattedAmount = ethers.utils.formatUnits(amount, 18);
+  const tokenAddress = claim.permit.permitted.token;
+  const tokenSymbol = await getTokenSymbol(tokenAddress, rpc);
+
+  // find latest assignment before the permit comment
+  const events = await getAllIssueAssignEvents(issue.number);
+  if (events.length === 0) {
+    logger.error(`No assignment found`);
+    return;
+  }
+  const assignee = events[0].assignee.login;
+
+  if (parseFloat(formattedAmount) > 0) {
+    // write penalty to db
+    const { debit } = Runtime.getState().adapters.supabase;
+
+    try {
+      await debit.addDebit({
+        userId: events[0].assignee.id,
+        amount: new Decimal(formattedAmount),
+        // comment: permitComment,
+        networkId: Number(networkId),
+        address: tokenAddress,
+      });
+    } catch (err) {
+      logger.error(`Error writing penalty to db: ${err}`);
+      return;
+    }
+
+    await addCommentToIssue(
+      `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of **${formattedAmount} ${tokenSymbol}** will be deducted from your next task.`,
+      issue.number
+    );
+  } else {
+    logger.info(`Skipped penalty because amount is 0`);
+  }
+  // } catch (err) {
+  //   return await _renderErrorDiffWrapper(err, issue);
+  // }
 }
 
 async function commandCallback(issue: number, comment: string, action: string, replyTo?: Comment) {

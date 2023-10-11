@@ -121,6 +121,6 @@ export function formatStackTrace(stack: string, linesToRemove = 0, prefix = ""):
     lines.shift(); // Remove the top line
   }
   return lines
-    .map((line) => `\t${prefix}${line.replace(/\s*at\s*/, "")}`) // Replace 'at' and prefix every line
+    .map((line) => `${prefix}${line.replace(/\s*at\s*/, "")}`) // Replace 'at' and prefix every line
     .join("\n");
 }

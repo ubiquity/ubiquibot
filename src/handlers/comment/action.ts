@@ -3,7 +3,6 @@ import { Comment, Payload } from "../../types";
 import { IssueCommentCommands } from "./commands";
 import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCheck } from "./handlers/first";
-import { _renderErrorDiffWrapper } from "./handlers/";
 
 export async function handleComment(): Promise<void> {
   const runtime = Runtime.getState(),
@@ -36,7 +35,8 @@ export async function handleComment(): Promise<void> {
       logger.info(`Running a comment handler: ${handler.name}`);
       const issue = payload.issue;
       if (!issue) {
-        throw logger.error("Issue is null. Skipping");
+        logger.error("Issue is null. Skipping", { issue }, true);
+        return;
       }
 
       const feature = config.command.find((e) => e.name === id.split("/")[1]);
@@ -52,14 +52,14 @@ export async function handleComment(): Promise<void> {
         continue;
       }
 
-      try {
-        const callbackComment = await handler(body);
-        if (callbackComment) {
-          await callback(issue.number, callbackComment, payload.action, payload.comment);
-        }
-      } catch (err) {
-        return await _renderErrorDiffWrapper(err, issue);
+      // try {
+      const callbackComment = await handler(body);
+      if (callbackComment) {
+        await callback(issue.number, callbackComment, payload.action, payload.comment);
       }
+      // } catch (err) {
+      //   return await _renderErrorDiffWrapper(err, issue);
+      // }
     } else {
       logger.info(`Skipping for a command: ${command}`);
     }

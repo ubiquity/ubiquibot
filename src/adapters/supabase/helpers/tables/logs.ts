@@ -2,15 +2,15 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import Runtime from "../../../../bindings/bot-runtime";
 import { LogLevel } from "../../../../types";
 import { Database, Json } from "../../types";
-import { prettyLogs } from "../pretty-logs";
+import { formatStackTrace, prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
 
 type LogFunction = (message?: string, metadata?: unknown) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
 type _Log = {
   level: LogLevel;
-  logFunction: LogFunction;
-  log: string;
+  consoleLog: LogFunction;
+  message: string;
   metadata?: unknown;
   postComment?: boolean;
 };
@@ -140,41 +140,51 @@ export class Logs extends Super {
     return `${preamble}${message}${postamble}`;
   }
 
-  private _log({ level, logFunction, log, metadata, postComment }: _Log): string {
-    logFunction(log, metadata);
+  private _log({ level, consoleLog, message, metadata, postComment }: _Log): string {
+    metadata = serializeErrors(metadata);
 
-    this._save(
-      {
-        log,
-        metadata: metadata as Json, // typecast for supabase
-      },
-      level
-    );
+    // get current location id from comment
 
-    if (postComment) {
-      this._postComment(JSON.stringify(log));
-    }
-    return this._colorComment(level, log);
+    const toSupabase = { log: message, level, metadata: metadata as Json } as LogInsert;
+
+    this._save(toSupabase, level);
+
+    // needs to generate three versions of the information.
+    // they must all first serialize the error object
+    // 2. the comment to post on supabase (must be raw)
+    // 1. the comment to post on github (must include diff syntax)
+    // 3. the comment to post on the console (must be colorized)
+
+    // const colorizedComment = this._colorComment(level, log);
+    // const comment = [colorizedComment];
+    // let serializedMetaData;
+    // if (metadata) serializedMetaData = handleMetaData(metadata, comment);
+    // const commentWithMetaData = comment.join("\n");
+    // consoleLog(log, metadata);
+    // // typecast for supabase
+
+    // if (postComment) this._postComment(commentWithMetaData);
+    // return commentWithMetaData;
   }
 
   public ok(log: string, metadata?: unknown, postComment?: boolean): string {
-    return this._log({ level: LogLevel.VERBOSE, logFunction: prettyLogs.ok, log, metadata, postComment });
+    return this._log({ level: LogLevel.VERBOSE, consoleLog: prettyLogs.ok, message: log, metadata, postComment });
   }
 
   public info(log: string, metadata?: unknown, postComment?: boolean): string {
-    return this._log({ level: LogLevel.INFO, logFunction: prettyLogs.info, log, metadata, postComment });
+    return this._log({ level: LogLevel.INFO, consoleLog: prettyLogs.info, message: log, metadata, postComment });
   }
 
   public warn(log: string, metadata?: unknown, postComment?: boolean): string {
-    return this._log({ level: LogLevel.WARN, logFunction: prettyLogs.warn, log, metadata, postComment });
+    return this._log({ level: LogLevel.WARN, consoleLog: prettyLogs.warn, message: log, metadata, postComment });
   }
 
   public debug(log: string, metadata?: unknown, postComment?: boolean): string {
-    return this._log({ level: LogLevel.DEBUG, logFunction: prettyLogs.debug, log, metadata, postComment });
+    return this._log({ level: LogLevel.DEBUG, consoleLog: prettyLogs.debug, message: log, metadata, postComment });
   }
 
   public error(log: string, metadata?: unknown, postComment?: boolean): string {
-    return this._log({ level: LogLevel.ERROR, logFunction: prettyLogs.error, log, metadata, postComment });
+    return this._log({ level: LogLevel.ERROR, consoleLog: prettyLogs.error, message: log, metadata, postComment });
   }
 
   private _postComment(message: string) {
@@ -185,7 +195,7 @@ export class Logs extends Super {
         issue_number: this.runtime.eventContext.issue().issue_number,
         body: message,
       })
-      .then((x) => console.trace(x))
+      // .then((x) => console.trace(x))
       .catch((x) => console.trace(x));
   }
 
@@ -209,6 +219,15 @@ export class Logs extends Super {
     }
   }
 }
+function handleMetaData(metadata: unknown, fullComment: string[]) {
+  const prettySerializedMetaData = JSON.stringify(metadata, replacer, 2);
+  const prefixedPrettySerializedMetaData = prefixInformation(prettySerializedMetaData, "# ");
+  // const diffMetaData = ["<!--", prettySerializedMetaData, "-->"].join("\n");
+  // fullComment.push(diffMetaData);
+  fullComment.push(prefixedPrettySerializedMetaData);
+  return prettySerializedMetaData;
+}
+
 function getNumericLevel(level: LogLevel) {
   switch (level) {
     case LogLevel.ERROR:
@@ -228,4 +247,39 @@ function getNumericLevel(level: LogLevel) {
     default:
       return -1; // Invalid level
   }
+}
+
+export function prefixInformation(information: string, prefix = ""): string {
+  const lines = information.split("\n");
+
+  return lines
+    .map((line) => `${prefix}${line}`) // Replace 'at' and prefix every line
+    .join("\n");
+}
+
+function replacer(key, value) {
+  if (value instanceof Error) {
+    return {
+      // Convert Error to a plain object
+      message: value.message,
+      name: value.name,
+      stack: value.stack,
+    };
+  }
+  return value;
+}
+function serializeErrors(obj: unknown): unknown {
+  if (obj instanceof Error) {
+    return {
+      message: obj.message,
+      name: obj.name,
+      stack: obj.stack ? obj.stack.split("\n") : "", // split stack into lines for better readability
+    };
+  } else if (typeof obj === "object" && obj !== null) {
+    const keys = Object.keys(obj);
+    keys.forEach((key) => {
+      obj[key] = serializeErrors(obj[key]);
+    });
+  }
+  return obj;
 }

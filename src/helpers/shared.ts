@@ -1,6 +1,6 @@
 import ms from "ms";
 import Runtime from "../bindings/bot-runtime";
-import { LabelFromConfig, Payload, UserType } from "../types";
+import { Label, Payload, UserType } from "../types";
 
 const contextNamesToSkip = ["workflow_run"];
 
@@ -21,7 +21,7 @@ export function shouldSkip() {
   return response;
 }
 
-export function calculateLabelValue(label: LabelFromConfig): number {
+export function calculateLabelValue(label: Label): number {
   const matches = label.name.match(/\d+/);
   const number = matches && matches.length > 0 ? parseInt(matches[0]) || 0 : 0;
   if (label.name.toLowerCase().includes("priority")) return number;
@@ -34,12 +34,14 @@ export function calculateLabelValue(label: LabelFromConfig): number {
   return 0;
 }
 
-export function calculateDurations(labels: LabelFromConfig[]): number[] {
+export function calculateDurations(labels: Label[]): number[] {
   // from shortest to longest
   const durations: number[] = [];
 
-  labels.forEach((label) => {
-    const matches = label.name.match(/<(\d+)\s*(\w+)>/);
+  labels.forEach((label: Label) => {
+    console.trace(label);
+    const matches = label.name.match(/<(\d+)\s*(\w+)/);
+    console.trace(matches);
     if (matches && matches.length >= 3) {
       const number = parseInt(matches[1]);
       const unit = matches[2];

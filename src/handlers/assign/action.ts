@@ -1,7 +1,7 @@
 import Runtime from "../../bindings/bot-runtime";
-import { addCommentToIssue, closePullRequest, calculateLabelValue, calculateDurations } from "../../helpers";
+import { addCommentToIssue, calculateDurations, calculateLabelValue, closePullRequest } from "../../helpers";
 import { getLinkedPullRequests } from "../../helpers/parser";
-import { Payload, LabelFromConfig } from "../../types";
+import { Label, Payload } from "../../types";
 import { deadLinePrefix } from "../shared";
 
 export async function startCommandHandler() {
@@ -12,14 +12,14 @@ export async function startCommandHandler() {
   const payload = context.payload as Payload;
 
   if (!payload.issue) {
-    throw new Error("Issue is not defined");
+    return logger.error("Issue is not defined");
   }
 
   const assignees = payload.issue?.assignees;
 
   // If no valid assignees exist, log a debug message and return
   if (assignees.length === 0) {
-    throw logger.warn("No assignees");
+    return logger.warn("No assignees");
   }
 
   // Flatten assignees into a string
@@ -30,11 +30,11 @@ export async function startCommandHandler() {
 
   // If no labels exist, log a debug message and return
   if (!labels) {
-    throw logger.warn(`No labels to calculate timeline`);
+    return logger.warn(`No labels to calculate timeline`);
   }
 
   // Filter out labels that match the time labels defined in the config
-  const timeLabelsAssigned: LabelFromConfig[] = labels.filter((label) =>
+  const timeLabelsAssigned: Label[] = labels.filter((label) =>
     typeof label === "string" || typeof label === "object"
       ? config.price.timeLabels.some((item) => item.name === label.name)
       : false
@@ -46,10 +46,24 @@ export async function startCommandHandler() {
   }
 
   // Sort labels by weight and select the one with the smallest weight
-  const sortedLabels = timeLabelsAssigned.sort((a, b) => calculateLabelValue(a) - calculateLabelValue(b));
+  const sortedLabels = timeLabelsAssigned
+    .sort((a, b) => {
+      const fullLabelA = labels.find((label) => label.name === a.name);
+      const fullLabelB = labels.find((label) => label.name === b.name);
+
+      if (!fullLabelA || !fullLabelB) {
+        return 0; // return a default value
+      }
+
+      return calculateLabelValue(fullLabelA) - calculateLabelValue(fullLabelB);
+    })
+    .map((label) => labels.find((fullLabel) => fullLabel.name === label.name));
+
+  // Filter out undefined values
+  const validSortedLabels = sortedLabels.filter((label) => label !== undefined);
 
   // Calculate the duration for the target label
-  const labelDuration = calculateDurations(sortedLabels);
+  const labelDuration = calculateDurations(validSortedLabels as Label[]);
   const shortestDurationLabel = labelDuration[0];
 
   // Calculate the end date based on the current date and the label duration

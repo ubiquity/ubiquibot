@@ -13,7 +13,7 @@ import { Label, Payload, UserType } from "../../types";
 import { handleLabelsAccess } from "../access";
 import { setPrice } from "../shared";
 
-export async function pricingLabel(): Promise<void> {
+export async function pricingLabel() {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const config = Runtime.getState().botConfig;
@@ -54,17 +54,17 @@ export async function pricingLabel(): Promise<void> {
 
   if (!recognizedTimeLabels.length) {
     await clearAllPriceLabelsOnIssue();
-    throw logger.warn("No recognized time labels to calculate price", null, true);
+    return logger.warn("No recognized time labels to calculate price", null, true);
   }
   if (!recognizedPriorityLabels.length) {
     await clearAllPriceLabelsOnIssue();
-    throw logger.warn("No recognized priority labels to calculate price", null, true);
+    return logger.warn("No recognized priority labels to calculate price", null, true);
   }
 
   const minTimeLabel = getMinLabel(recognizedTimeLabels);
   const minPriorityLabel = getMinLabel(recognizedPriorityLabels);
 
-  if (!minTimeLabel || !minPriorityLabel) throw logger.warn("Time or priority label is not defined");
+  if (!minTimeLabel || !minPriorityLabel) return logger.warn("Time or priority label is not defined");
 
   const targetPriceLabel = setPrice(minTimeLabel, minPriorityLabel);
 

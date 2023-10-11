@@ -1,7 +1,7 @@
 import { Comment } from "./payload";
 
-export type CommandsHandler = (args: string) => Promise<string | undefined>;
-export type ActionHandler = (args?: string) => Promise<void>;
+export type CommandsHandler = (args: string) => Promise<string | void>;
+export type ActionHandler = (args?: string) => Promise<string | void>;
 export type CallbackHandler = (issueNumber: number, text: string, action: string, replyTo?: Comment) => Promise<void>;
 export type PreActionHandler = ActionHandler;
 export type PostActionHandler = ActionHandler;
