@@ -5,6 +5,7 @@ import {
   getAllIssueComments,
   getCommitsOnPullRequest,
   getOpenedPullRequestsForAnIssue,
+  getRequestedReviewerStart,
   getReviewRequests,
   listAllIssuesForRepo,
   removeAssignees,
@@ -60,7 +61,17 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
     if (reviewRequests.users?.length > 0) {
       let msg = "";
       for (const reviewer of reviewRequests.users) {
-        msg += "@" + reviewer.login + " ";
+        //check if reviewer has to be followed up with
+        let reviewRequestedAt = await getRequestedReviewerStart(reviewer.login);
+        if (!reviewRequestedAt) return false;
+
+        let currDate = new Date();
+        let expectedDate = new Date(reviewRequestedAt);
+        expectedDate.setDate(expectedDate.getDate() + 3);
+
+        if (currDate >= expectedDate) {
+          msg += "@" + reviewer.login + " ";
+        }
       }
       msg += "Can you please review this pull request";
       // the below function can also add comment to prs
