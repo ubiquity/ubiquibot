@@ -91,7 +91,7 @@ export async function bindEvents(eventContext: Context) {
     );
     for (const action of handlerType.actions) {
       try {
-        const response = await action();
+        const response = await action(); // FIXME:
         if (response) {
           runtime.logger.ok(response, null, true);
         }
@@ -102,7 +102,7 @@ export async function bindEvents(eventContext: Context) {
         };
 
         // TODO: associate location metadata to `location` table
-        runtime.logger.error(`${handlerType.type} action uncaught error`, errorMetaData, true);
+        runtime.logger.error(`${handlerType.type} action uncaught error`, errorMetaData, true); // FIXME:
       }
     }
   }

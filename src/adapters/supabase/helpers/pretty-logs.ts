@@ -2,27 +2,30 @@ import { convertErrorsIntoObjects } from "./tables/logs";
 
 export const prettyLogs = {
   error: function errorLog(...args: unknown[]) {
-    if (args[0] instanceof Error) {
-      console.error(args[0].message); // Log the error message
-      if (args[0].stack) {
-        console.error(formatStackTrace(args[0].stack, 4)); // Log the formatted stack trace separately
-      }
-      _log("error", ...args); // Log the original error with metadata
-      return;
-    }
-
-    if (typeof args[0] === "object" && args[0] !== null && "stack" in args[0]) {
-      const { message, stack } = args[0] as { message: string; stack: string };
-      console.error(message); // Log the error message
-      console.error(formatStackTrace(stack, 4)); // Log the formatted stack trace separately
-      _log("error", ...args); // Log the original error with metadata
-      return;
-    }
-
     _log("error", ...args);
-
     const stack = new Error().stack;
     if (stack) _log("error", formatStackTrace(stack, 4)); // Log the formatted stack trace
+    // if (args[0] instanceof Error) {
+    //   console.error(args[0].message); // Log the error message
+    //   if (args[0].stack) {
+    //     console.error(formatStackTrace(args[0].stack, 4)); // Log the formatted stack trace separately
+    //   }
+    //   _log("error", ...args); // Log the original error with metadata
+    //   return;
+    // }
+
+    // if (typeof args[0] === "object" && args[0] !== null && "stack" in args[0]) {
+    //   const { message, stack } = args[0] as { message: string; stack: string };
+    //   console.error(message); // Log the error message
+    //   console.error(formatStackTrace(stack, 4)); // Log the formatted stack trace separately
+    //   _log("error", ...args); // Log the original error with metadata
+    //   return;
+    // }
+
+    // _log("error", ...args);
+
+    // const stack = new Error().stack;
+    // if (stack) _log("error", formatStackTrace(stack, 4)); // Log the formatted stack trace
   },
 
   warn: function warnLog(...args: unknown[]) {
