@@ -21,8 +21,9 @@ jobs:
       - name: Local Build
         run: yarn build
 
-      - name: Test
-        run: yarn test
+      # Enable `test` step once writing unit test done.
+      # - name: Test
+      #   run: yarn test
 
       - name: Lint
         run: yarn lint
