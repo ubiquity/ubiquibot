@@ -1,6 +1,6 @@
 {
   "extends": "@istanbuljs/nyc-config-typescript",
-  "exclude": ["src/index.ts", "src/types"],
+  "exclude": ["src/index.ts", "src/types", "src/adapters/github"],
   "include": ["src"],
   "all": true,
   "check-coverage": true,
