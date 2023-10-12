@@ -21,9 +21,10 @@
     "lint": "eslint --ext .ts ./src",
     "start:serverless": "tsx src/adapters/github/github-actions.ts",
     "start:watch": "nodemon --exec 'yarn start'",
-    "utils:cspell": "cspell --config .cspell.json 'src/**/*.{js,ts,json,md,yml}'",
-    "start": "probot run ./lib/index.js",
-    "prepare": "husky install"
+    "start": "probot run ./lib/src/index.js",
+    "prepare": "husky install",
+    "test": "nyc ts-mocha --check-leaks --exit --timeout 120000 './test/**/*.spec.ts'",
+    "utils:cspell": "cspell --config .cspell.json 'src/**/*.{js,ts,json,md,yml}'"
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
@@ -51,6 +52,7 @@
     "husky": "^8.0.2",
     "jimp": "^0.22.4",
     "js-yaml": "^4.1.0",
+    "jsonwebtoken": "^9.0.2",
     "libsodium-wrappers": "^0.7.11",
     "lint-staged": "^13.1.0",
     "lodash": "^4.17.21",
@@ -64,7 +66,14 @@
     "probot": "^12.2.4",
     "telegraf": "^4.11.2",
     "tsx": "^3.12.7",
-    "yaml": "^2.2.2"
+    "yaml": "^2.2.2",
+    "mocha": "10.2.0",
+    "nyc": "15.1.0",
+    "ts-mocha": "10.0.0",
+    "chai": "4.3.7",
+    "chai-as-promised": "7.1.1",
+    "chai-subset": "1.6.0",
+    "sinon-chai": "3.7.0"
   },
   "devDependencies": {
     "@types/eslint": "^8.40.2",
@@ -73,6 +82,13 @@
     "@types/lodash": "^4.14.197",
     "@types/node": "^14.18.37",
     "@types/source-map-support": "^0.5.6",
+    "@types/mocha": "10.0.1",
+    "@istanbuljs/nyc-config-typescript": "1.0.2",
+    "@types/chai": "4.3.4",
+    "@types/chai-as-promised": "7.1.5",
+    "@types/chai-subset": "1.3.3",
+    "@types/sinon": "10.0.13",
+    "@types/sinon-chai": "3.2.9",
     "eslint": "^8.43.0",
     "jest": "^26.6.3",
     "nock": "^13.0.5",
