@@ -176,6 +176,7 @@ export const getWideConfig = async (context: Context) => {
     botDelay: mergedConfigData.botDelay,
     followUpTime: mergedConfigData.followUpTime,
     disqualifyTime: mergedConfigData.disqualifyTime,
+    followUpReviewerTime: mergedConfigData.followUpReviewerTime,
   };
 
   return configData;

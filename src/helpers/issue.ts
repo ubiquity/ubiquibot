@@ -658,52 +658,16 @@ export const getPullByNumber = async (context: Context, pull_number: number) => 
   }
 };
 
-export const getAllIssueEvents = async () => {
-  const context = getBotContext();
-  const logger = getLogger();
-  const payload = context.payload as Payload;
-  if (!payload.issue) return;
-
-  let shouldFetch = true;
-  let page_number = 1;
-  const events = [];
-
-  try {
-    while (shouldFetch) {
-      // Fetch issue events
-      const response = await context.octokit.issues.listEvents({
-        owner: payload.repository.owner.login,
-        repo: payload.repository.full_name,
-        issue_number: payload.issue.number,
-        per_page: 100,
-        page: page_number,
-      });
-
-      await checkRateLimitGit(response?.headers);
-
-      if (response?.data?.length > 0) {
-        events.push(...response.data);
-        page_number++;
-      } else {
-        shouldFetch = false;
-      }
-    }
-  } catch (e: unknown) {
-    shouldFetch = false;
-    logger.error(`Getting all issue events failed, reason: ${e}`);
-    return null;
-  }
-  return events;
-};
-
 export const getRequestedReviewerStart = async (user: String) => {
   let events = await getAllIssueEvents();
   if (!events) return null;
-  events = events.filter((e) => e.event === "review_requested");
-  events = events.filter((e) => e.requested_reviewer?.login === user);
-  return events[events.length - 1].created_at;
+  const filteredEvents = events.filter((e) => e.event === "review_requested" && e.requested_reviewer?.login === user);
+  if (!filteredEvents) {
+    return null;
+  } else {
+    return events[events.length - 1].created_at;
+  }
 };
-
 // Get issues assigned to a username
 export const getAssignedIssues = async (username: string) => {
   const issuesArr = [];

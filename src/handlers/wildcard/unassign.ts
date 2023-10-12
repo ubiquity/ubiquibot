@@ -63,7 +63,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
       for (const reviewer of reviewRequests.users) {
         //check if reviewer has to be followed up with
         let reviewRequestedAt = await getRequestedReviewerStart(reviewer.login);
-        if (!reviewRequestedAt) return false;
+        if (!reviewRequestedAt) continue;
 
         let currDate = new Date();
         let expectedDate = new Date(reviewRequestedAt);

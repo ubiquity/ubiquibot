@@ -103,6 +103,7 @@ export const DefaultConfig: MergedConfig = {
   permitBaseUrl: "https://pay.ubq.fi",
   botDelay: 100, // 100ms
   followUpTime: "4 days",
+  followUpReviewerTime: "3 days",
   disqualifyTime: "7 days",
   newContributorGreeting: {
     enabled: true,
