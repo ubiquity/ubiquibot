@@ -37,7 +37,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   const payload = context.payload as Payload;
   const logger = getLogger();
   const {
-    unassign: { followUpTime, disqualifyTime },
+    unassign: { followUpTime, disqualifyTime, followUpReviewerTime },
   } = getBotConfig();
   logger.info(`Checking the bounty to unassign, issue_number: ${issue.number}`);
   const { unassignComment, askUpdate } = GLOBAL_STRINGS;
@@ -67,7 +67,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
 
         let currDate = new Date();
         let expectedDate = new Date(reviewRequestedAt);
-        expectedDate.setDate(expectedDate.getDate() + 3);
+        expectedDate.setTime(expectedDate.getTime() + followUpReviewerTime);
 
         if (currDate >= expectedDate) {
           msg += "@" + reviewer.login + " ";
