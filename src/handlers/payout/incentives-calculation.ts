@@ -51,7 +51,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     mode: { incentiveMode, permitMaxPrice },
     price: { incentives, issueCreatorMultiplier, baseMultiplier },
     publicAccessControl: accessControl,
-  } = Runtime.getState().botConfig;
+  } = runtime.botConfig;
   const logger = runtime.logger;
   const payload = context.payload as Payload;
   const issue = payload.issue;
@@ -136,7 +136,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   }
 
   if (privateKey == "") {
-    throw logger.info("Permit generation disabled because wallet private key is not set.");
+    throw logger.warn("Permit generation disabled because wallet private key is not set.");
   }
 
   if (issue.state_reason !== StateReason.COMPLETED) {
@@ -178,7 +178,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   }
 
   // check for label altering here
-  const { label } = Runtime.getState().adapters.supabase;
+  const { label } = runtime.adapters.supabase;
   const labelChanges = await label.getLabelChanges(repository.full_name);
 
   if (labelChanges) {

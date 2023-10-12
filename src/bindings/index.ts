@@ -1,2 +1,2 @@
 export * from "./event";
-export * from "./config";
+export * from "./config/config";

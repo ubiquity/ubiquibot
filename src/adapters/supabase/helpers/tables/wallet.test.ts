@@ -3,7 +3,7 @@ dotenv.config();
 
 import { createAdapters } from "../../..";
 import { Context } from "probot";
-import { loadConfig } from "../../../../bindings/config";
+import { loadConfig } from "../../../../bindings/config/config";
 import { User } from "../../../../types";
 // import { GitHubUser } from "./Wallet.test.d";
 

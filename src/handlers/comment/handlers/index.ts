@@ -1,4 +1,4 @@
-import { Comment, Organization, Payload, UserCommands } from "../../../types";
+import { Comment, Organization, Payload, User, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
@@ -83,11 +83,25 @@ export async function issueClosedCallback(): Promise<void> {
   const context = runtime.eventContext;
   const payload = context.payload as Payload;
   const issue = payload.issue;
-  const organization = payload.organization as Organization;
+  const organization = payload.organization;
+  const owner = payload.repository.owner;
+
+  if (!organization) {
+    runtime.logger.warn("No organization found in payload, falling back to `owner`");
+  }
 
   const logger = runtime.logger;
 
-  if (!organization) throw logger.warn("Cannot save permit to DB, missing organization");
+  if (!organization) {
+    logger.warn("Cannot save permit to DB, missing organization", { organization });
+  }
+  if (!owner) {
+    logger.warn("Cannot save permit to DB, missing owner", { owner });
+  }
+  if (!organization && !owner) {
+    throw logger.error("Cannot save permit to DB, missing organization and owner");
+  }
+
   if (!issue) throw logger.error("Cannot save permit to DB, missing issue");
   // assign function incentivesCalculation to a variable
   const calculateIncentives = await incentivesCalculation();
@@ -103,7 +117,8 @@ export async function issueClosedCallback(): Promise<void> {
     conversationRewards,
     pullRequestReviewersReward,
     incentivesCalculation: calculateIncentives,
-    organization: organization,
+    // organization: organization,
+    // owner: owner,
   });
 
   if (error) {

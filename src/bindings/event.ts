@@ -5,10 +5,11 @@ import { validateConfigChange } from "../handlers/push";
 import { shouldSkip } from "../helpers";
 import { GithubEvent, Payload, PayloadSchema } from "../types";
 import { ajv } from "../utils";
-import { loadConfig } from "./config";
+import { loadConfig } from "./config/config";
 
 import Runtime from "./bot-runtime";
 import { LogReturn } from "../adapters/supabase";
+import { getPrivateKey } from "../utils/private";
 
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT, GithubEvent.PUSH_EVENT] as string[];
 
@@ -23,6 +24,7 @@ export async function bindEvents(eventContext: Context) {
   let botConfigError;
   try {
     runtime.botConfig = await loadConfig(eventContext);
+    console.trace(runtime.botConfig.payout.privateKey);
   } catch (err) {
     botConfigError = err;
   }
@@ -108,7 +110,6 @@ export async function bindEvents(eventContext: Context) {
 
         const selectedLogger = runtime.logger[type].bind(runtime.logger); // used for `this` context
 
-        console.trace(selectedLogger);
         if (!selectedLogger) {
           console.trace(report);
           return report;

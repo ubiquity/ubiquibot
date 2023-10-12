@@ -1,6 +1,6 @@
 import ms from "ms";
 import Runtime from "../bindings/bot-runtime";
-import { Label, Payload, UserType } from "../types";
+import { Label, LabelFromConfig, Payload, UserType } from "../types";
 
 const contextNamesToSkip = ["workflow_run"];
 
@@ -21,7 +21,7 @@ export function shouldSkip() {
   return response;
 }
 
-export function calculateLabelValue(label: Label): number {
+export function calculateLabelValue(label: LabelFromConfig): number {
   const matches = label.name.match(/\d+/);
   const number = matches && matches.length > 0 ? parseInt(matches[0]) || 0 : 0;
   if (label.name.toLowerCase().includes("priority")) return number;

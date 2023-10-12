@@ -1,17 +1,17 @@
-import * as shims from "./shims";
+import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
 import {
+  addCommentToIssue,
   addLabelToIssue,
+  createDetailsTable,
   deleteLabel,
   generatePermit2Signature,
-  addCommentToIssue,
-  createDetailsTable,
   savePermitToDB,
 } from "../../helpers";
-import Decimal from "decimal.js";
+import { Organization } from "../../types";
 import { RewardsResponse } from "../comment";
 import { IncentivesCalculationResult } from "./incentives-calculation";
-import { Organization } from "../../types";
+import * as shims from "./shims";
 
 interface HandleIssueClosed {
   creatorReward: RewardsResponse;
@@ -19,7 +19,6 @@ interface HandleIssueClosed {
   conversationRewards: RewardsResponse;
   pullRequestReviewersReward: RewardsResponse;
   incentivesCalculation: IncentivesCalculationResult;
-  organization: Organization;
 }
 interface RewardByUser {
   account: string;
