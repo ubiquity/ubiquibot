@@ -33,7 +33,7 @@ yarn start:watch
 
 ## Environment Variables
 
-- Copy `.env.example` to `.env` (do not rname .env.example, just make a copy)
+- Copy `.env.example` to `.env` (do not rename .env.example, just make a copy)
 - Update the following fields on `.env`:
 - `SUPABASE_URL`: Add your Supabase project URL.
 - `SUPABASE_KEY`: Add your Supabase project API key.
