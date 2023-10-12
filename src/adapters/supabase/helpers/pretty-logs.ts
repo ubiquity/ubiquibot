@@ -1,9 +1,8 @@
 import { convertErrorsIntoObjects } from "./tables/logs";
 
 export const prettyLogs = {
-  error: function errorLog(...args: unknown[]) {
-    if (args[1] && args[1].error) {
-      const metadata = args.splice(1, 1)[0];
+  error: function errorLog(message: string, metadata?: unknown) {
+    if (metadata && metadata?.error && metadata?.error?.stack) {
       const prettyStack = formatStackTrace(metadata.error.stack.join("\n"));
       // delete metadata.error.stack;
       const colorizedStack = colorizeText(prettyStack, "dim");
@@ -12,11 +11,11 @@ export const prettyLogs = {
       // [{ prettyStack }, { metadata }, { colorizedStack }, { args: [...args] }]
       // ), null, 2);
 
-      _log("error", ...args);
+      _log("error", message);
       _log("error", metadata);
       _log("error", colorizedStack);
     } else {
-      _log("error", ...args);
+      _log("error", message, metadata);
       const stack = new Error().stack;
       if (stack) _log("error", colorizeText(formatStackTrace(stack, 4), "dim")); // Log the formatted stack trace
     }

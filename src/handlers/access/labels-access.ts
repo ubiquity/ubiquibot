@@ -2,7 +2,7 @@ import Runtime from "../../bindings/bot-runtime";
 import { addCommentToIssue, isUserAdminOrBillingManager, removeLabel, addLabelToIssue } from "../../helpers";
 import { Payload, UserType } from "../../types";
 
-export const handleLabelsAccess = async () => {
+export async function handleLabelsAccess() {
   const runtime = Runtime.getState();
   const { publicAccessControl } = runtime.botConfig;
   if (!publicAccessControl.setLabel) return true;
@@ -26,15 +26,16 @@ export const handleLabelsAccess = async () => {
   // get text before :
   const match = payload.label?.name?.split(":");
   if (match.length == 0) return;
-  const label_type = match[0].toLowerCase();
+  const labelType = match[0].toLowerCase();
   if (sufficientPrivileges) {
-    logger.info(`Getting ${label_type} access for ${sender} on ${repo.full_name}`);
+    logger.info(`Admin/Billing Manager ${sender} has full control over "${labelType}" on "${repo.full_name}"`);
+    return true;
+  } else {
+    logger.info(`Checking ${labelType} access for ${sender} on ${repo.full_name}`);
     // check permission
     const { access, user } = runtime.adapters.supabase;
     const userId = await user.getUserId(sender);
     const accessible = await access.getAccess(userId);
-    // const accessible = await access.getAccessLevel(sender, repo.full_name, label_type);
-
     if (accessible) {
       return true;
     }
@@ -51,4 +52,4 @@ export const handleLabelsAccess = async () => {
     return false;
   }
   return true;
-};
+}

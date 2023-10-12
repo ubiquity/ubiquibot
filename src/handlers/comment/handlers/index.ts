@@ -87,7 +87,7 @@ export async function issueClosedCallback(): Promise<void> {
 
   const logger = runtime.logger;
 
-  if (!organization) throw logger.error("Cannot save permit to DB, missing organization");
+  if (!organization) throw logger.warn("Cannot save permit to DB, missing organization");
   if (!issue) throw logger.error("Cannot save permit to DB, missing issue");
   // assign function incentivesCalculation to a variable
   const calculateIncentives = await incentivesCalculation();

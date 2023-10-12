@@ -6,7 +6,7 @@ export function getTimeLabelsAssigned(payload: Payload, config: BotConfig) {
   const logger = runtime.logger;
   const labels = payload.issue?.labels;
   if (!labels?.length) {
-    logger.warn("Skipping '/start' since no labels are set to calculate the timeline", { labels }, true);
+    logger.warn("Skipping '/start' since no labels are set to calculate the timeline", { labels });
     return;
   }
   const timeLabelsDefined = config.price.timeLabels;

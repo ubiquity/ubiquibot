@@ -8,6 +8,7 @@ import { ajv } from "../utils";
 import { loadConfig } from "./config";
 
 import Runtime from "./bot-runtime";
+import { LogReturn } from "../adapters/supabase";
 
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT, GithubEvent.PUSH_EVENT] as string[];
 
@@ -95,14 +96,29 @@ export async function bindEvents(eventContext: Context) {
         if (response) {
           runtime.logger.ok(response, null, true);
         }
-      } catch (error: unknown) {
-        const errorMetaData = {
-          action: action.name,
-          error: error,
-        };
+      } catch (report: unknown) {
+        const outputComment = report?.logMessage?.raw || `${handlerType.type} action uncaught error`;
+        const type: keyof typeof runtime.logger = report?.logMessage?.type || "debug";
 
         // TODO: associate location metadata to `location` table
-        runtime.logger.error(`${handlerType.type} action uncaught error`, errorMetaData, true); // FIXME:
+
+        delete report?.logMessage;
+        // check if report.metadata is empty
+        const isEmpty = Object.values(report).every((value) => value === undefined);
+
+        const selectedLogger = runtime.logger[type].bind(runtime.logger); // used for `this` context
+
+        console.trace(selectedLogger);
+        if (!selectedLogger) {
+          console.trace(report);
+          return report;
+        }
+
+        if (isEmpty) {
+          return selectedLogger(outputComment, null, true);
+        } else {
+          return selectedLogger(outputComment, report, true);
+        }
       }
     }
   }

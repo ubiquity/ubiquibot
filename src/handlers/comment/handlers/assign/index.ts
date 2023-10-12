@@ -65,7 +65,7 @@ export async function assign(body: string) {
 
   const timeLabelsAssigned = getTimeLabelsAssigned(payload, config);
 
-  if (timeLabelsAssigned.length == 0) {
+  if (!timeLabelsAssigned || timeLabelsAssigned.length == 0) {
     return logger.warn("Skipping '/start' since no time labels are set to calculate the timeline", timeLabelsAssigned);
   }
 

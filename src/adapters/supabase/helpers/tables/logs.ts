@@ -2,7 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import Runtime from "../../../../bindings/bot-runtime";
 import { LogLevel } from "../../../../types";
 import { Database } from "../../types";
-import { prettyLogs } from "../pretty-logs";
+import { formatStackTrace, prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
 
 type LogFunction = (message?: string, metadata?: unknown) => void;
@@ -10,11 +10,18 @@ type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
 type _Log = {
   level: LogLevel;
   consoleLog: LogFunction;
-  message: string;
+  logMessage: string;
   metadata?: unknown;
   postComment?: boolean;
 };
-
+export type LogReturn = {
+  logMessage: {
+    raw: string;
+    diff: string;
+    type: string;
+  };
+  metadata?: unknown;
+};
 export class Logs extends Super {
   private maxLevel = -1;
   private environment = "development";
@@ -23,6 +30,78 @@ export class Logs extends Super {
   private retryDelay = 1000; // Delay between retries in milliseconds
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
+
+  private _log({ level, consoleLog, logMessage: logMessage, metadata, postComment }: _Log) {
+    // needs to generate three versions of the information.
+    // they must all first serialize the error object if it exists
+    // - the comment to post on supabase (must be raw)
+    // - the comment to post on github (must include diff syntax)
+    // - the comment to post on the console (must be colorized)
+
+    if (metadata) {
+      metadata = convertErrorsIntoObjects(metadata);
+      consoleLog(logMessage, metadata);
+      // consoleLog(message);
+      // consoleLog(message.includes(JSON.stringify(metadata)) ? message : message + " " + JSON.stringify(metadata));
+      if (postComment) {
+        const colorizedCommentMessage = this._diffColorCommentMessage(level, logMessage);
+        const commentMetaData = this._diffColorCommentMetaData(metadata);
+        // enhanced location data analytics
+        this._postComment([colorizedCommentMessage, commentMetaData].join("\n"));
+        // messageForGitHub = [colorizedCommentMessage, commentMetaData].join("\n");
+      }
+      const toSupabase = { log: logMessage, level, metadata: metadata } as LogInsert;
+      this._save(toSupabase, level);
+    } else {
+      consoleLog(logMessage);
+      if (postComment) {
+        const colorizedCommentMessage = this._diffColorCommentMessage(level, logMessage);
+        // enhanced location data analytics
+        this._postComment(colorizedCommentMessage);
+        // messageForGitHub = colorizedCommentMessage;
+      }
+      const toSupabase = { log: logMessage, level } as LogInsert;
+      this._save(toSupabase, level);
+    }
+
+    return {
+      logMessage: {
+        raw: logMessage,
+        diff: this._diffColorCommentMessage(level, logMessage), // this colorizes the github comment.
+        type: level,
+      },
+      metadata: metadata,
+    } as LogReturn;
+  }
+
+  public ok(log: string, metadata?: unknown, postComment?: boolean): LogReturn {
+    return this._log({ level: LogLevel.VERBOSE, consoleLog: prettyLogs.ok, logMessage: log, metadata, postComment });
+  }
+
+  public info(log: string, metadata?: unknown, postComment?: boolean): LogReturn {
+    return this._log({ level: LogLevel.INFO, consoleLog: prettyLogs.info, logMessage: log, metadata, postComment });
+  }
+
+  public warn(log: string, metadata?: unknown, postComment?: boolean): LogReturn {
+    return this._log({ level: LogLevel.WARN, consoleLog: prettyLogs.warn, logMessage: log, metadata, postComment });
+  }
+
+  public debug(log: string, metadata?: unknown, postComment?: boolean): LogReturn {
+    return this._log({ level: LogLevel.DEBUG, consoleLog: prettyLogs.debug, logMessage: log, metadata, postComment });
+  }
+
+  public error(log: string, metadata?: unknown, postComment?: boolean): LogReturn {
+    if (!metadata) {
+      metadata = convertErrorsIntoObjects(new Error(log));
+      console.trace(metadata);
+      // remove the second element in the metadata.stack array
+
+      const stack = metadata.stack as string[];
+      stack.splice(1, 1);
+      metadata.stack = stack;
+    }
+    return this._log({ level: LogLevel.ERROR, consoleLog: prettyLogs.error, logMessage: log, metadata, postComment });
+  }
 
   constructor(supabase: SupabaseClient) {
     super(supabase);
@@ -157,58 +236,6 @@ export class Logs extends Super {
     const diffFooter = "```";
 
     return [diffHeader, message, diffFooter].join("\n");
-  }
-
-  private _log({ level, consoleLog, message, metadata, postComment }: _Log): string {
-    // needs to generate three versions of the information.
-    // they must all first serialize the error object if it exists
-    // - the comment to post on supabase (must be raw)
-    // - the comment to post on github (must include diff syntax)
-    // - the comment to post on the console (must be colorized)
-
-    if (metadata) {
-      metadata = convertErrorsIntoObjects(metadata);
-      consoleLog(message, metadata);
-      // consoleLog(message);
-      // consoleLog(message.includes(JSON.stringify(metadata)) ? message : message + " " + JSON.stringify(metadata));
-      if (postComment) {
-        const colorizedCommentMessage = this._diffColorCommentMessage(level, message);
-        const commentMetaData = this._diffColorCommentMetaData(metadata);
-        // enhanced location data analytics
-        this._postComment([colorizedCommentMessage, commentMetaData].join("\n"));
-      }
-      const toSupabase = { log: message, level, metadata: metadata } as LogInsert;
-      this._save(toSupabase, level);
-    } else {
-      consoleLog(message);
-      if (postComment) {
-        // enhanced location data analytics
-        this._postComment(message);
-      }
-      const toSupabase = { log: message, level } as LogInsert;
-      this._save(toSupabase, level);
-    }
-    return message;
-  }
-
-  public ok(log: string, metadata?: unknown, postComment?: boolean): string {
-    return this._log({ level: LogLevel.VERBOSE, consoleLog: prettyLogs.ok, message: log, metadata, postComment });
-  }
-
-  public info(log: string, metadata?: unknown, postComment?: boolean): string {
-    return this._log({ level: LogLevel.INFO, consoleLog: prettyLogs.info, message: log, metadata, postComment });
-  }
-
-  public warn(log: string, metadata?: unknown, postComment?: boolean): string {
-    return this._log({ level: LogLevel.WARN, consoleLog: prettyLogs.warn, message: log, metadata, postComment });
-  }
-
-  public debug(log: string, metadata?: unknown, postComment?: boolean): string {
-    return this._log({ level: LogLevel.DEBUG, consoleLog: prettyLogs.debug, message: log, metadata, postComment });
-  }
-
-  public error(log: string, metadata?: unknown, postComment?: boolean): string {
-    return this._log({ level: LogLevel.ERROR, consoleLog: prettyLogs.error, message: log, metadata, postComment });
   }
 
   private _postComment(message: string) {
