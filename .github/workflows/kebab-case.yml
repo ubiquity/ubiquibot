@@ -24,6 +24,7 @@ jobs:
             "\.sql$"
             "\.md$"
             "\.d.ts$"
+            "\.spec.ts$"
             "^\.\/\log-app"
           )
           while read -r file; do
