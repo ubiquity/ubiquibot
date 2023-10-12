@@ -18,43 +18,47 @@ export const checkPullRequests = async () => {
 
   // Loop through the pull requests and assign them to their respective issues if needed
   for (const pull of pulls) {
-    const linkedIssue = await gitLinkedIssueParser({
+    const linkedIssues = await gitLinkedIssueParser({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       pull_number: pull.number,
     });
 
-    // if pullRequestLinked is empty, continue
-    if (linkedIssue == "" || !pull.user || !linkedIssue) {
-      continue;
-    }
+    if (!linkedIssues) continue;
 
-    const connectedPull = await getPullByNumber(context, pull.number);
+    for (const linkedIssue of linkedIssues) {
+      // if pullRequestLinked is empty, continue
+      if (linkedIssue == "" || !pull.user || !linkedIssue) {
+        continue;
+      }
 
-    // Newly created PULL (draft or direct) pull does have same `created_at` and `updated_at`.
-    if (connectedPull?.created_at !== connectedPull?.updated_at) {
-      logger.debug("It's an updated Pull Request, reverting");
-      continue;
-    }
+      const connectedPull = await getPullByNumber(context, pull.number);
 
-    const linkedIssueNumber = linkedIssue.substring(linkedIssue.lastIndexOf("/") + 1);
+      // Newly created PULL (draft or direct) pull does have same `created_at` and `updated_at`.
+      if (connectedPull?.created_at !== connectedPull?.updated_at) {
+        logger.debug("It's an updated Pull Request, reverting");
+        continue;
+      }
 
-    // Check if the pull request opener is assigned to the issue
-    const opener = pull.user.login;
+      const linkedIssueNumber = linkedIssue.substring(linkedIssue.lastIndexOf("/") + 1);
 
-    const issue = await getIssueByNumber(context, +linkedIssueNumber);
-    if (!issue?.assignees) continue;
+      // Check if the pull request opener is assigned to the issue
+      const opener = pull.user.login;
 
-    // if issue is already assigned, continue
-    if (issue.assignees.length > 0) {
-      logger.debug(`Issue already assigned, ignoring...`);
-      continue;
-    }
+      const issue = await getIssueByNumber(context, +linkedIssueNumber);
+      if (!issue?.assignees) continue;
 
-    const assignedUsernames = issue.assignees.map((assignee) => assignee.login);
-    if (!assignedUsernames.includes(opener)) {
-      await addAssignees(+linkedIssueNumber, [opener]);
-      logger.debug(`Assigned pull request #${pull.number} opener to issue ${linkedIssueNumber}.`);
+      // if issue is already assigned, continue
+      if (issue.assignees.length > 0) {
+        logger.debug(`Issue already assigned, ignoring...`);
+        continue;
+      }
+
+      const assignedUsernames = issue.assignees.map((assignee) => assignee.login);
+      if (!assignedUsernames.includes(opener)) {
+        await addAssignees(+linkedIssueNumber, [opener]);
+        logger.debug(`Assigned pull request #${pull.number} opener to issue ${linkedIssueNumber}.`);
+      }
     }
   }
 };

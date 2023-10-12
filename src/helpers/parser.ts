@@ -29,6 +29,8 @@ export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitPars
       return null;
     }
 
+    const linkedIssueUrls = [];
+
     for (const linkedIssue of linkedIssues) {
       const issueUrl = linkedIssue.querySelector("a")?.attrs?.href;
 
@@ -45,10 +47,9 @@ export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitPars
 
       if (`${issueOrganization}/${issueRepository}` !== `${owner}/${repo}`) continue;
 
-      return issueUrl;
+      linkedIssueUrls.push(issueUrl);
     }
-
-    return null;
+    return linkedIssueUrls;
   } catch (error) {
     logger.error(`${JSON.stringify(error)}`);
     return null;
