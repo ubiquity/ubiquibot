@@ -3,6 +3,50 @@ import { getBotConfig, getBotContext, getLogger } from "../bindings";
 import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
 
+export const getAllIssueEvents = async () => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  if (!payload.issue) return;
+
+  let shouldFetch = true;
+  let page_number = 1;
+  const events = [];
+
+  try {
+    while (shouldFetch) {
+      // Fetch issue events
+      const response = await context.octokit.issues.listEvents({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.full_name,
+        issue_number: payload.issue.number,
+        per_page: 100,
+        page: page_number,
+      });
+
+      await checkRateLimitGit(response?.headers);
+
+      if (response?.data?.length > 0) {
+        events.push(...response.data);
+        page_number++;
+      } else {
+        shouldFetch = false;
+      }
+    }
+  } catch (e: unknown) {
+    shouldFetch = false;
+    logger.error(`Getting all issue events failed, reason: ${e}`);
+    return null;
+  }
+  return events;
+};
+
+export const getAllLabeledEvents = async () => {
+  const events = await getAllIssueEvents();
+  if (!events) return null;
+  return events.filter((event) => event.event === "labeled");
+};
+
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   const context = getBotContext();
   const logger = getLogger();
@@ -159,6 +203,18 @@ export const upsertCommentToIssue = async (issue_number: number, comment: string
     await updateCommentOfIssue(comment, issue_number, reply_to);
   } else {
     await addCommentToIssue(comment, issue_number);
+  }
+};
+
+export const upsertLastCommentToIssue = async (issue_number: number, commentBody: string) => {
+  const logger = getLogger();
+
+  try {
+    const comments = await getAllIssueComments(issue_number);
+
+    if (comments.length > 0 && comments[comments.length - 1].body !== commentBody) await addCommentToIssue(commentBody, issue_number);
+  } catch (e: unknown) {
+    logger.debug(`Upserting last comment failed! reason: ${e}`);
   }
 };
 
