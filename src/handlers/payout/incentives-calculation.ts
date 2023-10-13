@@ -97,12 +97,9 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     if (!evmNetworkId) {
       evmNetworkId = 1;
     }
-    let claim;
-    try {
-      claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
-    } catch (err: unknown) {
-      throw logger.error(`${err}`);
-    }
+
+    const claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
+
     const amount = new Decimal(claim.permit.permitted.amount);
 
     // extract assignee
@@ -142,7 +139,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   }
 
   if (issue.state_reason !== StateReason.COMPLETED) {
-    throw logger.info("Permit generation disabled because this is marked as unplanned.");
+    throw logger.info("Permit generation disabled because this was not closed as completed.");
   }
 
   logger.info(`Checking if the issue is a parent issue.`);

@@ -152,27 +152,31 @@ function logMultipleDataTypes(response: string | void | LogReturn, action: AllHa
 function createLoggerHandler(handlerType: AllHandlersWithTypes, activeHandler: AllHandlers) {
   const runtime = Runtime.getState();
 
-  return async function loggerHandler(_report: any): Promise<any> {
-    const { logMessage } = _report;
+  return async function loggerHandler(logReturn: LogReturn | Error | unknown) {
+    const issue = (runtime.eventContext.payload as Payload).issue;
+    if (!issue) return runtime.logger.error("Issue is null. Skipping", { issue });
 
-    if (logMessage) {
+    if (logReturn instanceof LogReturn) {
       // already made it to console so it should just post the comment
-      const serializedMetadata = JSON.stringify(logMessage.metadata, null, 2);
-      const issue = (runtime.eventContext.payload as Payload).issue;
-      if (!issue) return runtime.logger.error("Issue is null. Skipping", { issue });
-      if (serializedMetadata !== "{}") {
+      const { logMessage } = logReturn;
+
+      if (logReturn.metadata) {
+        const serializedMetadata = JSON.stringify(logReturn.metadata, null, 2);
         const metadataForComment = ["```json", serializedMetadata, "```"].join("\n");
-        await addCommentToIssue([logMessage.diff, metadataForComment].join("\n"), issue.number);
+        return await addCommentToIssue([logMessage.diff, metadataForComment].join("\n"), issue.number);
       } else {
-        await addCommentToIssue(logMessage.diff, issue.number);
+        return await addCommentToIssue(logMessage.diff, issue.number);
       }
     }
 
     const outputComment =
-      _report instanceof Error
+      logReturn instanceof Error
         ? `${handlerType.type} action "${activeHandler.name}" has an uncaught error`
         : `${handlerType.type} action "${activeHandler.name}" returned an unexpected value`;
 
-    runtime.logger.error(outputComment, _report, true);
+    //   // Log the instance of _report
+    //   console.trace(`_report is an instance of: ${_report.constructor.name}`);
+    // await addCommentToIssue(outputComment, issue.number);
+    return runtime.logger.error(outputComment, logReturn, true);
   };
 }

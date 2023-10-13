@@ -15,28 +15,20 @@ export async function issueClosedCallback() {
   const payload = context.payload as Payload;
   const issue = payload.issue;
   const organization = payload.organization;
-  const owner = payload.repository.owner;
-
-  if (!organization) {
-    runtime.logger.warn("No organization found in payload, falling back to `owner`");
-  }
-
+  const owner = payload.repository.owner.login;
   const logger = runtime.logger;
+  if (!issue) throw logger.error("Cannot save permit to DB, missing issue");
 
   if (!organization) {
-    logger.warn("Cannot save permit to DB, missing organization", { organization });
+    logger.warn("No organization found in payload, falling back to `owner`");
   }
-  if (!owner) {
-    logger.warn("Cannot save permit to DB, missing owner", { owner });
-  }
+
   if (!organization && !owner) {
     throw logger.error("Cannot save permit to DB, missing organization and owner");
   }
 
-  if (!issue) throw logger.error("Cannot save permit to DB, missing issue");
   // assign function incentivesCalculation to a variable
   const calculateIncentives = await incentivesCalculation();
-
   const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
   const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
   const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
@@ -55,5 +47,5 @@ export async function issueClosedCallback() {
   if (error) {
     throw logger.error(error);
   }
-  return logger.info("Issue closed successfully");
+  return logger.ok("Issue closed successfully");
 }
