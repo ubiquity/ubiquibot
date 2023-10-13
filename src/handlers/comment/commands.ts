@@ -1,4 +1,4 @@
-export enum IssueCommentCommands {
+export enum IssueCommentCommand {
   HELP = "/help", // list available commands
   START = "/start", // assign the hunter to the issue automatically
   STOP = "/stop", // unassign to default

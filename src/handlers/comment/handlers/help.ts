@@ -2,27 +2,24 @@ import { userCommands } from ".";
 import Runtime from "../../../bindings/bot-runtime";
 
 import { IssueType, Payload } from "../../../types";
-import { IssueCommentCommands } from "../commands";
+import { IssueCommentCommand } from "../commands";
 
 export const listAvailableCommands = async (body: string) => {
   const runtime = Runtime.getState();
   const { payload: _payload } = runtime.eventContext;
   const logger = runtime.logger;
-  if (body != IssueCommentCommands.HELP && body.replace(/`/g, "") != IssueCommentCommands.HELP) {
-    logger.info(`Skipping to list available commands. body: ${body}`);
-    return;
+  if (body != IssueCommentCommand.HELP && body.replace(/`/g, "") != IssueCommentCommand.HELP) {
+    return logger.info(`Skipping to list available commands. body: ${body}`);
   }
   const payload = _payload as Payload;
   const issue = payload.issue;
 
   if (!issue) {
-    logger.info("Skipping /help, reason: not issue");
-    return;
+    return logger.info("Skipping /help, reason: not issue");
   }
 
   if (issue.state == IssueType.CLOSED) {
-    logger.info("Skipping '/start', reason: closed ");
-    return;
+    return logger.info("Skipping '/start', reason: closed ");
   }
 
   return generateHelpMenu();

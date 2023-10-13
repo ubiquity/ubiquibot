@@ -1,6 +1,5 @@
 import Runtime from "../../../../bindings/bot-runtime";
 import { Payload } from "../../../../types";
-import { deadLinePrefix } from "../../../shared";
 import { getWalletAddress } from "./get-wallet-address";
 
 export async function generateAssignmentComment(payload: Payload, duration: number) {
@@ -18,10 +17,10 @@ export async function generateAssignmentComment(payload: Payload, duration: numb
     taskDeadline: endTime.toISOString(),
     registeredWallet:
       (await getWalletAddress(payload.sender.id)) || "Please set your wallet address to use `/wallet 0x0000...0000`",
-    timeLimit: `@${payload.sender.login} ${deadLinePrefix} ${endTime.toUTCString()}`,
+    timeLimit: endTime.toUTCString(),
     tips: `<h6>Tips:</h6>
     <ul>
-    <li>Use <code>/wallet 0x0000...0000</code> if you want to update your registered payment wallet address @${payload.sender.login}.</li>
+    <li>Use <code>/wallet 0x0000...0000</code> if you want to update your registered payment wallet address.</li>
     <li>Be sure to open a draft pull request as soon as possible to communicate updates on your progress.</li>
     <li>Be sure to provide timely updates to us when requested, or you will be automatically unassigned from the task.</li>
     <ul>`,

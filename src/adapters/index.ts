@@ -1,8 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { BotConfig } from "../types";
 import { Access } from "./supabase/helpers/tables/access";
-import { Settlement } from "./supabase/helpers/tables/settlement";
 import { Label } from "./supabase/helpers/tables/label";
+import { Logs } from "./supabase/helpers/tables/logs";
+import { Settlement } from "./supabase/helpers/tables/settlement";
 import { Super } from "./supabase/helpers/tables/super";
 import { User } from "./supabase/helpers/tables/user";
 import { Wallet } from "./supabase/helpers/tables/wallet";
@@ -15,14 +16,13 @@ export function createAdapters(config: BotConfig) {
   );
   return {
     supabase: {
-      client,
-
       access: new Access(client),
       wallet: new Wallet(client),
       user: new User(client),
       debit: new Settlement(client),
       settlement: new Settlement(client),
       label: new Label(client),
+      logs: new Logs(client),
       super: new Super(client),
     },
   };

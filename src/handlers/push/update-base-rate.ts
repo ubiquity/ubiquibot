@@ -5,7 +5,7 @@ import { getPreviousFileContent, listLabelsForRepo, updateLabelsFromBaseRate } f
 import { Label, PushPayload } from "../../types";
 import { parseYAML } from "../../utils/private";
 
-export const updateBaseRate = async (context: Context, payload: PushPayload, filePath: string) => {
+export async function updateBaseRate(context: Context, payload: PushPayload, filePath: string) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   // Get default branch from ref
@@ -34,9 +34,8 @@ export const updateBaseRate = async (context: Context, payload: PushPayload, fil
   const repoLabels = await listLabelsForRepo();
 
   if (repoLabels.length === 0) {
-    logger.debug("No labels on this repo");
-    return;
+    return logger.debug("No labels on this repo");
   }
 
-  await updateLabelsFromBaseRate(owner, repo, context, repoLabels as Label[], previousBaseRate);
-};
+  return await updateLabelsFromBaseRate(owner, repo, context, repoLabels as Label[], previousBaseRate);
+}

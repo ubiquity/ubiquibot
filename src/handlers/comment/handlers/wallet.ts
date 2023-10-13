@@ -1,10 +1,10 @@
 import { constants, ethers } from "ethers";
-import { GitHubLogger } from "../../../adapters/supabase";
+import { Logs } from "../../../adapters/supabase";
 import Runtime from "../../../bindings/bot-runtime";
 import { resolveAddress } from "../../../helpers";
 import { Payload } from "../../../types";
 import { formatEthAddress } from "../../../utils";
-import { IssueCommentCommands } from "../commands";
+import { IssueCommentCommand } from "../commands";
 // Extracts ensname from raw text.
 function extractEnsName(text: string) {
   // Define a regular expression to match ENS names
@@ -29,7 +29,7 @@ export async function registerWallet(body: string) {
   const regexForAddress = /(0x[a-fA-F0-9]{40})/g;
   const addressMatches = body.match(regexForAddress);
   let address = addressMatches ? addressMatches[0] : null;
-  const ensName = extractEnsName(body.replace(IssueCommentCommands.WALLET, "").trim());
+  const ensName = extractEnsName(body.replace(IssueCommentCommand.WALLET, "").trim());
 
   if (!address && ensName) {
     logger.info(`Trying to resolve address from ENS name: ${ensName}`);
@@ -41,8 +41,7 @@ export async function registerWallet(body: string) {
   }
 
   if (!address) {
-    logger.info("Skipping to register a wallet address because both address/ens doesn't exist");
-    return;
+    return logger.info("Skipping to register a wallet address because both address/ens doesn't exist");
   }
 
   if (config.wallet.registerWalletWithVerification) {
@@ -63,7 +62,7 @@ export async function registerWallet(body: string) {
     throw new Error("Payload comment is undefined");
   }
 }
-function _registerWalletWithVerification(body: string, address: string, logger: GitHubLogger) {
+function _registerWalletWithVerification(body: string, address: string, logger: Logs) {
   const regexForSigHash = /(0x[a-fA-F0-9]{130})/g;
   const sigHashMatches = body.match(regexForSigHash);
   const sigHash = sigHashMatches ? sigHashMatches[0] : null;

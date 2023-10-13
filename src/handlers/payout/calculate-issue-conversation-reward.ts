@@ -3,7 +3,7 @@ import Runtime from "../../bindings/bot-runtime";
 import { GLOBAL_STRINGS } from "../../configs";
 import { getAllIssueComments, parseComments } from "../../helpers";
 import { Comment, Payload, UserType } from "../../types";
-import { RewardsResponse } from "../comment";
+import { RewardsResponse } from "./shims";
 import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
 import { calculateRewardValue } from "./calculate-reward-value";
 import { IncentivesCalculationResult } from "./incentives-calculation";
@@ -31,9 +31,7 @@ export async function calculateIssueConversationReward(
 
   const permitComments = calculateIncentives.comments.filter(isBotCommentWithClaim);
   if (permitComments.length > 0)
-    throw logger.error({
-      message: `incentivizeComments: skip to generate a permit url because it has been already posted`,
-    });
+    throw logger.error("Skipping payment permit generation because payment permit has already been posted.");
 
   for (const botComment of permitComments.filter((comment: Comment) => comment.user.type === UserType.Bot).reverse()) {
     const botCommentBody = botComment.body;
@@ -42,7 +40,7 @@ export async function calculateIssueConversationReward(
       const res = botCommentBody.match(pattern);
       if (res) {
         if (res[1] === "false") {
-          return { error: "autopay is disabled" };
+          throw logger.error("autopay is disabled");
         }
         break;
       }
@@ -105,7 +103,6 @@ export async function calculateIssueConversationReward(
     }
   }
   return {
-    error: null,
     title,
     fallbackReward,
     reward,

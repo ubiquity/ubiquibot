@@ -26,7 +26,7 @@ export class Access extends Super {
     const { data, error } = await this.supabase.from("access").select("*, users(*)").filter("id", "eq", id);
 
     if (error) {
-      this.runtime.logger.error({ message: error });
+      this.runtime.logger.error(error.message, error);
       throw error;
     }
     return data;
@@ -52,7 +52,7 @@ export class Access extends Super {
     return data;
   }
 
-  async upsertMultiplier(userId: number, multiplier: number, reason: string, comment: Comment): Promise<void> {
+  async upsertMultiplier(userId: number, multiplier: number, reason: string, comment: Comment) {
     try {
       const accessData: _Access = {
         user_id: userId,

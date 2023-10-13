@@ -1,6 +1,6 @@
 import Runtime from "../../bindings/bot-runtime";
 import { addAssignees, getAllPullRequests, getIssueByNumber, getPullByNumber } from "../../helpers";
-import { gitLinkedIssueParser } from "../../helpers/parser";
+import { getLinkedIssues } from "../../helpers/parser";
 import { Payload } from "../../types";
 
 // Check for pull requests linked to their respective issues but not assigned to them
@@ -11,18 +11,17 @@ export async function checkPullRequests() {
   const pulls = await getAllPullRequests(context);
 
   if (pulls.length === 0) {
-    logger.debug(`No pull requests found at this time`);
-    return;
+    return logger.debug(`No pull requests found at this time`);
   }
 
   const payload = context.payload as Payload;
 
   // Loop through the pull requests and assign them to their respective issues if needed
   for (const pull of pulls) {
-    const linkedIssue = await gitLinkedIssueParser({
+    const linkedIssue = await getLinkedIssues({
       owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      pull_number: pull.number,
+      repository: payload.repository.name,
+      pull: pull.number,
     });
 
     // if pullRequestLinked is empty, continue
@@ -58,4 +57,5 @@ export async function checkPullRequests() {
       logger.debug(`Assigned pull request #${pull.number} opener to issue ${linkedIssueNumber}.`);
     }
   }
+  return logger.debug(`Checking pull requests done!`);
 }

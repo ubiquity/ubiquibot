@@ -1,21 +1,30 @@
-import { GithubEvent, Handler, ActionHandler } from "../types";
+import { GithubEvent, Handler, WildCardHandler } from "../types";
 import { closePullRequestForAnIssue, startCommandHandler } from "./assign";
-import { pricingLabelLogic, validatePriceLabels } from "./pricing";
+import { syncPriceLabelsToConfig } from "./pricing";
 import { checkTasksToUnassign } from "./wildcard";
-// import { nullHandler } from "./shared";
 
-import { handleComment, issueClosedCallback, issueCreatedCallback, issueReopenedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
-import { createDevPoolPR } from "./pull-request";
-import { runOnPush, validateConfigChange } from "./push";
-import { findDuplicateOne } from "./issue";
+import { commentCreatedOrEdited } from "./comment/action";
+import { issueClosedCallback } from "./comment/handlers/issue/issue-closed-callback";
+import { issueReopenedCallback } from "./comment/handlers/issue/issue-reopened-callback";
+import { findDuplicateIssue } from "./issue";
 import { watchLabelChange } from "./label";
+import { createDevPoolPR } from "./pull-request";
+import { validateConfigChange } from "./push";
+import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
+import { pricingLabel } from "./pricing/pricing-label";
+
+/**
+ * @dev
+ * pre and post handlers do not return a message to comment on the issue. their return type MUST BE `void`
+ * action MUST return a message to comment on the issue. its return type MUST BE either `string` or `LogReturn`
+ */
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_OPENED]: {
     pre: [],
-    action: [findDuplicateOne, issueCreatedCallback],
-    post: [],
+    action: [],
+    post: [findDuplicateIssue],
   },
   [GithubEvent.ISSUES_REOPENED]: {
     pre: [],
@@ -23,13 +32,13 @@ export const processors: Record<string, Handler> = {
     post: [],
   },
   [GithubEvent.ISSUES_LABELED]: {
-    pre: [validatePriceLabels],
-    action: [pricingLabelLogic],
+    pre: [syncPriceLabelsToConfig],
+    action: [pricingLabel],
     post: [],
   },
   [GithubEvent.ISSUES_UNLABELED]: {
-    pre: [validatePriceLabels],
-    action: [pricingLabelLogic],
+    pre: [syncPriceLabelsToConfig],
+    action: [pricingLabel],
     post: [],
   },
   [GithubEvent.ISSUES_ASSIGNED]: {
@@ -44,13 +53,13 @@ export const processors: Record<string, Handler> = {
   },
   [GithubEvent.ISSUE_COMMENT_CREATED]: {
     pre: [],
-    action: [handleComment],
-    post: [],
+    action: [],
+    post: [commentCreatedOrEdited],
   },
   [GithubEvent.ISSUE_COMMENT_EDITED]: {
     pre: [],
-    action: [handleComment],
-    post: [],
+    action: [],
+    post: [commentCreatedOrEdited],
   },
   [GithubEvent.ISSUES_CLOSED]: {
     pre: [],
@@ -68,9 +77,9 @@ export const processors: Record<string, Handler> = {
     post: [],
   },
   [GithubEvent.PUSH_EVENT]: {
-    pre: [],
-    action: [validateConfigChange, runOnPush],
-    post: [],
+    pre: [validateConfigChange],
+    action: [],
+    post: [checkModifiedBaseRate],
   },
   [GithubEvent.LABEL_EDITED]: {
     pre: [],
@@ -79,4 +88,4 @@ export const processors: Record<string, Handler> = {
   },
 };
 
-export const wildcardProcessors: ActionHandler[] = [checkTasksToUnassign]; // The handlers which will run after every event
+export const wildcardProcessors: WildCardHandler[] = [checkTasksToUnassign]; // The handlers which will run after every event

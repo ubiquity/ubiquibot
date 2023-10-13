@@ -1,105 +1,77 @@
 import Runtime from "../../bindings/bot-runtime";
 import { GLOBAL_STRINGS } from "../../configs";
 import {
-  addCommentToIssue,
   addLabelToIssue,
+  calculateLabelValue,
   clearAllPriceLabelsOnIssue,
   createLabel,
-  getLabel,
-  calculateWeight,
   getAllLabeledEvents,
+  getLabel,
 } from "../../helpers";
-import { Payload, UserType } from "../../types";
-import { handleLabelsAccess } from "../access";
-import { getTargetPriceLabel } from "../shared";
+import { Label, UserType } from "../../types";
 
-export const pricingLabelLogic = async (): Promise<void> => {
+export async function handleParentIssue(labels: Label[]) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
-  const config = Runtime.getState().botConfig;
-  const logger = runtime.logger;
-  const payload = context.payload as Payload;
-  if (!payload.issue) return;
-  const labels = payload.issue.labels;
-  const labelNames = labels.map((i) => i.name);
-  logger.info(`Checking if the issue is a parent issue.`);
-  if (payload.issue.body && isParentIssue(payload.issue.body)) {
-    logger.error("Identified as parent issue. Disabling price label.");
-    const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));
-    if (issuePrices.length) {
-      await addCommentToIssue(GLOBAL_STRINGS.skipPriceLabelGenerationComment, payload.issue.number);
-      await clearAllPriceLabelsOnIssue();
-    }
-    return;
-  }
-  const valid = await handleLabelsAccess();
-
-  if (!valid && config.publicAccessControl.setLabel) {
-    return;
-  }
-
-  const { assistivePricing } = config.mode;
-  const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
-  const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
-
-  const minTimeLabel =
-    timeLabels.length > 0
-      ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name
-      : undefined;
-  const minPriorityLabel =
-    priorityLabels.length > 0
-      ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name
-      : undefined;
-
-  const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
-
-  if (targetPriceLabel) {
-    const _targetPriceLabel = labelNames.find((name) => name.includes("Price") && name.includes(targetPriceLabel));
-
-    if (_targetPriceLabel) {
-      // get all issue events of type "labeled" and the event label includes Price
-      let labeledEvents = await getAllLabeledEvents();
-      if (!labeledEvents) return;
-
-      labeledEvents = labeledEvents.filter((event) => event.label?.name.includes("Price"));
-      if (!labeledEvents.length) return;
-
-      // check if the latest price label has been added by a user
-      if (labeledEvents[labeledEvents.length - 1].actor?.type == UserType.User) {
-        logger.info(`Skipping... already exists`);
-      } else {
-        // add price label to issue becuase wrong price has been added by bot
-        logger.info(`Adding price label to issue`);
-        await clearAllPriceLabelsOnIssue();
-
-        const exist = await getLabel(targetPriceLabel);
-
-        if (assistivePricing && !exist) {
-          logger.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
-          await createLabel(targetPriceLabel, "price");
-        }
-        await addLabelToIssue(targetPriceLabel);
-      }
-    } else {
-      // add price if there is none
-      logger.info(`Adding price label to issue`);
-      await clearAllPriceLabelsOnIssue();
-
-      const exist = await getLabel(targetPriceLabel);
-
-      if (assistivePricing && !exist) {
-        logger.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
-        await createLabel(targetPriceLabel, "price");
-      }
-      await addLabelToIssue(targetPriceLabel);
-    }
-  } else {
+  const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));
+  if (issuePrices.length) {
+    // await addCommentToIssue(GLOBAL_STRINGS.pricingDisabledOnParentIssues, issueNumber);
     await clearAllPriceLabelsOnIssue();
-    logger.info(`Skipping action...`);
   }
-};
+  return runtime.logger.warn(GLOBAL_STRINGS.pricingDisabledOnParentIssues);
+}
 
-export const isParentIssue = (body: string) => {
+export function getMinLabel(labels: Label[]) {
+  return labels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b)).name;
+}
+
+export async function handleTargetPriceLabel(
+  targetPriceLabel: string,
+  labelNames: string[],
+  assistivePricing: boolean
+) {
+  const _targetPriceLabel = labelNames.find((name) => name.includes("Price") && name.includes(targetPriceLabel));
+
+  if (_targetPriceLabel) {
+    await handleExistingPriceLabel(targetPriceLabel, assistivePricing);
+  } else {
+    await handleNewPriceLabel(targetPriceLabel, assistivePricing);
+  }
+}
+
+async function handleExistingPriceLabel(targetPriceLabel: string, assistivePricing: boolean) {
+  const logger = Runtime.getState().logger;
+  let labeledEvents = await getAllLabeledEvents();
+  if (!labeledEvents) return logger.warn("No labeled events found");
+
+  labeledEvents = labeledEvents.filter((event) => event.label?.name.includes("Price"));
+  if (!labeledEvents.length) return logger.warn("No price labeled events found");
+
+  if (labeledEvents[labeledEvents.length - 1].actor?.type == UserType.User) {
+    logger.info(`Skipping... already exists`);
+  } else {
+    await addPriceLabelToIssue(targetPriceLabel, assistivePricing);
+  }
+}
+
+async function handleNewPriceLabel(targetPriceLabel: string, assistivePricing: boolean) {
+  await addPriceLabelToIssue(targetPriceLabel, assistivePricing);
+}
+
+async function addPriceLabelToIssue(targetPriceLabel: string, assistivePricing: boolean) {
+  const logger = Runtime.getState().logger;
+  await clearAllPriceLabelsOnIssue();
+
+  const exist = await getLabel(targetPriceLabel);
+
+  if (assistivePricing && !exist) {
+    logger.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
+    await createLabel(targetPriceLabel, "price");
+  }
+
+  await addLabelToIssue(targetPriceLabel);
+}
+
+export function isParentIssue(body: string) {
   const parentPattern = /-\s+\[( |x)\]\s+#\d+/;
   return body.match(parentPattern);
-};
+}

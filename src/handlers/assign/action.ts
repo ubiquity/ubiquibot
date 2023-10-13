@@ -1,30 +1,25 @@
 import Runtime from "../../bindings/bot-runtime";
-import { addCommentToIssue, closePullRequest, calculateWeight, calculateDuration } from "../../helpers";
-import { gitLinkedPrParser } from "../../helpers/parser";
-import { Payload, LabelItem } from "../../types";
+import { calculateDurations, calculateLabelValue, closePullRequest } from "../../helpers";
+import { getLinkedPullRequests } from "../../helpers/parser";
+import { Label, Payload } from "../../types";
 import { deadLinePrefix } from "../shared";
 
-const exclude_accounts: string[] = [];
 export async function startCommandHandler() {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const config = runtime.botConfig;
   const logger = runtime.logger;
   const payload = context.payload as Payload;
+
   if (!payload.issue) {
-    logger.debug(`Empty issue object`);
-    return;
+    return logger.error("Issue is not defined");
   }
 
-  logger.info(`Commenting timeline message for issue: ${payload.issue.number}`);
-
-  // Extract assignees from payload and filter out excluded accounts
-  const assignees = payload.issue?.assignees?.filter((assignee) => !exclude_accounts.includes(assignee.login)) || [];
+  const assignees = payload.issue?.assignees;
 
   // If no valid assignees exist, log a debug message and return
   if (assignees.length === 0) {
-    logger.debug(`No assignees for comment`);
-    return;
+    return logger.warn("No assignees");
   }
 
   // Flatten assignees into a string
@@ -35,67 +30,79 @@ export async function startCommandHandler() {
 
   // If no labels exist, log a debug message and return
   if (!labels) {
-    logger.debug(`No labels to calculate timeline`);
-    return;
+    return logger.warn(`No labels to calculate timeline`);
   }
 
   // Filter out labels that match the time labels defined in the config
-  const timeLabelsAssigned: LabelItem[] = labels.filter((label) =>
+  const timeLabelsAssigned: Label[] = labels.filter((label) =>
     typeof label === "string" || typeof label === "object"
       ? config.price.timeLabels.some((item) => item.name === label.name)
       : false
   );
 
   if (timeLabelsAssigned.length == 0) {
-    logger.debug(`No labels to calculate timeline`);
-    return;
+    return logger.debug(`No labels to calculate timeline`);
   }
 
   // Sort labels by weight and select the one with the smallest weight
-  const sortedLabels = timeLabelsAssigned.sort((a, b) => calculateWeight(a) - calculateWeight(b));
-  const targetLabel = sortedLabels[0];
+  const sortedLabels = timeLabelsAssigned
+    .sort((a, b) => {
+      const fullLabelA = labels.find((label) => label.name === a.name);
+      const fullLabelB = labels.find((label) => label.name === b.name);
+
+      if (!fullLabelA || !fullLabelB) {
+        return 0; // return a default value
+      }
+
+      return calculateLabelValue(fullLabelA) - calculateLabelValue(fullLabelB);
+    })
+    .map((label) => labels.find((fullLabel) => fullLabel.name === label.name));
+
+  // Filter out undefined values
+  const validSortedLabels = sortedLabels.filter((label) => label !== undefined);
 
   // Calculate the duration for the target label
-  const labelDuration = calculateDuration(targetLabel);
-
-  // If the duration is not configured, log a debug message and return
-  if (!labelDuration) {
-    logger.debug(`Missing configuration for time label: ${targetLabel.name}`);
-    return;
-  }
+  const labelDuration = calculateDurations(validSortedLabels as Label[]);
+  const shortestDurationLabel = labelDuration[0];
 
   // Calculate the end date based on the current date and the label duration
   const currentDate = new Date();
-  const endDate = new Date(currentDate.getTime() + labelDuration * 1000);
+  const endDate = new Date(currentDate.getTime() + shortestDurationLabel * 1000);
 
   // Format the commit message
-  const commitMessage = `${flattenedAssignees} ${deadLinePrefix} ${endDate.toUTCString().replace("GMT", "UTC")}`;
+  const commitMessage = `${flattenedAssignees} ${deadLinePrefix} ${endDate.toISOString()}`;
   logger.debug(`Creating an issue comment, commit_msg: ${commitMessage}`);
 
   // Add the commit message as a comment to the issue
-  await addCommentToIssue(commitMessage, payload.issue?.number);
+  // await addCommentToIssue(commitMessage, payload.issue?.number);
+  return logger.info(commitMessage);
 }
 
-export async function closePullRequestForAnIssue(): Promise<void> {
+export async function closePullRequestForAnIssue() {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const logger = runtime.logger;
   const payload = context.payload as Payload;
-  if (!payload.issue?.number) return;
+  if (!payload.issue?.number) {
+    throw logger.error("Issue is not defined");
+  }
 
-  const prs = await gitLinkedPrParser({
+  const linkedPullRequests = await getLinkedPullRequests({
     owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    issue_number: payload.issue.number,
+    repository: payload.repository.name,
+    issue: payload.issue.number,
   });
 
-  if (!prs.length) return;
-
-  logger.info(`Opened prs for this issue: ${JSON.stringify(prs)}`);
-  let comment = `These linked pull requests are closed: `;
-  for (let i = 0; i < prs.length; i++) {
-    await closePullRequest(prs[i].prNumber);
-    comment += ` <a href="${prs[i].prHref}">#${prs[i].prNumber}</a> `;
+  if (!linkedPullRequests.length) {
+    return logger.info(`No linked pull requests to close`);
   }
-  await addCommentToIssue(comment, payload.issue.number);
+
+  logger.info(`Opened prs`, linkedPullRequests);
+  let comment = `These linked pull requests are closed: `;
+  for (let i = 0; i < linkedPullRequests.length; i++) {
+    await closePullRequest(linkedPullRequests[i].number);
+    comment += ` <a href="${linkedPullRequests[i].href}">#${linkedPullRequests[i].number}</a> `;
+  }
+  return logger.info(comment);
+  // await addCommentToIssue(comment, payload.issue.number);
 }

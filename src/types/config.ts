@@ -1,7 +1,7 @@
 import { Static, Type } from "@sinclair/typebox";
 import { LogLevel } from "./log";
 
-const LabelItemSchema = Type.Object(
+const LabelFromConfigSchema = Type.Object(
   {
     name: Type.String(),
   },
@@ -9,7 +9,7 @@ const LabelItemSchema = Type.Object(
     additionalProperties: false,
   }
 );
-export type LabelItem = Static<typeof LabelItemSchema>;
+export type LabelFromConfig = Static<typeof LabelFromConfigSchema>;
 
 const CommentIncentivesSchema = Type.Object(
   {
@@ -46,8 +46,8 @@ export type CommandItem = Static<typeof CommandItemSchema>;
 export const PriceConfigSchema = Type.Object({
   baseMultiplier: Type.Number(),
   issueCreatorMultiplier: Type.Number(),
-  timeLabels: Type.Array(LabelItemSchema),
-  priorityLabels: Type.Array(LabelItemSchema),
+  timeLabels: Type.Array(LabelFromConfigSchema),
+  priorityLabels: Type.Array(LabelFromConfigSchema),
   incentives: IncentivesSchema,
   defaultLabels: Type.Array(Type.String()),
 });
@@ -180,8 +180,8 @@ export const ConfigSchema = Type.Object(
     evmNetworkId: Type.Optional(Type.Number()),
     priceMultiplier: Type.Optional(Type.Number()),
     issueCreatorMultiplier: Type.Optional(Type.Number()),
-    timeLabels: Type.Optional(Type.Array(LabelItemSchema)),
-    priorityLabels: Type.Optional(Type.Array(LabelItemSchema)),
+    timeLabels: Type.Optional(Type.Array(LabelFromConfigSchema)),
+    priorityLabels: Type.Optional(Type.Array(LabelFromConfigSchema)),
     permitMaxPrice: Type.Optional(Type.Number()),
     commandSettings: Type.Optional(Type.Array(CommandItemSchema)),
     promotionComment: Type.Optional(Type.String()),
@@ -223,13 +223,13 @@ export const MergedConfigSchema = Type.Object({
   openAITokenLimit: Type.Optional(Type.Number()),
   permitMaxPrice: Type.Number(),
   priceMultiplier: Type.Number(),
-  priorityLabels: Type.Array(LabelItemSchema),
+  priorityLabels: Type.Array(LabelFromConfigSchema),
   privateKeyEncrypted: Type.Optional(Type.String()),
   promotionComment: Type.String(),
   publicAccessControl: PublicAccessControlSchema,
   registerWalletWithVerification: Type.Boolean(),
   staleTaskTime: Type.String(),
-  timeLabels: Type.Array(LabelItemSchema),
+  timeLabels: Type.Array(LabelFromConfigSchema),
   staleBountyTime: Type.String(),
   timeRangeForMaxIssue: Type.Number(),
   timeRangeForMaxIssueEnabled: Type.Boolean(),

@@ -1,11 +1,11 @@
 import { User, UserType } from "../../types";
 import { commentParser } from "../comment";
 import { Comment } from "../../types";
-import { GitHubLogger } from "../../adapters/supabase";
+import { Logs } from "../../adapters/supabase";
 interface WalkComments {
   issueComments: Comment[];
   assignee: User;
-  logger: GitHubLogger;
+  logger: Logs;
   issueCommentsByUser: Record<string, { id: string; comments: string[] }>;
 }
 
@@ -13,17 +13,13 @@ export function walkComments({ issueComments, assignee, logger, issueCommentsByU
   for (const issueComment of issueComments) {
     const user = issueComment.user;
     if (user.type == UserType.Bot || user.login == assignee.login) continue;
-    const commands = commentParser(issueComment.body);
-    if (commands.length > 0) {
-      logger.info(
-        `Skipping to parse the comment because it contains commands. comment: ${JSON.stringify(issueComment)}`
-      );
+    const command = commentParser(issueComment.body);
+    if (command) {
+      logger.info(`Skipping to parse the comment because it contains commands.`, { issueComment });
       continue;
     }
     if (!issueComment.body_html) {
-      logger.info(
-        `Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(issueComment)}`
-      );
+      logger.info(`Skipping to parse the comment because body_html is undefined.`, { issueComment });
       continue;
     }
 

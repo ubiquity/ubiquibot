@@ -12,7 +12,7 @@ export async function createDevPoolPR() {
   const devPoolRepo = "devpool-directory";
 
   if (!payload.repositories_added) {
-    return;
+    return logger.info("No repositories added");
   }
 
   const repository = payload.repositories_added[0];
@@ -82,5 +82,5 @@ export async function createDevPoolPR() {
     body: "",
   });
 
-  logger.info("Pull request created on DevPool Directory");
+  return logger.info("Pull request created on DevPool Directory");
 }

@@ -111,7 +111,7 @@ const mergeConfigs = (configs: MergedConfigs) => {
   return merge({}, configs.parsedDefault, configs.parsedOrg, configs.parsedRepo);
 };
 
-export const getConfig = async (context: Context) => {
+export async function getConfig(context: Context) {
   const orgConfig = await getConfigSuperset(context, "org", CONFIG_PATH);
   const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
 
@@ -175,4 +175,4 @@ export const getConfig = async (context: Context) => {
   };
 
   return configData;
-};
+}

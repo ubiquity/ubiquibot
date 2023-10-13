@@ -11,9 +11,6 @@ export interface Database {
           location_id: number | null;
           multiplier: number;
           multiplier_reason: string | null;
-          node_id: string | null;
-          node_type: string | null;
-          node_url: string | null;
           updated: string | null;
           user_id: number;
         };
@@ -24,9 +21,6 @@ export interface Database {
           location_id?: number | null;
           multiplier?: number;
           multiplier_reason?: string | null;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           updated?: string | null;
           user_id: number;
         };
@@ -37,9 +31,6 @@ export interface Database {
           location_id?: number | null;
           multiplier?: number;
           multiplier_reason?: string | null;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           updated?: string | null;
           user_id?: number;
         };
@@ -64,9 +55,6 @@ export interface Database {
           created: string;
           id: number;
           location_id: number | null;
-          node_id: string | null;
-          node_type: string | null;
-          node_url: string | null;
           permit_id: number | null;
           updated: string | null;
         };
@@ -75,9 +63,6 @@ export interface Database {
           created?: string;
           id?: number;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           permit_id?: number | null;
           updated?: string | null;
         };
@@ -86,9 +71,6 @@ export interface Database {
           created?: string;
           id?: number;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           permit_id?: number | null;
           updated?: string | null;
         };
@@ -113,9 +95,6 @@ export interface Database {
           created: string;
           id: number;
           location_id: number | null;
-          node_id: string | null;
-          node_type: string | null;
-          node_url: string | null;
           token_id: number | null;
           updated: string | null;
         };
@@ -124,9 +103,6 @@ export interface Database {
           created?: string;
           id?: number;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           token_id?: number | null;
           updated?: string | null;
         };
@@ -135,9 +111,6 @@ export interface Database {
           created?: string;
           id?: number;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           token_id?: number | null;
           updated?: string | null;
         };
@@ -164,9 +137,6 @@ export interface Database {
           label_from: string | null;
           label_to: string | null;
           location_id: number | null;
-          node_id: string | null;
-          node_type: Database["public"]["Enums"]["github_node_type"] | null;
-          node_url: string | null;
           updated: string | null;
         };
         Insert: {
@@ -176,9 +146,6 @@ export interface Database {
           label_from?: string | null;
           label_to?: string | null;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: Database["public"]["Enums"]["github_node_type"] | null;
-          node_url?: string | null;
           updated?: string | null;
         };
         Update: {
@@ -188,9 +155,6 @@ export interface Database {
           label_from?: string | null;
           label_to?: string | null;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: Database["public"]["Enums"]["github_node_type"] | null;
-          node_url?: string | null;
           updated?: string | null;
         };
         Relationships: [
@@ -248,31 +212,28 @@ export interface Database {
         Row: {
           created: string;
           id: number;
+          level: string | null;
           location_id: number | null;
-          log_entry: string;
-          node_id: string | null;
-          node_type: string | null;
-          node_url: string | null;
+          log: string;
+          metadata: Json | null;
           updated: string | null;
         };
         Insert: {
           created?: string;
           id?: number;
+          level?: string | null;
           location_id?: number | null;
-          log_entry: string;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
+          log: string;
+          metadata?: Json | null;
           updated?: string | null;
         };
         Update: {
           created?: string;
           id?: number;
+          level?: string | null;
           location_id?: number | null;
-          log_entry?: string;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
+          log?: string;
+          metadata?: Json | null;
           updated?: string | null;
         };
         Relationships: [
@@ -289,9 +250,6 @@ export interface Database {
           created: string;
           id: number;
           location_id: number | null;
-          node_id: string | null;
-          node_type: string | null;
-          node_url: string | null;
           updated: string | null;
           wallet_id: number | null;
         };
@@ -299,9 +257,6 @@ export interface Database {
           created?: string;
           id?: number;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           updated?: string | null;
           wallet_id?: number | null;
         };
@@ -309,9 +264,6 @@ export interface Database {
           created?: string;
           id?: number;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           updated?: string | null;
           wallet_id?: number | null;
         };
@@ -338,9 +290,6 @@ export interface Database {
           deadline: string;
           id: number;
           location_id: number | null;
-          node_id: string | null;
-          node_type: Database["public"]["Enums"]["github_node_type"] | null;
-          node_url: string | null;
           nonce: string;
           partner_id: number | null;
           signature: string;
@@ -355,9 +304,6 @@ export interface Database {
           deadline: string;
           id?: number;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: Database["public"]["Enums"]["github_node_type"] | null;
-          node_url?: string | null;
           nonce: string;
           partner_id?: number | null;
           signature: string;
@@ -372,9 +318,6 @@ export interface Database {
           deadline?: string;
           id?: number;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: Database["public"]["Enums"]["github_node_type"] | null;
-          node_url?: string | null;
           nonce?: string;
           partner_id?: number | null;
           signature?: string;
@@ -416,9 +359,6 @@ export interface Database {
           debit_id: number | null;
           id: number;
           location_id: number | null;
-          node_id: string | null;
-          node_type: string | null;
-          node_url: string | null;
           updated: string | null;
           user_id: number;
         };
@@ -428,9 +368,6 @@ export interface Database {
           debit_id?: number | null;
           id?: number;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           updated?: string | null;
           user_id: number;
         };
@@ -440,9 +377,6 @@ export interface Database {
           debit_id?: number | null;
           id?: number;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           updated?: string | null;
           user_id?: number;
         };
@@ -480,9 +414,6 @@ export interface Database {
           id: number;
           location_id: number | null;
           network: number;
-          node_id: string | null;
-          node_type: string | null;
-          node_url: string | null;
           updated: string | null;
         };
         Insert: {
@@ -491,9 +422,6 @@ export interface Database {
           id?: number;
           location_id?: number | null;
           network?: number;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           updated?: string | null;
         };
         Update: {
@@ -502,9 +430,6 @@ export interface Database {
           id?: number;
           location_id?: number | null;
           network?: number;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           updated?: string | null;
         };
         Relationships: [
@@ -521,9 +446,6 @@ export interface Database {
           created: string;
           id: number;
           location_id: number | null;
-          node_id: string | null;
-          node_type: string | null;
-          node_url: string | null;
           updated: string | null;
           wallet_id: number | null;
         };
@@ -531,9 +453,6 @@ export interface Database {
           created?: string;
           id?: number;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           updated?: string | null;
           wallet_id?: number | null;
         };
@@ -541,9 +460,6 @@ export interface Database {
           created?: string;
           id?: number;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           updated?: string | null;
           wallet_id?: number | null;
         };
@@ -568,9 +484,6 @@ export interface Database {
           created: string;
           id: number;
           location_id: number | null;
-          node_id: string | null;
-          node_type: string | null;
-          node_url: string | null;
           updated: string | null;
         };
         Insert: {
@@ -578,9 +491,6 @@ export interface Database {
           created?: string;
           id?: number;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           updated?: string | null;
         };
         Update: {
@@ -588,9 +498,6 @@ export interface Database {
           created?: string;
           id?: number;
           location_id?: number | null;
-          node_id?: string | null;
-          node_type?: string | null;
-          node_url?: string | null;
           updated?: string | null;
         };
         Relationships: [

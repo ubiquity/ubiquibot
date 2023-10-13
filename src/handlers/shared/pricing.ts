@@ -1,27 +1,32 @@
 import Runtime from "../../bindings/bot-runtime";
-import { calculateWeight } from "../../helpers";
+import { calculateLabelValue } from "../../helpers";
 
-export const calculateTaskPrice = (timeValue: number, priorityValue: number, baseValue?: number): number => {
-  const botConfig = Runtime.getState().botConfig;
-  const base = baseValue ?? botConfig.price.baseMultiplier;
+export function calculateTaskPrice(timeValue: number, priorityValue: number, baseValue?: number): number {
+  const runtime = Runtime.getState();
+  const base = baseValue ?? runtime.botConfig.price.baseMultiplier;
   const priority = priorityValue / 10; // floats cause bad math
   const price = 1000 * base * timeValue * priority;
   return price;
-};
+}
 
-export const getTargetPriceLabel = (
-  timeLabel: string | undefined,
-  priorityLabel: string | undefined
-): string | undefined => {
-  const botConfig = Runtime.getState().botConfig;
-  let targetPriceLabel: string | undefined = undefined;
-  if (timeLabel && priorityLabel) {
-    const timeWeight = calculateWeight(botConfig.price.timeLabels.find((item) => item.name === timeLabel));
-    const priorityWeight = calculateWeight(botConfig.price.priorityLabels.find((item) => item.name === priorityLabel));
-    if (timeWeight && priorityWeight) {
-      const taskPrice = calculateTaskPrice(timeWeight, priorityWeight);
-      targetPriceLabel = `Price: ${taskPrice} USD`;
-    }
-  }
-  return targetPriceLabel;
-};
+export function setPrice(timeLabel: string, priorityLabel: string) {
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+
+  if (!timeLabel || !priorityLabel) return logger.warn("Time or priority label is not defined");
+
+  const recognizedTimeLabels = runtime.botConfig.price.timeLabels.find((item) => item.name === timeLabel);
+  if (!recognizedTimeLabels) return logger.warn("Time label is not recognized");
+
+  const recognizedPriorityLabels = runtime.botConfig.price.priorityLabels.find((item) => item.name === priorityLabel);
+  if (!recognizedPriorityLabels) return logger.warn("Priority label is not recognized");
+
+  const timeValue = calculateLabelValue(recognizedTimeLabels);
+  if (!timeValue) return logger.warn("Time value is not defined");
+
+  const priorityValue = calculateLabelValue(recognizedPriorityLabels);
+  if (!priorityValue) return logger.warn("Priority value is not defined");
+
+  const taskPrice = calculateTaskPrice(timeValue, priorityValue);
+  return `Price: ${taskPrice} USD`;
+}

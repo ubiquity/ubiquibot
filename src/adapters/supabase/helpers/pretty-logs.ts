@@ -1,68 +1,111 @@
+import util from "util";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export const prettyLogs = {
-  error: function errorLog(...args: unknown[]) {
-    if (args[0] instanceof Error) {
-      console.error(args[0]);
-      if (args[0].stack) {
-        _log("error", formatStackTrace(args[0].stack, 3)); // Log the formatted stack trace
-      }
-      return;
-    }
-
-    _log("error", ...args);
+  error: function logError(message: string, metadata?: any) {
+    logWithStack("error", message, metadata);
   },
 
-  ok: function okLog(...args: unknown[]) {
-    _log("ok", ...args);
+  warn: function logWarn(message: string, metadata?: any) {
+    logWithStack("warn", message, metadata);
   },
 
-  warn: function warnLog(...args: unknown[]) {
-    _log("warn", ...args);
-    const stack = new Error().stack;
-    if (stack) _log("warn", formatStackTrace(stack, 3)); // Log the formatted stack trace
+  ok: function logOk(message: string, metadata?: any) {
+    logWithStack("ok", message, metadata);
   },
 
-  info: function infoLog(...args: unknown[]) {
-    _log("info", ...args);
+  info: function logInfo(message: string, metadata?: any) {
+    logWithStack("info", message, metadata);
   },
 
-  debug: function debugLog(...args: unknown[]) {
-    _log("debug", ...args);
-    const stack = new Error().stack;
-    if (stack) _log("debug", formatStackTrace(stack, 3)); // Log the formatted stack trace
+  debug: function logDebug(message: string, metadata?: any) {
+    logWithStack("debug", message, metadata);
+  },
+
+  http: function logHttp(message: string, metadata?: any) {
+    logWithStack("http", message, metadata);
+  },
+
+  verbose: function logVerbose(message: string, metadata?: any) {
+    logWithStack("verbose", message, metadata);
+  },
+
+  silly: function logSilly(message: string, metadata?: any) {
+    logWithStack("silly", message, metadata);
   },
 };
+interface Metadata {
+  error?: { stack?: string };
+  stack?: string;
+  message?: string;
+  name?: string;
+  [key: string]: any;
+}
+function logWithStack(type: keyof typeof prettyLogs, message: string, metadata?: Metadata) {
+  // console.trace(util.inspect(metadata, { showHidden: true, depth: null }));
+  _log(type, message);
+  if (metadata) {
+    let stack = metadata?.error?.stack || metadata?.stack;
+    if (!stack) {
+      // generate and remove the top four lines of the stack trace
+      const stackTrace = new Error().stack?.split("\n");
+      if (stackTrace) {
+        stackTrace.splice(0, 4);
+        stack = stackTrace
+          .filter((line) => line.includes("/src/")) // adjust this path to match your source code
+          .join("\n");
+      }
+    }
+    const newMetadata = { ...metadata };
+    delete newMetadata.message;
+    delete newMetadata.name;
+    delete newMetadata.stack;
 
-function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown[]) {
-  const defaultSymbols = {
+    if (!isEmpty(newMetadata)) {
+      // console.trace(util.inspect(newMetadata, { showHidden: true, depth: null }));
+      _log(type, newMetadata);
+    }
+
+    if (typeof stack == "string") {
+      const prettyStack = formatStackTrace(stack, 1);
+      const colorizedStack = colorizeText(prettyStack, "dim");
+      _log(type, colorizedStack);
+    } else if (stack) {
+      // console.trace({ type: typeof stack, stack });
+      const prettyStack = formatStackTrace((stack as unknown as string[]).join("\n"), 1);
+      const colorizedStack = colorizeText(prettyStack, "dim");
+      _log(type, colorizedStack);
+    } else {
+      throw new Error("Stack is null");
+    }
+  }
+}
+
+function _log(type: keyof typeof prettyLogs, message: any) {
+  const defaultSymbols: Record<keyof typeof prettyLogs, string> = {
     error: "×",
     ok: "✓",
     warn: "⚠",
     info: "›",
-    debug: "↳",
+    debug: "››",
+    http: "🛜",
+    verbose: "💬",
+    silly: "🤪",
   };
 
-  // Extracting the optional symbol from the arguments
-  let symbol = defaultSymbols[type];
-  let messageArgs = args;
-
-  if (args.length > 1 && typeof args[0] === "string") {
-    symbol = args[0];
-    messageArgs = args.slice(1);
-  }
+  const symbol = defaultSymbols[type];
 
   // Formatting the message
-  const message = messageArgs
-    .map((arg) => {
-      if (typeof arg === "string") {
-        return arg;
-      } else {
-        return JSON.stringify(arg, null, "  ");
-      }
-    })
-    .join(" ");
+  const messageFormatted =
+    typeof message === "string"
+      ? message
+      : util.inspect(message, { showHidden: true, depth: null, breakLength: Infinity });
+  // const messageFormatted =
+  //   typeof message === "string" ? message : JSON.stringify(Logs.convertErrorsIntoObjects(message));
 
   // Constructing the full log string with the prefix symbol
-  const lines = message.split("\n");
+  const lines = messageFormatted.split("\n");
   const logString = lines
     .map((line, index) => {
       // Add the symbol only to the first line and keep the indentation for the rest
@@ -71,20 +114,25 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
     })
     .join("\n");
 
-  const colorMap = {
-    error: ["trace", "fgRed"],
+  const fullLogString = logString;
+
+  const colorMap: Record<keyof typeof prettyLogs, string[]> = {
+    error: ["error", "fgRed"],
     ok: ["log", "fgGreen"],
     warn: ["warn", "fgYellow"],
     info: ["info", "dim"],
-    debug: ["info", "dim"],
+    debug: ["debug", "dim"],
+    http: ["debug", "dim"],
+    verbose: ["debug", "dim"],
+    silly: ["debug", "dim"],
   };
+
   const _console = console[colorMap[type][0] as keyof typeof console] as (...args: string[]) => void;
   if (typeof _console === "function") {
-    _console(colorizeText(logString, colorMap[type][1] as keyof typeof colors));
+    _console(colorizeText(fullLogString, colorMap[type][1] as keyof typeof colors));
+  } else {
+    throw new Error(fullLogString);
   }
-  // else {
-  //   console.log(logString);
-  // }
 }
 
 const colors = {
@@ -124,6 +172,9 @@ export function formatStackTrace(stack: string, linesToRemove = 0, prefix = ""):
     lines.shift(); // Remove the top line
   }
   return lines
-    .map((line) => `\t${prefix}${line.replace(/\s*at\s*/, "")}`) // Replace 'at' and prefix every line
+    .map((line) => `${prefix}${line.replace(/\s*at\s*/, "  ↳  ")}`) // Replace 'at' and prefix every line
     .join("\n");
+}
+function isEmpty(obj: Record<string, any>) {
+  return !Reflect.ownKeys(obj).some((key) => typeof obj[String(key)] !== "function");
 }

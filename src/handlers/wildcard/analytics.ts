@@ -1,5 +1,5 @@
 import Runtime from "../../bindings/bot-runtime";
-import { calculateWeight } from "../../helpers";
+import { calculateLabelValue } from "../../helpers";
 import { Issue } from "../../types";
 
 //  Checks the issue whether it's an open task for public self assignment
@@ -19,11 +19,11 @@ export function taskInfo(issue: Issue): {
 
   const minTimeLabel =
     timeLabels.length > 0
-      ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name
+      ? timeLabels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b)).name
       : undefined;
   const minPriorityLabel =
     priorityLabels.length > 0
-      ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name
+      ? priorityLabels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b)).name
       : undefined;
 
   const priceLabel = labels.find((label) => label.name.includes("Price"))?.name;

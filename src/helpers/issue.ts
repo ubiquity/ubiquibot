@@ -1,7 +1,16 @@
 import { Context } from "probot";
-import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
+import {
+  AssignEvent,
+  Comment,
+  HandlerReturnValuesNoVoid,
+  IssueType,
+  Payload,
+  StreamlinedComment,
+  UserType,
+} from "../types";
 import { checkRateLimitGit } from "../utils";
 import Runtime from "../bindings/bot-runtime";
+import { LogReturn } from "../adapters/supabase";
 
 export async function getAllIssueEvents() {
   const runtime = Runtime.getState();
@@ -18,9 +27,13 @@ export async function getAllIssueEvents() {
   try {
     while (shouldFetch) {
       // Fetch issue events
+
+      const repo = payload.repository.name;
+      const owner = payload.repository.owner.login;
+
       const response = await context.octokit.issues.listEvents({
-        owner: payload.repository.owner.login,
-        repo: payload.repository.full_name,
+        owner: owner,
+        repo: repo,
         issue_number: payload.issue.number,
         per_page: 100,
         page: page_number,
@@ -49,7 +62,7 @@ export async function getAllLabeledEvents() {
   return events.filter((event) => event.event === "labeled");
 }
 
-export async function clearAllPriceLabelsOnIssue(): Promise<void> {
+export async function clearAllPriceLabelsOnIssue() {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
 
@@ -144,8 +157,12 @@ export async function listAllIssuesForRepo(state: "open" | "closed" | "all" = "o
   return issuesArr;
 }
 
-export async function addCommentToIssue(message: string, issueNumber: number) {
+export async function addCommentToIssue(message: HandlerReturnValuesNoVoid, issueNumber: number) {
+  let comment = message as string;
   const runtime = Runtime.getState();
+  if (message instanceof LogReturn) {
+    comment = message.logMessage.diff;
+  }
   const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
@@ -155,17 +172,20 @@ export async function addCommentToIssue(message: string, issueNumber: number) {
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: issueNumber,
-      body: message,
+      body: comment,
     });
   } catch (e: unknown) {
-    runtime.logger.debug(`Adding a comment failed! reason: ${e}`);
+    runtime.logger.error("Adding a comment failed!", e);
   }
 }
 
-export async function updateCommentOfIssue(msg: string, issueNumber: number, replyTo: Comment) {
+export async function updateCommentOfIssue(message: HandlerReturnValuesNoVoid, issueNumber: number, replyTo: Comment) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
-
+  let comment = message as string;
+  if (message instanceof LogReturn) {
+    comment = message.logMessage.diff;
+  }
   const payload = context.payload as Payload;
 
   try {
@@ -194,11 +214,11 @@ export async function updateCommentOfIssue(msg: string, issueNumber: number, rep
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
         comment_id: commentToEdit.id,
-        body: msg,
+        body: comment,
       });
     } else {
       runtime.logger.info(`Falling back to add comment. Couldn't find response to edit for comment_id: ${replyTo.id}`);
-      await addCommentToIssue(msg, issueNumber);
+      await addCommentToIssue(message, issueNumber);
     }
   } catch (e: unknown) {
     runtime.logger.debug(`Updating a comment failed! reason: ${e}`);
@@ -207,7 +227,7 @@ export async function updateCommentOfIssue(msg: string, issueNumber: number, rep
 
 export async function upsertCommentToIssue(
   issueNumber: number,
-  comment: string,
+  comment: HandlerReturnValuesNoVoid,
   action?: string,
   destination?: Comment
 ) {
@@ -390,7 +410,7 @@ export async function wasIssueReopened(issueNumber: number): Promise<boolean> {
   return false;
 }
 
-export async function removeAssignees(issueNumber: number, assignees: string[]): Promise<void> {
+export async function removeAssignees(issueNumber: number, assignees: string[]) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
 
@@ -499,7 +519,7 @@ export async function isUserAdminOrBillingManager(
   }
 }
 
-export async function addAssignees(issueNumber: number, assignees: string[]): Promise<void> {
+export async function addAssignees(issue: number, assignees: string[]) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
 
@@ -509,7 +529,7 @@ export async function addAssignees(issueNumber: number, assignees: string[]): Pr
     await context.octokit.rest.issues.addAssignees({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      issue_number: issueNumber,
+      issue_number: issue,
       assignees,
     });
   } catch (e: unknown) {
@@ -517,7 +537,7 @@ export async function addAssignees(issueNumber: number, assignees: string[]): Pr
   }
 }
 
-export async function deleteLabel(label: string): Promise<void> {
+export async function deleteLabel(label: string) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
 
@@ -702,21 +722,21 @@ export async function getIssueByNumber(context: Context, issueNumber: number) {
   }
 }
 
-export async function getPullByNumber(context: Context, pull_number: number) {
-  const runtime = Runtime.getState();
+export async function getPullByNumber(context: Context, pull: number) {
+  // const runtime = Runtime.getState();
 
   const payload = context.payload as Payload;
-  try {
-    const { data: pull } = await context.octokit.rest.pulls.get({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      pull_number,
-    });
-    return pull;
-  } catch (error) {
-    runtime.logger.debug(`Fetching pull failed! reason: ${error}`);
-    return;
-  }
+  // try {
+  const response = await context.octokit.rest.pulls.get({
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    pull_number: pull,
+  });
+  return response.data;
+  // } catch (error) {
+  //   runtime.logger.debug(`Fetching pull failed! reason: ${error}`);
+  //   return;
+  // }
 }
 
 // Get issues assigned to a username

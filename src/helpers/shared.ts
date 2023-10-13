@@ -1,6 +1,6 @@
 import ms from "ms";
 import Runtime from "../bindings/bot-runtime";
-import { LabelItem, Payload, UserType } from "../types";
+import { Label, LabelFromConfig, Payload, UserType } from "../types";
 
 const contextNamesToSkip = ["workflow_run"];
 
@@ -21,13 +21,11 @@ export function shouldSkip() {
   return response;
 }
 
-export const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-export function calculateWeight(label: LabelItem | undefined): number {
-  if (!label) return 0;
+export function calculateLabelValue(label: LabelFromConfig): number {
   const matches = label.name.match(/\d+/);
   const number = matches && matches.length > 0 ? parseInt(matches[0]) || 0 : 0;
   if (label.name.toLowerCase().includes("priority")) return number;
+  // throw new Error(`Label ${label.name} is not a priority label`);
   if (label.name.toLowerCase().includes("minute")) return number * 0.002;
   if (label.name.toLowerCase().includes("hour")) return number * 0.125;
   if (label.name.toLowerCase().includes("day")) return 1 + (number - 1) * 0.25;
@@ -36,13 +34,19 @@ export function calculateWeight(label: LabelItem | undefined): number {
   return 0;
 }
 
-export function calculateDuration(label: LabelItem): number {
-  if (!label) return 0;
-  if (label.name.toLowerCase().includes("priority")) return 0;
+export function calculateDurations(labels: Label[]): number[] {
+  // from shortest to longest
+  const durations: number[] = [];
 
-  const pattern = /<(\d+\s\w+)/;
-  const result = label.name.match(pattern);
-  if (!result) return 0;
+  labels.forEach((label: Label) => {
+    const matches = label.name.match(/<(\d+)\s*(\w+)/);
+    if (matches && matches.length >= 3) {
+      const number = parseInt(matches[1]);
+      const unit = matches[2];
+      const duration = ms(`${number} ${unit}`) / 1000;
+      durations.push(duration);
+    }
+  });
 
-  return ms(result[1]) / 1000;
+  return durations.sort((a, b) => a - b);
 }

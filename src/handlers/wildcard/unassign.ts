@@ -39,13 +39,13 @@ async function checkTaskToUnassign(issue: Issue): Promise<boolean> {
   const { disqualifyTime, followUpTime } = unassign;
 
   logger.info(`Checking the task to unassign, issue_number: ${issue.number}`);
-  const { unassignComment, askUpdate } = GLOBAL_STRINGS;
+  const { timeoutComment, requestContributorUpdate } = GLOBAL_STRINGS;
   const assignees = issue.assignees.map((i) => i.login);
   const comments = await getAllIssueComments(issue.number);
   if (!comments || comments.length == 0) return false;
 
   const askUpdateComments = comments
-    .filter((comment: Comment) => comment.body.includes(askUpdate))
+    .filter((comment: Comment) => comment.body.includes(requestContributorUpdate))
     .sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const lastAskTime =
@@ -77,7 +77,7 @@ async function checkTaskToUnassign(issue: Issue): Promise<boolean> {
       // remove assignees from the issue
       await removeAssignees(issue.number, assignees);
       await addCommentToIssue(
-        `@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`,
+        `@${assignees[0]} - ${timeoutComment} \nLast activity time: ${lastActivity}`,
         issue.number
       );
 
@@ -93,7 +93,7 @@ async function checkTaskToUnassign(issue: Issue): Promise<boolean> {
         );
       } else {
         await addCommentToIssue(
-          `${askUpdate} @${assignees[0]}? If you would like to release the task back to the DevPool, please comment \`/stop\` \nLast activity time: ${lastActivity}`,
+          `${requestContributorUpdate} @${assignees[0]}? If you would like to release the task back to the DevPool, please comment \`/stop\` \nLast activity time: ${lastActivity}`,
           issue.number
         );
       }

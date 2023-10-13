@@ -1,9 +1,8 @@
 import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
-import { RewardsResponse } from "../comment";
 import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
 import { IncentivesCalculationResult } from "./incentives-calculation";
-import { removePenalty } from "./shims";
+import { removePenalty, RewardsResponse } from "./shims";
 
 // Calculate the reward for the assignee
 export async function calculateIssueAssigneeReward(
@@ -31,7 +30,7 @@ export async function calculateIssueAssigneeReward(
   const networkId = incentivesCalculation.evmNetworkId;
   const address = incentivesCalculation.paymentToken;
 
-  await Runtime.getState().adapters.supabase.settlement.addDebit({ userId, amount, comment, networkId, address });
+  await Runtime.getState().adapters.supabase.settlement.addDebit({ userId, amount, networkId, address });
 
   if (amount.gt(0)) {
     logger.info(`Deducting penalty from task`);
@@ -39,20 +38,8 @@ export async function calculateIssueAssigneeReward(
     if (taskAmountAfterPenalty.lte(0)) {
       // adds a settlement
       // adds credit
-      await removePenalty({
-        userId: incentivesCalculation.assignee.id,
-        amount,
-        node: comment,
-
-        // username: assigneeLogin,
-        // repoName: incentivesCalculation.payload.repository.full_name,
-        // tokenAddress: incentivesCalculation.paymentToken,
-        // networkId: incentivesCalculation.evmNetworkId,
-        // penalty: taskAmount,
-      });
-      const msg = `Permit generation disabled because task amount after penalty is 0.`;
-      logger.info(msg);
-      return { error: msg };
+      await removePenalty({ userId: incentivesCalculation.assignee.id, amount, node: comment });
+      throw logger.error("Permit generation disabled because task amount after penalty is 0.");
     }
     taskAmount = new Decimal(taskAmountAfterPenalty);
   }
@@ -61,7 +48,6 @@ export async function calculateIssueAssigneeReward(
 
   return {
     title: "Issue-Assignee",
-    error: "",
     userId: incentivesCalculation.assignee.id,
     username: assigneeLogin,
     reward: [

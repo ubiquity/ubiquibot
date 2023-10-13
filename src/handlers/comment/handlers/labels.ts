@@ -2,7 +2,7 @@ import Runtime from "../../../bindings/bot-runtime";
 import { isUserAdminOrBillingManager } from "../../../helpers";
 import { Payload } from "../../../types";
 
-export async function setLabels(body: string): Promise<string> {
+export async function setLabels(body: string) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const logger = runtime.logger;
