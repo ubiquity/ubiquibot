@@ -7,6 +7,7 @@ import merge from "lodash/merge";
 import { DefaultConfig } from "../configs";
 import { validate } from "./ajv";
 import { Config, RepositoryConfig, ConfigSchema } from "../types";
+import { upsertLastCommentToIssue } from "../helpers/issue";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
@@ -114,20 +115,26 @@ const mergeConfigs = (configs: MergedConfigs) => {
 export async function getConfig(context: Context) {
   const orgConfig = await getConfigSuperset(context, "org", CONFIG_PATH);
   const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
+  const payload = context.payload as Payload;
 
   const parsedOrg: RepositoryConfig | undefined = parseYAML(orgConfig);
 
   if (parsedOrg) {
     const { valid, error } = validate(ConfigSchema, parsedOrg);
     if (!valid) {
-      throw new Error(`Invalid org config: ${error}`);
+      const err = new Error(`Invalid org config: ${error}`);
+      if (payload.issue) await upsertLastCommentToIssue(payload.issue.number, err.message);
+      throw err;
     }
   }
   const parsedRepo: RepositoryConfig | undefined = parseYAML(repoConfig);
+
   if (parsedRepo) {
     const { valid, error } = validate(ConfigSchema, parsedRepo);
     if (!valid) {
-      throw new Error(`Invalid repo config: ${error}`);
+      const err = new Error(`Invalid repo config: ${error}`);
+      if (payload.issue) await upsertLastCommentToIssue(payload.issue.number, err.message);
+      throw err;
     }
   }
   const parsedDefault: MergedConfig = DefaultConfig;

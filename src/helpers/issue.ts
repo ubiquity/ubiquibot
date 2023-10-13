@@ -238,10 +238,22 @@ export async function upsertCommentToIssue(
   }
 }
 
+export const upsertLastCommentToIssue = async (issue_number: number, commentBody: string) => {
+  const runtime = Runtime.getState();
+
+  try {
+    const comments = await getAllIssueComments(issue_number);
+
+    if (comments.length > 0 && comments[comments.length - 1].body !== commentBody)
+      await addCommentToIssue(commentBody, issue_number);
+  } catch (e: unknown) {
+    runtime.logger.debug(`Upserting last comment failed! reason: ${e}`);
+  }
+};
+
 export async function getCommentsOfIssue(issueNumber: number): Promise<Comment[]> {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
-
   const payload = context.payload as Payload;
 
   let result: Comment[] = [];
