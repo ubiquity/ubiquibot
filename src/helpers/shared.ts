@@ -39,9 +39,7 @@ export function calculateDurations(labels: Label[]): number[] {
   const durations: number[] = [];
 
   labels.forEach((label: Label) => {
-    console.trace(label);
     const matches = label.name.match(/<(\d+)\s*(\w+)/);
-    console.trace(matches);
     if (matches && matches.length >= 3) {
       const number = parseInt(matches[1]);
       const unit = matches[2];

@@ -27,9 +27,13 @@ export async function getAllIssueEvents() {
   try {
     while (shouldFetch) {
       // Fetch issue events
+
+      const repo = payload.repository.name;
+      const owner = payload.repository.owner.login;
+
       const response = await context.octokit.issues.listEvents({
-        owner: payload.repository.owner.login,
-        repo: payload.repository.full_name,
+        owner: owner,
+        repo: repo,
         issue_number: payload.issue.number,
         per_page: 100,
         page: page_number,

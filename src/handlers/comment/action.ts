@@ -48,7 +48,7 @@ export async function commentCreatedOrEdited() {
 
     const callbackComment = await handler(body);
     if (callbackComment) {
-      console.trace("the only time this calls is when the help menu is requested and I'm unsure why.");
+      logger.info(`Command callback comment:`, callbackComment);
       await callback(issue.number, callbackComment, payload.action, payload.comment);
     }
   } else {

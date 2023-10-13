@@ -39,7 +39,7 @@ export async function bindEvents(eventContext: Context) {
   runtime.logger = runtime.adapters.supabase.logs;
 
   if (!runtime.botConfig.payout.privateKey) {
-    runtime.logger.warn("No private key found");
+    runtime.logger.warn("No EVM private key found");
   }
 
   const payload = eventContext.payload as Payload;
@@ -95,7 +95,7 @@ export async function bindEvents(eventContext: Context) {
 
   for (const handlerType of handlerTypes) {
     // List all the function names of handlerType.actions
-    const functionNames = handlerType.actions.map((action) => action.name);
+    const functionNames = handlerType.actions.map((action) => action?.name);
 
     runtime.logger.info(
       `Running "${handlerType.type}" for event: "${eventName}". handlers: "${functionNames.join(", ")}"`
@@ -157,11 +157,15 @@ function createLoggerHandler(handlerType: AllHandlersWithTypes, activeHandler: A
 
     if (logMessage) {
       // already made it to console so it should just post the comment
-      const metadataForComment = ["```json", JSON.stringify(logMessage.metadata, null, 2), "```"].join("\n");
+      const serializedMetadata = JSON.stringify(logMessage.metadata, null, 2);
       const issue = (runtime.eventContext.payload as Payload).issue;
-      console.trace({ issue });
       if (!issue) return runtime.logger.error("Issue is null. Skipping", { issue });
-      await addCommentToIssue([logMessage.diff, metadataForComment].join("\n"), issue.number);
+      if (serializedMetadata !== "{}") {
+        const metadataForComment = ["```json", serializedMetadata, "```"].join("\n");
+        await addCommentToIssue([logMessage.diff, metadataForComment].join("\n"), issue.number);
+      } else {
+        await addCommentToIssue(logMessage.diff, issue.number);
+      }
     }
 
     const outputComment =

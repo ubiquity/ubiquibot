@@ -63,7 +63,7 @@ function logWithStack(type: keyof typeof prettyLogs, message: string, metadata?:
     delete newMetadata.stack;
 
     if (!isEmpty(newMetadata)) {
-      console.trace(util.inspect(newMetadata, { showHidden: true, depth: null }));
+      // console.trace(util.inspect(newMetadata, { showHidden: true, depth: null }));
       _log(type, newMetadata);
     }
 

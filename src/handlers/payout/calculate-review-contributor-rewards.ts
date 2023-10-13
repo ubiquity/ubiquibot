@@ -27,7 +27,7 @@ export async function calculateReviewContributorRewards(
   const latestLinkedPullRequest = await getLatestMergedPullRequest(linkedPullRequest);
 
   if (!latestLinkedPullRequest) {
-    throw logger.error(`No linked pull requests found`);
+    throw logger.info(`No linked pull requests found`);
   }
 
   const comments = await getAllIssueComments(incentivesCalculation.issue.number);
@@ -38,13 +38,13 @@ export async function calculateReviewContributorRewards(
       content.user.type == UserType.Bot
   );
   if (permitComments.length > 0) {
-    throw logger.error(`skip to generate a permit url because it has been already posted`);
+    throw logger.warn(`skip to generate a permit url because it has been already posted`);
   }
 
   const assignees = incentivesCalculation.issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
-    throw logger.error("skipping payment permit generation because `assignee` is `undefined`.");
+    throw logger.warn("skipping payment permit generation because `assignee` is `undefined`.");
   }
 
   const prReviews = await getAllPullRequestReviews(context, latestLinkedPullRequest.number, "full");
@@ -100,14 +100,14 @@ export async function calculateReviewContributorRewards(
     const commentsByNode = parseComments(commentByUser.comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, incentivesCalculation.incentives);
     if (rewardValue.equals(0)) {
-      logger.info(`Skipping to generate a permit url because the reward value is 0.`, { _user });
+      logger.warn(`Skipping to generate a permit url because the reward value is 0.`, { _user });
       continue;
     }
     logger.info(`Comment parsed for the user: ${_user}, sum: ${rewardValue}`, { commentsByNode });
     const account = await getWalletAddress(user.id);
     const priceInDecimal = rewardValue.mul(incentivesCalculation.baseMultiplier);
     if (priceInDecimal.gt(incentivesCalculation.permitMaxPrice)) {
-      logger.info(`Skipping comment reward for user ${_user} because reward is higher than payment permit max price`);
+      logger.warn(`Skipping comment reward for user ${_user} because reward is higher than payment permit max price`);
       continue;
     }
 

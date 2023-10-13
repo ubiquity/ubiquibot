@@ -94,7 +94,7 @@ export async function closePullRequestForAnIssue() {
   });
 
   if (!linkedPullRequests.length) {
-    return logger.warn(`No linked pull requests to close`);
+    return logger.info(`No linked pull requests to close`);
   }
 
   logger.info(`Opened prs`, linkedPullRequests);

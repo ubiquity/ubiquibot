@@ -8,8 +8,8 @@ export async function unassign(body: string) {
   const runtime = Runtime.getState();
   const { payload: _payload } = runtime.eventContext;
   const logger = runtime.logger;
-  if (body != IssueCommentCommand.STOP && body.replace(/`/g, "") != IssueCommentCommand.STOP) {
-    return logger.info(`Skipping to unassign. body: ${body}`);
+  if (body != IssueCommentCommand.STOP) {
+    return logger.error(`Skipping to unassign. body: "${body}"`);
   }
 
   const payload = _payload as Payload;

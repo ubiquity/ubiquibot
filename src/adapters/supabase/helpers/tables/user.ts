@@ -27,7 +27,7 @@ export class User extends Super {
       .select("id")
       .eq("repository_id", repositoryId);
 
-    if (error) throw error;
+    if (error) throw this.runtime.logger.error("Error getting location data", error);
 
     // cross reference the location id with the access table to see if the user has a multiplier
 
@@ -43,7 +43,7 @@ export class User extends Super {
         .order("id", { ascending: false }) // get the latest one
         .single();
 
-      if (accessError) throw accessError;
+      if (accessError) throw this.runtime.logger.error("Error getting access data", accessError);
 
       if (accessData) {
         // The user at that repository has that multiplier

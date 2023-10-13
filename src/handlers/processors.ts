@@ -1,6 +1,6 @@
 import { GithubEvent, Handler, WildCardHandler } from "../types";
 import { closePullRequestForAnIssue, startCommandHandler } from "./assign";
-import { pricingLabel, syncPriceLabelsToConfig } from "./pricing";
+import { syncPriceLabelsToConfig } from "./pricing";
 import { checkTasksToUnassign } from "./wildcard";
 
 import { checkPullRequests } from "./assign/auto";
@@ -12,6 +12,7 @@ import { watchLabelChange } from "./label";
 import { createDevPoolPR } from "./pull-request";
 import { validateConfigChange } from "./push";
 import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
+import { pricingLabel } from "./pricing/pricing-label";
 
 /**
  * @dev

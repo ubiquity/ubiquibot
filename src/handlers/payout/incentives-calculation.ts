@@ -136,7 +136,9 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   }
 
   if (privateKey == "") {
-    throw logger.warn("Permit generation disabled because wallet private key is not set.");
+    throw logger.warn(
+      "Permit generation disabled because EVM wallet private key is not set. Let the maintainers know."
+    );
   }
 
   if (issue.state_reason !== StateReason.COMPLETED) {
