@@ -89,7 +89,8 @@ export class Logs extends Super {
   }
 
   public warn(log: string, metadata?: any, postComment?: boolean): LogReturn {
-    if (!log) throw new Error("log is undefined");
+    if (!this) throw new Error("'this' is undefined");
+    if (!log) throw new Error("'log' is undefined");
     return this._log({ level: LogLevel.WARN, consoleLog: prettyLogs.warn, logMessage: log, metadata, postComment });
   }
 

@@ -54,11 +54,11 @@ export async function pricingLabel() {
 
   if (!recognizedTimeLabels.length) {
     await clearAllPriceLabelsOnIssue();
-    return logger.warn("No recognized time labels to calculate price", null, true);
+    throw logger.error("No recognized time labels to calculate price");
   }
   if (!recognizedPriorityLabels.length) {
     await clearAllPriceLabelsOnIssue();
-    return logger.warn("No recognized priority labels to calculate price", null, true);
+    throw logger.error("No recognized priority labels to calculate price");
   }
 
   const minTimeLabel = getMinLabel(recognizedTimeLabels);

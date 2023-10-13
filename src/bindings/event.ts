@@ -3,7 +3,7 @@ import { createAdapters } from "../adapters";
 import { LogMessage, LogReturn } from "../adapters/supabase";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
-import { shouldSkip } from "../helpers";
+import { addCommentToIssue, shouldSkip } from "../helpers";
 import { ActionHandler, GithubEvent, Payload, PayloadSchema } from "../types";
 import { ajv } from "../utils";
 
@@ -82,7 +82,12 @@ export async function bindEvents(eventContext: Context) {
   ];
 
   for (const handlerType of handlerTypes) {
-    runtime.logger.info(`Running "${handlerType.type}" for event: "${eventName}". handlers:`, handlerType.actions);
+    // List all the function names of handlerType.actions
+    const functionNames = handlerType.actions.map((action) => action.name);
+
+    runtime.logger.info(
+      `Running "${handlerType.type}" for event: "${eventName}". handlers: ${functionNames.join(", ")}`
+    );
     await logAnyReturnFromHandlers(handlerType);
   }
 
@@ -91,7 +96,10 @@ export async function bindEvents(eventContext: Context) {
     return runtime.logger.info(`Skipping wildcard handlers for event: ${eventName}`);
   } else {
     // Run wildcard handlers
-    runtime.logger.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
+    runtime.logger.info(
+      `Running wildcard handlers:`,
+      wildcardProcessors.map((fn) => fn.name)
+    );
     const handlerType: HandlerType = { type: "wildcard", actions: wildcardProcessors };
     await logAnyReturnFromHandlers(handlerType);
   }
@@ -129,16 +137,28 @@ function createLoggerHandler(handlerType: HandlerType, activeHandler: ActionHand
     const { logMessage, ...otherProps } = _report;
 
     if (logMessage) {
-      const type = logMessage.type as LogMessage["type"];
-      outputComment = logMessage?.raw;
-      selectedLogger = runtime.logger[type];
+      // already made it to console so it should just post the comment
 
-      if (!selectedLogger) {
-        return runtime.logger.error(`Logger type "${type}" not found`);
-      }
+      // convert logMessage.metadata into a comment
+      const metadataForComment = JSON.stringify(["```json", logMessage.metadata, "```"].join("\n"), null, 2);
 
-      const isEmpty = Object.values(otherProps).every((value) => value === undefined);
-      return isEmpty ? selectedLogger(outputComment, null, true) : selectedLogger(outputComment, otherProps, true);
+      const issue = (runtime.eventContext.payload as Payload).issue;
+      await addCommentToIssue([logMessage.diff, metadataForComment].join("\n"), issue.number);
+
+      // const type = logMessage.type as LogMessage["type"];
+      // outputComment = logMessage?.raw;
+      // selectedLogger = runtime.logger[type].bind(runtime.logger);
+
+      // if (!selectedLogger) {
+      //   return runtime.logger.error(`Logger type "${type}" not found`);
+      // }
+
+      // const isEmpty = Object.values(otherProps).every((value) => value === undefined);
+      // if (isEmpty) {
+      //   return selectedLogger(outputComment, null, true);
+      // } else {
+      //   return selectedLogger(outputComment, otherProps, true);
+      // }
     }
 
     outputComment =
