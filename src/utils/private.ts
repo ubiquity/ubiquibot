@@ -7,8 +7,7 @@ import merge from "lodash/merge";
 import { DefaultConfig } from "../configs";
 import { validate } from "./ajv";
 import { Config, RepositoryConfig, ConfigSchema } from "../types";
-import { WideConfig, WideRepoConfig, WideConfigSchema } from "../types";
-import { upsertLastCommentToIssue } from "../helpers";
+import { upsertLastCommentToIssue } from "../helpers/issue";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
