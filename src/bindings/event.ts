@@ -98,8 +98,7 @@ export async function bindEvents(eventContext: Context) {
     const functionNames = handlerType.actions.map((action) => action.name);
 
     runtime.logger.info(
-      `Running "${handlerType.type}" for event: "${eventName}". handlers: ${functionNames.join(", ")}`,
-      handlerType.actions
+      `Running "${handlerType.type}" for event: "${eventName}". handlers: "${functionNames.join(", ")}"`
     );
     await logAnyReturnFromHandlers(handlerType);
   }
@@ -109,10 +108,8 @@ export async function bindEvents(eventContext: Context) {
     return runtime.logger.info(`Skipping wildcard handlers for event: ${eventName}`);
   } else {
     // Run wildcard handlers
-    runtime.logger.info(
-      `Running wildcard handlers:`,
-      wildcardProcessors.map((fn) => fn.name)
-    );
+    const functionNames = wildcardProcessors.map((action: any) => action.name);
+    runtime.logger.info(`Running wildcard handlers: "${functionNames.join(", ")}"`);
     const wildCardHandlerType: WildCardHandlerWithType = { type: "wildcard", actions: wildcardProcessors };
     await logAnyReturnFromHandlers(wildCardHandlerType);
   }
@@ -123,7 +120,14 @@ async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
     const loggerHandler = createLoggerHandler(handlerType, action);
     try {
       const response = await action();
-      logMultipleDataTypes(response, action);
+      if (handlerType.type === "action") {
+        // only log action handler results
+        logMultipleDataTypes(response, action);
+        // if (handlerType.type !== "pre" && handlerType.type !== "post" && handlerType.type !== "wildcard") {
+      } else {
+        const runtime = Runtime.getState();
+        runtime.logger.ok(`"${handlerType.type}" for "${action.name}" action completed.`);
+      }
     } catch (report: any) {
       await loggerHandler(report);
     }

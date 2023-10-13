@@ -1,7 +1,6 @@
+import util from "util";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
-import { Logs } from "./tables/logs";
 
 export const prettyLogs = {
   error: function logError(message: string, metadata?: any) {
@@ -44,26 +43,42 @@ interface Metadata {
   [key: string]: any;
 }
 function logWithStack(type: keyof typeof prettyLogs, message: string, metadata?: Metadata) {
-  const stack = metadata?.error?.stack || metadata?.stack || new Error().stack;
-
+  // console.trace(util.inspect(metadata, { showHidden: true, depth: null }));
   _log(type, message);
   if (metadata) {
+    let stack = metadata?.error?.stack || metadata?.stack;
+    if (!stack) {
+      // generate and remove the top four lines of the stack trace
+      const stackTrace = new Error().stack?.split("\n");
+      if (stackTrace) {
+        stackTrace.splice(0, 4);
+        stack = stackTrace
+          .filter((line) => line.includes("/src/")) // adjust this path to match your source code
+          .join("\n");
+      }
+    }
     const newMetadata = { ...metadata };
     delete newMetadata.message;
     delete newMetadata.name;
     delete newMetadata.stack;
 
-    if (Object.keys(newMetadata).length > 0) {
+    if (!isEmpty(newMetadata)) {
+      console.trace(util.inspect(newMetadata, { showHidden: true, depth: null }));
       _log(type, newMetadata);
     }
-  }
 
-  if (typeof stack == "string") {
-    const prettyStack = formatStackTrace(stack, 1);
-    const colorizedStack = colorizeText(prettyStack, "dim");
-    _log(type, colorizedStack);
-  } else {
-    throw new Error("stack is not a string");
+    if (typeof stack == "string") {
+      const prettyStack = formatStackTrace(stack, 1);
+      const colorizedStack = colorizeText(prettyStack, "dim");
+      _log(type, colorizedStack);
+    } else if (stack) {
+      // console.trace({ type: typeof stack, stack });
+      const prettyStack = formatStackTrace((stack as unknown as string[]).join("\n"), 1);
+      const colorizedStack = colorizeText(prettyStack, "dim");
+      _log(type, colorizedStack);
+    } else {
+      throw new Error("Stack is null");
+    }
   }
 }
 
@@ -83,10 +98,11 @@ function _log(type: keyof typeof prettyLogs, message: any) {
 
   // Formatting the message
   const messageFormatted =
-    typeof message === "string" ? message : JSON.stringify(Logs.convertErrorsIntoObjects(message));
-
+    typeof message === "string"
+      ? message
+      : util.inspect(message, { showHidden: true, depth: null, breakLength: Infinity });
   // const messageFormatted =
-  // typeof message === "string" ? message : JSON.stringify(Logs.convertErrorsIntoObjects(message));
+  //   typeof message === "string" ? message : JSON.stringify(Logs.convertErrorsIntoObjects(message));
 
   // Constructing the full log string with the prefix symbol
   const lines = messageFormatted.split("\n");
@@ -158,4 +174,7 @@ export function formatStackTrace(stack: string, linesToRemove = 0, prefix = ""):
   return lines
     .map((line) => `${prefix}${line.replace(/\s*at\s*/, "  ↳  ")}`) // Replace 'at' and prefix every line
     .join("\n");
+}
+function isEmpty(obj: Record<string, any>) {
+  return !Reflect.ownKeys(obj).some((key) => typeof obj[String(key)] !== "function");
 }

@@ -4,7 +4,7 @@ import Runtime from "../../../bindings/bot-runtime";
 import { resolveAddress } from "../../../helpers";
 import { Payload } from "../../../types";
 import { formatEthAddress } from "../../../utils";
-import { IssueCommentCommands } from "../commands";
+import { IssueCommentCommand } from "../commands";
 // Extracts ensname from raw text.
 function extractEnsName(text: string) {
   // Define a regular expression to match ENS names
@@ -29,7 +29,7 @@ export async function registerWallet(body: string) {
   const regexForAddress = /(0x[a-fA-F0-9]{40})/g;
   const addressMatches = body.match(regexForAddress);
   let address = addressMatches ? addressMatches[0] : null;
-  const ensName = extractEnsName(body.replace(IssueCommentCommands.WALLET, "").trim());
+  const ensName = extractEnsName(body.replace(IssueCommentCommand.WALLET, "").trim());
 
   if (!address && ensName) {
     logger.info(`Trying to resolve address from ENS name: ${ensName}`);
