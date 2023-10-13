@@ -36,7 +36,7 @@ export async function validateConfigChange() {
 
   // skip if empty
   if (changes && changes.length === 0) {
-    return logger.debug("Skipping push events, file change empty");
+    return logger.debug("Skipping push events, file change empty 3");
   }
 
   // check for modified or added files and check for specified file
@@ -69,5 +69,5 @@ export async function validateConfigChange() {
       }
     }
   }
-  return logger.debug("Skipping push events, file change empty");
+  return logger.debug("Skipping push events, file change empty 4");
 }

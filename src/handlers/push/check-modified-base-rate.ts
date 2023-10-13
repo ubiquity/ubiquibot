@@ -19,7 +19,7 @@ export async function checkModifiedBaseRate() {
 
   // skip if empty
   if (changes && changes.length === 0) {
-    logger.debug("Skipping push events, file change empty");
+    logger.debug("Skipping push events, file change empty 1");
   }
 
   // check for modified or added files and check for specified file
@@ -27,5 +27,5 @@ export async function checkModifiedBaseRate() {
     // update base rate
     await updateBaseRate(context, payload, BASE_RATE_FILE);
   }
-  logger.debug("Skipping push events, file change empty");
+  logger.debug("Skipping push events, file change empty 2");
 }
