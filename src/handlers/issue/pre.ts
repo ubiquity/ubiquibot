@@ -9,7 +9,7 @@ export async function findDuplicateIssue() {
   // const payload = context.payload as Payload;
   // const issue = payload.issue;
 
-  return logger.warn(`skipping "find duplicate issue" due to poor implementation`);
+  logger.warn(`skipping "find duplicate issue" due to poor implementation`);
 
   // if (!issue?.body) {
   //   return logger.error("Issue body is empty", issue);

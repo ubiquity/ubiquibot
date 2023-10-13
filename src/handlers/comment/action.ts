@@ -13,14 +13,14 @@ export async function commentCreatedOrEdited() {
 
   const comment = payload.comment as Comment;
   if (!comment) {
-    return logger.info(`Comment is null. Skipping`);
+    logger.info(`Comment is null. Skipping`);
   }
 
   const body = comment.body;
   const commentedCommands = commentParser(body);
 
   if (commentedCommands.length === 0) {
-    return await verifyFirstCommentInRepository();
+    await verifyFirstCommentInRepository();
   }
 
   const allCommands = userCommands();
@@ -50,12 +50,12 @@ export async function commentCreatedOrEdited() {
 
       const callbackComment = await handler(body);
       if (callbackComment) {
-        console.trace("this might be double diffing comments but probably not.");
+        console.trace("the only time this calls is when the help menu is requested and I'm unsure why.");
         await callback(issue.number, callbackComment, payload.action, payload.comment);
       }
     } else {
       logger.info(`Skipping for a command: ${command}`);
     }
   }
-  return logger.info(`Finished handling an issue comment on issue ${payload.issue?.number}`);
+  logger.info(`Finished handling an issue comment on issue ${payload.issue?.number}`);
 }

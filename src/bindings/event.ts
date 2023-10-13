@@ -4,7 +4,15 @@ import { LogReturn } from "../adapters/supabase";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
 import { addCommentToIssue, shouldSkip } from "../helpers";
-import { ActionHandler, GithubEvent, Payload, PayloadSchema, PostActionHandler, PreActionHandler } from "../types";
+import {
+  ActionHandler,
+  GithubEvent,
+  Payload,
+  PayloadSchema,
+  PostActionHandler,
+  PreActionHandler,
+  WildCardHandler,
+} from "../types";
 import { ajv } from "../utils";
 
 import Runtime from "./bot-runtime";
@@ -14,6 +22,8 @@ const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT, GithubEvent.PUSH_EV
 
 type PreHandlerWithType = { type: string; actions: PreActionHandler[] };
 type HandlerWithType = { type: string; actions: ActionHandler[] };
+type WildCardHandlerWithType = { type: string; actions: WildCardHandler[] };
+
 type PostHandlerWithType = { type: string; actions: PostActionHandler[] };
 
 type AllHandlersWithTypes = PreHandlerWithType | HandlerWithType | PostHandlerWithType;
@@ -42,10 +52,6 @@ export async function bindEvents(eventContext: Context) {
   if (!runtime.logger) {
     throw new Error("Failed to create logger");
   }
-
-  // if (botConfigError) {
-  //   throw runtime.logger.error("Failed to load config", botConfigError);
-  // }
 
   runtime.logger.info(`Binding events... id: ${eventContext.id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
 
@@ -92,7 +98,8 @@ export async function bindEvents(eventContext: Context) {
     const functionNames = handlerType.actions.map((action) => action.name);
 
     runtime.logger.info(
-      `Running "${handlerType.type}" for event: "${eventName}". handlers: ${functionNames.join(", ")}`
+      `Running "${handlerType.type}" for event: "${eventName}". handlers: ${functionNames.join(", ")}`,
+      handlerType.actions
     );
     await logAnyReturnFromHandlers(handlerType);
   }
@@ -106,8 +113,8 @@ export async function bindEvents(eventContext: Context) {
       `Running wildcard handlers:`,
       wildcardProcessors.map((fn) => fn.name)
     );
-    const handlerType: HandlerWithType = { type: "wildcard", actions: wildcardProcessors };
-    await logAnyReturnFromHandlers(handlerType);
+    const wildCardHandlerType: WildCardHandlerWithType = { type: "wildcard", actions: wildcardProcessors };
+    await logAnyReturnFromHandlers(wildCardHandlerType);
   }
 }
 

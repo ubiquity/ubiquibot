@@ -1,16 +1,16 @@
-import { GithubEvent, Handler, ActionHandler } from "../types";
+import { GithubEvent, Handler, WildCardHandler } from "../types";
 import { closePullRequestForAnIssue, startCommandHandler } from "./assign";
 import { pricingLabel, syncPriceLabelsToConfig } from "./pricing";
 import { checkTasksToUnassign } from "./wildcard";
 
 import { checkPullRequests } from "./assign/auto";
-import { createDevPoolPR } from "./pull-request";
-import { validateConfigChange } from "./push";
-import { findDuplicateIssue } from "./issue";
-import { watchLabelChange } from "./label";
-import { issueReopenedCallback } from "./comment/handlers/issue/issue-reopened-callback";
 import { commentCreatedOrEdited } from "./comment/action";
 import { issueClosedCallback } from "./comment/handlers/issue/issue-closed-callback";
+import { issueReopenedCallback } from "./comment/handlers/issue/issue-reopened-callback";
+import { findDuplicateIssue } from "./issue";
+import { watchLabelChange } from "./label";
+import { createDevPoolPR } from "./pull-request";
+import { validateConfigChange } from "./push";
 import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
 
 /**
@@ -22,8 +22,8 @@ import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_OPENED]: {
     pre: [],
-    action: [findDuplicateIssue],
-    post: [],
+    action: [],
+    post: [findDuplicateIssue],
   },
   [GithubEvent.ISSUES_REOPENED]: {
     pre: [],
@@ -52,13 +52,13 @@ export const processors: Record<string, Handler> = {
   },
   [GithubEvent.ISSUE_COMMENT_CREATED]: {
     pre: [],
-    action: [commentCreatedOrEdited],
-    post: [],
+    action: [],
+    post: [commentCreatedOrEdited],
   },
   [GithubEvent.ISSUE_COMMENT_EDITED]: {
     pre: [],
-    action: [commentCreatedOrEdited],
-    post: [],
+    action: [],
+    post: [commentCreatedOrEdited],
   },
   [GithubEvent.ISSUES_CLOSED]: {
     pre: [],
@@ -87,4 +87,4 @@ export const processors: Record<string, Handler> = {
   },
 };
 
-export const wildcardProcessors: ActionHandler[] = [checkTasksToUnassign]; // The handlers which will run after every event
+export const wildcardProcessors: WildCardHandler[] = [checkTasksToUnassign]; // The handlers which will run after every event

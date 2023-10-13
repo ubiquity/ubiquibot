@@ -4,10 +4,11 @@ import { LogReturn } from "../adapters/supabase/helpers/tables/logs";
 export type HandlerReturnValuesNoVoid = string | LogReturn;
 export type HandlerReturnValuesWithVoid = void | HandlerReturnValuesNoVoid;
 
+export type ActionHandler = (args?: string) => Promise<HandlerReturnValuesNoVoid>;
 export type CommandsHandler = (args: string) => Promise<HandlerReturnValuesNoVoid>;
 export type PreActionHandler = (args?: string) => Promise<void>;
 export type PostActionHandler = (args?: string) => Promise<void>;
-export type ActionHandler = (args?: string) => Promise<HandlerReturnValuesNoVoid>;
+export type WildCardHandler = (args?: string) => Promise<void>;
 export type CallbackHandler = (
   issueNumber: number,
   text: HandlerReturnValuesNoVoid,

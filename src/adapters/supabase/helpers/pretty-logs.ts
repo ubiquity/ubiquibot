@@ -4,72 +4,70 @@
 import { Logs } from "./tables/logs";
 
 export const prettyLogs = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  error: function errorLog(message: string, metadata?: any) {
-    const stack = metadata?.error?.stack || metadata?.stack;
-
-    if (stack) {
-      // stack found
-      const prettyStack = formatStackTrace(stack.join("\n"), 1);
-      const colorizedStack = colorizeText(prettyStack, "dim");
-
-      _log("error", message);
-      if (metadata) {
-        const newMetadata = { ...metadata };
-        delete newMetadata.message;
-        delete newMetadata.name;
-        delete newMetadata.stack;
-
-        if (Object.keys(newMetadata).length > 0) {
-          _log("info", newMetadata);
-        }
-      }
-      _log("error", colorizedStack);
-    } else {
-      // generate stack
-      _log("error", message);
-      const stack = new Error().stack;
-      if (stack) _log("error", colorizeText(formatStackTrace(stack, 4), "dim")); // Log the formatted stack trace
-    }
+  error: function logError(message: string, metadata?: any) {
+    logWithStack("error", message, metadata);
   },
 
-  warn: function warnLog(message: string, metadata?: any) {
-    _log("warn", message);
-    if (metadata) {
-      _log("warn", metadata);
-    }
-    const error = new Error();
-    const stack = error.stack;
-    if (stack) {
-      _log("warn", colorizeText(formatStackTrace(stack, 4), "dim")); // Log the formatted stack trace
-    }
+  warn: function logWarn(message: string, metadata?: any) {
+    logWithStack("warn", message, metadata);
   },
 
-  ok: function okLog(message: string, _metadata?: any) {
-    _log("ok", message);
+  ok: function logOk(message: string, metadata?: any) {
+    logWithStack("ok", message, metadata);
   },
 
-  info: function infoLog(message: string, _metadata?: any) {
-    _log("info", message);
+  info: function logInfo(message: string, metadata?: any) {
+    logWithStack("info", message, metadata);
   },
 
-  debug: function debugLog(message: string, _metadata?: any) {
-    _log("debug", message);
-    const stack = new Error().stack;
-    if (stack) _log("debug", colorizeText(formatStackTrace(stack, 4), "dim")); // Log the formatted stack trace
+  debug: function logDebug(message: string, metadata?: any) {
+    logWithStack("debug", message, metadata);
   },
-  http: function httpLog(message: string, _metadata?: any) {
-    _log("http", message);
+
+  http: function logHttp(message: string, metadata?: any) {
+    logWithStack("http", message, metadata);
   },
-  verbose: function verboseLog(message: string, _metadata?: any) {
-    _log("verbose", message);
+
+  verbose: function logVerbose(message: string, metadata?: any) {
+    logWithStack("verbose", message, metadata);
   },
-  silly: function sillyLog(message: string, _metadata?: any) {
-    _log("silly", message);
+
+  silly: function logSilly(message: string, metadata?: any) {
+    logWithStack("silly", message, metadata);
   },
 };
+interface Metadata {
+  error?: { stack?: string };
+  stack?: string;
+  message?: string;
+  name?: string;
+  [key: string]: any;
+}
+function logWithStack(type: keyof typeof prettyLogs, message: string, metadata?: Metadata) {
+  const stack = metadata?.error?.stack || metadata?.stack || new Error().stack;
 
-function _log(type: keyof typeof prettyLogs, message: string) {
+  _log(type, message);
+  if (metadata) {
+    const newMetadata = { ...metadata };
+    delete newMetadata.message;
+    delete newMetadata.name;
+    delete newMetadata.stack;
+
+    if (Object.keys(newMetadata).length > 0) {
+      _log(type, newMetadata);
+    }
+  }
+
+  if (typeof stack == "string") {
+    const prettyStack = formatStackTrace(stack, 1);
+    const colorizedStack = colorizeText(prettyStack, "dim");
+    _log(type, colorizedStack);
+  } else {
+    throw new Error("stack is not a string");
+  }
+}
+
+function _log(type: keyof typeof prettyLogs, message: any) {
   const defaultSymbols: Record<keyof typeof prettyLogs, string> = {
     error: "×",
     ok: "✓",
