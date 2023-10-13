@@ -146,30 +146,11 @@ function createLoggerHandler(handlerType: AllHandlersWithTypes, activeHandler: A
 
     if (logMessage) {
       // already made it to console so it should just post the comment
-
-      // convert logMessage.metadata into a comment
       const metadataForComment = ["```json", JSON.stringify(logMessage.metadata, null, 2), "```"].join("\n");
-
       const issue = (runtime.eventContext.payload as Payload).issue;
-      if (!issue) {
-        return runtime.logger.error("Issue is null. Skipping", { issue }, true);
-      }
+      console.trace({ issue });
+      if (!issue) return runtime.logger.error("Issue is null. Skipping", { issue });
       await addCommentToIssue([logMessage.diff, metadataForComment].join("\n"), issue.number);
-
-      // const type = logMessage.type as LogMessage["type"];
-      // outputComment = logMessage?.raw;
-      // selectedLogger = runtime.logger[type].bind(runtime.logger);
-
-      // if (!selectedLogger) {
-      //   return runtime.logger.error(`Logger type "${type}" not found`);
-      // }
-
-      // const isEmpty = Object.values(otherProps).every((value) => value === undefined);
-      // if (isEmpty) {
-      //   return selectedLogger(outputComment, null, true);
-      // } else {
-      //   return selectedLogger(outputComment, otherProps, true);
-      // }
     }
 
     const outputComment =
