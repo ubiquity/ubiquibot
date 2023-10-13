@@ -15,4 +15,3 @@ supabase/temp
 .netlify
 bin
 .yarn
-.nyc_output
