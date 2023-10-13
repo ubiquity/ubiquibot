@@ -41,8 +41,7 @@ export async function registerWallet(body: string) {
   }
 
   if (!address) {
-    logger.info("Skipping to register a wallet address because both address/ens doesn't exist");
-    return;
+    return logger.info("Skipping to register a wallet address because both address/ens doesn't exist");
   }
 
   if (config.wallet.registerWalletWithVerification) {

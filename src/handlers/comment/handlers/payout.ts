@@ -6,10 +6,9 @@ import { isUserAdminOrBillingManager } from "../../../helpers/issue";
 export async function autoPay(body: string) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
-  const _payload = context.payload;
+  const payload = context.payload as Payload;
   const logger = runtime.logger;
 
-  const payload = _payload as Payload;
   logger.info(`Received '/autopay' command from user: ${payload.sender.login}`);
 
   const pattern = /^\/autopay (true|false)$/;
@@ -23,8 +22,10 @@ export async function autoPay(body: string) {
       );
     }
     if (res.length > 1) {
-      return `${GLOBAL_STRINGS.autopayComment} **${res[1]}**`;
+      return logger.ok(`${GLOBAL_STRINGS.autopayComment} **${res[1]}**`);
     }
   }
-  return "Invalid body for autopay command: e.g. /autopay false";
+  return logger.warn(
+    `Invalid command. Please use the following format: \`/autopay true\` or \`/autopay false\` to toggle automatic payments for completed issues.`
+  );
 }

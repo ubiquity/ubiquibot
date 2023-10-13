@@ -1,7 +1,16 @@
 import { Context } from "probot";
-import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
+import {
+  AssignEvent,
+  Comment,
+  HandlerReturnValuesNoVoid,
+  IssueType,
+  Payload,
+  StreamlinedComment,
+  UserType,
+} from "../types";
 import { checkRateLimitGit } from "../utils";
 import Runtime from "../bindings/bot-runtime";
+import { LogReturn } from "../adapters/supabase";
 
 export async function getAllIssueEvents() {
   const runtime = Runtime.getState();
@@ -144,8 +153,12 @@ export async function listAllIssuesForRepo(state: "open" | "closed" | "all" = "o
   return issuesArr;
 }
 
-export async function addCommentToIssue(message: string, issueNumber: number) {
+export async function addCommentToIssue(message: HandlerReturnValuesNoVoid, issueNumber: number) {
+  let comment = message as string;
   const runtime = Runtime.getState();
+  if (message instanceof LogReturn) {
+    comment = message.logMessage.diff;
+  }
   const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
@@ -155,17 +168,20 @@ export async function addCommentToIssue(message: string, issueNumber: number) {
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: issueNumber,
-      body: message,
+      body: comment,
     });
   } catch (e: unknown) {
     runtime.logger.error("Adding a comment failed!", e);
   }
 }
 
-export async function updateCommentOfIssue(msg: string, issueNumber: number, replyTo: Comment) {
+export async function updateCommentOfIssue(message: HandlerReturnValuesNoVoid, issueNumber: number, replyTo: Comment) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
-
+  let comment = message as string;
+  if (message instanceof LogReturn) {
+    comment = message.logMessage.diff;
+  }
   const payload = context.payload as Payload;
 
   try {
@@ -194,11 +210,11 @@ export async function updateCommentOfIssue(msg: string, issueNumber: number, rep
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
         comment_id: commentToEdit.id,
-        body: msg,
+        body: comment,
       });
     } else {
       runtime.logger.info(`Falling back to add comment. Couldn't find response to edit for comment_id: ${replyTo.id}`);
-      await addCommentToIssue(msg, issueNumber);
+      await addCommentToIssue(message, issueNumber);
     }
   } catch (e: unknown) {
     runtime.logger.debug(`Updating a comment failed! reason: ${e}`);
@@ -207,7 +223,7 @@ export async function updateCommentOfIssue(msg: string, issueNumber: number, rep
 
 export async function upsertCommentToIssue(
   issueNumber: number,
-  comment: string,
+  comment: HandlerReturnValuesNoVoid,
   action?: string,
   destination?: Comment
 ) {

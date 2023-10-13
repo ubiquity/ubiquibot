@@ -36,6 +36,7 @@ import { incentivesCalculation } from "../../payout/incentives-calculation";
 import { setPrice } from "../../shared";
 import { autoPay } from "./payout";
 import { query } from "./query";
+import { HandlerReturnValuesNoVoid } from "../../../types/handlers";
 
 export * from "./ask";
 export * from "./assign";
@@ -267,7 +268,7 @@ export async function issueReopenedCallback(): Promise<void> {
   // }
 }
 
-async function commandCallback(issue: number, comment: string, action: string, replyTo?: Comment) {
+async function commandCallback(issue: number, comment: HandlerReturnValuesNoVoid, action: string, replyTo?: Comment) {
   // Default callback for slash commands
   await upsertCommentToIssue(issue, comment, action, replyTo);
 }
@@ -289,10 +290,10 @@ export function userCommands(): UserCommands[] {
       callback: commandCallback,
     },
     {
-      handler: listAvailableCommands,
       id: IssueCommentCommands.HELP,
       description: "List all available commands.",
       example: void 0,
+      handler: listAvailableCommands,
       callback: commandCallback,
     },
     // Commented out until Gnosis Safe is integrated (https://github.com/ubiquity/ubiquibot/issues/353)

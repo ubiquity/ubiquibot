@@ -1,13 +1,21 @@
 import { Comment } from "./payload";
 import { LogReturn } from "../adapters/supabase/helpers/tables/logs";
 
-type HandlerReturnValues = // string | void
-  void | string | LogReturn;
+export type HandlerReturnValuesNoVoid = // string | void
+  // void | HandlerReturnValuesNoVoid;
+  string | LogReturn;
 // void | LogReturn;
 
-export type CommandsHandler = (args: string) => Promise<HandlerReturnValues>;
-export type ActionHandler = (args?: string) => Promise<HandlerReturnValues>;
-export type CallbackHandler = (issueNumber: number, text: string, action: string, replyTo?: Comment) => Promise<void>;
+export type HandlerReturnValuesWithVoid = void | HandlerReturnValuesNoVoid;
+
+export type CommandsHandler = (args: string) => Promise<HandlerReturnValuesNoVoid>;
+export type ActionHandler = (args?: string) => Promise<HandlerReturnValuesWithVoid>;
+export type CallbackHandler = (
+  issueNumber: number,
+  text: HandlerReturnValuesNoVoid,
+  action: string,
+  replyTo?: Comment
+) => Promise<void>;
 export type PreActionHandler = ActionHandler;
 export type PostActionHandler = ActionHandler;
 

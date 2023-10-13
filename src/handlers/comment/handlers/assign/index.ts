@@ -113,5 +113,5 @@ export async function assign(body: string) {
       }) + comment.tips
     );
   }
-  return;
+  return logger.error("The assign message has been already posted");
 }

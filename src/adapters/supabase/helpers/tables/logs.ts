@@ -32,7 +32,7 @@ type FunctionPropertyNames<T> = {
 
 type PublicMethods<T> = Exclude<FunctionPropertyNames<T>, "constructor" | keyof object>;
 
-type LogMessage = { raw: string; diff: string; type: PublicMethods<Logs> };
+export type LogMessage = { raw: string; diff: string; type: PublicMethods<Logs> };
 
 export class Logs extends Super {
   private maxLevel = -1;

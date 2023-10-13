@@ -1,6 +1,6 @@
 import { Context } from "probot";
 import { createAdapters } from "../adapters";
-import { LogReturn } from "../adapters/supabase";
+import { LogMessage, LogReturn } from "../adapters/supabase";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
 import { shouldSkip } from "../helpers";
@@ -130,38 +130,31 @@ function logMultipleDataTypes(response: string | void | LogReturn) {
 
 function createLoggerHandler(handlerType: HandlerType, activeHandler: ActionHandler) {
   const runtime = Runtime.getState();
-  return async function loggerHandler(report: any) {
-    if (report instanceof LogReturn) {
-      // recognized return type
-      const outputComment = report?.logMessage?.raw;
-      const type = report?.logMessage?.type as keyof typeof runtime.logger;
-      delete report?.logMessage;
-      // check if report.metadata is empty
-      const isEmpty = Object.values(report).every((value) => value === undefined);
-      const selectedLogger = runtime.logger[type] as typeof runtime.logger.info;
-      selectedLogger.bind(runtime.logger); // used for `this` context
-      if (!selectedLogger) {
-        runtime.logger.error.bind(runtime.logger); // used for `this` context
-        runtime.logger.error(`Logger type "${type}" not found`);
-        // console.trace(report);
-        return report;
-      }
-      if (isEmpty) {
-        return selectedLogger(outputComment, null, true);
-      } else {
-        return selectedLogger(outputComment, report, true);
-      }
-    } else if (report instanceof Error) {
-      // unrecognized return type
 
-      const outputComment = `${handlerType.type} action "${activeHandler.name}" has an uncaught error`; // it has a default message
-      runtime.logger.error.bind(runtime.logger); // used for `this` context
-      return runtime.logger.error(outputComment, report, true);
-    } else {
-      // unrecognized return type TODO: add instanceof Error class as well
-      const outputComment = `${handlerType.type} action "${activeHandler.name}" returned an unexpected value`;
-      runtime.logger.error.bind(runtime.logger); // used for `this` context
-      return runtime.logger.error(outputComment, report, true);
+  return async function loggerHandler(_report: any): Promise<any> {
+    let outputComment;
+    let selectedLogger;
+    const { logMessage, ...otherProps } = _report;
+
+    if (logMessage) {
+      const type = logMessage.type as LogMessage["type"];
+      outputComment = logMessage?.raw;
+      selectedLogger = runtime.logger[type];
+
+      if (!selectedLogger) {
+        runtime.logger.error(`Logger type "${type}" not found`);
+        return;
+      }
+
+      const isEmpty = Object.values(otherProps).every((value) => value === undefined);
+      return isEmpty ? selectedLogger(outputComment, null, true) : selectedLogger(outputComment, otherProps, true);
     }
+
+    outputComment =
+      _report instanceof Error
+        ? `${handlerType.type} action "${activeHandler.name}" has an uncaught error`
+        : `${handlerType.type} action "${activeHandler.name}" returned an unexpected value`;
+
+    runtime.logger.error(outputComment, _report, true);
   };
 }
