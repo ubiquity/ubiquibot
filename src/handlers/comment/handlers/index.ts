@@ -1,4 +1,4 @@
-import { Comment, Organization, Payload, User, UserCommands } from "../../../types";
+import { Comment, Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";

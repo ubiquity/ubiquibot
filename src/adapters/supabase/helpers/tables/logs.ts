@@ -1,27 +1,39 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// This is disabled because logs should be able to log any type of data
+
 import { SupabaseClient } from "@supabase/supabase-js";
 import Runtime from "../../../../bindings/bot-runtime";
 import { LogLevel } from "../../../../types";
 import { Database } from "../../types";
-import { formatStackTrace, prettyLogs } from "../pretty-logs";
+import { prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
 
-type LogFunction = (message?: string, metadata?: unknown) => void;
+type LogFunction = (message: string, metadata?: any) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
-type _Log = {
+type _LogParams = {
   level: LogLevel;
   consoleLog: LogFunction;
   logMessage: string;
-  metadata?: unknown;
+  metadata?: any;
   postComment?: boolean;
 };
-export type LogReturn = {
-  logMessage: {
-    raw: string;
-    diff: string;
-    type: string;
-  };
-  metadata?: unknown;
-};
+export class LogReturn {
+  logMessage: LogMessage;
+  metadata?: any;
+  constructor(logMessage: LogMessage, metadata?: any) {
+    this.logMessage = logMessage;
+    this.metadata = metadata;
+  }
+}
+
+type FunctionPropertyNames<T> = {
+  [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never;
+}[keyof T];
+
+type PublicMethods<T> = Exclude<FunctionPropertyNames<T>, "constructor" | keyof object>;
+
+type LogMessage = { raw: string; diff: string; type: PublicMethods<Logs> };
+
 export class Logs extends Super {
   private maxLevel = -1;
   private environment = "development";
@@ -31,7 +43,7 @@ export class Logs extends Super {
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
 
-  private _log({ level, consoleLog, logMessage: logMessage, metadata, postComment }: _Log) {
+  private _log({ level, consoleLog, logMessage: logMessage, metadata, postComment }: _LogParams) {
     // needs to generate three versions of the information.
     // they must all first serialize the error object if it exists
     // - the comment to post on supabase (must be raw)
@@ -39,16 +51,12 @@ export class Logs extends Super {
     // - the comment to post on the console (must be colorized)
 
     if (metadata) {
-      metadata = convertErrorsIntoObjects(metadata);
+      metadata = Logs.convertErrorsIntoObjects(metadata);
       consoleLog(logMessage, metadata);
-      // consoleLog(message);
-      // consoleLog(message.includes(JSON.stringify(metadata)) ? message : message + " " + JSON.stringify(metadata));
       if (postComment) {
         const colorizedCommentMessage = this._diffColorCommentMessage(level, logMessage);
         const commentMetaData = this._diffColorCommentMetaData(metadata);
-        // enhanced location data analytics
         this._postComment([colorizedCommentMessage, commentMetaData].join("\n"));
-        // messageForGitHub = [colorizedCommentMessage, commentMetaData].join("\n");
       }
       const toSupabase = { log: logMessage, level, metadata: metadata } as LogInsert;
       this._save(toSupabase, level);
@@ -56,43 +64,41 @@ export class Logs extends Super {
       consoleLog(logMessage);
       if (postComment) {
         const colorizedCommentMessage = this._diffColorCommentMessage(level, logMessage);
-        // enhanced location data analytics
         this._postComment(colorizedCommentMessage);
-        // messageForGitHub = colorizedCommentMessage;
       }
       const toSupabase = { log: logMessage, level } as LogInsert;
       this._save(toSupabase, level);
     }
 
-    return {
-      logMessage: {
+    return new LogReturn(
+      {
         raw: logMessage,
-        diff: this._diffColorCommentMessage(level, logMessage), // this colorizes the github comment.
+        diff: this._diffColorCommentMessage(level, logMessage),
         type: level,
       },
-      metadata: metadata,
-    } as LogReturn;
+      metadata
+    );
   }
 
-  public ok(log: string, metadata?: unknown, postComment?: boolean): LogReturn {
+  public ok(log: string, metadata?: any, postComment?: boolean): LogReturn {
     return this._log({ level: LogLevel.VERBOSE, consoleLog: prettyLogs.ok, logMessage: log, metadata, postComment });
   }
 
-  public info(log: string, metadata?: unknown, postComment?: boolean): LogReturn {
+  public info(log: string, metadata?: any, postComment?: boolean): LogReturn {
     return this._log({ level: LogLevel.INFO, consoleLog: prettyLogs.info, logMessage: log, metadata, postComment });
   }
 
-  public warn(log: string, metadata?: unknown, postComment?: boolean): LogReturn {
+  public warn(log: string, metadata?: any, postComment?: boolean): LogReturn {
     return this._log({ level: LogLevel.WARN, consoleLog: prettyLogs.warn, logMessage: log, metadata, postComment });
   }
 
-  public debug(log: string, metadata?: unknown, postComment?: boolean): LogReturn {
+  public debug(log: string, metadata?: any, postComment?: boolean): LogReturn {
     return this._log({ level: LogLevel.DEBUG, consoleLog: prettyLogs.debug, logMessage: log, metadata, postComment });
   }
 
-  public error(log: string, metadata?: unknown, postComment?: boolean): LogReturn {
+  public error(log: string, metadata?: any, postComment?: boolean): LogReturn {
     if (!metadata) {
-      metadata = convertErrorsIntoObjects(new Error(log));
+      metadata = Logs.convertErrorsIntoObjects(new Error(log));
       console.trace(metadata);
       // remove the second element in the metadata.stack array
 
@@ -101,6 +107,24 @@ export class Logs extends Super {
       metadata.stack = stack;
     }
     return this._log({ level: LogLevel.ERROR, consoleLog: prettyLogs.error, logMessage: log, metadata, postComment });
+  }
+
+  http(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    return this._log({ level: LogLevel.HTTP, consoleLog: prettyLogs.http, logMessage: log, metadata, postComment });
+  }
+
+  verbose(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    return this._log({
+      level: LogLevel.VERBOSE,
+      consoleLog: prettyLogs.verbose,
+      logMessage: log,
+      metadata,
+      postComment,
+    });
+  }
+
+  silly(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    return this._log({ level: LogLevel.SILLY, consoleLog: prettyLogs.silly, logMessage: log, metadata, postComment });
   }
 
   constructor(supabase: SupabaseClient) {
@@ -118,16 +142,16 @@ export class Logs extends Super {
     if (error) throw prettyLogs.error("Error logging to Supabase:", error);
   }
 
-  async processLogs(log: LogInsert) {
+  private async _processLogs(log: LogInsert) {
     try {
       await this._sendLogsToSupabase(log);
     } catch (error) {
       prettyLogs.error("Error sending log, retrying:", error);
-      return this.retryLimit > 0 ? await this.retryLog(log) : null;
+      return this.retryLimit > 0 ? await this._retryLog(log) : null;
     }
   }
 
-  async retryLog(log: LogInsert, retryCount = 0) {
+  private async _retryLog(log: LogInsert, retryCount = 0) {
     if (retryCount >= this.retryLimit) {
       prettyLogs.error("Max retry limit reached for log:", log);
       return;
@@ -139,56 +163,56 @@ export class Logs extends Super {
       await this._sendLogsToSupabase(log);
     } catch (error) {
       prettyLogs.error("Error sending log (after retry):", error);
-      await this.retryLog(log, retryCount + 1);
+      await this._retryLog(log, retryCount + 1);
     }
   }
 
-  async processLogQueue() {
+  private async _processLogQueue() {
     while (this.queue.length > 0) {
       const log = this.queue.shift();
       if (!log) {
         continue;
       }
-      await this.processLogs(log);
+      await this._processLogs(log);
     }
   }
 
-  async throttle() {
+  private async _throttle() {
     if (this.throttleCount >= this.concurrency) {
       return;
     }
 
     this.throttleCount++;
     try {
-      await this.processLogQueue();
+      await this._processLogQueue();
     } finally {
       this.throttleCount--;
       if (this.queue.length > 0) {
-        await this.throttle();
+        await this._throttle();
       }
     }
   }
 
-  async addToQueue(log: LogInsert) {
+  private async _addToQueue(log: LogInsert) {
     this.queue.push(log);
     if (this.throttleCount < this.concurrency) {
-      await this.throttle();
+      await this._throttle();
     }
   }
 
-  private _save(log: LogInsert, level: LogLevel) {
-    if (this._getNumericLevel(level) > this.maxLevel) return; // filter out more verbose logs according to maxLevel set in config
+  private _save(logInsert: LogInsert, logLevel: LogLevel) {
+    if (this._getNumericLevel(logLevel) > this.maxLevel) return; // filter out more verbose logs according to maxLevel set in config
 
-    this.addToQueue(log)
+    this._addToQueue(logInsert)
       .then(() => void 0)
       .catch(() => prettyLogs.error("Error adding logs to queue"));
 
     if (this.environment === "development") {
-      prettyLogs.ok(log);
+      prettyLogs.ok(logInsert.log, logInsert);
     }
   }
 
-  private _diffColorCommentMetaData(metadata: unknown) {
+  private _diffColorCommentMetaData(metadata: any) {
     const diffHeader = "```json";
     const diffFooter = "```";
 
@@ -250,25 +274,25 @@ export class Logs extends Super {
       .catch((x) => console.trace(x));
   }
 
-  async get() {
-    try {
-      const { data, error } = await this.supabase.from("logs").select("*");
+  // private async _get() {
+  //   try {
+  //     const { data, error } = await this.supabase.from("logs").select("*");
 
-      if (error) {
-        prettyLogs.error("Error retrieving logs from Supabase:", error.message);
-        return [];
-      }
+  //     if (error) {
+  //       prettyLogs.error("Error retrieving logs from Supabase:", error.message);
+  //       return [];
+  //     }
 
-      return data;
-    } catch (error) {
-      if (error instanceof Error) {
-        throw prettyLogs.error("An error occurred:", error.message);
-      }
+  //     return data;
+  //   } catch (error) {
+  //     if (error instanceof Error) {
+  //       throw prettyLogs.error("An error occurred:", error.message);
+  //     }
 
-      prettyLogs.error("Unexpected error", error);
-      return [];
-    }
-  }
+  //     prettyLogs.error("Unexpected error", error);
+  //     return [];
+  //   }
+  // }
 
   private _getNumericLevel(level: LogLevel) {
     switch (level) {
@@ -290,39 +314,40 @@ export class Logs extends Super {
         return -1; // Invalid level
     }
   }
-
-  // function replacer(key, value) {
-  //   if (value instanceof Error) {
-  //     return {
-  //       // Convert Error to a plain object
-  //       message: value.message,
-  //       name: value.name,
-  //       stack: value.stack,
-  //     };
-  //   }
-  //   return value;
-  // }
-}
-export function prefixInformation(information: string, prefix = ""): string {
-  const lines = information.split("\n");
-
-  return lines
-    .map((line) => `${prefix}${line}`) // Replace 'at' and prefix every line
-    .join("\n");
-}
-export function convertErrorsIntoObjects(obj: unknown): unknown {
-  if (obj instanceof Error) {
-    // return obj.stack ? obj.stack.split("\n") : ""; // split stack into lines for better readability
-    return {
-      message: obj.message,
-      name: obj.name,
-      stack: obj.stack ? obj.stack.split("\n") : "", // split stack into lines for better readability
-    };
-  } else if (typeof obj === "object" && obj !== null) {
-    const keys = Object.keys(obj);
-    keys.forEach((key) => {
-      obj[key] = convertErrorsIntoObjects(obj[key]);
-    });
+  static convertErrorsIntoObjects(obj: any): any {
+    // this is a utility function to render native errors in the console, the database, and on GitHub.
+    if (obj instanceof Error) {
+      return {
+        message: obj.message,
+        name: obj.name,
+        stack: obj.stack ? obj.stack.split("\n") : "",
+      };
+    } else if (typeof obj === "object" && obj !== null) {
+      const keys = Object.keys(obj);
+      keys.forEach((key) => {
+        obj[key] = this.convertErrorsIntoObjects(obj[key]);
+      });
+    }
+    return obj;
   }
-  return obj;
 }
+
+// function replacer(key, value) {
+//   if (value instanceof Error) {
+//     return {
+//       // Convert Error to a plain object
+//       message: value.message,
+//       name: value.name,
+//       stack: value.stack,
+//     };
+//   }
+//   return value;
+// }
+// }
+// export function prefixInformation(information: string, prefix = ""): string {
+//   const lines = information.split("\n");
+
+//   return lines
+//     .map((line) => `${prefix}${line}`) // Replace 'at' and prefix every line
+//     .join("\n");
+// }

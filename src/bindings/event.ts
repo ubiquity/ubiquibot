@@ -1,17 +1,18 @@
 import { Context } from "probot";
 import { createAdapters } from "../adapters";
+import { LogReturn } from "../adapters/supabase";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
 import { shouldSkip } from "../helpers";
-import { GithubEvent, Payload, PayloadSchema } from "../types";
+import { ActionHandler, GithubEvent, Payload, PayloadSchema } from "../types";
 import { ajv } from "../utils";
-import { loadConfig } from "./config/config";
 
 import Runtime from "./bot-runtime";
-import { LogReturn } from "../adapters/supabase";
-import { getPrivateKey } from "../utils/private";
+import { loadConfig } from "./config";
 
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT, GithubEvent.PUSH_EVENT] as string[];
+
+type HandlerType = { type: string; actions: ActionHandler[] };
 
 export async function bindEvents(eventContext: Context) {
   const runtime = Runtime.getState();
@@ -82,68 +83,85 @@ export async function bindEvents(eventContext: Context) {
   }
 
   const { pre, action, post } = handlers;
-  const handlerTypes = [
+  const handlerTypes: HandlerType[] = [
     { type: "pre", actions: pre },
     { type: "main", actions: action },
     { type: "post", actions: post },
   ];
 
   for (const handlerType of handlerTypes) {
-    runtime.logger.info(
-      `Running ${handlerType.type} handlers: "${handlerType.actions.map((fn) => fn.name)}" event: ${eventName}`
-    );
-    for (const action of handlerType.actions) {
-      try {
-        const response = await action();
-        if (response) {
-          runtime.logger.ok(response, null, true);
-        }
-      } catch (report: unknown) {
-        const outputComment = report?.logMessage?.raw || `${handlerType.type} action uncaught error`;
-        const type: keyof typeof runtime.logger = report?.logMessage?.type || "debug";
-
-        // TODO: associate location metadata to `location` table
-
-        delete report?.logMessage;
-        // check if report.metadata is empty
-        const isEmpty = Object.values(report).every((value) => value === undefined);
-
-        const selectedLogger = runtime.logger[type].bind(runtime.logger); // used for `this` context
-
-        if (!selectedLogger) {
-          console.trace(report);
-          return report;
-        }
-
-        if (isEmpty) {
-          return selectedLogger(outputComment, null, true);
-        } else {
-          return selectedLogger(outputComment, report, true);
-        }
-      }
-    }
+    runtime.logger.info(`Running "${handlerType.type}" for event: "${eventName}". handlers:`, handlerType.actions);
+    await logAnyReturnFromHandlers(handlerType);
   }
+
   // Skip wildcard handlers for installation event and push event
-  if (eventName !== GithubEvent.INSTALLATION_ADDED_EVENT && eventName !== GithubEvent.PUSH_EVENT) {
+  if (eventName == GithubEvent.INSTALLATION_ADDED_EVENT || eventName == GithubEvent.PUSH_EVENT) {
+    return runtime.logger.info(`Skipping wildcard handlers for event: ${eventName}`);
+  } else {
     // Run wildcard handlers
     runtime.logger.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
-    for (const wildcardProcessor of wildcardProcessors) {
-      try {
-        const response = await wildcardProcessor();
-        if (response) {
-          runtime.logger.ok(response, null, true);
-        }
-      } catch (error: unknown) {
-        // TODO: associate location metadata to `location` table
-        runtime.logger.error(
-          `wildcard action uncaught error`,
-          {
-            action: wildcardProcessor.name,
-            error,
-          },
-          true
-        );
-      }
+    const handlerType: HandlerType = { type: "wildcard", actions: wildcardProcessors };
+    await logAnyReturnFromHandlers(handlerType);
+  }
+}
+
+async function logAnyReturnFromHandlers(handlerType: HandlerType) {
+  for (const action of handlerType.actions) {
+    const loggerHandler = createLoggerHandler(handlerType, action);
+    try {
+      const response = await action();
+      logMultipleDataTypes(response);
+    } catch (report: any) {
+      await loggerHandler(report);
     }
   }
+}
+
+function logMultipleDataTypes(response: string | void | LogReturn) {
+  const runtime = Runtime.getState();
+  if (response instanceof LogReturn) {
+    runtime.logger.ok(response.logMessage.raw, response.metadata, true);
+  } else if (typeof response == "string") {
+    runtime.logger.ok(response, null, true);
+  } else {
+    runtime.logger.error("No response from action. Ensure return of string or LogReturn object", null, true);
+  }
+}
+
+function createLoggerHandler(handlerType: HandlerType, activeHandler: ActionHandler) {
+  const runtime = Runtime.getState();
+  return async function loggerHandler(report: any) {
+    if (report instanceof LogReturn) {
+      // recognized return type
+      const outputComment = report?.logMessage?.raw;
+      const type = report?.logMessage?.type as keyof typeof runtime.logger;
+      delete report?.logMessage;
+      // check if report.metadata is empty
+      const isEmpty = Object.values(report).every((value) => value === undefined);
+      const selectedLogger = runtime.logger[type] as typeof runtime.logger.info;
+      selectedLogger.bind(runtime.logger); // used for `this` context
+      if (!selectedLogger) {
+        runtime.logger.error.bind(runtime.logger); // used for `this` context
+        runtime.logger.error(`Logger type "${type}" not found`);
+        // console.trace(report);
+        return report;
+      }
+      if (isEmpty) {
+        return selectedLogger(outputComment, null, true);
+      } else {
+        return selectedLogger(outputComment, report, true);
+      }
+    } else if (report instanceof Error) {
+      // unrecognized return type
+
+      const outputComment = `${handlerType.type} action "${activeHandler.name}" has an uncaught error`; // it has a default message
+      runtime.logger.error.bind(runtime.logger); // used for `this` context
+      return runtime.logger.error(outputComment, report, true);
+    } else {
+      // unrecognized return type TODO: add instanceof Error class as well
+      const outputComment = `${handlerType.type} action "${activeHandler.name}" returned an unexpected value`;
+      runtime.logger.error.bind(runtime.logger); // used for `this` context
+      return runtime.logger.error(outputComment, report, true);
+    }
+  };
 }

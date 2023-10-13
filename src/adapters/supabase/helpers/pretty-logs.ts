@@ -1,29 +1,28 @@
-import { convertErrorsIntoObjects } from "./tables/logs";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { Logs } from "./tables/logs";
 
 export const prettyLogs = {
-  error: function errorLog(message: string, metadata?: unknown) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  error: function errorLog(message: string, metadata?: any) {
     if (metadata && metadata?.error && metadata?.error?.stack) {
       const prettyStack = formatStackTrace(metadata.error.stack.join("\n"));
-      // delete metadata.error.stack;
       const colorizedStack = colorizeText(prettyStack, "dim");
-
-      // console.trace(JSON.stringify(
-      // [{ prettyStack }, { metadata }, { colorizedStack }, { args: [...args] }]
-      // ), null, 2);
 
       _log("error", message);
       _log("error", metadata);
       _log("error", colorizedStack);
     } else {
-      _log("error", message, metadata);
+      _log("error", message);
       const stack = new Error().stack;
       if (stack) _log("error", colorizeText(formatStackTrace(stack, 4), "dim")); // Log the formatted stack trace
     }
   },
 
-  warn: function warnLog(...args: unknown[]) {
-    _log("warn", args[0]);
-    _log("warn", ...args.slice(1));
+  warn: function warnLog(message: string, metadata?: any) {
+    _log("warn", message);
+    _log("warn", metadata);
     const error = new Error();
     const stack = error.stack;
     if (stack) {
@@ -31,53 +30,50 @@ export const prettyLogs = {
     }
   },
 
-  ok: function okLog(...args: unknown[]) {
-    _log("ok", ...args);
+  ok: function okLog(message: string, _metadata?: any) {
+    _log("ok", message);
   },
 
-  info: function infoLog(...args: unknown[]) {
-    _log("info", ...args);
+  info: function infoLog(message: string, _metadata?: any) {
+    _log("info", message);
   },
 
-  debug: function debugLog(...args: unknown[]) {
-    _log("debug", ...args);
+  debug: function debugLog(message: string, _metadata?: any) {
+    _log("debug", message);
     const stack = new Error().stack;
     if (stack) _log("debug", colorizeText(formatStackTrace(stack, 4), "dim")); // Log the formatted stack trace
   },
+  http: function httpLog(message: string, _metadata?: any) {
+    _log("http", message);
+  },
+  verbose: function verboseLog(message: string, _metadata?: any) {
+    _log("verbose", message);
+  },
+  silly: function sillyLog(message: string, _metadata?: any) {
+    _log("silly", message);
+  },
 };
 
-function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown[]) {
-  const defaultSymbols = {
+function _log(type: keyof typeof prettyLogs, message: string) {
+  const defaultSymbols: Record<keyof typeof prettyLogs, string> = {
     error: "×",
     ok: "✓",
     warn: "⚠",
     info: "›",
     debug: "››",
+    http: "🛜",
+    verbose: "💬",
+    silly: "🤪",
   };
 
-  // Extracting the optional symbol from the arguments
-  let symbol = defaultSymbols[type];
-  let messageArgs = args;
-
-  if (args.length > 1 && typeof args[0] === "string") {
-    symbol = args[0];
-    messageArgs = args.slice(1);
-  }
+  const symbol = defaultSymbols[type];
 
   // Formatting the message
-  const message = messageArgs
-    .map((arg) => {
-      if (typeof arg === "string") {
-        return arg;
-      } else {
-        return JSON.stringify(convertErrorsIntoObjects(arg));
-        // return JSON.stringify(convertErrorsIntoObjects(arg), null, 2);
-      }
-    })
-    .join(" ");
+  const messageFormatted =
+    typeof message === "string" ? message : JSON.stringify(Logs.convertErrorsIntoObjects(message));
 
-  // // Constructing the full log string with the prefix symbol
-  const lines = message.split("\n");
+  // Constructing the full log string with the prefix symbol
+  const lines = messageFormatted.split("\n");
   const logString = lines
     .map((line, index) => {
       // Add the symbol only to the first line and keep the indentation for the rest
@@ -86,25 +82,19 @@ function _log(type: "error" | "ok" | "warn" | "info" | "debug", ...args: unknown
     })
     .join("\n");
 
-  // // Adding metadata logs
-  // const metadataLogs = args
-  //   .slice(1)
-  //   .map((arg) => JSON.stringify(convertErrorsIntoObjects(arg), null, 2)) // Use 2 spaces for indentation
-  //   .join("\n");
-
-  // // Constructing the full log string with the prefix symbol
   const fullLogString = logString;
-  // if (metadataLogs.trim() !== "" && !logString.includes(metadataLogs)) {
-  //   fullLogString += "\nMetadata:\n" + metadataLogs;
-  // }
 
-  const colorMap = {
+  const colorMap: Record<keyof typeof prettyLogs, string[]> = {
     error: ["error", "fgRed"],
     ok: ["log", "fgGreen"],
     warn: ["warn", "fgYellow"],
     info: ["info", "dim"],
-    debug: ["info", "dim"],
+    debug: ["debug", "dim"],
+    http: ["debug", "dim"],
+    verbose: ["debug", "dim"],
+    silly: ["debug", "dim"],
   };
+
   const _console = console[colorMap[type][0] as keyof typeof console] as (...args: string[]) => void;
   if (typeof _console === "function") {
     _console(colorizeText(fullLogString, colorMap[type][1] as keyof typeof colors));

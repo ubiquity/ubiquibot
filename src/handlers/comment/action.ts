@@ -55,7 +55,8 @@ export async function handleComment(): Promise<void> {
       // try {
       const callbackComment = await handler(body);
       if (callbackComment) {
-        await callback(issue.number, callbackComment, payload.action, payload.comment);
+        console.trace("this might be double diffing comments but probably not.");
+        await callback(issue.number, callbackComment.logMessage.diff, payload.action, payload.comment);
       }
       // } catch (err) {
       //   return await _renderErrorDiffWrapper(err, issue);
