@@ -110,21 +110,25 @@ async function logAnyReturnFromHandlers(handlerType: HandlerType) {
     const loggerHandler = createLoggerHandler(handlerType, action);
     try {
       const response = await action();
-      logMultipleDataTypes(response);
+      logMultipleDataTypes(response, action);
     } catch (report: any) {
       await loggerHandler(report);
     }
   }
 }
 
-function logMultipleDataTypes(response: string | void | LogReturn) {
+function logMultipleDataTypes(response: string | void | LogReturn, action: ActionHandler) {
   const runtime = Runtime.getState();
   if (response instanceof LogReturn) {
     runtime.logger.debug(response.logMessage.raw, response.metadata, true);
   } else if (typeof response == "string") {
     runtime.logger.debug(response, null, true);
   } else {
-    runtime.logger.error("No response from action. Ensure return of string or LogReturn object", null, true);
+    runtime.logger.error(
+      `No response from "${action.name}" action. Ensure return of string or LogReturn object`,
+      null,
+      true
+    );
   }
 }
 
@@ -140,7 +144,7 @@ function createLoggerHandler(handlerType: HandlerType, activeHandler: ActionHand
       // already made it to console so it should just post the comment
 
       // convert logMessage.metadata into a comment
-      const metadataForComment = JSON.stringify(["```json", logMessage.metadata, "```"].join("\n"), null, 2);
+      const metadataForComment = ["```json", JSON.stringify(logMessage.metadata, null, 2), "```"].join("\n");
 
       const issue = (runtime.eventContext.payload as Payload).issue;
       await addCommentToIssue([logMessage.diff, metadataForComment].join("\n"), issue.number);

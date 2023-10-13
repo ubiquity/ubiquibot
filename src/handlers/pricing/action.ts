@@ -26,18 +26,17 @@ export async function pricingLabel() {
   const labelNames = labels.map((i) => i.name);
 
   if (payload.issue.body && isParentIssue(payload.issue.body)) {
-    await handleParentIssue(labels, payload.issue.number);
-    return;
+    return await handleParentIssue(labels, payload.issue.number);
   }
 
   if (!(await handleLabelsAccess()) && config.publicAccessControl.setLabel) {
-    return;
+    return logger.warn("No access to set labels");
   }
 
   const { assistivePricing } = config.mode;
 
   if (!labels) {
-    throw logger.warn(`No labels to calculate price`);
+    return logger.warn(`No labels to calculate price`);
   }
 
   const recognizedTimeLabels: Label[] = labels.filter((label: Label) =>
@@ -54,11 +53,11 @@ export async function pricingLabel() {
 
   if (!recognizedTimeLabels.length) {
     await clearAllPriceLabelsOnIssue();
-    throw logger.error("No recognized time labels to calculate price");
+    return logger.warn("No recognized time labels to calculate price");
   }
   if (!recognizedPriorityLabels.length) {
     await clearAllPriceLabelsOnIssue();
-    throw logger.error("No recognized priority labels to calculate price");
+    return logger.warn("No recognized priority labels to calculate price");
   }
 
   const minTimeLabel = getMinLabel(recognizedTimeLabels);
@@ -101,10 +100,10 @@ async function handleTargetPriceLabel(targetPriceLabel: string, labelNames: stri
 async function handleExistingPriceLabel(targetPriceLabel: string, assistivePricing: boolean) {
   const logger = Runtime.getState().logger;
   let labeledEvents = await getAllLabeledEvents();
-  if (!labeledEvents) return;
+  if (!labeledEvents) return logger.warn("No labeled events found");
 
   labeledEvents = labeledEvents.filter((event) => event.label?.name.includes("Price"));
-  if (!labeledEvents.length) return;
+  if (!labeledEvents.length) return logger.warn("No price labeled events found");
 
   if (labeledEvents[labeledEvents.length - 1].actor?.type == UserType.User) {
     logger.info(`Skipping... already exists`);

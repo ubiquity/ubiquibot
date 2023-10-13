@@ -9,7 +9,6 @@ import { createDevPoolPR } from "./pull-request";
 import { runOnPush, validateConfigChange } from "./push";
 import { findDuplicateIssue } from "./issue";
 import { watchLabelChange } from "./label";
-import { issueCreatedCallback } from "./comment/handlers/issue/issue-created-callback";
 import { issueReopenedCallback } from "./comment/handlers/issue/issue-reopened-callback";
 import { handleComment } from "./comment/action";
 import { issueClosedCallback } from "./comment/handlers/issue/issue-closed-callback";
@@ -17,7 +16,7 @@ import { issueClosedCallback } from "./comment/handlers/issue/issue-closed-callb
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_OPENED]: {
     pre: [],
-    action: [findDuplicateIssue, issueCreatedCallback],
+    action: [findDuplicateIssue],
     post: [],
   },
   [GithubEvent.ISSUES_REOPENED]: {
