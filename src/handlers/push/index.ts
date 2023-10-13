@@ -22,7 +22,7 @@ function getCommitChanges(commits: CommitsPayload[]) {
   return changes;
 }
 
-export const runOnPush = async () => {
+export async function runOnPush() {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
@@ -31,16 +31,14 @@ export const runOnPush = async () => {
 
   // if zero sha, push is a pr change
   if (payload.before === ZERO_SHA) {
-    logger.debug("Skipping push events, not a master write");
-    return;
+    return logger.debug("Skipping push events, not a master write");
   }
 
   const changes = getCommitChanges(payload.commits);
 
   // skip if empty
   if (changes && changes.length === 0) {
-    logger.debug("Skipping push events, file change empty");
-    return;
+    return logger.debug("Skipping push events, file change empty");
   }
 
   // check for modified or added files and check for specified file
@@ -48,9 +46,10 @@ export const runOnPush = async () => {
     // update base rate
     await updateBaseRate(context, payload, BASE_RATE_FILE);
   }
-};
+  return logger.debug("Skipping push events, file change empty");
+}
 
-export const validateConfigChange = async () => {
+export async function validateConfigChange() {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
@@ -58,16 +57,14 @@ export const validateConfigChange = async () => {
   const payload = context.payload as PushPayload;
 
   if (!payload.ref.startsWith("refs/heads/")) {
-    logger.debug("Skipping push events, not a branch");
-    return;
+    return logger.debug("Skipping push events, not a branch");
   }
 
   const changes = getCommitChanges(payload.commits);
 
   // skip if empty
   if (changes && changes.length === 0) {
-    logger.debug("Skipping push events, file change empty");
-    return;
+    return logger.debug("Skipping push events, file change empty");
   }
 
   // check for modified or added files and check for specified file
@@ -76,8 +73,7 @@ export const validateConfigChange = async () => {
       .filter((commit) => commit.modified.includes(BASE_RATE_FILE) || commit.added.includes(BASE_RATE_FILE))
       .reverse()[0]?.id;
     if (!commitSha) {
-      logger.debug("Skipping push events, commit sha not found");
-      return;
+      return logger.debug("Skipping push events, commit sha not found");
     }
 
     const configFileContent = await getFileContent(
@@ -101,4 +97,5 @@ export const validateConfigChange = async () => {
       }
     }
   }
-};
+  return logger.debug("Skipping push events, file change empty");
+}

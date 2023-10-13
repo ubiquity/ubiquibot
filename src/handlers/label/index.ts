@@ -19,8 +19,7 @@ export async function watchLabelChange() {
   const triggerUser = sender.login;
 
   if (!previousLabel || !currentLabel) {
-    logger.debug("No label name change.. skipping");
-    return;
+    return logger.debug("No label name change.. skipping");
   }
 
   // check if user is authorized to make the change
@@ -34,5 +33,5 @@ export async function watchLabelChange() {
     authorized: hasAccess,
     repository: payload.repository,
   });
-  logger.debug("label name change saved to db");
+  return logger.debug("label name change saved to db");
 }

@@ -1,7 +1,7 @@
+import { LogReturn } from "../../adapters/supabase/helpers/tables/logs";
 import Runtime from "../../bindings/bot-runtime";
 import { GLOBAL_STRINGS } from "../../configs";
 import {
-  addCommentToIssue,
   addLabelToIssue,
   calculateLabelValue,
   clearAllPriceLabelsOnIssue,
@@ -26,7 +26,7 @@ export async function pricingLabel() {
   const labelNames = labels.map((i) => i.name);
 
   if (payload.issue.body && isParentIssue(payload.issue.body)) {
-    return await handleParentIssue(labels, payload.issue.number);
+    return await handleParentIssue(labels);
   }
 
   if (!(await handleLabelsAccess()) && config.publicAccessControl.setLabel) {
@@ -67,20 +67,30 @@ export async function pricingLabel() {
 
   const targetPriceLabel = setPrice(minTimeLabel, minPriorityLabel);
 
+  if (targetPriceLabel instanceof LogReturn) {
+    // this didn't successfully set the price, instead it returned information about why it didn't
+    // because this is the first time i'm handling it this way, its possible im handling it incorrectly
+    console.trace("possible im handling this incorrectly");
+    return targetPriceLabel;
+  }
+
   if (targetPriceLabel) {
     await handleTargetPriceLabel(targetPriceLabel, labelNames, assistivePricing);
   } else {
     await clearAllPriceLabelsOnIssue();
     logger.info(`Skipping action...`);
   }
+  return logger.info(`Price label set to ${targetPriceLabel}`);
 }
 
-async function handleParentIssue(labels: Label[], issueNumber: number) {
+async function handleParentIssue(labels: Label[]) {
+  const runtime = Runtime.getState();
   const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));
   if (issuePrices.length) {
-    await addCommentToIssue(GLOBAL_STRINGS.pricingDisabledOnParentIssues, issueNumber);
+    // await addCommentToIssue(GLOBAL_STRINGS.pricingDisabledOnParentIssues, issueNumber);
     await clearAllPriceLabelsOnIssue();
   }
+  return runtime.logger.warn(GLOBAL_STRINGS.pricingDisabledOnParentIssues);
 }
 
 function getMinLabel(labels: Label[]) {

@@ -1,14 +1,13 @@
-import { Payload } from "../../../../types";
+import Decimal from "decimal.js";
 import { BigNumber, ethers } from "ethers";
 import Runtime from "../../../../bindings/bot-runtime";
 import {
-  addCommentToIssue,
   getAllIssueAssignEvents,
   getAllIssueComments,
   getPayoutConfigByNetworkId,
   getTokenSymbol,
 } from "../../../../helpers";
-import Decimal from "decimal.js";
+import { Payload } from "../../../../types";
 
 export async function issueReopenedCallback() {
   const runtime = Runtime.getState();

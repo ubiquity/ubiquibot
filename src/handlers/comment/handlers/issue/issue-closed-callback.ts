@@ -55,4 +55,5 @@ export async function issueClosedCallback() {
   if (error) {
     throw logger.error(error);
   }
+  return logger.info("Issue closed successfully");
 }

@@ -5,15 +5,15 @@ export type HandlerReturnValuesNoVoid = string | LogReturn;
 export type HandlerReturnValuesWithVoid = void | HandlerReturnValuesNoVoid;
 
 export type CommandsHandler = (args: string) => Promise<HandlerReturnValuesNoVoid>;
-export type ActionHandler = (args?: string) => Promise<HandlerReturnValuesNoVoid>; // Promise<HandlerReturnValuesWithVoid>;
+export type PreActionHandler = (args?: string) => Promise<void>;
+export type PostActionHandler = (args?: string) => Promise<void>;
+export type ActionHandler = (args?: string) => Promise<HandlerReturnValuesNoVoid>;
 export type CallbackHandler = (
   issueNumber: number,
   text: HandlerReturnValuesNoVoid,
   action: string,
   replyTo?: Comment
 ) => Promise<void>;
-export type PreActionHandler = ActionHandler;
-export type PostActionHandler = ActionHandler;
 
 /**
  * @dev A set of handlers to do a pre/main/post action for a given action

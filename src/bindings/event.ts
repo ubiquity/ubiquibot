@@ -1,10 +1,10 @@
 import { Context } from "probot";
 import { createAdapters } from "../adapters";
-import { LogMessage, LogReturn } from "../adapters/supabase";
+import { LogReturn } from "../adapters/supabase";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
 import { addCommentToIssue, shouldSkip } from "../helpers";
-import { ActionHandler, GithubEvent, Payload, PayloadSchema } from "../types";
+import { ActionHandler, GithubEvent, Payload, PayloadSchema, PostActionHandler, PreActionHandler } from "../types";
 import { ajv } from "../utils";
 
 import Runtime from "./bot-runtime";
@@ -12,7 +12,13 @@ import { loadConfig } from "./config";
 
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT, GithubEvent.PUSH_EVENT] as string[];
 
-type HandlerType = { type: string; actions: ActionHandler[] };
+type PreHandlerWithType = { type: string; actions: PreActionHandler[] };
+type HandlerWithType = { type: string; actions: ActionHandler[] };
+type PostHandlerWithType = { type: string; actions: PostActionHandler[] };
+
+type AllHandlersWithTypes = PreHandlerWithType | HandlerWithType | PostHandlerWithType;
+
+type AllHandlers = PreActionHandler | ActionHandler | PostActionHandler;
 
 export async function bindEvents(eventContext: Context) {
   const runtime = Runtime.getState();
@@ -73,9 +79,9 @@ export async function bindEvents(eventContext: Context) {
   if (!handlers) {
     return runtime.logger.warn(`No handler configured for event: ${eventName}`);
   }
-
   const { pre, action, post } = handlers;
-  const handlerTypes: HandlerType[] = [
+
+  const handlerTypes: AllHandlersWithTypes[] = [
     { type: "pre", actions: pre },
     { type: "main", actions: action },
     { type: "post", actions: post },
@@ -100,12 +106,12 @@ export async function bindEvents(eventContext: Context) {
       `Running wildcard handlers:`,
       wildcardProcessors.map((fn) => fn.name)
     );
-    const handlerType: HandlerType = { type: "wildcard", actions: wildcardProcessors };
+    const handlerType: HandlerWithType = { type: "wildcard", actions: wildcardProcessors };
     await logAnyReturnFromHandlers(handlerType);
   }
 }
 
-async function logAnyReturnFromHandlers(handlerType: HandlerType) {
+async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
   for (const action of handlerType.actions) {
     const loggerHandler = createLoggerHandler(handlerType, action);
     try {
@@ -117,7 +123,7 @@ async function logAnyReturnFromHandlers(handlerType: HandlerType) {
   }
 }
 
-function logMultipleDataTypes(response: string | void | LogReturn, action: ActionHandler) {
+function logMultipleDataTypes(response: string | void | LogReturn, action: AllHandlers) {
   const runtime = Runtime.getState();
   if (response instanceof LogReturn) {
     runtime.logger.debug(response.logMessage.raw, response.metadata, true);
@@ -132,13 +138,11 @@ function logMultipleDataTypes(response: string | void | LogReturn, action: Actio
   }
 }
 
-function createLoggerHandler(handlerType: HandlerType, activeHandler: ActionHandler) {
+function createLoggerHandler(handlerType: AllHandlersWithTypes, activeHandler: AllHandlers) {
   const runtime = Runtime.getState();
 
   return async function loggerHandler(_report: any): Promise<any> {
-    let outputComment;
-    let selectedLogger;
-    const { logMessage, ...otherProps } = _report;
+    const { logMessage } = _report;
 
     if (logMessage) {
       // already made it to console so it should just post the comment
@@ -147,6 +151,9 @@ function createLoggerHandler(handlerType: HandlerType, activeHandler: ActionHand
       const metadataForComment = ["```json", JSON.stringify(logMessage.metadata, null, 2), "```"].join("\n");
 
       const issue = (runtime.eventContext.payload as Payload).issue;
+      if (!issue) {
+        return runtime.logger.error("Issue is null. Skipping", { issue }, true);
+      }
       await addCommentToIssue([logMessage.diff, metadataForComment].join("\n"), issue.number);
 
       // const type = logMessage.type as LogMessage["type"];
@@ -165,7 +172,7 @@ function createLoggerHandler(handlerType: HandlerType, activeHandler: ActionHand
       // }
     }
 
-    outputComment =
+    const outputComment =
       _report instanceof Error
         ? `${handlerType.type} action "${activeHandler.name}" has an uncaught error`
         : `${handlerType.type} action "${activeHandler.name}" returned an unexpected value`;

@@ -4,7 +4,7 @@ import { calculateTaskPrice } from "../shared";
 
 // This just checks all the labels in the config have been set in gh issue
 // If there's something missing, they will be added
-export const validatePriceLabels = async (): Promise<void> => {
+export async function syncPriceLabelsToConfig() {
   const runtime = Runtime.getState();
   const config = runtime.botConfig;
   const logger = runtime.logger;
@@ -12,7 +12,7 @@ export const validatePriceLabels = async (): Promise<void> => {
   const { assistivePricing } = config.mode;
 
   if (!assistivePricing) {
-    logger.info(`Assistive Pricing is disabled`);
+    logger.info(`Assistive pricing is disabled`);
     return;
   }
 
@@ -46,4 +46,4 @@ export const validatePriceLabels = async (): Promise<void> => {
     await Promise.all(missingLabels.map((label) => createLabel(label)));
     logger.info(`Creating missing labels done`);
   }
-};
+}

@@ -1,5 +1,5 @@
 import Runtime from "../../bindings/bot-runtime";
-import { addCommentToIssue, calculateDurations, calculateLabelValue, closePullRequest } from "../../helpers";
+import { calculateDurations, calculateLabelValue, closePullRequest } from "../../helpers";
 import { getLinkedPullRequests } from "../../helpers/parser";
 import { Label, Payload } from "../../types";
 import { deadLinePrefix } from "../shared";
@@ -41,8 +41,7 @@ export async function startCommandHandler() {
   );
 
   if (timeLabelsAssigned.length == 0) {
-    logger.debug(`No labels to calculate timeline`);
-    return;
+    return logger.debug(`No labels to calculate timeline`);
   }
 
   // Sort labels by weight and select the one with the smallest weight
@@ -75,7 +74,8 @@ export async function startCommandHandler() {
   logger.debug(`Creating an issue comment, commit_msg: ${commitMessage}`);
 
   // Add the commit message as a comment to the issue
-  await addCommentToIssue(commitMessage, payload.issue?.number);
+  // await addCommentToIssue(commitMessage, payload.issue?.number);
+  return logger.info(commitMessage);
 }
 
 export async function closePullRequestForAnIssue() {
@@ -83,7 +83,9 @@ export async function closePullRequestForAnIssue() {
   const context = runtime.eventContext;
   const logger = runtime.logger;
   const payload = context.payload as Payload;
-  if (!payload.issue?.number) return;
+  if (!payload.issue?.number) {
+    throw logger.error("Issue is not defined");
+  }
 
   const linkedPullRequests = await getLinkedPullRequests({
     owner: payload.repository.owner.login,
@@ -91,7 +93,9 @@ export async function closePullRequestForAnIssue() {
     issue: payload.issue.number,
   });
 
-  if (!linkedPullRequests.length) return;
+  if (!linkedPullRequests.length) {
+    return logger.warn(`No linked pull requests to close`);
+  }
 
   logger.info(`Opened prs`, linkedPullRequests);
   let comment = `These linked pull requests are closed: `;
@@ -99,6 +103,6 @@ export async function closePullRequestForAnIssue() {
     await closePullRequest(linkedPullRequests[i].number);
     comment += ` <a href="${linkedPullRequests[i].href}">#${linkedPullRequests[i].number}</a> `;
   }
-  logger.info(comment, null, true);
+  return logger.info(comment);
   // await addCommentToIssue(comment, payload.issue.number);
 }

@@ -1,6 +1,6 @@
 import { GithubEvent, Handler, ActionHandler } from "../types";
 import { closePullRequestForAnIssue, startCommandHandler } from "./assign";
-import { pricingLabel, validatePriceLabels } from "./pricing";
+import { pricingLabel, syncPriceLabelsToConfig } from "./pricing";
 import { checkTasksToUnassign } from "./wildcard";
 // import { nullHandler } from "./shared";
 
@@ -25,12 +25,12 @@ export const processors: Record<string, Handler> = {
     post: [],
   },
   [GithubEvent.ISSUES_LABELED]: {
-    pre: [validatePriceLabels],
+    pre: [syncPriceLabelsToConfig],
     action: [pricingLabel],
     post: [],
   },
   [GithubEvent.ISSUES_UNLABELED]: {
-    pre: [validatePriceLabels],
+    pre: [syncPriceLabelsToConfig],
     action: [pricingLabel],
     post: [],
   },

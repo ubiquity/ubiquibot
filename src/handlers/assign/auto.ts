@@ -11,8 +11,7 @@ export async function checkPullRequests() {
   const pulls = await getAllPullRequests(context);
 
   if (pulls.length === 0) {
-    logger.debug(`No pull requests found at this time`);
-    return;
+    return logger.debug(`No pull requests found at this time`);
   }
 
   const payload = context.payload as Payload;
@@ -58,4 +57,5 @@ export async function checkPullRequests() {
       logger.debug(`Assigned pull request #${pull.number} opener to issue ${linkedIssueNumber}.`);
     }
   }
+  return logger.debug(`Checking pull requests done!`);
 }

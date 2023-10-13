@@ -27,7 +27,7 @@ export async function checkTasksToUnassign() {
 
   // Checking the tasks in parallel
   const res = await Promise.all(assigned_issues.map(async (issue) => checkTaskToUnassign(issue as Issue)));
-  logger.info(`Checking expired tasks done! total: ${res.length}, unassigned: ${res.filter((i) => i).length}`);
+  return logger.info(`Checking expired tasks done! total: ${res.length}, unassigned: ${res.filter((i) => i).length}`);
 }
 
 async function checkTaskToUnassign(issue: Issue): Promise<boolean> {
