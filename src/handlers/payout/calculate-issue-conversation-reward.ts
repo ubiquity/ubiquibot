@@ -3,7 +3,7 @@ import Runtime from "../../bindings/bot-runtime";
 import { GLOBAL_STRINGS } from "../../configs";
 import { getAllIssueComments, parseComments } from "../../helpers";
 import { Comment, Payload, UserType } from "../../types";
-import { RewardsResponse } from "../comment";
+import { RewardsResponse } from "./shims";
 import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
 import { calculateRewardValue } from "./calculate-reward-value";
 import { IncentivesCalculationResult } from "./incentives-calculation";

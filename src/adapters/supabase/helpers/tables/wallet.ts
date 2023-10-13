@@ -39,7 +39,7 @@ export class Wallet extends Super {
     return nodeUrl;
   }
 
-  public async upsertWalletAddress(address: string): Promise<void> {
+  public async upsertWalletAddress(address: string) {
     const runtime = Runtime.getState();
     const eventContext = runtime.eventContext;
     const payload = eventContext.payload as

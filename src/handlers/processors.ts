@@ -4,17 +4,20 @@ import { pricingLabel, validatePriceLabels } from "./pricing";
 import { checkTasksToUnassign } from "./wildcard";
 // import { nullHandler } from "./shared";
 
-import { handleComment, issueClosedCallback, issueCreatedCallback, issueReopenedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
 import { runOnPush, validateConfigChange } from "./push";
-import { findDuplicateOne } from "./issue";
+import { findDuplicateIssue } from "./issue";
 import { watchLabelChange } from "./label";
+import { issueCreatedCallback } from "./comment/handlers/issue/issue-created-callback";
+import { issueReopenedCallback } from "./comment/handlers/issue/issue-reopened-callback";
+import { handleComment } from "./comment/action";
+import { issueClosedCallback } from "./comment/handlers/issue/issue-closed-callback";
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_OPENED]: {
     pre: [],
-    action: [findDuplicateOne, issueCreatedCallback],
+    action: [findDuplicateIssue, issueCreatedCallback],
     post: [],
   },
   [GithubEvent.ISSUES_REOPENED]: {

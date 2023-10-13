@@ -6,14 +6,27 @@ import { Logs } from "./tables/logs";
 export const prettyLogs = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error: function errorLog(message: string, metadata?: any) {
-    if (metadata && metadata?.error && metadata?.error?.stack) {
-      const prettyStack = formatStackTrace(metadata.error.stack.join("\n"));
+    const stack = metadata?.error?.stack || metadata?.stack;
+
+    if (stack) {
+      // stack found
+      const prettyStack = formatStackTrace(stack.join("\n"), 1);
       const colorizedStack = colorizeText(prettyStack, "dim");
 
       _log("error", message);
-      _log("error", metadata);
+      if (metadata) {
+        const newMetadata = { ...metadata };
+        delete newMetadata.message;
+        delete newMetadata.name;
+        delete newMetadata.stack;
+
+        if (Object.keys(newMetadata).length > 0) {
+          _log("info", newMetadata);
+        }
+      }
       _log("error", colorizedStack);
     } else {
+      // generate stack
       _log("error", message);
       const stack = new Error().stack;
       if (stack) _log("error", colorizeText(formatStackTrace(stack, 4), "dim")); // Log the formatted stack trace
@@ -22,7 +35,9 @@ export const prettyLogs = {
 
   warn: function warnLog(message: string, metadata?: any) {
     _log("warn", message);
-    _log("warn", metadata);
+    if (metadata) {
+      _log("warn", metadata);
+    }
     const error = new Error();
     const stack = error.stack;
     if (stack) {
@@ -71,6 +86,9 @@ function _log(type: keyof typeof prettyLogs, message: string) {
   // Formatting the message
   const messageFormatted =
     typeof message === "string" ? message : JSON.stringify(Logs.convertErrorsIntoObjects(message));
+
+  // const messageFormatted =
+  // typeof message === "string" ? message : JSON.stringify(Logs.convertErrorsIntoObjects(message));
 
   // Constructing the full log string with the prefix symbol
   const lines = messageFormatted.split("\n");

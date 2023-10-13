@@ -9,7 +9,7 @@ import {
   savePermitToDB,
 } from "../../helpers";
 import { Organization } from "../../types";
-import { RewardsResponse } from "../comment";
+import { RewardsResponse } from "./shims";
 import { IncentivesCalculationResult } from "./incentives-calculation";
 import * as shims from "./shims";
 

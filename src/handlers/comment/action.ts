@@ -4,7 +4,7 @@ import { IssueCommentCommands } from "./commands";
 import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCheck } from "./handlers/first";
 
-export async function handleComment(): Promise<void> {
+export async function handleComment() {
   const runtime = Runtime.getState(),
     config = runtime.botConfig,
     logger = runtime.logger,

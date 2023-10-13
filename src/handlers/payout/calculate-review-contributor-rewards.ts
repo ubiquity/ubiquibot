@@ -3,11 +3,11 @@ import Runtime from "../../bindings/bot-runtime";
 import { getAllIssueComments, getAllPullRequestReviews, parseComments } from "../../helpers";
 import { getLatestMergedPullRequest, getLinkedPullRequests } from "../../helpers/parser";
 import { UserType } from "../../types";
-import { RewardsResponse } from "../comment/handlers";
 import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
 import { calculateRewardValue } from "./calculate-reward-value";
 import { IncentivesCalculationResult } from "./incentives-calculation";
 import { ItemsToExclude } from "./post";
+import { RewardsResponse } from "./shims";
 
 export async function calculateReviewContributorRewards(
   incentivesCalculation: IncentivesCalculationResult

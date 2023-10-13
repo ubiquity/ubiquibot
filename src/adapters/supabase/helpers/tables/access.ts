@@ -52,7 +52,7 @@ export class Access extends Super {
     return data;
   }
 
-  async upsertMultiplier(userId: number, multiplier: number, reason: string, comment: Comment): Promise<void> {
+  async upsertMultiplier(userId: number, multiplier: number, reason: string, comment: Comment) {
     try {
       const accessData: _Access = {
         user_id: userId,

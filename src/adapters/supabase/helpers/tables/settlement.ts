@@ -49,7 +49,7 @@ export class Settlement extends Super {
     return tokenData.id;
   }
 
-  public async addDebit({ userId, amount, networkId, address }: AddDebit): Promise<void> {
+  public async addDebit({ userId, amount, networkId, address }: AddDebit) {
     // Lookup the tokenId
     const tokenId = await this._lookupTokenId(networkId, address);
 
@@ -95,7 +95,7 @@ export class Settlement extends Super {
     permit,
     networkId,
     organization,
-  }: AddCreditWithPermit): Promise<void> {
+  }: AddCreditWithPermit) {
     // Insert into the credits table
     const creditData: CreditInsert = {
       amount: amount.toNumber(),

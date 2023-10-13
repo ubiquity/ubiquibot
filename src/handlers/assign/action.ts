@@ -78,7 +78,7 @@ export async function startCommandHandler() {
   await addCommentToIssue(commitMessage, payload.issue?.number);
 }
 
-export async function closePullRequestForAnIssue(): Promise<void> {
+export async function closePullRequestForAnIssue() {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const logger = runtime.logger;

@@ -1,9 +1,8 @@
 import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
-import { RewardsResponse } from "../comment";
 import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
 import { IncentivesCalculationResult } from "./incentives-calculation";
-import { removePenalty } from "./shims";
+import { removePenalty, RewardsResponse } from "./shims";
 
 // Calculate the reward for the assignee
 export async function calculateIssueAssigneeReward(

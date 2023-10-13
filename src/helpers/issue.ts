@@ -58,7 +58,7 @@ export async function getAllLabeledEvents() {
   return events.filter((event) => event.event === "labeled");
 }
 
-export async function clearAllPriceLabelsOnIssue(): Promise<void> {
+export async function clearAllPriceLabelsOnIssue() {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
 
@@ -406,7 +406,7 @@ export async function wasIssueReopened(issueNumber: number): Promise<boolean> {
   return false;
 }
 
-export async function removeAssignees(issueNumber: number, assignees: string[]): Promise<void> {
+export async function removeAssignees(issueNumber: number, assignees: string[]) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
 
@@ -515,7 +515,7 @@ export async function isUserAdminOrBillingManager(
   }
 }
 
-export async function addAssignees(issue: number, assignees: string[]): Promise<void> {
+export async function addAssignees(issue: number, assignees: string[]) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
 
@@ -533,7 +533,7 @@ export async function addAssignees(issue: number, assignees: string[]): Promise<
   }
 }
 
-export async function deleteLabel(label: string): Promise<void> {
+export async function deleteLabel(label: string) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
 

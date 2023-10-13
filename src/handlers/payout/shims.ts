@@ -6,7 +6,7 @@ interface RemovePenalty {
   amount: Decimal;
   node: Comment;
 }
-export async function removePenalty({ userId, amount, node }: RemovePenalty): Promise<void> {
+export async function removePenalty({ userId, amount, node }: RemovePenalty) {
   const { supabase } = Runtime.getState().adapters;
   // const logger = runtime.logger;
 
@@ -30,3 +30,17 @@ export async function removePenalty({ userId, amount, node }: RemovePenalty): Pr
 }
 
 //
+export interface RewardsResponse {
+  title?: string;
+  userId?: number;
+  username?: string;
+  reward?: {
+    account: string;
+    priceInDecimal: Decimal;
+    penaltyAmount: Decimal;
+    user?: string;
+    userId: number;
+    debug?: Record<string, { count: number; reward: Decimal }>;
+  }[];
+  fallbackReward?: Record<string, Decimal>;
+}

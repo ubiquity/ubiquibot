@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
 import { getAllIssueComments, getIssueDescription } from "../../helpers";
 import { UserType } from "../../types";
-import { RewardsResponse } from "../comment";
+import { RewardsResponse } from "./shims";
 import { taskInfo } from "../wildcard";
 import { generatePermitForComment } from "./generate-permit-for-comment";
 import { IncentivesCalculationResult } from "./incentives-calculation";

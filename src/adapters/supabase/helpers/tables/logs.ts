@@ -43,7 +43,7 @@ export class Logs extends Super {
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
 
-  private _log({ level, consoleLog, logMessage: logMessage, metadata, postComment }: _LogParams) {
+  private _log({ level, consoleLog, logMessage, metadata, postComment }: _LogParams) {
     // needs to generate three versions of the information.
     // they must all first serialize the error object if it exists
     // - the comment to post on supabase (must be raw)
@@ -89,6 +89,7 @@ export class Logs extends Super {
   }
 
   public warn(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    if (!log) throw new Error("log is undefined");
     return this._log({ level: LogLevel.WARN, consoleLog: prettyLogs.warn, logMessage: log, metadata, postComment });
   }
 
@@ -99,12 +100,15 @@ export class Logs extends Super {
   public error(log: string, metadata?: any, postComment?: boolean): LogReturn {
     if (!metadata) {
       metadata = Logs.convertErrorsIntoObjects(new Error(log));
-      console.trace(metadata);
+      // console.trace(metadata);
       // remove the second element in the metadata.stack array
 
       const stack = metadata.stack as string[];
       stack.splice(1, 1);
       metadata.stack = stack;
+    }
+    if (!this) {
+      console.trace("this is unbound. please bind the context.");
     }
     return this._log({ level: LogLevel.ERROR, consoleLog: prettyLogs.error, logMessage: log, metadata, postComment });
   }
@@ -242,7 +246,7 @@ export class Logs extends Super {
         .split("\n")
         .map((line) => `${selected} ${line}`)
         .join("\n");
-    } else if (diffPrefix["debug" as keyof typeof diffPrefix]) {
+    } else if (type === "debug") {
       // debug has special formatting
       message = message
         .split("\n")

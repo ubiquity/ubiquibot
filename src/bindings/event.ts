@@ -17,37 +17,29 @@ type HandlerType = { type: string; actions: ActionHandler[] };
 export async function bindEvents(eventContext: Context) {
   const runtime = Runtime.getState();
   runtime.eventContext = eventContext;
-
-  if (!runtime.logger) {
-    throw new Error("Failed to create logger");
-  }
-
-  let botConfigError;
-  try {
-    runtime.botConfig = await loadConfig(eventContext);
-    console.trace(runtime.botConfig.payout.privateKey);
-  } catch (err) {
-    botConfigError = err;
-  }
+  runtime.botConfig = await loadConfig(eventContext);
 
   runtime.adapters = createAdapters(runtime.botConfig);
   runtime.logger = runtime.adapters.supabase.logs;
 
+  if (!runtime.botConfig.payout.privateKey) {
+    runtime.logger.warn("No private key found");
+  }
+
   const payload = eventContext.payload as Payload;
   const allowedEvents = Object.values(GithubEvent) as string[];
   const eventName = payload.action ? `${eventContext.name}.${payload.action}` : eventContext.name; // some events wont have actions as this grows
+  if (eventName === GithubEvent.PUSH_EVENT) {
+    await validateConfigChange();
+  }
 
   if (!runtime.logger) {
     throw new Error("Failed to create logger");
   }
 
-  if (botConfigError) {
-    runtime.logger.error("Bot configuration error", botConfigError);
-    if (eventName === GithubEvent.PUSH_EVENT) {
-      await validateConfigChange();
-    }
-    throw new Error("Failed to load config");
-  }
+  // if (botConfigError) {
+  //   throw runtime.logger.error("Failed to load config", botConfigError);
+  // }
 
   runtime.logger.info(`Binding events... id: ${eventContext.id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
 
@@ -120,9 +112,9 @@ async function logAnyReturnFromHandlers(handlerType: HandlerType) {
 function logMultipleDataTypes(response: string | void | LogReturn) {
   const runtime = Runtime.getState();
   if (response instanceof LogReturn) {
-    runtime.logger.ok(response.logMessage.raw, response.metadata, true);
+    runtime.logger.debug(response.logMessage.raw, response.metadata, true);
   } else if (typeof response == "string") {
-    runtime.logger.ok(response, null, true);
+    runtime.logger.debug(response, null, true);
   } else {
     runtime.logger.error("No response from action. Ensure return of string or LogReturn object", null, true);
   }
@@ -142,8 +134,7 @@ function createLoggerHandler(handlerType: HandlerType, activeHandler: ActionHand
       selectedLogger = runtime.logger[type];
 
       if (!selectedLogger) {
-        runtime.logger.error(`Logger type "${type}" not found`);
-        return;
+        return runtime.logger.error(`Logger type "${type}" not found`);
       }
 
       const isEmpty = Object.values(otherProps).every((value) => value === undefined);
