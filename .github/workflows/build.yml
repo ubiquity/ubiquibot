@@ -1,10 +1,10 @@
-name: Build
+name: Build and Test
 on:
   push:
   pull_request:
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -20,6 +20,10 @@ jobs:
 
       - name: Local Build
         run: yarn build
+
+      # Enable `test` step once writing unit test done.
+      # - name: Test
+      #   run: yarn test
 
       - name: Lint
         run: yarn lint

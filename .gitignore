@@ -17,3 +17,4 @@ bin
 .yarn
 yarn-error.log
 tsconfig.tsbuildinfo
+.nyc_output
