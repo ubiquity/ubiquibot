@@ -8,10 +8,10 @@ import { DefaultConfig } from "../configs";
 import { validate } from "./ajv";
 import { WideConfig, WideRepoConfig, WideConfigSchema } from "../types";
 import { upsertLastCommentToIssue } from "../helpers";
+import { getLogger } from "../bindings";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
-const KEY_NAME = "privateKeyEncrypted";
 const KEY_PREFIX = "HSK_";
 
 export const getConfigSuperset = async (context: Context, type: "org" | "repo", filePath: string): Promise<string | undefined> => {
@@ -64,7 +64,7 @@ export const getOrgAndRepoFromPath = (path: string) => {
   return { org, repo };
 };
 
-export const getPrivateKey = async (cipherText: string): Promise<string | undefined> => {
+export const getPrivateKey = async (cipherText: string): Promise<string> => {
   try {
     await _sodium.ready;
     const sodium = _sodium;
@@ -72,9 +72,8 @@ export const getPrivateKey = async (cipherText: string): Promise<string | undefi
     const privateKey = process.env.X25519_PRIVATE_KEY;
     const publicKey = await getScalarKey(privateKey);
 
-    if (!publicKey || !privateKey) {
-      return undefined;
-    }
+    if (!privateKey) throw new Error("X25519_PRIVATE_KEY env variable is missing");
+    if (!publicKey) throw new Error("Failed getting public key from X25519_PRIVATE_KEY env variable");
 
     const binPub = sodium.from_base64(publicKey, sodium.base64_variants.URLSAFE_NO_PADDING);
     const binPriv = sodium.from_base64(privateKey, sodium.base64_variants.URLSAFE_NO_PADDING);
@@ -84,7 +83,9 @@ export const getPrivateKey = async (cipherText: string): Promise<string | undefi
     walletPrivateKey = walletPrivateKey.replace(KEY_PREFIX, "");
     return walletPrivateKey;
   } catch (error: unknown) {
-    return undefined;
+    const logger = getLogger();
+    logger.error(`${error}`);
+    throw new Error("Failed decrypting partner wallet private key");
   }
 };
 
@@ -136,21 +137,12 @@ export const getWideConfig = async (context: Context) => {
   }
   const parsedDefault: MergedConfig = DefaultConfig;
 
-  let privateKeyDecrypted;
-  if (parsedRepo && parsedRepo[KEY_NAME]) {
-    privateKeyDecrypted = await getPrivateKey(parsedRepo[KEY_NAME]);
-  } else if (parsedOrg && parsedOrg[KEY_NAME]) {
-    privateKeyDecrypted = await getPrivateKey(parsedOrg[KEY_NAME]);
-  } else {
-    privateKeyDecrypted = undefined;
-  }
-
   const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
   const mergedConfigData: MergedConfig = mergeConfigs(configs);
 
   const configData = {
     networkId: mergedConfigData.evmNetworkId,
-    privateKey: privateKeyDecrypted ?? "",
+    privateKeyEncrypted: mergedConfigData.privateKeyEncrypted,
     assistivePricing: mergedConfigData.assistivePricing,
     commandSettings: mergedConfigData.commandSettings,
     baseMultiplier: mergedConfigData.priceMultiplier,

@@ -5,6 +5,7 @@ import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 import Decimal from "decimal.js";
 import { Payload } from "../types";
 import { savePermit } from "../adapters/supabase";
+import { getPrivateKey } from "../utils/private";
 
 const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on all networks
 
@@ -59,11 +60,13 @@ export const generatePermit2Signature = async (
   userId = ""
 ): Promise<{ txData: TxData; payoutUrl: string }> => {
   const {
-    payout: { networkId, privateKey, permitBaseUrl, rpc, paymentToken },
+    payout: { networkId, privateKeyEncrypted, permitBaseUrl, rpc, paymentToken },
   } = getBotConfig();
   const logger = getLogger();
   const provider = new ethers.providers.JsonRpcProvider(rpc);
-  const adminWallet = new ethers.Wallet(privateKey, provider);
+
+  const privateKeyDecrypted = await getPrivateKey(privateKeyEncrypted);
+  const adminWallet = new ethers.Wallet(privateKeyDecrypted, provider);
 
   const permitTransferFromData: PermitTransferFrom = {
     permitted: {
