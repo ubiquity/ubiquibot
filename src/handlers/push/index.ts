@@ -2,13 +2,12 @@ import Runtime from "../../bindings/bot-runtime";
 import { createCommitComment, getFileContent } from "../../helpers";
 import { CommitsPayload, PushPayload, ConfigSchema } from "../../types";
 import { parseYAML } from "../../utils/private";
-import { updateBaseRate } from "./update-base";
 import { validate } from "../../utils/ajv";
 
-const ZERO_SHA = "0000000000000000000000000000000000000000";
-const BASE_RATE_FILE = ".github/ubiquibot-config.yml";
+export const ZERO_SHA = "0000000000000000000000000000000000000000";
+export const BASE_RATE_FILE = ".github/ubiquibot-config.yml";
 
-function getCommitChanges(commits: CommitsPayload[]) {
+export function getCommitChanges(commits: CommitsPayload[]) {
   const changes = [];
 
   for (const commit of commits) {
@@ -20,33 +19,6 @@ function getCommitChanges(commits: CommitsPayload[]) {
     }
   }
   return changes;
-}
-
-export async function runOnPush() {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
-
-  const context = runtime.eventContext;
-  const payload = context.payload as PushPayload;
-
-  // if zero sha, push is a pr change
-  if (payload.before === ZERO_SHA) {
-    return logger.debug("Skipping push events, not a master write");
-  }
-
-  const changes = getCommitChanges(payload.commits);
-
-  // skip if empty
-  if (changes && changes.length === 0) {
-    return logger.debug("Skipping push events, file change empty");
-  }
-
-  // check for modified or added files and check for specified file
-  if (changes.includes(BASE_RATE_FILE)) {
-    // update base rate
-    await updateBaseRate(context, payload, BASE_RATE_FILE);
-  }
-  return logger.debug("Skipping push events, file change empty");
 }
 
 export async function validateConfigChange() {

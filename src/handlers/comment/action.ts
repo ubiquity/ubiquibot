@@ -4,14 +4,13 @@ import { IssueCommentCommands } from "./commands";
 import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCommentInRepository } from "./handlers/first";
 
-export async function handleComment() {
+export async function commentCreatedOrEdited() {
   const runtime = Runtime.getState(),
     config = runtime.botConfig,
     logger = runtime.logger,
     context = runtime.eventContext,
     payload = context.payload as Payload;
 
-  // logger.info(`Handling an issue comment on issue ${payload.issue?.number}`);
   const comment = payload.comment as Comment;
   if (!comment) {
     return logger.info(`Comment is null. Skipping`);

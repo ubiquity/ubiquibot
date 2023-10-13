@@ -2,16 +2,22 @@ import { GithubEvent, Handler, ActionHandler } from "../types";
 import { closePullRequestForAnIssue, startCommandHandler } from "./assign";
 import { pricingLabel, syncPriceLabelsToConfig } from "./pricing";
 import { checkTasksToUnassign } from "./wildcard";
-// import { nullHandler } from "./shared";
 
 import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
-import { runOnPush, validateConfigChange } from "./push";
+import { validateConfigChange } from "./push";
 import { findDuplicateIssue } from "./issue";
 import { watchLabelChange } from "./label";
 import { issueReopenedCallback } from "./comment/handlers/issue/issue-reopened-callback";
-import { handleComment } from "./comment/action";
+import { commentCreatedOrEdited } from "./comment/action";
 import { issueClosedCallback } from "./comment/handlers/issue/issue-closed-callback";
+import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
+
+/**
+ * @dev
+ * pre and post handlers do not return a message to comment on the issue. their return type MUST BE `void`
+ * action MUST return a message to comment on the issue. its return type MUST BE either `string` or `LogReturn`
+ */
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_OPENED]: {
@@ -46,12 +52,12 @@ export const processors: Record<string, Handler> = {
   },
   [GithubEvent.ISSUE_COMMENT_CREATED]: {
     pre: [],
-    action: [handleComment],
+    action: [commentCreatedOrEdited],
     post: [],
   },
   [GithubEvent.ISSUE_COMMENT_EDITED]: {
     pre: [],
-    action: [handleComment],
+    action: [commentCreatedOrEdited],
     post: [],
   },
   [GithubEvent.ISSUES_CLOSED]: {
@@ -71,8 +77,8 @@ export const processors: Record<string, Handler> = {
   },
   [GithubEvent.PUSH_EVENT]: {
     pre: [],
-    action: [validateConfigChange, runOnPush],
-    post: [],
+    action: [validateConfigChange],
+    post: [checkModifiedBaseRate],
   },
   [GithubEvent.LABEL_EDITED]: {
     pre: [],
