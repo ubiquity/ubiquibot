@@ -29,14 +29,16 @@ export async function validateConfigChange() {
   const payload = context.payload as PushPayload;
 
   if (!payload.ref.startsWith("refs/heads/")) {
-    return logger.debug("Skipping push events, not a branch");
+    logger.debug("Skipping push events, not a branch");
+    return;
   }
 
   const changes = getCommitChanges(payload.commits);
 
   // skip if empty
   if (changes && changes.length === 0) {
-    return logger.debug("Skipping push events, file change empty 3");
+    logger.debug("Skipping push events, file change empty 3");
+    return;
   }
 
   // check for modified or added files and check for specified file
@@ -45,7 +47,8 @@ export async function validateConfigChange() {
       .filter((commit) => commit.modified.includes(BASE_RATE_FILE) || commit.added.includes(BASE_RATE_FILE))
       .reverse()[0]?.id;
     if (!commitSha) {
-      return logger.debug("Skipping push events, commit sha not found");
+      logger.debug("Skipping push events, commit sha not found");
+      return;
     }
 
     const configFileContent = await getFileContent(
@@ -66,8 +69,9 @@ export async function validateConfigChange() {
           commitSha,
           BASE_RATE_FILE
         );
+        logger.info("Config validation failed!", error);
       }
     }
   }
-  return logger.debug("Skipping push events, file change empty 4");
+  logger.debug("Skipping push events, file change empty 4");
 }

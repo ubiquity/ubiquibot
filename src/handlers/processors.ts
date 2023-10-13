@@ -76,8 +76,8 @@ export const processors: Record<string, Handler> = {
     post: [],
   },
   [GithubEvent.PUSH_EVENT]: {
-    pre: [],
-    action: [validateConfigChange],
+    pre: [validateConfigChange],
+    action: [],
     post: [checkModifiedBaseRate],
   },
   [GithubEvent.LABEL_EDITED]: {
