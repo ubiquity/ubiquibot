@@ -2,7 +2,7 @@ import { getBotContext, getLogger } from "../../../bindings";
 import { Payload, StreamlinedComment } from "../../../types";
 import { getAllIssueComments, getPullByNumber } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
-import { askGPT, getPRSpec, specCheckTemplate } from "../../../helpers/gpt";
+import { askGPT, getPRSpec, specCheckTemplate, validationMsg } from "../../../helpers/gpt";
 import { ErrorDiff } from "../../../utils/helpers";
 
 /**
@@ -104,11 +104,25 @@ export const review = async (body: string) => {
 
       const gptResponse = await askGPT(`Pr review call for #${issue.number}`, chatHistory);
 
-      if (typeof gptResponse === "string") {
-        return gptResponse;
+      chatHistory = [];
+      chatHistory.push(
+        {
+          role: "system",
+          content: validationMsg,
+        } as CreateChatCompletionRequestMessage,
+        {
+          role: "assistant",
+          content: `Validate for user: ${issue.assignees[0].login}: \n` + JSON.stringify(gptResponse),
+        } as CreateChatCompletionRequestMessage
+      );
+
+      const validated = await askGPT(`Pr review validation call for #${issue.number}`, chatHistory);
+
+      if (typeof validated === "string") {
+        return validated;
       } else {
-        if (gptResponse.answer) {
-          return gptResponse.answer;
+        if (validated.answer) {
+          return validated.answer;
         } else {
           return ErrorDiff(`No answer found for issue #${issue.number}`);
         }

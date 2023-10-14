@@ -38,6 +38,7 @@ import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
 import Decimal from "decimal.js";
 import { ErrorDiff } from "../../../utils/helpers";
+import { review } from "./review";
 
 export * from "./assign";
 export * from "./wallet";
@@ -47,6 +48,7 @@ export * from "./help";
 export * from "./multiplier";
 export * from "./query";
 export * from "./ask";
+export * from "./review";
 export * from "./authorize";
 
 export interface RewardsResponse {
@@ -293,6 +295,12 @@ export const userCommands = (): UserCommands[] => {
       id: IssueCommentCommands.ASK,
       description: `Ask a technical question to the Ubiquity AI. \n  example usage: "/ask How do I do X?"`,
       handler: ask,
+      callback: commandCallback,
+    },
+    {
+      id: IssueCommentCommands.REVIEW,
+      description: `Compares the pull request code diff with the linked issue's specification to perform a review of the current pull request. \n  example usage: /review`,
+      handler: review,
       callback: commandCallback,
     },
     {
