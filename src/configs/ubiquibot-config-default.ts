@@ -10,6 +10,7 @@ export const DefaultConfig: MergedConfig = {
   disableAnalytics: false,
   commentIncentives: false,
   registerWalletWithVerification: false,
+  openAIKey: process.env.OPENAI_API_KEY || "",
   promotionComment:
     "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>",
   defaultLabels: [],
@@ -50,39 +51,39 @@ export const DefaultConfig: MergedConfig = {
   commandSettings: [
     {
       name: "start",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "stop",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "wallet",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "payout",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "multiplier",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "query",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "ask",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "allow",
-      enabled: false,
+      enabled: true,
     },
     {
       name: "autopay",
-      enabled: false,
+      enabled: true,
     },
   ],
   incentives: {

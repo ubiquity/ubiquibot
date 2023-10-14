@@ -1,23 +1,48 @@
 import { getBotConfig, getBotContext, getLogger } from "../bindings";
 import { Payload, StreamlinedComment, UserType } from "../types";
-import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../helpers";
+import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody, getIssueByNumber } from "../helpers";
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { ErrorDiff } from "../utils/helpers";
+import { Context } from "probot";
 
-export const sysMsg = `You are the UbiquityAI, designed to provide accurate technical answers. \n
+export const sysMsg = `You are an AI designed to provide accurate technical answers. \n
 Whenever appropriate, format your response using GitHub Flavored Markdown. Utilize tables, lists, and code blocks for clear and organized answers. \n
 Do not make up answers. If you are unsure, say so. \n
 Original Context exists only to provide you with additional information to the current question, use it to formulate answers. \n
 Infer the context of the question from the Original Context using your best judgement. \n
-All replies MUST end with "\n\n <!--- { 'UbiquityAI': 'answer' } ---> ".\n
+All replies MUST end with "\n\n <!--- { 'OpenAI': 'answer' } ---> ".\n
+`;
+
+export const specCheckTemplate = `
+Using the provided context, ensure you clearly understand the specification of the issue.
+They must achieve the specification exactly as it is written, no less but more is acceptable.
+If the specification is not met, you are to provide a clear and concise reason why.
+
+Your response will be posted as a GitHub comment for everyone to see in the pull request review conversation.
+Knowing this, only include information that will benefit them, think of it as a summary of the review.
+You can add value by identifying coding errors and code suggestions that benefit both the author and reviewers.
+
+Do not deviate from the provided examples below, use only their username, never use the @ symbol.
+Always use the following format for your response, do not deviate from this format and do not add additional information.
+
+==If the spec is wrong==
+### Haven't achieved specification
+{username} this is where you went wrong...
+this is how you can fix it... 
+> code example of solution
+==If the spec is right==
+### Have achieved specification
+{username}, you have achieved the spec and now the reviewers will let you know if there are any other changes needed.\n
 `;
 
 export const gptContextTemplate = `
-You are the UbiquityAI, designed to review and analyze pull requests.
+You are an AI designed to review and analyze pull requests.
 You have been provided with the spec of the issue and all linked issues or pull requests.
 Using this full context, Reply in pure JSON format, with the following structure omitting irrelvant information pertaining to the specification.
 You MUST provide the following structure, but you may add additional information if you deem it relevant.
+Do not include example data, only include data relevant to the specification.
+
 Example:[
   {
     "source": "issue #123"
@@ -54,6 +79,66 @@ Example:[
 ]
 `;
 
+export const getPRSpec = async (context: Context, chatHistory: CreateChatCompletionRequestMessage[], streamlined: StreamlinedComment[]) => {
+  const logger = getLogger();
+
+  const payload = context.payload as Payload;
+
+  const pr = payload.issue;
+
+  if (!pr) {
+    return ErrorDiff(`Payload issue is undefined.`);
+  }
+
+  // we're in the pr context, so grab the linked issue body
+  const regex = /(#(\d+)|https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+))/gi;
+  const linkedIssueNumber = pr.body.match(regex);
+  const linkedIssues: number[] = [];
+
+  if (linkedIssueNumber) {
+    linkedIssueNumber.forEach((issue: string) => {
+      if (issue.includes("#")) {
+        linkedIssues.push(Number(issue.slice(1)));
+      } else {
+        linkedIssues.push(Number(issue.split("/")[6]));
+      }
+    });
+  } else {
+    logger.info(`No linked issues or prs found`);
+  }
+
+  if (!linkedIssueNumber) {
+    return ErrorDiff(`No linked issue found in body.`);
+  }
+
+  // get the linked issue body
+  const linkedIssue = await getIssueByNumber(context, linkedIssues[0]);
+
+  if (!linkedIssue) {
+    return ErrorDiff(`Error getting linked issue.`);
+  }
+
+  // add the first comment of the pull request which is the contributor's description of their changes
+  streamlined.push({
+    login: pr.user.login,
+    body: `${pr.user.login}'s pull request description:\n` + pr.body,
+  });
+
+  // add the linked issue body as this is the spec
+  streamlined.push({
+    login: "assistant",
+    body: `#${linkedIssue.number} Specification: \n` + linkedIssue.body,
+  });
+
+  // no other conversation context is needed
+  chatHistory.push({
+    role: "system",
+    content: "This pull request context: \n" + JSON.stringify(streamlined),
+  } as CreateChatCompletionRequestMessage);
+
+  return chatHistory;
+};
+
 /**
  * @notice best used alongside getAllLinkedIssuesAndPullsInBody() in helpers/issue
  * @param chatHistory the conversational context to provide to GPT
@@ -74,12 +159,12 @@ export const decideContextGPT = async (
   const issue = payload.issue;
 
   if (!issue) {
-    return `Payload issue is undefined`;
+    return ErrorDiff(`Payload issue is undefined.`);
   }
 
   // standard comments
   const comments = await getAllIssueComments(issue.number);
-  // raw so we can grab the <!--- { 'UbiquityAI': 'answer' } ---> tag
+  // raw so we can grab the <!--- { 'OpenAI': 'answer' } ---> tag
   const commentsRaw = await getAllIssueComments(issue.number, "raw");
 
   if (!comments) {
@@ -95,7 +180,7 @@ export const decideContextGPT = async (
 
   // add the rest
   comments.forEach(async (comment, i) => {
-    if (comment.user.type == UserType.User || commentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
+    if (comment.user.type == UserType.User || commentsRaw[i].body.includes("<!--- { 'OpenAI': 'answer' } --->")) {
       streamlined.push({
         login: comment.user.login,
         body: comment.body,
@@ -108,7 +193,7 @@ export const decideContextGPT = async (
 
   if (typeof links === "string") {
     logger.info(`Error getting linked issues or prs: ${links}`);
-    return `Error getting linked issues or prs: ${links}`;
+    return ErrorDiff(`Error getting linked issues or prs: ${links}`);
   }
 
   linkedIssueStreamlined = links.linkedIssues;
@@ -117,23 +202,23 @@ export const decideContextGPT = async (
   chatHistory.push(
     {
       role: "system",
+      content: gptContextTemplate,
+    },
+    {
+      role: "assistant",
       content: "This issue/Pr context: \n" + JSON.stringify(streamlined),
-      name: "UbiquityAI",
     } as CreateChatCompletionRequestMessage,
     {
-      role: "system",
+      role: "assistant",
       content: "Linked issue(s) context: \n" + JSON.stringify(linkedIssueStreamlined),
-      name: "UbiquityAI",
     } as CreateChatCompletionRequestMessage,
     {
-      role: "system",
+      role: "assistant",
       content: "Linked Pr(s) context: \n" + JSON.stringify(linkedPRStreamlined),
-      name: "UbiquityAI",
     } as CreateChatCompletionRequestMessage
   );
 
-  // we'll use the first response to determine the context of future calls
-  const res = await askGPT("", chatHistory);
+  const res = await askGPT(`OpenAI fetching context for #${issue.number}`, chatHistory);
 
   return res;
 };
