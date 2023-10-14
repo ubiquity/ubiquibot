@@ -1,7 +1,51 @@
 import { Context } from "probot";
 import { getBotConfig, getBotContext, getLogger } from "../bindings";
-import { AssignEvent, Comment, IssueType, Payload } from "../types";
+import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
+
+export const getAllIssueEvents = async () => {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+  if (!payload.issue) return;
+
+  let shouldFetch = true;
+  let page_number = 1;
+  const events = [];
+
+  try {
+    while (shouldFetch) {
+      // Fetch issue events
+      const response = await context.octokit.issues.listEvents({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.full_name,
+        issue_number: payload.issue.number,
+        per_page: 100,
+        page: page_number,
+      });
+
+      await checkRateLimitGit(response?.headers);
+
+      if (response?.data?.length > 0) {
+        events.push(...response.data);
+        page_number++;
+      } else {
+        shouldFetch = false;
+      }
+    }
+  } catch (e: unknown) {
+    shouldFetch = false;
+    logger.error(`Getting all issue events failed, reason: ${e}`);
+    return null;
+  }
+  return events;
+};
+
+export const getAllLabeledEvents = async () => {
+  const events = await getAllIssueEvents();
+  if (!events) return null;
+  return events.filter((event) => event.event === "labeled");
+};
 
 export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   const context = getBotContext();
@@ -23,7 +67,7 @@ export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
       name: issuePrices[0].name.toString(),
     });
   } catch (e: unknown) {
-    logger.debug(`Clearing all price labels failed!, reason: ${e}`);
+    logger.debug(`Clearing all price labels failed! reason: ${e}`);
   }
 };
 
@@ -44,7 +88,7 @@ export const addLabelToIssue = async (labelName: string) => {
       labels: [labelName],
     });
   } catch (e: unknown) {
-    logger.debug(`Adding a label to issue failed!, reason: ${e}`);
+    logger.debug(`Adding a label to issue failed! reason: ${e}`);
   }
 };
 
@@ -108,7 +152,7 @@ export const addCommentToIssue = async (msg: string, issue_number: number) => {
       body: msg,
     });
   } catch (e: unknown) {
-    logger.debug(`Adding a comment failed!, reason: ${e}`);
+    logger.debug(`Adding a comment failed! reason: ${e}`);
   }
 };
 
@@ -150,7 +194,7 @@ export const updateCommentOfIssue = async (msg: string, issue_number: number, re
       await addCommentToIssue(msg, issue_number);
     }
   } catch (e: unknown) {
-    logger.debug(`Upading a comment failed!, reason: ${e}`);
+    logger.debug(`Updating a comment failed! reason: ${e}`);
   }
 };
 
@@ -159,6 +203,18 @@ export const upsertCommentToIssue = async (issue_number: number, comment: string
     await updateCommentOfIssue(comment, issue_number, reply_to);
   } else {
     await addCommentToIssue(comment, issue_number);
+  }
+};
+
+export const upsertLastCommentToIssue = async (issue_number: number, commentBody: string) => {
+  const logger = getLogger();
+
+  try {
+    const comments = await getAllIssueComments(issue_number);
+
+    if (comments.length > 0 && comments[comments.length - 1].body !== commentBody) await addCommentToIssue(commentBody, issue_number);
+  } catch (e: unknown) {
+    logger.debug(`Upserting last comment failed! reason: ${e}`);
   }
 };
 
@@ -177,7 +233,7 @@ export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[
 
     if (response.data) result = response.data as Comment[];
   } catch (e: unknown) {
-    logger.debug(`Listing issue comments failed!, reason: ${e}`);
+    logger.debug(`Listing issue comments failed! reason: ${e}`);
   }
 
   return result;
@@ -212,7 +268,7 @@ export const getIssueDescription = async (issue_number: number, format: "raw" | 
         break;
     }
   } catch (e: unknown) {
-    logger.debug(`Getting issue description failed!, reason: ${e}`);
+    logger.debug(`Getting issue description failed! reason: ${e}`);
   }
   return result;
 };
@@ -334,7 +390,7 @@ export const removeAssignees = async (issue_number: number, assignees: string[])
       assignees,
     });
   } catch (e: unknown) {
-    logger.debug(`Removing assignees failed!, reason: ${e}`);
+    logger.debug(`Removing assignees failed! reason: ${e}`);
   }
 };
 
@@ -359,7 +415,7 @@ export const checkUserPermissionForRepo = async (username: string, context: Cont
 
     return res.status === 204;
   } catch (e: unknown) {
-    logger.error(`Checking if user permisson for repo failed!, reason: ${e}`);
+    logger.error(`Checking if user permisson for repo failed! reason: ${e}`);
     return false;
   }
 };
@@ -377,7 +433,7 @@ export const checkUserPermissionForOrg = async (username: string, context: Conte
     // skipping status check due to type error of checkMembershipForUser function of octokit
     return true;
   } catch (e: unknown) {
-    logger.error(`Checking if user permisson for org failed!, reason: ${e}`);
+    logger.error(`Checking if user permisson for org failed! reason: ${e}`);
     return false;
   }
 };
@@ -399,7 +455,7 @@ export const getUserPermission = async (username: string, context: Context): Pro
       return "";
     }
   } catch (e: unknown) {
-    logger.debug(`Checking if user is admin failed!, reason: ${e}`);
+    logger.debug(`Checking if user is admin failed! reason: ${e}`);
     return "";
   }
 };
@@ -417,7 +473,7 @@ export const addAssignees = async (issue_number: number, assignees: string[]): P
       assignees,
     });
   } catch (e: unknown) {
-    logger.debug(`Adding assignees failed!, reason: ${e}`);
+    logger.debug(`Adding assignees failed! reason: ${e}`);
   }
 };
 
@@ -439,7 +495,7 @@ export const deleteLabel = async (label: string): Promise<void> => {
       });
     }
   } catch (e: unknown) {
-    logger.debug(`Label deletion failed!, reason: ${e}`);
+    logger.debug(`Label deletion failed! reason: ${e}`);
   }
 };
 
@@ -460,7 +516,7 @@ export const removeLabel = async (name: string) => {
       name: name,
     });
   } catch (e: unknown) {
-    logger.debug(`Label removal failed!, reason: ${e}`);
+    logger.debug(`Label removal failed! reason: ${e}`);
   }
 };
 
@@ -494,7 +550,7 @@ export const getPullRequests = async (context: Context, state: "open" | "closed"
     });
     return pulls;
   } catch (e: unknown) {
-    logger.debug(`Fetching pull requests failed!, reason: ${e}`);
+    logger.debug(`Fetching pull requests failed! reason: ${e}`);
     return [];
   }
 };
@@ -511,7 +567,7 @@ export const closePullRequest = async (pull_number: number) => {
       state: "closed",
     });
   } catch (e: unknown) {
-    logger.debug(`Closing pull requests failed!, reason: ${e}`);
+    logger.debug(`Closing pull requests failed! reason: ${e}`);
   }
 };
 
@@ -554,7 +610,7 @@ export const getPullRequestReviews = async (
     });
     return reviews;
   } catch (e: unknown) {
-    logger.debug(`Fetching pull request reviews failed!, reason: ${e}`);
+    logger.debug(`Fetching pull request reviews failed! reason: ${e}`);
     return [];
   }
 };
@@ -585,7 +641,7 @@ export const getIssueByNumber = async (context: Context, issue_number: number) =
     });
     return issue;
   } catch (e: unknown) {
-    logger.debug(`Fetching issue failed!, reason: ${e}`);
+    logger.debug(`Fetching issue failed! reason: ${e}`);
     return;
   }
 };
@@ -597,7 +653,7 @@ export const getPullByNumber = async (context: Context, pull_number: number) => 
     const { data: pull } = await context.octokit.rest.pulls.get({ owner: payload.repository.owner.login, repo: payload.repository.name, pull_number });
     return pull;
   } catch (error) {
-    logger.debug(`Fetching pull failed!, reason: ${error}`);
+    logger.debug(`Fetching pull failed! reason: ${error}`);
     return;
   }
 };
@@ -657,7 +713,7 @@ export const getCommitsOnPullRequest = async (pullNumber: number) => {
     });
     return commits;
   } catch (e: unknown) {
-    logger.debug(`Fetching pull request commits failed!, reason: ${e}`);
+    logger.debug(`Fetching pull request commits failed! reason: ${e}`);
     return [];
   }
 };
@@ -687,4 +743,110 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
     }
   }
   return result;
+};
+
+// Strips out all links from the body of an issue or pull request and fetches the conversational context from each linked issue or pull request
+export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
+  const context = getBotContext();
+  const logger = getLogger();
+
+  const issue = await getIssueByNumber(context, issueNumber);
+
+  if (!issue) {
+    return `Failed to fetch using issueNumber: ${issueNumber}`;
+  }
+
+  if (!issue.body) {
+    return `No body found for issue: ${issueNumber}`;
+  }
+
+  const body = issue.body;
+  const linkedPRStreamlined: StreamlinedComment[] = [];
+  const linkedIssueStreamlined: StreamlinedComment[] = [];
+
+  const regex = /https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+)/gi;
+  const matches = body.match(regex);
+
+  if (matches) {
+    try {
+      const linkedIssues: number[] = [];
+      const linkedPrs: number[] = [];
+
+      // this finds refs via all patterns: #<issue number>, full url or [#25](url.to.issue)
+      const issueRef = issue.body.match(/(#(\d+)|https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+))/gi);
+
+      // if they exist, strip out the # or the url and push them to their arrays
+      if (issueRef) {
+        issueRef.forEach((issue) => {
+          if (issue.includes("#")) {
+            linkedIssues.push(Number(issue.slice(1)));
+          } else {
+            if (issue.split("/")[5] == "pull") {
+              linkedPrs.push(Number(issue.split("/")[6]));
+            } else linkedIssues.push(Number(issue.split("/")[6]));
+          }
+        });
+      } else {
+        logger.info(`No linked issues or prs found`);
+      }
+
+      if (linkedPrs.length > 0) {
+        for (let i = 0; i < linkedPrs.length; i++) {
+          const pr = await getPullByNumber(context, linkedPrs[i]);
+          if (pr) {
+            linkedPRStreamlined.push({
+              login: "system",
+              body: `=============== Pull Request #${pr.number}: ${pr.title} + ===============\n ${pr.body}}`,
+            });
+            const prComments = await getAllIssueComments(linkedPrs[i]);
+            const prCommentsRaw = await getAllIssueComments(linkedPrs[i], "raw");
+            prComments.forEach(async (comment, i) => {
+              if (comment.user.type == UserType.User || prCommentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
+                linkedPRStreamlined.push({
+                  login: comment.user.login,
+                  body: comment.body,
+                });
+              }
+            });
+          }
+        }
+      }
+
+      if (linkedIssues.length > 0) {
+        for (let i = 0; i < linkedIssues.length; i++) {
+          const issue = await getIssueByNumber(context, linkedIssues[i]);
+          if (issue) {
+            linkedIssueStreamlined.push({
+              login: "system",
+              body: `=============== Issue #${issue.number}: ${issue.title} + ===============\n ${issue.body} `,
+            });
+            const issueComments = await getAllIssueComments(linkedIssues[i]);
+            const issueCommentsRaw = await getAllIssueComments(linkedIssues[i], "raw");
+            issueComments.forEach(async (comment, i) => {
+              if (comment.user.type == UserType.User || issueCommentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
+                linkedIssueStreamlined.push({
+                  login: comment.user.login,
+                  body: comment.body,
+                });
+              }
+            });
+          }
+        }
+      }
+
+      return {
+        linkedIssues: linkedIssueStreamlined,
+        linkedPrs: linkedPRStreamlined,
+      };
+    } catch (error) {
+      logger.info(`Error getting linked issues or prs: ${error}`);
+      return `Error getting linked issues or prs: ${error}`;
+    }
+  } else {
+    logger.info(`No matches found`);
+    return {
+      linkedIssues: [],
+      linkedPrs: [],
+    };
+  }
 };

@@ -6,9 +6,9 @@ import { nullHandler } from "./shared";
 import { handleComment, issueClosedCallback, issueCreatedCallback, issueReopenedBlameCallback, issueReopenedCallback } from "./comment";
 import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
-import { incentivizeComments, incentivizeCreatorComment, incentivizePullRequestReviews } from "./payout";
 import { runOnPush, validateConfigChange } from "./push";
 import { findDuplicateOne } from "./issue";
+import { watchLabelChange } from "./label";
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_OPENED]: {
@@ -54,7 +54,7 @@ export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_CLOSED]: {
     pre: [nullHandler],
     action: [issueClosedCallback],
-    post: [incentivizeCreatorComment, incentivizeComments, incentivizePullRequestReviews],
+    post: [nullHandler],
   },
   [GithubEvent.PULL_REQUEST_OPENED]: {
     pre: [nullHandler],
@@ -69,6 +69,11 @@ export const processors: Record<string, Handler> = {
   [GithubEvent.PUSH_EVENT]: {
     pre: [nullHandler],
     action: [validateConfigChange, runOnPush],
+    post: [nullHandler],
+  },
+  [GithubEvent.LABEL_EDITED]: {
+    pre: [nullHandler],
+    action: [watchLabelChange],
     post: [nullHandler],
   },
 };
