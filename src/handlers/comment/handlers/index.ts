@@ -24,6 +24,7 @@ import {
   getAllIssueAssignEvents,
   calculateWeight,
   getAllPullRequests,
+  getAllPullRequestReviews,
 } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import {
@@ -248,8 +249,44 @@ export const issueReopenedBlameCallback = async (): Promise<void> => {
     }
   }
 
+  interface Blamed {
+    author: string;
+    count: number;
+    pr?: number[];
+  }
+
   if (pullDiff.files && pullDiff.files.length > 0) {
     logger.info(`Found ${pullDiff.files.length} files changed in commit ${matchingPull?.merge_commit_sha}`);
+  }
+
+  const pullReviewsMap: Record<number, string[]> = {};
+  const blamedHunters: Blamed[] = [];
+  const blamedReviewers: Blamed[] = [];
+
+  for (const pull of mergedPulls) {
+    const reviews = await getAllPullRequestReviews(context, pull.number);
+    const reviewers = reviews
+      .filter((review) => review.state === "APPROVED")
+      .map((review) => review.user?.login)
+      .filter((reviewer) => reviewer !== undefined) as string[];
+    if (reviewers.length) {
+      pullReviewsMap[pull.number] = reviewers;
+    }
+  }
+
+  for (const pullNumber of onlyPRsNeeded) {
+    const reviewers = pullReviewsMap[pullNumber];
+    if (reviewers) {
+      for (const reviewer of reviewers) {
+        const blame = blamedReviewers.find((b) => b.author === reviewer);
+        if (blame) {
+          blame.count += 1;
+          blame.pr?.push(pullNumber);
+        } else {
+          blamedReviewers.push({ author: reviewer || "", count: 1, pr: [pullNumber] });
+        }
+      }
+    }
   }
 
   const matchingSlice = matchingPull?.merge_commit_sha?.slice(0, 8);
@@ -257,43 +294,62 @@ export const issueReopenedBlameCallback = async (): Promise<void> => {
 
   const twoDotUrl = `<code>[${matchingSlice}..${currentSlice}](${repository.html_url}/compare/${matchingPull?.merge_commit_sha}..${currentCommitSha})</code>`;
 
-  interface Blamer {
-    author: string;
-    count: number;
-  }
+  const countNonWhitespaceChanges = (patch: string): number => {
+    const lines = patch.split("\n");
+    const changedLines = lines.filter((line) => line.startsWith("+") || line.startsWith("-"));
+    const count = changedLines.reduce((acc, line) => acc + line.slice(1).replace(/\s/g, "").length, 0);
 
-  const blamers: Blamer[] = [];
+    return count;
+  };
 
   for (const diff of diffs) {
     if (!diff.files) continue;
     for (const file of diff.files) {
-      const linesChanged = file.patch?.split("\n").filter((line) => line.startsWith("+")).length;
+      const charsChanged = countNonWhitespaceChanges(file.patch || "");
       const author = diff.base_commit?.author?.login;
-      const blamer = blamers.find((b) => b.author === author);
+      const blamer = blamedHunters.find((b) => b.author === author);
       if (blamer) {
-        blamer.count += linesChanged || 0;
+        blamer.count += charsChanged || 0;
       } else {
-        blamers.push({ author: author || "", count: linesChanged || 0 });
+        blamedHunters.push({ author: author || "", count: charsChanged || 0 });
       }
     }
   }
 
-  const advancedBlameTable = `
-  | **Blame** | **Count** | **%** |
-  | --- | --- | --- |
+  const generateHunterTable = (blamers: Blamed[]) => `
+  | **Blame** | **%** |
+  | --- | --- |
   ${Array.from(new Set(blamers))
-    .filter((blamer) => blamer.count > 0)
+    .filter((blamed) => blamed.count > 0)
     .sort((a, b) => b.count - a.count)
-    .map((blamer) => {
-      const linesChanged = blamer.count;
+    .map((blamed) => {
+      const linesChanged = blamed.count;
       const totalLinesChanged = blamers.reduce((acc, val) => acc + val.count, 0);
       const percent = Math.round((linesChanged / totalLinesChanged) * 100);
-      return `| ${blamer.author} | ${blamer.count} | ${percent}% |`;
+      return `| ${blamed.author} | ${percent}% |`;
     })
     .join("\n")}
   `;
 
-  const blameQuantifier = blamers.length > 1 ? "suspects" : "suspect";
+  const generateReviewerTable = (blamers: Blamed[]) => `
+  | **Blame** | **%** | PRs |
+  | --- | --- | --- |
+  ${Array.from(new Set(blamers))
+    .filter((blamed) => blamed.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .map((blamed) => {
+      const linesChanged = blamed.count;
+      const totalLinesChanged = blamers.reduce((acc, val) => acc + val.count, 0);
+      const percent = Math.round((linesChanged / totalLinesChanged) * 100);
+      return `| ${blamed.author} | ${percent}% | ${blamed.pr?.map((pr) => `[#${pr}](${repository.html_url}/pull/${pr})`).join(", ")} |`;
+    })
+    .join("\n")}
+  `;
+
+  const huntersTable = generateHunterTable(blamedHunters);
+  const reviewersTable = generateReviewerTable(blamedReviewers);
+
+  const blameQuantifier = blamedHunters.length > 1 ? "suspects" : "suspect";
 
   const comment = `
 <details>
@@ -309,13 +365,11 @@ ${onlyPRsNeeded
 <details>
 <summary>Merged Commits Since Issue Close</summary><br/>
 ${diffs
-  // @ts-expect-error - diff is unused
   .map((diff, i) => {
-    const fileLen = fileLens[i];
     const sha = mergedSHAs[i];
     const slice = sha?.slice(0, 7);
     const url = `${repository.html_url}/commit/${sha}`;
-    return `\n<code><a href="${url}">${slice}</a></code> - ${fileLen} files changed`;
+    return `\n<code><a href="${url}">${slice}</a></code> - ${diff.files?.length} files changed - ${repository.html_url}/compare/${sha}...${currentCommitSha}`;
   })
   .join("\n")}
 </details>
@@ -324,7 +378,13 @@ ${diffs
 <summary>Assigned Blame</summary><br/>
 
 The following ${blameQuantifier} may be responsible for breaking this issue:
-  ${advancedBlameTable}
+
+**Hunters**
+${huntersTable}
+
+**Reviewers**
+${reviewersTable}
+
 </details>
 
 <hr>
