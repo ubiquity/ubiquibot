@@ -77,7 +77,12 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
       key: process.env.SUPABASE_KEY ?? null,
     },
 
-    mode: { permitMaxPrice, disableAnalytics, incentiveMode, assistivePricing },
+    mode: {
+      permitMaxPrice,
+      disableAnalytics,
+      incentiveMode,
+      assistivePricing,
+    },
     command: commandSettings,
     assign: { maxConcurrentTasks: maxConcurrentTasks, staleTaskTime: ms(staleTaskTime) },
     sodium: { privateKey: keys.private, publicKey: keys.public },

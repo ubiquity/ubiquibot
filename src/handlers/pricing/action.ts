@@ -20,8 +20,8 @@ export async function handleParentIssue(labels: Label[]) {
   return runtime.logger.warn(GLOBAL_STRINGS.pricingDisabledOnParentIssues);
 }
 
-export function getMinLabel(labels: Label[]) {
-  return labels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b)).name;
+export function sortLabelsByValue(labels: Label[]) {
+  return labels.sort((a, b) => calculateLabelValue(a) - calculateLabelValue(b));
 }
 
 export async function handleTargetPriceLabel(
@@ -62,7 +62,7 @@ async function addPriceLabelToIssue(targetPriceLabel: string, assistivePricing: 
   await clearAllPriceLabelsOnIssue();
 
   const exist = await getLabel(targetPriceLabel);
-
+  console.trace({ exist, assistivePricing });
   if (assistivePricing && !exist) {
     logger.info("Assistive pricing is enabled, creating label...", { targetPriceLabel });
     await createLabel(targetPriceLabel, "price");

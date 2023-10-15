@@ -92,8 +92,7 @@ export async function addLabelToIssue(labelName: string) {
 
   const payload = context.payload as Payload;
   if (!payload.issue) {
-    runtime.logger.debug("Issue object is null");
-    return;
+    throw runtime.logger.error("Issue object is null");
   }
 
   try {

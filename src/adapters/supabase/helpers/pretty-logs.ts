@@ -42,9 +42,14 @@ interface Metadata {
   name?: string;
   [key: string]: any;
 }
-function logWithStack(type: keyof typeof prettyLogs, message: string, metadata?: Metadata) {
-  // console.trace(util.inspect(metadata, { showHidden: true, depth: null }));
+function logWithStack(type: keyof typeof prettyLogs, message: string, metadata?: Metadata | string) {
+  // FIXME: for errors this renders the stack error location correctly on GitHub comments but not in the logs.
+
   _log(type, message);
+  if (typeof metadata === "string") {
+    _log(type, metadata);
+    return;
+  }
   if (metadata) {
     let stack = metadata?.error?.stack || metadata?.stack;
     if (!stack) {

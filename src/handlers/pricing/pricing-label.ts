@@ -1,10 +1,9 @@
-import { LogReturn } from "../../adapters/supabase/helpers/tables/logs";
 import Runtime from "../../bindings/bot-runtime";
 import { clearAllPriceLabelsOnIssue } from "../../helpers";
-import { Label, Payload } from "../../types";
+import { Label, LabelFromConfig, Payload } from "../../types";
 import { handleLabelsAccess } from "../access";
 import { setPrice } from "../shared";
-import { isParentIssue, handleParentIssue, getMinLabel, handleTargetPriceLabel } from "./action";
+import { isParentIssue, handleParentIssue, sortLabelsByValue, handleTargetPriceLabel } from "./action";
 
 export async function pricingLabel() {
   const runtime = Runtime.getState();
@@ -24,19 +23,19 @@ export async function pricingLabel() {
     return logger.warn("No access to set labels");
 
   const { assistivePricing } = config.mode;
+  // console.trace({ assistivePricing })
 
   if (!labels) return logger.warn(`No labels to calculate price`);
 
+  const isRecognizedLabel = (label: Label, labelConfig: LabelFromConfig[]) =>
+    (typeof label === "string" || typeof label === "object") && labelConfig.some((item) => item.name === label.name);
+
   const recognizedTimeLabels: Label[] = labels.filter((label: Label) =>
-    typeof label === "string" || typeof label === "object"
-      ? config.price.timeLabels.some((item) => item.name === label.name)
-      : false
+    isRecognizedLabel(label, config.price.timeLabels)
   );
 
   const recognizedPriorityLabels: Label[] = labels.filter((label: Label) =>
-    typeof label === "string" || typeof label === "object"
-      ? config.price.priorityLabels.some((item) => item.name === label.name)
-      : false
+    isRecognizedLabel(label, config.price.priorityLabels)
   );
 
   if (!recognizedTimeLabels.length) {
@@ -48,19 +47,12 @@ export async function pricingLabel() {
     await clearAllPriceLabelsOnIssue();
   }
 
-  const minTimeLabel = getMinLabel(recognizedTimeLabels);
-  const minPriorityLabel = getMinLabel(recognizedPriorityLabels);
+  const minTimeLabel = sortLabelsByValue(recognizedTimeLabels).shift();
+  const minPriorityLabel = sortLabelsByValue(recognizedPriorityLabels).shift();
 
   if (!minTimeLabel || !minPriorityLabel) return logger.warn("Time or priority label is not defined");
 
   const targetPriceLabel = setPrice(minTimeLabel, minPriorityLabel);
-
-  if (targetPriceLabel instanceof LogReturn) {
-    // this didn't successfully set the price, instead it returned information about why it didn't
-    // because this is the first time i'm handling it this way, its possible im handling it incorrectly
-    console.trace("possible im handling this incorrectly");
-    return targetPriceLabel;
-  }
 
   if (targetPriceLabel) {
     await handleTargetPriceLabel(targetPriceLabel, labelNames, assistivePricing);

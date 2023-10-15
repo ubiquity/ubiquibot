@@ -16,24 +16,55 @@ const CONFIG_PATH = ".github/ubiquibot-config.yml";
 const KEY_NAME = "privateKeyEncrypted";
 const KEY_PREFIX = "HSK_";
 
-export async function getConfigSuperset(context: Context, type: "org" | "repo", filePath: string) {
-  try {
-    const payload = context.payload as Payload;
-    const repo = type === "org" ? CONFIG_REPO : payload.repository.name;
-    const owner = type === "org" ? payload.organization?.login : payload.repository.owner.login;
-    if (!repo || !owner) return null;
-    const { data } = await context.octokit.rest.repos.getContent({
-      owner,
-      repo,
-      path: filePath,
-      mediaType: {
-        format: "raw",
-      },
-    });
-    return data;
-  } catch (error: unknown) {
-    return null;
+export async function downloadConfig(context: Context, type: "org" | "repo") {
+  // try {
+  const payload = context.payload as Payload;
+
+  let repo;
+  let owner;
+
+  if (type === "org") {
+    repo = CONFIG_REPO;
+    owner = payload.organization?.login;
+    // if (!owner) {
+    // console.trace(
+    //   "Owner config was not found. Be sure to share the bot access with your `ubiquibot-config` repo in the owner organization."
+    // );
+    // }
+    owner = payload.repository.owner.login;
+  } else {
+    repo = payload.repository.name;
+    owner = payload.repository.owner.login;
   }
+
+  // console.trace({
+  // repo,
+  // owner,
+  // payload,
+  // });
+
+  if (!repo) {
+    // console.trace("Repository config was not found.");
+  } else if (!owner) {
+    // console.trace(
+    //   "Owner config was not found. Be sure to share the bot access with your `ubiquibot-config` repo in the owner organization."
+    // );
+  }
+
+  if (!repo || !owner) return null;
+
+  const { data } = await context.octokit.rest.repos.getContent({
+    owner,
+    repo,
+    path: CONFIG_PATH,
+    mediaType: {
+      format: "raw",
+    },
+  });
+  return data;
+  // } catch (error: unknown) {
+  //   return null;
+  // }
 }
 
 export interface MergedConfigs {
@@ -71,16 +102,15 @@ export async function getPrivateAndPublicKeys(
   cipherText: string,
   keys: { private: string | null; public: string | null }
 ) {
-  const logger = Runtime.getState().logger;
   await sodium.ready;
 
   const X25519_PRIVATE_KEY = process.env.X25519_PRIVATE_KEY;
   if (!X25519_PRIVATE_KEY) {
-    return logger.warn("X25519_PRIVATE_KEY is not defined");
+    return console.warn("X25519_PRIVATE_KEY is not defined");
   }
   keys.public = await getScalarKey(X25519_PRIVATE_KEY);
   if (!keys.public) {
-    return logger.warn("Public key is null");
+    return console.warn("Public key is null");
   }
   const binPub = sodium.from_base64(keys.public, sodium.base64_variants.URLSAFE_NO_PADDING);
   const binPriv = sodium.from_base64(X25519_PRIVATE_KEY, sodium.base64_variants.URLSAFE_NO_PADDING);
@@ -111,8 +141,8 @@ const mergeConfigs = (configs: MergedConfigs) => {
 };
 
 export async function getConfig(context: Context) {
-  const orgConfig = await getConfigSuperset(context, "org", CONFIG_PATH);
-  const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
+  const orgConfig = await downloadConfig(context, "org");
+  const repoConfig = await downloadConfig(context, "repo");
   const payload = context.payload as Payload;
 
   let parsedOrg: Config | null;
@@ -161,7 +191,10 @@ export async function getConfig(context: Context) {
   }
 
   const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
+  console.trace({ configs });
   const mergedConfigData: MergedConfig = mergeConfigs(configs);
+
+  console.trace({ mergedConfigData });
 
   const configData = {
     keys,

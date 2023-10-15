@@ -31,10 +31,11 @@ export const listLabelsForRepo = async (per_page?: number, page?: number): Promi
   throw new Error(`Failed to fetch lists of labels, code: ${res.status}`);
 };
 
-export const createLabel = async (name: string, labelType?: keyof typeof COLORS): Promise<void> => {
+export async function createLabel(name: string, labelType?: keyof typeof COLORS): Promise<void> {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const logger = runtime.logger;
+  // console.trace("createLabel", { name, labelType });
   const payload = context.payload as Payload;
   try {
     await context.octokit.rest.issues.createLabel({
@@ -46,9 +47,9 @@ export const createLabel = async (name: string, labelType?: keyof typeof COLORS)
   } catch (err: unknown) {
     logger.debug("Error creating a label: ", err);
   }
-};
+}
 
-export const getLabel = async (name: string): Promise<boolean> => {
+export async function getLabel(name: string): Promise<boolean> {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const logger = runtime.logger;
@@ -65,16 +66,16 @@ export const getLabel = async (name: string): Promise<boolean> => {
   }
 
   return false;
-};
+}
 
 // Function to update labels based on the base rate difference
-export const updateLabelsFromBaseRate = async (
+export async function updateLabelsFromBaseRate(
   owner: string,
   repo: string,
   context: Context,
   labels: Label[],
   previousBaseRate: number
-) => {
+) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   const config = runtime.botConfig;
@@ -142,4 +143,4 @@ export const updateLabelsFromBaseRate = async (
   } catch (error: unknown) {
     logger.error("Error updating labels", { error });
   }
-};
+}
