@@ -25,7 +25,7 @@ export async function checkPullRequests() {
     });
 
     // if pullRequestLinked is empty, continue
-    if (linkedIssue == "" || !pull.user || !linkedIssue) {
+    if (linkedIssue == null || !pull.user || !linkedIssue) {
       continue;
     }
 

@@ -2,7 +2,8 @@ import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
 import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
 import { IncentivesCalculationResult } from "./incentives-calculation";
-import { removePenalty, RewardsResponse } from "./shims";
+import { removePenalty } from "./shims";
+import { RewardsResponse } from "./handle-issue-closed";
 
 // Calculate the reward for the assignee
 export async function calculateIssueAssigneeReward(
@@ -19,7 +20,7 @@ export async function calculateIssueAssigneeReward(
     )
   ).mul(incentivesCalculation.multiplier);
   if (taskAmount.gt(incentivesCalculation.permitMaxPrice)) {
-    throw logger.info("Skipping to proceed the payment because task payout is higher than permitMaxPrice.");
+    throw logger.error("Skipping to proceed the payment because task payout is higher than permitMaxPrice.");
   }
 
   // if contributor has any penalty then deduct it from the task
@@ -30,7 +31,7 @@ export async function calculateIssueAssigneeReward(
   const networkId = incentivesCalculation.evmNetworkId;
   const address = incentivesCalculation.paymentToken;
 
-  await Runtime.getState().adapters.supabase.settlement.addDebit({ userId, amount, networkId, address });
+  await runtime.adapters.supabase.settlement.addDebit({ userId, amount, networkId, address });
 
   if (amount.gt(0)) {
     logger.info(`Deducting penalty from task`);
@@ -54,10 +55,8 @@ export async function calculateIssueAssigneeReward(
       {
         priceInDecimal: taskAmount,
         penaltyAmount: new Decimal(amount),
-        account: account || "0x",
-        user: "",
+        account: account,
         userId: incentivesCalculation.assignee.id,
-        debug: {},
       },
     ],
   };

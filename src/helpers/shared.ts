@@ -8,7 +8,7 @@ export function shouldSkip() {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const payload = context.payload as Payload;
-  const response = { stop: false, reason: "" };
+  const response = { stop: false, reason: null } as { stop: boolean; reason: string | null };
 
   if (contextNamesToSkip.includes(context.name)) {
     response.stop = true;

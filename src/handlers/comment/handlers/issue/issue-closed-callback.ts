@@ -34,7 +34,7 @@ export async function issueClosedCallback() {
   const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
   const pullRequestReviewersReward = await calculateReviewContributorRewards(calculateIncentives);
 
-  const { error } = await handleIssueClosed({
+  await handleIssueClosed({
     creatorReward,
     assigneeReward,
     conversationRewards,
@@ -44,8 +44,5 @@ export async function issueClosedCallback() {
     // owner: owner,
   });
 
-  if (error) {
-    throw logger.error(error);
-  }
   return logger.ok("Issue closed successfully");
 }

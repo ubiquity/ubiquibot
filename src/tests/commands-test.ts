@@ -3,7 +3,7 @@ import { execSync } from "child_process";
 import "dotenv/config";
 import { Octokit } from "octokit";
 import { Server } from "probot";
-import { RepositoryConfig } from "../types";
+import { Config } from "../types/config";
 import { afterAllHandler } from "./after-all-handler";
 import { beforeAllHandler } from "./before-all-handler";
 import { testSuite } from "./test-suite";
@@ -22,8 +22,8 @@ export const repo = process.env.TEST_REPOSITORY_NAME || "staging";
 // generate setters and getters for the following variables
 let octokitAdmin: Octokit;
 let octokitCollaborator: Octokit;
-let adminUsername = "";
-let collaboratorUsername = "";
+let adminUsername: string | null = null;
+let collaboratorUsername: string | null = null;
 let server: Server;
 
 export function getAdminUser(): Octokit {
@@ -38,13 +38,13 @@ export function getCollaboratorUser(): Octokit {
 export function setCollaboratorUser(value: Octokit) {
   octokitCollaborator = value;
 }
-export function getAdminUsername(): string {
+export function getAdminUsername(): string | null {
   return adminUsername;
 }
 export function setAdminUsername(value: string) {
   adminUsername = value;
 }
-export function getCollaboratorUsername(): string {
+export function getCollaboratorUsername(): string | null {
   return collaboratorUsername;
 }
 export function setCollaboratorUsername(value: string) {
@@ -57,19 +57,15 @@ export function setServer(value: Server) {
   server = value;
 }
 
-export const orgConfig: RepositoryConfig = {
+export const orgConfig: Config = {
   privateKeyEncrypted:
     "YU-tFJFczN3JPVoJu0pQKSbWoeiCFPjKiTXMoFnJxDDxUNX-BBXc6ZHkcQcHVjdOd6ZcEnU1o2jU3F-i05mGJPmhF2rhQYXkNlxu5U5fZMMcgxJ9INhAmktzRBUxWncg4L1HOalZIoQ7gm3nk1a84g",
 };
 
 export const CustomOctokit = Octokit.defaults({
   throttle: {
-    onRateLimit: () => {
-      return true;
-    },
-    onSecondaryRateLimit: () => {
-      return true;
-    },
+    onRateLimit: () => true,
+    onSecondaryRateLimit: () => true,
   },
 });
 

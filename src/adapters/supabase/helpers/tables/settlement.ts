@@ -1,7 +1,7 @@
 import { PostgrestResponse, SupabaseClient } from "@supabase/supabase-js";
 import Decimal from "decimal.js";
 import { GeneratedPermit } from "../../../../helpers/permit";
-import { Comment, Organization } from "../../../../types/payload";
+import { Comment, Payload } from "../../../../types/payload";
 import { Database } from "../../types/database";
 import { Super } from "./super";
 
@@ -22,7 +22,7 @@ type AddCreditWithPermit = {
   comment: Comment;
   permit?: GeneratedPermit;
   networkId?: number;
-  organization?: Organization; // should be organization type from GitHub.
+  organization?: Payload["organization"];
 };
 
 export class Settlement extends Super {

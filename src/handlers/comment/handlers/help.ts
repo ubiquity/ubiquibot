@@ -8,7 +8,7 @@ export const listAvailableCommands = async (body: string) => {
   const runtime = Runtime.getState();
   const { payload: _payload } = runtime.eventContext;
   const logger = runtime.logger;
-  if (body != IssueCommentCommand.HELP && body.replace(/`/g, "") != IssueCommentCommand.HELP) {
+  if (body != IssueCommentCommand.HELP) {
     return logger.info("Skipping to list available commands.", { body });
   }
   const payload = _payload as Payload;
@@ -32,9 +32,9 @@ export function generateHelpMenu() {
   const commands = userCommands();
   commands.map(
     (command) =>
-      (helpMenu += `| \`${command.id}\` | ${breakSentences(command.description)} | ${breakLongString(
-        command.example || ""
-      )} |\n`) // add to help menu
+      (helpMenu += `| \`${command.id}\` | ${breakSentences(command.description)} | ${
+        command.example && breakLongString(command.example)
+      } |\n`) // add to help menu
   );
 
   if (!startEnabled)
@@ -44,28 +44,27 @@ export function generateHelpMenu() {
 }
 
 function breakLongString(str: string, maxLen = 24) {
-  let newStr = "";
+  const newStr = [] as string[];
   let spaceIndex = str.lastIndexOf(" ", maxLen);
 
   while (str.length > maxLen) {
     if (spaceIndex > -1) {
-      newStr += str.slice(0, spaceIndex) + "<br>";
+      newStr.push(str.slice(0, spaceIndex));
       str = str.slice(spaceIndex + 1);
     } else {
       const forcedBreakIndex = str.slice(0, maxLen).lastIndexOf(" ");
       if (forcedBreakIndex !== -1) {
-        newStr += str.slice(0, forcedBreakIndex) + "<br>";
+        newStr.push(str.slice(0, forcedBreakIndex));
         str = str.slice(forcedBreakIndex + 1);
       } else {
-        newStr += str.slice(0, maxLen) + "<br>";
+        newStr.push(str.slice(0, maxLen));
         str = str.slice(maxLen);
       }
     }
     spaceIndex = str.lastIndexOf(" ", maxLen);
   }
 
-  newStr += str;
-  return newStr;
+  return newStr.join("<br>").concat(str);
 }
 
 function breakSentences(str: string) {

@@ -7,7 +7,7 @@ import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address"
 import { calculateRewardValue } from "./calculate-reward-value";
 import { IncentivesCalculationResult } from "./incentives-calculation";
 import { ItemsToExclude } from "./post";
-import { RewardsResponse } from "./shims";
+import { RewardsResponse } from "./handle-issue-closed";
 
 export async function calculateReviewContributorRewards(
   incentivesCalculation: IncentivesCalculationResult
@@ -105,7 +105,7 @@ export async function calculateReviewContributorRewards(
     }
     logger.info("Comment parsed for the user", { _user, commentsByNode, rewardValue: rewardValue.toString() });
     const account = await getWalletAddress(user.id);
-    const priceInDecimal = rewardValue.mul(incentivesCalculation.baseMultiplier);
+    const priceInDecimal = rewardValue.mul(incentivesCalculation.priceMultiplier);
     if (priceInDecimal.gt(incentivesCalculation.permitMaxPrice)) {
       logger.warn("Skipping comment reward for user because reward is higher than payment permit max price", { _user });
       continue;
@@ -127,5 +127,5 @@ export async function calculateReviewContributorRewards(
   logger.info(`Permit url generated for pull request reviewers.`, { reward });
   logger.info(`Skipping to generate a permit url for missing accounts.`, { fallbackReward });
 
-  return { title, reward, fallbackReward };
+  return { title, reward, fallbackReward, userId: parseInt(assignee.id), username: assignee.login };
 }

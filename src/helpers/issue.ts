@@ -3,6 +3,7 @@ import {
   AssignEvent,
   Comment,
   HandlerReturnValuesNoVoid,
+  Issue,
   IssueType,
   Payload,
   StreamlinedComment,
@@ -12,47 +13,45 @@ import { checkRateLimitGit } from "../utils";
 import Runtime from "../bindings/bot-runtime";
 import { LogReturn } from "../adapters/supabase";
 
+type PromiseType<T> = T extends Promise<infer U> ? U : never;
+
 export async function getAllIssueEvents() {
+  type Event = PromiseType<ReturnType<typeof context.octokit.issues.listEvents>>["data"][0];
   const runtime = Runtime.getState();
-  const logger = runtime.logger;
   const context = runtime.eventContext;
 
   const payload = context.payload as Payload;
   if (!payload.issue) return;
 
   let shouldFetch = true;
-  let page_number = 1;
-  const events = [];
+  let page = 1;
 
-  try {
-    while (shouldFetch) {
-      // Fetch issue events
+  const events = [] as Event[];
 
-      const repo = payload.repository.name;
-      const owner = payload.repository.owner.login;
+  while (shouldFetch) {
+    // Fetch issue events
 
-      const response = await context.octokit.issues.listEvents({
-        owner: owner,
-        repo: repo,
-        issue_number: payload.issue.number,
-        per_page: 100,
-        page: page_number,
-      });
+    const repo = payload.repository.name;
+    const owner = payload.repository.owner.login;
 
-      await checkRateLimitGit(response?.headers);
+    const response = await context.octokit.issues.listEvents({
+      owner: owner,
+      repo: repo,
+      issue_number: payload.issue.number,
+      per_page: 100,
+      page: page,
+    });
 
-      if (response?.data?.length > 0) {
-        events.push(...response.data);
-        page_number++;
-      } else {
-        shouldFetch = false;
-      }
+    await checkRateLimitGit(response?.headers);
+
+    if (response.data.length > 0) {
+      events.push(...(response.data as Event[]));
+      page++;
+    } else {
+      shouldFetch = false;
     }
-  } catch (e: unknown) {
-    shouldFetch = false;
-    logger.error("Getting all issue events failed", e);
-    return null;
   }
+
   return events;
 }
 
@@ -111,7 +110,7 @@ export async function addLabelToIssue(labelName: string) {
 
 export async function listIssuesForRepo(
   state: "open" | "closed" | "all" = "open",
-  per_page = 30,
+  per_page = 100,
   page = 1,
   sort: "created" | "updated" | "comments" = "created",
   direction: "desc" | "asc" = "desc"
@@ -140,12 +139,12 @@ export async function listIssuesForRepo(
 }
 
 export async function listAllIssuesForRepo(state: "open" | "closed" | "all" = "open") {
-  const issuesArr = [];
+  const issuesArr = [] as Issue[];
   const perPage = 100;
   let fetchDone = false;
   let curPage = 1;
   while (!fetchDone) {
-    const issues = await listIssuesForRepo(state, perPage, curPage);
+    const issues = (await listIssuesForRepo(state, perPage, curPage)) as Issue[];
 
     // push the objects to array
     issuesArr.push(...issues);
@@ -201,7 +200,7 @@ export async function updateCommentOfIssue(message: HandlerReturnValuesNoVoid, i
       repo: payload.repository.name,
       issue_number: issueNumber,
       since: replyTo.created_at,
-      per_page: 30,
+      per_page: 100,
     });
 
     const commentToEdit = comments.data.find((comment) => {
@@ -281,32 +280,29 @@ export async function getIssueDescription(
 
   const payload = context.payload as Payload;
 
-  let result = "";
-  try {
-    const response = await context.octokit.rest.issues.get({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: issueNumber,
-      mediaType: {
-        format,
-      },
-    });
+  const response = await context.octokit.rest.issues.get({
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    issue_number: issueNumber,
+    mediaType: {
+      format,
+    },
+  });
 
-    await checkRateLimitGit(response?.headers);
-    switch (format) {
-      case "raw":
-        result = response.data.body ?? "";
-        break;
-      case "html":
-        result = response.data.body_html ?? "";
-        break;
-      case "text":
-        result = response.data.body_text ?? "";
-        break;
-    }
-  } catch (e: unknown) {
-    runtime.logger.debug("Getting issue description failed!", e);
+  await checkRateLimitGit(response?.headers);
+
+  let result = response.data.body;
+
+  if (format === "html") {
+    result = response.data.body_html;
+  } else if (format === "text") {
+    result = response.data.body_text;
   }
+
+  if (!result) {
+    throw runtime.logger.error("Issue description is empty");
+  }
+
   return result;
 }
 
@@ -595,7 +591,8 @@ export async function removeLabel(name: string) {
 }
 
 export async function getAllPullRequests(context: Context, state: "open" | "closed" | "all" = "open") {
-  const prArr = [];
+  type Pulls = PromiseType<ReturnType<typeof context.octokit.rest.pulls.list>>["data"][0];
+  const prArr = [] as Pulls[];
   let fetchDone = false;
   const perPage = 100;
   let curPage = 1;
@@ -617,22 +614,15 @@ export async function getPullRequests(
   per_page: number,
   page: number
 ) {
-  const runtime = Runtime.getState();
-
   const payload = context.payload as Payload;
-  try {
-    const { data: pulls } = await context.octokit.rest.pulls.list({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      state,
-      per_page,
-      page,
-    });
-    return pulls;
-  } catch (e: unknown) {
-    runtime.logger.debug("Fetching pull requests failed!", e);
-    return [];
-  }
+  const { data: pulls } = await context.octokit.rest.pulls.list({
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    state,
+    per_page,
+    page,
+  });
+  return pulls;
 }
 
 export async function closePullRequest(pull_number: number) {
@@ -657,9 +647,10 @@ export async function getAllPullRequestReviews(
   pull_number: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ) {
-  const prArr = [];
+  type Reviews = PromiseType<ReturnType<typeof context.octokit.rest.pulls.listReviews>>["data"][0];
+  const prArr = [] as Reviews[];
   let fetchDone = false;
-  const perPage = 30;
+  const perPage = 100;
   let curPage = 1;
   while (!fetchDone) {
     const prs = await getPullRequestReviews(context, pull_number, perPage, curPage, format);
@@ -748,9 +739,12 @@ export async function getPullByNumber(context: Context, pull: number) {
 
 // Get issues assigned to a username
 export async function getAssignedIssues(username: string) {
-  const issuesArr = [];
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  type Issues = PromiseType<ReturnType<typeof context.octokit.issues.listForRepo>>["data"][0];
+  const issuesArr = [] as Issues[];
   let fetchDone = false;
-  const perPage = 30;
+  const perPage = 100;
   let curPage = 1;
   while (!fetchDone) {
     const issues = await listIssuesForRepo(IssueType.OPEN, perPage, curPage);
@@ -817,24 +811,26 @@ export async function getAvailableOpenedPullRequests(username: string) {
   const { timeRangeForMaxIssue, timeRangeForMaxIssueEnabled } = unassignConfig;
   if (!timeRangeForMaxIssueEnabled) return [];
 
-  const opened_prs = await getOpenedPullRequests(username);
+  const openedPullRequests = await getOpenedPullRequests(username);
+  const result = [] as typeof openedPullRequests;
 
-  const result = [];
-
-  for (let i = 0; i < opened_prs.length; i++) {
-    const pr = opened_prs[i];
-    const reviews = await getAllPullRequestReviews(context, pr.number);
+  for (let i = 0; i < openedPullRequests.length; i++) {
+    const openedPullRequest = openedPullRequests[i];
+    const reviews = await getAllPullRequestReviews(context, openedPullRequest.number);
 
     if (reviews.length > 0) {
       const approvedReviews = reviews.find((review) => review.state === "APPROVED");
-      if (approvedReviews) result.push(pr);
+      if (approvedReviews) {
+        result.push(openedPullRequest);
+      }
     }
 
     if (
       reviews.length === 0 &&
-      (new Date().getTime() - new Date(pr.created_at).getTime()) / (1000 * 60 * 60) >= timeRangeForMaxIssue
+      (new Date().getTime() - new Date(openedPullRequest.created_at).getTime()) / (1000 * 60 * 60) >=
+        timeRangeForMaxIssue
     ) {
-      result.push(pr);
+      result.push(openedPullRequest);
     }
   }
   return result;

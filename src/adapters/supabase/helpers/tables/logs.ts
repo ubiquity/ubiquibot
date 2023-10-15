@@ -226,9 +226,9 @@ export class Logs extends Super {
       warn: "!", // ! text in orange
       // info: "#", // # text in gray
       // debug: "@@@@",// @@ text in purple (and bold)@@
-      // error: "",
-      // warn: "",
-      // info: "",
+      // error: null,
+      // warn: null,
+      // info: null,
       // http: "#",
       verbose: "+",
       // debug: "#",
@@ -300,7 +300,7 @@ export class Logs extends Super {
       return {
         message: obj.message,
         name: obj.name,
-        stack: obj.stack ? obj.stack.split("\n") : "",
+        stack: obj.stack ? obj.stack.split("\n") : null,
       };
     } else if (typeof obj === "object" && obj !== null) {
       const keys = Object.keys(obj);

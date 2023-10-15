@@ -166,7 +166,7 @@ export function colorizeText(text: string, color: keyof typeof colors): string {
   return colors[color].concat(text).concat(colors.reset);
 }
 
-export function formatStackTrace(stack: string, linesToRemove = 0, prefix = ""): string {
+export function formatStackTrace(stack: string, linesToRemove = 0, prefix = null): string {
   const lines = stack.split("\n");
   for (let i = 0; i < linesToRemove; i++) {
     lines.shift(); // Remove the top line

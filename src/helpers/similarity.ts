@@ -6,21 +6,21 @@ import { backOff } from "exponential-backoff";
 import { Issue } from "../types";
 
 export async function extractImportantWords(issue: Issue): Promise<string[]> {
-  const res = await getAnswerFromChatGPT(
-    "",
+  const res = await getAnswerFromOpenAI(
+    null,
     `${
       process.env.CHATGPT_USER_PROMPT_FOR_IMPORTANT_WORDS ||
       "I need your help to find important words (e.g. unique adjectives) from github issue below and I want to parse them easily so please separate them using #(No other contexts needed). Please separate the words by # so I can parse them easily. Please answer simply as I only need the important words. Here is the issue content.\n"
     } '${`Issue title: ${issue.title}\nIssue content: ${issue.body}`}'`,
     parseFloat(process.env.IMPORTANT_WORDS_AI_TEMPERATURE || "0")
   );
-  if (res === "") return [];
+  if (res === null) return [];
   return res.split(/[,# ]/);
 }
 
 export async function measureSimilarity(first: Issue, second: Issue): Promise<number> {
-  const res = await getAnswerFromChatGPT(
-    "",
+  const res = await getAnswerFromOpenAI(
+    null,
     `${(
       process.env.CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY ||
       'I have two github issues and I need to measure the possibility of the 2 issues are the same content (I need to parse the % so other contents are not needed and give me only the number in %).\n Give me in number format and add % after the number.\nDo not tell other things since I only need the number (e.g. 85%). Here are two issues:\n 1. "%first%"\n2. "%second%"'
@@ -48,12 +48,12 @@ const ChoicesSchema = Type.Object({
 
 type Choices = Static<typeof ChoicesSchema>;
 
-export const getAnswerFromChatGPT = async (
-  systemPrompt: string,
+export async function getAnswerFromOpenAI(
+  systemPrompt: string | null,
   userPrompt: string,
   temperature = 0,
   max_tokens = 1500
-): Promise<string> => {
+): Promise<string> {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   const body = JSON.stringify({
@@ -93,18 +93,15 @@ export const getAnswerFromChatGPT = async (
     const validate = ajv.compile(ChoicesSchema);
     const valid = validate(data);
     if (!valid) {
-      logger.error(`Error occurred from OpenAI`);
-      return "";
+      throw logger.error(`Error occurred from OpenAI`);
     }
     const { choices: choice } = data;
     if (choice.length <= 0) {
-      logger.error(`No result from OpenAI`);
-      return "";
+      throw logger.error(`No result from OpenAI`);
     }
     const answer = choice[0].message.content;
     return answer;
   } catch (error) {
-    logger.error("Error occurred from OpenAI", error);
-    return "";
+    throw logger.error("Error occurred from OpenAI", error);
   }
-};
+}

@@ -20,24 +20,17 @@ export async function multiplier(body: string) {
   const sender = payload.sender.login;
   const repo = payload.repository;
   const comment = payload.comment;
-
   if (!comment) return logger.info(`Skipping '/multiplier' because of no comment instance`);
-
   const issue = payload.issue;
-
   logger.info("Running '/multiplier' command handler", { sender });
-
   if (!issue) return logger.info(`Skipping '/multiplier' because of no issue instance`);
-
   const regex = /(".*?"|[^"\s]+)(?=\s*|\s*$)/g;
-
   const matches = body.match(regex);
-
   matches?.shift();
 
   if (matches) {
     let taskMultiplier = 1;
-    let username = "";
+    let username;
     let reason = "";
 
     for (const part of matches) {
@@ -78,25 +71,35 @@ export async function multiplier(body: string) {
         );
       }
     }
-    logger.info(
-      `Upserting to the wallet table, username: ${username}, taskMultiplier: ${taskMultiplier}, reason: ${reason}}`
-    );
+    logger.info("Upserting to the wallet table", { username, taskMultiplier, reason });
 
     const { access } = Runtime.getState().adapters.supabase;
     await access.upsertMultiplier(payload.sender.id, taskMultiplier, reason, comment);
 
     if (taskMultiplier > 1) {
-      return `Successfully changed the payout multiplier for @${username} to ${taskMultiplier}. The reason ${
-        reason ? `provided is "${reason}"` : "is not provided"
-      }. This feature is designed to limit the contributor's compensation for any task on the current repository due to other compensation structures (i.e. salary.) are you sure you want to use a price multiplier above 1?`;
+      return logger.ok(
+        "Successfully changed the payout multiplier. \
+        This feature is designed to limit the contributor's compensation \
+        for any task on the current repository \
+        due to other compensation structures (i.e. salary.) \
+        are you sure you want to use a price multiplier above 1?",
+        {
+          username,
+          taskMultiplier,
+          reason,
+        }
+      );
     } else {
-      return `Successfully changed the payout multiplier for @${username} to ${taskMultiplier}. The reason ${
-        reason ? `provided is "${reason}"` : "is not provided"
-      }.`;
+      return logger.ok("Successfully changed the payout multiplier", {
+        username,
+        taskMultiplier,
+        reason,
+      });
     }
   } else {
-    logger.error("Invalid body for taskMultiplier command");
-    return `Invalid syntax for wallet command \n example usage: "/multiplier @user 0.5 'Multiplier reason'"`;
+    return logger.error(
+      "Invalid body for taskMultiplier command. Example usage: /multiplier @user 0.5 'Multiplier reason'"
+    );
   }
 }
 

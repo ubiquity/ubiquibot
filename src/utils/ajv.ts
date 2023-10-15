@@ -46,7 +46,7 @@ export function validate(
       error: `${ajv.errorsText()}. ${
         additionalProperties && additionalProperties.length > 0
           ? `Unnecessary properties: ${additionalProperties.join(", ")}`
-          : ""
+          : null
       }`,
     };
   }

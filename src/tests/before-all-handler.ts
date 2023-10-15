@@ -34,10 +34,15 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
     setAdminUsername(data.login);
 
     // check if the user is admin
+    const adminUsername = getAdminUsername();
+    if (!adminUsername) {
+      throw new Error("TEST_ADMIN_PAT is not admin");
+    }
+
     const { data: data1 } = await getAdminUser().rest.repos.getCollaboratorPermissionLevel({
       repo,
       owner,
-      username: getAdminUsername(),
+      username: adminUsername,
     });
     if (data1.permission !== "admin") {
       throw new Error("TEST_ADMIN_PAT is not admin");
@@ -54,10 +59,14 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
     setCollaboratorUsername(data2.login);
 
     // check if the user is outside collaborator
+    const collaboratorUsername = getCollaboratorUsername();
+    if (!collaboratorUsername) {
+      throw new Error("TEST_OUTSIDE_COLLABORATOR_PAT is not outside collaborator");
+    }
     const { data: data3 } = await getAdminUser().rest.repos.getCollaboratorPermissionLevel({
       repo,
       owner,
-      username: getCollaboratorUsername(),
+      username: collaboratorUsername,
     });
     if (data3.permission === "admin" || data3.permission === "write") {
       throw new Error("TEST_OUTSIDE_COLLABORATOR_PAT is not outside collaborator");

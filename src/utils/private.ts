@@ -1,29 +1,27 @@
-import _sodium from "libsodium-wrappers";
+import sodium from "libsodium-wrappers";
+import merge from "lodash/merge";
+import { Context } from "probot";
 import YAML from "yaml";
 import { MergedConfig, Payload } from "../types";
-import { Context } from "probot";
-import merge from "lodash/merge";
 
+import Runtime from "../bindings/bot-runtime";
 import { DefaultConfig } from "../configs";
-import { validate } from "./ajv";
-import { Config, RepositoryConfig, ConfigSchema } from "../types";
 import { upsertLastCommentToIssue } from "../helpers/issue";
+import { ConfigSchema } from "../types";
+import { validate } from "./ajv";
+import { Config } from "../types/config";
 
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
 const KEY_NAME = "privateKeyEncrypted";
 const KEY_PREFIX = "HSK_";
 
-export const getConfigSuperset = async (
-  context: Context,
-  type: "org" | "repo",
-  filePath: string
-): Promise<string | undefined> => {
+export async function getConfigSuperset(context: Context, type: "org" | "repo", filePath: string) {
   try {
     const payload = context.payload as Payload;
     const repo = type === "org" ? CONFIG_REPO : payload.repository.name;
     const owner = type === "org" ? payload.organization?.login : payload.repository.owner.login;
-    if (!repo || !owner) return undefined;
+    if (!repo || !owner) return null;
     const { data } = await context.octokit.rest.repos.getContent({
       owner,
       repo,
@@ -32,29 +30,30 @@ export const getConfigSuperset = async (
         format: "raw",
       },
     });
-    return data as unknown as string;
+    return data;
   } catch (error: unknown) {
-    return undefined;
+    return null;
   }
-};
+}
 
 export interface MergedConfigs {
-  parsedRepo: RepositoryConfig | undefined;
-  parsedOrg: RepositoryConfig | undefined;
+  parsedRepo: Config | null;
+  parsedOrg: Config | null;
   parsedDefault: MergedConfig;
 }
 
-export const parseYAML = (data?: string): Config | undefined => {
+export function parseYAML(data?: string) {
   try {
     if (data) {
-      const parsedData = YAML.parse(data);
-      return parsedData ?? undefined;
+      const parsedData = YAML.parse(data) as Config;
+      return parsedData ?? null;
     }
-    return undefined;
   } catch (error) {
-    return undefined;
+    const logger = Runtime.getState().logger;
+    logger.error("Failed to parse YAML", { error });
   }
-};
+  return null;
+}
 
 export const getOrgAndRepoFromPath = (path: string) => {
   const parts = path.split("/");
@@ -68,45 +67,44 @@ export const getOrgAndRepoFromPath = (path: string) => {
   return { org, repo };
 };
 
-export const getPrivateKey = async (cipherText: string): Promise<string | undefined> => {
-  try {
-    await _sodium.ready;
-    const sodium = _sodium;
+export async function getPrivateAndPublicKeys(
+  cipherText: string,
+  keys: { private: string | null; public: string | null }
+) {
+  const logger = Runtime.getState().logger;
+  await sodium.ready;
 
-    const privateKey = process.env.X25519_PRIVATE_KEY;
-    const publicKey = await getScalarKey(privateKey);
-
-    if (!publicKey || !privateKey) {
-      return undefined;
-    }
-
-    const binPub = sodium.from_base64(publicKey, sodium.base64_variants.URLSAFE_NO_PADDING);
-    const binPriv = sodium.from_base64(privateKey, sodium.base64_variants.URLSAFE_NO_PADDING);
-    const binCipher = sodium.from_base64(cipherText, sodium.base64_variants.URLSAFE_NO_PADDING);
-
-    let walletPrivateKey: string | undefined = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
-    walletPrivateKey = walletPrivateKey.replace(KEY_PREFIX, "");
-    return walletPrivateKey;
-  } catch (error: unknown) {
-    return undefined;
+  const X25519_PRIVATE_KEY = process.env.X25519_PRIVATE_KEY;
+  if (!X25519_PRIVATE_KEY) {
+    return logger.warn("X25519_PRIVATE_KEY is not defined");
   }
-};
-
-export const getScalarKey = async (X25519_PRIVATE_KEY: string | undefined): Promise<string | undefined> => {
-  try {
-    if (X25519_PRIVATE_KEY !== undefined) {
-      await _sodium.ready;
-      const sodium = _sodium;
-
-      const binPriv = sodium.from_base64(X25519_PRIVATE_KEY, sodium.base64_variants.URLSAFE_NO_PADDING);
-      const scalerPub = sodium.crypto_scalarmult_base(binPriv, "base64");
-      return scalerPub;
-    }
-    return undefined;
-  } catch (error: unknown) {
-    return undefined;
+  keys.public = await getScalarKey(X25519_PRIVATE_KEY);
+  if (!keys.public) {
+    return logger.warn("Public key is null");
   }
-};
+  const binPub = sodium.from_base64(keys.public, sodium.base64_variants.URLSAFE_NO_PADDING);
+  const binPriv = sodium.from_base64(X25519_PRIVATE_KEY, sodium.base64_variants.URLSAFE_NO_PADDING);
+  const binCipher = sodium.from_base64(cipherText, sodium.base64_variants.URLSAFE_NO_PADDING);
+
+  const walletPrivateKey: string | null = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
+  keys.private = walletPrivateKey?.replace(KEY_PREFIX, "");
+
+  return keys;
+}
+
+export async function getScalarKey(X25519_PRIVATE_KEY: string) {
+  const logger = Runtime.getState().logger;
+  if (X25519_PRIVATE_KEY !== null) {
+    await sodium.ready;
+
+    const binPriv = sodium.from_base64(X25519_PRIVATE_KEY, sodium.base64_variants.URLSAFE_NO_PADDING);
+    const scalerPub = sodium.crypto_scalarmult_base(binPriv, "base64");
+    return scalerPub;
+  } else {
+    logger.warn("X25519_PRIVATE_KEY is null");
+    return null;
+  }
+}
 
 const mergeConfigs = (configs: MergedConfigs) => {
   return merge({}, configs.parsedDefault, configs.parsedOrg, configs.parsedRepo);
@@ -117,7 +115,13 @@ export async function getConfig(context: Context) {
   const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
   const payload = context.payload as Payload;
 
-  const parsedOrg: RepositoryConfig | undefined = parseYAML(orgConfig);
+  let parsedOrg: Config | null;
+
+  if (typeof orgConfig === "string") {
+    parsedOrg = parseYAML(orgConfig);
+  } else {
+    parsedOrg = null;
+  }
 
   if (parsedOrg) {
     const { valid, error } = validate(ConfigSchema, parsedOrg);
@@ -127,7 +131,13 @@ export async function getConfig(context: Context) {
       throw err;
     }
   }
-  const parsedRepo: RepositoryConfig | undefined = parseYAML(repoConfig);
+
+  let parsedRepo: Config | null;
+  if (typeof repoConfig === "string") {
+    parsedRepo = parseYAML(repoConfig);
+  } else {
+    parsedRepo = null;
+  }
 
   if (parsedRepo) {
     const { valid, error } = validate(ConfigSchema, parsedRepo);
@@ -139,46 +149,23 @@ export async function getConfig(context: Context) {
   }
   const parsedDefault: MergedConfig = DefaultConfig;
 
-  let privateKeyDecrypted;
+  const keys = { private: null, public: null } as {
+    private: string | null;
+    public: string | null;
+  };
+
   if (parsedRepo && parsedRepo[KEY_NAME]) {
-    privateKeyDecrypted = await getPrivateKey(parsedRepo[KEY_NAME]);
+    await getPrivateAndPublicKeys(parsedRepo[KEY_NAME], keys);
   } else if (parsedOrg && parsedOrg[KEY_NAME]) {
-    privateKeyDecrypted = await getPrivateKey(parsedOrg[KEY_NAME]);
-  } else {
-    privateKeyDecrypted = undefined;
+    await getPrivateAndPublicKeys(parsedOrg[KEY_NAME], keys);
   }
 
   const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
   const mergedConfigData: MergedConfig = mergeConfigs(configs);
 
   const configData = {
-    assistivePricing: mergedConfigData.assistivePricing,
-    baseMultiplier: mergedConfigData.priceMultiplier,
-    commandSettings: mergedConfigData.commandSettings,
-    defaultLabels: mergedConfigData.defaultLabels,
-    disableAnalytics: mergedConfigData.disableAnalytics,
-    evmNetworkId: mergedConfigData.evmNetworkId,
-    incentiveMode: mergedConfigData.commentIncentives,
-    incentives: mergedConfigData.incentives,
-    issueCreatorMultiplier: mergedConfigData.issueCreatorMultiplier,
-    maxConcurrentTasks: mergedConfigData.maxConcurrentAssigns,
-    newContributorGreeting: mergedConfigData.newContributorGreeting,
-    openAIKey: mergedConfigData.openAIKey,
-    openAITokenLimit: mergedConfigData.openAITokenLimit,
-    permitMaxPrice: mergedConfigData.permitMaxPrice,
-    priorityLabels: mergedConfigData.priorityLabels,
-    privateKey: privateKeyDecrypted ?? "",
-    promotionComment: mergedConfigData.promotionComment,
-    publicAccessControl: mergedConfigData.publicAccessControl,
-    registerWalletWithVerification: mergedConfigData.registerWalletWithVerification,
-    staleTaskTime: mergedConfigData.staleTaskTime,
-    timeLabels: mergedConfigData.timeLabels,
-    staleBountyTime: mergedConfigData.staleBountyTime,
-    timeRangeForMaxIssue: mergedConfigData.timeRangeForMaxIssue,
-    timeRangeForMaxIssueEnabled: mergedConfigData.timeRangeForMaxIssueEnabled,
-    permitBaseUrl: mergedConfigData.permitBaseUrl,
-    followUpTime: mergedConfigData.followUpTime,
-    disqualifyTime: mergedConfigData.disqualifyTime,
+    keys,
+    ...mergedConfigData,
   };
 
   return configData;

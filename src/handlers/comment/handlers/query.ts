@@ -47,19 +47,19 @@ export async function query(body: string) {
   return messageBuffer.join("");
 
   function appendToMarkdownTableBody(data: Record<string, any>, parentKey = ""): string {
-    let table = "";
+    const tableStringBuffer = [] as string[];
 
     for (const key in data) {
-      const decamelizedKey = _.startCase(_.toLower(key));
+      const deCamelKey = _.startCase(_.toLower(key));
       const value = data[key];
       if (typeof value === "object" && value !== null) {
-        table += appendToMarkdownTableBody(value as Record<string, any>, `${parentKey}${decamelizedKey} - `);
+        tableStringBuffer.push(appendToMarkdownTableBody(value as Record<string, any>, `${parentKey}${deCamelKey} - `));
       } else {
-        table += `| ${parentKey}${decamelizedKey} | ${value} |\n`; // Table row
+        tableStringBuffer.push(`| ${parentKey}${deCamelKey} | ${value} |\n`); // Table row
       }
     }
 
-    return table;
+    return tableStringBuffer.join("");
   }
 }
 

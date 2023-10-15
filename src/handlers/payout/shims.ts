@@ -28,17 +28,3 @@ export async function removePenalty({ userId, amount, node }: RemovePenalty) {
 }
 
 //
-export interface RewardsResponse {
-  title?: string;
-  userId?: number;
-  username?: string;
-  reward?: {
-    account: string;
-    priceInDecimal: Decimal;
-    penaltyAmount: Decimal;
-    user?: string;
-    userId: number;
-    debug?: Record<string, { count: number; reward: Decimal }>;
-  }[];
-  fallbackReward?: Record<string, Decimal>;
-}

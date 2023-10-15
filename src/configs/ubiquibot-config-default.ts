@@ -5,10 +5,10 @@ export const DefaultConfig: MergedConfig = {
   priceMultiplier: 1,
   issueCreatorMultiplier: 1,
   permitMaxPrice: Number.MAX_SAFE_INTEGER,
-  maxConcurrentAssigns: Number.MAX_SAFE_INTEGER,
+  maxConcurrentTasks: Number.MAX_SAFE_INTEGER,
   assistivePricing: false,
   disableAnalytics: false,
-  commentIncentives: false,
+  incentiveMode: false,
   registerWalletWithVerification: false,
   promotionComment:
     "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>",

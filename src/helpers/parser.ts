@@ -27,7 +27,7 @@ export async function getLinkedIssues({ owner, repository, pull }: GetLinkedPara
     return null;
   }
 
-  const issueUrl = linkedIssues[0].querySelector("a")?.attrs?.href || "";
+  const issueUrl = linkedIssues[0].querySelector("a")?.attrs?.href || null;
   return issueUrl;
 }
 

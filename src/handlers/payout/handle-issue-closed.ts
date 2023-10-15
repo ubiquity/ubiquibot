@@ -2,14 +2,11 @@ import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
 import {
   addCommentToIssue,
-  addLabelToIssue,
   createDetailsTable,
   deleteLabel,
   generatePermit2Signature,
   savePermitToDB,
 } from "../../helpers";
-import { Organization } from "../../types";
-import { RewardsResponse } from "./shims";
 import { IncentivesCalculationResult } from "./incentives-calculation";
 import * as shims from "./shims";
 
@@ -23,12 +20,12 @@ interface HandleIssueClosed {
 interface RewardByUser {
   account: string;
   priceInDecimal: Decimal;
-  userId: number | undefined;
+  userId?: number;
   issueId: string;
-  type: (string | undefined)[];
-  user: string | undefined;
+  type?: string[];
+  user?: string;
   priceArray: string[];
-  debug: Record<string, { count: number; reward: Decimal }> | undefined;
+  debug?: Record<string, { count: number; reward: Decimal }>;
 }
 export async function handleIssueClosed({
   creatorReward,
@@ -36,13 +33,12 @@ export async function handleIssueClosed({
   conversationRewards,
   pullRequestReviewersReward,
   incentivesCalculation,
-}: HandleIssueClosed): Promise<{ error: string }> {
+}: HandleIssueClosed) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   const { comments } = runtime.botConfig;
   const issueNumber = incentivesCalculation.issue.number;
 
-  let permitComment = "";
   const title = ["Issue-Assignee"];
 
   // Rewards by user
@@ -158,20 +154,23 @@ export async function handleIssueClosed({
   }
 
   // MERGE ALL REWARDS
-  const rewards = rewardByUser.reduce((acc, curr) => {
-    const existing = acc.find((item) => item.userId === curr.userId);
+  const rewards = rewardByUser.reduce((account, current) => {
+    const existing = account.find((item) => item.userId === current.userId);
     if (existing) {
-      existing.priceInDecimal = existing.priceInDecimal.add(curr.priceInDecimal);
-      existing.priceArray = existing.priceArray.concat(curr.priceArray);
-      existing.type = existing.type.concat(curr.type);
+      existing.priceInDecimal = existing.priceInDecimal.add(current.priceInDecimal);
+      existing.priceArray = existing.priceArray.concat(current.priceArray);
+      const currentType = current.type;
+      existing.type = existing?.type?.concat(currentType || []);
     } else {
-      acc.push(curr);
+      account.push(current);
     }
-    return acc;
+    return account;
   }, [] as RewardByUser[]);
 
   // sort rewards by price
   rewards.sort((a, b) => new Decimal(b.priceInDecimal).cmp(new Decimal(a.priceInDecimal)));
+
+  let permitComment;
 
   // CREATE PERMIT URL FOR EACH USER
   for (const reward of rewards) {
@@ -182,26 +181,29 @@ export async function handleIssueClosed({
 
     const detailsValue = reward.priceArray
       .map((price, i) => {
-        const separateTitle = reward.type[i]?.split("-");
-        if (!separateTitle) return { title: "", subtitle: "", value: "" };
-        return { title: separateTitle[0], subtitle: separateTitle[1], value: price };
+        if (reward.type) {
+          const separateTitle = reward.type[i]?.split("-");
+          if (!separateTitle) return { title: null, subtitle: null, value: null };
+          return { title: separateTitle[0], subtitle: separateTitle[1], value: price };
+        }
+        return { title: null, subtitle: null, value: null };
       })
       // remove title if it's the same as the first one
       .map((item, i, arr) => {
         if (i === 0) return item;
-        if (item.title === arr[0].title) return { ...item, title: "" };
+        if (item.title === arr[0].title) return { ...item, title: null };
         return item;
       });
 
     const access = await Runtime.getState().adapters.supabase.access.getAccess(reward.userId);
 
     const multiplier = access?.multiplier || 1;
-    const multiplier_reason = access?.multiplier_reason || "";
+    const multiplierReason = access?.multiplier_reason || null;
 
-    // if reason is not "", then add multiplier to detailsValue and multiply the price
-    if (multiplier_reason) {
+    // if reason is not null, then add multiplier to detailsValue and multiply the price
+    if (multiplierReason) {
       detailsValue.push({ title: "Multiplier", subtitle: "Amount", value: multiplier.toString() });
-      detailsValue.push({ title: "", subtitle: "Reason", value: multiplier_reason });
+      detailsValue.push({ title: null, subtitle: "Reason", value: multiplierReason });
 
       // add multiplier to the price
       reward.priceInDecimal = priceInDecimal.mul(multiplier);
@@ -211,32 +213,42 @@ export async function handleIssueClosed({
       reward.account,
       reward.priceInDecimal,
       reward.issueId,
-      reward.userId?.toString()
+      reward.userId
     );
 
     const price = `${reward.priceInDecimal} ${incentivesCalculation.tokenSymbol.toUpperCase()}`;
 
-    const comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue, reward.debug);
-
-    await savePermitToDB(
-      Number(reward.userId),
-      permit,
-      incentivesCalculation.evmNetworkId,
-      incentivesCalculation.payload.organization as Organization
+    const filteredDetailsValue = detailsValue.filter(
+      (item) => item.title !== null && item.subtitle !== null && item.value !== null
     );
-    permitComment += comment;
+    const comment = createDetailsTable(price, payoutUrl, reward.user, filteredDetailsValue, reward.debug);
 
-    throw logger.info(
-      `Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(
-        conversationRewards.fallbackReward
-      )}`
-    );
+    const org = incentivesCalculation.payload.organization;
+    if (!org) {
+      throw logger.error("org is undefined", incentivesCalculation.payload);
+    }
+    await savePermitToDB(Number(reward.userId), permit, incentivesCalculation.evmNetworkId, org);
+    permitComment = comment;
+
+    logger.warn("Skipping to generate a permit url for missing accounts.", conversationRewards.fallbackReward);
   }
 
   if (permitComment) await addCommentToIssue(permitComment.trim() + comments.promotionComment, issueNumber);
 
   await deleteLabel(incentivesCalculation.issueDetailed.priceLabel);
-  await addLabelToIssue("Permitted");
+}
 
-  return { error: "" };
+export interface RewardsResponse {
+  title: string;
+  userId: number;
+  username: string;
+  reward: {
+    account: string;
+    priceInDecimal: Decimal;
+    penaltyAmount: Decimal;
+    user?: string;
+    userId: number;
+    debug?: Record<string, { count: number; reward: Decimal }>;
+  }[];
+  fallbackReward?: Record<string, Decimal>;
 }

@@ -3,7 +3,7 @@ import Decimal from "decimal.js";
 import { BigNumber, ethers } from "ethers";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 import Runtime from "../bindings/bot-runtime";
-import { Organization, Payload } from "../types";
+import { Payload } from "../types";
 // import { savePermit } from "../adapters/supabase";
 
 const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on all networks
@@ -49,7 +49,7 @@ export const generatePermit2Signature = async (
   spender: string,
   amountInEth: Decimal,
   identifier: string,
-  userId = ""
+  userId: number
 ): Promise<{ permit: GeneratedPermit; payoutUrl: string }> => {
   const {
     payout: { evmNetworkId, privateKey, permitBaseUrl, rpc, paymentToken },
@@ -57,6 +57,7 @@ export const generatePermit2Signature = async (
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   const provider = new ethers.providers.JsonRpcProvider(rpc);
+  if (!privateKey) throw logger.error("No EVM private key found");
   const adminWallet = new ethers.Wallet(privateKey, provider);
 
   const permitTransferFromData: PermitTransferFrom = {
@@ -68,7 +69,7 @@ export const generatePermit2Signature = async (
     },
     // who can transfer the tokens
     spender: spender,
-    nonce: BigNumber.from(keccak256(toUtf8Bytes(identifier + userId))),
+    nonce: BigNumber.from(keccak256(toUtf8Bytes(identifier + userId.toString()))),
     // signature deadline
     deadline: MaxUint256,
   };
@@ -108,7 +109,7 @@ export async function savePermitToDB(
   contributorId: number,
   txData: GeneratedPermit,
   evmNetworkId: number,
-  organization: Organization
+  organization: Payload["organization"]
 ) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;

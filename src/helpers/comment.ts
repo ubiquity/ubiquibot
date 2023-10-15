@@ -18,7 +18,10 @@ const traverse = (result: Record<string, string[]>, node: Node, itemsToExclude: 
     result[node.nodeName] = [];
   }
 
-  result[node.nodeName].push(node.value?.trim() ?? "");
+  const trimmedValue = node.value ? node.value.trim() : null;
+  if (trimmedValue) {
+    result[node.nodeName].push(trimmedValue);
+  }
 
   if (node.childNodes && node.childNodes.length > 0) {
     node.childNodes.forEach((child) => traverse(result, child, itemsToExclude));
@@ -69,11 +72,11 @@ ${tableRows}
   return tableMarkdown;
 }
 
-export const createDetailsTable = (
+export function createDetailsTable(
   amount: string,
   paymentURL: string,
   username: string,
-  values: { title: string; subtitle: string; value: string }[],
+  values: { title: string | null; subtitle: string | null; value: string | null }[],
   debug?: Record<
     string,
     {
@@ -81,22 +84,22 @@ export const createDetailsTable = (
       reward: Decimal;
     }
   >
-): string => {
-  let collapsibleTable = null;
+): string {
   // Generate the table rows based on the values array
   const tableRows = values
     .map(({ title, value, subtitle }) => {
       if (!subtitle || !value) {
-        return "";
+        return null;
       }
       return `<tr>
-          <td>${title || ""}</td>
+          <td>${title}</td>
           <td>${subtitle}</td>
           <td>${value}</td>
         </tr>`;
     })
     .join("");
 
+  let collapsibleTable = "";
   if (!isEmpty(debug)) {
     const data = Object.entries(debug)
       .filter(([, value]) => value.count > 0)
@@ -111,30 +114,18 @@ export const createDetailsTable = (
   }
 
   // Construct the complete HTML structure
-  const html = `
-    <details>
-      <summary>
-        <b>
-          <h3>
-            <a href="${paymentURL}">[ ${amount} ]</a>
-          </h3>
-          <h6>&nbsp;@${username}</h6>
-        </b>
-      </summary>
-      <table>
-        <tbody>
-          ${tableRows}
-        </tbody>
-      </table>
-      ${collapsibleTable ? "COLLAPSIBLE_TABLE_PLACEHOLDER" : ""}
-    </details>
-  `;
 
-  // Remove spaces and line breaks from the HTML, ignoring the attributes like <a href="..."> and [ ... ]
-  const cleanedHtml = html.replace(/>\s+</g, "><").replace(/[\r\n]+/g, "");
-
-  // Add collapsible table here to avoid compression
-  const finalHtml = cleanedHtml.replace("COLLAPSIBLE_TABLE_PLACEHOLDER", collapsibleTable || "");
-
-  return finalHtml;
-};
+  return [
+    `<details>`,
+    `<summary>`,
+    `<b><h3><a href="${paymentURL}">[ ${amount} ]</a></h3><h6>&nbsp;@${username}</h6></b>`,
+    `</summary>`,
+    `<table>`,
+    `<tbody>`,
+    `${tableRows}`,
+    `</tbody>`,
+    `</table>`,
+    `${collapsibleTable}`,
+    `</details>`,
+  ].join("");
+}

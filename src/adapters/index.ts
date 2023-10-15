@@ -10,10 +10,7 @@ import { Wallet } from "./supabase/helpers/tables/wallet";
 import { Database } from "./supabase/types";
 
 export function createAdapters(config: BotConfig) {
-  const client = generateSupabase(
-    config?.supabase?.url ?? process.env.SUPABASE_URL,
-    config?.supabase?.key ?? process.env.SUPABASE_KEY
-  );
+  const client = generateSupabase(config.supabase.url, config.supabase.key);
   return {
     supabase: {
       access: new Access(client),
@@ -28,6 +25,7 @@ export function createAdapters(config: BotConfig) {
   };
 }
 
-function generateSupabase(url: string, key: string) {
+function generateSupabase(url: string | null, key: string | null) {
+  if (!url || !key) throw new Error("Supabase url or key is not defined");
   return createClient<Database>(url, key, { auth: { persistSession: false } });
 }

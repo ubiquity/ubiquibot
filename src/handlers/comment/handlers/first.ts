@@ -6,12 +6,11 @@ export async function verifyFirstCommentInRepository() {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const payload = runtime.eventContext.payload as Payload;
-  let firstTimeCommentMessage = "";
   if (!payload.issue) {
     throw runtime.logger.error("Issue is null. Skipping", { issue: payload.issue }, true);
   }
   const {
-    newContributorGreeting: { header, helpMenu, footer, enabled },
+    newContributorGreeting: { header, footer, enabled },
   } = Runtime.getState().botConfig;
   const response_issue = await context.octokit.rest.search.issuesAndPullRequests({
     q: `is:issue repo:${payload.repository.owner.login}/${payload.repository.name} commenter:${payload.sender.login}`,
@@ -32,17 +31,7 @@ export async function verifyFirstCommentInRepository() {
     });
     const isFirstComment = resp.data.filter((item) => item.user?.login === payload.sender.login).length === 1;
     if (isFirstComment && enabled) {
-      //first_comment
-      if (header) {
-        firstTimeCommentMessage += `${header}\n`;
-      }
-      if (helpMenu) {
-        firstTimeCommentMessage += `${generateHelpMenu()}\n@${payload.sender.login}\n`;
-      }
-      if (footer) {
-        firstTimeCommentMessage += `${footer}`;
-      }
-      return firstTimeCommentMessage;
+      return [header, generateHelpMenu(), `@${payload.sender.login}`, footer].join("\n");
       // await upsertCommentToIssue(payload.issue.number, msg, payload.action, payload.comment);
     }
   }

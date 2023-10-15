@@ -24,7 +24,7 @@ export interface IncentivesCalculationResult {
   evmNetworkId: number;
   privateKey: string;
   permitMaxPrice: number;
-  baseMultiplier: number;
+  priceMultiplier: number;
   incentives: Incentives;
   issueCreatorMultiplier: number;
   recipient: string;
@@ -49,7 +49,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   const {
     payout: { paymentToken, rpc, permitBaseUrl, evmNetworkId, privateKey },
     mode: { incentiveMode, permitMaxPrice },
-    price: { incentives, issueCreatorMultiplier, baseMultiplier },
+    price: { incentives, issueCreatorMultiplier, priceMultiplier },
     publicAccessControl: accessControl,
   } = runtime.botConfig;
   const logger = runtime.logger;
@@ -132,7 +132,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     throw logger.info(`No incentive mode. skipping to process`);
   }
 
-  if (privateKey == "") {
+  if (privateKey == null) {
     throw logger.warn(
       "Permit generation disabled because EVM wallet private key is not set. Let the maintainers know."
     );
@@ -200,7 +200,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   }
 
   const recipient = await getWalletAddress(assignee.login);
-  if (!recipient || recipient?.trim() === "") {
+  if (!recipient || recipient?.trim() === null) {
     throw logger.info(`Recipient address is missing`);
   }
 
@@ -237,7 +237,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     recipient,
     multiplier,
     permitMaxPrice,
-    baseMultiplier,
+    priceMultiplier,
     incentives,
     issueCreatorMultiplier,
     issue,

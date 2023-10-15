@@ -24,7 +24,7 @@ export async function syncPriceLabelsToConfig() {
       const targetPrice = calculateTaskPrice(
         calculateLabelValue(timeLabel),
         calculateLabelValue(priorityLabel),
-        config.price.baseMultiplier
+        config.price.priceMultiplier
       );
       const targetPriceLabel = `Price: ${targetPrice} USD`;
       aiLabels.push(targetPriceLabel);

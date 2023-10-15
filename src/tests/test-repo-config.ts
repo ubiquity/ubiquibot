@@ -1,6 +1,6 @@
-import { RepositoryConfig } from "../types";
+import { Config } from "../types";
 
-export const repoConfig: RepositoryConfig = {
+export const repoConfig: Config = {
   evmNetworkId: 100,
   priceMultiplier: 1,
   issueCreatorMultiplier: 1,
@@ -20,9 +20,9 @@ export const repoConfig: RepositoryConfig = {
   ],
   defaultLabels: ["Time: <1 Hour", "Priority: 1 (Normal)"],
   permitMaxPrice: 1000,
-  commentIncentives: true,
-  maxConcurrentAssigns: 5,
-  promotionComment: "",
+  incentiveMode: true,
+  maxConcurrentTasks: 5,
+  promotionComment: null,
   assistivePricing: true,
   registerWalletWithVerification: false,
   commandSettings: [
@@ -56,8 +56,8 @@ export const repoConfig: RepositoryConfig = {
       },
     },
   },
-  // openAIKey: "",
-  // privateKeyEncrypted: "",
+  // openAIKey: null,
+  // privateKeyEncrypted: null,
   openAITokenLimit: 100000,
   staleTaskTime: "15 minutes",
 

@@ -23,7 +23,7 @@ export async function startCommandHandler() {
   }
 
   // Flatten assignees into a string
-  const flattenedAssignees = assignees.reduce((acc, assignee) => `${acc} @${assignee.login}`, "");
+  const flattenedAssignees = assignees.reduce((acc, assignee) => `${acc} @${assignee.login}`, null);
 
   // Extract labels from payload
   const labels = payload.issue?.labels;

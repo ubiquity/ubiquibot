@@ -44,7 +44,7 @@ const CommandItemSchema = Type.Object(
 export type CommandItem = Static<typeof CommandItemSchema>;
 
 export const PriceConfigSchema = Type.Object({
-  baseMultiplier: Type.Number(),
+  priceMultiplier: Type.Number(),
   issueCreatorMultiplier: Type.Number(),
   timeLabels: Type.Array(LabelFromConfigSchema),
   priorityLabels: Type.Array(LabelFromConfigSchema),
@@ -54,8 +54,8 @@ export const PriceConfigSchema = Type.Object({
 export type PriceConfig = Static<typeof PriceConfigSchema>;
 
 export const SupabaseConfigSchema = Type.Object({
-  url: Type.String(),
-  key: Type.String(),
+  url: Type.Union([Type.String(), Type.Null()]),
+  key: Type.Union([Type.String(), Type.Null()]),
 });
 
 export const LogNotificationSchema = Type.Object({
@@ -71,7 +71,7 @@ export type LogNotification = Static<typeof LogNotificationSchema>;
 export const PayoutConfigSchema = Type.Object({
   evmNetworkId: Type.Number(),
   rpc: Type.String(),
-  privateKey: Type.String(),
+  privateKey: Type.Union([Type.String(), Type.Null()]),
   paymentToken: Type.String(),
   permitBaseUrl: Type.String(),
 });
@@ -102,8 +102,8 @@ export const LogConfigSchema = Type.Object({
 });
 
 export const SodiumSchema = Type.Object({
-  publicKey: Type.String(),
-  privateKey: Type.String(),
+  publicKey: Type.Union([Type.String(), Type.Null()]),
+  privateKey: Type.Union([Type.String(), Type.Null()]),
 });
 
 export const CommentsSchema = Type.Object({
@@ -184,11 +184,11 @@ export const ConfigSchema = Type.Object(
     priorityLabels: Type.Optional(Type.Array(LabelFromConfigSchema)),
     permitMaxPrice: Type.Optional(Type.Number()),
     commandSettings: Type.Optional(Type.Array(CommandItemSchema)),
-    promotionComment: Type.Optional(Type.String()),
+    promotionComment: Type.Optional(Type.Union([Type.String(), Type.Null()])),
     disableAnalytics: Type.Optional(Type.Boolean()),
-    commentIncentives: Type.Optional(Type.Boolean()),
+    incentiveMode: Type.Optional(Type.Boolean()),
     assistivePricing: Type.Optional(Type.Boolean()),
-    maxConcurrentAssigns: Type.Optional(Type.Number()),
+    maxConcurrentTasks: Type.Optional(Type.Number()),
     incentives: Type.Optional(IncentivesSchema),
     defaultLabels: Type.Optional(Type.Array(Type.String())),
     registerWalletWithVerification: Type.Optional(Type.Boolean()),
@@ -206,18 +206,18 @@ export const ConfigSchema = Type.Object(
 
 export type Config = Static<typeof ConfigSchema>;
 
-export type RepositoryConfig = Config;
+// export type Config = Config;
 
 export const MergedConfigSchema = Type.Object({
   assistivePricing: Type.Boolean(),
   commandSettings: Type.Array(CommandItemSchema),
-  commentIncentives: Type.Boolean(),
+  incentiveMode: Type.Boolean(),
   defaultLabels: Type.Array(Type.String()),
   disableAnalytics: Type.Boolean(),
   evmNetworkId: Type.Number(),
   incentives: IncentivesSchema,
   issueCreatorMultiplier: Type.Number(),
-  maxConcurrentAssigns: Type.Number(),
+  maxConcurrentTasks: Type.Number(),
   newContributorGreeting: NewContributorGreetingSchema,
   openAIKey: Type.Optional(Type.String()),
   openAITokenLimit: Type.Optional(Type.Number()),

@@ -3,12 +3,12 @@ import Runtime from "../../bindings/bot-runtime";
 import { GLOBAL_STRINGS } from "../../configs";
 import { getAllIssueComments, parseComments } from "../../helpers";
 import { Comment, Payload, UserType } from "../../types";
-import { RewardsResponse } from "./shims";
 import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
 import { calculateRewardValue } from "./calculate-reward-value";
 import { IncentivesCalculationResult } from "./incentives-calculation";
 import { ItemsToExclude } from "./post";
 import { walkComments } from "./walk-comments";
+import { RewardsResponse } from "./handle-issue-closed";
 
 // Incentivize the contributors based on their contribution.
 // The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
@@ -77,7 +77,7 @@ export async function calculateIssueConversationReward(
     logger.debug("Comment parsed for the user", { _user, commentsByNode, rewardValue: rewardValue.toString() });
 
     const account = await getWalletAddress(user.id);
-    const priceInDecimal = rewardValue.mul(calculateIncentives.baseMultiplier);
+    const priceInDecimal = rewardValue.mul(calculateIncentives.priceMultiplier);
     if (priceInDecimal.gt(calculateIncentives.permitMaxPrice)) {
       logger.info("Skipping comment reward for user because reward is higher than payment permit max price", { _user });
       continue;
@@ -104,5 +104,7 @@ export async function calculateIssueConversationReward(
     title,
     fallbackReward,
     reward,
+    userId: parseInt(assignee.id),
+    username: assignee.login,
   };
 }

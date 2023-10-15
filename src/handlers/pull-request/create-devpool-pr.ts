@@ -79,7 +79,6 @@ export async function createDevPoolPR() {
     title: `Add ${repository.full_name} to repo`,
     head: branchName,
     base: baseRef,
-    body: "",
   });
 
   return logger.info("Pull request created on DevPool Directory");

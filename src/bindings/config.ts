@@ -5,13 +5,14 @@ import { BotConfig, BotConfigSchema } from "../types";
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
-import { getScalarKey, getConfig } from "../utils/private";
+import { getConfig } from "../utils/private";
 import { LogLevel } from "../adapters/supabase/helpers/tables/logs";
+import Runtime from "./bot-runtime";
 
-export const loadConfig = async (context: Context): Promise<BotConfig> => {
+export async function loadConfig(context: Context): Promise<BotConfig> {
   const {
     assistivePricing,
-    baseMultiplier,
+    priceMultiplier,
     commandSettings,
     defaultLabels,
     disableAnalytics,
@@ -24,7 +25,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     openAITokenLimit,
     permitMaxPrice,
     priorityLabels,
-    privateKey,
+    keys,
     promotionComment,
     publicAccessControl,
     registerWalletWithVerification,
@@ -38,7 +39,12 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     disqualifyTime,
   } = await getConfig(context);
 
-  const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
+  const runtime = Runtime.getState();
+
+  if (!keys.private) {
+    runtime.logger.error("X25519_PRIVATE_KEY not defined");
+  }
+
   const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
 
   const botConfig: BotConfig = {
@@ -47,12 +53,12 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       level: (process.env.LOG_LEVEL as LogLevel) || LogLevel.DEBUG,
       retryLimit: Number(process.env.LOG_RETRY) || 0,
     },
-    price: { baseMultiplier, issueCreatorMultiplier, timeLabels, priorityLabels, incentives, defaultLabels },
+    price: { priceMultiplier, issueCreatorMultiplier, timeLabels, priorityLabels, incentives, defaultLabels },
     comments: { promotionComment: promotionComment },
     payout: {
       evmNetworkId: evmNetworkId,
       rpc: rpc,
-      privateKey: privateKey,
+      privateKey: keys.private,
       paymentToken: paymentToken,
       permitBaseUrl: process.env.PERMIT_BASE_URL || permitBaseUrl,
     },
@@ -67,50 +73,36 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       disqualifyTime: ms(process.env.DISQUALIFY_TIME || disqualifyTime),
     },
     supabase: {
-      url: process.env.SUPABASE_URL ?? "",
-      key: process.env.SUPABASE_KEY ?? "",
+      url: process.env.SUPABASE_URL ?? null,
+      key: process.env.SUPABASE_KEY ?? null,
     },
 
-    // logNotification: {
-    //   url: process.env.LOG_WEBHOOK_BOT_URL || "",
-    //   secret: process.env.LOG_WEBHOOK_SECRET || "",
-    //   groupId: Number(process.env.LOG_WEBHOOK_GROUP_ID) || 0,
-    //   topicId: Number(process.env.LOG_WEBHOOK_TOPIC_ID) || 0,
-    //   enabled: true,
-    // },
     mode: { permitMaxPrice, disableAnalytics, incentiveMode, assistivePricing },
     command: commandSettings,
     assign: { maxConcurrentTasks: maxConcurrentTasks, staleTaskTime: ms(staleTaskTime) },
-    sodium: { privateKey: process.env.X25519_PRIVATE_KEY ?? "", publicKey: publicKey ?? "" },
+    sodium: { privateKey: keys.private, publicKey: keys.public },
     wallet: { registerWalletWithVerification: registerWalletWithVerification },
     ask: { apiKey: process.env.OPENAI_API_KEY || openAIKey, tokenLimit: openAITokenLimit || 0 },
     publicAccessControl: publicAccessControl,
     newContributorGreeting: newContributorGreeting,
   };
 
-  if (botConfig.payout.privateKey == "") {
+  if (botConfig.payout.privateKey == null) {
     botConfig.mode.permitMaxPrice = 0;
   }
-
-  // if (
-  //   botConfig.logNotification.secret == "" ||
-  //   botConfig.logNotification.groupId == 0 ||
-  //   botConfig.logNotification.url == ""
-  // ) {
-  //   botConfig.logNotification.enabled = false;
-  // }
 
   const validate = ajv.compile(BotConfigSchema);
   const valid = validate(botConfig);
   if (!valid) {
-    throw new Error(validate.errors?.map((err: unknown) => JSON.stringify(err, null, 2)).join(","));
+    throw runtime.logger.error("Invalid config", validate.errors);
   }
 
   if (botConfig.unassign.followUpTime < 0 || botConfig.unassign.disqualifyTime < 0) {
-    throw new Error(
-      `Invalid time interval, followUpTime: ${botConfig.unassign.followUpTime}, disqualifyTime: ${botConfig.unassign.disqualifyTime}`
-    );
+    throw runtime.logger.error("Invalid time interval, followUpTime or disqualifyTime cannot be negative", {
+      followUpTime: botConfig.unassign.followUpTime,
+      disqualifyTime: botConfig.unassign.disqualifyTime,
+    });
   }
 
   return botConfig;
-};
+}
