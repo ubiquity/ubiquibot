@@ -250,7 +250,7 @@ export const issueReopenedBlameCallback = async (): Promise<void> => {
   }
 
   interface Blamed {
-    author: string;
+    author: string | null;
     count: number;
     pr?: number[];
   }
@@ -283,7 +283,7 @@ export const issueReopenedBlameCallback = async (): Promise<void> => {
           blame.count += 1;
           blame.pr?.push(pullNumber);
         } else {
-          blamedReviewers.push({ author: reviewer || "", count: 1, pr: [pullNumber] });
+          blamedReviewers.push({ author: reviewer || null, count: 1, pr: [pullNumber] });
         }
       }
     }
@@ -311,7 +311,7 @@ export const issueReopenedBlameCallback = async (): Promise<void> => {
       if (blamer) {
         blamer.count += charsChanged || 0;
       } else {
-        blamedHunters.push({ author: author || "", count: charsChanged || 0 });
+        blamedHunters.push({ author: author || null, count: charsChanged || 0 });
       }
     }
   }
