@@ -76,14 +76,14 @@ export async function bindEvents(eventContext: Context) {
     // Check if we should skip the event
     const should = shouldSkip();
     if (should.stop) {
-      return runtime.logger.info("Skipping the event. reason:", should.reason);
+      return runtime.logger.info("Skipping the event.", { reason: should.reason });
     }
   }
 
   // Get the handlers for the action
   const handlers = processors[eventName];
   if (!handlers) {
-    return runtime.logger.warn("No handler configured for event:", eventName);
+    return runtime.logger.warn("No handler configured for event:", { eventName });
   }
   const { pre, action, post } = handlers;
 
@@ -108,8 +108,8 @@ export async function bindEvents(eventContext: Context) {
     return runtime.logger.info("Skipping wildcard handlers for event:", eventName);
   } else {
     // Run wildcard handlers
-    const functionNames = wildcardProcessors.map((action: any) => action.name);
-    runtime.logger.info("Running wildcard handlers:", functionNames.join(", "));
+    const functionNames = wildcardProcessors.map((action) => action?.name);
+    runtime.logger.info(`Running wildcard handlers: "${functionNames.join(", ")}"`);
     const wildCardHandlerType: WildCardHandlerWithType = { type: "wildcard", actions: wildcardProcessors };
     await logAnyReturnFromHandlers(wildCardHandlerType);
   }

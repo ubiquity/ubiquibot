@@ -48,7 +48,7 @@ export async function commentCreatedOrEdited() {
 
     const callbackComment = await handler(body);
     if (callbackComment) {
-      logger.info(`Command callback comment:`, callbackComment);
+      logger.info(`Command callback comment:`, { callbackComment });
       await callback(issue.number, callbackComment, payload.action, payload.comment);
     }
   } else {

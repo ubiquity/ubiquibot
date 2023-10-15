@@ -42,7 +42,7 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
   const runtime = Runtime.getState();
 
   if (!keys.private) {
-    runtime.logger.error("X25519_PRIVATE_KEY not defined");
+    console.trace("X25519_PRIVATE_KEY not defined");
   }
 
   const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
