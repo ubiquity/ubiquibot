@@ -142,8 +142,8 @@ function logMultipleDataTypes(response: string | void | LogReturn, action: AllHa
     runtime.logger.debug(response, null, true);
   } else {
     runtime.logger.error(
-      `No response from "${action.name}" action. Ensure return of string or LogReturn object`,
-      null,
+      "No response from action. Ensure return of string or LogReturn object",
+      { action: action.name },
       true
     );
   }
@@ -170,13 +170,11 @@ function createLoggerHandler(handlerType: AllHandlersWithTypes, activeHandler: A
     }
 
     const outputComment =
-      logReturn instanceof Error
-        ? `${handlerType.type} action "${activeHandler.name}" has an uncaught error`
-        : `${handlerType.type} action "${activeHandler.name}" returned an unexpected value`;
+      logReturn instanceof Error ? "action has an uncaught error" : "action returned an unexpected value";
 
     //   // Log the instance of _report
     //   console.trace(`_report is an instance of: ${_report.constructor.name}`);
     // await addCommentToIssue(outputComment, issue.number);
-    return runtime.logger.error(outputComment, logReturn, true);
+    return runtime.logger.error(outputComment, { logReturn, handlerType, activeHandler: activeHandler.name }, true);
   };
 }

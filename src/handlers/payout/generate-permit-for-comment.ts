@@ -29,9 +29,7 @@ export async function generatePermitForComment({
     );
     return;
   }
-  logger.debug(
-    `Comment parsed for the user: ${user.login}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue}`
-  );
+  logger.debug("Reward value", { rewardValue: rewardValue.toString(), user: user.login, comments: commentsByNode });
   const account = await getWalletAddress(user.id);
   const amountInBigNumber = rewardValue.mul(multiplier);
   if (amountInBigNumber.gt(permitMaxPrice)) {

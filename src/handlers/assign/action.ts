@@ -41,7 +41,7 @@ export async function startCommandHandler() {
   );
 
   if (timeLabelsAssigned.length == 0) {
-    return logger.debug(`No labels to calculate timeline`);
+    return logger.debug("No labels to calculate timeline");
   }
 
   // Sort labels by weight and select the one with the smallest weight

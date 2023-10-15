@@ -26,9 +26,11 @@ export async function unassign(body: string) {
     return logger.warn("No assignees found for issue", { issueNumber });
   }
   const shouldUnassign = payload.sender.login.toLowerCase() == assignees[0].login.toLowerCase();
-  logger.debug(
-    `Unassigning sender: ${payload.sender.login.toLowerCase()}, assignee: ${assignees[0].login.toLowerCase()}, shouldUnassign: ${shouldUnassign}`
-  );
+  logger.debug("Unassigning sender", {
+    sender: payload.sender.login.toLowerCase(),
+    assignee: assignees[0].login.toLowerCase(),
+    shouldUnassign,
+  });
 
   if (shouldUnassign) {
     await closePullRequestForAnIssue();
