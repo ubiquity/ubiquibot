@@ -29,8 +29,10 @@ export async function setLabels(body: string) {
 
     const userId = await user.getUserId(username);
     await access.setAccess(labels, nodeInfo, userId);
-    if (!labels.length) return logger.ok(`Successfully cleared access for ${username}`);
-    return logger.ok(`Enabled label access to "${labels.join(", ")}" for ${username}.`);
+    if (!labels.length) {
+      return logger.ok("Successfully cleared access", { username });
+    }
+    return logger.ok("Successfully set access", { username, labels });
   } else {
     throw logger.error(
       `Invalid syntax for allow \n usage: '/labels set-(access type) @user true|false' \n  ex-1 /labels set-multiplier @user false`

@@ -54,7 +54,11 @@ export async function checkPullRequests() {
     const assignedUsernames = issue.assignees.map((assignee) => assignee.login);
     if (!assignedUsernames.includes(opener)) {
       await addAssignees(+linkedIssueNumber, [opener]);
-      logger.debug(`Assigned pull request #${pull.number} opener to issue ${linkedIssueNumber}.`);
+      logger.debug("Assigned pull request opener to issue", {
+        pullRequest: pull.number,
+        issue: linkedIssueNumber,
+        opener,
+      });
     }
   }
   return logger.debug(`Checking pull requests done!`);

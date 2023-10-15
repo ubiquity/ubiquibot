@@ -103,11 +103,11 @@ export async function calculateReviewContributorRewards(
       logger.warn(`Skipping to generate a permit url because the reward value is 0.`, { _user });
       continue;
     }
-    logger.info(`Comment parsed for the user: ${_user}, sum: ${rewardValue}`, { commentsByNode });
+    logger.info("Comment parsed for the user", { _user, commentsByNode, rewardValue: rewardValue.toString() });
     const account = await getWalletAddress(user.id);
     const priceInDecimal = rewardValue.mul(incentivesCalculation.baseMultiplier);
     if (priceInDecimal.gt(incentivesCalculation.permitMaxPrice)) {
-      logger.warn(`Skipping comment reward for user ${_user} because reward is higher than payment permit max price`);
+      logger.warn("Skipping comment reward for user because reward is higher than payment permit max price", { _user });
       continue;
     }
 

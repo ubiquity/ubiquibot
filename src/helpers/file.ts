@@ -54,10 +54,10 @@ export async function getPreviousFileContent(owner: string, repo: string, branch
         return previousFileContent.data.content;
       }
     }
-    return "";
+    return null;
   } catch (error: unknown) {
-    logger.debug(`Error retrieving previous file content. error: ${error}`);
-    return "";
+    logger.debug("Error retrieving previous file content.", { error });
+    return null;
   }
 }
 
@@ -115,7 +115,7 @@ export async function getFileContent(
     }
     return null;
   } catch (error: unknown) {
-    logger.debug(`Error retrieving previous file content. error: ${error}`);
+    logger.debug("Error retrieving file content.", { error });
     return null;
   }
 }

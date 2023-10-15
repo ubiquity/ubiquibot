@@ -104,7 +104,7 @@ export const getAnswerFromChatGPT = async (
     const answer = choice[0].message.content;
     return answer;
   } catch (error) {
-    logger.error(`Getting response from ChatGPT failed: ${error}`);
+    logger.error("Error occurred from OpenAI", error);
     return "";
   }
 };

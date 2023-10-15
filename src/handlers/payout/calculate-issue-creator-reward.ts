@@ -43,7 +43,7 @@ export async function calculateIssueCreatorReward(
       `Skipping to generate a permit url because issue description is empty. description: ${description}`
     );
   }
-  logger.info(`Getting the issue description done. description: ${description}`);
+  logger.info("Getting the issue description done.", { description });
   const creator = incentivesCalculation.issue.user;
   if (creator.type === UserType.Bot || creator.login === incentivesCalculation.issue.assignee) {
     throw logger.error("Issue creator assigned their self or bot created this issue.");

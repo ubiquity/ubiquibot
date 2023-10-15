@@ -9,7 +9,7 @@ export async function query(body: string) {
     payload = context.payload as Payload,
     sender = payload.sender.login;
 
-  logger.info(`Received '/query' command from user: ${sender}`);
+  logger.info("Running '/query' command handler", { sender });
 
   const issue = payload.issue;
   if (!issue) return logger.info(`Skipping '/query' because of no issue instance`);
@@ -25,14 +25,18 @@ export async function query(body: string) {
   const database = runtime.adapters.supabase;
   const usernameResponse = await context.octokit.users.getByUsername({ username });
   const user = usernameResponse.data;
-  if (!user) throw logger.error(`No user found for username: ${username}`);
+  if (!user) {
+    throw logger.error("User not found", { username });
+  }
   const accessData = await database.access.getAccess(user.id);
   const walletAddress = await database.wallet.getAddress(user.id);
   const messageBuffer = [] as string[];
 
   messageBuffer.push(renderMarkdownTableHeader());
 
-  if (!accessData && !walletAddress) return logger.warn(`No access or wallet information is set for @${user}`);
+  if (!accessData && !walletAddress) {
+    return logger.warn("No access or wallet found for user", { username });
+  }
   if (accessData) {
     messageBuffer.push(appendToMarkdownTableBody(accessData));
   }

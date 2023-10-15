@@ -5,5 +5,5 @@ export async function nullHandler() {
   // This would be replaced with the meaningful handler once its feature determined
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  logger.debug(`Running placeholder handler, name: ${nullHandler.name}`);
+  logger.debug("Running null handler", { name: nullHandler.name });
 }

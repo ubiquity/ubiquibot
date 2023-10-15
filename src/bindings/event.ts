@@ -53,7 +53,7 @@ export async function bindEvents(eventContext: Context) {
     throw new Error("Failed to create logger");
   }
 
-  runtime.logger.info(`Binding events... id: ${eventContext.id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
+  runtime.logger.info("Binding events", { id: eventContext.id, name: eventName, allowedEvents });
 
   if (!allowedEvents.includes(eventName)) {
     // just check if its on the watch list
@@ -76,14 +76,14 @@ export async function bindEvents(eventContext: Context) {
     // Check if we should skip the event
     const should = shouldSkip();
     if (should.stop) {
-      return runtime.logger.info(`Skipping the event because ${should.reason}`);
+      return runtime.logger.info("Skipping the event. reason:", should.reason);
     }
   }
 
   // Get the handlers for the action
   const handlers = processors[eventName];
   if (!handlers) {
-    return runtime.logger.warn(`No handler configured for event: ${eventName}`);
+    return runtime.logger.warn("No handler configured for event:", eventName);
   }
   const { pre, action, post } = handlers;
 
@@ -105,11 +105,11 @@ export async function bindEvents(eventContext: Context) {
 
   // Skip wildcard handlers for installation event and push event
   if (eventName == GithubEvent.INSTALLATION_ADDED_EVENT || eventName == GithubEvent.PUSH_EVENT) {
-    return runtime.logger.info(`Skipping wildcard handlers for event: ${eventName}`);
+    return runtime.logger.info("Skipping wildcard handlers for event:", eventName);
   } else {
     // Run wildcard handlers
     const functionNames = wildcardProcessors.map((action: any) => action.name);
-    runtime.logger.info(`Running wildcard handlers: "${functionNames.join(", ")}"`);
+    runtime.logger.info("Running wildcard handlers:", functionNames.join(", "));
     const wildCardHandlerType: WildCardHandlerWithType = { type: "wildcard", actions: wildcardProcessors };
     await logAnyReturnFromHandlers(wildCardHandlerType);
   }
@@ -126,7 +126,7 @@ async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
         // if (handlerType.type !== "pre" && handlerType.type !== "post" && handlerType.type !== "wildcard") {
       } else {
         const runtime = Runtime.getState();
-        runtime.logger.ok(`"${handlerType.type}" for "${action.name}" action completed.`);
+        runtime.logger.ok("Completed", { action: action.name, type: handlerType.type });
       }
     } catch (report: any) {
       await loggerHandler(report);

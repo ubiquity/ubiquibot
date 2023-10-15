@@ -44,7 +44,7 @@ export const createLabel = async (name: string, labelType?: keyof typeof COLORS)
       color: COLORS[labelType ?? "default"],
     });
   } catch (err: unknown) {
-    logger.debug(`Error creating a label: ${name}. Is it already there?`);
+    logger.debug("Error creating a label: ", err);
   }
 };
 
@@ -61,7 +61,7 @@ export const getLabel = async (name: string): Promise<boolean> => {
     });
     return res.status === 200 ? true : false;
   } catch (err: unknown) {
-    logger.debug(`Error creating a label: ${name}. Is it already there?`);
+    logger.debug("Error getting a label: ", err);
   }
 
   return false;
@@ -108,7 +108,7 @@ export const updateLabelsFromBaseRate = async (
   const labelsFiltered: string[] = labels.map((obj) => obj["name"]);
   const usedLabels = uniquePreviousLabels.filter((value: string) => labelsFiltered.includes(value));
 
-  logger.debug(`${usedLabels.length} previous labels used on issues`);
+  logger.debug("Got used labels: ", { usedLabels });
 
   try {
     for (const label of usedLabels) {
@@ -119,7 +119,7 @@ export const updateLabelsFromBaseRate = async (
         const exist = await getLabel(uniqueNewLabels[index]);
         if (exist) {
           // we have to delete first
-          logger.debug(`Deleted ${uniqueNewLabels[index]}, updating it`);
+          logger.debug("Label already exists, deleting it", { label });
           await deleteLabel(uniqueNewLabels[index]);
         }
 
@@ -136,10 +136,10 @@ export const updateLabelsFromBaseRate = async (
           },
         });
 
-        logger.debug(`Label updated: ${label} -> ${uniqueNewLabels[index]}`);
+        logger.debug("Label updated", { label, to: uniqueNewLabels[index] });
       }
     }
   } catch (error: unknown) {
-    logger.error(`Error updating labels, error: ${error}`);
+    logger.error("Error updating labels", { error });
   }
 };

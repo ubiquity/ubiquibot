@@ -32,7 +32,7 @@ export async function syncPriceLabelsToConfig() {
   }
 
   const neededLabels: string[] = [...timeLabels, ...priorityLabels];
-  logger.debug(`Got needed labels for setting up price, neededLabels: ${neededLabels.toString()}`);
+  logger.debug("Got needed labels for setting up price ", { neededLabels });
 
   // List all the labels for a repository
   const repoLabels = await listLabelsForRepo();
@@ -42,7 +42,7 @@ export async function syncPriceLabelsToConfig() {
 
   // Create missing labels
   if (missingLabels.length > 0) {
-    logger.info(`Creating missing labels: ${missingLabels}`);
+    logger.info("Missing labels found, creating them", { missingLabels });
     await Promise.all(missingLabels.map((label) => createLabel(label)));
     logger.info(`Creating missing labels done`);
   }

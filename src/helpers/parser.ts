@@ -62,7 +62,7 @@ export async function getLinkedPullRequests({
     const href = `https://github.com${relativeHref}`;
 
     if (`${organization}/${repository}` !== `${owner}/${repository}`) {
-      logger.info(`Skipping linked pull request from another organization: ${href}`);
+      logger.info("Skipping linked pull request from another repository", href);
       continue;
     }
 

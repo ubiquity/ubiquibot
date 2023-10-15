@@ -66,7 +66,7 @@ export async function issueReopenedCallback() {
       }
 
       // TODO: make sure that we can tag the assignee (so cant be a diff) by returning a special log type that uses a normal font
-      return logger.warn(`Penalty of ${formattedAmount} ${tokenSymbol} deducted from @${assignee}`);
+      return logger.warn("Penalty added", { amount: formattedAmount, tokenSymbol, assignee });
       // await addCommentToIssue(
       //   `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of **${formattedAmount} ${tokenSymbol}** will be deducted from your next task.`,
       //   issue.number

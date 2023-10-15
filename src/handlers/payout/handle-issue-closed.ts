@@ -176,7 +176,7 @@ export async function handleIssueClosed({
   // CREATE PERMIT URL FOR EACH USER
   for (const reward of rewards) {
     if (!reward.user || !reward.userId) {
-      logger.info(`Skipping to generate a permit url for missing user. fallback: ${reward.user}`);
+      logger.info("Skipping to generate a permit url for missing user. fallback: ", { reward });
       continue;
     }
 

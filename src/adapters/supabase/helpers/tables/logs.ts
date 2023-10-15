@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // This is disabled because logs should be able to log any type of data
+// Normally this is forbidden
 
 import { SupabaseClient } from "@supabase/supabase-js";
 import Runtime from "../../../../bindings/bot-runtime";
@@ -88,8 +89,6 @@ export class Logs extends Super {
   }
 
   public warn(log: string, metadata?: any, postComment?: boolean): LogReturn {
-    // if (!this) throw new Error("'this' is undefined");
-    // if (!log) throw new Error("'log' is undefined");
     return this._log({ level: LogLevel.WARN, consoleLog: prettyLogs.warn, logMessage: log, metadata, postComment });
   }
 
@@ -100,9 +99,6 @@ export class Logs extends Super {
   public error(log: string, metadata?: any, postComment?: boolean): LogReturn {
     if (!metadata) {
       metadata = Logs.convertErrorsIntoObjects(new Error(log));
-      // console.trace(metadata);
-      // remove the second element in the metadata.stack array
-
       const stack = metadata.stack as string[];
       stack.splice(1, 1);
       metadata.stack = stack;
@@ -278,26 +274,6 @@ export class Logs extends Super {
       .catch((x) => console.trace(x));
   }
 
-  // private async _get() {
-  //   try {
-  //     const { data, error } = await this.supabase.from("logs").select("*");
-
-  //     if (error) {
-  //       prettyLogs.error("Error retrieving logs from Supabase:", error.message);
-  //       return [];
-  //     }
-
-  //     return data;
-  //   } catch (error) {
-  //     if (error instanceof Error) {
-  //       throw prettyLogs.error("An error occurred:", error.message);
-  //     }
-
-  //     prettyLogs.error("Unexpected error", error);
-  //     return [];
-  //   }
-  // }
-
   private _getNumericLevel(level: LogLevel) {
     switch (level) {
       case LogLevel.ERROR:
@@ -335,26 +311,6 @@ export class Logs extends Super {
     return obj;
   }
 }
-
-// function replacer(key, value) {
-//   if (value instanceof Error) {
-//     return {
-//       // Convert Error to a plain object
-//       message: value.message,
-//       name: value.name,
-//       stack: value.stack,
-//     };
-//   }
-//   return value;
-// }
-// }
-// export function prefixInformation(information: string, prefix = ""): string {
-//   const lines = information.split("\n");
-
-//   return lines
-//     .map((line) => `${prefix}${line}`) // Replace 'at' and prefix every line
-//     .join("\n");
-// }
 
 export enum LogLevel {
   ERROR = "error",

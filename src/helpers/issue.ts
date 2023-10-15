@@ -50,7 +50,7 @@ export async function getAllIssueEvents() {
     }
   } catch (e: unknown) {
     shouldFetch = false;
-    logger.error(`Getting all issue events failed, reason: ${e}`);
+    logger.error("Getting all issue events failed", e);
     return null;
   }
   return events;
@@ -83,7 +83,7 @@ export async function clearAllPriceLabelsOnIssue() {
       name: issuePrices[0].name.toString(),
     });
   } catch (e: unknown) {
-    runtime.logger.debug(`Clearing all price labels failed! reason: ${e}`);
+    runtime.logger.debug("Clearing all price labels failed!", e);
   }
 }
 
@@ -105,7 +105,7 @@ export async function addLabelToIssue(labelName: string) {
       labels: [labelName],
     });
   } catch (e: unknown) {
-    runtime.logger.debug(`Adding a label to issue failed! reason: ${e}`);
+    runtime.logger.debug("Adding a label to issue failed!", e);
   }
 }
 
@@ -191,10 +191,10 @@ export async function updateCommentOfIssue(message: HandlerReturnValuesNoVoid, i
   try {
     const appResponse = await context.octokit.apps.getAuthenticated();
     const { name, slug } = appResponse.data;
-    runtime.logger.info(`App name/slug ${name}/${slug}`);
+    runtime.logger.info("App name/slug", { name, slug });
 
     const editCommentBy = `${slug}[bot]`;
-    runtime.logger.info(`Bot slug: ${editCommentBy}`);
+    runtime.logger.info("Bot slug", { editCommentBy });
 
     const comments = await context.octokit.issues.listComments({
       owner: payload.repository.owner.login,
@@ -209,7 +209,7 @@ export async function updateCommentOfIssue(message: HandlerReturnValuesNoVoid, i
     });
 
     if (commentToEdit) {
-      runtime.logger.info(`For comment_id: ${replyTo.id} found comment_to_edit with id: ${commentToEdit.id}`);
+      runtime.logger.info("Found comment to edit", { commentToEdit });
       await context.octokit.issues.updateComment({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
@@ -217,11 +217,11 @@ export async function updateCommentOfIssue(message: HandlerReturnValuesNoVoid, i
         body: comment,
       });
     } else {
-      runtime.logger.info(`Falling back to add comment. Couldn't find response to edit for comment_id: ${replyTo.id}`);
+      runtime.logger.info("Couldn't find comment to edit", { replyTo });
       await addCommentToIssue(message, issueNumber);
     }
   } catch (e: unknown) {
-    runtime.logger.debug(`Updating a comment failed! reason: ${e}`);
+    runtime.logger.debug("Updating a comment failed!", e);
   }
 }
 
@@ -247,7 +247,7 @@ export const upsertLastCommentToIssue = async (issue_number: number, commentBody
     if (comments.length > 0 && comments[comments.length - 1].body !== commentBody)
       await addCommentToIssue(commentBody, issue_number);
   } catch (e: unknown) {
-    runtime.logger.debug(`Upserting last comment failed! reason: ${e}`);
+    runtime.logger.debug("Upserting last comment failed!", e);
   }
 };
 
@@ -266,7 +266,7 @@ export async function getCommentsOfIssue(issueNumber: number): Promise<Comment[]
 
     if (response.data) result = response.data as Comment[];
   } catch (e: unknown) {
-    runtime.logger.debug(`Listing issue comments failed! reason: ${e}`);
+    runtime.logger.debug("Getting comments of issue failed!", e);
   }
 
   return result;
@@ -305,7 +305,7 @@ export async function getIssueDescription(
         break;
     }
   } catch (e: unknown) {
-    runtime.logger.debug(`Getting issue description failed! reason: ${e}`);
+    runtime.logger.debug("Getting issue description failed!", e);
   }
   return result;
 }
@@ -436,7 +436,7 @@ export async function removeAssignees(issueNumber: number, assignees: string[]) 
       assignees,
     });
   } catch (e: unknown) {
-    runtime.logger.debug(`Removing assignees failed! reason: ${e}`);
+    runtime.logger.debug("Removing assignees failed!", e);
   }
 }
 
@@ -462,7 +462,7 @@ export async function checkUserPermissionForRepo(username: string, context: Cont
 
     return res.status === 204;
   } catch (e: unknown) {
-    runtime.logger.error(`Checking if user permisson for repo failed! reason: ${e}`);
+    runtime.logger.error("Checking if user permisson for repo failed!", e);
     return false;
   }
 }
@@ -481,7 +481,7 @@ export async function checkUserPermissionForOrg(username: string, context: Conte
     // skipping status check due to type error of checkMembershipForUser function of octokit
     return true;
   } catch (e: unknown) {
-    runtime.logger.error(`Checking if user permisson for org failed! reason: ${e}`);
+    runtime.logger.error("Checking if user permisson for org failed!", e);
     return false;
   }
 }
@@ -545,7 +545,7 @@ export async function addAssignees(issue: number, assignees: string[]) {
       assignees,
     });
   } catch (e: unknown) {
-    runtime.logger.debug(`Adding assignees failed! reason: ${e}`);
+    runtime.logger.debug("Adding assignees failed!", e);
   }
 }
 
@@ -568,7 +568,7 @@ export async function deleteLabel(label: string) {
       });
     }
   } catch (e: unknown) {
-    runtime.logger.debug(`Label deletion failed! reason: ${e}`);
+    runtime.logger.debug("Deleting label failed!", e);
   }
 }
 
@@ -590,7 +590,7 @@ export async function removeLabel(name: string) {
       name: name,
     });
   } catch (e: unknown) {
-    runtime.logger.debug(`Label removal failed! reason: ${e}`);
+    runtime.logger.debug("Removing label failed!", e);
   }
 }
 
@@ -630,7 +630,7 @@ export async function getPullRequests(
     });
     return pulls;
   } catch (e: unknown) {
-    runtime.logger.debug(`Fetching pull requests failed! reason: ${e}`);
+    runtime.logger.debug("Fetching pull requests failed!", e);
     return [];
   }
 }
@@ -648,7 +648,7 @@ export async function closePullRequest(pull_number: number) {
       state: "closed",
     });
   } catch (e: unknown) {
-    runtime.logger.debug(`Closing pull requests failed! reason: ${e}`);
+    runtime.logger.debug("Closing pull requests failed!", e);
   }
 }
 
@@ -696,7 +696,7 @@ export async function getPullRequestReviews(
     });
     return reviews;
   } catch (e: unknown) {
-    runtime.logger.debug(`Fetching pull request reviews failed! reason: ${e}`);
+    runtime.logger.debug("Fetching pull request reviews failed!", e);
     return [];
   }
 }
@@ -712,7 +712,7 @@ export async function getReviewRequests(context: Context, pull_number: number, o
     });
     return response.data;
   } catch (e: unknown) {
-    runtime.logger.error(`Could not get requested reviewers, reason: ${e}`);
+    runtime.logger.error("Could not get requested reviewers", e);
     return null;
   }
 }
@@ -729,7 +729,7 @@ export async function getIssueByNumber(context: Context, issueNumber: number) {
     });
     return issue;
   } catch (e: unknown) {
-    runtime.logger.debug(`Fetching issue failed! reason: ${e}`);
+    runtime.logger.debug("Fetching issue failed!", e);
     return;
   }
 }
@@ -738,17 +738,12 @@ export async function getPullByNumber(context: Context, pull: number) {
   // const runtime = Runtime.getState();
 
   const payload = context.payload as Payload;
-  // try {
   const response = await context.octokit.rest.pulls.get({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     pull_number: pull,
   });
   return response.data;
-  // } catch (error) {
-  //   runtime.logger.debug(`Fetching pull failed! reason: ${error}`);
-  //   return;
-  // }
 }
 
 // Get issues assigned to a username
@@ -809,7 +804,7 @@ export async function getCommitsOnPullRequest(pullNumber: number) {
     });
     return commits;
   } catch (e: unknown) {
-    runtime.logger.debug(`Fetching pull request commits failed! reason: ${e}`);
+    runtime.logger.debug("Fetching pull request commits failed!", e);
     return [];
   }
 }
@@ -849,15 +844,16 @@ export async function getAvailableOpenedPullRequests(username: string) {
 export async function getAllLinkedIssuesAndPullsInBody(issueNumber: number) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
+  const logger = runtime.logger;
 
   const issue = await getIssueByNumber(context, issueNumber);
 
   if (!issue) {
-    return `Failed to fetch using issueNumber: ${issueNumber}`;
+    throw logger.error("No issue found!", { issueNumber });
   }
 
   if (!issue.body) {
-    return `No body found for issue: ${issueNumber}`;
+    throw logger.error("No body found!", { issueNumber });
   }
 
   const body = issue.body;
@@ -868,86 +864,81 @@ export async function getAllLinkedIssuesAndPullsInBody(issueNumber: number) {
   const matches = body.match(regex);
 
   if (matches) {
-    try {
-      const linkedIssues: number[] = [];
-      const linkedPrs: number[] = [];
+    const linkedIssues: number[] = [];
+    const linkedPrs: number[] = [];
 
-      // this finds refs via all patterns: #<issue number>, full url or [#25](url.to.issue)
-      const issueRef = issue.body.match(/(#(\d+)|https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+))/gi);
+    // this finds refs via all patterns: #<issue number>, full url or [#25](url.to.issue)
+    const issueRef = issue.body.match(/(#(\d+)|https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+))/gi);
 
-      // if they exist, strip out the # or the url and push them to their arrays
-      if (issueRef) {
-        issueRef.forEach((issue) => {
-          if (issue.includes("#")) {
-            linkedIssues.push(Number(issue.slice(1)));
-          } else {
-            if (issue.split("/")[5] == "pull") {
-              linkedPrs.push(Number(issue.split("/")[6]));
-            } else linkedIssues.push(Number(issue.split("/")[6]));
-          }
-        });
-      } else {
-        runtime.logger.info(`No linked issues or prs found`);
-      }
-
-      if (linkedPrs.length > 0) {
-        for (let i = 0; i < linkedPrs.length; i++) {
-          const pr = await getPullByNumber(context, linkedPrs[i]);
-          if (pr) {
-            linkedPRStreamlined.push({
-              login: "system",
-              body: `=============== Pull Request #${pr.number}: ${pr.title} + ===============\n ${pr.body}}`,
-            });
-            const prComments = await getAllIssueComments(linkedPrs[i]);
-            const prCommentsRaw = await getAllIssueComments(linkedPrs[i], "raw");
-            prComments.forEach(async (comment, i) => {
-              if (
-                comment.user.type == UserType.User ||
-                prCommentsRaw[i].body.includes("<!--- { 'UbiquiBot': 'answer' } --->")
-              ) {
-                linkedPRStreamlined.push({
-                  login: comment.user.login,
-                  body: comment.body,
-                });
-              }
-            });
-          }
+    // if they exist, strip out the # or the url and push them to their arrays
+    if (issueRef) {
+      issueRef.forEach((issue) => {
+        if (issue.includes("#")) {
+          linkedIssues.push(Number(issue.slice(1)));
+        } else {
+          if (issue.split("/")[5] == "pull") {
+            linkedPrs.push(Number(issue.split("/")[6]));
+          } else linkedIssues.push(Number(issue.split("/")[6]));
         }
-      }
-
-      if (linkedIssues.length > 0) {
-        for (let i = 0; i < linkedIssues.length; i++) {
-          const issue = await getIssueByNumber(context, linkedIssues[i]);
-          if (issue) {
-            linkedIssueStreamlined.push({
-              login: "system",
-              body: `=============== Issue #${issue.number}: ${issue.title} + ===============\n ${issue.body} `,
-            });
-            const issueComments = await getAllIssueComments(linkedIssues[i]);
-            const issueCommentsRaw = await getAllIssueComments(linkedIssues[i], "raw");
-            issueComments.forEach(async (comment, i) => {
-              if (
-                comment.user.type == UserType.User ||
-                issueCommentsRaw[i].body.includes("<!--- { 'UbiquiBot': 'answer' } --->")
-              ) {
-                linkedIssueStreamlined.push({
-                  login: comment.user.login,
-                  body: comment.body,
-                });
-              }
-            });
-          }
-        }
-      }
-
-      return {
-        linkedIssues: linkedIssueStreamlined,
-        linkedPrs: linkedPRStreamlined,
-      };
-    } catch (error) {
-      runtime.logger.info(`Error getting linked issues or prs: ${error}`);
-      return `Error getting linked issues or prs: ${error}`;
+      });
+    } else {
+      runtime.logger.info(`No linked issues or prs found`);
     }
+
+    if (linkedPrs.length > 0) {
+      for (let i = 0; i < linkedPrs.length; i++) {
+        const pr = await getPullByNumber(context, linkedPrs[i]);
+        if (pr) {
+          linkedPRStreamlined.push({
+            login: "system",
+            body: `=============== Pull Request #${pr.number}: ${pr.title} + ===============\n ${pr.body}}`,
+          });
+          const prComments = await getAllIssueComments(linkedPrs[i]);
+          const prCommentsRaw = await getAllIssueComments(linkedPrs[i], "raw");
+          prComments.forEach(async (comment, i) => {
+            if (
+              comment.user.type == UserType.User ||
+              prCommentsRaw[i].body.includes("<!--- { 'UbiquiBot': 'answer' } --->")
+            ) {
+              linkedPRStreamlined.push({
+                login: comment.user.login,
+                body: comment.body,
+              });
+            }
+          });
+        }
+      }
+    }
+
+    if (linkedIssues.length > 0) {
+      for (let i = 0; i < linkedIssues.length; i++) {
+        const issue = await getIssueByNumber(context, linkedIssues[i]);
+        if (issue) {
+          linkedIssueStreamlined.push({
+            login: "system",
+            body: `=============== Issue #${issue.number}: ${issue.title} + ===============\n ${issue.body} `,
+          });
+          const issueComments = await getAllIssueComments(linkedIssues[i]);
+          const issueCommentsRaw = await getAllIssueComments(linkedIssues[i], "raw");
+          issueComments.forEach(async (comment, i) => {
+            if (
+              comment.user.type == UserType.User ||
+              issueCommentsRaw[i].body.includes("<!--- { 'UbiquiBot': 'answer' } --->")
+            ) {
+              linkedIssueStreamlined.push({
+                login: comment.user.login,
+                body: comment.body,
+              });
+            }
+          });
+        }
+      }
+    }
+
+    return {
+      linkedIssues: linkedIssueStreamlined,
+      linkedPrs: linkedPRStreamlined,
+    };
   } else {
     runtime.logger.info(`No matches found`);
     return {

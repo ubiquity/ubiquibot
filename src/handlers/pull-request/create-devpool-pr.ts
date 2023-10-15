@@ -17,7 +17,7 @@ export async function createDevPoolPR() {
 
   const repository = payload.repositories_added[0];
 
-  logger.info(`New Install: ${repository.full_name}`);
+  logger.info("New Install: ", { repository: repository.full_name });
 
   const [owner, repo] = repository.full_name.split("/");
 

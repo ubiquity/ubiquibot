@@ -27,7 +27,7 @@ export async function checkTasksToUnassign() {
 
   // Checking the tasks in parallel
   const res = await Promise.all(assigned_issues.map(async (issue) => checkTaskToUnassign(issue as Issue)));
-  logger.info(`Checking expired tasks done! total: ${res.length}, unassigned: ${res.filter((i) => i).length}`);
+  logger.info("Checking expired tasks done!", { total: res.length, unassigned: res.filter((i) => i).length });
 }
 
 async function checkTaskToUnassign(issue: Issue): Promise<boolean> {
@@ -38,7 +38,7 @@ async function checkTaskToUnassign(issue: Issue): Promise<boolean> {
   const unassign = runtime.botConfig.unassign;
   const { disqualifyTime, followUpTime } = unassign;
 
-  logger.info(`Checking the task to unassign, issue_number: ${issue.number}`);
+  logger.info("Checking the task to unassign...", { issue_number: issue.number });
   const { timeoutComment, requestContributorUpdate } = GLOBAL_STRINGS;
   const assignees = issue.assignees.map((i) => i.login);
   const comments = await getAllIssueComments(issue.number);
@@ -106,7 +106,7 @@ async function checkTaskToUnassign(issue: Issue): Promise<boolean> {
 async function lastActivityTime(issue: Issue, comments: Comment[]): Promise<Date> {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  logger.info(`Checking the latest activity for the issue, issue_number: ${issue.number}`);
+  logger.info("Checking the latest activity for the issue...", { issue_number: issue.number });
   const assignees = issue.assignees.map((i) => i.login);
   const activities: Date[] = [new Date(issue.created_at)];
 

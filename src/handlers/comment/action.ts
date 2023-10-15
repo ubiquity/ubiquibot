@@ -28,7 +28,7 @@ export async function commentCreatedOrEdited() {
 
   if (userCommand) {
     const { id, handler, callback } = userCommand;
-    logger.info(`Running a comment handler: ${handler.name}`);
+    logger.info("Running a comment handler", { id, handler: handler.name });
     const issue = payload.issue;
     if (!issue) {
       throw logger.error("Issue is null. Skipping", { issue });
@@ -37,7 +37,7 @@ export async function commentCreatedOrEdited() {
     const feature = config.command.find((e) => e.name === id.split("/")[1]);
 
     if (feature?.enabled === false && id !== IssueCommentCommand.HELP) {
-      logger.info(`Skipping '${id}' because it is disabled on this repo.`);
+      logger.info("Skipping because it is disabled on this repo.", { id });
       await callback(
         issue.number,
         `Skipping \`${id}\` because it is disabled on this repo.`,
@@ -52,7 +52,7 @@ export async function commentCreatedOrEdited() {
       await callback(issue.number, callbackComment, payload.action, payload.comment);
     }
   } else {
-    logger.info(`Skipping for a command: ${commentedCommand}`);
+    logger.info("No command found in comment", { body });
   }
-  logger.info(`Finished handling an issue comment on issue ${payload.issue?.number}`);
+  logger.info("Finished handling a comment on issue", { issue: payload.issue?.number });
 }

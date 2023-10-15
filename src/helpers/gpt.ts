@@ -101,8 +101,7 @@ export async function decideContextGPT(
   const links = await getAllLinkedIssuesAndPullsInBody(issue.number);
 
   if (typeof links === "string") {
-    logger.info(`Error getting linked issues or prs: ${links}`);
-    return `Error getting linked issues or prs: ${links}`;
+    return logger.info("Error getting linked issues or prs: ", { links });
   }
 
   linkedIssueStreamlined = links.linkedIssues;
@@ -127,12 +126,12 @@ export async function decideContextGPT(
   );
 
   // we'll use the first response to determine the context of future calls
-  const res = await askGPT("", chatHistory);
+  const res = await askGPT(chatHistory);
 
   return res;
 }
 
-export async function askGPT(question: string, chatHistory: CreateChatCompletionRequestMessage[]) {
+export async function askGPT(chatHistory: CreateChatCompletionRequestMessage[]) {
   // base askGPT function
   const runtime = Runtime.getState();
   const logger = runtime.logger;
@@ -164,8 +163,7 @@ export async function askGPT(question: string, chatHistory: CreateChatCompletion
   };
 
   if (!res) {
-    logger.info(`No answer found for question: ${question}`);
-    return `No answer found for question: ${question}`;
+    throw logger.error("Error getting GPT response", { res });
   }
 
   return { answer, tokenUsage };

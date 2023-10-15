@@ -68,5 +68,5 @@ export async function pricingLabel() {
     await clearAllPriceLabelsOnIssue();
     logger.info(`Skipping action...`);
   }
-  return logger.info(`Price label set to ${targetPriceLabel}`);
+  return logger.info("Pricing label action completed", { targetPriceLabel });
 }

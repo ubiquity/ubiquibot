@@ -28,10 +28,14 @@ export async function handleLabelsAccess() {
   if (match.length == 0) return;
   const labelType = match[0].toLowerCase();
   if (sufficientPrivileges) {
-    logger.info(`Admin/Billing Manager ${sender} has full control over "${labelType}" on "${repo.full_name}"`);
+    logger.info("Admin/Billing Manager has full control over all labels", {
+      repo: repo.full_name,
+      user: sender,
+      labelType,
+    });
     return true;
   } else {
-    logger.info(`Checking ${labelType} access for ${sender} on ${repo.full_name}`);
+    logger.info("Checking access for labels", { repo: repo.full_name, user: sender, labelType });
     // check permission
     const { access, user } = runtime.adapters.supabase;
     const userId = await user.getUserId(sender);
@@ -48,7 +52,7 @@ export async function handleLabelsAccess() {
       await addLabelToIssue(labelName);
     }
     await addCommentToIssue(`@${sender}, You are not allowed to ${eventName} ${labelName}`, payload.issue.number);
-    logger.info(`@${sender} is not allowed to ${eventName} ${labelName}`);
+    logger.info("No access to edit label", { sender, label: labelName });
     return false;
   }
   return true;

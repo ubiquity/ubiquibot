@@ -25,7 +25,7 @@ export async function multiplier(body: string) {
 
   const issue = payload.issue;
 
-  logger.info(`Received '/multiplier' command from user: ${sender}`);
+  logger.info("Running '/multiplier' command handler", { sender });
 
   if (!issue) return logger.info(`Skipping '/multiplier' because of no issue instance`);
 
@@ -56,7 +56,11 @@ export async function multiplier(body: string) {
 
     // if sender is not admin or billing_manager, check db for access
     if (sufficientPrivileges) {
-      logger.info(`Getting multiplier access for ${sender} on ${repo.full_name}`);
+      logger.info("Getting multiplier access", {
+        repo: repo.full_name,
+        user: sender,
+      });
+
       // check db permission
       // await getMultiplier(sender.id, repo.id);
       const accessible = await getAccessLevel(
@@ -66,7 +70,11 @@ export async function multiplier(body: string) {
 
       if (!accessible) {
         return logger.warn(
-          `Insufficient permissions to update the payout multiplier. ${sender} is not an 'admin' or 'billing_manager'`
+          "Insufficient permissions to update the payout multiplier. User is not an 'admin' or 'billing_manager'",
+          {
+            repo: repo.full_name,
+            user: sender,
+          }
         );
       }
     }

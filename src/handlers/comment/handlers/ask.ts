@@ -62,7 +62,7 @@ export async function ask(body: string) {
     const links = await getAllLinkedIssuesAndPullsInBody(issue.number);
 
     if (typeof links === "string") {
-      logger.info(`Error getting linked issues or prs: ${links}`);
+      logger.info("Error getting linked issues or prs: ", links);
     } else {
       linkedIssueStreamlined = links.linkedIssues;
       linkedPRStreamlined = links.linkedPrs;
@@ -110,7 +110,7 @@ export async function ask(body: string) {
       );
     }
 
-    const gptResponse = await askGPT(body, chatHistory);
+    const gptResponse = await askGPT(chatHistory);
 
     if (typeof gptResponse === "string") {
       return gptResponse;

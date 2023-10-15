@@ -32,12 +32,12 @@ export async function registerWallet(body: string) {
   const ensName = extractEnsName(body.replace(IssueCommentCommand.WALLET, "").trim());
 
   if (!address && ensName) {
-    logger.info(`Trying to resolve address from ENS name: ${ensName}`);
+    logger.info("Trying to resolve address from ENS name", { ensName });
     address = await resolveAddress(ensName);
     if (!address) {
-      throw logger.error(`Resolving address from ENS name failed, EnsName: ${ensName}`);
+      throw logger.error("Resolving address from ENS name failed", { ensName });
     }
-    logger.ok(`Resolved address from ENS name: ${ensName}, address: ${address}`);
+    logger.ok("Resolved address from ENS name", { ensName, address });
   }
 
   if (!address) {
@@ -57,7 +57,7 @@ export async function registerWallet(body: string) {
   if (payload.comment) {
     const { wallet } = runtime.adapters.supabase;
     await wallet.upsertWalletAddress(address);
-    return logger.ok(`Updated wallet address for '${sender}' to ${formatEthAddress(address)}`);
+    return logger.ok("Successfully registered wallet address", { sender, address: formatEthAddress(address) });
   } else {
     throw new Error("Payload comment is undefined");
   }
@@ -76,7 +76,7 @@ function _registerWalletWithVerification(body: string, address: string, logger: 
       throw logger.error(failedSigLogMsg);
     }
   } catch (e) {
-    logger.error(`Exception thrown by verifyMessage for /wallet: ${e}`);
+    logger.error("Exception thrown by verifyMessage for /wallet: ", e);
     throw logger.error(failedSigLogMsg);
   }
 }

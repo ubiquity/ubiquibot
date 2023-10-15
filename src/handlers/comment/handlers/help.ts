@@ -9,7 +9,7 @@ export const listAvailableCommands = async (body: string) => {
   const { payload: _payload } = runtime.eventContext;
   const logger = runtime.logger;
   if (body != IssueCommentCommand.HELP && body.replace(/`/g, "") != IssueCommentCommand.HELP) {
-    return logger.info(`Skipping to list available commands. body: ${body}`);
+    return logger.info("Skipping to list available commands.", { body });
   }
   const payload = _payload as Payload;
   const issue = payload.issue;

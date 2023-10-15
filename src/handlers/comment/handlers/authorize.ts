@@ -11,7 +11,7 @@ export async function approveLabelChange() {
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
 
-  logger.info(`Received '/authorize' command from user: ${sender}`);
+  logger.info("Running '/authorize' command handler", { sender });
 
   const { issue, repository } = payload;
   if (!issue) {
@@ -41,7 +41,7 @@ export async function approveLabelChange() {
   // Approve label changes
   labelChanges.forEach(async (labelChange) => {
     await label.approveLabelChange(labelChange.id);
-    return logger.info(`Approved label change for ${labelChange.label_from} -> ${labelChange.label_to}`);
+    return logger.info("Approved label change", { labelChange });
   });
 
   return `Label change has been approved, permit can now be generated`;

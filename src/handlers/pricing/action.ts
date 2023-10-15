@@ -64,7 +64,7 @@ async function addPriceLabelToIssue(targetPriceLabel: string, assistivePricing: 
   const exist = await getLabel(targetPriceLabel);
 
   if (assistivePricing && !exist) {
-    logger.info(`${targetPriceLabel} doesn't exist on the repo, creating...`);
+    logger.info("Assistive pricing is enabled, creating label...", { targetPriceLabel });
     await createLabel(targetPriceLabel, "price");
   }
 

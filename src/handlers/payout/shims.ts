@@ -22,8 +22,6 @@ export async function removePenalty({ userId, amount, node }: RemovePenalty) {
     // address: tokenAddress,
   });
 
-  // logger.debug(`Removing penalty done, { data: ${JSON.stringify(error)}, error: ${JSON.stringify(error)} }`);
-
   // if (error) {
   //   throw new Error(`Error removing penalty: ${error.message}`);
   // }

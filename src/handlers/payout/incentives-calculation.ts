@@ -122,7 +122,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
         // penalty: amount,
       });
     } catch (err) {
-      throw logger.error(`Failed to remove penalty: ${err}`);
+      throw logger.error("Error writing penalty to db", err);
     }
 
     throw logger.info(`Penalty removed`);
@@ -148,7 +148,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     throw logger.error("Permit generation disabled because this is a collection of issues.");
   }
 
-  logger.info(`Handling issues.closed event, issue: ${issue.number}`);
+  logger.info("Checking if the issue is an eligible task.", { issue });
   for (const botComment of comments.filter((cmt) => cmt.user.type === UserType.Bot).reverse()) {
     const botCommentBody = botComment.body;
     if (botCommentBody.includes(GLOBAL_STRINGS.autopayComment)) {
@@ -164,16 +164,16 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   }
 
   if (permitMaxPrice == 0 || !permitMaxPrice) {
-    throw logger.info(`Skipping to generate permit2 url, reason: { permitMaxPrice: ${permitMaxPrice}}`);
+    throw logger.info("Skipping to generate permit2 url, reason: permitMaxPrice is 0 or undefined", { permitMaxPrice });
   }
 
   const issueDetailed = taskInfo(issue);
   if (!issueDetailed.isTask) {
-    throw logger.info(`Skipping... its not a task`);
+    throw logger.info(`Skipping... its not an eligible task`);
   }
 
   if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timeLabel) {
-    throw logger.info(`Skipping... its not a task`);
+    throw logger.info(`Skipping... its not an eligible task`);
   }
 
   // check for label altering here

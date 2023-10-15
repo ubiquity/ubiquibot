@@ -71,7 +71,7 @@ export async function startCommandHandler() {
 
   // Format the commit message
   const commitMessage = `${flattenedAssignees} ${deadLinePrefix} ${endDate.toISOString()}`;
-  logger.debug(`Creating an issue comment, commit_msg: ${commitMessage}`);
+  logger.debug("Creating an issue comment", { commitMessage });
 
   // Add the commit message as a comment to the issue
   // await addCommentToIssue(commitMessage, payload.issue?.number);

@@ -100,7 +100,7 @@ export const generatePermit2Signature = async (
   const base64encodedTxData = Buffer.from(JSON.stringify(txData)).toString("base64");
 
   const payoutUrl = `${permitBaseUrl}?claim=${base64encodedTxData}&network=${evmNetworkId}`;
-  logger.info(`Generated permit2 url: ${payoutUrl}`);
+  logger.info("Generated permit2 url: ", payoutUrl);
   return { permit: txData, payoutUrl };
 };
 
@@ -150,6 +150,6 @@ export async function savePermitToDB(
     // address: txData.permit.permitted.token,
   });
   // const savedPermit = await savePermit(permit);
-  logger.info(`Saved permit to DB: ${JSON.stringify(permit)}`);
+  logger.info("Saved permit to DB: ", permit);
   return permit;
 }

@@ -64,7 +64,7 @@ export async function hasLabelEditPermission(label: string, caller: string) {
     const userId = await user.getUserId(caller);
     const accessible = await access.getAccess(userId);
     if (accessible) return true;
-    logger.info(`@${caller} is not allowed to edit label ${label}`);
+    logger.info("No access to edit label", { caller, label });
     return false;
   }
 
