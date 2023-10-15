@@ -23,7 +23,8 @@
     "start:watch": "nodemon --exec 'yarn start'",
     "utils:cspell": "cspell --config .cspell.json 'src/**/*.{js,ts,json,md,yml}'",
     "start": "probot run ./lib/index.js",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "test": "jest"
   },
   "dependencies": {
     "@actions/core": "^1.10.0",
