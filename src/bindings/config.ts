@@ -1,11 +1,12 @@
 import ms from "ms";
 
-import { BotConfig, BotConfigSchema, LogLevel } from "../types";
+import { BotConfig, BotConfigSchema } from "../types";
 
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
 import { getScalarKey, getConfig } from "../utils/private";
+import { LogLevel } from "../adapters/supabase/helpers/tables/logs";
 
 export const loadConfig = async (context: Context): Promise<BotConfig> => {
   const {

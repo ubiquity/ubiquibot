@@ -1,5 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
-import { LogLevel } from "./log";
+import { LogLevel } from "../adapters/supabase/helpers/tables/logs";
 
 const LabelFromConfigSchema = Type.Object(
   {

@@ -3,7 +3,6 @@
 
 import { SupabaseClient } from "@supabase/supabase-js";
 import Runtime from "../../../../bindings/bot-runtime";
-import { LogLevel } from "../../../../types";
 import { Database } from "../../types";
 import { prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
@@ -356,3 +355,13 @@ export class Logs extends Super {
 //     .map((line) => `${prefix}${line}`) // Replace 'at' and prefix every line
 //     .join("\n");
 // }
+
+export enum LogLevel {
+  ERROR = "error",
+  WARN = "warn",
+  INFO = "info",
+  HTTP = "http",
+  VERBOSE = "verbose",
+  DEBUG = "debug",
+  SILLY = "silly",
+}
