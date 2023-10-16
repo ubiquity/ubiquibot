@@ -6,8 +6,10 @@ export type HandlerReturnValuesWithVoid = void | HandlerReturnValuesNoVoid;
 
 export type ActionHandler = (args?: string) => Promise<HandlerReturnValuesNoVoid>;
 export type CommandsHandler = (args: string) => Promise<HandlerReturnValuesNoVoid>;
+
 export type PreActionHandler = (args?: string) => Promise<void>;
 export type PostActionHandler = (args?: string) => Promise<void>;
+
 export type WildCardHandler = (args?: string) => Promise<void>;
 export type CallbackHandler = (
   issueNumber: number,
@@ -32,9 +34,9 @@ export type Handler = {
 export type UserCommands = {
   id: string;
   description: string;
-  example?: string;
+  example: string;
   handler: CommandsHandler;
-  callback: CallbackHandler;
+  // callback: CallbackHandler;
   // successComment?: string;
   // failureComment?: string;
 };

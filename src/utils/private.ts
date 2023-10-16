@@ -3,76 +3,91 @@ import merge from "lodash/merge";
 import { Context } from "probot";
 import YAML from "yaml";
 import { MergedConfig, Payload } from "../types";
-
 import Runtime from "../bindings/bot-runtime";
 import { DefaultConfig } from "../configs";
 import { upsertLastCommentToIssue } from "../helpers/issue";
 import { ConfigSchema } from "../types";
-import { validate } from "./ajv";
 import { Config } from "../types/config";
-
+import { validate } from "./ajv";
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
 const KEY_NAME = "privateKeyEncrypted";
 const KEY_PREFIX = "HSK_";
-
-export async function downloadConfig(context: Context, type: "org" | "repo") {
-  // try {
+export async function getConfig(context: Context) {
+  const orgConfig = await downloadConfig(context, "org");
+  const repoConfig = await downloadConfig(context, "repo");
   const payload = context.payload as Payload;
-
+  let parsedOrg: Config | null;
+  if (typeof orgConfig === "string") {
+    parsedOrg = parseYAML(orgConfig);
+  } else {
+    parsedOrg = null;
+  }
+  if (parsedOrg) {
+    const { valid, error } = validate(ConfigSchema, parsedOrg);
+    if (!valid) {
+      const err = new Error(`Invalid org config: ${error}`);
+      if (payload.issue) await upsertLastCommentToIssue(payload.issue.number, err.message);
+      throw err;
+    }
+  }
+  let parsedRepo: Config | null;
+  if (typeof repoConfig === "string") {
+    parsedRepo = parseYAML(repoConfig);
+  } else {
+    parsedRepo = null;
+  }
+  if (parsedRepo) {
+    const { valid, error } = validate(ConfigSchema, parsedRepo);
+    if (!valid) {
+      const err = new Error(`Invalid repo config: ${error}`);
+      if (payload.issue) await upsertLastCommentToIssue(payload.issue.number, err.message);
+      throw err;
+    }
+  }
+  const parsedDefault: MergedConfig = DefaultConfig;
+  const keys = { private: null, public: null } as { private: string | null; public: string | null };
+  try {
+    if (parsedRepo && parsedRepo[KEY_NAME]) {
+      await getPrivateAndPublicKeys(parsedRepo[KEY_NAME], keys);
+    } else if (parsedOrg && parsedOrg[KEY_NAME]) {
+      await getPrivateAndPublicKeys(parsedOrg[KEY_NAME], keys);
+    }
+  } catch (error) {
+    console.warn("Failed to get keys", { error });
+  }
+  // console.trace({ keys });
+  const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
+  const mergedConfigData: MergedConfig = mergeConfigs(configs);
+  const configData = { keys, ...mergedConfigData };
+  return configData;
+}
+export async function downloadConfig(context: Context, type: "org" | "repo") {
+  const payload = context.payload as Payload;
   let repo;
   let owner;
-
   if (type === "org") {
     repo = CONFIG_REPO;
     owner = payload.organization?.login;
-    // if (!owner) {
-    // console.trace(
-    //   "Owner config was not found. Be sure to share the bot access with your `ubiquibot-config` repo in the owner organization."
-    // );
-    // }
     owner = payload.repository.owner.login;
   } else {
     repo = payload.repository.name;
     owner = payload.repository.owner.login;
   }
-
-  // console.trace({
-  // repo,
-  // owner,
-  // payload,
-  // });
-
-  if (!repo) {
-    // console.trace("Repository config was not found.");
-  } else if (!owner) {
-    // console.trace(
-    //   "Owner config was not found. Be sure to share the bot access with your `ubiquibot-config` repo in the owner organization."
-    // );
-  }
-
   if (!repo || !owner) return null;
-
   const { data } = await context.octokit.rest.repos.getContent({
     owner,
     repo,
     path: CONFIG_PATH,
-    mediaType: {
-      format: "raw",
-    },
+    mediaType: { format: "raw" },
   });
   return data;
-  // } catch (error: unknown) {
-  //   return null;
-  // }
 }
-
 export interface MergedConfigs {
   parsedRepo: Config | null;
   parsedOrg: Config | null;
   parsedDefault: MergedConfig;
 }
-
 export function parseYAML(data?: string) {
   try {
     if (data) {
@@ -85,25 +100,19 @@ export function parseYAML(data?: string) {
   }
   return null;
 }
-
-export const getOrgAndRepoFromPath = (path: string) => {
+export function getOrgAndRepoFromPath(path: string) {
   const parts = path.split("/");
-
   if (parts.length !== 2) {
     return { org: null, repo: null };
   }
-
   const [org, repo] = parts;
-
   return { org, repo };
-};
-
+}
 export async function getPrivateAndPublicKeys(
   cipherText: string,
   keys: { private: string | null; public: string | null }
 ) {
   await sodium.ready;
-
   const X25519_PRIVATE_KEY = process.env.X25519_PRIVATE_KEY;
   if (!X25519_PRIVATE_KEY) {
     return console.warn("X25519_PRIVATE_KEY is not defined");
@@ -112,22 +121,20 @@ export async function getPrivateAndPublicKeys(
   if (!keys.public) {
     return console.warn("Public key is null");
   }
+  // console.trace();
   const binPub = sodium.from_base64(keys.public, sodium.base64_variants.URLSAFE_NO_PADDING);
   const binPriv = sodium.from_base64(X25519_PRIVATE_KEY, sodium.base64_variants.URLSAFE_NO_PADDING);
   const binCipher = sodium.from_base64(cipherText, sodium.base64_variants.URLSAFE_NO_PADDING);
-
   const walletPrivateKey: string | null = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
-  console.trace({ walletPrivateKey });
+  // console.trace({ walletPrivateKey });
   keys.private = walletPrivateKey?.replace(KEY_PREFIX, "");
-
   return keys;
 }
-
 export async function getScalarKey(X25519_PRIVATE_KEY: string) {
   const logger = Runtime.getState().logger;
   if (X25519_PRIVATE_KEY !== null) {
     await sodium.ready;
-
+    // console.trace();
     const binPriv = sodium.from_base64(X25519_PRIVATE_KEY, sodium.base64_variants.URLSAFE_NO_PADDING);
     const scalerPub = sodium.crypto_scalarmult_base(binPriv, "base64");
     return scalerPub;
@@ -136,80 +143,6 @@ export async function getScalarKey(X25519_PRIVATE_KEY: string) {
     return null;
   }
 }
-
-const mergeConfigs = (configs: MergedConfigs) => {
+function mergeConfigs(configs: MergedConfigs) {
   return merge({}, configs.parsedDefault, configs.parsedOrg, configs.parsedRepo);
-};
-
-export async function getConfig(context: Context) {
-  const orgConfig = await downloadConfig(context, "org");
-  const repoConfig = await downloadConfig(context, "repo");
-  const payload = context.payload as Payload;
-
-  let parsedOrg: Config | null;
-
-  if (typeof orgConfig === "string") {
-    parsedOrg = parseYAML(orgConfig);
-  } else {
-    parsedOrg = null;
-  }
-
-  if (parsedOrg) {
-    const { valid, error } = validate(ConfigSchema, parsedOrg);
-    if (!valid) {
-      const err = new Error(`Invalid org config: ${error}`);
-      if (payload.issue) await upsertLastCommentToIssue(payload.issue.number, err.message);
-      throw err;
-    }
-  }
-
-  let parsedRepo: Config | null;
-  if (typeof repoConfig === "string") {
-    parsedRepo = parseYAML(repoConfig);
-  } else {
-    parsedRepo = null;
-  }
-
-  if (parsedRepo) {
-    const { valid, error } = validate(ConfigSchema, parsedRepo);
-    if (!valid) {
-      const err = new Error(`Invalid repo config: ${error}`);
-      if (payload.issue) await upsertLastCommentToIssue(payload.issue.number, err.message);
-      throw err;
-    }
-  }
-  const parsedDefault: MergedConfig = DefaultConfig;
-
-  const keys = { private: null, public: null } as {
-    private: string | null;
-    public: string | null;
-  };
-
-  // console.trace({
-  //   parsedRepo,
-  //   "parsedRepo[KEY_NAME]": parsedRepo[KEY_NAME],
-  //   KEY_NAME,
-  //   parsedOrg,
-  //   "parsedOrg[KEY_NAME]": parsedOrg[KEY_NAME],
-  // });
-  if (parsedRepo && parsedRepo[KEY_NAME]) {
-    await getPrivateAndPublicKeys(parsedRepo[KEY_NAME], keys);
-  } else if (parsedOrg && parsedOrg[KEY_NAME]) {
-    await getPrivateAndPublicKeys(parsedOrg[KEY_NAME], keys);
-  }
-
-  console.trace({ keys });
-
-  const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
-  // console.trace({ configs });
-  const mergedConfigData: MergedConfig = mergeConfigs(configs);
-
-  // console.trace({ mergedConfigData });
-
-  const configData = {
-    keys,
-    ...mergedConfigData,
-  };
-
-  return configData;
 }

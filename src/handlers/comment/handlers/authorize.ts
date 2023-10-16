@@ -3,7 +3,7 @@ import { isUserAdminOrBillingManager } from "../../../helpers";
 import { Payload } from "../../../types";
 import { taskInfo } from "../../wildcard";
 
-export async function approveLabelChange() {
+export async function authorizeLabelChanges() {
   const runtime = Runtime.getState();
   const { label } = runtime.adapters.supabase;
   const context = runtime.eventContext;
@@ -24,15 +24,16 @@ export async function approveLabelChange() {
 
   // if sender is not admin, return
   if (sufficientPrivileges) {
-    throw new Error(
-      `User ${sender} is not an admin/billing_manager and do not have the required permissions to access this function.`
+    throw runtime.logger.error(
+      "User is not an admin/billing_manager and do not have the required permissions to access this function.",
+      { sender }
     );
   }
 
   const issueDetailed = taskInfo(issue);
 
   if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timeLabel) {
-    throw new Error(`No valid task label on this issue`);
+    throw runtime.logger.error("No valid task label on this issue", { issueDetailed });
   }
 
   // get current repository node id from payload and pass it to getLabelChanges function to get label changes
@@ -44,5 +45,5 @@ export async function approveLabelChange() {
     return logger.info("Approved label change", { labelChange });
   });
 
-  return `Label change has been approved, permit can now be generated`;
+  return runtime.logger.ok("Label change has been approved, permit can now be generated");
 }

@@ -32,8 +32,8 @@ export function generateHelpMenu() {
   const commands = userCommands();
   commands.map(
     (command) =>
-      (helpMenu += `| \`${command.id}\` | ${breakSentences(command.description)} | ${
-        command.example && breakLongString(command.example)
+      (helpMenu += `| \`${command.id}\` | ${breakSentences(command.description) || ""} | ${
+        (command.example && breakLongString(command.example)) || ""
       } |\n`) // add to help menu
   );
 

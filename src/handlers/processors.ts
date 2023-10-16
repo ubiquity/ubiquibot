@@ -53,13 +53,13 @@ export const processors: Record<string, Handler> = {
   },
   [GithubEvent.ISSUE_COMMENT_CREATED]: {
     pre: [],
-    action: [],
-    post: [commentCreatedOrEdited],
+    action: [commentCreatedOrEdited],
+    post: [],
   },
   [GithubEvent.ISSUE_COMMENT_EDITED]: {
     pre: [],
-    action: [],
-    post: [commentCreatedOrEdited],
+    action: [commentCreatedOrEdited],
+    post: [],
   },
   [GithubEvent.ISSUES_CLOSED]: {
     pre: [],

@@ -87,20 +87,20 @@ export async function bindEvents(eventContext: Context) {
   }
   const { pre, action, post } = handlers;
 
-  const handlerTypes: AllHandlersWithTypes[] = [
+  const handlerWithTypes: AllHandlersWithTypes[] = [
     { type: "pre", actions: pre },
     { type: "main", actions: action },
     { type: "post", actions: post },
   ];
 
-  for (const handlerType of handlerTypes) {
+  for (const handlerWithType of handlerWithTypes) {
     // List all the function names of handlerType.actions
-    const functionNames = handlerType.actions.map((action) => action?.name);
+    const functionNames = handlerWithType.actions.map((action) => action?.name);
 
     runtime.logger.info(
-      `Running "${handlerType.type}" for event: "${eventName}". handlers: "${functionNames.join(", ")}"`
+      `Running "${handlerWithType.type}" for event: "${eventName}". handlers: "${functionNames.join(", ")}"`
     );
-    await logAnyReturnFromHandlers(handlerType);
+    await logAnyReturnFromHandlers(handlerWithType);
   }
 
   // Skip wildcard handlers for installation event and push event
@@ -118,11 +118,14 @@ export async function bindEvents(eventContext: Context) {
 async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
   for (const action of handlerType.actions) {
     const loggerHandler = createLoggerHandler(handlerType, action);
+    console.trace(handlerType, action);
+
     try {
       const response = await action();
-      if (handlerType.type === "action") {
+      if (handlerType.type === "main") {
         // only log action handler results
-        logMultipleDataTypes(response, action);
+        await logMultipleDataTypes(response, action);
+        console.trace(response);
         // if (handlerType.type !== "pre" && handlerType.type !== "post" && handlerType.type !== "wildcard") {
       } else {
         const runtime = Runtime.getState();
@@ -134,12 +137,17 @@ async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
   }
 }
 
-function logMultipleDataTypes(response: string | void | LogReturn, action: AllHandlers) {
+async function logMultipleDataTypes(response: string | void | LogReturn, action: AllHandlers) {
   const runtime = Runtime.getState();
   if (response instanceof LogReturn) {
-    runtime.logger.debug(response.logMessage.raw, response.metadata, true);
+    runtime.logger.ok(response.logMessage.raw, response.metadata, true);
   } else if (typeof response == "string") {
-    runtime.logger.debug(response, null, true);
+    const issueNumber = (runtime.eventContext.payload as Payload).issue?.number;
+    if (!issueNumber) {
+      throw new Error("No issue number found");
+    }
+    await addCommentToIssue(response, issueNumber);
+    // runtime.logger.debug(response, null, true);
   } else {
     runtime.logger.error(
       "No response from action. Ensure return of string or LogReturn object",
@@ -155,7 +163,7 @@ function createLoggerHandler(handlerType: AllHandlersWithTypes, activeHandler: A
   return async function loggerHandler(logReturn: LogReturn | Error | unknown) {
     const issue = (runtime.eventContext.payload as Payload).issue;
     if (!issue) return runtime.logger.error("Issue is null. Skipping", { issue });
-
+    console.trace();
     if (logReturn instanceof LogReturn) {
       // already made it to console so it should just post the comment
       const { logMessage } = logReturn;
@@ -163,8 +171,10 @@ function createLoggerHandler(handlerType: AllHandlersWithTypes, activeHandler: A
       if (logReturn.metadata) {
         const serializedMetadata = JSON.stringify(logReturn.metadata, null, 2);
         const metadataForComment = ["```json", serializedMetadata, "```"].join("\n");
+        console.trace();
         return await addCommentToIssue([logMessage.diff, metadataForComment].join("\n"), issue.number);
       } else {
+        console.trace();
         return await addCommentToIssue(logMessage.diff, issue.number);
       }
     }

@@ -3,7 +3,6 @@ import { Logs } from "../../../adapters/supabase";
 import Runtime from "../../../bindings/bot-runtime";
 import { resolveAddress } from "../../../helpers";
 import { Payload } from "../../../types";
-import { formatEthAddress } from "../../../utils";
 import { IssueCommentCommand } from "../commands";
 // Extracts ensname from raw text.
 function extractEnsName(text: string) {
@@ -57,7 +56,7 @@ export async function registerWallet(body: string) {
   if (payload.comment) {
     const { wallet } = runtime.adapters.supabase;
     await wallet.upsertWalletAddress(address);
-    return logger.ok("Successfully registered wallet address", { sender, address: formatEthAddress(address) });
+    return logger.ok("Successfully registered wallet address", { sender, address });
   } else {
     throw new Error("Payload comment is undefined");
   }

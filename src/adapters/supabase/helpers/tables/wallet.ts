@@ -107,9 +107,6 @@ export class Wallet extends Super {
   private async _registerNewUser(user: User) {
     const newUser: UserInsert = {
       id: user.id,
-      // // node_id: user.node_id,
-      // node_type: "User",
-      // node_url: user.html_url,
     };
 
     const { data: newUserInsertData, error: newUserError } = await this.supabase.from("users").insert(newUser).single();
@@ -125,9 +122,6 @@ export class Wallet extends Super {
   private async _registerNewWallet({ address, locationMetaData, payload }: RegisterNewWallet) {
     const newWallet: WalletInsert = {
       address: address,
-      // // node_id: payload.comment.node_id,
-      // node_type: "IssueComment",
-      // node_url: payload.comment.html_url,
     };
 
     const { data: walletInsertData, error: walletInsertError } = await this.supabase
@@ -144,7 +138,8 @@ export class Wallet extends Super {
     await this._updateWalletId(walletData.id, senderId);
 
     if (walletData.location_id) {
-      await this._enrichLocationMetaData(walletData, locationMetaData);
+      // await this._enrichLocationMetaData(walletData, locationMetaData);
+      await this.supabase.from("locations").update(locationMetaData).eq("id", walletData.location_id);
     }
   }
 
@@ -153,26 +148,36 @@ export class Wallet extends Super {
   }
 
   private async _updateExistingWallet({ address, locationMetaData, walletData }: UpdateExistingWallet) {
-    const basicLocationInfo = {
-      address: address,
-      // // node_id: payload.comment.node_id,
-      // node_type: "IssueComment",
-      // node_url: payload.comment.html_url,
-    } as WalletRow;
+    const updateWalletSql = `
+      UPDATE wallets
+      SET address = '${address}'
+      WHERE id = ${walletData.id};
+    `;
 
-    await this.supabase.from("wallets").update(basicLocationInfo).eq("id", walletData.id).single();
-
+    let updateLocationSql = "";
     if (walletData.location_id) {
-      await this._enrichLocationMetaData(walletData, locationMetaData);
+      updateLocationSql = `
+        UPDATE locations
+        SET user_id = ${locationMetaData.user_id},
+            comment_id = ${locationMetaData.comment_id},
+            issue_id = ${locationMetaData.issue_id},
+            repository_id = ${locationMetaData.repository_id},
+            organization_id = ${locationMetaData.organization_id}
+        WHERE id = ${walletData.location_id};
+      `;
     }
+
+    const sqlStatement = `${updateWalletSql} ${updateLocationSql}`;
+    const { error } = await this.supabase.raw(sqlStatement);
+    if (error) throw error;
   }
 
-  private async _enrichLocationMetaData(walletData: WalletRow, locationMetaData: LocationMetaData) {
-    const runtime = Runtime.getState();
-    const logger = runtime.logger;
-    logger.ok("Enriching wallet location metadata", locationMetaData);
-    await this.supabase.from("locations").update(locationMetaData).eq("id", walletData.location_id);
-  }
+  //   private async _enrichLocationMetaData(walletData: WalletRow, locationMetaData: LocationMetaData) {
+  //     const runtime = Runtime.getState();
+  //     const logger = runtime.logger;
+  //     logger.ok("Enriching wallet location metadata", locationMetaData);
+  //     await this.supabase.from("locations").update(locationMetaData).eq("id", walletData.location_id);
+  //   }
 }
 
 interface RegisterNewWallet {
