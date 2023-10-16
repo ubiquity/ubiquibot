@@ -1,6 +1,5 @@
 import Runtime from "../../bindings/bot-runtime";
 import { Comment, Payload } from "../../types";
-import { IssueCommentCommand } from "./commands";
 import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCommentInRepository } from "./handlers/first";
 
@@ -37,7 +36,7 @@ export async function commentCreatedOrEdited() {
 
     const feature = config.command.find((e) => e.name === id.split("/")[1]);
 
-    if (feature?.enabled === false && id !== IssueCommentCommand.HELP) {
+    if (feature?.enabled === false && id !== "/help") {
       logger.info("Skipping because it is disabled on this repo.", { id });
     }
 

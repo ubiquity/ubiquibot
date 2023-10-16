@@ -10,7 +10,7 @@ interface GetLinkedParams {
   pull?: number;
 }
 
-export interface GetLinkedResults {
+interface GetLinkedResults {
   organization: string;
   repository: string;
   number: number;

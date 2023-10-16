@@ -83,7 +83,7 @@ async function downloadConfig(context: Context, type: "org" | "repo") {
   });
   return data;
 }
-export interface MergedConfigs {
+interface MergedConfigs {
   parsedRepo: Config | null;
   parsedOrg: Config | null;
   parsedDefault: MergedConfig;

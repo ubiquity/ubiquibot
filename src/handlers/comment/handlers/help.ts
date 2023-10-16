@@ -2,13 +2,12 @@ import { userCommands } from ".";
 import Runtime from "../../../bindings/bot-runtime";
 
 import { IssueType, Payload } from "../../../types";
-import { IssueCommentCommand } from "../commands";
 
 export const listAvailableCommands = async (body: string) => {
   const runtime = Runtime.getState();
   const { payload: _payload } = runtime.eventContext;
   const logger = runtime.logger;
-  if (body != IssueCommentCommand.HELP) {
+  if (body != "/help") {
     return logger.info("Skipping to list available commands.", { body });
   }
   const payload = _payload as Payload;

@@ -698,7 +698,7 @@ export async function getOpenedPullRequestsForAnIssue(issueNumber: number, userN
   });
 }
 
-export async function getOpenedPullRequests(username: string) {
+async function getOpenedPullRequests(username: string) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const prs = await getAllPullRequests(context, "open");
