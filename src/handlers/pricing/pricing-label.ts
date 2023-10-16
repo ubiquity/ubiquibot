@@ -2,8 +2,8 @@ import Runtime from "../../bindings/bot-runtime";
 import { clearAllPriceLabelsOnIssue } from "../../helpers";
 import { Label, LabelFromConfig, Payload } from "../../types";
 import { handleLabelsAccess } from "../access";
-import { setPrice } from "../shared";
 import { isParentIssue, handleParentIssue, sortLabelsByValue, handleTargetPriceLabel } from "./action";
+import { setPrice } from "../shared/pricing";
 
 export async function pricingLabel() {
   const runtime = Runtime.getState();

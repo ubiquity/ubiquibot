@@ -2,7 +2,6 @@ import Runtime from "../../bindings/bot-runtime";
 import { calculateDurations, calculateLabelValue, closePullRequest } from "../../helpers";
 import { getLinkedPullRequests } from "../../helpers/parser";
 import { Label, Payload } from "../../types";
-import { deadLinePrefix } from "../shared";
 
 export async function startCommandHandler() {
   const runtime = Runtime.getState();
@@ -70,7 +69,7 @@ export async function startCommandHandler() {
   const endDate = new Date(currentDate.getTime() + shortestDurationLabel * 1000);
 
   // Format the commit message
-  const commitMessage = `${flattenedAssignees} ${deadLinePrefix} ${endDate.toISOString()}`;
+  const commitMessage = `${flattenedAssignees} the deadline is at ${endDate.toISOString()}`;
   logger.debug("Creating an issue comment", { commitMessage });
 
   // Add the commit message as a comment to the issue

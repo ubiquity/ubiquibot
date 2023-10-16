@@ -1,9 +1,9 @@
 import { Context } from "probot";
 import Runtime from "../bindings/bot-runtime";
-import { calculateTaskPrice } from "../handlers";
 import { Label, Payload } from "../types";
 import { deleteLabel } from "./issue";
 import { calculateLabelValue } from "../helpers";
+import { calculateTaskPrice } from "../handlers/shared/pricing";
 
 // cspell:disable
 const COLORS = {

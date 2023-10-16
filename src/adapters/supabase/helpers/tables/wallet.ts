@@ -22,11 +22,6 @@ export class Wallet extends Super {
     return this._validateAndGetWalletAddress(userWithWallet);
   }
 
-  // public async getWalletRegistrationUrl(id: number): Promise<string> {
-  //   const userWithWallet = await this._getUserWithWallet(id);
-  //   return this._validateAndGetWalletRegistrationUrl(userWithWallet);
-  // }
-
   public async upsertWalletAddress(address: string) {
     const runtime = Runtime.getState();
     const eventContext = runtime.eventContext;
@@ -67,19 +62,6 @@ export class Wallet extends Super {
     return userWithWallet[0]?.wallets?.address;
   }
 
-  // private async _validateAndGetWalletRegistrationUrl(userWithWallet: UserWithWallet): Promise<string> {
-  //   if (!userWithWallet[0].wallets) throw new Error("Wallet of wallet registration comment is null");
-  //   if (!userWithWallet[0].wallets.location_id) throw new Error("Location id of wallet registration comment is null");
-
-  //   const locationId = userWithWallet[0].wallets.location_id;
-
-  //   const { data, error } = await this.supabase.from("locations").select("*").eq("id", locationId);
-  //   if (error) throw error;
-  //   const nodeUrl = data[0].node_url;
-  //   if (!nodeUrl) throw new Error("Node URL of wallet registration comment is null");
-
-  //   return nodeUrl;
-  // }
   private async _checkIfUserExists(userId: number) {
     const { data, error } = await this.supabase.from("users").select("*").eq("id", userId).single();
     if (error) throw error;

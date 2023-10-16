@@ -10,7 +10,6 @@ import {
   removeAssignees,
 } from "../../helpers";
 import { Comment, Issue, IssueType, Payload, UserType } from "../../types";
-import { deadLinePrefix } from "../shared";
 
 export async function checkTasksToUnassign() {
   // Check out the tasks which haven't been completed within the initial timeline
@@ -115,7 +114,7 @@ async function lastActivityTime(issue: Issue, comments: Comment[]): Promise<Date
       (comment) =>
         comment.user.type === UserType.Bot &&
         comment.body.includes(assignees[0]) &&
-        comment.body.includes(deadLinePrefix)
+        comment.body.includes("the deadline is at")
     )
     .sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   if (lastAssignCommentOfHunter.length > 0) activities.push(new Date(lastAssignCommentOfHunter[0].created_at));

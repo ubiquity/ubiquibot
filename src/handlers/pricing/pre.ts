@@ -1,6 +1,6 @@
 import Runtime from "../../bindings/bot-runtime";
 import { calculateLabelValue, createLabel, listLabelsForRepo } from "../../helpers";
-import { calculateTaskPrice } from "../shared";
+import { calculateTaskPrice } from "../shared/pricing";
 
 // This just checks all the labels in the config have been set in gh issue
 // If there's something missing, they will be added

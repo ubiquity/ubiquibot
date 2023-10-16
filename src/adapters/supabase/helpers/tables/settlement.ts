@@ -29,12 +29,7 @@ export class Settlement extends Super {
   constructor(supabase: SupabaseClient) {
     super(supabase);
   }
-  // private async _lookupPartnerId(organizationId: number): Promise<number> {
-  //   // Your logic to lookup the partnerId goes here.
-  //   // This is just a placeholder implementation.
-  //   const partnerId = organizationId; // Replace this with your actual logic.
-  //   return partnerId;
-  // }
+
   private async _lookupTokenId(networkId: number, address: string): Promise<number> {
     const { data: tokenData, error: tokenError } = await this.supabase
       .from("tokens")
@@ -99,9 +94,6 @@ export class Settlement extends Super {
     // Insert into the credits table
     const creditData: CreditInsert = {
       amount: amount.toNumber(),
-      // // node_id: comment.node_id,
-      // node_type: "IssueComment",
-      // node_url: comment.html_url,
     };
 
     const { data: creditInsertData, error: creditError } = await this.supabase
@@ -127,9 +119,6 @@ export class Settlement extends Super {
         token_id: await this._lookupTokenId(networkId, permit.permit.permitted.token),
         partner_id: organization.id,
         beneficiary_id: userId,
-        // // node_id: comment.node_id,
-        // node_type: "IssueComment",
-        // node_url: comment.html_url,
       };
 
       const permitResult = await this.supabase.from("permits").insert(permitData).select("*").single();
@@ -165,56 +154,4 @@ export class Settlement extends Super {
     if (settlementError) throw settlementError;
     if (!settlementInsertData) throw new Error("Settlement not inserted");
   }
-
-  // public async getDebit(debitId: number): Promise<PostgrestResponse<DebitInsert>> {
-  //   const { data: debitData, error: debitError } = await this.supabase
-  //     .from("debits")
-  //     .select("*")
-  //     .eq("id", debitId)
-  //     .single();
-
-  //   if (debitError) throw debitError;
-  //   if (!debitData) throw new Error("Debit not found");
-
-  //   return debitData;
-  // }
-
-  // public async getWalletFromSettlement(settlementId: number): Promise<PostgrestResponse<WalletRow>> {
-  //   // try {
-  //   const { data: settlementData, error: settlementError } = await this.client
-  //     .from("settlements")
-  //     .select("user_id")
-  //     .eq("id", settlementId)
-  //     .single();
-
-  //   if (settlementError) throw settlementError;
-  //   if (!settlementData) throw new Error("Settlement not found");
-
-  //   const userId = settlementData.user_id;
-
-  //   const { data: userData, error: userError } = await this.client
-  //     .from("users")
-  //     .select("wallet_id")
-  //     .eq("id", userId)
-  //     .single();
-
-  //   if (userError) throw userError;
-  //   if (!userData) throw new Error("User not found");
-
-  //   const walletId = userData.wallet_id;
-
-  //   const { data: walletData, error: walletError } = await this.client
-  //     .from("wallets")
-  //     .select("*")
-  //     .eq("id", walletId)
-  //     .single();
-
-  //   if (walletError) throw walletError;
-
-  //   return walletData; // { data: walletData, error: null, status: 200, body: JSON.stringify(walletData) };
-  //   // } catch (error) {
-  //   // return { data: null, error, status: 400, body: error.message };
-
-  //   // }
-  // }
 }

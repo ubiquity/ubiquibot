@@ -14,10 +14,6 @@ export class User extends Super {
     return data.id;
   }
 
-  // public async getMultiplier(userId: number, repositoryId: number){
-  // const { data: locationData, error } = await this.supabase.from("access")
-  // }
-
   public async getMultiplier(userId: number, repositoryId: number): Promise<{ value: number; reason: string } | null> {
     // this gets every location id from every registered location in the repository
     const { data: locationData, error } = await this.supabase
