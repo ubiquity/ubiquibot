@@ -19,17 +19,14 @@ export interface LinkedPR {
 
 export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitParser) => {
   const logger = getLogger();
+  const linkedIssueUrls = [];
   try {
     const { data } = await axios.get(`https://github.com/${owner}/${repo}/pull/${pull_number}`);
     const dom = parse(data);
     const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
     const linkedIssues = devForm.querySelectorAll(".my-1");
 
-    if (linkedIssues.length === 0) {
-      return null;
-    }
-
-    const linkedIssueUrls = [];
+    if (linkedIssues.length === 0) return [];
 
     for (const linkedIssue of linkedIssues) {
       const issueUrl = linkedIssue.querySelector("a")?.attrs?.href;
@@ -49,11 +46,11 @@ export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitPars
 
       linkedIssueUrls.push(issueUrl);
     }
-    return linkedIssueUrls;
   } catch (error) {
     logger.error(`${JSON.stringify(error)}`);
-    return null;
   }
+
+  return linkedIssueUrls;
 };
 
 export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser): Promise<LinkedPR[]> => {

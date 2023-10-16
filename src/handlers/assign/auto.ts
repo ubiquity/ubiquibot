@@ -24,8 +24,6 @@ export const checkPullRequests = async () => {
       pull_number: pull.number,
     });
 
-    if (!linkedIssues) continue;
-
     for (const linkedIssue of linkedIssues) {
       // if pullRequestLinked is empty, continue
       if (linkedIssue == "" || !pull.user || !linkedIssue) {
@@ -34,9 +32,9 @@ export const checkPullRequests = async () => {
 
       const connectedPull = await getPullByNumber(context, pull.number);
 
-      // Newly created PULL (draft or direct) pull does have same `created_at` and `updated_at`.
+      // The new PR, whether it's in draft or in direct form, it has identical `created_at` and `updated_at` timestamps.
       if (connectedPull?.created_at !== connectedPull?.updated_at) {
-        logger.debug("It's an updated Pull Request, reverting");
+        logger.debug("Skipping because it's not a new PR");
         continue;
       }
 
