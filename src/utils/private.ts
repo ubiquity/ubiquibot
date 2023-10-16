@@ -64,8 +64,10 @@ export const getOrgAndRepoFromPath = (path: string) => {
   return { org, repo };
 };
 
-export const getPrivateKey = async (cipherText: string): Promise<string> => {
+export const getPrivateKey = async (cipherText: string | null): Promise<string> => {
   try {
+    if (!cipherText) throw new Error("Cipher text is empty");
+
     await _sodium.ready;
     const sodium = _sodium;
 

@@ -76,7 +76,7 @@ export type LogNotification = Static<typeof LogNotificationSchema>;
 export const PayoutConfigSchema = Type.Object({
   networkId: Type.Number(),
   rpc: Type.String(),
-  privateKeyEncrypted: Type.String(),
+  privateKeyEncrypted: Type.Union([Type.Null(), Type.String()]),
   paymentToken: Type.String(),
   permitBaseUrl: Type.String(),
 });

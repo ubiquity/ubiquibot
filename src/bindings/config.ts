@@ -60,7 +60,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     payout: {
       networkId: networkId,
       rpc: rpc,
-      privateKeyEncrypted: privateKeyEncrypted || "",
+      privateKeyEncrypted: privateKeyEncrypted || null,
       paymentToken: paymentToken,
       permitBaseUrl: process.env.PERMIT_BASE_URL || permitBaseUrl,
     },
@@ -113,7 +113,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     newContributorGreeting: newContributorGreeting,
   };
 
-  if (botConfig.payout.privateKeyEncrypted == "") {
+  if (!botConfig.payout.privateKeyEncrypted) {
     botConfig.mode.paymentPermitMaxPrice = 0;
   }
 

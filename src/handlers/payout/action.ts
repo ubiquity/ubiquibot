@@ -27,7 +27,7 @@ export interface IncentivesCalculationResult {
   paymentToken: string;
   rpc: string;
   networkId: number;
-  privateKeyEncrypted: string;
+  privateKeyEncrypted: string | null;
   paymentPermitMaxPrice: number;
   baseMultiplier: number;
   incentives: Incentives;
@@ -147,7 +147,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     throw new Error("No incentive mode. skipping to process");
   }
 
-  if (privateKeyEncrypted == "") {
+  if (!privateKeyEncrypted) {
     logger.info("Permit generation disabled because wallet private key is not set.");
     throw new Error("Permit generation disabled because wallet private key is not set.");
   }
