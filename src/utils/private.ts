@@ -62,7 +62,7 @@ export async function getConfig(context: Context) {
   const configData = { keys, ...mergedConfigData };
   return configData;
 }
-export async function downloadConfig(context: Context, type: "org" | "repo") {
+async function downloadConfig(context: Context, type: "org" | "repo") {
   const payload = context.payload as Payload;
   let repo;
   let owner;
@@ -83,7 +83,7 @@ export async function downloadConfig(context: Context, type: "org" | "repo") {
   });
   return data;
 }
-export interface MergedConfigs {
+interface MergedConfigs {
   parsedRepo: Config | null;
   parsedOrg: Config | null;
   parsedDefault: MergedConfig;
@@ -100,18 +100,8 @@ export function parseYAML(data?: string) {
   }
   return null;
 }
-export function getOrgAndRepoFromPath(path: string) {
-  const parts = path.split("/");
-  if (parts.length !== 2) {
-    return { org: null, repo: null };
-  }
-  const [org, repo] = parts;
-  return { org, repo };
-}
-export async function getPrivateAndPublicKeys(
-  cipherText: string,
-  keys: { private: string | null; public: string | null }
-) {
+
+async function getPrivateAndPublicKeys(cipherText: string, keys: { private: string | null; public: string | null }) {
   await sodium.ready;
   const X25519_PRIVATE_KEY = process.env.X25519_PRIVATE_KEY;
   if (!X25519_PRIVATE_KEY) {
@@ -131,7 +121,7 @@ export async function getPrivateAndPublicKeys(
   keys.private = walletPrivateKey?.replace(KEY_PREFIX, "");
   return keys;
 }
-export async function getScalarKey(X25519_PRIVATE_KEY: string) {
+async function getScalarKey(X25519_PRIVATE_KEY: string) {
   const logger = Runtime.getState().logger;
   if (X25519_PRIVATE_KEY !== null) {
     await sodium.ready;

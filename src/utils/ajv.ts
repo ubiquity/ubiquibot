@@ -28,7 +28,7 @@ export const ajv = addFormats(new Ajv(), {
   ],
 });
 
-export function getAdditionalProperties() {
+function getAdditionalProperties() {
   return ajv.errors
     ?.filter((error) => error.keyword === "additionalProperties")
     .map((error) => error.params.additionalProperty);

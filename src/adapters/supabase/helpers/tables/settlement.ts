@@ -1,4 +1,4 @@
-import { PostgrestResponse, SupabaseClient } from "@supabase/supabase-js";
+import { SupabaseClient } from "@supabase/supabase-js";
 import Decimal from "decimal.js";
 import { GeneratedPermit } from "../../../../helpers/permit";
 import { Comment, Payload } from "../../../../types/payload";
@@ -7,7 +7,7 @@ import { Super } from "./super";
 
 type DebitInsert = Database["public"]["Tables"]["debits"]["Insert"];
 type CreditInsert = Database["public"]["Tables"]["credits"]["Insert"];
-export type PermitInsert = Database["public"]["Tables"]["permits"]["Insert"];
+type PermitInsert = Database["public"]["Tables"]["permits"]["Insert"];
 type SettlementInsert = Database["public"]["Tables"]["settlements"]["Insert"];
 type AddDebit = {
   userId: number;
@@ -166,18 +166,18 @@ export class Settlement extends Super {
     if (!settlementInsertData) throw new Error("Settlement not inserted");
   }
 
-  public async getDebit(debitId: number): Promise<PostgrestResponse<DebitInsert>> {
-    const { data: debitData, error: debitError } = await this.supabase
-      .from("debits")
-      .select("*")
-      .eq("id", debitId)
-      .single();
+  // public async getDebit(debitId: number): Promise<PostgrestResponse<DebitInsert>> {
+  //   const { data: debitData, error: debitError } = await this.supabase
+  //     .from("debits")
+  //     .select("*")
+  //     .eq("id", debitId)
+  //     .single();
 
-    if (debitError) throw debitError;
-    if (!debitData) throw new Error("Debit not found");
+  //   if (debitError) throw debitError;
+  //   if (!debitData) throw new Error("Debit not found");
 
-    return debitData;
-  }
+  //   return debitData;
+  // }
 
   // public async getWalletFromSettlement(settlementId: number): Promise<PostgrestResponse<WalletRow>> {
   //   // try {

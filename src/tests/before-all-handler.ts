@@ -1,4 +1,3 @@
-import { EmitterWebhookEventName } from "@octokit/webhooks";
 import { Probot, run } from "probot";
 
 import { repoConfig } from "./test-repo-config";
@@ -76,7 +75,7 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
     }
 
     const server = await run(function main(app: Probot) {
-      const allowedEvents = Object.values(GithubEvent) as EmitterWebhookEventName[];
+      const allowedEvents = Object.values(GithubEvent);
       app.on(allowedEvents, async (context) => {
         await bindEvents(context);
         webhookEventEmitter.emit("event", context.payload);

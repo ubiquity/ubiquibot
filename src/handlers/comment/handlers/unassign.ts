@@ -2,13 +2,12 @@ import { removeAssignees } from "../../../helpers";
 import Runtime from "../../../bindings/bot-runtime";
 import { Payload } from "../../../types";
 import { closePullRequestForAnIssue } from "../../assign/index";
-import { IssueCommentCommand } from "../commands";
 
 export async function unassign(body: string) {
   const runtime = Runtime.getState();
   const { payload: _payload } = runtime.eventContext;
   const logger = runtime.logger;
-  if (body != IssueCommentCommand.STOP) {
+  if (body != "/stop") {
     return logger.error("Skipping to unassign", { body });
   }
 

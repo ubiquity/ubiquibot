@@ -1,5 +1,4 @@
 import { UserCommands } from "../../../types";
-import { IssueCommentCommand } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
 // Commented out until Gnosis Safe is integrated (https://github.com/ubiquity/ubiquibot/issues/353)
@@ -26,13 +25,14 @@ export * from "./unassign";
 export * from "./wallet";
 
 // Parses the comment body and figure out the command name a user wants
-export function commentParser(body: string): null | IssueCommentCommand {
-  const regex = /^\/(\w+)\b/; // Regex pattern to match the command at the beginning of the body
+export function commentParser(body: string): null | string {
+  const userCommandIds = userCommands().map((cmd) => cmd.id);
+  const regex = new RegExp(`^(${userCommandIds.join("|")})\\b`); // Regex pattern to match any command at the beginning of the body
 
   const matches = regex.exec(body);
   if (matches) {
-    const command = matches[0] as IssueCommentCommand;
-    if (Object.values(IssueCommentCommand).includes(command)) {
+    const command = matches[0] as string;
+    if (userCommandIds.includes(command)) {
       return command;
     }
   }
@@ -40,75 +40,70 @@ export function commentParser(body: string): null | IssueCommentCommand {
   return null;
 }
 
-// async function commandCallback(issue: number, comment: HandlerReturnValuesNoVoid, action: string, replyTo?: Comment) {
-//   // Default callback for slash commands
-//   // await upsertCommentToIssue(issue, comment, action, replyTo);
-// }
-
 export function userCommands(): UserCommands[] {
   return [
     {
-      id: IssueCommentCommand.START,
+      id: "/start",
       description: "Assign yourself to the issue.",
       example: "/start",
       handler: assign,
     },
     {
-      id: IssueCommentCommand.STOP,
+      id: "/stop",
       description: "Unassign yourself from the issue.",
       example: "/stop",
       handler: unassign,
     },
     {
-      id: IssueCommentCommand.HELP,
+      id: "/help",
       description: "List all available commands.",
       example: "/help",
       handler: listAvailableCommands,
     },
     // Commented out until Gnosis Safe is integrated (https://github.com/ubiquity/ubiquibot/issues/353)
     /*{
-    id: IssueCommentCommands.PAYOUT,
+    id: "/payout",
     description: "Disable automatic payment for the issue.",
     handler: payout,
   },*/
     {
-      id: IssueCommentCommand.AUTOPAY,
+      id: "/autopay",
       description: "Toggle automatic payment for the completion of the current issue.",
       example: "/autopay true",
       handler: autoPay,
     },
     {
-      id: IssueCommentCommand.QUERY,
+      id: "/query",
       description: "Comments the users multiplier and address.",
       example: "/query @user",
       handler: query,
     },
     {
-      id: IssueCommentCommand.ASK,
+      id: "/ask",
       description: "Ask a technical question to UbiquiBot.",
       example: "/ask how do I do x?",
       handler: ask,
     },
     {
-      id: IssueCommentCommand.MULTIPLIER,
+      id: "/multiplier",
       description: "Set the task payout multiplier for a specific contributor, and provide a reason for why.",
       example: '/multiplier @user 0.5 "multiplier reason"',
       handler: multiplier,
     },
     {
-      id: IssueCommentCommand.LABELS,
+      id: "/labels",
       description: "Set access control, for admins only.",
       example: "/labels @user priority time price",
       handler: setLabels,
     },
     {
-      id: IssueCommentCommand.AUTHORIZE,
+      id: "/authorize",
       description: "Approve a label change, for admins only.",
       example: "/authorize",
       handler: authorizeLabelChanges,
     },
     {
-      id: IssueCommentCommand.WALLET,
+      id: "/wallet",
       description:
         'Register your wallet address for payments. Your message to sign is: "UbiquiBot". You can generate a signature hash using https://etherscan.io/verifiedSignatures',
       example:

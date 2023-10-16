@@ -15,7 +15,7 @@ import { LogReturn } from "../adapters/supabase";
 
 type PromiseType<T> = T extends Promise<infer U> ? U : never;
 
-export async function getAllIssueEvents() {
+async function getAllIssueEvents() {
   type Event = PromiseType<ReturnType<typeof context.octokit.issues.listEvents>>["data"][0];
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
@@ -107,7 +107,7 @@ export async function addLabelToIssue(labelName: string) {
   }
 }
 
-export async function listIssuesForRepo(
+async function listIssuesForRepo(
   state: "open" | "closed" | "all" = "open",
   per_page = 100,
   page = 1,
@@ -177,66 +177,7 @@ export async function addCommentToIssue(message: HandlerReturnValuesNoVoid, issu
   }
 }
 
-export async function updateCommentOfIssue(message: HandlerReturnValuesNoVoid, issueNumber: number, replyTo: Comment) {
-  const runtime = Runtime.getState();
-  const context = runtime.eventContext;
-  let comment = message as string;
-  if (message instanceof LogReturn) {
-    comment = message.logMessage.diff;
-  }
-  const payload = context.payload as Payload;
-
-  try {
-    const appResponse = await context.octokit.apps.getAuthenticated();
-    const { name, slug } = appResponse.data;
-    runtime.logger.info("App name/slug", { name, slug });
-
-    const editCommentBy = `${slug}[bot]`;
-    runtime.logger.info("Bot slug", { editCommentBy });
-
-    const comments = await context.octokit.issues.listComments({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: issueNumber,
-      since: replyTo.created_at,
-      per_page: 100,
-    });
-
-    const commentToEdit = comments.data.find((comment) => {
-      return comment?.user?.login == editCommentBy && comment.id > replyTo.id;
-    });
-
-    if (commentToEdit) {
-      runtime.logger.info("Found comment to edit", { commentToEdit });
-      await context.octokit.issues.updateComment({
-        owner: payload.repository.owner.login,
-        repo: payload.repository.name,
-        comment_id: commentToEdit.id,
-        body: comment,
-      });
-    } else {
-      runtime.logger.info("Couldn't find comment to edit", { replyTo });
-      await addCommentToIssue(message, issueNumber);
-    }
-  } catch (e: unknown) {
-    runtime.logger.debug("Updating a comment failed!", e);
-  }
-}
-
-export async function upsertCommentToIssue(
-  issueNumber: number,
-  comment: HandlerReturnValuesNoVoid,
-  action?: string,
-  destination?: Comment
-) {
-  if (action == "edited" && destination) {
-    await updateCommentOfIssue(comment, issueNumber, destination);
-  } else {
-    await addCommentToIssue(comment, issueNumber);
-  }
-}
-
-export const upsertLastCommentToIssue = async (issue_number: number, commentBody: string) => {
+export async function upsertLastCommentToIssue(issue_number: number, commentBody: string) {
   const runtime = Runtime.getState();
 
   try {
@@ -247,27 +188,6 @@ export const upsertLastCommentToIssue = async (issue_number: number, commentBody
   } catch (e: unknown) {
     runtime.logger.debug("Upserting last comment failed!", e);
   }
-};
-
-export async function getCommentsOfIssue(issueNumber: number): Promise<Comment[]> {
-  const runtime = Runtime.getState();
-  const context = runtime.eventContext;
-  const payload = context.payload as Payload;
-
-  let result: Comment[] = [];
-  try {
-    const response = await context.octokit.rest.issues.listComments({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: issueNumber,
-    });
-
-    if (response.data) result = response.data as Comment[];
-  } catch (e: unknown) {
-    runtime.logger.debug("Getting comments of issue failed!", e);
-  }
-
-  return result;
 }
 
 export async function getIssueDescription(
@@ -443,7 +363,7 @@ export async function checkUserPermissionForRepoAndOrg(username: string, context
   return permissionForOrg || permissionForRepo || userPermission === "admin";
 }
 
-export async function checkUserPermissionForRepo(username: string, context: Context): Promise<boolean> {
+async function checkUserPermissionForRepo(username: string, context: Context): Promise<boolean> {
   const runtime = Runtime.getState();
 
   const payload = context.payload as Payload;
@@ -462,7 +382,7 @@ export async function checkUserPermissionForRepo(username: string, context: Cont
   }
 }
 
-export async function checkUserPermissionForOrg(username: string, context: Context): Promise<boolean> {
+async function checkUserPermissionForOrg(username: string, context: Context): Promise<boolean> {
   const runtime = Runtime.getState();
 
   const payload = context.payload as Payload;
@@ -607,7 +527,7 @@ export async function getAllPullRequests(context: Context, state: "open" | "clos
   return prArr;
 }
 // Use `context.octokit.rest` to get the pull requests for the repository
-export async function getPullRequests(
+async function getPullRequests(
   context: Context,
   state: "open" | "closed" | "all" = "open",
   per_page: number,
@@ -663,7 +583,7 @@ export async function getAllPullRequestReviews(
   return prArr;
 }
 
-export async function getPullRequestReviews(
+async function getPullRequestReviews(
   context: Context,
   pull_number: number,
   per_page: number,
@@ -778,7 +698,7 @@ export async function getOpenedPullRequestsForAnIssue(issueNumber: number, userN
   });
 }
 
-export async function getOpenedPullRequests(username: string) {
+async function getOpenedPullRequests(username: string) {
   const runtime = Runtime.getState();
   const context = runtime.eventContext;
   const prs = await getAllPullRequests(context, "open");
