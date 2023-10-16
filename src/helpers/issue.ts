@@ -29,7 +29,7 @@ export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
 
 export const getIncentivizedUsers = async (issue_number: number) => {
   const comments = await getAllIssueComments(issue_number);
-  const incentiveComments = comments.filter((comment) => comment.body.startsWith("/comment-incentives"));
+  const incentiveComments = comments.filter((comment) => comment.body.startsWith("/comment-incentive"));
   const users: { [key: string]: boolean } = {};
   for (const incentiveComment of incentiveComments) {
     const parts = incentiveComment.body.split(" ");
