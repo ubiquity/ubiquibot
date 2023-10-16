@@ -1,11 +1,12 @@
-import { SupabaseClient } from "@supabase/supabase-js";
+import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { Context } from "probot/lib/context";
 import Runtime from "../../../../bindings/bot-runtime";
 import { User } from "../../../../types";
 import { Database } from "../../types/database";
 import { Super } from "./super";
-import { UserInsert, UserRow } from "./user";
+import { UserRow } from "./user";
 
+export type LocationRow = Database["public"]["Tables"]["locations"]["Row"];
 export type WalletRow = Database["public"]["Tables"]["wallets"]["Row"];
 export type WalletInsert = Database["public"]["Tables"]["wallets"]["Insert"];
 type UserWithWallet = (UserRow & { wallets: WalletRow | null })[];
@@ -18,25 +19,12 @@ export class Wallet extends Super {
   }
   public async getAddress(id: number): Promise<string> {
     const userWithWallet = await this._getUserWithWallet(id);
-
-    if (userWithWallet[0]?.wallets?.address === undefined) throw new Error("Wallet address is undefined");
-    if (userWithWallet[0]?.wallets?.address === null) throw new Error("Wallet address is null");
-    return userWithWallet[0]?.wallets?.address;
+    return this._validateAndGetWalletAddress(userWithWallet);
   }
 
   public async getWalletRegistrationUrl(id: number): Promise<string> {
     const userWithWallet = await this._getUserWithWallet(id);
-    if (!userWithWallet[0].wallets) throw new Error("Wallet of wallet registration comment is null");
-    if (!userWithWallet[0].wallets.location_id) throw new Error("Location id of wallet registration comment is null");
-
-    const locationId = userWithWallet[0].wallets.location_id;
-
-    const { data, error } = await this.supabase.from("locations").select("*").eq("id", locationId);
-    if (error) throw error;
-    const nodeUrl = data[0].node_url;
-    if (!nodeUrl) throw new Error("Node URL of wallet registration comment is null");
-
-    return nodeUrl;
+    return this._validateAndGetWalletRegistrationUrl(userWithWallet);
   }
 
   public async upsertWalletAddress(address: string) {
@@ -46,37 +34,11 @@ export class Wallet extends Super {
       | Context<"issue_comment.created">["payload"]
       | Context<"issue_comment.edited">["payload"];
 
-    // Check if the user exists
-    const userResponse = await this._checkIfUserExists(payload.sender.id);
+    const userData = await this._getUserData(payload);
+    const walletData = await this._getWalletData(userData);
 
-    let userData = userResponse.data as UserRow;
-    const userError = userResponse.error;
+    const locationMetaData = this._getLocationMetaData(payload);
 
-    if (userError) throw userError;
-
-    // If user doesn't exist, register the user
-    if (!userData) {
-      const user = payload.sender as User;
-      userData = await this._registerNewUser(user);
-    }
-
-    // Check if the wallet exists by looking up the wallet_id foreign key
-    const walletResponse = await this._checkIfWalletExists(userData);
-    const walletData = walletResponse.data as WalletRow;
-    const walletError = walletResponse.error;
-
-    if (walletError) throw walletError;
-
-    const locationMetaData = {
-      user_id: payload.sender.id,
-      comment_id: payload.comment.id,
-      issue_id: payload.issue.id,
-      repository_id: payload.repository.id,
-      organization_id: payload.organization?.id ?? payload.repository.owner.id,
-      // comment: payload.comment,
-    } as LocationMetaData;
-
-    // If wallet doesn't exist, insert a new row
     if (!walletData) {
       await this._registerNewWallet({
         address,
@@ -84,7 +46,6 @@ export class Wallet extends Super {
         payload,
       });
     } else {
-      // Update the existing wallet
       await this._updateExistingWallet({
         address,
         locationMetaData,
@@ -100,26 +61,114 @@ export class Wallet extends Super {
     return data;
   }
 
+  private _validateAndGetWalletAddress(userWithWallet: UserWithWallet): string {
+    if (userWithWallet[0]?.wallets?.address === undefined) throw new Error("Wallet address is undefined");
+    if (userWithWallet[0]?.wallets?.address === null) throw new Error("Wallet address is null");
+    return userWithWallet[0]?.wallets?.address;
+  }
+
+  private async _validateAndGetWalletRegistrationUrl(userWithWallet: UserWithWallet): Promise<string> {
+    if (!userWithWallet[0].wallets) throw new Error("Wallet of wallet registration comment is null");
+    if (!userWithWallet[0].wallets.location_id) throw new Error("Location id of wallet registration comment is null");
+
+    const locationId = userWithWallet[0].wallets.location_id;
+
+    const { data, error } = await this.supabase.from("locations").select("*").eq("id", locationId);
+    if (error) throw error;
+    const nodeUrl = data[0].node_url;
+    if (!nodeUrl) throw new Error("Node URL of wallet registration comment is null");
+
+    return nodeUrl;
+  }
   private async _checkIfUserExists(userId: number) {
-    return await this.supabase.from("users").select("*").eq("id", userId).single();
+    const { data, error } = await this.supabase.from("users").select("*").eq("id", userId).single();
+    if (error) throw error;
+    return data as UserRow;
+  }
+  private async _getUserData(payload: issueCommentPayload): Promise<UserRow> {
+    const user = await this._checkIfUserExists(payload.sender.id);
+    let userData = user;
+    if (!userData) {
+      const user = payload.sender as User;
+      userData = await this._registerNewUser(user, this._getLocationMetaData(payload));
+    }
+    return userData;
+  }
+  private async _registerNewUser(user: User, locationMetaData: LocationMetaData): Promise<UserRow> {
+    // Insert the location metadata into the locations table
+    const { data: locationData, error: locationError } = (await this.supabase
+      .from("locations")
+      .insert(locationMetaData)
+      .single()) as { data: LocationRow; error: PostgrestError | null };
+
+    if (locationError) {
+      throw locationError;
+    }
+
+    // Get the ID of the inserted location
+    const locationId = locationData.id;
+
+    // Register the new user with the location ID
+    const { data: userData, error: userError } = await this.supabase
+      .from("users")
+      .insert([{ id: user.id, location_id: locationId /* other fields if necessary */ }])
+      .single();
+
+    if (userError) {
+      throw userError;
+    }
+
+    return userData as UserRow;
+  }
+  private async _checkIfWalletExists(
+    userData: UserRow
+  ): Promise<{ data: WalletRow | null; error: PostgrestError | null }> {
+    const { data, error } = await this.supabase.from("wallets").select("*").eq("id", userData.wallet_id).single();
+
+    return { data: data as WalletRow, error };
+  }
+  private async _updateWalletId(walletId: number, userId: number) {
+    const { error } = await this.supabase.from("users").update({ wallet_id: walletId }).eq("id", userId);
+
+    if (error) {
+      throw error;
+    }
+  }
+  private async _getWalletData(userData: UserRow): Promise<WalletRow> {
+    const walletResponse = await this._checkIfWalletExists(userData);
+    const walletData = walletResponse.data as WalletRow;
+    const walletError = walletResponse.error;
+
+    if (walletError) throw walletError;
+    return walletData;
   }
 
-  private async _registerNewUser(user: User) {
-    const newUser: UserInsert = {
-      id: user.id,
-    };
-
-    const { data: newUserInsertData, error: newUserError } = await this.supabase.from("users").insert(newUser).single();
-
-    if (newUserError) throw newUserError;
-    return newUserInsertData;
-  }
-
-  private async _checkIfWalletExists(userData: UserRow) {
-    return await this.supabase.from("wallets").select("*").eq("id", userData.wallet_id).single();
+  private _getLocationMetaData(payload: issueCommentPayload): LocationMetaData {
+    return {
+      user_id: payload.sender.id,
+      comment_id: payload.comment.id,
+      issue_id: payload.issue.id,
+      repository_id: payload.repository.id,
+      organization_id: payload.organization?.id ?? payload.repository.owner.id,
+    } as LocationMetaData;
   }
 
   private async _registerNewWallet({ address, locationMetaData, payload }: RegisterNewWallet) {
+    const walletData = await this._insertNewWallet(address);
+    await this._updateWalletId(walletData.id, payload.sender.id);
+    if (walletData.location_id) {
+      await this._enrichLocationMetaData(walletData, locationMetaData);
+    }
+  }
+
+  private async _updateExistingWallet({ address, locationMetaData, walletData }: UpdateExistingWallet) {
+    await this._updateWalletAddress(walletData.id, address);
+    if (walletData.location_id) {
+      await this._enrichLocationMetaData(walletData, locationMetaData);
+    }
+  }
+
+  private async _insertNewWallet(address: string): Promise<WalletRow> {
     const newWallet: WalletInsert = {
       address: address,
     };
@@ -130,54 +179,23 @@ export class Wallet extends Super {
       .single();
 
     if (walletInsertError) throw walletInsertError;
-
-    // Update wallet_id in users table
-    const senderId = payload.sender.id;
-    const walletData = walletInsertData as WalletRow;
-
-    await this._updateWalletId(walletData.id, senderId);
-
-    if (walletData.location_id) {
-      // await this._enrichLocationMetaData(walletData, locationMetaData);
-      await this.supabase.from("locations").update(locationMetaData).eq("id", walletData.location_id);
-    }
+    return walletInsertData as WalletRow;
   }
 
-  private async _updateWalletId(walletId: number, userId: number) {
-    await this.supabase.from("users").update({ wallet_id: walletId }).eq("id", userId);
+  private async _updateWalletAddress(walletId: number, address: string) {
+    const basicLocationInfo = {
+      address: address,
+    } as WalletRow;
+
+    await this.supabase.from("wallets").update(basicLocationInfo).eq("id", walletId).single();
   }
 
-  private async _updateExistingWallet({ address, locationMetaData, walletData }: UpdateExistingWallet) {
-    const updateWalletSql = `
-      UPDATE wallets
-      SET address = '${address}'
-      WHERE id = ${walletData.id};
-    `;
-
-    let updateLocationSql = "";
-    if (walletData.location_id) {
-      updateLocationSql = `
-        UPDATE locations
-        SET user_id = ${locationMetaData.user_id},
-            comment_id = ${locationMetaData.comment_id},
-            issue_id = ${locationMetaData.issue_id},
-            repository_id = ${locationMetaData.repository_id},
-            organization_id = ${locationMetaData.organization_id}
-        WHERE id = ${walletData.location_id};
-      `;
-    }
-
-    const sqlStatement = `${updateWalletSql} ${updateLocationSql}`;
-    const { error } = await this.supabase.raw(sqlStatement);
-    if (error) throw error;
+  private async _enrichLocationMetaData(walletData: WalletRow, locationMetaData: LocationMetaData) {
+    const runtime = Runtime.getState();
+    const logger = runtime.logger;
+    logger.ok("Enriching wallet location metadata", locationMetaData);
+    await this.supabase.from("locations").update(locationMetaData).eq("id", walletData.location_id);
   }
-
-  //   private async _enrichLocationMetaData(walletData: WalletRow, locationMetaData: LocationMetaData) {
-  //     const runtime = Runtime.getState();
-  //     const logger = runtime.logger;
-  //     logger.ok("Enriching wallet location metadata", locationMetaData);
-  //     await this.supabase.from("locations").update(locationMetaData).eq("id", walletData.location_id);
-  //   }
 }
 
 interface RegisterNewWallet {
