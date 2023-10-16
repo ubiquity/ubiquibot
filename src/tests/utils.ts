@@ -1,3 +1,4 @@
+import { expect } from "@jest/globals";
 import { RequestError } from "@octokit/request-error";
 import EventEmitter from "events";
 import { Octokit } from "octokit";

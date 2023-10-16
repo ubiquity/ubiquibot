@@ -119,7 +119,7 @@ const IssueSchema = Type.Object({
 });
 export type Issue = Static<typeof IssueSchema>;
 
-export const RepositorySchema = Type.Object({
+const RepositorySchema = Type.Object({
   id: Type.Number(),
   node_id: Type.String(),
   name: Type.String(),
@@ -230,7 +230,7 @@ const InstallationSchema = Type.Object({
   node_id: Type.String(),
 });
 
-export const CommentSchema = Type.Object({
+const CommentSchema = Type.Object({
   url: Type.String(),
   html_url: Type.String(),
   issue_url: Type.String(),
@@ -260,7 +260,7 @@ export const CommentSchema = Type.Object({
 
 export type Comment = Static<typeof CommentSchema>;
 
-export const AssignEventSchema = Type.Object({
+const AssignEventSchema = Type.Object({
   url: Type.String(),
   id: Type.Number(),
   node_id: Type.String(),
@@ -303,7 +303,7 @@ export const PayloadSchema = Type.Object({
 
 export type Payload = Static<typeof PayloadSchema>;
 
-export const PushSchema = Type.Object({
+const PushSchema = Type.Object({
   ref: Type.String(),
   action: Type.String(),
   before: Type.String(),
@@ -320,7 +320,7 @@ export const PushSchema = Type.Object({
 
 export type PushPayload = Static<typeof PushSchema>;
 
-export const GithubContentSchema = Type.Object({
+const GithubContentSchema = Type.Object({
   type: Type.String(),
   encoding: Type.String(),
   size: Type.Number(),

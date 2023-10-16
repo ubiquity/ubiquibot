@@ -6,7 +6,7 @@ import { deleteLabel } from "./issue";
 import { calculateLabelValue } from "../helpers";
 
 // cspell:disable
-export const COLORS = {
+const COLORS = {
   default: "ededed",
   price: "1f883d",
 };

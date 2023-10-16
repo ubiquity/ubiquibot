@@ -100,14 +100,7 @@ export function parseYAML(data?: string) {
   }
   return null;
 }
-function getOrgAndRepoFromPath(path: string) {
-  const parts = path.split("/");
-  if (parts.length !== 2) {
-    return { org: null, repo: null };
-  }
-  const [org, repo] = parts;
-  return { org, repo };
-}
+
 async function getPrivateAndPublicKeys(cipherText: string, keys: { private: string | null; public: string | null }) {
   await sodium.ready;
   const X25519_PRIVATE_KEY = process.env.X25519_PRIVATE_KEY;

@@ -1,4 +1,4 @@
-export const shortenEthAddress = (address: string, len: number) => {
+const shortenEthAddress = (address: string, len: number) => {
   let prefixLength = 6;
   let suffixLength = 5;
 

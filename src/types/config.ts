@@ -43,7 +43,7 @@ const CommandItemSchema = Type.Object(
 );
 export type CommandItem = Static<typeof CommandItemSchema>;
 
-export const PriceConfigSchema = Type.Object({
+const PriceConfigSchema = Type.Object({
   priceMultiplier: Type.Number(),
   issueCreatorMultiplier: Type.Number(),
   timeLabels: Type.Array(LabelFromConfigSchema),
@@ -53,12 +53,12 @@ export const PriceConfigSchema = Type.Object({
 });
 export type PriceConfig = Static<typeof PriceConfigSchema>;
 
-export const SupabaseConfigSchema = Type.Object({
+const SupabaseConfigSchema = Type.Object({
   url: Type.Union([Type.String(), Type.Null()]),
   key: Type.Union([Type.String(), Type.Null()]),
 });
 
-export const LogNotificationSchema = Type.Object({
+const LogNotificationSchema = Type.Object({
   url: Type.String(),
   secret: Type.String(),
   groupId: Type.Number(),
@@ -76,45 +76,45 @@ export const PayoutConfigSchema = Type.Object({
   permitBaseUrl: Type.String(),
 });
 
-export const UnassignConfigSchema = Type.Object({
+const UnassignConfigSchema = Type.Object({
   followUpTime: Type.Number(),
   disqualifyTime: Type.Number(),
   timeRangeForMaxIssue: Type.Number(),
 });
 
-export const ModeSchema = Type.Object({
+const ModeSchema = Type.Object({
   permitMaxPrice: Type.Number(),
   disableAnalytics: Type.Boolean(),
   incentiveMode: Type.Boolean(),
   assistivePricing: Type.Boolean(),
 });
 
-export const AssignSchema = Type.Object({
+const AssignSchema = Type.Object({
   maxConcurrentTasks: Type.Number(),
   staleTaskTime: Type.Number(),
 });
 
-export const LogConfigSchema = Type.Object({
+const LogConfigSchema = Type.Object({
   logEnvironment: Type.String(),
   level: Type.Enum(LogLevel),
   retryLimit: Type.Number(),
 });
 
-export const SodiumSchema = Type.Object({
+const SodiumSchema = Type.Object({
   publicKey: Type.Union([Type.String(), Type.Null()]),
   privateKey: Type.Union([Type.String(), Type.Null()]),
 });
 
-export const CommentsSchema = Type.Object({
+const CommentsSchema = Type.Object({
   promotionComment: Type.String(),
 });
 
-export const AskSchema = Type.Object({
+const AskSchema = Type.Object({
   apiKey: Type.Optional(Type.String()),
   tokenLimit: Type.Number(),
 });
 
-export const NewContributorGreetingSchema = Type.Object({
+const NewContributorGreetingSchema = Type.Object({
   enabled: Type.Boolean(),
   header: Type.String(),
   helpMenu: Type.Boolean(),
@@ -122,14 +122,14 @@ export const NewContributorGreetingSchema = Type.Object({
 });
 export type NewContributorGreeting = Static<typeof NewContributorGreetingSchema>;
 
-export const CommandConfigSchema = Type.Array(CommandItemSchema);
+const CommandConfigSchema = Type.Array(CommandItemSchema);
 
 export type CommandConfig = Static<typeof CommandConfigSchema>;
-export const WalletSchema = Type.Object({
+const WalletSchema = Type.Object({
   registerWalletWithVerification: Type.Boolean(),
 });
 
-export const PublicAccessControlSchema = Type.Object({
+const PublicAccessControlSchema = Type.Object({
   setLabel: Type.Boolean(),
   fundExternalClosedIssue: Type.Boolean(),
 });
@@ -156,14 +156,14 @@ export const BotConfigSchema = Type.Object({
 
 export type BotConfig = Static<typeof BotConfigSchema>;
 
-export const StreamlinedCommentSchema = Type.Object({
+const StreamlinedCommentSchema = Type.Object({
   login: Type.Optional(Type.String()),
   body: Type.Optional(Type.String()),
 });
 
 export type StreamlinedComment = Static<typeof StreamlinedCommentSchema>;
 
-export const GPTResponseSchema = Type.Object({
+const GPTResponseSchema = Type.Object({
   answer: Type.Optional(Type.String()),
   tokenUsage: Type.Object({
     output: Type.Optional(Type.Number()),
@@ -207,7 +207,7 @@ export type Config = Static<typeof ConfigSchema>;
 
 // export type Config = Config;
 
-export const MergedConfigSchema = Type.Object({
+const MergedConfigSchema = Type.Object({
   assistivePricing: Type.Boolean(),
   commandSettings: Type.Array(CommandItemSchema),
   incentiveMode: Type.Boolean(),
