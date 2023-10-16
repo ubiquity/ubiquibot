@@ -34,7 +34,7 @@ import {
   calculateIssueAssigneeReward,
   calculatePullRequestReviewsReward,
 } from "../../payout";
-import { incentivize } from "./incentivize";
+import { commentIncentive } from "./comment-incentive";
 import { query } from "./query";
 import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
@@ -50,7 +50,7 @@ export * from "./multiplier";
 export * from "./query";
 export * from "./ask";
 export * from "./authorize";
-export * from "./incentivize";
+export * from "./comment-incentive";
 
 export interface RewardsResponse {
   error: string | null;
@@ -76,7 +76,7 @@ export interface RewardsResponse {
  */
 
 export const commentParser = (body: string): IssueCommentCommands[] => {
-  const regex = /^\/(\w+)\b/; // Regex pattern to match the command at the beginning of the body
+  const regex = /^\/([\w-]+)\b/; // Regex pattern to match the command at the beginning of the body
 
   const matches = regex.exec(body);
   if (matches) {
@@ -267,9 +267,9 @@ export const userCommands = (): UserCommands[] => {
       callback: commandCallback,
     },
     {
-      id: IssueCommentCommands.INCENTIVIZE,
+      id: IssueCommentCommands.COMMENTINCENTIVE,
       description: "Enables or Disables comment incentive for a user",
-      handler: incentivize,
+      handler: commentIncentive,
       callback: commandCallback,
     },
     {

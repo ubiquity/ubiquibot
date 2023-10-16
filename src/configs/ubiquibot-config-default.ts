@@ -53,7 +53,7 @@ export const DefaultConfig: MergedConfig = {
       enabled: false,
     },
     {
-      name: "incentivize",
+      name: "comment-incentive",
       enabled: false,
     },
     {
