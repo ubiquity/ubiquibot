@@ -125,6 +125,7 @@ export async function getPrivateAndPublicKeys(
   const binPub = sodium.from_base64(keys.public, sodium.base64_variants.URLSAFE_NO_PADDING);
   const binPriv = sodium.from_base64(X25519_PRIVATE_KEY, sodium.base64_variants.URLSAFE_NO_PADDING);
   const binCipher = sodium.from_base64(cipherText, sodium.base64_variants.URLSAFE_NO_PADDING);
+
   const walletPrivateKey: string | null = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
   // console.trace({ walletPrivateKey });
   keys.private = walletPrivateKey?.replace(KEY_PREFIX, "");

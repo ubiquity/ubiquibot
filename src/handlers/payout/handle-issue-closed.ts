@@ -8,7 +8,6 @@ import {
   savePermitToDB,
 } from "../../helpers";
 import { IncentivesCalculationResult } from "./incentives-calculation";
-import * as shims from "./shims";
 
 interface HandleIssueClosed {
   creatorReward: RewardsResponse;
@@ -139,7 +138,7 @@ export async function handleIssueClosed({
 
     if (assigneeReward.reward[0].penaltyAmount.gt(0)) {
       if (!assigneeReward.userId) throw new Error("assigneeReward.userId is undefined");
-      await shims.removePenalty({
+      await removePenalty({
         userId: assigneeReward.userId,
         amount: assigneeReward.reward[0].penaltyAmount,
         node: incentivesCalculation.comments[incentivesCalculation.comments.length - 1],
@@ -251,4 +250,25 @@ export interface RewardsResponse {
     debug?: Record<string, { count: number; reward: Decimal }>;
   }[];
   fallbackReward?: Record<string, Decimal>;
+}
+
+//
+
+//
+
+import { Comment } from "../../types";
+interface RemovePenalty {
+  userId: number;
+  amount: Decimal;
+  node: Comment;
+}
+
+export async function removePenalty({ userId, amount, node }: RemovePenalty) {
+  const { supabase } = Runtime.getState().adapters;
+
+  await supabase.settlement.addCredit({
+    userId: userId,
+    amount: amount,
+    comment: node,
+  });
 }

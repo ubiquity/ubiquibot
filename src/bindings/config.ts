@@ -8,7 +8,6 @@ import { Context } from "probot";
 import { getConfig } from "../utils/private";
 import { LogLevel } from "../adapters/supabase/helpers/tables/logs";
 import Runtime from "./bot-runtime";
-import util from "util";
 
 export async function loadConfig(context: Context): Promise<BotConfig> {
   const {
@@ -39,8 +38,8 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
     disqualifyTime,
   } = await getConfig(context);
 
-  const config = await getConfig(context);
-  console.trace(util.inspect(config, { showHidden: true, depth: null, breakLength: Infinity }));
+  // const config = await getConfig(context);
+  // console.trace(util.inspect(config, { showHidden: true, depth: null, breakLength: Infinity }));
 
   const runtime = Runtime.getState();
 

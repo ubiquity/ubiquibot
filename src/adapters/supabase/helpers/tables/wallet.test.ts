@@ -19,9 +19,9 @@ async function getWalletAddressAndUrlTest(context: Context) {
   const results = [] as unknown[];
   try {
     const address = await wallet.getAddress(userId);
-    const url = await wallet.getWalletRegistrationUrl(userId);
+    // const url = await wallet.getWalletRegistrationUrl(userId);
     results.push(address);
-    results.push(url);
+    // results.push(url);
   } catch (e) {
     console.error(e);
   }

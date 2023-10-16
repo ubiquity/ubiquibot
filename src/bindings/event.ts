@@ -118,14 +118,14 @@ export async function bindEvents(eventContext: Context) {
 async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
   for (const action of handlerType.actions) {
     const loggerHandler = createLoggerHandler(handlerType, action);
-    console.trace(handlerType, action);
+    // console.trace(handlerType, action);
 
     try {
       const response = await action();
       if (handlerType.type === "main") {
         // only log action handler results
         await logMultipleDataTypes(response, action);
-        console.trace(response);
+        // console.trace(response);
         // if (handlerType.type !== "pre" && handlerType.type !== "post" && handlerType.type !== "wildcard") {
       } else {
         const runtime = Runtime.getState();
@@ -163,7 +163,7 @@ function createLoggerHandler(handlerType: AllHandlersWithTypes, activeHandler: A
   return async function loggerHandler(logReturn: LogReturn | Error | unknown) {
     const issue = (runtime.eventContext.payload as Payload).issue;
     if (!issue) return runtime.logger.error("Issue is null. Skipping", { issue });
-    console.trace();
+    // console.trace();
     if (logReturn instanceof LogReturn) {
       // already made it to console so it should just post the comment
       const { logMessage } = logReturn;
@@ -171,10 +171,8 @@ function createLoggerHandler(handlerType: AllHandlersWithTypes, activeHandler: A
       if (logReturn.metadata) {
         const serializedMetadata = JSON.stringify(logReturn.metadata, null, 2);
         const metadataForComment = ["```json", serializedMetadata, "```"].join("\n");
-        console.trace();
         return await addCommentToIssue([logMessage.diff, metadataForComment].join("\n"), issue.number);
       } else {
-        console.trace();
         return await addCommentToIssue(logMessage.diff, issue.number);
       }
     }
@@ -182,9 +180,6 @@ function createLoggerHandler(handlerType: AllHandlersWithTypes, activeHandler: A
     const outputComment =
       logReturn instanceof Error ? "action has an uncaught error" : "action returned an unexpected value";
 
-    //   // Log the instance of _report
-    //   console.trace(`_report is an instance of: ${_report.constructor.name}`);
-    // await addCommentToIssue(outputComment, issue.number);
     return runtime.logger.error(outputComment, { logReturn, handlerType, activeHandler: activeHandler.name }, true);
   };
 }

@@ -2,9 +2,8 @@ import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
 import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
 import { IncentivesCalculationResult } from "./incentives-calculation";
-import { removePenalty } from "./shims";
 import { RewardsResponse } from "./handle-issue-closed";
-
+import { removePenalty } from "./handle-issue-closed";
 // Calculate the reward for the assignee
 export async function calculateIssueAssigneeReward(
   incentivesCalculation: IncentivesCalculationResult
@@ -20,7 +19,7 @@ export async function calculateIssueAssigneeReward(
     )
   ).mul(incentivesCalculation.multiplier);
   if (taskAmount.gt(incentivesCalculation.permitMaxPrice)) {
-    throw logger.error("Skipping to proceed the payment because task payout is higher than permitMaxPrice.");
+    throw logger.warn("Skipping to proceed the payment because task payout is higher than permitMaxPrice.");
   }
 
   // if contributor has any penalty then deduct it from the task
@@ -40,7 +39,7 @@ export async function calculateIssueAssigneeReward(
       // adds a settlement
       // adds credit
       await removePenalty({ userId: incentivesCalculation.assignee.id, amount, node: comment });
-      throw logger.error("Permit generation disabled because task amount after penalty is 0.");
+      throw logger.warn("Permit generation disabled because task amount after penalty is 0.");
     }
     taskAmount = new Decimal(taskAmountAfterPenalty);
   }

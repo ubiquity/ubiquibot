@@ -27,7 +27,7 @@ export class Access extends Super {
 
     if (error) {
       this.runtime.logger.error(error.message, error);
-      throw error;
+      throw new Error(error.message);
     }
     return data;
   }
@@ -48,7 +48,7 @@ export class Access extends Super {
       ...node,
       user_id: userId,
     } as AccessInsert);
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return data;
   }
 
@@ -65,7 +65,7 @@ export class Access extends Super {
 
       const { data, error } = await this.supabase.from("access").upsert(accessData, { onConflict: "location_id" });
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
       if (!data) throw new Error("Multiplier not upserted");
     } catch (error) {
       console.error("An error occurred while upserting multiplier:", error);

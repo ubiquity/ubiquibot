@@ -11,7 +11,7 @@ export type WalletRow = Database["public"]["Tables"]["wallets"]["Row"];
 export type WalletInsert = Database["public"]["Tables"]["wallets"]["Insert"];
 type UserWithWallet = (UserRow & { wallets: WalletRow | null })[];
 
-type issueCommentPayload = Context<"issue_comment.created">["payload"] | Context<"issue_comment.edited">["payload"];
+type IssueCommentPayload = Context<"issue_comment.created">["payload"] | Context<"issue_comment.edited">["payload"];
 
 export class Wallet extends Super {
   constructor(supabase: SupabaseClient) {
@@ -22,10 +22,10 @@ export class Wallet extends Super {
     return this._validateAndGetWalletAddress(userWithWallet);
   }
 
-  public async getWalletRegistrationUrl(id: number): Promise<string> {
-    const userWithWallet = await this._getUserWithWallet(id);
-    return this._validateAndGetWalletRegistrationUrl(userWithWallet);
-  }
+  // public async getWalletRegistrationUrl(id: number): Promise<string> {
+  //   const userWithWallet = await this._getUserWithWallet(id);
+  //   return this._validateAndGetWalletRegistrationUrl(userWithWallet);
+  // }
 
   public async upsertWalletAddress(address: string) {
     const runtime = Runtime.getState();
@@ -35,11 +35,11 @@ export class Wallet extends Super {
       | Context<"issue_comment.edited">["payload"];
 
     const userData = await this._getUserData(payload);
-    const walletData = await this._getWalletData(userData);
+    const registeredWalletData = await this._getRegisteredWalletData(userData);
 
     const locationMetaData = this._getLocationMetaData(payload);
 
-    if (!walletData) {
+    if (!registeredWalletData) {
       await this._registerNewWallet({
         address,
         locationMetaData,
@@ -50,7 +50,7 @@ export class Wallet extends Super {
         address,
         locationMetaData,
         payload,
-        walletData,
+        walletData: registeredWalletData,
       });
     }
   }
@@ -67,25 +67,25 @@ export class Wallet extends Super {
     return userWithWallet[0]?.wallets?.address;
   }
 
-  private async _validateAndGetWalletRegistrationUrl(userWithWallet: UserWithWallet): Promise<string> {
-    if (!userWithWallet[0].wallets) throw new Error("Wallet of wallet registration comment is null");
-    if (!userWithWallet[0].wallets.location_id) throw new Error("Location id of wallet registration comment is null");
+  // private async _validateAndGetWalletRegistrationUrl(userWithWallet: UserWithWallet): Promise<string> {
+  //   if (!userWithWallet[0].wallets) throw new Error("Wallet of wallet registration comment is null");
+  //   if (!userWithWallet[0].wallets.location_id) throw new Error("Location id of wallet registration comment is null");
 
-    const locationId = userWithWallet[0].wallets.location_id;
+  //   const locationId = userWithWallet[0].wallets.location_id;
 
-    const { data, error } = await this.supabase.from("locations").select("*").eq("id", locationId);
-    if (error) throw error;
-    const nodeUrl = data[0].node_url;
-    if (!nodeUrl) throw new Error("Node URL of wallet registration comment is null");
+  //   const { data, error } = await this.supabase.from("locations").select("*").eq("id", locationId);
+  //   if (error) throw error;
+  //   const nodeUrl = data[0].node_url;
+  //   if (!nodeUrl) throw new Error("Node URL of wallet registration comment is null");
 
-    return nodeUrl;
-  }
+  //   return nodeUrl;
+  // }
   private async _checkIfUserExists(userId: number) {
     const { data, error } = await this.supabase.from("users").select("*").eq("id", userId).single();
     if (error) throw error;
     return data as UserRow;
   }
-  private async _getUserData(payload: issueCommentPayload): Promise<UserRow> {
+  private async _getUserData(payload: IssueCommentPayload): Promise<UserRow> {
     const user = await this._checkIfUserExists(payload.sender.id);
     let userData = user;
     if (!userData) {
@@ -134,7 +134,7 @@ export class Wallet extends Super {
       throw error;
     }
   }
-  private async _getWalletData(userData: UserRow): Promise<WalletRow> {
+  private async _getRegisteredWalletData(userData: UserRow): Promise<WalletRow> {
     const walletResponse = await this._checkIfWalletExists(userData);
     const walletData = walletResponse.data as WalletRow;
     const walletError = walletResponse.error;
@@ -143,7 +143,7 @@ export class Wallet extends Super {
     return walletData;
   }
 
-  private _getLocationMetaData(payload: issueCommentPayload): LocationMetaData {
+  private _getLocationMetaData(payload: IssueCommentPayload): LocationMetaData {
     return {
       user_id: payload.sender.id,
       comment_id: payload.comment.id,
@@ -194,13 +194,13 @@ export class Wallet extends Super {
     const runtime = Runtime.getState();
     const logger = runtime.logger;
     logger.ok("Enriching wallet location metadata", locationMetaData);
-    await this.supabase.from("locations").update(locationMetaData).eq("id", walletData.location_id);
+    return await this.supabase.from("locations").update(locationMetaData).eq("id", walletData.location_id);
   }
 }
 
 interface RegisterNewWallet {
   address: string;
-  payload: issueCommentPayload;
+  payload: IssueCommentPayload;
   locationMetaData: LocationMetaData;
 }
 

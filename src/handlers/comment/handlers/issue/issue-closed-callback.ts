@@ -10,21 +10,13 @@ import { incentivesCalculation } from "../../../payout/incentives-calculation";
 // Callback for issues closed - Processor
 
 export async function issueClosedCallback() {
-  const runtime = Runtime.getState();
-  const context = runtime.eventContext;
-  const payload = context.payload as Payload;
-  const issue = payload.issue;
-  const organization = payload.organization;
-  const owner = payload.repository.owner.login;
-  const logger = runtime.logger;
-  if (!issue) throw logger.error("Cannot save permit to DB, missing issue");
+  const { organization, logger, owner } = getEssentials();
 
   if (!organization) {
     logger.warn("No organization found in payload, falling back to `owner`");
-  }
-
-  if (!organization && !owner) {
-    throw logger.error("Cannot save permit to DB, missing organization and owner");
+    if (!owner) {
+      throw logger.error("Cannot save permit to DB, missing organization and owner");
+    }
   }
 
   // assign function incentivesCalculation to a variable
@@ -45,4 +37,16 @@ export async function issueClosedCallback() {
   });
 
   return logger.ok("Issue closed successfully");
+}
+
+function getEssentials() {
+  const runtime = Runtime.getState();
+  const context = runtime.eventContext;
+  const payload = context.payload as Payload;
+  const issue = payload.issue;
+  const organization = payload.organization;
+  const owner = payload.repository.owner.login;
+  const logger = runtime.logger;
+  if (!issue) throw logger.error("Cannot save permit to DB, missing issue");
+  return { organization, logger, owner };
 }

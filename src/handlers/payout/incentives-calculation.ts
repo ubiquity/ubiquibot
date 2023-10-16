@@ -1,4 +1,3 @@
-import * as shims from "./shims";
 import Runtime from "../../bindings/bot-runtime";
 import {
   checkUserPermissionForRepoAndOrg,
@@ -15,8 +14,8 @@ import { isParentIssue } from "../pricing";
 import Decimal from "decimal.js";
 import { getUserMultiplier } from "../comment/handlers/assign/get-user-multiplier";
 import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
+import { removePenalty } from "./handle-issue-closed";
 
-// Collect the information required for the permit generation and error handling
 export interface IncentivesCalculationResult {
   id: number;
   paymentToken: string;
@@ -56,27 +55,20 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   const payload = context.payload as Payload;
   const issue = payload.issue;
   const { repository, organization } = payload;
-
   const id = organization?.id || repository?.id; // repository?.id as fallback
-
   if (!issue) {
     throw new Error("Permit generation skipped because issue is undefined");
   }
-
   if (accessControl.fundExternalClosedIssue) {
     const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
-
     if (!userHasPermission) {
       throw new Error("Permit generation disabled because this issue has been closed by an external contributor.");
     }
   }
-
   const comments = await getAllIssueComments(issue.number);
-
   const wasReopened = await wasIssueReopened(issue.number);
   const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
   const permitCommentIdx = comments.findIndex((e) => e.user.type === UserType.Bot && e.body.match(claimUrlRegex));
-
   if (wasReopened && permitCommentIdx !== -1) {
     const permitComment = comments[permitCommentIdx];
     const permitUrl = permitComment.body.match(claimUrlRegex);
@@ -92,62 +84,44 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     if (!networkQuery) {
       throw logger.error(`Permit network search parameter not found`);
     }
-
     let evmNetworkId = parseInt(networkQuery);
     if (!evmNetworkId) {
       evmNetworkId = 1;
     }
-
     const claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
-
     const amount = new Decimal(claim.permit.permitted.amount);
-
-    // extract assignee
     const events = await getAllIssueAssignEvents(issue.number);
     if (events.length === 0) {
       throw logger.error(`No assignment found`);
     }
     const assignee = events[0].assignee;
-
     try {
-      await shims.removePenalty({
+      await removePenalty({
         userId: assignee.id,
         amount,
         node: permitComment,
-
-        // username: assignee,
-        // repoName: payload.repository.full_name,
-        // tokenAddress,
-        // networkId: evmNetworkId,
-        // penalty: amount,
       });
     } catch (err) {
       throw logger.error("Error writing penalty to db", err);
     }
-
-    throw logger.info(`Penalty removed`);
+    throw logger.warn(`Penalty removed`);
   }
-
   if (!incentiveMode) {
-    throw logger.info(`No incentive mode. skipping to process`);
+    throw logger.warn(`No incentive mode. skipping to process`);
   }
-
   if (privateKey == null) {
     throw logger.warn(
       "Permit generation disabled because EVM wallet private key is not set. Let the maintainers know."
     );
   }
-
   if (issue.state_reason !== StateReason.COMPLETED) {
-    throw logger.info("Permit generation disabled because this was not closed as completed.");
+    throw logger.warn("Permit generation disabled because this was not closed as completed.");
   }
-
   logger.info(`Checking if the issue is a parent issue.`);
   if (issue.body && isParentIssue(issue.body)) {
     await clearAllPriceLabelsOnIssue();
     throw logger.error("Permit generation disabled because this is a collection of issues.");
   }
-
   logger.info("Checking if the issue is an eligible task.", { issue });
   for (const botComment of comments.filter((cmt) => cmt.user.type === UserType.Bot).reverse()) {
     const botCommentBody = botComment.body;
@@ -156,35 +130,28 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
       const res = botCommentBody.match(pattern);
       if (res) {
         if (res[1] === "false") {
-          throw logger.info(`Skipping to generate permit2 url, reason: autoPayMode for this issue: false`);
+          throw logger.warn(`Skipping to generate permit2 url, reason: autoPayMode for this issue: false`);
         }
         break;
       }
     }
   }
-
   if (permitMaxPrice == 0 || !permitMaxPrice) {
-    throw logger.info("Skipping to generate permit2 url, reason: permitMaxPrice is 0 or undefined", { permitMaxPrice });
+    throw logger.warn("Skipping to generate permit2 url, reason: permitMaxPrice is 0 or undefined", { permitMaxPrice });
   }
-
   const issueDetailed = taskInfo(issue);
   if (!issueDetailed.isTask) {
-    throw logger.info(`Skipping... its not an eligible task`);
+    throw logger.warn(`Skipping... its not an eligible task`);
   }
-
   if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timeLabel) {
-    throw logger.info(`Skipping... its not an eligible task`);
+    throw logger.warn(`Skipping... its not an eligible task`);
   }
-
-  // check for label altering here
   const { label } = runtime.adapters.supabase;
   const labelChanges = await label.getLabelChanges(repository.full_name);
-
   if (labelChanges) {
-    // if authorized is still false, it means user was certainly not authorized for that edit
     labelChanges.forEach((labelChange) => {
       if (labelChange.authorized === false) {
-        throw logger.info(`Skipping... label was changed by unauthorized user`);
+        throw logger.warn(`Skipping... label was changed by unauthorized user`);
       }
     });
   }
@@ -192,30 +159,28 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
-    throw logger.info("Skipping to proceed the payment because `assignee` is undefined");
+    throw logger.warn("Skipping to proceed the payment because `assignee` is undefined");
   }
 
   if (!issueDetailed.priceLabel) {
-    throw logger.info("Skipping to proceed the payment because price not set");
+    throw logger.warn("Skipping to proceed the payment because price not set");
   }
 
   const recipient = await getWalletAddress(assignee.login);
   if (!recipient || recipient?.trim() === null) {
-    throw logger.info(`Recipient address is missing`);
+    throw logger.warn(`Recipient address is missing`);
   }
 
   const userMultiplier = await getUserMultiplier(assignee.id, repository.id);
 
   if (!userMultiplier) {
-    throw logger.info(`User multiplier is missing`);
+    throw logger.warn(`User multiplier is missing`);
   }
 
   const multiplier = userMultiplier.value;
 
   if (multiplier === 0) {
-    const errMsg =
-      "Refusing to generate the payment permit because " + `@${assignee.login}` + "'s payment `multiplier` is `0`";
-    throw logger.info(errMsg);
+    throw logger.warn("Refusing to generate the payment permit because multiplier is 0", { assignee });
   }
 
   const permitComments = comments.filter(
@@ -223,7 +188,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   );
 
   if (permitComments.length > 0) {
-    throw logger.info(`skip to generate a permit url because it has been already posted`);
+    throw logger.warn(`skip to generate a permit url because it has been already posted`);
   }
 
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
