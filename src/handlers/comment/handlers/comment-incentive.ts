@@ -1,5 +1,4 @@
 import { getBotContext, getLogger } from "../../../bindings";
-import { getIncentivizedUsers } from "../../../helpers";
 import { Payload } from "../../../types";
 
 export const commentIncentive = async (body: string) => {
@@ -18,7 +17,6 @@ export const commentIncentive = async (body: string) => {
   if (!toggle) {
     return `invalid syntax for /comment-incentive \n usage /comment-incentive @user @user1... true|false \n ex /comment-incentive @user true`;
   } else {
-    let users = await getIncentivizedUsers(payload.issue.number);
-    return JSON.stringify(users);
+    return;
   }
 };
