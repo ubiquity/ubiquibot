@@ -79,7 +79,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   if (!users) return { error: "Error: Could not find any incentivized users" };
 
   for (const user of Object.keys(issueCommentsByUser)) {
-    if (!users[user] === true) continue;
+    if (!users[user]) continue;
     const commentsByUser = issueCommentsByUser[user];
     const commentsByNode = await parseComments(commentsByUser.comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, calculateIncentives.incentives);
