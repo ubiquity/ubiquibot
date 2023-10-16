@@ -23,7 +23,7 @@ const CommentIncentivesSchema = Type.Object(
   },
   { additionalProperties: false }
 );
-export type CommentIncentives = Static<typeof CommentIncentivesSchema>;
+// type CommentIncentives= Static<typeof CommentIncentivesSchema>;
 
 const IncentivesSchema = Type.Object(
   {
@@ -41,7 +41,7 @@ const CommandItemSchema = Type.Object(
   },
   { additionalProperties: false }
 );
-export type CommandItem = Static<typeof CommandItemSchema>;
+// type CommandItem= Static<typeof CommandItemSchema>;
 
 const PriceConfigSchema = Type.Object({
   priceMultiplier: Type.Number(),
@@ -51,22 +51,22 @@ const PriceConfigSchema = Type.Object({
   incentives: IncentivesSchema,
   defaultLabels: Type.Array(Type.String()),
 });
-export type PriceConfig = Static<typeof PriceConfigSchema>;
+// type PriceConfig= Static<typeof PriceConfigSchema>;
 
 const SupabaseConfigSchema = Type.Object({
   url: Type.Union([Type.String(), Type.Null()]),
   key: Type.Union([Type.String(), Type.Null()]),
 });
 
-const LogNotificationSchema = Type.Object({
-  url: Type.String(),
-  secret: Type.String(),
-  groupId: Type.Number(),
-  topicId: Type.Number(),
-  enabled: Type.Boolean(),
-});
+// const LogNotificationSchema = Type.Object({
+//   url: Type.String(),
+//   secret: Type.String(),
+//   groupId: Type.Number(),
+//   topicId: Type.Number(),
+//   enabled: Type.Boolean(),
+// });
 
-export type LogNotification = Static<typeof LogNotificationSchema>;
+// type LogNotification= Static<typeof LogNotificationSchema>;
 
 export const PayoutConfigSchema = Type.Object({
   evmNetworkId: Type.Number(),
@@ -120,11 +120,11 @@ const NewContributorGreetingSchema = Type.Object({
   helpMenu: Type.Boolean(),
   footer: Type.String(),
 });
-export type NewContributorGreeting = Static<typeof NewContributorGreetingSchema>;
+// type NewContributorGreeting= Static<typeof NewContributorGreetingSchema>;
 
 const CommandConfigSchema = Type.Array(CommandItemSchema);
 
-export type CommandConfig = Static<typeof CommandConfigSchema>;
+// type CommandConfig= Static<typeof CommandConfigSchema>;
 const WalletSchema = Type.Object({
   registerWalletWithVerification: Type.Boolean(),
 });
@@ -134,7 +134,7 @@ const PublicAccessControlSchema = Type.Object({
   fundExternalClosedIssue: Type.Boolean(),
 });
 
-export type AccessControl = Static<typeof PublicAccessControlSchema>;
+// type AccessControl= Static<typeof PublicAccessControlSchema>;
 
 export const BotConfigSchema = Type.Object({
   log: LogConfigSchema,
@@ -163,16 +163,16 @@ const StreamlinedCommentSchema = Type.Object({
 
 export type StreamlinedComment = Static<typeof StreamlinedCommentSchema>;
 
-const GPTResponseSchema = Type.Object({
-  answer: Type.Optional(Type.String()),
-  tokenUsage: Type.Object({
-    output: Type.Optional(Type.Number()),
-    input: Type.Optional(Type.Number()),
-    total: Type.Optional(Type.Number()),
-  }),
-});
+// const GPTResponseSchema = Type.Object({
+//   answer: Type.Optional(Type.String()),
+//   tokenUsage: Type.Object({
+//     output: Type.Optional(Type.Number()),
+//     input: Type.Optional(Type.Number()),
+//     total: Type.Optional(Type.Number()),
+//   }),
+// });
 
-export type GPTResponse = Static<typeof GPTResponseSchema>;
+// type GPTResponse= Static<typeof GPTResponseSchema>;
 
 export const ConfigSchema = Type.Object(
   {
