@@ -4,8 +4,8 @@ import { Database } from "../../types/database";
 import { GitHubNode } from "../client";
 import { Super } from "./super";
 import { UserRow } from "./user";
-export type AccessRow = Database["public"]["Tables"]["access"]["Row"];
-export type AccessInsert = Database["public"]["Tables"]["access"]["Insert"];
+type AccessRow = Database["public"]["Tables"]["access"]["Row"];
+type AccessInsert = Database["public"]["Tables"]["access"]["Insert"];
 type UserWithAccess = (UserRow & { access: AccessRow | null })[];
 
 type _Access = {

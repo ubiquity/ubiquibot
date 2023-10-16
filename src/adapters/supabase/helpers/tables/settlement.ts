@@ -7,7 +7,7 @@ import { Super } from "./super";
 
 type DebitInsert = Database["public"]["Tables"]["debits"]["Insert"];
 type CreditInsert = Database["public"]["Tables"]["credits"]["Insert"];
-export type PermitInsert = Database["public"]["Tables"]["permits"]["Insert"];
+type PermitInsert = Database["public"]["Tables"]["permits"]["Insert"];
 type SettlementInsert = Database["public"]["Tables"]["settlements"]["Insert"];
 type AddDebit = {
   userId: number;

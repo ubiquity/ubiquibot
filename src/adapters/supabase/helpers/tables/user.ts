@@ -3,8 +3,6 @@ import { Database } from "../../types/database";
 import { Super } from "./super";
 
 export type UserRow = Database["public"]["Tables"]["users"]["Row"];
-export type UserInsert = Database["public"]["Tables"]["users"]["Insert"];
-// type LocationRow = Database["public"]["Tables"]["locations"]["Row"];
 export class User extends Super {
   constructor(supabase: SupabaseClient) {
     super(supabase);

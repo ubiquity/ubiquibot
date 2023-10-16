@@ -6,9 +6,9 @@ import { Database } from "../../types/database";
 import { Super } from "./super";
 import { UserRow } from "./user";
 
-export type LocationRow = Database["public"]["Tables"]["locations"]["Row"];
-export type WalletRow = Database["public"]["Tables"]["wallets"]["Row"];
-export type WalletInsert = Database["public"]["Tables"]["wallets"]["Insert"];
+type LocationRow = Database["public"]["Tables"]["locations"]["Row"];
+type WalletRow = Database["public"]["Tables"]["wallets"]["Row"];
+type WalletInsert = Database["public"]["Tables"]["wallets"]["Insert"];
 type UserWithWallet = (UserRow & { wallets: WalletRow | null })[];
 
 type IssueCommentPayload = Context<"issue_comment.created">["payload"] | Context<"issue_comment.edited">["payload"];
