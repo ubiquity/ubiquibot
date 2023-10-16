@@ -32,12 +32,13 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
     staleTaskTime,
     timeLabels,
     newContributorGreeting,
-    timeRangeForMaxIssueEnabled,
     timeRangeForMaxIssue,
     permitBaseUrl,
     followUpTime,
     disqualifyTime,
   } = await getConfig(context);
+
+  console.trace({ getConfig: await getConfig(context) });
 
   const runtime = Runtime.getState();
 
@@ -50,7 +51,7 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
   const botConfig: BotConfig = {
     log: {
       logEnvironment: process.env.LOG_ENVIRONMENT || "production",
-      level: (process.env.LOG_LEVEL as LogLevel) || LogLevel.DEBUG,
+      level: (process.env.LOG_LEVEL as LogLevel) || LogLevel.SILLY,
       retryLimit: Number(process.env.LOG_RETRY) || 0,
     },
     price: { priceMultiplier, issueCreatorMultiplier, timeLabels, priorityLabels, incentives, defaultLabels },
@@ -66,9 +67,7 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
       timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE
         ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE)
         : timeRangeForMaxIssue,
-      timeRangeForMaxIssueEnabled: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED
-        ? process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED == "true"
-        : timeRangeForMaxIssueEnabled,
+
       followUpTime: ms(process.env.FOLLOW_UP_TIME || followUpTime),
       disqualifyTime: ms(process.env.DISQUALIFY_TIME || disqualifyTime),
     },

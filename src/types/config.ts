@@ -80,7 +80,6 @@ export const UnassignConfigSchema = Type.Object({
   followUpTime: Type.Number(),
   disqualifyTime: Type.Number(),
   timeRangeForMaxIssue: Type.Number(),
-  timeRangeForMaxIssueEnabled: Type.Boolean(),
 });
 
 export const ModeSchema = Type.Object({
@@ -232,7 +231,6 @@ export const MergedConfigSchema = Type.Object({
   timeLabels: Type.Array(LabelFromConfigSchema),
   staleBountyTime: Type.String(),
   timeRangeForMaxIssue: Type.Number(),
-  timeRangeForMaxIssueEnabled: Type.Boolean(),
   permitBaseUrl: Type.String(),
   followUpTime: Type.String(),
   disqualifyTime: Type.String(),

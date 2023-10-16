@@ -807,8 +807,8 @@ export async function getAvailableOpenedPullRequests(username: string) {
   const context = runtime.eventContext;
 
   const unassignConfig = runtime.botConfig.unassign;
-  const { timeRangeForMaxIssue, timeRangeForMaxIssueEnabled } = unassignConfig;
-  if (!timeRangeForMaxIssueEnabled) return [];
+  const { timeRangeForMaxIssue } = unassignConfig;
+  if (!timeRangeForMaxIssue) return [];
 
   const openedPullRequests = await getOpenedPullRequests(username);
   const result = [] as typeof openedPullRequests;

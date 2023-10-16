@@ -117,6 +117,7 @@ export async function getPrivateAndPublicKeys(
   const binCipher = sodium.from_base64(cipherText, sodium.base64_variants.URLSAFE_NO_PADDING);
 
   const walletPrivateKey: string | null = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
+  console.trace({ walletPrivateKey });
   keys.private = walletPrivateKey?.replace(KEY_PREFIX, "");
 
   return keys;
@@ -184,17 +185,26 @@ export async function getConfig(context: Context) {
     public: string | null;
   };
 
+  // console.trace({
+  //   parsedRepo,
+  //   "parsedRepo[KEY_NAME]": parsedRepo[KEY_NAME],
+  //   KEY_NAME,
+  //   parsedOrg,
+  //   "parsedOrg[KEY_NAME]": parsedOrg[KEY_NAME],
+  // });
   if (parsedRepo && parsedRepo[KEY_NAME]) {
     await getPrivateAndPublicKeys(parsedRepo[KEY_NAME], keys);
   } else if (parsedOrg && parsedOrg[KEY_NAME]) {
     await getPrivateAndPublicKeys(parsedOrg[KEY_NAME], keys);
   }
 
+  console.trace({ keys });
+
   const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
-  console.trace({ configs });
+  // console.trace({ configs });
   const mergedConfigData: MergedConfig = mergeConfigs(configs);
 
-  console.trace({ mergedConfigData });
+  // console.trace({ mergedConfigData });
 
   const configData = {
     keys,
