@@ -33,8 +33,6 @@ export const getIncentivizedUsers = async (issue_number: number) => {
   const users: { [key: string]: boolean } = {};
   for (const incentiveComment of incentiveComments) {
     const parts = incentiveComment.body.split(" ");
-    console.log(incentiveComment.body);
-    console.log(parts);
     parts.shift();
     const toggle: RegExpMatchArray | null = incentiveComment.body.match(/\b(true|false)\b/);
 
