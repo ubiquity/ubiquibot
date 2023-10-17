@@ -122,6 +122,7 @@ async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
 
     try {
       const response = await action();
+      // console.trace(response);
       if (handlerType.type === "main") {
         // only log action handler results
         await logMultipleDataTypes(response, action);
@@ -140,7 +141,7 @@ async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
 async function logMultipleDataTypes(response: string | void | LogReturn, action: AllHandlers) {
   const runtime = Runtime.getState();
   if (response instanceof LogReturn) {
-    runtime.logger.ok(response.logMessage.raw, response.metadata, true);
+    runtime.logger[response.logMessage.type](response.logMessage.raw, response.metadata, true);
   } else if (typeof response == "string") {
     const issueNumber = (runtime.eventContext.payload as Payload).issue?.number;
     if (!issueNumber) {
