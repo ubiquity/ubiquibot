@@ -1,5 +1,4 @@
 import Runtime from "../../../../bindings/bot-runtime";
-import { GLOBAL_STRINGS } from "../../../../configs";
 import {
   addAssignees,
   calculateDurations,
@@ -28,15 +27,17 @@ export async function assign(body: string) {
   logger.info("Received '/start' command", { sender: payload.sender.login, body });
 
   if (!issue) {
-    return logger.info(`Skipping '/start' because of no issue instance`);
+    throw logger.warn(`Skipping '/start' because of no issue instance`);
   }
 
   if (!startEnabled?.enabled) {
-    return logger.warn(GLOBAL_STRINGS.disabledAssigns);
+    throw logger.warn("The `/assign` command is disabled for this repository.");
   }
 
   if (issue.body && isParentIssue(issue.body)) {
-    return logger.warn(GLOBAL_STRINGS.startDisabledOnParentIssues);
+    throw logger.warn(
+      "Please select a child issue from the specification checklist to work on. The '/start' command is disabled on parent issues."
+    );
   }
 
   const openedPullRequests = await getAvailableOpenedPullRequests(payload.sender.login);
@@ -51,32 +52,32 @@ export async function assign(body: string) {
 
   // check for max and enforce max
   if (assignedIssues.length - openedPullRequests.length >= config.assign.maxConcurrentTasks) {
-    return logger.warn("Too many assigned issues, you have reached your max limit", {
+    throw logger.warn("Too many assigned issues, you have reached your max limit", {
       maxConcurrentTasks: config.assign.maxConcurrentTasks,
     });
   }
 
   if (issue.state == IssueType.CLOSED) {
-    return logger.warn("Skipping '/start' since the issue is closed");
+    throw logger.warn("Skipping '/start' since the issue is closed");
   }
   const assignees: User[] = payload.issue?.assignees ?? [];
 
   if (assignees.length !== 0) {
-    return logger.warn("Skipping '/start' since the issue is already assigned");
+    throw logger.warn("Skipping '/start' since the issue is already assigned");
   }
 
   const timeLabelsAssigned = getTimeLabelsAssigned(payload, config);
 
   if (!timeLabelsAssigned || timeLabelsAssigned.length == 0) {
-    return logger.warn("Skipping '/start' since no time labels are set to calculate the timeline", timeLabelsAssigned);
+    throw logger.warn("Skipping '/start' since no time labels are set to calculate the timeline", timeLabelsAssigned);
   }
 
   const durations = calculateDurations(timeLabelsAssigned);
 
   if (durations.length == 0) {
-    return logger.warn("Skipping '/start' since no durations found to calculate the timeline", durations);
+    throw logger.warn("Skipping '/start' since no durations found to calculate the timeline", durations);
   } else if (durations.length > 1) {
-    logger.warn("Using the shortest duration time label", null, true); // post comment
+    throw logger.warn("Using the shortest duration time label");
   }
 
   const duration = durations[0];
@@ -115,5 +116,5 @@ export async function assign(body: string) {
       }) + comment.tips
     );
   }
-  return logger.error("The assign message has been already posted");
+  throw logger.warn("The assign message has been already posted");
 }

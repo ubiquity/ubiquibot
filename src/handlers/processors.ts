@@ -32,13 +32,13 @@ export const processors: Record<string, Handler> = {
   },
   [GithubEvent.ISSUES_LABELED]: {
     pre: [syncPriceLabelsToConfig],
-    action: [pricingLabel],
-    post: [],
+    action: [],
+    post: [pricingLabel],
   },
   [GithubEvent.ISSUES_UNLABELED]: {
     pre: [syncPriceLabelsToConfig],
-    action: [pricingLabel],
-    post: [],
+    action: [],
+    post: [pricingLabel],
   },
   [GithubEvent.ISSUES_ASSIGNED]: {
     pre: [],

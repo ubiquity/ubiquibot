@@ -1,5 +1,4 @@
 import Runtime from "../../bindings/bot-runtime";
-import { GLOBAL_STRINGS } from "../../configs/strings";
 import {
   addCommentToIssue,
   getAllIssueComments,
@@ -10,6 +9,9 @@ import {
   removeAssignees,
 } from "../../helpers";
 import { Comment, Issue, IssueType, Payload, UserType } from "../../types";
+
+const requestContributorUpdate = "Do you have any updates";
+const timeoutComment = "Releasing the task due to lack of updates.";
 
 export async function checkTasksToUnassign() {
   // Check out the tasks which haven't been completed within the initial timeline
@@ -38,7 +40,6 @@ async function checkTaskToUnassign(issue: Issue): Promise<boolean> {
   const { disqualifyTime, followUpTime } = unassign;
 
   logger.info("Checking the task to unassign...", { issue_number: issue.number });
-  const { timeoutComment, requestContributorUpdate } = GLOBAL_STRINGS;
   const assignees = issue.assignees.map((i) => i.login);
   const comments = await getAllIssueComments(issue.number);
   if (!comments || comments.length == 0) return false;

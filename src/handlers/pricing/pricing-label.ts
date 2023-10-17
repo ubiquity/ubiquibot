@@ -20,12 +20,12 @@ export async function pricingLabel() {
   if (payload.issue.body && isParentIssue(payload.issue.body)) return await handleParentIssue(labels);
 
   if (!(await handleLabelsAccess()) && config.publicAccessControl.setLabel)
-    return logger.warn("No access to set labels");
+    throw logger.warn("No access to set labels");
 
   const { assistivePricing } = config.mode;
   // console.trace({ assistivePricing })
 
-  if (!labels) return logger.warn(`No labels to calculate price`);
+  if (!labels) throw logger.warn(`No labels to calculate price`);
 
   const isRecognizedLabel = (label: Label, labelConfig: LabelFromConfig[]) =>
     (typeof label === "string" || typeof label === "object") && labelConfig.some((item) => item.name === label.name);
@@ -50,7 +50,7 @@ export async function pricingLabel() {
   const minTimeLabel = sortLabelsByValue(recognizedTimeLabels).shift();
   const minPriorityLabel = sortLabelsByValue(recognizedPriorityLabels).shift();
 
-  if (!minTimeLabel || !minPriorityLabel) return logger.warn("Time or priority label is not defined");
+  if (!minTimeLabel || !minPriorityLabel) throw logger.warn("Time or priority label is not defined");
 
   const targetPriceLabel = setPrice(minTimeLabel, minPriorityLabel);
 
@@ -60,5 +60,4 @@ export async function pricingLabel() {
     await clearAllPriceLabelsOnIssue();
     logger.info(`Skipping action...`);
   }
-  return logger.info("Pricing label action completed", { targetPriceLabel });
 }

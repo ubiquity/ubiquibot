@@ -1,5 +1,4 @@
 import Runtime from "../../bindings/bot-runtime";
-import { GLOBAL_STRINGS } from "../../configs";
 import {
   addLabelToIssue,
   calculateLabelValue,
@@ -14,10 +13,9 @@ export async function handleParentIssue(labels: Label[]) {
   const runtime = Runtime.getState();
   const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));
   if (issuePrices.length) {
-    // await addCommentToIssue(GLOBAL_STRINGS.pricingDisabledOnParentIssues, issueNumber);
     await clearAllPriceLabelsOnIssue();
   }
-  return runtime.logger.warn(GLOBAL_STRINGS.pricingDisabledOnParentIssues);
+  throw runtime.logger.warn("Pricing is disabled on parent issues.");
 }
 
 export function sortLabelsByValue(labels: Label[]) {

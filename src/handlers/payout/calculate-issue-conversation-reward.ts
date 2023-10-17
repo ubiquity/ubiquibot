@@ -1,6 +1,5 @@
 import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
-import { GLOBAL_STRINGS } from "../../configs";
 import { getAllIssueComments, parseComments } from "../../helpers";
 import { Comment, Payload, UserType } from "../../types";
 import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
@@ -31,16 +30,16 @@ export async function calculateIssueConversationReward(
 
   const permitComments = calculateIncentives.comments.filter(isBotCommentWithClaim);
   if (permitComments.length > 0)
-    throw logger.error("Skipping payment permit generation because payment permit has already been posted.");
+    throw logger.warn("Skipping payment permit generation because payment permit has already been posted.");
 
   for (const botComment of permitComments.filter((comment: Comment) => comment.user.type === UserType.Bot).reverse()) {
     const botCommentBody = botComment.body;
-    if (botCommentBody.includes(GLOBAL_STRINGS.autopayComment)) {
+    if (botCommentBody.includes("Automatic payment for this issue is enabled:")) {
       const pattern = /\*\*(\w+)\*\*/;
       const res = botCommentBody.match(pattern);
       if (res) {
         if (res[1] === "false") {
-          throw logger.error("autopay is disabled");
+          throw logger.warn("autopay is disabled");
         }
         break;
       }
@@ -49,8 +48,7 @@ export async function calculateIssueConversationReward(
 
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
-  if (!assignee)
-    throw logger.info("incentivizeComments: skipping payment permit generation because `assignee` is `undefined`.");
+  if (!assignee) throw logger.info("Skipping payment permit generation because `assignee` is `undefined`.");
 
   const issueComments = await getAllIssueComments(calculateIncentives.issue.number, "raw");
   logger.info("Getting the issue comments done.", { issueComments });
