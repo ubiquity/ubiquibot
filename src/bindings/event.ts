@@ -12,27 +12,20 @@ import {
   WildCardHandler,
 } from "../types";
 import { ajv } from "../utils";
-
 import { Payload } from "../types/payload";
 import Runtime from "./bot-runtime";
 import { loadConfig } from "./config";
 import { Context } from "probot";
-
 const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
-
 type PreHandlerWithType = { type: string; actions: PreActionHandler[] };
 type HandlerWithType = { type: string; actions: MainActionHandler[] };
 type WildCardHandlerWithType = { type: string; actions: WildCardHandler[] };
-
 type PostHandlerWithType = { type: string; actions: PostActionHandler[] };
-
 type AllHandlersWithTypes = PreHandlerWithType | HandlerWithType | PostHandlerWithType;
-
 type AllHandlers = PreActionHandler | MainActionHandler | PostActionHandler;
-// type test = typeof Object.values(GitHubEvent);
 export async function bindEvents(eventContext: Context) {
   const runtime = Runtime.getState();
-  // runtime.latestEventContext = eventContext;
+  runtime.latestEventContext = eventContext;
   runtime.botConfig = await loadConfig(eventContext);
 
   runtime.adapters = createAdapters(runtime.botConfig);
