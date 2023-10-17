@@ -4,7 +4,7 @@ import Decimal from "decimal.js";
 import { ItemsToExclude } from "./post";
 import { calculateRewardValue } from "./calculate-reward-value";
 import Runtime from "../../bindings/bot-runtime";
-import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
+
 type GeneratePermitForComment = {
   user: User;
   comments: string[];
@@ -30,7 +30,7 @@ export async function generatePermitForComment({
     return;
   }
   logger.debug("Reward value", { rewardValue: rewardValue.toString(), user: user.login, comments: commentsByNode });
-  const account = await getWalletAddress(user.id);
+  const account = await runtime.adapters.supabase.wallet.getAddress(user.id);
   const amountInBigNumber = rewardValue.mul(multiplier);
   if (amountInBigNumber.gt(permitMaxPrice)) {
     logger.info(

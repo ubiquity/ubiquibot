@@ -3,7 +3,7 @@ import Runtime from "../../bindings/bot-runtime";
 import { getAllIssueComments, getAllPullRequestReviews, parseComments } from "../../helpers";
 import { getLatestMergedPullRequest, getLinkedPullRequests } from "../../helpers/parser";
 import { UserType } from "../../types";
-import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
+
 import { calculateRewardValue } from "./calculate-reward-value";
 import { IncentivesCalculationResult } from "./incentives-calculation";
 import { ItemsToExclude } from "./post";
@@ -14,7 +14,7 @@ export async function calculateReviewContributorRewards(
 ): Promise<RewardsResponse> {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const title = "Reviewer";
   const user = incentivesCalculation.issue.user;
 
@@ -104,7 +104,7 @@ export async function calculateReviewContributorRewards(
       continue;
     }
     logger.info("Comment parsed for the user", { _user, commentsByNode, rewardValue: rewardValue.toString() });
-    const account = await getWalletAddress(user.id);
+    const account = await runtime.adapters.supabase.wallet.getAddress(user.id);
     const priceInDecimal = rewardValue.mul(incentivesCalculation.priceMultiplier);
     if (priceInDecimal.gt(incentivesCalculation.permitMaxPrice)) {
       logger.warn("Skipping comment reward for user because reward is higher than payment permit max price", { _user });

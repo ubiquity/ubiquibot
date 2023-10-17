@@ -114,7 +114,7 @@ export async function savePermitToDB(
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
   const comment = payload.comment;
   if (!comment) throw logger.error("Cannot save permit to DB, missing comment");

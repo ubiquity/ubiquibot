@@ -4,7 +4,7 @@ import { isUserAdminOrBillingManager } from "../../../helpers/issue";
 
 export async function autoPay(body: string) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
   const logger = runtime.logger;
 

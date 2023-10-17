@@ -5,20 +5,20 @@ import {
   HandlerReturnValuesNoVoid,
   Issue,
   IssueType,
-  Payload,
   StreamlinedComment,
   UserType,
 } from "../types";
 import { checkRateLimitGit } from "../utils";
 import Runtime from "../bindings/bot-runtime";
 import { LogReturn } from "../adapters/supabase";
+import { Payload } from "../types/payload";
 
 type PromiseType<T> = T extends Promise<infer U> ? U : never;
 
 async function getAllIssueEvents() {
   type Event = PromiseType<ReturnType<typeof context.octokit.issues.listEvents>>["data"][0];
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
 
   const payload = context.payload as Payload;
   if (!payload.issue) return;
@@ -63,10 +63,9 @@ export async function getAllLabeledEvents() {
 
 export async function clearAllPriceLabelsOnIssue() {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
 
   const payload = context.payload as Payload;
-
   if (!payload.issue) return;
 
   const labels = payload.issue.labels;
@@ -88,7 +87,7 @@ export async function clearAllPriceLabelsOnIssue() {
 
 export async function addLabelToIssue(labelName: string) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
 
   const payload = context.payload as Payload;
   if (!payload.issue) {
@@ -115,9 +114,8 @@ async function listIssuesForRepo(
   direction: "desc" | "asc" = "desc"
 ) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
-
   const response = await context.octokit.issues.listForRepo({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
@@ -160,11 +158,16 @@ export async function addCommentToIssue(message: HandlerReturnValuesNoVoid, issu
   const runtime = Runtime.getState();
   if (message instanceof LogReturn) {
     comment = message.logMessage.diff;
+    console.trace(
+      "one of the places that metadata is being serialized as an html comment. this one is unexpected and serves as a fallback"
+    );
+    const metadataSerialized = JSON.stringify(message.metadata);
+    const metadataSerializedAsComment = `<!-- ${metadataSerialized} -->`;
+    comment = comment.concat(metadataSerializedAsComment);
   }
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
 
   const payload = context.payload as Payload;
-
   try {
     await context.octokit.issues.createComment({
       owner: payload.repository.owner.login,
@@ -195,10 +198,9 @@ export async function getIssueDescription(
   format: "raw" | "html" | "text" = "raw"
 ): Promise<string> {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
 
   const payload = context.payload as Payload;
-
   const response = await context.octokit.rest.issues.get({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
@@ -230,9 +232,8 @@ export async function getAllIssueComments(
   format: "raw" | "html" | "text" | "full" = "raw"
 ): Promise<Comment[]> {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
-
   const result: Comment[] = [];
   let shouldFetch = true;
   let page_number = 1;
@@ -270,9 +271,8 @@ export async function getAllIssueComments(
 
 export async function getAllIssueAssignEvents(issueNumber: number): Promise<AssignEvent[]> {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
-
   const result: AssignEvent[] = [];
   let shouldFetch = true;
   let page_number = 1;
@@ -305,9 +305,8 @@ export async function getAllIssueAssignEvents(issueNumber: number): Promise<Assi
 
 export async function wasIssueReopened(issueNumber: number): Promise<boolean> {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
-
   let shouldFetch = true;
   let page_number = 1;
   try {
@@ -339,10 +338,9 @@ export async function wasIssueReopened(issueNumber: number): Promise<boolean> {
 
 export async function removeAssignees(issueNumber: number, assignees: string[]) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
 
   const payload = context.payload as Payload;
-
   try {
     await context.octokit.rest.issues.removeAssignees({
       owner: payload.repository.owner.login,
@@ -367,7 +365,6 @@ async function checkUserPermissionForRepo(username: string, context: Context): P
   const runtime = Runtime.getState();
 
   const payload = context.payload as Payload;
-
   try {
     const res = await context.octokit.rest.repos.checkCollaborator({
       owner: payload.repository.owner.login,
@@ -406,7 +403,6 @@ export async function isUserAdminOrBillingManager(
   context: Context
 ): Promise<"admin" | "billing_manager" | false> {
   const payload = context.payload as Payload;
-
   const isAdmin = await checkIfIsAdmin();
   if (isAdmin) return "admin";
 
@@ -448,10 +444,9 @@ export async function isUserAdminOrBillingManager(
 
 export async function addAssignees(issue: number, assignees: string[]) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
 
   const payload = context.payload as Payload;
-
   try {
     await context.octokit.rest.issues.addAssignees({
       owner: payload.repository.owner.login,
@@ -466,10 +461,9 @@ export async function addAssignees(issue: number, assignees: string[]) {
 
 export async function deleteLabel(label: string) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
 
   const payload = context.payload as Payload;
-
   try {
     const response = await context.octokit.rest.search.issuesAndPullRequests({
       q: `repo:${payload.repository.owner.login}/${payload.repository.name} label:"${label}" state:open`,
@@ -489,7 +483,7 @@ export async function deleteLabel(label: string) {
 
 export async function removeLabel(name: string) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
 
   const payload = context.payload as Payload;
   if (!payload.issue) {
@@ -546,9 +540,8 @@ async function getPullRequests(
 
 export async function closePullRequest(pull_number: number) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
-
   try {
     await context.octokit.rest.pulls.update({
       owner: payload.repository.owner.login,
@@ -659,7 +652,7 @@ export async function getPullByNumber(context: Context, pull: number) {
 // Get issues assigned to a username
 export async function getAssignedIssues(username: string) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   type Issues = PromiseType<ReturnType<typeof context.octokit.issues.listForRepo>>["data"][0];
   const issuesArr = [] as Issues[];
   let fetchDone = false;
@@ -700,15 +693,15 @@ export async function getOpenedPullRequestsForAnIssue(issueNumber: number, userN
 
 async function getOpenedPullRequests(username: string) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const prs = await getAllPullRequests(context, "open");
   return prs.filter((pr) => !pr.draft && (pr.user?.login === username || !username));
 }
 
 export async function getCommitsOnPullRequest(pullNumber: number) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
-  const payload = runtime.eventContext.payload as Payload;
+  const context = runtime.latestEventContext;
+  const payload = runtime.latestEventContext.payload as Payload;
   try {
     const { data: commits } = await context.octokit.rest.pulls.listCommits({
       owner: payload.repository.owner.login,
@@ -724,7 +717,7 @@ export async function getCommitsOnPullRequest(pullNumber: number) {
 
 export async function getAvailableOpenedPullRequests(username: string) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
 
   const unassignConfig = runtime.botConfig.unassign;
   const { timeRangeForMaxIssue } = unassignConfig;
@@ -758,7 +751,7 @@ export async function getAvailableOpenedPullRequests(username: string) {
 // Strips out all links from the body of an issue or pull request and fetches the conversational context from each linked issue or pull request
 export async function getAllLinkedIssuesAndPullsInBody(issueNumber: number) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const logger = runtime.logger;
 
   const issue = await getIssueByNumber(context, issueNumber);

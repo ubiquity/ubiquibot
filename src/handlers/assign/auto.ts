@@ -6,7 +6,7 @@ import { Payload } from "../../types";
 // Check for pull requests linked to their respective issues but not assigned to them
 export async function checkPullRequests() {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const logger = runtime.logger;
   const pulls = await getAllPullRequests(context);
 
@@ -15,7 +15,6 @@ export async function checkPullRequests() {
   }
 
   const payload = context.payload as Payload;
-
   // Loop through the pull requests and assign them to their respective issues if needed
   for (const pull of pulls) {
     const linkedIssue = await getLinkedIssues({

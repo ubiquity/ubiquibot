@@ -4,7 +4,7 @@ import _ from "lodash";
 
 export async function query(body: string) {
   const runtime = Runtime.getState(),
-    context = runtime.eventContext,
+    context = runtime.latestEventContext,
     logger = runtime.logger,
     payload = context.payload as Payload,
     sender = payload.sender.login;

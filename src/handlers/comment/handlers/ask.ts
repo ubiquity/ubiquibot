@@ -7,7 +7,7 @@ import { askGPT, decideContextGPT, sysMsg } from "../../../helpers/gpt";
 export async function ask(body: string) {
   // The question to ask
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const logger = runtime.logger;
 
   const payload = context.payload as Payload;

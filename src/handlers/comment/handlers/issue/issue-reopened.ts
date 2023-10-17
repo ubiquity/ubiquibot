@@ -7,14 +7,19 @@ import {
   getPayoutConfigByNetworkId,
   getTokenSymbol,
 } from "../../../../helpers";
-import { Payload } from "../../../../types";
+// import { Payload } from "../../../../types";
+import { Payload } from "../../../../types/payload";
+
+// type IssuePayload = Context<"issues.reopened">; // ["payload"]
 
 export async function issueReopened() {
   const runtime = Runtime.getState();
-
   const { logger } = runtime;
+  // if (!eventContext) {
+  //   throw new Error("No event context found");
+  // }
 
-  const payload = runtime.eventContext.payload as Payload;
+  const payload = runtime.latestEventContext.payload as Payload;
   const issue = payload.issue;
 
   if (!issue) throw logger.error("No issue found in payload", payload);

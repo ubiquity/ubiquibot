@@ -14,7 +14,7 @@ import { Payload } from "../../../types";
  **/
 export async function multiplier(body: string) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const logger = runtime.logger;
   const payload = context.payload as Payload;
   const sender = payload.sender.login;

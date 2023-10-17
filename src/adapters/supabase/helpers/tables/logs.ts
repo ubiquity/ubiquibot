@@ -7,6 +7,7 @@ import Runtime from "../../../../bindings/bot-runtime";
 import { Database } from "../../types";
 import { prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
+import { execSync } from "child_process";
 
 type LogFunction = (message: string, metadata?: any) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
@@ -55,7 +56,7 @@ export class Logs extends Super {
       consoleLog(logMessage, metadata);
       if (postComment) {
         const colorizedCommentMessage = this._diffColorCommentMessage(level, logMessage);
-        const commentMetaData = this._diffColorCommentMetaData(metadata);
+        const commentMetaData = this._commentMetaData(metadata, level);
         this._postComment([colorizedCommentMessage, commentMetaData].join("\n"));
       }
       const toSupabase = { log: logMessage, level, metadata: metadata } as LogInsert;
@@ -79,20 +80,52 @@ export class Logs extends Super {
       metadata
     );
   }
+  private _addDiagnosticInformation(metadata: any) {
+    // this is a utility function to get the name of the function that called the log
+    // I have mixed feelings on this because it manipulates metadata later possibly without the developer understanding why and where,
+    // but seems useful for the metadata parser to understand where the comment originated from
 
+    // console.trace(metadata);
+
+    if (!metadata) {
+      metadata = {};
+    }
+    if (typeof metadata == "string" || typeof metadata == "number") {
+      // TODO: think i need to support every data type
+      metadata = { message: metadata };
+    }
+
+    const stackLines = new Error().stack?.split("\n") || [];
+    if (stackLines.length > 3) {
+      const callerLine = stackLines[3];
+      const match = callerLine.match(/at (\S+)/);
+      if (match) {
+        metadata.caller = match[1];
+      }
+    }
+
+    const gitCommit = execSync("git rev-parse --short HEAD").toString().trim();
+    metadata.revision = gitCommit;
+
+    return metadata;
+  }
   public ok(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({ level: LogLevel.VERBOSE, consoleLog: prettyLogs.ok, logMessage: log, metadata, postComment });
   }
 
   public info(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({ level: LogLevel.INFO, consoleLog: prettyLogs.info, logMessage: log, metadata, postComment });
   }
 
   public warn(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({ level: LogLevel.WARN, consoleLog: prettyLogs.warn, logMessage: log, metadata, postComment });
   }
 
   public debug(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({ level: LogLevel.DEBUG, consoleLog: prettyLogs.debug, logMessage: log, metadata, postComment });
   }
 
@@ -103,17 +136,18 @@ export class Logs extends Super {
       stack.splice(1, 1);
       metadata.stack = stack;
     }
-    if (!this) {
-      console.trace("this is unbound. please bind the context.");
-    }
+
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({ level: LogLevel.ERROR, consoleLog: prettyLogs.error, logMessage: log, metadata, postComment });
   }
 
   http(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({ level: LogLevel.HTTP, consoleLog: prettyLogs.http, logMessage: log, metadata, postComment });
   }
 
   verbose(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.VERBOSE,
       consoleLog: prettyLogs.verbose,
@@ -124,6 +158,7 @@ export class Logs extends Super {
   }
 
   silly(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({ level: LogLevel.SILLY, consoleLog: prettyLogs.silly, logMessage: log, metadata, postComment });
   }
 
@@ -212,11 +247,16 @@ export class Logs extends Super {
     }
   }
 
-  private _diffColorCommentMetaData(metadata: any) {
-    const diffHeader = "```json";
-    const diffFooter = "```";
-
-    return [diffHeader, JSON.stringify(metadata, null, 2), diffFooter].join("\n");
+  private _commentMetaData(metadata: any, level: LogLevel) {
+    console.trace("the main place that metadata is being serialized as an html comment");
+    const prettySerialized = JSON.stringify(metadata, null, 2);
+    // first check if metadata is an error, then post it as a json comment
+    // otherwise post it as an html comment
+    if (level === LogLevel.ERROR) {
+      return ["```json", prettySerialized, "```"].join("\n");
+    } else {
+      return ["<!--", prettySerialized, "-->"].join("\n");
+    }
   }
 
   private _diffColorCommentMessage(type: string, message: string) {
@@ -263,11 +303,11 @@ export class Logs extends Super {
   }
 
   private _postComment(message: string) {
-    this.runtime.eventContext.octokit.issues
+    this.runtime.latestEventContext.octokit.issues
       .createComment({
-        owner: this.runtime.eventContext.issue().owner,
-        repo: this.runtime.eventContext.issue().repo,
-        issue_number: this.runtime.eventContext.issue().issue_number,
+        owner: this.runtime.latestEventContext.issue().owner,
+        repo: this.runtime.latestEventContext.issue().repo,
+        issue_number: this.runtime.latestEventContext.issue().issue_number,
         body: message,
       })
       // .then((x) => console.trace(x))

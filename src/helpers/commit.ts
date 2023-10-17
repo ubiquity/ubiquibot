@@ -9,7 +9,7 @@ export async function createCommitComment(
   repo?: string
 ) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
   if (!owner) {
     owner = payload.repository.owner.login;

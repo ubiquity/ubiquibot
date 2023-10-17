@@ -1,5 +1,5 @@
-import { Payload } from "../../../../types";
 import Runtime from "../../../../bindings/bot-runtime";
+import { Payload } from "../../../../types/payload";
 import { calculateIssueAssigneeReward } from "../../../payout/calculate-issue-assignee-reward";
 import { calculateIssueConversationReward } from "../../../payout/calculate-issue-conversation-reward";
 import { calculateIssueCreatorReward } from "../../../payout/calculate-issue-creator-reward";
@@ -37,7 +37,7 @@ export async function issueClosed() {
 
 function getEssentials() {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
   const issue = payload.issue;
   if (!issue) throw runtime.logger.error("Missing issue in payload");

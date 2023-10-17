@@ -25,7 +25,7 @@ export async function validateConfigChange() {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as PushPayload;
 
   if (!payload.ref.startsWith("refs/heads/")) {

@@ -12,7 +12,7 @@ import { taskInfo } from "../wildcard";
 import { isParentIssue } from "../pricing";
 import Decimal from "decimal.js";
 import { getUserMultiplier } from "../comment/handlers/assign/get-user-multiplier";
-import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
+
 import { removePenalty } from "./handle-issue-closed";
 
 export interface IncentivesCalculationResult {
@@ -43,7 +43,7 @@ export interface IncentivesCalculationResult {
 
 export async function incentivesCalculation(): Promise<IncentivesCalculationResult> {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const {
     payout: { paymentToken, rpc, permitBaseUrl, evmNetworkId, privateKey },
     mode: { incentiveMode, permitMaxPrice },
@@ -165,7 +165,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     throw logger.warn("Skipping to proceed the payment because price not set");
   }
 
-  const recipient = await getWalletAddress(assignee.login);
+  const recipient = await runtime.adapters.supabase.wallet.getAddress(assignee.login);
   if (!recipient || recipient?.trim() === null) {
     throw logger.warn(`Recipient address is missing`);
   }

@@ -37,7 +37,7 @@ export async function getLinkedPullRequests({
   issue,
 }: GetLinkedParams): Promise<GetLinkedResults[]> {
   const logger = Runtime.getState().logger;
-  const collection = [];
+  const collection = [] as GetLinkedResults[];
   const { data } = await axios.get(`https://github.com/${owner}/${repository}/issues/${issue}`);
   const dom = parse(data);
   const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
@@ -74,8 +74,8 @@ export async function getLinkedPullRequests({
 
 export async function getLatestMergedPullRequest(pulls: GetLinkedResults[]) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
-  let latestMergedPullRequest = null;
+  const context = runtime.latestEventContext;
+  let latestMergedPullRequest;
 
   for (const pullRequest of pulls) {
     if (Number.isNaN(pullRequest.number)) return null;

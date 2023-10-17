@@ -3,9 +3,9 @@ import Runtime from "../../../bindings/bot-runtime";
 
 import { IssueType, Payload } from "../../../types";
 
-export const listAvailableCommands = async (body: string) => {
+export async function listAvailableCommands(body: string) {
   const runtime = Runtime.getState();
-  const { payload: _payload } = runtime.eventContext;
+  const { payload: _payload } = runtime.latestEventContext;
   const logger = runtime.logger;
   if (body != "/help") {
     return logger.info("Skipping to list available commands.", { body });
@@ -22,7 +22,7 @@ export const listAvailableCommands = async (body: string) => {
   }
 
   return generateHelpMenu();
-};
+}
 
 export function generateHelpMenu() {
   const config = Runtime.getState().botConfig;

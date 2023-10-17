@@ -7,7 +7,7 @@ export async function commentCreatedOrEdited() {
   const runtime = Runtime.getState(),
     config = runtime.botConfig,
     logger = runtime.logger,
-    context = runtime.eventContext,
+    context = runtime.latestEventContext,
     payload = context.payload as Payload;
 
   const comment = payload.comment as Comment;
@@ -42,13 +42,13 @@ export async function commentCreatedOrEdited() {
 
     const callbackComment = await handler(body);
 
-    console.trace(callbackComment);
+    // console.trace(callbackComment);
 
     if (callbackComment) {
       return callbackComment;
     }
   } else {
-    return logger.debug("No command found in comment", { body });
+    return logger.verbose("I do not understand how to respond to the command", { body });
   }
   return logger.info("Finished handling a comment on issue", { issue: payload.issue?.number });
 }

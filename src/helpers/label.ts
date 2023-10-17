@@ -12,16 +12,16 @@ const COLORS = {
 };
 // cspell:enable
 
-export const listLabelsForRepo = async (per_page?: number, page?: number): Promise<Label[]> => {
+export async function listLabelsForRepo(): Promise<Label[]> {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
 
   const res = await context.octokit.rest.issues.listLabelsForRepo({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
-    per_page: per_page ?? 100,
-    page: page ?? 1,
+    per_page: 100,
+    page: 1,
   });
 
   if (res.status === 200) {
@@ -29,11 +29,11 @@ export const listLabelsForRepo = async (per_page?: number, page?: number): Promi
   }
 
   throw new Error(`Failed to fetch lists of labels, code: ${res.status}`);
-};
+}
 
 export async function createLabel(name: string, labelType?: keyof typeof COLORS): Promise<void> {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const logger = runtime.logger;
   // console.trace("createLabel", { name, labelType });
   const payload = context.payload as Payload;
@@ -51,7 +51,7 @@ export async function createLabel(name: string, labelType?: keyof typeof COLORS)
 
 export async function getLabel(name: string): Promise<boolean> {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const logger = runtime.logger;
   const payload = context.payload as Payload;
   try {

@@ -5,9 +5,8 @@ export async function createDevPoolPR() {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
-
   const devPoolOwner = "ubiquity";
   const devPoolRepo = "devpool-directory";
 

@@ -4,6 +4,7 @@ import { calculateTaskPrice } from "../shared/pricing";
 
 // This just checks all the labels in the config have been set in gh issue
 // If there's something missing, they will be added
+
 export async function syncPriceLabelsToConfig() {
   const runtime = Runtime.getState();
   const config = runtime.botConfig;

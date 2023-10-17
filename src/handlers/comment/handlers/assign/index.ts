@@ -18,7 +18,7 @@ export async function assign(body: string) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   const config = runtime.botConfig;
-  const payload = runtime.eventContext.payload as Payload;
+  const payload = runtime.latestEventContext.payload as Payload;
   const issue = payload.issue;
 
   const staleTask = config.assign.staleTaskTime;
@@ -77,7 +77,7 @@ export async function assign(body: string) {
   if (durations.length == 0) {
     throw logger.warn("Skipping '/start' since no durations found to calculate the timeline", durations);
   } else if (durations.length > 1) {
-    throw logger.warn("Using the shortest duration time label");
+    logger.warn("Using the shortest duration time label");
   }
 
   const duration = durations[0];

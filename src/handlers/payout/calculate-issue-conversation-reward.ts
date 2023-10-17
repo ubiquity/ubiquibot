@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
 import { getAllIssueComments, parseComments } from "../../helpers";
 import { Comment, Payload, UserType } from "../../types";
-import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
+
 import { calculateRewardValue } from "./calculate-reward-value";
 import { IncentivesCalculationResult } from "./incentives-calculation";
 import { ItemsToExclude } from "./post";
@@ -18,7 +18,7 @@ export async function calculateIssueConversationReward(
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
   const issue = payload.issue;
   const user = payload.sender;
@@ -74,7 +74,7 @@ export async function calculateIssueConversationReward(
     }
     logger.debug("Comment parsed for the user", { _user, commentsByNode, rewardValue: rewardValue.toString() });
 
-    const account = await getWalletAddress(user.id);
+    const account = await runtime.adapters.supabase.wallet.getAddress(user.id);
     const priceInDecimal = rewardValue.mul(calculateIncentives.priceMultiplier);
     if (priceInDecimal.gt(calculateIncentives.permitMaxPrice)) {
       logger.info("Skipping comment reward for user because reward is higher than payment permit max price", { _user });

@@ -5,10 +5,9 @@ import { Payload } from "../../types";
 export async function watchLabelChange() {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
 
   const payload = context.payload as Payload;
-
   const { label, changes, sender } = payload;
 
   const previousLabel = changes?.name?.from;

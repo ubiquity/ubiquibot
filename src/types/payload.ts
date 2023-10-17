@@ -3,7 +3,7 @@
 import { Static, Type } from "@sinclair/typebox";
 import { LabelSchema } from "./label";
 
-export enum GithubEvent {
+export enum GitHubEvent {
   // issues events
   ISSUES_LABELED = "issues.labeled",
   ISSUES_UNLABELED = "issues.unlabeled",

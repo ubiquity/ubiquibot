@@ -7,11 +7,10 @@ export async function handleLabelsAccess() {
   const { publicAccessControl } = runtime.botConfig;
   if (!publicAccessControl.setLabel) return true;
 
-  const eventContext = runtime.eventContext;
+  const eventContext = runtime.latestEventContext;
   const logger = runtime.logger;
 
   const payload = eventContext.payload as Payload;
-
   if (!payload.issue) return;
   if (!payload.label?.name) return;
   if (payload.sender.type === UserType.Bot) return true;
@@ -55,5 +54,4 @@ export async function handleLabelsAccess() {
     logger.info("No access to edit label", { sender, label: labelName });
     return false;
   }
-  return true;
 }

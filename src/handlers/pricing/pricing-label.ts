@@ -7,11 +7,10 @@ import { setPrice } from "../shared/pricing";
 
 export async function pricingLabel() {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const config = Runtime.getState().botConfig;
   const logger = runtime.logger;
   const payload = context.payload as Payload;
-
   if (!payload.issue) throw logger.error("Issue is not defined");
 
   const labels = payload.issue.labels;
