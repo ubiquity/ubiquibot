@@ -4,10 +4,12 @@ import { calculateTaskPrice } from "../shared/pricing";
 
 // This just checks all the labels in the config have been set in gh issue
 // If there's something missing, they will be added
+
 export async function syncPriceLabelsToConfig() {
   const runtime = Runtime.getState();
   const config = runtime.botConfig;
   const logger = runtime.logger;
+  const context = runtime.latestEventContext;
 
   const { assistivePricing } = config.mode;
 
@@ -35,7 +37,7 @@ export async function syncPriceLabelsToConfig() {
   logger.debug("Got needed labels for setting up price ", { neededLabels });
 
   // List all the labels for a repository
-  const repoLabels = await listLabelsForRepo();
+  const repoLabels = await listLabelsForRepo(context);
 
   // Get the missing labels
   const missingLabels = neededLabels.filter((label) => !repoLabels.map((i) => i.name).includes(label));

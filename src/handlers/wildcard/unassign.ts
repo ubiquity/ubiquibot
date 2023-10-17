@@ -32,7 +32,7 @@ export async function checkTasksToUnassign() {
 async function checkTaskToUnassign(issue: Issue) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
   const unassign = runtime.botConfig.unassign;
   const { disqualifyTime, followUpTime } = unassign;

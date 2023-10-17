@@ -1,4 +1,4 @@
-import { GithubEvent, Handler, WildCardHandler } from "../types";
+import { GitHubEvent, Handler, WildCardHandler } from "../types";
 import { closePullRequestForAnIssue, startCommandHandler } from "./assign";
 import { syncPriceLabelsToConfig } from "./pricing";
 import { checkTasksToUnassign } from "./wildcard";
@@ -17,70 +17,71 @@ import { issueReopened } from "./comment/handlers/issue/issue-reopened";
  * @dev
  * pre and post handlers do not return a message to comment on the issue. their return type MUST BE `void`
  * main action MUST return a message to comment on the issue. its return type MUST BE either `string` for plaintext or `LogReturn` for color to signal success, warning, or failure status
+ * all MUST receive `Context` as the only parameter TODO: type checking on this
  */
 
 export const processors: Record<string, Handler> = {
-  [GithubEvent.ISSUES_OPENED]: {
+  [GitHubEvent.ISSUES_OPENED]: {
     pre: [],
     action: [],
     post: [],
   },
-  [GithubEvent.ISSUES_REOPENED]: {
+  [GitHubEvent.ISSUES_REOPENED]: {
     pre: [],
     action: [issueReopened],
     post: [],
   },
-  [GithubEvent.ISSUES_LABELED]: {
+  [GitHubEvent.ISSUES_LABELED]: {
     pre: [syncPriceLabelsToConfig],
     action: [],
     post: [pricingLabel],
   },
-  [GithubEvent.ISSUES_UNLABELED]: {
+  [GitHubEvent.ISSUES_UNLABELED]: {
     pre: [syncPriceLabelsToConfig],
     action: [],
     post: [pricingLabel],
   },
-  [GithubEvent.ISSUES_ASSIGNED]: {
+  [GitHubEvent.ISSUES_ASSIGNED]: {
     pre: [],
     action: [startCommandHandler],
     post: [],
   },
-  [GithubEvent.ISSUES_UNASSIGNED]: {
+  [GitHubEvent.ISSUES_UNASSIGNED]: {
     pre: [],
     action: [closePullRequestForAnIssue],
     post: [],
   },
-  [GithubEvent.ISSUE_COMMENT_CREATED]: {
+  [GitHubEvent.ISSUE_COMMENT_CREATED]: {
     pre: [],
     action: [commentCreatedOrEdited],
     post: [],
   },
-  [GithubEvent.ISSUE_COMMENT_EDITED]: {
+  [GitHubEvent.ISSUE_COMMENT_EDITED]: {
     pre: [],
     action: [commentCreatedOrEdited],
     post: [],
   },
-  [GithubEvent.ISSUES_CLOSED]: {
+  [GitHubEvent.ISSUES_CLOSED]: {
     pre: [],
     action: [issueClosed],
     post: [],
   },
-  [GithubEvent.PULL_REQUEST_OPENED]: {
+  [GitHubEvent.PULL_REQUEST_OPENED]: {
     pre: [],
     action: [checkPullRequests],
     post: [],
   },
-  [GithubEvent.INSTALLATION_ADDED_EVENT]: {
+  [GitHubEvent.INSTALLATION_ADDED_EVENT]: {
     pre: [],
     action: [createDevPoolPR],
     post: [],
   },
-  [GithubEvent.PUSH_EVENT]: {
+  [GitHubEvent.PUSH_EVENT]: {
     pre: [validateConfigChange],
     action: [],
     post: [checkModifiedBaseRate],
   },
-  [GithubEvent.LABEL_EDITED]: {
+  [GitHubEvent.LABEL_EDITED]: {
     pre: [],
     action: [watchLabelChange],
     post: [],

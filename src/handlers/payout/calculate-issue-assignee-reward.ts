@@ -1,6 +1,5 @@
 import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
-import { getWalletAddress } from "../comment/handlers/assign/get-wallet-address";
 import { IncentivesCalculationResult } from "./incentives-calculation";
 import { RewardsResponse } from "./handle-issue-closed";
 import { removePenalty } from "./handle-issue-closed";
@@ -44,7 +43,7 @@ export async function calculateIssueAssigneeReward(
     taskAmount = new Decimal(taskAmountAfterPenalty);
   }
 
-  const account = await getWalletAddress(incentivesCalculation.assignee.id);
+  const account = await runtime.adapters.supabase.wallet.getAddress(incentivesCalculation.assignee.id);
 
   return {
     title: "Issue-Assignee",

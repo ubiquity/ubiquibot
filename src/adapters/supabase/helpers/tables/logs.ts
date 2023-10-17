@@ -7,6 +7,7 @@ import Runtime from "../../../../bindings/bot-runtime";
 import { Database } from "../../types";
 import { prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
+import { execSync } from "child_process";
 
 type LogFunction = (message: string, metadata?: any) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
@@ -79,15 +80,18 @@ export class Logs extends Super {
       metadata
     );
   }
-  private _getFunctionCallerName(metadata: any) {
+  private _addDiagnosticInformation(metadata: any) {
     // this is a utility function to get the name of the function that called the log
     // I have mixed feelings on this because it manipulates metadata later possibly without the developer understanding why and where,
     // but seems useful for the metadata parser to understand where the comment originated from
+
+    // console.trace(metadata);
 
     if (!metadata) {
       metadata = {};
     }
     if (typeof metadata == "string" || typeof metadata == "number") {
+      // TODO: think i need to support every data type
       metadata = { message: metadata };
     }
 
@@ -100,49 +104,50 @@ export class Logs extends Super {
       }
     }
 
+    const gitCommit = execSync("git rev-parse --short HEAD").toString().trim();
+    metadata.revision = gitCommit;
+
     return metadata;
   }
   public ok(log: string, metadata?: any, postComment?: boolean): LogReturn {
-    metadata = this._getFunctionCallerName(metadata);
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({ level: LogLevel.VERBOSE, consoleLog: prettyLogs.ok, logMessage: log, metadata, postComment });
   }
 
   public info(log: string, metadata?: any, postComment?: boolean): LogReturn {
-    metadata = this._getFunctionCallerName(metadata);
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({ level: LogLevel.INFO, consoleLog: prettyLogs.info, logMessage: log, metadata, postComment });
   }
 
   public warn(log: string, metadata?: any, postComment?: boolean): LogReturn {
-    metadata = this._getFunctionCallerName(metadata);
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({ level: LogLevel.WARN, consoleLog: prettyLogs.warn, logMessage: log, metadata, postComment });
   }
 
   public debug(log: string, metadata?: any, postComment?: boolean): LogReturn {
-    metadata = this._getFunctionCallerName(metadata);
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({ level: LogLevel.DEBUG, consoleLog: prettyLogs.debug, logMessage: log, metadata, postComment });
   }
 
   public error(log: string, metadata?: any, postComment?: boolean): LogReturn {
-    metadata = this._getFunctionCallerName(metadata);
     if (!metadata) {
       metadata = Logs.convertErrorsIntoObjects(new Error(log));
       const stack = metadata.stack as string[];
       stack.splice(1, 1);
       metadata.stack = stack;
     }
-    if (!this) {
-      console.trace("this is unbound. please bind the context.");
-    }
+
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({ level: LogLevel.ERROR, consoleLog: prettyLogs.error, logMessage: log, metadata, postComment });
   }
 
   http(log: string, metadata?: any, postComment?: boolean): LogReturn {
-    metadata = this._getFunctionCallerName(metadata);
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({ level: LogLevel.HTTP, consoleLog: prettyLogs.http, logMessage: log, metadata, postComment });
   }
 
   verbose(log: string, metadata?: any, postComment?: boolean): LogReturn {
-    metadata = this._getFunctionCallerName(metadata);
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.VERBOSE,
       consoleLog: prettyLogs.verbose,
@@ -153,7 +158,7 @@ export class Logs extends Super {
   }
 
   silly(log: string, metadata?: any, postComment?: boolean): LogReturn {
-    metadata = this._getFunctionCallerName(metadata);
+    metadata = this._addDiagnosticInformation(metadata);
     return this._log({ level: LogLevel.SILLY, consoleLog: prettyLogs.silly, logMessage: log, metadata, postComment });
   }
 
@@ -298,11 +303,11 @@ export class Logs extends Super {
   }
 
   private _postComment(message: string) {
-    this.runtime.eventContext.octokit.issues
+    this.runtime.latestEventContext.octokit.issues
       .createComment({
-        owner: this.runtime.eventContext.issue().owner,
-        repo: this.runtime.eventContext.issue().repo,
-        issue_number: this.runtime.eventContext.issue().issue_number,
+        owner: this.runtime.latestEventContext.issue().owner,
+        repo: this.runtime.latestEventContext.issue().repo,
+        issue_number: this.runtime.latestEventContext.issue().issue_number,
         body: message,
       })
       // .then((x) => console.trace(x))

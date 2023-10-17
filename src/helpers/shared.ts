@@ -6,13 +6,13 @@ const contextNamesToSkip = ["workflow_run"];
 
 export function shouldSkip() {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
   const response = { stop: false, reason: null } as { stop: boolean; reason: string | null };
 
   if (contextNamesToSkip.includes(context.name)) {
     response.stop = true;
-    response.reason = `excluded context name: ${context.name}`;
+    response.reason = `excluded context name: "${context.name}"`;
   } else if (payload.sender.type === UserType.Bot) {
     response.stop = true;
     response.reason = "sender is a bot";

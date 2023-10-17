@@ -5,11 +5,10 @@ import { Label, Payload } from "../../types";
 
 export async function startCommandHandler() {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const config = runtime.botConfig;
   const logger = runtime.logger;
   const payload = context.payload as Payload;
-
   if (!payload.issue) {
     return logger.error("Issue is not defined");
   }
@@ -79,7 +78,7 @@ export async function startCommandHandler() {
 
 export async function closePullRequestForAnIssue() {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const logger = runtime.logger;
   const payload = context.payload as Payload;
   if (!payload.issue?.number) {

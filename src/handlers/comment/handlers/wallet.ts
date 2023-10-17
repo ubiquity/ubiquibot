@@ -19,7 +19,7 @@ function extractEnsName(text: string) {
 
 export async function registerWallet(body: string) {
   const runtime = Runtime.getState();
-  const payload = runtime.eventContext.payload as Payload;
+  const payload = runtime.latestEventContext.payload as Payload;
   const config = runtime.botConfig;
   const logger = runtime.logger;
   const sender = payload.sender.login;

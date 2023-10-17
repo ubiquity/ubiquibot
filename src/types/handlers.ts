@@ -1,22 +1,15 @@
-// import { Comment } from "./payload";
+import { Context } from "probot";
 import { LogReturn } from "../adapters/supabase/helpers/tables/logs";
 
 export type HandlerReturnValuesNoVoid = string | LogReturn;
-// type HandlerReturnValuesWithVoid= void | HandlerReturnValuesNoVoid;
 
-export type ActionHandler = (args?: string) => Promise<HandlerReturnValuesNoVoid>;
-type CommandsHandler = (args: string) => Promise<HandlerReturnValuesNoVoid>;
+export type MainActionHandler = (context: Context) => Promise<HandlerReturnValuesNoVoid>;
+type CommandsHandler = (body: string) => Promise<HandlerReturnValuesNoVoid>;
 
-export type PreActionHandler = (args?: string) => Promise<void>;
-export type PostActionHandler = (args?: string) => Promise<void>;
+export type PreActionHandler = (context: Context) => Promise<void>;
+export type PostActionHandler = (context: Context) => Promise<void>;
 
-export type WildCardHandler = (args?: string) => Promise<void>;
-// type CallbackHandler= (
-//   issueNumber: number,
-//   text: HandlerReturnValuesNoVoid,
-//   action: string,
-//   replyTo?: Comment
-// ) => Promise<void>;
+export type WildCardHandler = (context: Context) => Promise<void>;
 
 /**
  * @dev A set of handlers to do a pre/main/post action for a given action
@@ -27,7 +20,7 @@ export type WildCardHandler = (args?: string) => Promise<void>;
  */
 export type Handler = {
   pre: PreActionHandler[];
-  action: ActionHandler[];
+  action: MainActionHandler[];
   post: PostActionHandler[];
 };
 
@@ -36,7 +29,4 @@ export type UserCommands = {
   description: string;
   example: string;
   handler: CommandsHandler;
-  // callback: CallbackHandler;
-  // successComment?: string;
-  // failureComment?: string;
 };

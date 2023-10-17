@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { BotConfig } from "../types";
 import { Access } from "./supabase/helpers/tables/access";
 import { Label } from "./supabase/helpers/tables/label";
+import { Locations } from "./supabase/helpers/tables/locations";
 import { Logs } from "./supabase/helpers/tables/logs";
 import { Settlement } from "./supabase/helpers/tables/settlement";
 import { Super } from "./supabase/helpers/tables/super";
@@ -20,6 +21,7 @@ export function createAdapters(config: BotConfig) {
       settlement: new Settlement(client),
       label: new Label(client),
       logs: new Logs(client),
+      locations: new Locations(client),
       super: new Super(client),
     },
   };

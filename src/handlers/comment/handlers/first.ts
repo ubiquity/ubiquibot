@@ -4,8 +4,8 @@ import { generateHelpMenu } from "./help";
 
 export async function verifyFirstCommentInRepository() {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
-  const payload = runtime.eventContext.payload as Payload;
+  const context = runtime.latestEventContext;
+  const payload = runtime.latestEventContext.payload as Payload;
   if (!payload.issue) {
     throw runtime.logger.error("Issue is null. Skipping", { issue: payload.issue }, true);
   }

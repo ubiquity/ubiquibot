@@ -6,7 +6,7 @@ import { taskInfo } from "../../wildcard";
 export async function authorizeLabelChanges() {
   const runtime = Runtime.getState();
   const { label } = runtime.adapters.supabase;
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const logger = runtime.logger;
   const payload = context.payload as Payload;
   const sender = payload.sender.login;

@@ -24,7 +24,7 @@ export class Wallet extends Super {
 
   public async upsertWalletAddress(address: string) {
     const runtime = Runtime.getState();
-    const eventContext = runtime.eventContext;
+    const eventContext = runtime.latestEventContext;
     const payload = eventContext.payload as
       | Context<"issue_comment.created">["payload"]
       | Context<"issue_comment.edited">["payload"];
@@ -57,6 +57,8 @@ export class Wallet extends Super {
   }
 
   private _validateAndGetWalletAddress(userWithWallet: UserWithWallet): string {
+    const payload = Runtime.getState().latestEventContext.payload;
+    console.trace({ payload, userWithWallet });
     if (userWithWallet[0]?.wallets?.address === undefined) throw new Error("Wallet address is undefined");
     if (userWithWallet[0]?.wallets?.address === null) throw new Error("Wallet address is null");
     return userWithWallet[0]?.wallets?.address;

@@ -5,34 +5,35 @@ import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
 import { addCommentToIssue, shouldSkip } from "../helpers";
 import {
-  ActionHandler,
-  GithubEvent,
-  Payload,
+  MainActionHandler,
+  GitHubEvent,
   PayloadSchema,
   PostActionHandler,
   PreActionHandler,
   WildCardHandler,
+  // Payload,
 } from "../types";
 import { ajv } from "../utils";
 
 import Runtime from "./bot-runtime";
 import { loadConfig } from "./config";
+import { Payload } from "../types/payload";
 
-const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT, GithubEvent.PUSH_EVENT] as string[];
+const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
 
 type PreHandlerWithType = { type: string; actions: PreActionHandler[] };
-type HandlerWithType = { type: string; actions: ActionHandler[] };
+type HandlerWithType = { type: string; actions: MainActionHandler[] };
 type WildCardHandlerWithType = { type: string; actions: WildCardHandler[] };
 
 type PostHandlerWithType = { type: string; actions: PostActionHandler[] };
 
 type AllHandlersWithTypes = PreHandlerWithType | HandlerWithType | PostHandlerWithType;
 
-type AllHandlers = PreActionHandler | ActionHandler | PostActionHandler;
-
-export async function bindEvents(eventContext: Context) {
+type AllHandlers = PreActionHandler | MainActionHandler | PostActionHandler;
+// type test = typeof Object.values(GithubEvent);
+export async function bindEvents(eventContext: Context<"issues">) {
   const runtime = Runtime.getState();
-  runtime.eventContext = eventContext;
+  // runtime.latestEventContext = eventContext;
   runtime.botConfig = await loadConfig(eventContext);
 
   runtime.adapters = createAdapters(runtime.botConfig);
@@ -42,10 +43,10 @@ export async function bindEvents(eventContext: Context) {
     runtime.logger.warn("No EVM private key found");
   }
 
-  const payload = eventContext.payload as Payload;
-  const allowedEvents = Object.values(GithubEvent) as string[];
-  const eventName = payload.action ? `${eventContext.name}.${payload.action}` : eventContext.name; // some events wont have actions as this grows
-  if (eventName === GithubEvent.PUSH_EVENT) {
+  const payload = eventContext.payload;
+  const allowedEvents = Object.values(GitHubEvent) as string[];
+  const eventName = payload?.action ? `${eventContext.name}.${payload?.action}` : eventContext.name; // some events wont have actions as this grows
+  if (eventName === GitHubEvent.PUSH_EVENT) {
     await validateConfigChange();
   }
 
@@ -82,6 +83,7 @@ export async function bindEvents(eventContext: Context) {
 
   // Get the handlers for the action
   const handlers = processors[eventName];
+
   if (!handlers) {
     return runtime.logger.warn("No handler configured for event:", { eventName });
   }
@@ -98,13 +100,16 @@ export async function bindEvents(eventContext: Context) {
     const functionNames = handlerWithType.actions.map((action) => action?.name);
 
     runtime.logger.info(
-      `Running "${handlerWithType.type}" for event: "${eventName}". handlers: "${functionNames.join(", ")}"`
+      `Running "${handlerWithType.type}" \
+      for event: "${eventName}". \
+      handlers: "${functionNames.join(", ")}"`
     );
+
     await logAnyReturnFromHandlers(handlerWithType);
   }
 
   // Skip wildcard handlers for installation event and push event
-  if (eventName == GithubEvent.INSTALLATION_ADDED_EVENT || eventName == GithubEvent.PUSH_EVENT) {
+  if (eventName == GitHubEvent.INSTALLATION_ADDED_EVENT || eventName == GitHubEvent.PUSH_EVENT) {
     return runtime.logger.info("Skipping wildcard handlers for event:", eventName);
   } else {
     // Run wildcard handlers
@@ -118,21 +123,18 @@ export async function bindEvents(eventContext: Context) {
 async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
   for (const action of handlerType.actions) {
     const renderCatchAllWithContext = createRenderCatchAll(handlerType, action);
-    // console.trace(handlerType, action);
-
     try {
+      // checkHandler(action);
       const response = await action();
-      // console.trace(response);
+
       if (handlerType.type === "main") {
-        // only log action handler results
+        // only log main handler results
         await renderMainActionOutput(response, action);
-        // console.trace(response);
-        // if (handlerType.type !== "pre" && handlerType.type !== "post" && handlerType.type !== "wildcard") {
       } else {
         const runtime = Runtime.getState();
         runtime.logger.ok("Completed", { action: action.name, type: handlerType.type });
       }
-    } catch (report: any) {
+    } catch (report: unknown) {
       await renderCatchAllWithContext(report);
     }
   }
@@ -143,7 +145,8 @@ async function renderMainActionOutput(response: string | void | LogReturn, actio
   if (response instanceof LogReturn) {
     runtime.logger[response.logMessage.type](response.logMessage.raw, response.metadata, true);
   } else if (typeof response == "string") {
-    const issueNumber = (runtime.eventContext.payload as Payload).issue?.number;
+    const payload = runtime.latestEventContext.payload as Payload;
+    const issueNumber = payload.issue?.number;
     if (!issueNumber) {
       throw new Error("No issue number found");
     }
@@ -162,7 +165,8 @@ function createRenderCatchAll(handlerType: AllHandlersWithTypes, activeHandler: 
   const runtime = Runtime.getState();
 
   return async function renderCatchAll(logReturn: LogReturn | Error | unknown) {
-    const issue = (runtime.eventContext.payload as Payload).issue;
+    const payload = runtime.latestEventContext.payload as Payload;
+    const issue = payload.issue;
     if (!issue) return runtime.logger.error("Issue is null. Skipping", { issue });
     // console.trace();
     if (logReturn instanceof LogReturn) {

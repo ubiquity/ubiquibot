@@ -1,4 +1,3 @@
-import { Payload } from "../../../../types";
 import Runtime from "../../../../bindings/bot-runtime";
 import { calculateIssueAssigneeReward } from "../../../payout/calculate-issue-assignee-reward";
 import { calculateIssueConversationReward } from "../../../payout/calculate-issue-conversation-reward";
@@ -6,6 +5,8 @@ import { calculateIssueCreatorReward } from "../../../payout/calculate-issue-cre
 import { calculateReviewContributorRewards } from "../../../payout/calculate-review-contributor-rewards";
 import { handleIssueClosed } from "../../../payout/handle-issue-closed";
 import { incentivesCalculation } from "../../../payout/incentives-calculation";
+import { Context } from "probot/lib/context";
+import { Payload } from "../../../../types/payload";
 
 export async function issueClosed() {
   const { organization, logger, owner } = getEssentials();
@@ -37,7 +38,7 @@ export async function issueClosed() {
 
 function getEssentials() {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
   const issue = payload.issue;
   if (!issue) throw runtime.logger.error("Missing issue in payload");

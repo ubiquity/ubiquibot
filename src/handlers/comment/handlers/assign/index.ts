@@ -18,7 +18,7 @@ export async function assign(body: string) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   const config = runtime.botConfig;
-  const payload = runtime.eventContext.payload as Payload;
+  const payload = runtime.latestEventContext.payload as Payload;
   const issue = payload.issue;
 
   const staleTask = config.assign.staleTaskTime;

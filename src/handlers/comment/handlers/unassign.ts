@@ -5,7 +5,7 @@ import { closePullRequestForAnIssue } from "../../assign/index";
 
 export async function unassign(body: string) {
   const runtime = Runtime.getState();
-  const { payload: _payload } = runtime.eventContext;
+  const { payload: _payload } = runtime.latestEventContext;
   const logger = runtime.logger;
   if (body != "/stop") {
     return logger.error("Skipping to unassign", { body });

@@ -50,7 +50,7 @@ export const getPayoutConfigByNetworkId = (evmNetworkId: number): PayoutConfigPa
 
 export async function hasLabelEditPermission(label: string, caller: string) {
   const runtime = Runtime.getState();
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
   const logger = runtime.logger;
   const sufficientPrivileges = await isUserAdminOrBillingManager(caller, context);
 

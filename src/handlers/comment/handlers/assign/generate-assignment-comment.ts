@@ -1,8 +1,8 @@
 import Runtime from "../../../../bindings/bot-runtime";
 import { Payload } from "../../../../types";
-import { getWalletAddress } from "./get-wallet-address";
 
 export async function generateAssignmentComment(payload: Payload, duration: number) {
+  const runtime = Runtime.getState();
   const startTime = new Date().getTime();
   const endTime = new Date(startTime + duration * 1000);
 
@@ -16,7 +16,8 @@ export async function generateAssignmentComment(payload: Payload, duration: numb
     daysElapsedSinceTaskCreation: Math.floor((startTime - new Date(issueCreationTime).getTime()) / 1000 / 60 / 60 / 24),
     taskDeadline: endTime.toISOString(),
     registeredWallet:
-      (await getWalletAddress(payload.sender.id)) || "Please set your wallet address to use `/wallet 0x0000...0000`",
+      (await runtime.adapters.supabase.wallet.getAddress(payload.sender.id)) ||
+      "Please set your wallet address to use `/wallet 0x0000...0000`",
     timeLimit: endTime.toUTCString(),
     tips: `<h6>Tips:</h6>
     <ul>

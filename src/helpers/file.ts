@@ -4,7 +4,7 @@ import Runtime from "../bindings/bot-runtime";
 export async function getPreviousFileContent(owner: string, repo: string, branch: string, filePath: string) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
 
   try {
     // Get the latest commit of the branch
@@ -70,7 +70,7 @@ export async function getFileContent(
 ): Promise<string | null> {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const context = runtime.eventContext;
+  const context = runtime.latestEventContext;
 
   try {
     if (!commitSha) {
