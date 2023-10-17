@@ -37,9 +37,8 @@ export class User extends Super {
       .in("location_id", locationIdsInCurrentRepository)
       .eq("user_id", userId)
       .order("id", { ascending: false }) // get the latest one
-      .single();
-
-    if (accessError) throw this.runtime.logger.error("Error getting access data", new Error(accessError.message));
+      .maybeSingle();
+    if (accessError) throw this.runtime.logger.error("Error getting access data", accessError);
     return accessData;
   }
 }

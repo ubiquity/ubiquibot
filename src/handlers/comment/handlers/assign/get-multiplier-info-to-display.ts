@@ -7,9 +7,7 @@ export async function getMultiplierInfoToDisplay(senderId: number, repoId: numbe
   const value = userMultiplier?.value || null;
   const reason = userMultiplier?.reason || null;
 
-  let totalPriceOfTask = null;
-
-  console.trace(value);
+  let totalPriceOfTask: string | null = null;
 
   if (value && value != 1) {
     totalPriceOfTask = `Permit generation disabled because price label is not set.`;
