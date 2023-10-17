@@ -17,6 +17,7 @@ type _LogParams = {
   logMessage: string;
   metadata?: any;
   postComment?: boolean;
+  type: PublicMethods<Logs>;
 };
 export class LogReturn {
   logMessage: LogMessage;
@@ -33,7 +34,7 @@ type FunctionPropertyNames<T> = {
 
 type PublicMethods<T> = Exclude<FunctionPropertyNames<T>, "constructor" | keyof object>;
 
-type LogMessage = { raw: string; diff: string; type: PublicMethods<Logs> };
+export type LogMessage = { raw: string; diff: string; level: LogLevel; type: PublicMethods<Logs> };
 
 export class Logs extends Super {
   private maxLevel = -1;
@@ -44,7 +45,7 @@ export class Logs extends Super {
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
 
-  private _log({ level, consoleLog, logMessage, metadata, postComment }: _LogParams) {
+  private _log({ level, consoleLog, logMessage, metadata, postComment, type }: _LogParams) {
     // needs to generate three versions of the information.
     // they must all first serialize the error object if it exists
     // - the comment to post on supabase (must be raw)
@@ -52,19 +53,19 @@ export class Logs extends Super {
     // - the comment to post on the console (must be colorized)
 
     if (metadata) {
-      metadata = Logs.convertErrorsIntoObjects(metadata);
+      // metadata = Logs.convertErrorsIntoObjects(metadata);
       consoleLog(logMessage, metadata);
       if (postComment) {
-        const colorizedCommentMessage = this._diffColorCommentMessage(level, logMessage);
-        const commentMetaData = this._commentMetaData(metadata, level);
+        const colorizedCommentMessage = this._diffColorCommentMessage(type, logMessage);
+        const commentMetaData = Logs._commentMetaData(metadata, level);
         this._postComment([colorizedCommentMessage, commentMetaData].join("\n"));
       }
-      const toSupabase = { log: logMessage, level, metadata: metadata } as LogInsert;
+      const toSupabase = { log: logMessage, level, metadata } as LogInsert;
       this._save(toSupabase, level);
     } else {
       consoleLog(logMessage);
       if (postComment) {
-        const colorizedCommentMessage = this._diffColorCommentMessage(level, logMessage);
+        const colorizedCommentMessage = this._diffColorCommentMessage(type, logMessage);
         this._postComment(colorizedCommentMessage);
       }
       const toSupabase = { log: logMessage, level } as LogInsert;
@@ -74,8 +75,9 @@ export class Logs extends Super {
     return new LogReturn(
       {
         raw: logMessage,
-        diff: this._diffColorCommentMessage(level, logMessage),
-        type: level,
+        diff: this._diffColorCommentMessage(type, logMessage),
+        type,
+        level,
       },
       metadata
     );
@@ -85,7 +87,7 @@ export class Logs extends Super {
     // I have mixed feelings on this because it manipulates metadata later possibly without the developer understanding why and where,
     // but seems useful for the metadata parser to understand where the comment originated from
 
-    // console.trace(metadata);
+    // console.trace({ metadata });
 
     if (!metadata) {
       metadata = {};
@@ -111,22 +113,50 @@ export class Logs extends Super {
   }
   public ok(log: string, metadata?: any, postComment?: boolean): LogReturn {
     metadata = this._addDiagnosticInformation(metadata);
-    return this._log({ level: LogLevel.VERBOSE, consoleLog: prettyLogs.ok, logMessage: log, metadata, postComment });
+    return this._log({
+      level: LogLevel.VERBOSE,
+      consoleLog: prettyLogs.ok,
+      logMessage: log,
+      metadata,
+      postComment,
+      type: "ok",
+    });
   }
 
   public info(log: string, metadata?: any, postComment?: boolean): LogReturn {
     metadata = this._addDiagnosticInformation(metadata);
-    return this._log({ level: LogLevel.INFO, consoleLog: prettyLogs.info, logMessage: log, metadata, postComment });
+    return this._log({
+      level: LogLevel.INFO,
+      consoleLog: prettyLogs.info,
+      logMessage: log,
+      metadata,
+      postComment,
+      type: "info",
+    });
   }
 
   public warn(log: string, metadata?: any, postComment?: boolean): LogReturn {
     metadata = this._addDiagnosticInformation(metadata);
-    return this._log({ level: LogLevel.WARN, consoleLog: prettyLogs.warn, logMessage: log, metadata, postComment });
+    return this._log({
+      level: LogLevel.WARN,
+      consoleLog: prettyLogs.warn,
+      logMessage: log,
+      metadata,
+      postComment,
+      type: "warn",
+    });
   }
 
   public debug(log: string, metadata?: any, postComment?: boolean): LogReturn {
     metadata = this._addDiagnosticInformation(metadata);
-    return this._log({ level: LogLevel.DEBUG, consoleLog: prettyLogs.debug, logMessage: log, metadata, postComment });
+    return this._log({
+      level: LogLevel.DEBUG,
+      consoleLog: prettyLogs.debug,
+      logMessage: log,
+      metadata,
+      postComment,
+      type: "debug",
+    });
   }
 
   public error(log: string, metadata?: any, postComment?: boolean): LogReturn {
@@ -136,14 +166,34 @@ export class Logs extends Super {
       stack.splice(1, 1);
       metadata.stack = stack;
     }
+    if (metadata instanceof Error) {
+      metadata = Logs.convertErrorsIntoObjects(metadata);
+      const stack = metadata.stack as string[];
+      stack.splice(1, 1);
+      metadata.stack = stack;
+    }
 
     metadata = this._addDiagnosticInformation(metadata);
-    return this._log({ level: LogLevel.ERROR, consoleLog: prettyLogs.error, logMessage: log, metadata, postComment });
+    return this._log({
+      level: LogLevel.ERROR,
+      consoleLog: prettyLogs.error,
+      logMessage: log,
+      metadata,
+      postComment,
+      type: "error",
+    });
   }
 
   http(log: string, metadata?: any, postComment?: boolean): LogReturn {
     metadata = this._addDiagnosticInformation(metadata);
-    return this._log({ level: LogLevel.HTTP, consoleLog: prettyLogs.http, logMessage: log, metadata, postComment });
+    return this._log({
+      level: LogLevel.HTTP,
+      consoleLog: prettyLogs.http,
+      logMessage: log,
+      metadata,
+      postComment,
+      type: "http",
+    });
   }
 
   verbose(log: string, metadata?: any, postComment?: boolean): LogReturn {
@@ -154,12 +204,20 @@ export class Logs extends Super {
       logMessage: log,
       metadata,
       postComment,
+      type: "verbose",
     });
   }
 
   silly(log: string, metadata?: any, postComment?: boolean): LogReturn {
     metadata = this._addDiagnosticInformation(metadata);
-    return this._log({ level: LogLevel.SILLY, consoleLog: prettyLogs.silly, logMessage: log, metadata, postComment });
+    return this._log({
+      level: LogLevel.SILLY,
+      consoleLog: prettyLogs.silly,
+      logMessage: log,
+      metadata,
+      postComment,
+      type: "silly",
+    });
   }
 
   constructor(supabase: SupabaseClient) {
@@ -247,7 +305,7 @@ export class Logs extends Super {
     }
   }
 
-  private _commentMetaData(metadata: any, level: LogLevel) {
+  static _commentMetaData(metadata: any, level: LogLevel) {
     console.trace("the main place that metadata is being serialized as an html comment");
     const prettySerialized = JSON.stringify(metadata, null, 2);
     // first check if metadata is an error, then post it as a json comment
@@ -289,6 +347,7 @@ export class Logs extends Super {
         .map((line) => `@@ ${line} @@`)
         .join("\n"); // debug: "@@@@",
     } else {
+      // console.trace("unknown log type", type);
       // default to gray
       message = message
         .split("\n")

@@ -37,18 +37,11 @@ export async function commentCreatedOrEdited() {
     const feature = config.command.find((e) => e.name === id.split("/")[1]);
 
     if (feature?.enabled === false && id !== "/help") {
-      logger.info("Skipping because it is disabled on this repo.", { id });
+      return logger.warn("Skipping because it is disabled on this repo.", { id });
     }
 
-    const callbackComment = await handler(body);
-
-    // console.trace(callbackComment);
-
-    if (callbackComment) {
-      return callbackComment;
-    }
+    return await handler(body);
   } else {
     return logger.verbose("I do not understand how to respond to that command", { body });
   }
-  return logger.info("Finished handling a comment on issue", { issue: payload.issue?.number });
 }

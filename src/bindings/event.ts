@@ -1,5 +1,7 @@
+import { Context } from "probot";
 import { createAdapters } from "../adapters";
 import { LogReturn } from "../adapters/supabase";
+import { LogMessage } from "../adapters/supabase/helpers/tables/logs";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
 import { addCommentToIssue, shouldSkip } from "../helpers";
@@ -11,11 +13,10 @@ import {
   PreActionHandler,
   WildCardHandler,
 } from "../types";
-import { ajv } from "../utils";
 import { Payload } from "../types/payload";
+import { ajv } from "../utils";
 import Runtime from "./bot-runtime";
 import { loadConfig } from "./config";
-import { Context } from "probot";
 const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
 type PreHandlerWithType = { type: string; actions: PreActionHandler[] };
 type HandlerWithType = { type: string; actions: MainActionHandler[] };
@@ -135,7 +136,9 @@ async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
 async function renderMainActionOutput(response: string | void | LogReturn, action: AllHandlers) {
   const runtime = Runtime.getState();
   if (response instanceof LogReturn) {
-    runtime.logger[response.logMessage.type](response.logMessage.raw, response.metadata, true);
+    // console.trace({ response });
+
+    runtime.logger[response.logMessage.type as LogMessage["type"]](response.logMessage.raw, response.metadata, true);
   } else if (typeof response == "string") {
     const payload = runtime.latestEventContext.payload as Payload;
     const issueNumber = payload.issue?.number;
@@ -154,30 +157,44 @@ async function renderMainActionOutput(response: string | void | LogReturn, actio
 }
 
 function createRenderCatchAll(handlerType: AllHandlersWithTypes, activeHandler: AllHandlers) {
-  const runtime = Runtime.getState();
-
   return async function renderCatchAll(logReturn: LogReturn | Error | unknown) {
+    const runtime = Runtime.getState();
     const payload = runtime.latestEventContext.payload as Payload;
     const issue = payload.issue;
     if (!issue) return runtime.logger.error("Issue is null. Skipping", { issue });
-    // console.trace();
+
     if (logReturn instanceof LogReturn) {
       // already made it to console so it should just post the comment
       const { logMessage } = logReturn;
 
       if (logReturn.metadata) {
-        const serializedMetadata = JSON.stringify(logReturn.metadata, null, 2);
-        console.trace("render catch all serialize metadata");
-        const metadataForComment = ["```json", serializedMetadata, "```"].join("\n");
-        return await addCommentToIssue([logMessage.diff, metadataForComment].join("\n"), issue.number);
+        console.trace("this is the second place that metadata is being serialized as an html comment");
+        let metadataSerialized;
+        const prettySerialized = JSON.stringify(logReturn.metadata, null, 2);
+        // first check if metadata is an error, then post it as a json comment
+        // otherwise post it as an html comment
+        if (logReturn.logMessage.type === ("error" as LogMessage["type"])) {
+          metadataSerialized = ["```json", prettySerialized, "```"].join("\n");
+        } else {
+          metadataSerialized = ["<!--", prettySerialized, "-->"].join("\n");
+        }
+
+        return await addCommentToIssue([logMessage.diff, metadataSerialized].join("\n"), issue.number);
       } else {
         return await addCommentToIssue(logMessage.diff, issue.number);
       }
+    } else if (logReturn instanceof Error) {
+      return runtime.logger.error(
+        "action has an uncaught error",
+        { logReturn, handlerType, activeHandler: activeHandler.name },
+        true
+      );
+    } else {
+      return runtime.logger.error(
+        "action returned an unexpected value",
+        { logReturn, handlerType, activeHandler: activeHandler.name },
+        true
+      );
     }
-
-    const outputComment =
-      logReturn instanceof Error ? "action has an uncaught error" : "action returned an unexpected value";
-
-    return runtime.logger.error(outputComment, { logReturn, handlerType, activeHandler: activeHandler.name }, true);
   };
 }

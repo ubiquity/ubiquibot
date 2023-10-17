@@ -7,15 +7,15 @@ export async function unassign(body: string) {
   const runtime = Runtime.getState();
   const { payload: _payload } = runtime.latestEventContext;
   const logger = runtime.logger;
-  if (body != "/stop") {
+  if (!body.startsWith("/stop")) {
     return logger.error("Skipping to unassign", { body });
   }
 
   const payload = _payload as Payload;
-  logger.info("Running '/stop' command handler", { sender: payload.sender.login });
+  logger.debug("Running '/stop' command handler", { sender: payload.sender.login });
   const issue = (_payload as Payload).issue;
   if (!issue) {
-    return logger.info(`Skipping '/stop' because of no issue instance`);
+    return logger.debug(`Skipping '/stop' because of no issue instance`);
   }
 
   const issueNumber = issue.number;

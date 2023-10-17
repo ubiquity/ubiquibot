@@ -101,6 +101,8 @@ function _log(type: keyof typeof prettyLogs, message: any) {
 
   const symbol = defaultSymbols[type];
 
+  // console.trace({ type, symbol, message });
+
   // Formatting the message
   const messageFormatted =
     typeof message === "string"
