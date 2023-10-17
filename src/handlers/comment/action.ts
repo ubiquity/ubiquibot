@@ -48,7 +48,7 @@ export async function commentCreatedOrEdited() {
       return callbackComment;
     }
   } else {
-    return logger.verbose("I do not understand how to respond to the command", { body });
+    return logger.verbose("I do not understand how to respond to that command", { body });
   }
   return logger.info("Finished handling a comment on issue", { issue: payload.issue?.number });
 }

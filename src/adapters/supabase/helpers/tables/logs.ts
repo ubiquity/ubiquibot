@@ -270,7 +270,7 @@ export class Logs extends Super {
       // warn: null,
       // info: null,
       // http: "#",
-      verbose: "+",
+      // verbose: "#",
       // debug: "#",
       // silly: "#",
     };
