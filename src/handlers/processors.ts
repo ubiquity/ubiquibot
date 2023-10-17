@@ -5,30 +5,29 @@ import { checkTasksToUnassign } from "./wildcard";
 
 import { checkPullRequests } from "./assign/auto";
 import { commentCreatedOrEdited } from "./comment/action";
-import { issueClosedCallback } from "./comment/handlers/issue/issue-closed-callback";
-import { issueReopenedCallback } from "./comment/handlers/issue/issue-reopened-callback";
-import { findDuplicateIssue } from "./issue";
+import { issueClosed } from "./comment/handlers/issue/issue-closed";
 import { watchLabelChange } from "./label";
 import { createDevPoolPR } from "./pull-request";
 import { validateConfigChange } from "./push";
 import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
 import { pricingLabel } from "./pricing/pricing-label";
+import { issueReopened } from "./comment/handlers/issue/issue-reopened";
 
 /**
  * @dev
  * pre and post handlers do not return a message to comment on the issue. their return type MUST BE `void`
- * action MUST return a message to comment on the issue. its return type MUST BE either `string` or `LogReturn`
+ * main action MUST return a message to comment on the issue. its return type MUST BE either `string` for plaintext or `LogReturn` for color to signal success, warning, or failure status
  */
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_OPENED]: {
     pre: [],
     action: [],
-    post: [findDuplicateIssue],
+    post: [],
   },
   [GithubEvent.ISSUES_REOPENED]: {
     pre: [],
-    action: [issueReopenedCallback],
+    action: [issueReopened],
     post: [],
   },
   [GithubEvent.ISSUES_LABELED]: {
@@ -63,7 +62,7 @@ export const processors: Record<string, Handler> = {
   },
   [GithubEvent.ISSUES_CLOSED]: {
     pre: [],
-    action: [issueClosedCallback],
+    action: [issueClosed],
     post: [],
   },
   [GithubEvent.PULL_REQUEST_OPENED]: {

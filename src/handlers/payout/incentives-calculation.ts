@@ -68,9 +68,9 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   const comments = await getAllIssueComments(issue.number);
   const wasReopened = await wasIssueReopened(issue.number);
   const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
-  const permitCommentIdx = comments.findIndex((e) => e.user.type === UserType.Bot && e.body.match(claimUrlRegex));
-  if (wasReopened && permitCommentIdx !== -1) {
-    const permitComment = comments[permitCommentIdx];
+  const permitCommentIndex = comments.findIndex((e) => e.user.type === UserType.Bot && e.body.match(claimUrlRegex));
+  if (wasReopened && permitCommentIndex !== -1) {
+    const permitComment = comments[permitCommentIndex];
     const permitUrl = permitComment.body.match(claimUrlRegex);
     if (!permitUrl || permitUrl.length < 2) {
       throw logger.error(`Permit URL not found`);

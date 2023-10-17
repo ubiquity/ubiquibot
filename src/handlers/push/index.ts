@@ -8,7 +8,7 @@ export const ZERO_SHA = "0000000000000000000000000000000000000000";
 export const BASE_RATE_FILE = ".github/ubiquibot-config.yml";
 
 export function getCommitChanges(commits: CommitsPayload[]) {
-  const changes = [];
+  const changes = [] as string[];
 
   for (const commit of commits) {
     for (const modifiedFile of commit.modified) {

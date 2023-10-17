@@ -7,9 +7,7 @@ import { calculateReviewContributorRewards } from "../../../payout/calculate-rev
 import { handleIssueClosed } from "../../../payout/handle-issue-closed";
 import { incentivesCalculation } from "../../../payout/incentives-calculation";
 
-// Callback for issues closed - Processor
-
-export async function issueClosedCallback() {
+export async function issueClosed() {
   const { organization, logger, owner } = getEssentials();
 
   if (!organization) {
@@ -32,8 +30,6 @@ export async function issueClosedCallback() {
     conversationRewards,
     pullRequestReviewersReward,
     incentivesCalculation: calculateIncentives,
-    // organization: organization,
-    // owner: owner,
   });
 
   return logger.ok("Issue closed successfully");
@@ -44,9 +40,15 @@ function getEssentials() {
   const context = runtime.eventContext;
   const payload = context.payload as Payload;
   const issue = payload.issue;
-  const organization = payload.organization;
-  const owner = payload.repository.owner.login;
-  const logger = runtime.logger;
-  if (!issue) throw logger.error("Cannot save permit to DB, missing issue");
-  return { organization, logger, owner };
+  if (!issue) throw runtime.logger.error("Missing issue in payload");
+  return {
+    organization: payload.organization,
+    logger: runtime.logger,
+    owner: payload.repository.owner.login,
+    sender: payload.sender,
+    runtime,
+    context,
+    payload,
+    issue,
+  };
 }
