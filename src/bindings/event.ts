@@ -135,16 +135,26 @@ async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
 
 async function renderMainActionOutput(response: string | void | LogReturn, action: AllHandlers) {
   const runtime = Runtime.getState();
+  const payload = runtime.latestEventContext.payload as Payload;
+  const issueNumber = payload.issue?.number;
+  if (!issueNumber) {
+    throw new Error("No issue number found");
+  }
+
   if (response instanceof LogReturn) {
     // console.trace({ response });
-
-    runtime.logger[response.logMessage.type as LogMessage["type"]](response.logMessage.raw, response.metadata, true);
-  } else if (typeof response == "string") {
-    const payload = runtime.latestEventContext.payload as Payload;
-    const issueNumber = payload.issue?.number;
-    if (!issueNumber) {
-      throw new Error("No issue number found");
+    let serializedComment;
+    if (response.metadata) {
+      serializedComment = [response.logMessage.diff, "<!--", JSON.stringify(response.metadata, null, 2), "-->"].join(
+        "\n"
+      );
+    } else {
+      serializedComment = response.logMessage.diff;
     }
+
+    await addCommentToIssue(serializedComment, issueNumber);
+    // runtime.logger[response.logMessage.type as LogMessage["type"]](response.logMessage.raw, response.metadata, true);
+  } else if (typeof response == "string") {
     await addCommentToIssue(response, issueNumber);
     // runtime.logger.debug(response, null, true);
   } else {
