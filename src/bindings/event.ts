@@ -117,7 +117,7 @@ export async function bindEvents(eventContext: Context) {
 
 async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
   for (const action of handlerType.actions) {
-    const loggerHandler = createLoggerHandler(handlerType, action);
+    const renderCatchAllWithContext = createRenderCatchAll(handlerType, action);
     // console.trace(handlerType, action);
 
     try {
@@ -125,7 +125,7 @@ async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
       // console.trace(response);
       if (handlerType.type === "main") {
         // only log action handler results
-        await logMultipleDataTypes(response, action);
+        await renderMainActionOutput(response, action);
         // console.trace(response);
         // if (handlerType.type !== "pre" && handlerType.type !== "post" && handlerType.type !== "wildcard") {
       } else {
@@ -133,12 +133,12 @@ async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
         runtime.logger.ok("Completed", { action: action.name, type: handlerType.type });
       }
     } catch (report: any) {
-      await loggerHandler(report);
+      await renderCatchAllWithContext(report);
     }
   }
 }
 
-async function logMultipleDataTypes(response: string | void | LogReturn, action: AllHandlers) {
+async function renderMainActionOutput(response: string | void | LogReturn, action: AllHandlers) {
   const runtime = Runtime.getState();
   if (response instanceof LogReturn) {
     runtime.logger[response.logMessage.type](response.logMessage.raw, response.metadata, true);
@@ -158,10 +158,10 @@ async function logMultipleDataTypes(response: string | void | LogReturn, action:
   }
 }
 
-function createLoggerHandler(handlerType: AllHandlersWithTypes, activeHandler: AllHandlers) {
+function createRenderCatchAll(handlerType: AllHandlersWithTypes, activeHandler: AllHandlers) {
   const runtime = Runtime.getState();
 
-  return async function loggerHandler(logReturn: LogReturn | Error | unknown) {
+  return async function renderCatchAll(logReturn: LogReturn | Error | unknown) {
     const issue = (runtime.eventContext.payload as Payload).issue;
     if (!issue) return runtime.logger.error("Issue is null. Skipping", { issue });
     // console.trace();
@@ -171,6 +171,7 @@ function createLoggerHandler(handlerType: AllHandlersWithTypes, activeHandler: A
 
       if (logReturn.metadata) {
         const serializedMetadata = JSON.stringify(logReturn.metadata, null, 2);
+        console.trace("render catch all serialize metadata");
         const metadataForComment = ["```json", serializedMetadata, "```"].join("\n");
         return await addCommentToIssue([logMessage.diff, metadataForComment].join("\n"), issue.number);
       } else {

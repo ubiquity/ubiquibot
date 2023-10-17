@@ -1,6 +1,5 @@
 import Runtime from "../../bindings/bot-runtime";
 import {
-  addCommentToIssue,
   getAllIssueComments,
   getCommitsOnPullRequest,
   getOpenedPullRequestsForAnIssue,
@@ -11,7 +10,6 @@ import {
 import { Comment, Issue, IssueType, Payload, UserType } from "../../types";
 
 const requestContributorUpdate = "Do you have any updates";
-const timeoutComment = "Releasing the task due to lack of updates.";
 
 export async function checkTasksToUnassign() {
   // Check out the tasks which haven't been completed within the initial timeline
@@ -27,11 +25,11 @@ export async function checkTasksToUnassign() {
   const assigned_issues = issues_opened.filter((issue) => issue.assignee);
 
   // Checking the tasks in parallel
-  const res = await Promise.all(assigned_issues.map(async (issue) => checkTaskToUnassign(issue as Issue)));
+  const res = await Promise.all(assigned_issues.map(async (issue: Issue) => checkTaskToUnassign(issue)));
   logger.info("Checking expired tasks done!", { total: res.length, unassigned: res.filter((i) => i).length });
 }
 
-async function checkTaskToUnassign(issue: Issue): Promise<boolean> {
+async function checkTaskToUnassign(issue: Issue) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   const context = runtime.eventContext;
@@ -71,36 +69,39 @@ async function checkTaskToUnassign(issue: Issue): Promise<boolean> {
 
   if (passedDuration >= disqualifyTime || passedDuration >= followUpTime) {
     if (passedDuration >= disqualifyTime) {
-      logger.info(
-        `Unassigning... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
-      );
       // remove assignees from the issue
       await removeAssignees(issue.number, assignees);
-      await addCommentToIssue(
-        `@${assignees[0]} - ${timeoutComment} \nLast activity time: ${lastActivity}`,
-        issue.number
-      );
 
-      return true;
+      return logger.warn("The task has been unassigned due to lack of updates", {
+        issue_number: issue.number,
+        passedDuration,
+        disqualifyTime,
+      });
     } else if (passedDuration >= followUpTime) {
-      logger.info(
-        `Asking for updates... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
-      );
+      logger.info("Asking for updates...", {
+        lastActivityTime: lastActivity.getTime(),
+        disqualifyTime,
+        issue_number: issue.number,
+        passedDuration,
+        followUpTime,
+      });
 
       if (lastAskTime > lastActivity.getTime()) {
         logger.info(
           `Skipping posting an update message cause its been already asked, lastAskTime: ${lastAskTime}, lastActivityTime: ${lastActivity.getTime()}`
         );
       } else {
-        await addCommentToIssue(
-          `${requestContributorUpdate} @${assignees[0]}? If you would like to release the task back to the DevPool, please comment \`/stop\` \nLast activity time: ${lastActivity}`,
-          issue.number
+        return logger.warn(
+          "Do you have any updates? If you would like to release the task back to the DevPool, please comment `/stop`",
+          {
+            issue_number: issue.number,
+            passedDuration,
+            followUpTime,
+          }
         );
       }
     }
   }
-
-  return false;
 }
 
 async function lastActivityTime(issue: Issue, comments: Comment[]): Promise<Date> {

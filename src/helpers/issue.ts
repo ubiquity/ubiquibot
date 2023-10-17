@@ -160,6 +160,12 @@ export async function addCommentToIssue(message: HandlerReturnValuesNoVoid, issu
   const runtime = Runtime.getState();
   if (message instanceof LogReturn) {
     comment = message.logMessage.diff;
+    console.trace(
+      "one of the places that metadata is being serialized as an html comment. this one is unexpected and serves as a fallback"
+    );
+    const metadataSerialized = JSON.stringify(message.metadata);
+    const metadataSerializedAsComment = `<!-- ${metadataSerialized} -->`;
+    comment = comment.concat(metadataSerializedAsComment);
   }
   const context = runtime.eventContext;
 

@@ -77,7 +77,7 @@ export async function assign(body: string) {
   if (durations.length == 0) {
     throw logger.warn("Skipping '/start' since no durations found to calculate the timeline", durations);
   } else if (durations.length > 1) {
-    throw logger.warn("Using the shortest duration time label");
+    logger.warn("Using the shortest duration time label");
   }
 
   const duration = durations[0];

@@ -55,7 +55,7 @@ export class Logs extends Super {
       consoleLog(logMessage, metadata);
       if (postComment) {
         const colorizedCommentMessage = this._diffColorCommentMessage(level, logMessage);
-        const commentMetaData = this._diffColorCommentMetaData(metadata);
+        const commentMetaData = this._commentMetaData(metadata, level);
         this._postComment([colorizedCommentMessage, commentMetaData].join("\n"));
       }
       const toSupabase = { log: logMessage, level, metadata: metadata } as LogInsert;
@@ -79,24 +79,51 @@ export class Logs extends Super {
       metadata
     );
   }
+  private _getFunctionCallerName(metadata: any) {
+    // this is a utility function to get the name of the function that called the log
+    // I have mixed feelings on this because it manipulates metadata later possibly without the developer understanding why and where,
+    // but seems useful for the metadata parser to understand where the comment originated from
 
+    if (!metadata) {
+      metadata = {};
+    }
+    if (typeof metadata == "string" || typeof metadata == "number") {
+      metadata = { message: metadata };
+    }
+
+    const stackLines = new Error().stack?.split("\n") || [];
+    if (stackLines.length > 3) {
+      const callerLine = stackLines[3];
+      const match = callerLine.match(/at (\S+)/);
+      if (match) {
+        metadata.caller = match[1];
+      }
+    }
+
+    return metadata;
+  }
   public ok(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._getFunctionCallerName(metadata);
     return this._log({ level: LogLevel.VERBOSE, consoleLog: prettyLogs.ok, logMessage: log, metadata, postComment });
   }
 
   public info(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._getFunctionCallerName(metadata);
     return this._log({ level: LogLevel.INFO, consoleLog: prettyLogs.info, logMessage: log, metadata, postComment });
   }
 
   public warn(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._getFunctionCallerName(metadata);
     return this._log({ level: LogLevel.WARN, consoleLog: prettyLogs.warn, logMessage: log, metadata, postComment });
   }
 
   public debug(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._getFunctionCallerName(metadata);
     return this._log({ level: LogLevel.DEBUG, consoleLog: prettyLogs.debug, logMessage: log, metadata, postComment });
   }
 
   public error(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._getFunctionCallerName(metadata);
     if (!metadata) {
       metadata = Logs.convertErrorsIntoObjects(new Error(log));
       const stack = metadata.stack as string[];
@@ -110,10 +137,12 @@ export class Logs extends Super {
   }
 
   http(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._getFunctionCallerName(metadata);
     return this._log({ level: LogLevel.HTTP, consoleLog: prettyLogs.http, logMessage: log, metadata, postComment });
   }
 
   verbose(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._getFunctionCallerName(metadata);
     return this._log({
       level: LogLevel.VERBOSE,
       consoleLog: prettyLogs.verbose,
@@ -124,6 +153,7 @@ export class Logs extends Super {
   }
 
   silly(log: string, metadata?: any, postComment?: boolean): LogReturn {
+    metadata = this._getFunctionCallerName(metadata);
     return this._log({ level: LogLevel.SILLY, consoleLog: prettyLogs.silly, logMessage: log, metadata, postComment });
   }
 
@@ -212,11 +242,16 @@ export class Logs extends Super {
     }
   }
 
-  private _diffColorCommentMetaData(metadata: any) {
-    const diffHeader = "```json";
-    const diffFooter = "```";
-
-    return [diffHeader, JSON.stringify(metadata, null, 2), diffFooter].join("\n");
+  private _commentMetaData(metadata: any, level: LogLevel) {
+    console.trace("the main place that metadata is being serialized as an html comment");
+    const prettySerialized = JSON.stringify(metadata, null, 2);
+    // first check if metadata is an error, then post it as a json comment
+    // otherwise post it as an html comment
+    if (level === LogLevel.ERROR) {
+      return ["```json", prettySerialized, "```"].join("\n");
+    } else {
+      return ["<!--", prettySerialized, "-->"].join("\n");
+    }
   }
 
   private _diffColorCommentMessage(type: string, message: string) {
