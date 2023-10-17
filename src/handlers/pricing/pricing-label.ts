@@ -49,7 +49,8 @@ export async function pricingLabel() {
   const minTimeLabel = sortLabelsByValue(recognizedTimeLabels).shift();
   const minPriorityLabel = sortLabelsByValue(recognizedPriorityLabels).shift();
 
-  if (!minTimeLabel || !minPriorityLabel) throw logger.warn("Time or priority label is not defined");
+  if (!minTimeLabel) return logger.warn(`No time label to calculate price`);
+  if (!minPriorityLabel) return logger.warn("No priority label to calculate price");
 
   const targetPriceLabel = setPrice(minTimeLabel, minPriorityLabel);
 
