@@ -12,10 +12,10 @@ export async function unassign(body: string) {
   }
 
   const payload = _payload as Payload;
-  logger.debug("Running '/stop' command handler", { sender: payload.sender.login });
+  logger.info("Running '/stop' command handler", { sender: payload.sender.login });
   const issue = (_payload as Payload).issue;
   if (!issue) {
-    return logger.debug(`Skipping '/stop' because of no issue instance`);
+    return logger.info(`Skipping '/stop' because of no issue instance`);
   }
 
   const issueNumber = issue.number;
