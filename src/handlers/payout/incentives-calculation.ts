@@ -9,7 +9,6 @@ import {
 } from "../../helpers";
 import { UserType, Payload, StateReason, Comment, Incentives, Issue, User } from "../../types";
 import { taskInfo } from "../wildcard";
-import { GLOBAL_STRINGS } from "../../configs";
 import { isParentIssue } from "../pricing";
 import Decimal from "decimal.js";
 import { getUserMultiplier } from "../comment/handlers/assign/get-user-multiplier";
@@ -125,7 +124,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   logger.info("Checking if the issue is an eligible task.", { issue });
   for (const botComment of comments.filter((cmt) => cmt.user.type === UserType.Bot).reverse()) {
     const botCommentBody = botComment.body;
-    if (botCommentBody.includes(GLOBAL_STRINGS.autopayComment)) {
+    if (botCommentBody.includes("Automatic payment for this issue")) {
       const pattern = /\*\*(\w+)\*\*/;
       const res = botCommentBody.match(pattern);
       if (res) {

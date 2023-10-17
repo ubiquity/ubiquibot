@@ -34,7 +34,7 @@ export async function calculateIssueConversationReward(
 
   for (const botComment of permitComments.filter((comment: Comment) => comment.user.type === UserType.Bot).reverse()) {
     const botCommentBody = botComment.body;
-    if (botCommentBody.includes("Automatic payment for this issue is enabled:")) {
+    if (botCommentBody.includes("Automatic payment for this issue")) {
       const pattern = /\*\*(\w+)\*\*/;
       const res = botCommentBody.match(pattern);
       if (res) {
