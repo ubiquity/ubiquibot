@@ -12,10 +12,10 @@ const COLORS = {
 };
 // cspell:enable
 
-export async function listLabelsForRepo(context): Promise<Label[]> {
-  // const runtime = Runtime.getState();
-  // const context = runtime.latestEventContext;
-  const payload = context.payload;
+export async function listLabelsForRepo(): Promise<Label[]> {
+  const runtime = Runtime.getState();
+  const context = runtime.latestEventContext;
+  const payload = context.payload as Payload;
 
   const res = await context.octokit.rest.issues.listLabelsForRepo({
     owner: payload.repository.owner.login,
@@ -53,7 +53,7 @@ export async function getLabel(name: string): Promise<boolean> {
   const runtime = Runtime.getState();
   const context = runtime.latestEventContext;
   const logger = runtime.logger;
-  const payload = context.payload;
+  const payload = context.payload as Payload;
   try {
     const res = await context.octokit.rest.issues.getLabel({
       owner: payload.repository.owner.login,

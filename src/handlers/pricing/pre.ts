@@ -9,7 +9,6 @@ export async function syncPriceLabelsToConfig() {
   const runtime = Runtime.getState();
   const config = runtime.botConfig;
   const logger = runtime.logger;
-  const context = runtime.latestEventContext;
 
   const { assistivePricing } = config.mode;
 
@@ -37,7 +36,7 @@ export async function syncPriceLabelsToConfig() {
   logger.debug("Got needed labels for setting up price ", { neededLabels });
 
   // List all the labels for a repository
-  const repoLabels = await listLabelsForRepo(context);
+  const repoLabels = await listLabelsForRepo();
 
   // Get the missing labels
   const missingLabels = neededLabels.filter((label) => !repoLabels.map((i) => i.name).includes(label));

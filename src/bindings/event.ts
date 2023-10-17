@@ -1,23 +1,22 @@
-import { Context } from "probot";
 import { createAdapters } from "../adapters";
 import { LogReturn } from "../adapters/supabase";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
 import { addCommentToIssue, shouldSkip } from "../helpers";
 import {
-  MainActionHandler,
   GitHubEvent,
+  MainActionHandler,
   PayloadSchema,
   PostActionHandler,
   PreActionHandler,
   WildCardHandler,
-  // Payload,
 } from "../types";
 import { ajv } from "../utils";
 
+import { Payload } from "../types/payload";
 import Runtime from "./bot-runtime";
 import { loadConfig } from "./config";
-import { Payload } from "../types/payload";
+import { Context } from "probot";
 
 const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
 
@@ -30,8 +29,8 @@ type PostHandlerWithType = { type: string; actions: PostActionHandler[] };
 type AllHandlersWithTypes = PreHandlerWithType | HandlerWithType | PostHandlerWithType;
 
 type AllHandlers = PreActionHandler | MainActionHandler | PostActionHandler;
-// type test = typeof Object.values(GithubEvent);
-export async function bindEvents(eventContext: Context<"issues">) {
+// type test = typeof Object.values(GitHubEvent);
+export async function bindEvents(eventContext: Context) {
   const runtime = Runtime.getState();
   // runtime.latestEventContext = eventContext;
   runtime.botConfig = await loadConfig(eventContext);
@@ -43,7 +42,7 @@ export async function bindEvents(eventContext: Context<"issues">) {
     runtime.logger.warn("No EVM private key found");
   }
 
-  const payload = eventContext.payload;
+  const payload = eventContext.payload as Payload;
   const allowedEvents = Object.values(GitHubEvent) as string[];
   const eventName = payload?.action ? `${eventContext.name}.${payload?.action}` : eventContext.name; // some events wont have actions as this grows
   if (eventName === GitHubEvent.PUSH_EVENT) {

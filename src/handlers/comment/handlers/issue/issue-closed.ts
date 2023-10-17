@@ -1,12 +1,11 @@
 import Runtime from "../../../../bindings/bot-runtime";
+import { Payload } from "../../../../types/payload";
 import { calculateIssueAssigneeReward } from "../../../payout/calculate-issue-assignee-reward";
 import { calculateIssueConversationReward } from "../../../payout/calculate-issue-conversation-reward";
 import { calculateIssueCreatorReward } from "../../../payout/calculate-issue-creator-reward";
 import { calculateReviewContributorRewards } from "../../../payout/calculate-review-contributor-rewards";
 import { handleIssueClosed } from "../../../payout/handle-issue-closed";
 import { incentivesCalculation } from "../../../payout/incentives-calculation";
-import { Context } from "probot/lib/context";
-import { Payload } from "../../../../types/payload";
 
 export async function issueClosed() {
   const { organization, logger, owner } = getEssentials();

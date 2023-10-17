@@ -1,6 +1,5 @@
 import Decimal from "decimal.js";
 import { BigNumber, ethers } from "ethers";
-import { Context } from "probot/lib/context";
 import Runtime from "../../../../bindings/bot-runtime";
 import {
   getAllIssueAssignEvents,

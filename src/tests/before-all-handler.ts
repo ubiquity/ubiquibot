@@ -2,7 +2,7 @@ import { Probot, run } from "probot";
 
 import { repoConfig } from "./test-repo-config";
 import { updateConfig, waitForNWebhooks, webhookEventEmitter } from "./utils";
-import { GithubEvent } from "../types/payload";
+import { GitHubEvent } from "../types/payload";
 import { bindEvents } from "../bindings/event";
 import {
   setAdminUser,
@@ -75,7 +75,7 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
     }
 
     const server = await run(function main(app: Probot) {
-      const allowedEvents = Object.values(GithubEvent);
+      const allowedEvents = Object.values(GitHubEvent);
       app.on(allowedEvents, async (context) => {
         await bindEvents(context);
         webhookEventEmitter.emit("event", context.payload);

@@ -50,5 +50,5 @@ export async function commentCreatedOrEdited() {
   } else {
     return logger.verbose("I do not understand how to respond to the command", { body });
   }
-  // return logger.info("Finished handling a comment on issue", { issue: payload.issue?.number });
+  return logger.info("Finished handling a comment on issue", { issue: payload.issue?.number });
 }

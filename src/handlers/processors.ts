@@ -17,7 +17,7 @@ import { issueReopened } from "./comment/handlers/issue/issue-reopened";
  * @dev
  * pre and post handlers do not return a message to comment on the issue. their return type MUST BE `void`
  * main action MUST return a message to comment on the issue. its return type MUST BE either `string` for plaintext or `LogReturn` for color to signal success, warning, or failure status
- * all MUST receive `Context` as the only parameter TODO: type checking on this
+ * TODO: all MUST receive `Context` as the only parameter
  */
 
 export const processors: Record<string, Handler> = {
