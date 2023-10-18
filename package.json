@@ -48,6 +48,7 @@
     "decimal.js": "^10.4.3",
     "ethers": "^5.7.2",
     "husky": "^8.0.2",
+    "js-tiktoken": "^1.0.7",
     "libsodium-wrappers": "^0.7.11",
     "lint-staged": "^13.1.0",
     "lodash": "^4.17.21",
