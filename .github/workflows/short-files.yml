@@ -1,0 +1,19 @@
+name: Check File Length
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Check file length
+        run: |
+          if [[ $(wc -l < .github/workflows/short-files.yml) -gt 512 ]]; then
+            echo "File line length is greater than 512. This should be broken up into smaller files."
+            exit 1
+          fi

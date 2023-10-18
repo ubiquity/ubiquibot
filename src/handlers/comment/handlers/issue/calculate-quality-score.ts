@@ -1,46 +1,13 @@
 import { Comment, Issue } from "../../../../types/payload";
 // import OpenAI from "openai";
 import { encodingForModel } from "js-tiktoken";
-import util from "util";
 
 const botCommandsAndCommentsFilter = (comment) => !comment.body.startsWith("/") && comment.user.type === "User";
 
 export function calculateQualScore(issue: Issue, comments: Comment[]) {
-  const gpt3TurboEncoder = encodingForModel("gpt-3.5-turbo");
-  // let score = 0;
-  const specificationComment = issue.body;
-  if (!specificationComment) {
-    throw new Error("Issue specification comment is missing");
-  }
-
-  const contributorCommentsWithTokens = comments.filter(botCommandsAndCommentsFilter).map((comment) => {
-    return {
-      tokens: gpt3TurboEncoder.encode(comment.body),
-      comment,
-    };
-  });
-
-  const contributorCommentsTokens = contributorCommentsWithTokens.map(({ tokens }) => tokens);
-  const sumOfContributorTokens = contributorCommentsWithTokens.reduce((acc, { tokens }) => acc + tokens.length, 0);
-  const specificationTokens = gpt3TurboEncoder.encode(specificationComment);
-  const sumOfSpecificationTokens = specificationTokens.length;
-  const totalSumOfTokens = sumOfSpecificationTokens + sumOfContributorTokens;
-  const estimatedOptimalModel = estimateOptimalModel(totalSumOfTokens);
-  // const decodeTest = gpt3TurboEncoder.decode([
-  //   -25, -24, -23, -22, -21, -20, -19, -18, -17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-  //   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
-  // ]);
-  const buffer = {
-    // decodeTest,
-    specificationTokens,
-    contributorCommentsTokens,
-    sumOfContributorTokens,
-    sumOfSpecificationTokens,
-    totalSumOfTokens,
-    estimatedOptimalModel,
-  };
-  console.trace(util.inspect(buffer, { depth: null }));
-  // return score;
+  const tokens = countTokensOfConversation(issue, comments);
+  const estimatedOptimalModel = estimateOptimalModel(tokens);
+  return { tokens, estimatedOptimalModel };
 }
 
 function estimateOptimalModel(sumOfTokens: number) {
@@ -56,6 +23,35 @@ function estimateOptimalModel(sumOfTokens: number) {
     console.warn("Backup plan for development purposes only, but using gpt-4-32k due to huge context size");
     return "gpt-4-32k";
   }
+}
+
+function countTokensOfConversation(issue: Issue, comments: Comment[]) {
+  const gpt3TurboEncoder = encodingForModel("gpt-3.5-turbo");
+  const specificationComment = issue.body;
+  if (!specificationComment) {
+    throw new Error("Issue specification comment is missing");
+  }
+
+  const contributorCommentsWithTokens = comments.filter(botCommandsAndCommentsFilter).map((comment) => {
+    return {
+      tokens: gpt3TurboEncoder.encode(comment.body),
+      comment,
+    };
+  });
+
+  // const contributorCommentsTokens = contributorCommentsWithTokens.map(({ tokens }) => tokens);
+  const sumOfContributorTokens = contributorCommentsWithTokens.reduce((acc, { tokens }) => acc + tokens.length, 0);
+  const specificationTokens = gpt3TurboEncoder.encode(specificationComment);
+  const sumOfSpecificationTokens = specificationTokens.length;
+  const totalSumOfTokens = sumOfSpecificationTokens + sumOfContributorTokens;
+  // const estimatedOptimalModel = estimateOptimalModel(totalSumOfTokens);
+
+  // const buffer = {
+  //   totalSumOfTokens,
+  //   estimatedOptimalModel,
+  // };
+  // return buffer;
+  return totalSumOfTokens;
 }
 
 // async function gpt() {
