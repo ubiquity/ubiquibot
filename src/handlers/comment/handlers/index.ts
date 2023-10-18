@@ -13,6 +13,7 @@ import { registerWallet } from "./wallet";
 
 import { autoPay } from "./payout";
 import { query } from "./query";
+import Runtime from "../../../bindings/bot-runtime";
 
 export * from "./ask";
 export * from "./assign";
@@ -41,6 +42,7 @@ export function commentParser(body: string): null | string {
 }
 
 export function userCommands(): UserCommands[] {
+  const accountForWalletVerification = walletVerificationDetails();
   return [
     {
       id: "/start",
@@ -74,14 +76,14 @@ export function userCommands(): UserCommands[] {
     },
     {
       id: "/query",
-      description: "Comments the users multiplier and address.",
+      description: "Returns the user's wallet, access, and multiplier information.",
       example: "/query @user",
       handler: query,
     },
     {
       id: "/ask",
-      description: "Ask a technical question to UbiquiBot.",
-      example: "/ask how do I do x?",
+      description: "Ask a context aware question.",
+      example: "/ask is x or y the best approach?",
       handler: ask,
     },
     {
@@ -104,11 +106,33 @@ export function userCommands(): UserCommands[] {
     },
     {
       id: "/wallet",
-      description:
-        'Register your wallet address for payments. Your message to sign is: "UbiquiBot". You can generate a signature hash using https://etherscan.io/verifiedSignatures',
-      example:
-        "/wallet ubq.eth 0xe2a3e34a63f3def2c29605de82225b79e1398190b542be917ef88a8e93ff9dc91bdc3ef9b12ed711550f6d2cbbb50671aa3f14a665b709ec391f3e603d0899a41b",
+      description: accountForWalletVerification.description,
+      example: accountForWalletVerification.example,
       handler: registerWallet,
     },
   ];
+}
+
+function walletVerificationDetails() {
+  const base = {
+    description: "Register your wallet address for payments.",
+    example: "/wallet ubq.eth",
+  };
+
+  const withVerification = {
+    description:
+      'Your message to sign is: "UbiquiBot". You can generate a signature hash using https://etherscan.io/verifiedSignatures',
+    example:
+      "0xe2a3e34a63f3def2c29605de82225b79e1398190b542be917ef88a8e93ff9dc91bdc3ef9b12ed711550f6d2cbbb50671aa3f14a665b709ec391f3e603d0899a41b",
+  };
+
+  const walletVerificationEnabled = Runtime.getState().botConfig.wallet.registerWalletWithVerification;
+  if (walletVerificationEnabled) {
+    return {
+      description: `${base.description} ${withVerification.description}`,
+      example: `${base.example} ${withVerification.example}`,
+    };
+  } else {
+    return base;
+  }
 }
