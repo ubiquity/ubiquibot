@@ -29,6 +29,7 @@ export function generateHelpMenu() {
   const startEnabled = config.command.find((command) => command.name === "start");
   let helpMenu = "### Available Commands\n\n| Command | Description | Example |\n| --- | --- | --- |\n";
   const commands = userCommands();
+
   commands.map(
     (command) =>
       (helpMenu += `| \`${command.id}\` | ${breakSentences(command.description) || ""} | ${
@@ -36,9 +37,9 @@ export function generateHelpMenu() {
       } |\n`) // add to help menu
   );
 
-  if (!startEnabled)
+  if (!startEnabled) {
     helpMenu += "\n\n***_To assign yourself to an issue, please open a draft pull request that is linked to it._***";
-
+  }
   return helpMenu;
 }
 
