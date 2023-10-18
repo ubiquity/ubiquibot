@@ -1,5 +1,5 @@
 import { Issue } from "../../../../types";
-import { taskInfo } from "../../../wildcard";
+import { taskPaymentMetaData } from "../../../wildcard";
 import { getUserMultiplier } from "./get-user-multiplier";
 
 export async function getMultiplierInfoToDisplay(senderId: number, repoId: number, issue: Issue) {
@@ -10,17 +10,14 @@ export async function getMultiplierInfoToDisplay(senderId: number, repoId: numbe
   let totalPriceOfTask: string | null = null;
 
   if (value && value != 1) {
-    totalPriceOfTask = `Permit generation disabled because price label is not set.`;
+    const task = taskPaymentMetaData(issue);
 
-    const issueDetailed = taskInfo(issue);
-    const priceLabel = issueDetailed.priceLabel;
-
-    console.trace(issueDetailed);
-
-    if (priceLabel) {
-      const price = parsePrice(priceLabel);
+    if (task.priceLabel) {
+      const price = parsePrice(task.priceLabel);
       price.number *= value;
       totalPriceOfTask = `${price.number} ${price.currency}`;
+    } else {
+      totalPriceOfTask = "Permit generation disabled because price label is not set.";
     }
   }
 

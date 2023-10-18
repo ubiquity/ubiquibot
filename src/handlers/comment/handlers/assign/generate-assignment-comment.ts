@@ -6,6 +6,17 @@ export async function generateAssignmentComment(payload: Payload, duration: numb
   const startTime = new Date().getTime();
   const endTime = new Date(startTime + duration * 1000);
 
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    timeZone: "UTC",
+    timeZoneName: "short",
+  };
+  const deadline = endTime.toLocaleString("en-US", options);
+
   const issueCreationTime = payload.issue?.created_at;
   if (!issueCreationTime) {
     const logger = Runtime.getState().logger;
@@ -14,11 +25,10 @@ export async function generateAssignmentComment(payload: Payload, duration: numb
 
   return {
     daysElapsedSinceTaskCreation: Math.floor((startTime - new Date(issueCreationTime).getTime()) / 1000 / 60 / 60 / 24),
-    taskDeadline: endTime.toISOString(),
+    deadline,
     registeredWallet:
       (await runtime.adapters.supabase.wallet.getAddress(payload.sender.id)) ||
       "Please set your wallet address to use `/wallet 0x0000...0000`",
-    timeLimit: endTime.toUTCString(),
     tips: `<h6>Tips:</h6>
     <ul>
     <li>Use <code>/wallet 0x0000...0000</code> if you want to update your registered payment wallet address.</li>

@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
 import { getAllIssueComments, getIssueDescription } from "../../helpers";
 import { UserType } from "../../types";
-import { taskInfo } from "../wildcard";
+import { taskPaymentMetaData } from "../wildcard";
 import { generatePermitForComment } from "./generate-permit-for-comment";
 import { IncentivesCalculationResult } from "./incentives-calculation";
 import { RewardsResponse } from "./handle-issue-closed";
@@ -14,9 +14,9 @@ export async function calculateIssueCreatorReward(
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
-  const issueDetailed = taskInfo(incentivesCalculation.issue);
-  if (!issueDetailed.isTask) {
-    throw logger.error("its not a funded task");
+  const task = taskPaymentMetaData(incentivesCalculation.issue);
+  if (!task.eligibleForPayment) {
+    throw logger.error("This task is not eligible for payment.");
   }
 
   const comments = await getAllIssueComments(incentivesCalculation.issue.number);

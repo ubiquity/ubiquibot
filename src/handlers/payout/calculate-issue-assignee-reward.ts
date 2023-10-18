@@ -10,15 +10,18 @@ export async function calculateIssueAssigneeReward(
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   const assigneeLogin = incentivesCalculation.assignee.login;
-
-  let taskAmount = new Decimal(
-    incentivesCalculation.issueDetailed.priceLabel.substring(
-      7,
-      incentivesCalculation.issueDetailed.priceLabel.length - 4
-    )
-  ).mul(incentivesCalculation.multiplier);
+  const priceLabel = incentivesCalculation.taskPaymentMetaData.priceLabel;
+  if (!priceLabel) {
+    throw logger.warn(
+      "Skipping to proceed the payment because there isn't a selected price label to calculate the assignee reward.",
+      { incentivesCalculation }
+    );
+  }
+  let taskAmount = new Decimal(priceLabel.substring(7, priceLabel.length - 4)).mul(incentivesCalculation.multiplier);
   if (taskAmount.gt(incentivesCalculation.permitMaxPrice)) {
-    throw logger.warn("Skipping to proceed the payment because task payout is higher than permitMaxPrice.");
+    throw logger.warn("Skipping to proceed the payment because task payout is higher than `permitMaxPrice`.", {
+      incentivesCalculation,
+    });
   }
 
   // if contributor has any penalty then deduct it from the task

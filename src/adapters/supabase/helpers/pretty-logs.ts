@@ -57,9 +57,7 @@ function logWithStack(type: keyof typeof prettyLogs, message: string, metadata?:
       const stackTrace = new Error().stack?.split("\n");
       if (stackTrace) {
         stackTrace.splice(0, 4);
-        stack = stackTrace
-          .filter((line) => line.includes("/src/")) // adjust this path to match your source code
-          .join("\n");
+        stack = stackTrace.filter((line) => line.includes(".ts:")).join("\n");
       }
     }
     const newMetadata = { ...metadata };

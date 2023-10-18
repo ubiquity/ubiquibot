@@ -10,7 +10,7 @@ import { watchLabelChange } from "./label";
 import { createDevPoolPR } from "./pull-request";
 import { validateConfigChange } from "./push";
 import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
-import { pricingLabel } from "./pricing/pricing-label";
+import { onLabelChangeSetPricing } from "./pricing/pricing-label";
 import { issueReopened } from "./comment/handlers/issue/issue-reopened";
 
 /**
@@ -34,12 +34,12 @@ export const processors: Record<string, Handler> = {
   [GitHubEvent.ISSUES_LABELED]: {
     pre: [syncPriceLabelsToConfig],
     action: [],
-    post: [pricingLabel],
+    post: [onLabelChangeSetPricing],
   },
   [GitHubEvent.ISSUES_UNLABELED]: {
     pre: [syncPriceLabelsToConfig],
     action: [],
-    post: [pricingLabel],
+    post: [onLabelChangeSetPricing],
   },
   [GitHubEvent.ISSUES_ASSIGNED]: {
     pre: [],

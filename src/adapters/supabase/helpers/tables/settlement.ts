@@ -36,9 +36,9 @@ export class Settlement extends Super {
       .select("id")
       .eq("network", networkId)
       .eq("address", address)
-      .single();
+      .maybeSingle();
 
-    if (tokenError) throw tokenError;
+    if (tokenError) throw new Error(tokenError.message);
     if (!tokenData) throw new Error("Token not found");
 
     return tokenData.id;
@@ -61,9 +61,9 @@ export class Settlement extends Super {
       .from("debits")
       .insert(debitData)
       .select("*")
-      .single();
+      .maybeSingle();
 
-    if (debitError) throw debitError;
+    if (debitError) throw new Error(debitError.message);
     if (!debitInsertData) throw new Error("Debit not inserted");
 
     // Insert into the settlements table
@@ -77,9 +77,9 @@ export class Settlement extends Super {
     const { data: settlementInsertData, error: settlementError } = await this.supabase
       .from("settlements")
       .insert(settlementData)
-      .single();
+      .maybeSingle();
 
-    if (settlementError) throw settlementError;
+    if (settlementError) throw new Error(settlementError.message);
     if (!settlementInsertData) throw new Error("Settlement not inserted");
   }
 
@@ -100,9 +100,9 @@ export class Settlement extends Super {
       .from("credits")
       .insert(creditData)
       .select("*")
-      .single();
+      .maybeSingle();
 
-    if (creditError) throw creditError;
+    if (creditError) throw new Error(creditError.message);
     if (!creditInsertData) throw new Error("Credit not inserted");
 
     // Insert into the permits table if permit data is provided
@@ -121,9 +121,9 @@ export class Settlement extends Super {
         beneficiary_id: userId,
       };
 
-      const permitResult = await this.supabase.from("permits").insert(permitData).select("*").single();
+      const permitResult = await this.supabase.from("permits").insert(permitData).select("*").maybeSingle();
 
-      if (permitResult.error) throw permitResult.error;
+      if (permitResult.error) throw new Error(permitResult.error.message);
       if (!permitResult.data) throw new Error("Permit not inserted");
       permitInsertData = permitResult.data;
     }
@@ -135,7 +135,7 @@ export class Settlement extends Super {
         .update({ permit_id: permitInsertData.id })
         .eq("id", creditInsertData.id);
 
-      if (creditUpdateError) throw creditUpdateError;
+      if (creditUpdateError) throw new Error(creditUpdateError.message);
     }
 
     // Insert into the settlements table
@@ -149,9 +149,9 @@ export class Settlement extends Super {
     const { data: settlementInsertData, error: settlementError } = await this.supabase
       .from("settlements")
       .insert(settlementData)
-      .single();
+      .maybeSingle();
 
-    if (settlementError) throw settlementError;
+    if (settlementError) throw new Error(settlementError.message);
     if (!settlementInsertData) throw new Error("Settlement not inserted");
   }
 }

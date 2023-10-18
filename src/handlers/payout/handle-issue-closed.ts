@@ -45,9 +45,9 @@ export async function handleIssueClosed({
 
   // ASSIGNEE REWARD PRICE PROCESSOR
   const priceInDecimal = new Decimal(
-    incentivesCalculation.issueDetailed.priceLabel.substring(
+    incentivesCalculation.taskPaymentMetaData.priceLabel.substring(
       7,
-      incentivesCalculation.issueDetailed.priceLabel.length - 4
+      incentivesCalculation.taskPaymentMetaData.priceLabel.length - 4
     )
   ).mul(incentivesCalculation.multiplier);
 
@@ -107,9 +107,10 @@ export async function handleIssueClosed({
       debug: creatorReward.reward[0].debug,
     });
   } else if (creatorReward && creatorReward.reward && creatorReward.reward[0].account === "0x") {
-    throw logger.info(
-      `Skipping to generate a permit url for missing account. fallback: ${creatorReward.fallbackReward}`
-    );
+    throw logger.info("Skipping to generate a permit url for missing account.", {
+      fallbackReward: creatorReward.fallbackReward,
+      creatorReward,
+    });
   }
 
   // ASSIGNEE REWARD HANDLER
@@ -234,7 +235,7 @@ export async function handleIssueClosed({
 
   if (permitComment) await addCommentToIssue(permitComment.trim() + comments.promotionComment, issueNumber);
 
-  await deleteLabel(incentivesCalculation.issueDetailed.priceLabel);
+  await deleteLabel(incentivesCalculation.taskPaymentMetaData.priceLabel);
 }
 
 export interface RewardsResponse {
