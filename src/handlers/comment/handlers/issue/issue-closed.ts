@@ -6,7 +6,7 @@ import { calculateQualScore } from "./calculate-quality-score";
 export async function issueClosed() {
   const { issue, logger } = preamble();
   const issueComments = await getAllIssueComments(issue.number);
-  return logger.ok("Issue closed. Calculating quality score.", calculateQualScore(issue, issueComments));
+  return logger.ok("Issue closed. Calculating quality score.", await calculateQualScore(issue, issueComments));
 }
 
 function preamble() {

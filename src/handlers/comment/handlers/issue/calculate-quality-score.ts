@@ -19,10 +19,10 @@ export async function calculateQualScore(issue: Issue, allComments: Comment[]) {
   );
 
   if (relevance.length != contributorComments.length) {
-    console.log({ relevance, contributorComments });
+    // console.log({ relevance, contributorComments });
     throw new Error("Relevance scores returned from OpenAI do not match the number of comments");
   }
-  return { tokens: sumOfConversationTokens, estimatedOptimalModel };
+  return { relevance, sumOfConversationTokens, model: estimatedOptimalModel };
 }
 
 export function estimateOptimalModel(sumOfTokens: number) {
