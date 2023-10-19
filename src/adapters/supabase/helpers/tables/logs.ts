@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // This is disabled because logs should be able to log any type of data
 // Normally this is forbidden
+// TODO: break this apart into smaller files.
 
 import { SupabaseClient } from "@supabase/supabase-js";
 import Runtime from "../../../../bindings/bot-runtime";

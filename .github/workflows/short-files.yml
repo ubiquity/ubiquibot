@@ -13,7 +13,7 @@ jobs:
 
       - name: Check file length
         run: |
-          IGNORE=("src/generatedFile1.ts" "src/generatedFile2.ts") # Add more files to ignore as needed
+          IGNORE=("src/adapters/supabase/types/database.ts" "src/generatedFile2.ts") # Add more files to ignore as needed
           find src -name "*.ts" -type f -exec bash -c '
             for ignore in "${IGNORE[@]}"; do
               if [[ "$1" == "$ignore" ]]; then
