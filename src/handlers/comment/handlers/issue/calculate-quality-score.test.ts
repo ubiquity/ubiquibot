@@ -6,27 +6,7 @@ import {
 } from "./calculate-quality-score";
 import { Comment, Issue, User, UserType } from "../../../../types/payload";
 
-// jest.mock("openai", () => {
-//   return jest.fn().mockImplementation(() => {
-//     return {
-//       chat: {
-//         completions: {
-//           create: jest.fn().mockResolvedValue({
-//             choices: [
-//               {
-//                 message: {
-//                   content: "[1, 1, 0]",
-//                 },
-//               },
-//             ],
-//           }),
-//         },
-//       },
-//     };
-//   });
-// });
-
-describe("(**Real OpenAI API Call**) calculateQualScore", () => {
+describe("*** Real OpenAI API Call *** calculateQualScore", () => {
   it("should calculate quality score", async () => {
     const issue = { body: "my topic is about apples" } as Issue;
     const comments: Comment[] = [
@@ -41,7 +21,7 @@ describe("(**Real OpenAI API Call**) calculateQualScore", () => {
   });
 });
 
-describe("(**Real OpenAI API Call**) gptRelevance", () => {
+describe("*** Real OpenAI API Call *** gptRelevance", () => {
   it("should calculate gpt relevance", async () => {
     const result = await gptRelevance("gpt-3.5-turbo", "my topic is about apples", [
       "the apple is red",
