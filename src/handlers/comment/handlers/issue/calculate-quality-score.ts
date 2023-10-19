@@ -2,27 +2,21 @@ import { Comment, Issue } from "../../../../types/payload";
 import OpenAI from "openai";
 import { encodingForModel } from "js-tiktoken";
 
-// TODO: make a filter to scrub out block quotes
-const botCommandsAndCommentsFilter = (comment: Comment) =>
-  !comment.body.startsWith("/") && comment.user.type === "User";
-
-export async function calculateQualScore(issue: Issue, allComments: Comment[]) {
-  const contributorComments = allComments.filter(botCommandsAndCommentsFilter);
-
+export async function calculateQualScore(issue: Issue, contributorComments: Comment[]) {
   const sumOfConversationTokens = countTokensOfConversation(issue, contributorComments);
   const estimatedOptimalModel = estimateOptimalModel(sumOfConversationTokens);
 
-  const relevance = await gptRelevance(
+  const relevanceScores = await gptRelevance(
     estimatedOptimalModel,
     issue.body,
     contributorComments.map((comment) => comment.body)
   );
 
-  if (relevance.length != contributorComments.length) {
+  if (relevanceScores.length != contributorComments.length) {
     // console.log({ relevance, contributorComments });
     throw new Error("Relevance scores returned from OpenAI do not match the number of comments");
   }
-  return { relevance, sumOfConversationTokens, model: estimatedOptimalModel };
+  return { relevanceScores, sumOfConversationTokens, model: estimatedOptimalModel };
 }
 
 export function estimateOptimalModel(sumOfTokens: number) {

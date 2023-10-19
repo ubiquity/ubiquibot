@@ -16,8 +16,10 @@ describe("*** Real OpenAI API Call *** calculateQualScore", () => {
     ];
     const result = await calculateQualScore(issue, comments);
     expect(result).toBeDefined();
-    expect(result.tokens).toBeGreaterThan(0);
-    expect(result.estimatedOptimalModel).toBeDefined();
+    expect(result.relevanceScores).toBeDefined();
+    expect(Array.isArray(result.relevanceScores)).toBe(true);
+    expect(typeof result.sumOfConversationTokens).toBe("number");
+    expect(typeof result.model).toBe("string");
   });
 });
 
@@ -83,8 +85,10 @@ describe("calculateQualScore", () => {
     const comments = [comment, comment, comment] as Comment[];
     const result = await calculateQualScore(issue, comments);
     expect(result).toBeDefined();
-    expect(result.tokens).toBeGreaterThan(0);
-    expect(result.estimatedOptimalModel).toBeDefined();
+    expect(result.relevanceScores).toBeDefined();
+    expect(Array.isArray(result.relevanceScores)).toBe(true);
+    expect(typeof result.sumOfConversationTokens).toBe("number");
+    expect(typeof result.model).toBe("string");
   });
 });
 

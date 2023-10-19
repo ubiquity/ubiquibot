@@ -56,12 +56,12 @@ type Role =
 
 type ReviewState = "commented" | "approved" | "requestChanges" | "dismissed";
 
-type CommentScoringConfig = {
-  // wordCredit: number; // credit per word
-  // listItemCredit: number; // credit per list item
-  // imageCredit: number; // credit per image
-  // linkCredit: number; // credit per link
-  // codeBlockCredit: number; // credit per code block
+export type CommentScoringConfig = {
+  wordCredit: number; // credit per word
+  listItemCredit: number; // credit per list item
+  imageCredit: number; // credit per image
+  linkCredit: number; // credit per link
+  codeBlockCredit: number; // credit per code block
 };
 
 export type CommentScore = {

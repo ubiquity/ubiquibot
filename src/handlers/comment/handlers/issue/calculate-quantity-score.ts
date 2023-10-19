@@ -1,4 +1,6 @@
-export function calculateQuantScore(comment: string, config: CommentScoringConfig): number {
+import { CommentScoringConfig } from "./calculate-score-typings";
+
+export function calculateQuantScore(issue: Issue, contributorComments: Comment[]): number {
   let score = 0;
 
   // Count words
@@ -23,3 +25,12 @@ export function calculateQuantScore(comment: string, config: CommentScoringConfi
 
   return score;
 }
+
+function calculateIssueIssuerQuantScore(comment: string, rubric: ScoringRubric) {}
+function calculateIssueAssigneeQuantScore(comment: string, rubric: ScoringRubric) {}
+function calculateIssueCollaboratorQuantScore(comment: string, rubric: ScoringRubric) {}
+function calculateIssueDefaultQuantScore(comment: string, rubric: ScoringRubric) {}
+// function calculateReviewIssuerQuantScore(){}
+// function calculateReviewAssigneeQuantScore(){}
+// function calculateReviewCollaboratorQuantScore(){}
+// function calculateReviewDefaultQuantScore(){}
