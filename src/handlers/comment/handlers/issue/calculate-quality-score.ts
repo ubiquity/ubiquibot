@@ -61,7 +61,6 @@ export async function gptRelevance(model: string, ISSUE_SPECIFICATION_BODY: stri
   const PROMPT = `I need to evaluate the relevance of GitHub contributors' comments to a specific issue specification. Specifically, I'm interested in how much each comment helps to further define the issue specification or contributes new information or research relevant to the issue. Please provide a float between 0 and 1 to represent the degree of relevance. A score of 1 indicates that the comment is entirely relevant and adds significant value to the issue, whereas a score of 0 indicates no relevance or added value. Each contributor's comment is on a new line.\n\nIssue Specification:\n\`\`\`\n${ISSUE_SPECIFICATION_BODY}\n\`\`\`\n\nConversation:\n\`\`\`\n${CONVERSATION_STRINGS.join(
     "\n"
   )}\n\`\`\`\n\n\nTo what degree are each of the comments in the conversation relevant and valuable to further defining the issue specification? Please reply with an array of float numbers between 0 and 1, corresponding to each comment in the order they appear. Each float should represent the degree of relevance and added value of the comment to the issue.`;
-  // console.trace({ PROMPT });
   const response: OpenAI.Chat.ChatCompletion = await openai.chat.completions.create({
     model: model,
     messages: [
@@ -77,7 +76,6 @@ export async function gptRelevance(model: string, ISSUE_SPECIFICATION_BODY: stri
     presence_penalty: 0,
   });
 
-  const parsedResponse = JSON.parse(response.choices[0].message.content as "[1, 1, 0.5, 0]");
-  // console.trace({ parsedResponse });
+  const parsedResponse = JSON.parse(response.choices[0].message.content as "[1, 1, 0.5, 0]") as number[];
   return parsedResponse;
 }

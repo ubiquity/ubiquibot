@@ -44,15 +44,15 @@
 
 type ContributionLocation = "issue" | "review";
 type ContributionStyle = "issuer" | "assignee" | "collaborator" | "default";
-type Role =
-  | "issueIssuer"
-  | "issueAssignee"
-  | "issueCollaborator"
-  | "issueDefault"
-  | "reviewIssuer"
-  | "reviewAssignee"
-  | "reviewCollaborator"
-  | "reviewDefault";
+export type Role =
+  | "Issue Issuer"
+  | "Issue Assignee"
+  | "Issue Collaborator"
+  | "Issue Default"
+  | "Review Issuer"
+  | "Review Assignee"
+  | "Review Collaborator"
+  | "Review Default";
 
 type ReviewState = "commented" | "approved" | "requestChanges" | "dismissed";
 
@@ -139,3 +139,6 @@ type Payments = {
 };
 
 // Your existing logic here
+export type CommentScoringRubric = {
+  [key in Role]: CommentScoringConfig;
+};
