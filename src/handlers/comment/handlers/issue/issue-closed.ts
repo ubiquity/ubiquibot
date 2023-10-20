@@ -2,7 +2,7 @@ import Runtime from "../../../../bindings/bot-runtime";
 import { getAllIssueComments } from "../../../../helpers";
 import { Issue, Payload } from "../../../../types/payload";
 import { calculateQualScore } from "./calculate-quality-score";
-import { _calculateQuantScore } from "./calculate-quantity-score";
+import { calculateQuantScore } from "./calculate-quantity-score";
 import { Comment } from "../../../../types/payload";
 
 // TODO: make a filter to scrub out block quotes
@@ -16,7 +16,7 @@ export async function issueClosed() {
   const contributorComments = issueComments.filter(botCommandsAndCommentsFilter);
 
   const qualityScore = await calculateQualScore(issue, contributorComments); // the issue specification is not included in this array scoring, it is only for the other contributor comments
-  const quantityScore = _calculateQuantScore(issue, contributorComments);
+  const quantityScore = calculateQuantScore(issue, contributorComments);
 
   return logger.ok("Issue closed. Calculating quality score.", qualityScore);
 }

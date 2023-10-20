@@ -44,15 +44,11 @@
 
 type ContributionLocation = "issue" | "review";
 type ContributionStyle = "issuer" | "assignee" | "collaborator" | "default";
-export type Role =
-  | "Issue Issuer"
-  | "Issue Assignee"
-  | "Issue Collaborator"
-  | "Issue Default"
-  | "Review Issuer"
-  | "Review Assignee"
-  | "Review Collaborator"
-  | "Review Default";
+export type IssueRole = "Issue Issuer" | "Issue Assignee" | "Issue Collaborator" | "Issue Default";
+// | "Review Issuer"
+// | "Review Assignee"
+// | "Review Collaborator"
+// | "Review Default";
 
 type ReviewState = "commented" | "approved" | "requestChanges" | "dismissed";
 
@@ -77,7 +73,7 @@ type LabelAction = {
 
 type PaymentConfig = {
   // Define how much each role and action is worth in monetary terms
-  [key in Role]: {
+  [key in IssueRole]: {
     comment: number;
     // labelPriority: number;
     // labelTime: number;
@@ -125,7 +121,7 @@ type ContributionRecord = {
 
 type DevPoolContributor = {
   contribution: {
-    role: Role;
+    role: IssueRole;
     style: ContributionStyle;
   };
   records: ContributionRecord;
@@ -139,6 +135,6 @@ type Payments = {
 };
 
 // Your existing logic here
-export type CommentScoringRubric = {
-  [key in Role]: CommentScoringConfig;
-};
+// export type CommentScoringRubric = {
+//   [key in IssueRole]: CommentScoringConfig;
+// };

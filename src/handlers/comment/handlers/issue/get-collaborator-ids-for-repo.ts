@@ -1,10 +1,10 @@
 import Runtime from "../../../../bindings/bot-runtime";
-import { Payload } from "../../../../types/payload";
+import { Payload, User } from "../../../../types/payload";
 import { Context } from "probot/lib/context";
-export async function getCollaboratorIdsForRepo(context: Context): Promise<number[]> {
+export async function getCollaboratorsForRepo(context: Context): Promise<User[]> {
   const runtime = Runtime.getState();
   const payload = context.payload as Payload;
-  const collaboratorIds: number[] = [];
+  const collaboratorUsers: User[] = [];
 
   try {
     let page = 1;
@@ -19,7 +19,7 @@ export async function getCollaboratorIdsForRepo(context: Context): Promise<numbe
       });
 
       if (res.data.length > 0) {
-        res.data.forEach((collaborator) => collaboratorIds.push(collaborator.id));
+        res.data.forEach((collaborator) => collaboratorUsers.push(collaborator as User));
         page++;
       } else {
         shouldFetch = false;
@@ -29,5 +29,5 @@ export async function getCollaboratorIdsForRepo(context: Context): Promise<numbe
     runtime.logger.error("Fetching collaborator IDs for repo failed!", e);
   }
 
-  return collaboratorIds;
+  return collaboratorUsers;
 }

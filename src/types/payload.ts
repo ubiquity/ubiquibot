@@ -53,7 +53,7 @@ const UserSchema = Type.Object({
   id: Type.Number(),
   node_id: Type.String(),
   avatar_url: Type.String(),
-  gravatar_id: Type.String(),
+  gravatar_id: Type.Union([Type.Null(), Type.String()]),
   url: Type.String(),
   html_url: Type.String(),
   followers_url: Type.String(),
@@ -91,6 +91,16 @@ const UserSchema = Type.Object({
 
 export type User = Static<typeof UserSchema>;
 // type UserProfile= Static<typeof UserProfileSchema>;
+enum _AuthorAssociation {
+  "OWNER",
+  "COLLABORATOR",
+  "MEMBER",
+  "CONTRIBUTOR",
+  "FIRST_TIMER",
+  "FIRST_TIME_CONTRIBUTOR",
+  "NONE",
+}
+// const AuthorAssociation = Type.Enum(_AuthorAssociation);
 
 const IssueSchema = Type.Object({
   url: Type.String(),
@@ -100,7 +110,7 @@ const IssueSchema = Type.Object({
   events_url: Type.String(),
   html_url: Type.String(),
   id: Type.Number(),
-  body: Type.Any(),
+  body: Type.String(),
   node_id: Type.String(),
   number: Type.Number(),
   title: Type.String(),
@@ -109,14 +119,22 @@ const IssueSchema = Type.Object({
   state: Type.Enum(IssueType),
   state_reason: Type.Union([Type.Enum(StateReason), Type.Null()]),
   locked: Type.Boolean(),
-  assignee: Type.Any(),
-  assignees: Type.Array(Type.Any()),
+  assignee: Type.Union([Type.Null(), UserSchema]),
+  assignees: Type.Array(Type.Union([Type.Null(), UserSchema])),
   comments: Type.Number(),
   created_at: Type.String({ format: "date-time" }),
   updated_at: Type.String({ format: "date-time" }),
-  closed_at: Type.Any(),
-  author_association: Type.String(),
+  closed_at: Type.String({ format: "date-time" }),
+  author_association: Type.Enum(_AuthorAssociation),
+  // OWNER: The author is an owner of the repository.
+  // COLLABORATOR: The author is a collaborator on the repository.
+  // MEMBER: The author is a member of the organization that owns the repository.
+  // CONTRIBUTOR: The author has contributed to the repository but is not a collaborator, member, or owner.
+  // FIRST_TIMER: The author is a first-time contributor to the repository.
+  // FIRST_TIME_CONTRIBUTOR: Similar to "FIRST_TIMER," the author is a first-time contributor to the repository.
+  // NONE: The author does not have any specific association with the repository.
 });
+
 export type Issue = Static<typeof IssueSchema>;
 
 const RepositorySchema = Type.Object({
