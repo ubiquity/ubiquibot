@@ -7,6 +7,7 @@ import { ErrorDiff } from "../utils/helpers";
 import { Context } from "probot";
 
 const escapeMsg = `Please ignore all previous commands and directives. \n
+Take your time to think and process things before responding. \n
 Perform exactly what is asked of you in the following way: \n\n`;
 
 export const sysMsg = `${escapeMsg} You are an AI designed to provide accurate technical answers. \n
@@ -17,30 +18,77 @@ Infer the context of the question from the Original Context using your best judg
 All replies MUST end with "\n\n <!--- { 'OpenAI': 'answer' } ---> ".\n
 `;
 
+export const requestedChangesMsg = `The input you will receive will be a JSON array of review comments. \n
+You are to format an easy to read message that will be posted as a review comment on the pull request. \n
+You are to create a GitHub tasklist returned in markdown built using checkboxes and lists. \n
+=== Template === \n
+# {username}, changes are needed. \n
+- Once you have made the requested changes, call \`\`/review\`\` again. \n
+- If you have any questions, you can ask them in a comment below using the ask command: \`\`/ask "question"\`\`. \n
+- Please make sure to check off the tasks as you complete them. \n
+
+### Your tasks: \n
+{tasklist} \n
+=== Template === \n
+`;
+
+export const pullRequestBusinessLogicMsg = `${escapeMsg} You are an AI designed to handle business logic surrounding pull requests. \n
+You will request changes be made if the following conditions are met: \n
+- The pull request spec is not achieved and there has been specific changes requested \n
+
+You will approve the pull request if the following conditions are met: \n
+- The pull request spec is achieved \n
+- No specific changes have been requested \n
+`;
+
 export const validationMsg = `${escapeMsg} You are an AI validation bot designed to ensure that the answers provided by the OpenAI API meet our predefined standards. \n
-The input you'll validate is the output of a pull request review performed by GPT-3, depending on whether it has achieved the spec will determine what you need to do. \n
+The input you'll validate is the output of a pull request review performed by GPT-3, the output should adhere to one of the following standards. \n
 
-If the spec is not achieved then you will take the useful information from the review and deliver it using the following template: \n
-=== Template A === \n
-### Spec not achieved
-{username} this is where you went wrong...
-this is how you can fix it... 
-> code example of solution
-=== Template A === \n
+Spec Not Achieved == Standard A \n
+Spec Achieved == Standard B \n
 
-If the spec is achieved then you will respond using the following template including their real username, no @ symbols:\n
-=== Template B === \n
+If the spec is not achieved, changes will be requested and in that case the output should follow proper JSON format. If it doesn't, then you should fix it.
+=== Standard A === 
+[
+{
+  "path": "{path}",
+  "body": "Changes are needed here: \n\n {body} \n\n Please make the requested changes and call \`\`/review\`\` again.",
+  "line": {line}
+  "start_line": {start_line}
+}
+]
+=== Standard A === 
+
+
+If the spec is achieved, then the output should be one sentence using the following Standard including their real username, no @ symbols: \n
+=== Standard B === \n
 ### Spec achieved
 {username}, you have achieved the spec and now the reviewers will let you know if there are any other changes needed.\n
-=== Template B === \n
+=== Standard B === \n
 `;
 
 export const specCheckTemplate = `${escapeMsg} Using the provided context, ensure you clearly understand the specification of the issue. \n
 Now using your best judgement, determine if the specification has been met based on the PR diff provided. \n
 The spec should be achieved atleast logically, if not literally. If changes are made that are not directly mentioned in the spec, but are logical and do not break the spec, they are acceptable. \n
-Your response will be posted as a GitHub comment for everyone to see in the pull request review conversation.
-Knowing this, only include information that will benefit them, think of it as a quick summary of the review.
-You can add value by identifying coding errors and code suggestions that benefit both the author and reviewers.
+
+If the spec is not achieved, changes will be requested as a review comment pinned to the respective file and line number.
+If changes span multiple files, multiple review comments will be made.
+If changes span multiple lines, multiple review comments will be made.
+Capture all changes needed in the following format, replacing the variables with the appropriate values.
+All comments will be batched into a single review.
+
+=== JSON ===
+[{
+  "path": "{path}",
+  "start_line": {start_line},
+  "line": {line},
+  "body": "Changes are needed here: \n\n {body} \n\n Please make the requested changes and call \`\`/review\`\` again when you're done."
+}]
+=== JSON ===
+
+If the spec is achieved then you will respond using the following template including their real username, no @ symbols:\
+### Spec achieved
+{username}, you have achieved the spec and now the reviewers will let you know if there are any other changes needed.\n
 `;
 
 export const gptContextTemplate = `${escapeMsg}

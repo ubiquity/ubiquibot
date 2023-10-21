@@ -1,12 +1,12 @@
-import { getBotContext, getLogger } from "../../../bindings";
+import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, StreamlinedComment } from "../../../types";
-import { getAllIssueComments, getPullByNumber } from "../../../helpers";
+import { approvePullRequest, getAllIssueComments, getCommitsOnPullRequest, getPullByNumber, requestPullChanges } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
-import { askGPT, getPRSpec, specCheckTemplate, validationMsg } from "../../../helpers/gpt";
+import { askGPT, getPRSpec, pullRequestBusinessLogicMsg, requestedChangesMsg, specCheckTemplate, validationMsg } from "../../../helpers/gpt";
 import { ErrorDiff } from "../../../utils/helpers";
+import OpenAI from "openai";
 
 /**
- * @notice Three calls to OpenAI are made. First for context, second for review and third for finalization.
  * @returns Pull Request Report
  */
 export const review = async (body: string) => {
@@ -116,15 +116,35 @@ export const review = async (body: string) => {
         } as CreateChatCompletionRequestMessage
       );
 
-      const validated = await askGPT(`Pr review validation call for #${issue.number}`, chatHistory);
+      const res = await askGPT(`Pr review call for #${issue.number}`, chatHistory);
+
+      chatHistory = [];
+      chatHistory.push(
+        {
+          role: "system",
+          content: pullRequestBusinessLogicMsg,
+        } as CreateChatCompletionRequestMessage,
+        {
+          role: "assistant",
+          content: `Handle business logic for:\n` + JSON.stringify(res),
+        } as CreateChatCompletionRequestMessage
+      );
+
+      const validated = await reviewGPT(issue.number, chatHistory, issue.assignees[0].login);
+
+      console.log("====================================");
+      console.log(validated);
+      console.log("====================================");
 
       if (typeof validated === "string") {
         return validated;
+      } else if (validated === null) {
+        return undefined;
       } else {
-        if (validated.answer) {
+        if (validated) {
           return validated.answer;
         } else {
-          return ErrorDiff(`No answer found for issue #${issue.number}`);
+          return ErrorDiff(`Validating the pull request response may have failed.`);
         }
       }
     } else {
@@ -133,8 +153,152 @@ export const review = async (body: string) => {
   };
 
   const res = await isPull();
-  if (res.startsWith("```diff\n")) {
+  if (res && res.startsWith("```diff\n")) {
     return res;
+  } else if (res === undefined) {
+    return undefined;
+  } else {
+    return res + `\n###### Ensure the pull request requirements are in the linked issue's first comment and update it if the scope evolves.`;
   }
-  return res + `\n###### Ensure the pull request requirements are in the linked issue's first comment and update it if the scope evolves.`;
+};
+
+export const reviewGPT = async (pullNumber: number, chatHistory: CreateChatCompletionRequestMessage[], user: string) => {
+  const logger = getLogger();
+  const config = getBotConfig();
+
+  if (!config.ask.apiKey) {
+    logger.info(`No OpenAI API Key provided`);
+    return ErrorDiff("You must configure the `openai-api-key` property in the bot configuration in order to use AI powered features.");
+  }
+
+  const openAI = new OpenAI({
+    apiKey: config.ask.apiKey,
+  });
+
+  const reviewFunctions: OpenAI.Chat.Completions.ChatCompletionCreateParams.Function[] = [
+    {
+      name: "approvePullRequest",
+      description: "If the spec has been achieved and the code is good, approve the pull request.",
+      parameters: {
+        type: "object",
+        properties: {},
+        require: [],
+      },
+    },
+    {
+      name: "requestPullChanges",
+      description: "Only if the spec hasn't been achieved and if changes are needed request them as a review on the pull request.",
+      parameters: {
+        type: "object",
+        properties: {
+          comments: {
+            type: "array",
+            description: "An array of comment objects.",
+            items: {
+              type: "object",
+              properties: {
+                path: {
+                  type: "string",
+                  description: "The relative path to the file in the repository.",
+                },
+                start_line: {
+                  type: "number",
+                  description: "The start_line is the first line in the pull request diff that your multi-line comment applies to. ",
+                },
+                line: {
+                  type: "number",
+                  description:
+                    "The line of the blob in the pull request diff that the comment applies to. For a multi-line comment, the last line of the range that your comment applies to.",
+                },
+                body: {
+                  type: "string",
+                  description: "The content of the comment.",
+                },
+              },
+              require: ["path", "line", "body", "start_line"],
+            },
+          },
+        },
+        require: ["comments"],
+      },
+    },
+  ];
+
+  const res: OpenAI.Chat.Completions.ChatCompletion = await openAI.chat.completions.create({
+    messages: chatHistory,
+    model: "gpt-3.5-turbo-16k-0613",
+    max_tokens: config.ask.tokenLimit,
+    temperature: 0,
+    functions: reviewFunctions,
+    function_call: "auto",
+  });
+
+  const functionName = res.choices[0].message.function_call?.name;
+  const functionArgs = res.choices[0].message.function_call?.arguments;
+  const answer = res.choices[0].message.content;
+
+  const tokenUsage = {
+    output: res.usage?.completion_tokens,
+    input: res.usage?.prompt_tokens,
+    total: res.usage?.total_tokens,
+  };
+
+  switch (functionName) {
+    case "approvePullRequest": {
+      console.log("================approvePullRequest====================");
+      console.log("approvePullRequest");
+      console.log("====================================");
+      logger.info(`Reverted pull request #${pullNumber} to draft status.`);
+      chatHistory.push({
+        role: "function",
+        name: "approvePullRequest",
+        content: `The pull request has been approved, explain this and the reason why to the user.` + answer,
+      } as CreateChatCompletionRequestMessage);
+      const answ = await askGPT(`Pr function call for #${pullNumber}`, chatHistory);
+
+      await approvePullRequest(pullNumber);
+
+      console.log("=================approvePullRequest===================");
+      console.log(answ);
+      console.log("====================================");
+      return answ;
+    }
+    case "requestPullChanges": {
+      let obj: any = {};
+      if (functionArgs) {
+        obj = JSON.parse(functionArgs);
+      }
+
+      const allCommits = await getCommitsOnPullRequest(pullNumber);
+      const commit = allCommits[0].sha;
+
+      console.log("================requestPullChanges====================");
+      console.log(obj);
+      console.log("====================================");
+
+      logger.info(`Requested changes on pull request #${pullNumber}.`);
+      chatHistory.push(
+        {
+          role: "function",
+          name: "requestPullChanges",
+          content: `${answer}`,
+        } as CreateChatCompletionRequestMessage,
+        {
+          role: "user",
+          content: `${requestedChangesMsg}` + user + `\n` + JSON.stringify(obj.comments),
+        } as CreateChatCompletionRequestMessage
+      );
+      const answ = await askGPT(`Pr review call for #${pullNumber}`, chatHistory);
+      const finalAnswer = typeof answ === "string" ? answ : answ.answer;
+
+      await requestPullChanges(pullNumber, obj.comments, commit, finalAnswer);
+
+      return null;
+    }
+    default:
+      return {
+        answer,
+        tokenUsage,
+      };
+  }
 };
