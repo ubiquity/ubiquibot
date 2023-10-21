@@ -73,6 +73,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
           msg += "@" + reviewer.login + " ";
         }
       }
+      if (!msg.includes("@")) return false;
       msg += "Can you please review this pull request";
       // the below function can also add comment to prs
       await addCommentToIssue(msg, pullRequest[0].number);
