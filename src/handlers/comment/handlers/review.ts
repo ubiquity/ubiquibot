@@ -132,7 +132,7 @@ export async function review(body: string) {
 
       const readme = await findFileInRepo(context, "readme.md");
       const contributing = await findFileInRepo(context, "contributing.md");
-      const docLinks = `### Helpful links - [Readme](${readme?.data.html_url})\n- [Contributing](${contributing?.data.html_url})`;
+      const docLinks = `### Helpful links\n - [Readme](${readme?.data.html_url})\n- [Contributing](${contributing?.data.html_url})`;
 
       const actionedResponse = await reviewGPT(issue.number, chatHistory, issue.assignees[0].login, docLinks);
 
