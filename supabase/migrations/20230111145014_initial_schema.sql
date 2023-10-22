@@ -27,24 +27,3 @@ CREATE TABLE users (
     created_at text,
     updated_at text
 );
-
-CREATE TABLE issues (
-    id SERIAL PRIMARY KEY,
-    issue_number integer NOT NULL,
-    issue_url text NOT NULL,
-    comments_url text NOT NULL,
-    events_url text NOT NULL,
-    labels text[],
-    assignees text[],
-    status issue_status DEFAULT 'READY_TO_START'::issue_status NOT NULL,
-    timeline text,
-    priority text,
-    price text,
-    txhash text[],
-    recipient character(42),
-    started_at text,
-    completed_at text,
-    closed_at text,
-    created_at text,
-    updated_at text
-);
