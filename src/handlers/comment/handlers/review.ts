@@ -325,14 +325,6 @@ async function findFileInRepo(context: any, fileName: string): Promise<any> {
 
     const file = tree.tree.find((f: any) => f.type === "blob" && f.path.toLowerCase().endsWith(fileName.toLowerCase()));
 
-    console.log("=================tree===================");
-    console.log(tree);
-    console.log("====================================");
-
-    console.log("=================file===================");
-    console.log(file);
-    console.log("====================================");
-
     if (!file) {
       return null;
     }
