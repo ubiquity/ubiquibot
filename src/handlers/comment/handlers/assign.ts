@@ -135,7 +135,7 @@ export const assign = async (body: string) => {
   return;
 };
 
-const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, issue: Issue) => {
+export const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, issue: Issue) => {
   const { reason, value } = await getWalletMultiplier(senderLogin, org_id);
 
   const multiplier = value?.toFixed(2) || "1.00";

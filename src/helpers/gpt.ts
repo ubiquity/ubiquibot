@@ -92,6 +92,11 @@ export const decideContextGPT = async (
     return `Error getting issue comments`;
   }
 
+  chatHistory.push({
+    role: "system",
+    content: sysMsg,
+  } as CreateChatCompletionRequestMessage);
+
   // add the first comment of the issue/pull request
   streamlined.push({
     login: issue.user.login,
@@ -121,19 +126,16 @@ export const decideContextGPT = async (
 
   chatHistory.push(
     {
-      role: "system",
-      content: "This issue/Pr context: \n" + JSON.stringify(streamlined),
-      name: "UbiquityAI",
+      role: "user",
+      content: `This issue/Pr #${issue.number} context: \n` + JSON.stringify(streamlined),
     } as CreateChatCompletionRequestMessage,
     {
-      role: "system",
-      content: "Linked issue(s) context: \n" + JSON.stringify(linkedIssueStreamlined),
-      name: "UbiquityAI",
+      role: "user",
+      content: `Linked issue(s) context: \n` + JSON.stringify(linkedIssueStreamlined),
     } as CreateChatCompletionRequestMessage,
     {
-      role: "system",
+      role: "user",
       content: "Linked Pr(s) context: \n" + JSON.stringify(linkedPRStreamlined),
-      name: "UbiquityAI",
     } as CreateChatCompletionRequestMessage
   );
 

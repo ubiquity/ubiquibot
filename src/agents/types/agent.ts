@@ -3,7 +3,9 @@ import { Payload } from "../../types";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import OpenAI from "openai";
 import { ErrorDiff } from "../../utils/helpers";
-import { registerUserWallet } from "../tools/agentTools";
+import { calculatePriorityAndDuration, registerUserWallet, setPriorityAndDuration } from "../tools/agentTools";
+import { assign } from "../tools/agentTools";
+import { overseerMsg } from "../utils/prompts";
 
 const githubAgentFunctions: OpenAI.Chat.Completions.ChatCompletionCreateParams.Function[] = [
   {
@@ -40,6 +42,60 @@ const githubAgentFunctions: OpenAI.Chat.Completions.ChatCompletionCreateParams.F
         },
       },
       require: ["issueNumber", "username"],
+    },
+  },
+  {
+    name: "setPriorityAndDuration",
+    description: "Set the priority and duration labels of an issue so it can be priced and assigned.",
+    parameters: {
+      type: "object",
+      properties: {
+        issueNumber: {
+          type: "number",
+          description: "The issue number to set the priority and duration for",
+        },
+        priority: {
+          type: "string",
+          description:
+            "The priority label to set: 'Priority: 1 (Normal)', 'Priority: 2 (Medium)', 'Priority: 3 (High)', 'Priority: 4 (Urgent)', 'Priority: 5 (Emergency)'",
+        },
+        duration: {
+          type: "string",
+          description: "The duration label to set 'Time: <1 hour', 'Time: <2 hours', 'Time: <4 hours', 'Time: <1 days', 'Time: <1 week'",
+        },
+      },
+      require: ["issueNumber", "priority", "duration"],
+    },
+  },
+  {
+    name: "calculatePriorityAndDuration",
+    description: "Calculate the priority and duration labels of an issue so it can be priced and assigned.",
+    parameters: {
+      type: "object",
+      properties: {},
+      require: [],
+    },
+  },
+  {
+    name: "updateRepoFile",
+    description: "Update a file in a repo",
+    parameters: {
+      type: "object",
+      properties: {
+        repo: {
+          type: "string",
+          description: "The repo to update",
+        },
+        path: {
+          type: "string",
+          description: "The path to the file to update",
+        },
+        content: {
+          type: "string",
+          description: "The content to update the file with",
+        },
+      },
+      require: ["repo", "path", "content"],
     },
   },
   {
@@ -163,10 +219,32 @@ export async function ubqGitHubAgent(body: string, chatHistory: CreateChatComple
 
   if (!issue) return `This command can only be used on issues`;
 
-  const agentCommands = [
+  interface AgentCommand {
+    name: string;
+    func: (...args: any[]) => Promise<any>;
+    expectedArgs: string[];
+  }
+
+  const agentCommands: AgentCommand[] = [
     {
       name: "registerUserWallet",
       func: registerUserWallet,
+      expectedArgs: ["walletAddress", "ensName"],
+    },
+    {
+      name: "assignToIssue",
+      func: assign,
+      expectedArgs: ["issueNumber", "username"],
+    },
+    {
+      name: "calculatePriorityAndDuration",
+      func: calculatePriorityAndDuration,
+      expectedArgs: ["chatHistory"],
+    },
+    {
+      name: "setPriorityAndDuration",
+      func: setPriorityAndDuration,
+      expectedArgs: ["issueNumber", "priority", "duration"],
     },
     // {
     //   name: "assignToIssue",
@@ -186,6 +264,17 @@ export async function ubqGitHubAgent(body: string, chatHistory: CreateChatComple
   const openAI = new OpenAI({
     apiKey: config.ask.apiKey,
   });
+
+  const oversightChatHistory = [
+    {
+      role: "system",
+      content: overseerMsg,
+    } as CreateChatCompletionRequestMessage,
+    {
+      role: "user",
+      content: body,
+    } as CreateChatCompletionRequestMessage,
+  ];
 
   async function singleResponse(chatHistory: OpenAI.Chat.Completions.ChatCompletionMessageParam[]) {
     return await openAI.chat.completions.create({
@@ -210,28 +299,43 @@ export async function ubqGitHubAgent(body: string, chatHistory: CreateChatComple
       console.log(`Response ${chainCount}: ${response.choices[0].message.content}`);
       const func = agentCommands.find((command) => command.name === funcName);
       if (!func) return ErrorDiff(`Agent command not found.`);
-      console.log(`Function: ${func.name}`);
-      console.log(`Function params: ${funcParams}`);
+
       let argObj: { [x: string]: any };
       if (funcParams) {
         argObj = JSON.parse(funcParams);
       } else {
         argObj = {};
       }
-      const argKeys = Object.keys(argObj);
-      console.log(`Function arguments: ${argKeys}`);
-      const args = argKeys.map((key) => argObj[key]);
-      console.log(`Function arguments: ${args}`);
-      const result = await func.func(...args);
-      console.log(`Function result: ${result}`);
 
-      chatHistory.push({
-        role: "function",
-        name: funcName,
-        content: `# ${funcName} executed\n - data: ${result}`,
-      } as CreateChatCompletionRequestMessage);
+      const args = func.expectedArgs.map((argName) => argObj[argName] ?? chatHistory);
+
+      let result;
+      try {
+        result = await func.func(...args);
+      } catch (err) {
+        console.log("====================================");
+        console.log("err:", err);
+        console.log("====================================");
+        return ErrorDiff(`Error calling function: ${func.name}`);
+      }
+
+      chatHistory.push(
+        {
+          role: "function",
+          name: funcName,
+          content: `# ${funcName} executed\n - data: ${result}`,
+        } as CreateChatCompletionRequestMessage,
+        {
+          role: "system",
+          content: `As the function has been executed, the agent will now continue to the next step. That means executing the next function in the chain, or returning the final response.`,
+        } as CreateChatCompletionRequestMessage
+      );
 
       response = await singleResponse(chatHistory);
+
+      console.log("====================================");
+      console.log("singleResponse:", response.choices[0].message.content);
+      console.log("====================================");
 
       funcName = response.choices[0].message.function_call?.name;
       funcParams = response.choices[0].message.function_call?.arguments;
@@ -243,5 +347,27 @@ export async function ubqGitHubAgent(body: string, chatHistory: CreateChatComple
   }
 
   const response = await singleResponse(chatHistory);
+
+  oversightChatHistory.push({
+    role: "assistant",
+    content: `UbiquityBot:\n` + response.choices[0].message.content,
+  } as CreateChatCompletionRequestMessage);
+
+  const oversightResponse = await singleResponse(oversightChatHistory);
+
+  console.log("===========oversight===========");
+  console.log(oversightResponse.choices[0].message.content);
+  console.log("====================================");
+
+  oversightChatHistory.push({
+    role: "assistant",
+    content: `Overseer:\n` + oversightResponse.choices[0].message.content,
+  } as CreateChatCompletionRequestMessage);
+
+  chatHistory.push({
+    role: "assistant",
+    content: `Overseer:\n` + oversightResponse.choices[0].message.content,
+  } as CreateChatCompletionRequestMessage);
+
   return await handleResponse(response);
 }
