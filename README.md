@@ -37,7 +37,6 @@ yarn start:watch
 - Update the following fields on `.env`:
 - `SUPABASE_URL`: Add your Supabase project URL.
 - `SUPABASE_KEY`: Add your Supabase project API key.
-- `LOGDNA_INGESTION_KEY`: Get it from [Mezmo](https://app.mezmo.com/) by creating an account, adding an organization, and copying the ingestion key.
 - `FOLLOWUP_TIME`: (optional) Set a custom follow-up time (default: 4 days).
 - `DISQUALIFY_TIME`: (optional) Set a custom disqualify time (default: 7 days).
 - `OPENAI_API_HOST`: (optional) Set OpenAI host url (default: https://api.openai.com).
