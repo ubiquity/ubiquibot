@@ -2,14 +2,14 @@ import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import { Payload, StreamlinedComment } from "../../../types";
 import { approvePullRequest, getAllIssueComments, getCommitsOnPullRequest, getPullByNumber, requestPullChanges } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
-import { askGPT, getPRSpec, pullRequestBusinessLogicMsg, requestedChangesMsg, specCheckTemplate, validationMsg } from "../../../helpers/gpt";
+import { appreciationMsg, askGPT, getPRSpec, pullRequestBusinessLogicMsg, requestedChangesMsg, specCheckTemplate, validationMsg } from "../../../helpers/gpt";
 import { ErrorDiff } from "../../../utils/helpers";
 import OpenAI from "openai";
 
 /**
  * @returns Pull Request Report
  */
-export const review = async (body: string) => {
+export async function review(body: string) {
   const context = getBotContext();
   const logger = getLogger();
 
@@ -102,7 +102,7 @@ export const review = async (body: string) => {
         } as CreateChatCompletionRequestMessage
       );
 
-      const gptResponse = await askGPT(`Pr review call for #${issue.number}`, chatHistory);
+      const specCheckResponse = await askGPT(`Pr specCheck call for #${issue.number}`, chatHistory);
 
       chatHistory = [];
       chatHistory.push(
@@ -112,11 +112,11 @@ export const review = async (body: string) => {
         } as CreateChatCompletionRequestMessage,
         {
           role: "assistant",
-          content: `Validate for user: ${issue.assignees[0].login}: \n` + JSON.stringify(gptResponse),
+          content: `Validate for user: ${issue.assignees[0].login}: \n` + JSON.stringify(specCheckResponse),
         } as CreateChatCompletionRequestMessage
       );
 
-      const res = await askGPT(`Pr review call for #${issue.number}`, chatHistory);
+      const validationResponse = await askGPT(`Pr validation call for #${issue.number}`, chatHistory);
 
       chatHistory = [];
       chatHistory.push(
@@ -126,33 +126,28 @@ export const review = async (body: string) => {
         } as CreateChatCompletionRequestMessage,
         {
           role: "assistant",
-          content: `Handle business logic for:\n` + JSON.stringify(res),
+          content: `Handle business logic for:\n` + JSON.stringify(validationResponse),
         } as CreateChatCompletionRequestMessage
       );
 
-      const validated = await reviewGPT(issue.number, chatHistory, issue.assignees[0].login);
-
-      console.log("====================================");
-      console.log(validated);
-      console.log("====================================");
-
       const readme = await findFileInRepo(context, "readme.md");
       const contributing = await findFileInRepo(context, "contributing.md");
+      const docLinks = `### Helpful links - [Readme](${readme?.data.html_url})\n- [Contributing](${contributing?.data.html_url})`;
 
-      const finalComment = `
-      ## Helpful links\n\n
-      - [Readme](${readme?.data.download_url})\n
-      - [Contributing](${contributing?.data.download_url})\n\n
-      `;
+      const actionedResponse = await reviewGPT(issue.number, chatHistory, issue.assignees[0].login, docLinks);
 
-      if (typeof validated === "string") {
-        return validated;
-      } else if (validated === null) {
-        return finalComment;
+      if (typeof actionedResponse === "string") {
+        // This is an error message from within /askGPT so we return it as is.
+        return actionedResponse;
+      } else if (actionedResponse === null) {
+        // If changes have been requested, we return the appreciation message after the review comment to keep spirits up.
+        return appreciationMsg;
       } else {
-        if (validated) {
-          return validated.answer;
+        if (actionedResponse) {
+          // If no changes have been requested
+          return actionedResponse.answer;
         } else {
+          // this shouldn't happen
           return ErrorDiff(`Validating the pull request response may have failed.`);
         }
       }
@@ -163,13 +158,21 @@ export const review = async (body: string) => {
 
   const res = await isPull();
   if (res && res.startsWith("```diff\n")) {
+    // Just forward the error message as is.
     return res;
   } else {
     return res + `\n###### Ensure the pull request requirements are in the linked issue's first comment and update it if the scope evolves.`;
   }
-};
+}
 
-export const reviewGPT = async (pullNumber: number, chatHistory: CreateChatCompletionRequestMessage[], user: string) => {
+/**
+ * @notice As we are using function_calling here breaking it away from the main /askGPT function as to not introduce potential breaking changes.
+ * @param pullNumber number of the pull request
+ * @param chatHistory conversational history
+ * @param user username of the hunter
+ * @param docs links to the readme and contributing files
+ */
+export async function reviewGPT(pullNumber: number, chatHistory: CreateChatCompletionRequestMessage[], user: string, docs: string) {
   const logger = getLogger();
   const config = getBotConfig();
 
@@ -231,6 +234,7 @@ export const reviewGPT = async (pullNumber: number, chatHistory: CreateChatCompl
     },
   ];
 
+  // We've provided the validation response as the prompt here so gpt just needs to infer what function to call based on this.
   const res: OpenAI.Chat.Completions.ChatCompletion = await openAI.chat.completions.create({
     messages: chatHistory,
     model: "gpt-3.5-turbo-16k-0613",
@@ -250,48 +254,34 @@ export const reviewGPT = async (pullNumber: number, chatHistory: CreateChatCompl
     total: res.usage?.total_tokens,
   };
 
-  // const approvedPullMsg = `{escapeMsg} `;
-
-  console.log("==================asndwqneisahd==================");
-  console.log(answer);
-  console.log("====================================");
-
   switch (functionName) {
     case "approvePullRequest": {
-      console.log("================approvePullRequest====================");
-      console.log("approvePullRequest");
-      console.log("====================================");
       logger.info(`Reverted pull request #${pullNumber} to draft status.`);
       chatHistory.push({
         role: "function",
         name: "approvePullRequest",
         content:
-          `The pull request has been approved, let ${user} know that you have approved the pull request and they should submit it ready for review and the reviewers will follow up shortly.` +
+          `The pull request has been approved, address ${user} by name and let them know that you have approved the pull request and they should submit it ready for review and the reviewers will follow up shortly.` +
           answer,
       } as CreateChatCompletionRequestMessage);
-      const answ = await askGPT(`Pr function call for #${pullNumber}`, chatHistory);
+      const answ = await askGPT(`Pr function inference call for #${pullNumber}`, chatHistory);
 
       await approvePullRequest(pullNumber);
 
-      console.log("=================approvePullRequest===================");
-      console.log(answ);
-      console.log("====================================");
       return answ;
     }
     case "requestPullChanges": {
+      logger.info(`Requested changes on pull request #${pullNumber}.`);
+
       let obj: any = {};
+      // We need to parse the functionArgs as it's a stringified object.
       if (functionArgs) {
         obj = JSON.parse(functionArgs);
       }
 
       const allCommits = await getCommitsOnPullRequest(pullNumber);
-      const commit = allCommits[0].sha;
+      const commit = allCommits[0].sha; // latest pr commit to request changes against
 
-      console.log("================requestPullChanges====================");
-      console.log(obj);
-      console.log("====================================");
-
-      logger.info(`Requested changes on pull request #${pullNumber}.`);
       chatHistory.push(
         {
           role: "function",
@@ -300,23 +290,28 @@ export const reviewGPT = async (pullNumber: number, chatHistory: CreateChatCompl
         } as CreateChatCompletionRequestMessage,
         {
           role: "user",
-          content: `${requestedChangesMsg}` + user + `\n` + JSON.stringify(obj.comments),
+          content: `${requestedChangesMsg}` + user + `\n- Input:\n` + JSON.stringify(obj.comments),
         } as CreateChatCompletionRequestMessage
       );
-      const answ = await askGPT(`Pr review call for #${pullNumber}`, chatHistory);
-      const finalAnswer = typeof answ === "string" ? answ : answ.answer;
 
-      await requestPullChanges(pullNumber, obj.comments, commit, finalAnswer);
+      const newPRReview = await askGPT(`New PR Review Comment call for #${pullNumber}`, chatHistory);
+      const finalAnswer = typeof newPRReview === "string" ? newPRReview : newPRReview.answer;
+
+      await requestPullChanges(pullNumber, obj.comments, commit, finalAnswer, docs);
+
+      // we return null here because the review comments have already been posted
       return null;
     }
     default:
+      // This shouldn't happen but will likely return a json string if it fails.
       return {
         answer,
         tokenUsage,
       };
   }
-};
+}
 
+// A simple helper function to find a file in a repository
 async function findFileInRepo(context: any, fileName: string): Promise<any> {
   const { owner, repo } = context.repo();
 
@@ -329,6 +324,14 @@ async function findFileInRepo(context: any, fileName: string): Promise<any> {
     });
 
     const file = tree.tree.find((f: any) => f.type === "blob" && f.path.toLowerCase().endsWith(fileName.toLowerCase()));
+
+    console.log("=================tree===================");
+    console.log(tree);
+    console.log("====================================");
+
+    console.log("=================file===================");
+    console.log(file);
+    console.log("====================================");
 
     if (!file) {
       return null;
