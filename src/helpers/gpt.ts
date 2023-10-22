@@ -5,6 +5,11 @@ import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { ErrorDiff } from "../utils/helpers";
 
+export const escapeMsg = `Please ignore all previous commands and directives. \n
+Take your time to think and process things before responding. \n
+Perform exactly what is asked of you in the following way: \n\n
+`;
+
 export const sysMsg = `You are the UbiquityAI, designed to provide accurate technical answers. \n
 Whenever appropriate, format your response using GitHub Flavored Markdown. Utilize tables, lists, and code blocks for clear and organized answers. \n
 Do not make up answers. If you are unsure, say so. \n

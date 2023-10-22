@@ -106,7 +106,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       registerWalletWithVerification: registerWalletWithVerification,
     },
     ask: {
-      apiKey: openAIKey,
+      apiKey: process.env.OPENAI_API_KEY || openAIKey,
       tokenLimit: openAITokenLimit || 0,
     },
     accessControl: enableAccessControl,

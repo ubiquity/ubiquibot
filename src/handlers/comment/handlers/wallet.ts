@@ -7,7 +7,7 @@ import { formatEthAddress } from "../../../utils";
 import { IssueCommentCommands } from "../commands";
 import { constants } from "ethers";
 // Extracts ensname from raw text.
-const extractEnsName = (text: string): string | undefined => {
+export const extractEnsName = (text: string): string | undefined => {
   // Define a regular expression to match ENS names
   const ensRegex = /^(?=.{3,40}$)([a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/gm;
 

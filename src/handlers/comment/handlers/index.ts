@@ -38,6 +38,7 @@ import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
 import Decimal from "decimal.js";
 import { ErrorDiff } from "../../../utils/helpers";
+import { agent } from "./agent";
 
 export * from "./assign";
 export * from "./wallet";
@@ -47,6 +48,7 @@ export * from "./help";
 export * from "./multiplier";
 export * from "./query";
 export * from "./ask";
+export * from "./agent";
 export * from "./authorize";
 
 export interface RewardsResponse {
@@ -287,6 +289,12 @@ export const userCommands = (): UserCommands[] => {
       id: IssueCommentCommands.QUERY,
       description: `Comments the users multiplier and address`,
       handler: query,
+      callback: commandCallback,
+    },
+    {
+      id: IssueCommentCommands.AGENT,
+      description: `Ubiquity Agent`,
+      handler: agent,
       callback: commandCallback,
     },
     {
