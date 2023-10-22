@@ -136,10 +136,19 @@ export const review = async (body: string) => {
       console.log(validated);
       console.log("====================================");
 
+      const readme = await findFileInRepo(context, "readme.md");
+      const contributing = await findFileInRepo(context, "contributing.md");
+
+      const finalComment = `
+      ## Helpful links\n\n
+      - [Readme](${readme?.data.download_url})\n
+      - [Contributing](${contributing?.data.download_url})\n\n
+      `;
+
       if (typeof validated === "string") {
         return validated;
       } else if (validated === null) {
-        return undefined;
+        return finalComment;
       } else {
         if (validated) {
           return validated.answer;
@@ -155,8 +164,6 @@ export const review = async (body: string) => {
   const res = await isPull();
   if (res && res.startsWith("```diff\n")) {
     return res;
-  } else if (res === undefined) {
-    return undefined;
   } else {
     return res + `\n###### Ensure the pull request requirements are in the linked issue's first comment and update it if the scope evolves.`;
   }
@@ -243,6 +250,12 @@ export const reviewGPT = async (pullNumber: number, chatHistory: CreateChatCompl
     total: res.usage?.total_tokens,
   };
 
+  // const approvedPullMsg = `{escapeMsg} `;
+
+  console.log("==================asndwqneisahd==================");
+  console.log(answer);
+  console.log("====================================");
+
   switch (functionName) {
     case "approvePullRequest": {
       console.log("================approvePullRequest====================");
@@ -252,7 +265,9 @@ export const reviewGPT = async (pullNumber: number, chatHistory: CreateChatCompl
       chatHistory.push({
         role: "function",
         name: "approvePullRequest",
-        content: `The pull request has been approved, explain this and the reason why to the user.` + answer,
+        content:
+          `The pull request has been approved, let ${user} know that you have approved the pull request and they should submit it ready for review and the reviewers will follow up shortly.` +
+          answer,
       } as CreateChatCompletionRequestMessage);
       const answ = await askGPT(`Pr function call for #${pullNumber}`, chatHistory);
 
@@ -292,7 +307,6 @@ export const reviewGPT = async (pullNumber: number, chatHistory: CreateChatCompl
       const finalAnswer = typeof answ === "string" ? answ : answ.answer;
 
       await requestPullChanges(pullNumber, obj.comments, commit, finalAnswer);
-
       return null;
     }
     default:
@@ -302,3 +316,31 @@ export const reviewGPT = async (pullNumber: number, chatHistory: CreateChatCompl
       };
   }
 };
+
+async function findFileInRepo(context: any, fileName: string): Promise<any> {
+  const { owner, repo } = context.repo();
+
+  try {
+    const { data: tree } = await context.octokit.git.getTree({
+      owner,
+      repo,
+      tree_sha: "HEAD",
+      recursive: "1",
+    });
+
+    const file = tree.tree.find((f: any) => f.type === "blob" && f.path.toLowerCase().endsWith(fileName.toLowerCase()));
+
+    if (!file) {
+      return null;
+    }
+
+    return await context.octokit.repos.getContent({
+      owner,
+      repo,
+      path: file.path,
+    });
+  } catch (error) {
+    console.error(`Error finding ${fileName} in repository:`, error);
+    return null;
+  }
+}
