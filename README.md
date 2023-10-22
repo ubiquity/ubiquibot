@@ -166,6 +166,7 @@ To test the bot, you can:
 `promotionComment` is a message that is appended to the payment permit comment.
 
 ## How to run locally
+
 ### Supase Database
 
 ### Option 1
@@ -180,6 +181,8 @@ SUPABASE_KEY="XXX"
 ```
 
 ### Option 2
+
+Supabase comes with a [readme](https://github.com/ubiquity/ubiquibot/blob/development/supabase/README.md) which is helpful for managing and setup
 ### This options will require you to have a local Docker installation (under the hood it is required by Supabase) refer to [Supabase Docs](https://supabase.com/docs)
 
 ```
@@ -193,19 +196,12 @@ yarn supabase status
 
 ![supabase](https://github.com/ubiquity/ubiquibot/assets/41552663/e8709b8f-e7c3-49e0-876c-c15dde22c6d2)
 
+## Supabase Studio
+
+You can then access to Supabase Studio by going to http://localhost:54323
 
 
-## Logs
-
-2. Create a new organization at [Mezmo](https://app.mezmo.com/). Add `LOGDNA_INGESTION_KEY` to the `.env` file:
-
-```
-
-LOGDNA_INGESTION_KEY ="XXX"
-
-```
-
-3. Add `FOLLOW_UP_TIME` and `DISQUALIFY_TIME` to the `.env` file if you don't want to use default ones.
+2. Add `FOLLOW_UP_TIME` and `DISQUALIFY_TIME` to the `.env` file if you don't want to use default ones.
 
 ```
 
@@ -214,16 +210,16 @@ DISQUALIFY_TIME="7 days" // 7 days
 
 ```
 
-4. `Make sure you have Node => 20 && yarn`
-5. Open 2 terminal instances:
+3. `Make sure you have Node => 20 && yarn`
+4. Open 2 terminal instances:
    - in one instance run `yarn build --watch` (compiles the Typescript code)
    - in another instance run `yarn start:watch` (runs the bot locally)
-6. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
+5. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
 
 At this point the `.env` files auto-fill the empty fields (`PRIVATE_KEY` and `APP_ID`) if it is not previously filled.
 Now you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react.
 
-7. After adding the bot (as a installed app) to your github you will need to restart the aforemention yarn start:watch so CTRL-C to stop the node daemon and `yarn start:watch` again
+6. After adding the bot (as a installed app) to your github you will need to restart the aforemention yarn start:watch so CTRL-C to stop the node daemon and `yarn start:watch` again
 
 You can, for example:
 
