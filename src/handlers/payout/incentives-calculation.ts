@@ -1,17 +1,14 @@
+import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
 import {
   checkUserPermissionForRepoAndOrg,
   clearAllPriceLabelsOnIssue,
   getAllIssueComments,
   getTokenSymbol,
-  wasIssueReopened,
-  getAllIssueAssignEvents,
 } from "../../helpers";
-import { UserType, Payload, StateReason, Comment, Incentives, Issue, User } from "../../types";
-import { taskPaymentMetaData } from "../wildcard";
-import { isParentIssue } from "../pricing";
-import Decimal from "decimal.js";
+import { Comment, Incentives, Issue, Payload, StateReason, User } from "../../types";
 import { getUserMultiplier } from "../comment/handlers/assign/get-user-multiplier";
+import { isParentIssue } from "../pricing";
 import { removePenalty } from "./handle-issue-closed";
 
 export interface IncentivesCalculationResult {
@@ -158,39 +155,39 @@ async function getUserMultiplierValue(assignee: User, repositoryId: number, runt
   return multiplier;
 }
 
-function constructResultObject(
-  issue: Issue,
-  payload: Payload,
-  comments: Comment[],
-  assignee: User,
-  recipient: string,
-  userMultiplier: number,
-  tokenSymbol: string,
-  runtime: Runtime
-): IncentivesCalculationResult {
-  return {
-    id,
-    paymentToken,
-    rpc,
-    evmNetworkId,
-    privateKey,
-    recipient,
-    multiplier,
-    permitMaxPrice,
-    priceMultiplier,
-    incentives,
-    issueCreatorMultiplier,
-    issue,
-    payload,
-    comments,
-    issueDetailed: {
-      isTask: issueDetailed.isTask,
-      timelabel: issueDetailed.timeLabel,
-      priorityLabel: issueDetailed.priorityLabel,
-      priceLabel: issueDetailed.priceLabel,
-    },
-    assignee,
-    tokenSymbol,
-    claimUrlRegex,
-  };
-}
+// function constructResultObject(
+//   issue: Issue,
+//   payload: Payload,
+//   comments: Comment[],
+//   assignee: User,
+//   recipient: string,
+//   userMultiplier: number,
+//   tokenSymbol: string,
+//   runtime: Runtime
+// ): IncentivesCalculationResult {
+//   return {
+//     id,
+//     paymentToken,
+//     rpc,
+//     evmNetworkId,
+//     privateKey,
+//     recipient,
+//     multiplier,
+//     permitMaxPrice,
+//     priceMultiplier,
+//     incentives,
+//     issueCreatorMultiplier,
+//     issue,
+//     payload,
+//     comments,
+//     issueDetailed: {
+//       isTask: issueDetailed.isTask,
+//       timelabel: issueDetailed.timeLabel,
+//       priorityLabel: issueDetailed.priorityLabel,
+//       priceLabel: issueDetailed.priceLabel,
+//     },
+//     assignee,
+//     tokenSymbol,
+//     claimUrlRegex,
+//   };
+// }

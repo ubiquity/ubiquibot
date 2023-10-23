@@ -3,22 +3,43 @@ import OpenAI from "openai";
 import { encodingForModel } from "js-tiktoken";
 import Runtime from "../../../../bindings/bot-runtime";
 
+const openai = new OpenAI(); // apiKey: // defaults to process.env["OPENAI_API_KEY"]
+
 export async function calculateQualScore(issue: Issue, contributorComments: Comment[]) {
+  const runtime = Runtime.getState();
   const sumOfConversationTokens = countTokensOfConversation(issue, contributorComments);
   const estimatedOptimalModel = estimateOptimalModel(sumOfConversationTokens);
 
-  const relevanceScores = await gptRelevance(
-    estimatedOptimalModel,
-    issue.body,
-    contributorComments.map((comment) => comment.body)
-  );
+  let relevanceScores: number[] = [];
+  let attempts = 0;
+  const MAX_ATTEMPTS = 3; // Set the maximum number of attempts
+
+  while (attempts < MAX_ATTEMPTS) {
+    relevanceScores = await gptRelevance(
+      estimatedOptimalModel,
+      issue.body,
+      contributorComments.map((comment) => comment.body)
+    );
+
+    if (relevanceScores.length === contributorComments.length) {
+      break;
+    }
+
+    attempts++;
+
+    if (attempts === MAX_ATTEMPTS) {
+      runtime.logger.warn("Maximum number of attempts reached. Defaulting all comment relevance scores to 0.", {
+        relevanceScores: relevanceScores,
+        contributorComments: contributorComments.length,
+      });
+      relevanceScores = contributorComments.map(() => 0);
+    }
+  }
 
   if (relevanceScores.length != contributorComments.length) {
-    const buffer = { relevanceScores: relevanceScores, contributorComments: contributorComments.length };
-    const runtime = Runtime.getState();
     runtime.logger.warn(
       "Relevance scores per comment array length from OpenAI do not match the number of comments in this conversation. Defaulting all comment relevance scores to 0. You can try closing and reopening this issue to recalculate the relevance scores.",
-      buffer,
+      { relevanceScores: relevanceScores, contributorComments: contributorComments.length },
       true
     );
     return {
@@ -27,6 +48,7 @@ export async function calculateQualScore(issue: Issue, contributorComments: Comm
       model: null,
     };
   }
+
   return { relevanceScores, sumOfConversationTokens, model: estimatedOptimalModel };
 }
 
@@ -68,7 +90,6 @@ export function countTokensOfConversation(issue: Issue, comments: Comment[]) {
 }
 
 export async function gptRelevance(model: string, ISSUE_SPECIFICATION_BODY: string, CONVERSATION_STRINGS: string[]) {
-  const openai = new OpenAI(); // apiKey: // defaults to process.env["OPENAI_API_KEY"]
   const PROMPT = `I need to evaluate the relevance of GitHub contributors' comments to a specific issue specification. Specifically, I'm interested in how much each comment helps to further define the issue specification or contributes new information or research relevant to the issue. Please provide a float between 0 and 1 to represent the degree of relevance. A score of 1 indicates that the comment is entirely relevant and adds significant value to the issue, whereas a score of 0 indicates no relevance or added value. Each contributor's comment is on a new line.\n\nIssue Specification:\n\`\`\`\n${ISSUE_SPECIFICATION_BODY}\n\`\`\`\n\nConversation:\n\`\`\`\n${CONVERSATION_STRINGS.join(
     "\n"
   )}\n\`\`\`\n\n\nTo what degree are each of the comments in the conversation relevant and valuable to further defining the issue specification? Please reply with an array of float numbers between 0 and 1, corresponding to each comment in the order they appear. Each float should represent the degree of relevance and added value of the comment to the issue.`;
@@ -87,6 +108,10 @@ export async function gptRelevance(model: string, ISSUE_SPECIFICATION_BODY: stri
     presence_penalty: 0,
   });
 
-  const parsedResponse = JSON.parse(response.choices[0].message.content as "[1, 1, 0.5, 0]") as number[];
-  return parsedResponse;
+  try {
+    const parsedResponse = JSON.parse(response.choices[0].message.content as "[1, 1, 0.5, 0]") as number[];
+    return parsedResponse;
+  } catch (error) {
+    return [];
+  }
 }

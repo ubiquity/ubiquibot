@@ -3,7 +3,6 @@ import { Comment, Issue, User } from "../../../../types/payload";
 import { IssueRole } from "./archive/calculate-score-typings";
 import { getCollaboratorsForRepo } from "./get-collaborator-ids-for-repo";
 import { ScoringRubric } from "./scoring-rubric";
-import Decimal from "decimal.js";
 
 type UsersOfCommentsByRole = {
   "Issue Issuer": User;
@@ -12,16 +11,17 @@ type UsersOfCommentsByRole = {
   "Issue Default": User[];
 };
 const scoringByRole = {
-  "Issue Issuer": new ScoringRubric(1, "Issue Issuer"),
-  "Issue Assignee": new ScoringRubric(0, "Issue Assignee"),
-  "Issue Collaborator": new ScoringRubric(0.5, "Issue Collaborator"),
-  "Issue Default": new ScoringRubric(0.25, "Issue Default"),
+  // TODO: make this configurable
+  "Issue Issuer": new ScoringRubric({ role: "Issue Issuer", multiplier: 1, wordValue: 0.2 }),
+  "Issue Assignee": new ScoringRubric({ role: "Issue Assignee", multiplier: 0, wordValue: 0 }),
+  "Issue Collaborator": new ScoringRubric({ role: "Issue Collaborator", multiplier: 0.5, wordValue: 0.1 }),
+  "Issue Default": new ScoringRubric({ role: "Issue Default", multiplier: 0.25, wordValue: 0.1 }),
 } as {
   [key in IssueRole]: ScoringRubric;
 };
 
 export async function _calculateAllCommentScores(issue: Issue, contributorComments: Comment[]) {
-  const usersOfCommentsByRole: UsersOfCommentsByRole = await _getUsersInRoles(issue, contributorComments);
+  const usersOfCommentsByRole: UsersOfCommentsByRole = await _getUsersInRolesEnsureUnique(issue, contributorComments);
   const commentsByRole = _filterCommentsByRole(usersOfCommentsByRole, contributorComments);
   const roles = Object.keys(usersOfCommentsByRole) as IssueRole[]; // ["Issue Issuer", "Issue Assignee", "Issue Collaborator", "Issue Default"]
 
@@ -52,10 +52,10 @@ export async function _calculateAllCommentScores(issue: Issue, contributorCommen
 
 function _calculatePerUserCommentScore(user: User, comments: Comment[], scoringRubric: ScoringRubric) {
   for (const comment of comments) {
-    scoringRubric.wordCounter(comment.body, user.id);
-    scoringRubric.elementScore(comment.body, user.id);
+    scoringRubric.computeWordScore(comment, user.id);
+    scoringRubric.computeElementScore(comment, user.id);
   }
-  scoringRubric.compileTotalScorePerId();
+  scoringRubric.compileUserScores();
   return scoringRubric;
 }
 
@@ -71,11 +71,9 @@ function _filterCommentsByRole(usersOfCommentsByRole: UsersOfCommentsByRole, con
       usersOfCommentsByRole["Issue Collaborator"].filter((user: User) => user.id == comment.user.id)
     ),
     "Issue Default": contributorComments.filter((comment: Comment) => {
-      // TODO: test this function
-      // "does this filter out the remainder, and properly handle if assignee is null"
       const checks =
         comment.user.type === "User" &&
-        !usersOfCommentsByRole["Issue Collaborator"].filter((user: User) => user.id == comment.user.id) &&
+        !usersOfCommentsByRole["Issue Collaborator"].some((user: User) => user.id == comment.user.id) &&
         comment.user.id !== usersOfCommentsByRole["Issue Issuer"].id;
 
       if (checks && usersOfCommentsByRole["Issue Assignee"]) {
@@ -84,14 +82,13 @@ function _filterCommentsByRole(usersOfCommentsByRole: UsersOfCommentsByRole, con
         return checks;
       }
     }),
-  } as {
-    [key in IssueRole]: Comment[];
   };
 }
 
 async function _getUsersInRoles(issue: Issue, contributorComments: Comment[]) {
   // This finds every user from the comments and
-  // derives which role they fall under through a process of elimination.
+  // derives which role they fall under
+  // this can be redundant, as a user can be an issuer, assignee and a collaborator
   const context = Runtime.getState().latestEventContext;
 
   const issueIssuerUser = issue.user;
@@ -109,10 +106,35 @@ async function _getUsersInRoles(issue: Issue, contributorComments: Comment[]) {
         .map((comment) => comment.user);
 
       const remainingUsers = humanUsersWhoCommented.filter(
-        (user: User) => !allRoleUsers.filter((_user) => _user?.id === user.id)
+        (user: User) => !allRoleUsers.some((_user) => _user?.id === user.id)
       );
       return remainingUsers;
     })(),
+  };
+  return roleIds;
+}
+
+async function _getUsersInRolesEnsureUnique(issue: Issue, contributorComments: Comment[]) {
+  const context = Runtime.getState().latestEventContext;
+
+  const issueIssuerUser = issue.user;
+  const issueAssigneeUser = issue.assignee;
+  const collaboratorUsers = await getCollaboratorsForRepo(context);
+
+  const allRoleUsers = [issueIssuerUser, issueAssigneeUser, ...collaboratorUsers];
+  const humanUsersWhoCommented = contributorComments
+    .filter((comment) => comment.user.type === "User")
+    .map((comment) => comment.user);
+
+  const roleIds = {
+    "Issue Issuer": issueIssuerUser,
+    "Issue Assignee": issueAssigneeUser && issueAssigneeUser.id !== issueIssuerUser.id ? issueAssigneeUser : null,
+    "Issue Collaborator": collaboratorUsers.filter(
+      (user: User) => user.id !== issueIssuerUser.id && (!issueAssigneeUser || user.id !== issueAssigneeUser.id)
+    ),
+    "Issue Default": humanUsersWhoCommented.filter(
+      (user: User) => !allRoleUsers.some((_user) => _user?.id === user.id)
+    ),
   };
   return roleIds;
 }

@@ -5,6 +5,8 @@ import { calculateQualScore } from "./calculate-quality-score";
 import { calculateQuantScore } from "./calculate-quantity-score";
 import { Comment } from "../../../../types/payload";
 import util from "util";
+import Decimal from "decimal.js";
+import { IssueRole } from "./archive/calculate-score-typings";
 
 // TODO: make a filter to scrub out block quotes
 const botCommandsAndCommentsFilter = (comment: Comment) =>
@@ -17,7 +19,24 @@ export async function issueClosed() {
   const contributorComments = issueComments.filter(botCommandsAndCommentsFilter);
 
   const qualityScore = await calculateQualScore(issue, contributorComments); // the issue specification is not included in this array scoring, it is only for the other contributor comments
+  // const commentQualityMapping = qualityScore.relevanceScores.map((score, index) => ({
+  //   comment: contributorComments[index],
+  //   score,
+  // }));
   const quantityScore = await calculateQuantScore(issue, contributorComments);
+
+  // i need to get a list of all the comments, and map the comments to the scores
+  // then i need to filter by user and then calculate each user reward and all the metadata for the reward
+
+  // type FinalMapping = {
+  //   [id: number]: {
+  //     role: IssueRole;
+  //     comments: Comment[];
+  //     qualityScores: Decimal[];
+  //     quantityScores: Decimal[];
+  //     totalScores: Decimal[];
+  //   };
+  // };
 
   util.inspect.defaultOptions.depth = 10;
   util.inspect.defaultOptions.colors = true;
@@ -26,7 +45,16 @@ export async function issueClosed() {
   util.inspect.defaultOptions.compact = false;
   util.inspect.defaultOptions.breakLength = Infinity;
   util.inspect.defaultOptions.maxStringLength = Infinity;
-  const buffer = util.inspect(quantityScore, false, null, true /* enable colors */);
+  const buffer = util.inspect(
+    {
+      // qualityScore,
+      // commentQualityMapping,
+      quantityScore,
+    },
+    false,
+    null,
+    true /* enable colors */
+  );
 
   console.log(buffer);
 

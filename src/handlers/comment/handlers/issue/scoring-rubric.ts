@@ -4,17 +4,39 @@ import { IssueRole } from "./archive/calculate-score-typings";
 import MarkdownIt from "markdown-it";
 import { ElementScoreConfig } from "./element-score-config";
 import _ from "lodash";
+import { Comment } from "../../../../types/payload";
 
 const md = new MarkdownIt();
+const NEG_ONE = new Decimal(-1);
+const ZERO = new Decimal(0);
 const ONE = new Decimal(1);
+
+type ScoringRubricConstructor = {
+  role: IssueRole;
+  multiplier?: number;
+  wordValue?: number;
+};
 export class ScoringRubric {
-  public category: IssueRole;
-  private _wordValue: Decimal = new Decimal(0.1);
-  private _wordScore: { [id: number]: { [word: string]: Decimal } } = {};
-  private _wordMultiplier: Decimal = ONE;
-  private _totalScores: { [id: number]: Decimal } = {};
-  private _elementScoresPerId: { [id: number]: { [key: string]: { count: number; score: Decimal } } } = {};
-  private _configElementScores: { [key: string]: { value: Decimal } } = {
+  public role: IssueRole;
+  public roleWordScore: Decimal = ONE;
+  public roleWordScoreMultiplier: Decimal = ONE;
+  public userWordScoreTotals: { [userId: number]: Decimal } = {};
+  public userElementScoreTotals: { [userId: number]: Decimal } = {};
+  // public userWordScoreDetails: { [id: number]: { [word: string]: Decimal } } = {};
+  public userElementScoreDetails: {
+    [userId: number]: { [commentId: string]: { count: number; score: Decimal; words: number } };
+  } = {};
+  public commentScores: {
+    [userId: number]: {
+      [commentId: number]: {
+        wordScoreTotal: Decimal;
+        wordScoreDetails?: { [word: string]: Decimal }; // Add this line
+        elementScoreTotal: Decimal;
+        elementScoreDetails?: { [key: string]: { count: number; score: Decimal } }; // Add this line
+      };
+    };
+  } = {};
+  private _elementConfig: { [key: string]: { value: Decimal } } = {
     h1: new ElementScoreConfig("h1", ONE),
     h2: new ElementScoreConfig("h2", ONE),
     h3: new ElementScoreConfig("h3", ONE),
@@ -40,76 +62,158 @@ export class ScoringRubric {
     ol: new ElementScoreConfig("ol", ONE),
   };
 
-  constructor(multiplier = 1, category: IssueRole) {
-    this.category = category;
-    this._applyMultiplier(multiplier);
+  constructor({ role, multiplier = 1, wordValue = 0 }: ScoringRubricConstructor) {
+    this.role = role;
+    this._applyRoleMultiplier(multiplier);
+    this.roleWordScore = new Decimal(wordValue);
   }
 
-  private _parseComment(comment: string, id: number) {
-    const htmlString = md.render(comment);
-    if (!this._elementScoresPerId[id]) {
-      this._elementScoresPerId[id] = _.mapValues(_.cloneDeep(this._configElementScores), () => ({
-        count: 0,
-        score: new Decimal(0),
-      }));
+  public compileUserScores(): void {
+    for (const userId in this.userElementScoreDetails) {
+      const userElementScore = this.userElementScoreDetails[userId];
+      const userWordScoreDetails = this.userWordScoreTotals[userId];
+
+      const totalElementScore = userElementScore
+        ? Object.values(userElementScore).reduce((total, { score }) => total.plus(score), ZERO)
+        : ZERO;
+
+      const totalWordScore = userWordScoreDetails
+        ? Object.values(userWordScoreDetails).reduce((total: Decimal, count: Decimal) => total.plus(count), ZERO)
+        : ZERO;
+
+      this.userWordScoreTotals[userId] = new Decimal(totalElementScore).plus(new Decimal(totalWordScore));
+
+      // Calculate total element score across all comments for the user
+      this.userElementScoreTotals[userId] = Object.values(this.commentScores[userId] || {}).reduce(
+        (total, { elementScoreDetails }) => {
+          const elementScore = elementScoreDetails
+            ? Object.values(elementScoreDetails).reduce((total, { score }) => total.plus(score), ZERO)
+            : ZERO;
+          return total.plus(elementScore);
+        },
+        ZERO
+      );
     }
-    for (const incomingTag in this._elementScoresPerId[id]) {
-      const tag = this._elementScoresPerId[id][incomingTag];
+  }
+
+  public getTotalScorePerId(userId: number): Decimal {
+    const score = this.userWordScoreTotals[userId];
+    if (!score) {
+      throw new Error(`No score for id ${userId}`);
+    }
+    return score;
+  }
+  public computeWordScore(comment: Comment, userId: number) {
+    const words = comment.body.match(/\w+/g) || [];
+    const wordScoreDetails = this._calculateWordScores(words);
+    const totalWordScore = this._calculateTotalScore(wordScoreDetails);
+
+    this._storeCommentWordScore(userId, comment.id, totalWordScore, wordScoreDetails);
+
+    return this.commentScores[userId][comment.id].wordScoreDetails;
+  }
+
+  private _calculateWordScores(words: string[]): { [key: string]: Decimal } {
+    const wordScoreDetails: { [key: string]: Decimal } = {};
+
+    for (const word of words) {
+      let counter = wordScoreDetails[word] || ZERO;
+      counter = counter.plus(this.roleWordScore);
+      wordScoreDetails[word] = counter;
+    }
+
+    return wordScoreDetails;
+  }
+
+  private _calculateTotalScore(wordScoreDetails: { [key: string]: Decimal }): Decimal {
+    return Object.values(wordScoreDetails).reduce((total: Decimal, count: Decimal) => total.plus(count), ZERO);
+  }
+
+  private _storeCommentWordScore(
+    userId: number,
+    commentId: number,
+    totalWordScore: Decimal,
+    wordScoreDetails: { [key: string]: Decimal }
+  ): void {
+    if (!this.commentScores[userId]) {
+      this.commentScores[userId] = {};
+    }
+    if (!this.commentScores[userId][commentId]) {
+      this.commentScores[userId][commentId] = {
+        wordScoreTotal: NEG_ONE,
+        elementScoreTotal: NEG_ONE,
+        wordScoreDetails: {},
+      };
+    }
+    this.commentScores[userId][commentId].wordScoreTotal = totalWordScore;
+    this.commentScores[userId][commentId].wordScoreDetails = wordScoreDetails;
+  }
+  private _countWordsInTag(html: string, tag: string): number {
+    const regex = new RegExp(`<${tag}[^>]*>(.*?)</${tag}>`, "g");
+    let match;
+    let wordCount = 0;
+    while ((match = regex.exec(html)) !== null) {
+      const content = match[1];
+      const words = content.match(/\w+/g) || [];
+      wordCount += words.length;
+    }
+    return wordCount;
+  }
+
+  public computeElementScore(comment: Comment, userId: number) {
+    const htmlString = md.render(comment.body);
+    const selectedUser = _.mapValues(_.cloneDeep(this._elementConfig), () => ({
+      count: 0,
+      score: ZERO,
+      words: 0, // Add this line
+    }));
+
+    let totalElementScore = ZERO;
+    for (const incomingTag in selectedUser) {
+      const tag = selectedUser[incomingTag];
       tag.count = this._countTags(htmlString, incomingTag);
-      tag.score = this._configElementScores[incomingTag].value.times(tag.count);
+      tag.score = this._elementConfig[incomingTag].value.times(tag.count);
+      tag.words = this._countWordsInTag(htmlString, incomingTag); // Add this line
+      if (tag.count !== 0 || !tag.score.isZero()) {
+        totalElementScore = totalElementScore.plus(tag.score);
+      } else {
+        delete selectedUser[incomingTag]; // Delete the element if count and score are both zero
+      }
     }
+
+    if (!this.userElementScoreDetails[userId]) {
+      this.userElementScoreDetails[userId] = {};
+    }
+    this.userElementScoreDetails[userId] = selectedUser;
+
+    // Store the element score for the comment
+    if (!this.commentScores[userId]) {
+      this.commentScores[userId] = {};
+    }
+    if (!this.commentScores[userId][comment.id]) {
+      this.commentScores[userId][comment.id] = {
+        wordScoreTotal: NEG_ONE,
+        elementScoreTotal: NEG_ONE,
+        elementScoreDetails: {}, // Add this line
+      };
+    }
+    this.commentScores[userId][comment.id].elementScoreTotal = totalElementScore;
+    this.commentScores[userId][comment.id].elementScoreDetails = selectedUser; // Change this line
+
     return htmlString;
+  }
+
+  private _applyRoleMultiplier(multiplier = 1) {
+    for (const userId in this._elementConfig) {
+      const selection = this._elementConfig[userId];
+      selection.value = selection.value.times(multiplier);
+    }
+
+    this.roleWordScoreMultiplier = this.roleWordScoreMultiplier.times(multiplier);
   }
 
   private _countTags(html: string, tag: string) {
     const regex = new RegExp(`<${tag}[^>]*>`, "g");
     return (html.match(regex) || []).length;
-  }
-
-  public compileTotalScorePerId(): void {
-    for (const id in this._elementScoresPerId) {
-      const totalElementScore = Object.values(this._elementScoresPerId[id]).reduce(
-        (total, { score }) => total.plus(score),
-        new Decimal(0)
-      );
-      const totalWordScore = Object.values(this._wordScore[id]).reduce(
-        (total, count) => total.plus(count),
-        new Decimal(0)
-      );
-      this._totalScores[id] = totalElementScore.plus(totalWordScore);
-    }
-  }
-
-  public getTotalScore(id: number): Decimal {
-    const score = this._totalScores[id];
-    if (!score) {
-      throw new Error(`No score for id ${id}`);
-    }
-    return score;
-  }
-  public wordCounter(comment: string, id: number) {
-    const words = comment.match(/\w+/g) || [];
-    if (!this._wordScore[id]) {
-      this._wordScore[id] = {};
-    }
-    for (const word of words) {
-      let counter = this._wordScore[id][word] || new Decimal(0);
-      counter = counter.plus(this._wordValue);
-      this._wordScore[id][word] = counter;
-    }
-    return this._wordScore[id];
-  }
-
-  public elementScore(comment: string, id: number) {
-    return this._parseComment(comment, id);
-  }
-
-  private _applyMultiplier(multiplier = 1) {
-    for (const id in this._configElementScores) {
-      const selection = this._configElementScores[id];
-      selection.value = selection.value.times(multiplier);
-    }
-
-    this._wordMultiplier = this._wordMultiplier.times(multiplier);
   }
 }
