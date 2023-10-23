@@ -7,6 +7,7 @@ import { Comment } from "../../../../types/payload";
 import util from "util";
 import Decimal from "decimal.js";
 import { IssueRole } from "./archive/calculate-score-typings";
+import { ScoringRubric } from "./scoring-rubric";
 
 // TODO: make a filter to scrub out block quotes
 const botCommandsAndCommentsFilter = (comment: Comment) =>
@@ -19,46 +20,37 @@ export async function issueClosed() {
   const contributorComments = issueComments.filter(botCommandsAndCommentsFilter);
 
   const qualityScore = await calculateQualScore(issue, contributorComments); // the issue specification is not included in this array scoring, it is only for the other contributor comments
-  // const commentQualityMapping = qualityScore.relevanceScores.map((score, index) => ({
-  //   comment: contributorComments[index],
-  //   score,
-  // }));
+  const qualityScoresWithMetaData = qualityScore.relevanceScores.map((score, index) => ({
+    commentId: contributorComments[index].id,
+    userId: contributorComments[index].user.id,
+    score,
+  }));
   const quantityScore = await calculateQuantScore(issue, contributorComments);
 
-  // i need to get a list of all the comments, and map the comments to the scores
-  // then i need to filter by user and then calculate each user reward and all the metadata for the reward
+  const totals = applyQualityScoreToQuantityScore(qualityScoresWithMetaData, quantityScore);
 
-  // type FinalMapping = {
-  //   [id: number]: {
-  //     role: IssueRole;
-  //     comments: Comment[];
-  //     qualityScores: Decimal[];
-  //     quantityScores: Decimal[];
-  //     totalScores: Decimal[];
-  //   };
-  // };
+  // util.inspect.defaultOptions.depth = 10;
+  // util.inspect.defaultOptions.colors = true;
+  // util.inspect.defaultOptions.showHidden = true;
+  // util.inspect.defaultOptions.maxArrayLength = Infinity;
+  // util.inspect.defaultOptions.compact = false;
+  // util.inspect.defaultOptions.breakLength = Infinity;
+  // util.inspect.defaultOptions.maxStringLength = Infinity;
+  // const buffer = util.inspect(
+  //   {
+  //     // qualityScore,
+  //     // commentQualityMapping,
+  //     // quantityScore,
+  //     totals,
+  //   },
+  //   false,
+  //   null,
+  //   true /* enable colors */
+  // );
 
-  util.inspect.defaultOptions.depth = 10;
-  util.inspect.defaultOptions.colors = true;
-  util.inspect.defaultOptions.showHidden = true;
-  util.inspect.defaultOptions.maxArrayLength = Infinity;
-  util.inspect.defaultOptions.compact = false;
-  util.inspect.defaultOptions.breakLength = Infinity;
-  util.inspect.defaultOptions.maxStringLength = Infinity;
-  const buffer = util.inspect(
-    {
-      // qualityScore,
-      // commentQualityMapping,
-      quantityScore,
-    },
-    false,
-    null,
-    true /* enable colors */
-  );
+  // console.log(buffer);
 
-  console.log(buffer);
-
-  return logger.ok("Issue closed. Calculating quality score.", qualityScore);
+  return logger.ok("Issue closed. Check metadata for scoring details.", totals);
 }
 
 function preamble() {
@@ -69,4 +61,52 @@ function preamble() {
   const issue = payload.issue as Issue;
   if (!issue) throw runtime.logger.error("Issue is not defined");
   return { issue, payload, context, runtime, logger };
+}
+
+function applyQualityScoreToQuantityScore(
+  qualityScoresWithCommentIds: { commentId: number; userId: number; score: number }[],
+  quantityScore: ScoringRubric[]
+) {
+  const finalScores = {} as {
+    [userId: number]: {
+      total: Decimal;
+      details: {
+        commentId: number;
+        wordAndElementScoreTotal: Decimal;
+        qualityScore: number;
+        finalScore: Decimal;
+      }[];
+    };
+  };
+
+  qualityScoresWithCommentIds.forEach(({ commentId, userId, score }) => {
+    quantityScore.forEach((scoringRubric) => {
+      const usersQuantityScores = scoringRubric.commentScores[userId];
+
+      if (usersQuantityScores) {
+        const userCommentScore = usersQuantityScores[commentId];
+        const quantityScore = userCommentScore.wordScoreTotal.plus(userCommentScore.elementScoreTotal);
+
+        const newScore = {
+          commentId: commentId,
+          finalScore: quantityScore.times(score),
+          qualityScore: score,
+          wordAndElementScoreTotal: quantityScore,
+          details: userCommentScore,
+        };
+
+        if (!finalScores[userId]) {
+          finalScores[userId] = {
+            total: new Decimal(0),
+            details: [],
+          };
+        }
+
+        finalScores[userId].details.push(newScore);
+        finalScores[userId].total = finalScores[userId].total.plus(newScore.finalScore);
+      }
+    });
+  });
+
+  return finalScores;
 }

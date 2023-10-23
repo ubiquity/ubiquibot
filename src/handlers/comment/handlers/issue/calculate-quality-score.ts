@@ -28,25 +28,21 @@ export async function calculateQualScore(issue: Issue, contributorComments: Comm
     attempts++;
 
     if (attempts === MAX_ATTEMPTS) {
-      runtime.logger.warn("Maximum number of attempts reached. Defaulting all comment relevance scores to 0.", {
+      runtime.logger.info("Maximum number of attempts reached. Defaulting all comment relevance scores to 0.", {
         relevanceScores: relevanceScores,
         contributorComments: contributorComments.length,
       });
-      relevanceScores = contributorComments.map(() => 0);
+      runtime.logger.warn(
+        "Relevance scores per comment array length from OpenAI do not match the number of comments in this conversation. Defaulting all comment relevance scores to 0. You can try closing and reopening this issue to recalculate the relevance scores.",
+        { relevanceScores: relevanceScores, contributorComments: contributorComments.length },
+        true
+      );
+      return {
+        relevanceScores: contributorComments.map(() => 0),
+        sumOfConversationTokens,
+        model: null,
+      };
     }
-  }
-
-  if (relevanceScores.length != contributorComments.length) {
-    runtime.logger.warn(
-      "Relevance scores per comment array length from OpenAI do not match the number of comments in this conversation. Defaulting all comment relevance scores to 0. You can try closing and reopening this issue to recalculate the relevance scores.",
-      { relevanceScores: relevanceScores, contributorComments: contributorComments.length },
-      true
-    );
-    return {
-      relevanceScores: contributorComments.map(() => 0),
-      sumOfConversationTokens,
-      model: null,
-    };
   }
 
   return { relevanceScores, sumOfConversationTokens, model: estimatedOptimalModel };
