@@ -83,6 +83,14 @@ export class GitHubLogger implements Logger {
     }
   }
 
+  private prefixLogFn = (): string | "" => {
+    const frame = new Error().stack?.split("\n")[3];
+
+    if (frame) {
+      return "[" + frame?.split(" ")[5] + "] ";
+    } else return "";
+  };
+
   private sendDataWithJwt(message: string | object, errorPayload?: string | object) {
     const context = getBotContext();
     const payload = context.payload as Payload;
@@ -192,7 +200,7 @@ export class GitHubLogger implements Logger {
     }
   }
 
-  private save(logMessage: string | object, level: LogLevel, errorPayload?: string | object) {
+  private save(logMessage: string | object, level: LogLevel, options?: JSON) {
     if (getNumericLevel(level) > this.maxLevel) return; // only return errors lower than max level
 
     const context = getBotContext();
@@ -222,37 +230,37 @@ export class GitHubLogger implements Logger {
       });
 
     if (this.logEnvironment === "development") {
-      console.log(this.app, logMessage, errorPayload, level, repo, org, commentId, issueNumber);
+      console.log(this.app, logMessage, options, level, repo, org, commentId, issueNumber);
     }
   }
 
-  info(message: string | object, errorPayload?: string | object) {
-    this.save(message, LogLevel.INFO, errorPayload);
+  info(message: string | object, payload?: JSON) {
+    this.save(payload?.hasOwnProperty("prefix") === true ? this.prefixLogFn() + message : message, LogLevel.INFO, payload);
   }
 
-  warn(message: string | object, errorPayload?: string | object) {
-    this.save(message, LogLevel.WARN, errorPayload);
-    this.sendDataWithJwt(message, errorPayload)
+  warn(message: string | object, payload?: JSON) {
+    this.save(payload?.hasOwnProperty("prefix") === true ? this.prefixLogFn() + message : message, LogLevel.WARN, payload);
+    this.sendDataWithJwt(message, payload)
       .then((response) => {
-        this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG, "");
+        this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG);
       })
       .catch((error) => {
-        this.save(`Log Notification Error: ${error}`, LogLevel.DEBUG, "");
+        this.save(`Log Notification Error: ${error}`, LogLevel.DEBUG);
       });
   }
 
-  debug(message: string | object, errorPayload?: string | object) {
-    this.save(message, LogLevel.DEBUG, errorPayload);
+  debug(message: string | object, payload?: JSON) {
+    this.save(payload?.hasOwnProperty("prefix") === true ? this.prefixLogFn() + message : message, LogLevel.DEBUG, payload);
   }
 
-  error(message: string | object, errorPayload?: string | object) {
-    this.save(message, LogLevel.ERROR, errorPayload);
-    this.sendDataWithJwt(message, errorPayload)
+  error(message: string | object, payload?: JSON) {
+    this.save(payload?.hasOwnProperty("prefix") === true ? this.prefixLogFn() + message : message, LogLevel.ERROR, payload);
+    this.sendDataWithJwt(message, payload)
       .then((response) => {
-        this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG, "");
+        this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG);
       })
       .catch((error) => {
-        this.save(`Log Notification Error: ${error}`, LogLevel.DEBUG, "");
+        this.save(`Log Notification Error: ${error}`, LogLevel.DEBUG);
       });
   }
 

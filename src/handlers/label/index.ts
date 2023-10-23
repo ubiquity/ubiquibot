@@ -1,5 +1,5 @@
 import { saveLabelChange } from "../../adapters/supabase";
-import { getBotContext, getLogger } from "../../bindings";
+import { getBotContext, getLogger, logFnName } from "../../bindings";
 import { hasLabelEditPermission } from "../../helpers";
 import { Payload } from "../../types";
 
@@ -18,7 +18,7 @@ export const watchLabelChange = async () => {
   const triggerUser = sender.login;
 
   if (!previousLabel || !currentLabel) {
-    logger.debug("watchLabelChange: No label name change.. skipping");
+    logger.debug("No label name change.. skipping", logFnName);
     return;
   }
 
@@ -26,5 +26,5 @@ export const watchLabelChange = async () => {
   const hasAccess = await hasLabelEditPermission(currentLabel, triggerUser, repository.full_name);
 
   await saveLabelChange(triggerUser, full_name, previousLabel, currentLabel, hasAccess);
-  logger.debug("watchLabelChange: label name change saved to db");
+  logger.debug("label name change saved to db", logFnName);
 };

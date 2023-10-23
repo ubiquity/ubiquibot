@@ -1,5 +1,5 @@
 import { getWalletAddress } from "../../adapters/supabase";
-import { getBotContext, getLogger } from "../../bindings";
+import { getBotContext, getLogger, logFnName } from "../../bindings";
 import { getAllIssueComments, getAllPullRequestReviews, getIssueDescription, parseComments } from "../../helpers";
 import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
 import { Incentives, MarkdownItem, Payload, UserType } from "../../types";
@@ -35,8 +35,8 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   const assignees = issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
-    logger.info("incentivizeComments: skipping payment permit generation because `assignee` is `undefined`.");
-    return { error: "incentivizeComments: skipping payment permit generation because `assignee` is `undefined`." };
+    logger.info("skipping payment permit generation because `assignee` is `undefined`.", logFnName);
+    return { error: "skipping payment permit generation because `assignee` is `undefined`." };
   }
 
   const issueComments = await getAllIssueComments(calculateIncentives.issue.number, "full");
@@ -174,15 +174,15 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
   const latestLinkedPullRequest = await getLatestPullRequest(linkedPullRequest);
 
   if (!latestLinkedPullRequest) {
-    logger.debug(`calculatePullRequestReviewsReward: No linked pull requests found`);
-    return { error: `calculatePullRequestReviewsReward: No linked pull requests found` };
+    logger.debug(`No linked pull requests found`, logFnName);
+    return { error: `No linked pull requests found` };
   }
 
   const assignees = incentivesCalculation.issue?.assignees ?? [];
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) {
-    logger.info("calculatePullRequestReviewsReward: skipping payment permit generation because `assignee` is `undefined`.");
-    return { error: "calculatePullRequestReviewsReward: skipping payment permit generation because `assignee` is `undefined`." };
+    logger.info("skipping payment permit generation because `assignee` is `undefined`.", logFnName);
+    return { error: "skipping payment permit generation because `assignee` is `undefined`." };
   }
 
   const prReviews = await getAllPullRequestReviews(context, latestLinkedPullRequest.number, "full");
@@ -194,7 +194,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
     if (!user) continue;
     if (user.type == UserType.Bot || user.login == assignee) continue;
     if (!review.body_html) {
-      logger.info(`calculatePullRequestReviewsReward: Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(review)}`);
+      logger.info(`Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(review)}`, logFnName);
       continue;
     }
     if (!prReviewsByUser[user.login]) {
@@ -208,7 +208,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
     if (!user) continue;
     if (user.type == UserType.Bot || user.login == assignee) continue;
     if (!comment.body_html) {
-      logger.info(`calculatePullRequestReviewsReward: Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(comment)}`);
+      logger.info(`Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(comment)}`, logFnName);
       continue;
     }
     if (!prReviewsByUser[user.login]) {
@@ -217,7 +217,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
     prReviewsByUser[user.login].comments.push(comment.body_html);
   }
 
-  logger.info(`calculatePullRequestReviewsReward: Filtering by the user type done. commentsByUser: ${JSON.stringify(prReviewsByUser)}`);
+  logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(prReviewsByUser)}`, logFnName);
 
   // array of awaiting permits to generate
   const reward: {
@@ -237,16 +237,14 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
     const commentsByNode = await parseComments(commentByUser.comments, ItemsToExclude);
     const rewardValue = calculateRewardValue(commentsByNode, incentivesCalculation.incentives);
     if (rewardValue.sum.equals(0)) {
-      logger.info(`calculatePullRequestReviewsReward: Skipping to generate a permit url because the reward value is 0. user: ${user}`);
+      logger.info(`Skipping to generate a permit url because the reward value is 0. user: ${user}`, logFnName);
       continue;
     }
-    logger.info(
-      `calculatePullRequestReviewsReward: Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue.sum}`
-    );
+    logger.info(`Comment parsed for the user: ${user}. comments: ${JSON.stringify(commentsByNode)}, sum: ${rewardValue.sum}`, logFnName);
     const account = await getWalletAddress(user);
     const priceInEth = rewardValue.sum.mul(incentivesCalculation.baseMultiplier);
     if (priceInEth.gt(incentivesCalculation.paymentPermitMaxPrice)) {
-      logger.info(`calculatePullRequestReviewsReward: Skipping comment reward for user ${user} because reward is higher than payment permit max price`);
+      logger.info(`Skipping comment reward for user ${user} because reward is higher than payment permit max price`, logFnName);
       continue;
     }
 
@@ -257,8 +255,8 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
     }
   }
 
-  logger.info(`calculatePullRequestReviewsReward: Permit url generated for pull request reviewers. reward: ${JSON.stringify(reward)}`);
-  logger.info(`calculatePullRequestReviewsReward: Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`);
+  logger.info(`Permit url generated for pull request reviewers. reward: ${JSON.stringify(reward)}`, logFnName);
+  logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(fallbackReward)}`, logFnName);
 
   return { error: "", title, reward, fallbackReward };
 };

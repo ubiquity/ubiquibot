@@ -27,6 +27,7 @@ export type Logger = {
 
 let logger: Logger;
 export const getLogger = (): Logger => logger;
+export const logFnName = <JSON>(<unknown>{ prefix: true });
 
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT as string, GithubEvent.PUSH_EVENT as string];
 
