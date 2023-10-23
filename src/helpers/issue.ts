@@ -659,7 +659,7 @@ export const getPullByNumber = async (context: Context, pull_number: number) => 
 };
 
 export async function getRequestedReviewerStart(user: string) {
-  let events = await getAllIssueEvents();
+  const events = await getAllIssueEvents();
   if (!events) return null;
   const filteredEvents = events.filter((e) => e.event === "review_requested" && e.requested_reviewer?.login === user);
   if (!filteredEvents) {
