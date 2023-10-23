@@ -1,6 +1,7 @@
 import { Comment, Issue } from "../../../../types/payload";
 import OpenAI from "openai";
 import { encodingForModel } from "js-tiktoken";
+import Runtime from "../../../../bindings/bot-runtime";
 
 export async function calculateQualScore(issue: Issue, contributorComments: Comment[]) {
   const sumOfConversationTokens = countTokensOfConversation(issue, contributorComments);
@@ -13,8 +14,18 @@ export async function calculateQualScore(issue: Issue, contributorComments: Comm
   );
 
   if (relevanceScores.length != contributorComments.length) {
-    // console.log({ relevance, contributorComments });
-    throw new Error("Relevance scores returned from OpenAI do not match the number of comments");
+    const buffer = { relevanceScores: relevanceScores, contributorComments: contributorComments.length };
+    const runtime = Runtime.getState();
+    runtime.logger.warn(
+      "Relevance scores per comment array length from OpenAI do not match the number of comments in this conversation. Defaulting all comment relevance scores to 0. You can try closing and reopening this issue to recalculate the relevance scores.",
+      buffer,
+      true
+    );
+    return {
+      relevanceScores: contributorComments.map(() => 0),
+      sumOfConversationTokens,
+      model: null,
+    };
   }
   return { relevanceScores, sumOfConversationTokens, model: estimatedOptimalModel };
 }

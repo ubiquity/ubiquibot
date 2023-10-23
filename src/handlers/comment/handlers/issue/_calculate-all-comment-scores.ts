@@ -37,27 +37,25 @@ export async function _calculateAllCommentScores(issue: Issue, contributorCommen
       // collaborators or default users (array)
       for (const collaboratorOrDefaultUser of selection) {
         const commentsOfRole = commentsByRole[role];
-        const scoringComplete = _calculatePerUserCommentScore(role, collaboratorOrDefaultUser, commentsOfRole, scoring);
+        const scoringComplete = _calculatePerUserCommentScore(collaboratorOrDefaultUser, commentsOfRole, scoring);
         scoringRubrics.push(scoringComplete);
       }
     } else {
       // issuer or assignee (single user)
       const commentsOfRole = commentsByRole[role];
-      const scoringComplete = _calculatePerUserCommentScore(role, selection, commentsOfRole, scoring);
+      const scoringComplete = _calculatePerUserCommentScore(selection, commentsOfRole, scoring);
       scoringRubrics.push(scoringComplete);
     }
   }
   return scoringRubrics;
 }
 
-function _calculatePerUserCommentScore(role: IssueRole, user: User, comments: Comment[], scoringRubric: ScoringRubric) {
-  scoringRubric.addUserId(user.id);
-
+function _calculatePerUserCommentScore(user: User, comments: Comment[], scoringRubric: ScoringRubric) {
   for (const comment of comments) {
-    scoringRubric.wordScore(comment.body);
-    scoringRubric.elementScore(comment.body);
+    scoringRubric.wordCounter(comment.body, user.id);
+    scoringRubric.elementScore(comment.body, user.id);
   }
-
+  scoringRubric.compileTotalScorePerId();
   return scoringRubric;
 }
 
