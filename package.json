@@ -59,7 +59,13 @@
     "parse5": "^7.1.2",
     "prettier": "^2.7.1",
     "probot": "^12.2.4",
+    "rehype-stringify": "^10.0.0",
+    "remark": "^15.0.1",
+    "remark-gfm": "^4.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.0.0",
     "tsx": "^3.12.7",
+    "unist-util-visit": "^5.0.0",
     "yaml": "^2.2.2"
   },
   "devDependencies": {

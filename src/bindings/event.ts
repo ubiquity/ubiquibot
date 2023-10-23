@@ -17,6 +17,7 @@ import { Payload } from "../types/payload";
 import { ajv } from "../utils";
 import Runtime from "./bot-runtime";
 import { loadConfig } from "./config";
+import util from "util";
 const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
 type PreHandlerWithType = { type: string; actions: PreActionHandler[] };
 type HandlerWithType = { type: string; actions: MainActionHandler[] };
@@ -57,14 +58,15 @@ export async function bindEvents(eventContext: Context) {
   // Skip validation for installation event and push
   if (!NO_VALIDATION.includes(eventName)) {
     // Validate payload
+    // console.trace({ payload });
     const validate = ajv.compile(PayloadSchema);
     const valid = validate(payload);
     if (!valid) {
       // runtime.logger.info("Payload schema validation failed!", payload);
       if (validate.errors) {
-        runtime.logger.warn("validation errors", validate.errors);
+        return runtime.logger.error("validation errors", validate.errors);
       }
-      return;
+      // return;
     }
 
     // Check if we should skip the event

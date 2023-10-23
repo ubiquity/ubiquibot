@@ -4,6 +4,7 @@ import { Issue, Payload } from "../../../../types/payload";
 import { calculateQualScore } from "./calculate-quality-score";
 import { calculateQuantScore } from "./calculate-quantity-score";
 import { Comment } from "../../../../types/payload";
+import util from "util";
 
 // TODO: make a filter to scrub out block quotes
 const botCommandsAndCommentsFilter = (comment: Comment) =>
@@ -16,7 +17,18 @@ export async function issueClosed() {
   const contributorComments = issueComments.filter(botCommandsAndCommentsFilter);
 
   const qualityScore = await calculateQualScore(issue, contributorComments); // the issue specification is not included in this array scoring, it is only for the other contributor comments
-  const quantityScore = calculateQuantScore(issue, contributorComments);
+  const quantityScore = await calculateQuantScore(issue, contributorComments);
+
+  util.inspect.defaultOptions.depth = 10;
+  util.inspect.defaultOptions.colors = true;
+  util.inspect.defaultOptions.showHidden = true;
+  util.inspect.defaultOptions.maxArrayLength = Infinity;
+  util.inspect.defaultOptions.compact = false;
+  util.inspect.defaultOptions.breakLength = Infinity;
+  util.inspect.defaultOptions.maxStringLength = Infinity;
+  const buffer = util.inspect(quantityScore, false, null, true /* enable colors */);
+
+  console.log(buffer);
 
   return logger.ok("Issue closed. Calculating quality score.", qualityScore);
 }

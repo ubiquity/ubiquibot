@@ -1,6 +1,6 @@
 import Runtime from "../../../../bindings/bot-runtime";
 import { Comment, Issue, User } from "../../../../types/payload";
-import { IssueRole } from "./calculate-score-typings";
+import { IssueRole } from "./archive/calculate-score-typings";
 import { getCollaboratorsForRepo } from "./get-collaborator-ids-for-repo";
 import { ScoringRubric } from "./scoring-rubric";
 import Decimal from "decimal.js";
@@ -12,10 +12,10 @@ type UsersOfCommentsByRole = {
   "Issue Default": User[];
 };
 const scoringByRole = {
-  "Issue Issuer": new ScoringRubric(1),
-  "Issue Assignee": new ScoringRubric(0),
-  "Issue Collaborator": new ScoringRubric(0.5),
-  "Issue Default": new ScoringRubric(0.25),
+  "Issue Issuer": new ScoringRubric(1, "Issue Issuer"),
+  "Issue Assignee": new ScoringRubric(0, "Issue Assignee"),
+  "Issue Collaborator": new ScoringRubric(0.5, "Issue Collaborator"),
+  "Issue Default": new ScoringRubric(0.25, "Issue Default"),
 } as {
   [key in IssueRole]: ScoringRubric;
 };
@@ -25,6 +25,7 @@ export async function _calculateAllCommentScores(issue: Issue, contributorCommen
   const commentsByRole = _filterCommentsByRole(usersOfCommentsByRole, contributorComments);
   const roles = Object.keys(usersOfCommentsByRole) as IssueRole[]; // ["Issue Issuer", "Issue Assignee", "Issue Collaborator", "Issue Default"]
 
+  const scoringRubrics = [] as ScoringRubric[];
   for (const role of roles) {
     const scoring = scoringByRole[role];
     const selection = usersOfCommentsByRole[role];
@@ -36,25 +37,28 @@ export async function _calculateAllCommentScores(issue: Issue, contributorCommen
       // collaborators or default users (array)
       for (const collaboratorOrDefaultUser of selection) {
         const commentsOfRole = commentsByRole[role];
-        _calculatePerUserCommentScore(role, collaboratorOrDefaultUser, commentsOfRole, scoring);
+        const scoringComplete = _calculatePerUserCommentScore(role, collaboratorOrDefaultUser, commentsOfRole, scoring);
+        scoringRubrics.push(scoringComplete);
       }
     } else {
       // issuer or assignee (single user)
       const commentsOfRole = commentsByRole[role];
-      _calculatePerUserCommentScore(role, selection, commentsOfRole, scoring);
+      const scoringComplete = _calculatePerUserCommentScore(role, selection, commentsOfRole, scoring);
+      scoringRubrics.push(scoringComplete);
     }
   }
+  return scoringRubrics;
 }
 
-function _calculatePerUserCommentScore(role: IssueRole, user: User, comments: Comment[], rubric: ScoringRubric) {
-  let score = new Decimal(0);
+function _calculatePerUserCommentScore(role: IssueRole, user: User, comments: Comment[], scoringRubric: ScoringRubric) {
+  scoringRubric.addUserId(user.id);
 
   for (const comment of comments) {
-    const commentScore = rubric.wordScore(comment.body);
-    score = score.plus(commentScore);
+    scoringRubric.wordScore(comment.body);
+    scoringRubric.elementScore(comment.body);
   }
 
-  return score;
+  return scoringRubric;
 }
 
 function _filterCommentsByRole(usersOfCommentsByRole: UsersOfCommentsByRole, contributorComments: Comment[]) {

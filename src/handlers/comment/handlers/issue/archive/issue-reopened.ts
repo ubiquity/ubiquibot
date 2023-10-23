@@ -1,14 +1,14 @@
 import Decimal from "decimal.js";
 import { BigNumber, ethers } from "ethers";
-import Runtime from "../../../../bindings/bot-runtime";
+import Runtime from "../../../../../bindings/bot-runtime";
 import {
   getAllIssueAssignEvents,
   getAllIssueComments,
   getPayoutConfigByNetworkId,
   getTokenSymbol,
-} from "../../../../helpers";
+} from "../../../../../helpers";
 // import { Payload } from "../../../../types";
-import { Payload } from "../../../../types/payload";
+import { Payload } from "../../../../../types/payload";
 
 // type IssuePayload = Context<"issues.reopened">; // ["payload"]
 

@@ -1,25 +1,44 @@
 import Decimal from "decimal.js";
+import { IssueRole } from "./archive/calculate-score-typings";
 import { validHTMLElements } from "./valid-html-elements";
 // TODO: should be inherited from default config. This is a temporary solution.
-
+import { unified } from "unified";
+import { remark } from "remark";
+import remarkGfm from "remark-gfm";
+import { parseComment } from "./remark-parse-comments";
 const ONE = new Decimal(1);
 
 export class ScoringRubric {
-  constructor(multiplier = 1) {
+  constructor(multiplier = 1, category: IssueRole) {
+    this.category = category;
     this._construction(multiplier);
   }
-
-  private _elementsScore: typeof this._elements = {};
+  public category: IssueRole;
+  public ids: number[] = [];
+  // private _elementsScore: typeof this._elements = {};
   private _totalsScore: typeof this._totals = {};
 
+  public addUserId(id: number) {
+    this.ids.push(id);
+  }
+
   public wordScore(comment: string) {
-    const words = comment.split(" ");
+    const words = comment.match(/\w+/g) || [];
     const score = new Decimal(0);
     for (const word of words) {
       const wordScore = this._totals[word] || 0;
       score.plus(wordScore);
     }
     this._totalsScore.words = score;
+    return score;
+  }
+
+  public elementScore(comment: string) {
+    parseComment.then((comment) => {
+      const file = unified().use(remarkGfm).process(comment);
+      console.log(file);
+      this._totalsScore.elements = score;
+    });
     return score;
   }
 

@@ -44,8 +44,8 @@ export enum IssueType {
 
 export enum StateReason {
   COMPLETED = "completed",
-  // NOT_PLANNED = "not_planned",
-  // REOPENED = "reopened",
+  NOT_PLANNED = "not_planned",
+  REOPENED = "reopened",
 }
 
 const UserSchema = Type.Object({
@@ -92,13 +92,13 @@ const UserSchema = Type.Object({
 export type User = Static<typeof UserSchema>;
 // type UserProfile= Static<typeof UserProfileSchema>;
 enum _AuthorAssociation {
-  "OWNER",
-  "COLLABORATOR",
-  "MEMBER",
-  "CONTRIBUTOR",
-  "FIRST_TIMER",
-  "FIRST_TIME_CONTRIBUTOR",
-  "NONE",
+  OWNER = "OWNER",
+  COLLABORATOR = "COLLABORATOR",
+  MEMBER = "MEMBER",
+  CONTRIBUTOR = "CONTRIBUTOR",
+  FIRST_TIMER = "FIRST_TIMER",
+  FIRST_TIME_CONTRIBUTOR = "FIRST_TIME_CONTRIBUTOR",
+  NONE = "NONE",
 }
 // const AuthorAssociation = Type.Enum(_AuthorAssociation);
 
@@ -124,7 +124,7 @@ const IssueSchema = Type.Object({
   comments: Type.Number(),
   created_at: Type.String({ format: "date-time" }),
   updated_at: Type.String({ format: "date-time" }),
-  closed_at: Type.String({ format: "date-time" }),
+  closed_at: Type.Union([Type.String({ format: "date-time" }), Type.Null()]),
   author_association: Type.Enum(_AuthorAssociation),
   // OWNER: The author is an owner of the repository.
   // COLLABORATOR: The author is a collaborator on the repository.

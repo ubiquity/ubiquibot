@@ -11,7 +11,7 @@ import { createDevPoolPR } from "./pull-request";
 import { validateConfigChange } from "./push";
 import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
 import { onLabelChangeSetPricing } from "./pricing/pricing-label";
-import { issueReopened } from "./comment/handlers/issue/issue-reopened";
+import { issueReopened } from "./comment/handlers/issue/archive/issue-reopened";
 
 /**
  * @dev
