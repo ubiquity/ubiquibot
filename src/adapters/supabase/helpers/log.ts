@@ -235,11 +235,11 @@ export class GitHubLogger implements Logger {
   }
 
   info(message: string | object, payload?: JSON) {
-    this.save(payload?.hasOwnProperty("prefix") === true ? this.prefixLogFn() + message : message, LogLevel.INFO, payload);
+    this.save(payload && "prefix" in payload ? this.prefixLogFn() + message : message, LogLevel.INFO, payload);
   }
 
   warn(message: string | object, payload?: JSON) {
-    this.save(payload?.hasOwnProperty("prefix") === true ? this.prefixLogFn() + message : message, LogLevel.WARN, payload);
+    this.save(payload && "prefix" in payload ? this.prefixLogFn() + message : message, LogLevel.WARN, payload);
     this.sendDataWithJwt(message, payload)
       .then((response) => {
         this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG);
@@ -250,11 +250,11 @@ export class GitHubLogger implements Logger {
   }
 
   debug(message: string | object, payload?: JSON) {
-    this.save(payload?.hasOwnProperty("prefix") === true ? this.prefixLogFn() + message : message, LogLevel.DEBUG, payload);
+    this.save(payload && "prefix" in payload ? this.prefixLogFn() + message : message, LogLevel.DEBUG, payload);
   }
 
   error(message: string | object, payload?: JSON) {
-    this.save(payload?.hasOwnProperty("prefix") === true ? this.prefixLogFn() + message : message, LogLevel.ERROR, payload);
+    this.save(payload && "prefix" in payload ? this.prefixLogFn() + message : message, LogLevel.ERROR, payload);
     this.sendDataWithJwt(message, payload)
       .then((response) => {
         this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG);
