@@ -1,5 +1,5 @@
 import Runtime from "../../../../bindings/bot-runtime";
-import { Payload } from "../../../../types/payload";
+import { Payload, Context } from "../../../../types";
 import { calculateIssueAssigneeReward } from "../../../payout/calculate-issue-assignee-reward";
 import { calculateIssueConversationReward } from "../../../payout/calculate-issue-conversation-reward";
 import { calculateIssueCreatorReward } from "../../../payout/calculate-issue-creator-reward";
@@ -7,8 +7,8 @@ import { calculateReviewContributorRewards } from "../../../payout/calculate-rev
 import { handleIssueClosed } from "../../../payout/handle-issue-closed";
 import { incentivesCalculation } from "../../../payout/incentives-calculation";
 
-export async function issueClosed() {
-  const { organization, logger, owner } = getEssentials();
+export async function issueClosed(context: Context) {
+  const { organization, logger, owner } = getEssentials(context);
 
   if (!organization) {
     logger.warn("No organization found in payload, falling back to `owner`");
@@ -18,13 +18,14 @@ export async function issueClosed() {
   }
 
   // assign function incentivesCalculation to a variable
-  const calculateIncentives = await incentivesCalculation();
-  const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
+  const calculateIncentives = await incentivesCalculation(context);
+  const creatorReward = await calculateIssueCreatorReward(context, calculateIncentives);
   const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
-  const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
-  const pullRequestReviewersReward = await calculateReviewContributorRewards(calculateIncentives);
+  const conversationRewards = await calculateIssueConversationReward(context, calculateIncentives);
+  const pullRequestReviewersReward = await calculateReviewContributorRewards(context, calculateIncentives);
 
   await handleIssueClosed({
+    context,
     creatorReward,
     assigneeReward,
     conversationRewards,
@@ -35,10 +36,9 @@ export async function issueClosed() {
   return logger.ok("Issue closed successfully");
 }
 
-function getEssentials() {
+function getEssentials(context: Context) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const issue = payload.issue;
   if (!issue) throw runtime.logger.error("Missing issue in payload");
   return {

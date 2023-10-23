@@ -1,23 +1,21 @@
 import Runtime from "../../bindings/bot-runtime";
 import { addCommentToIssue, isUserAdminOrBillingManager, removeLabel, addLabelToIssue } from "../../helpers";
-import { Payload, UserType } from "../../types";
+import { Context, Payload, UserType } from "../../types";
 
-export async function handleLabelsAccess() {
+export async function handleLabelsAccess(context: Context) {
   const runtime = Runtime.getState();
-  const { publicAccessControl } = runtime.botConfig;
+  const logger = runtime.logger;
+  const { publicAccessControl } = context.config;
   if (!publicAccessControl.setLabel) return true;
 
-  const eventContext = runtime.latestEventContext;
-  const logger = runtime.logger;
-
-  const payload = eventContext.payload as Payload;
+  const payload = context.event.payload as Payload;
   if (!payload.issue) return;
   if (!payload.label?.name) return;
   if (payload.sender.type === UserType.Bot) return true;
 
   const sender = payload.sender.login;
   const repo = payload.repository;
-  const sufficientPrivileges = await isUserAdminOrBillingManager(sender, eventContext);
+  const sufficientPrivileges = await isUserAdminOrBillingManager(context, sender);
   // event in plain english
   const eventName = payload.action === "labeled" ? "add" : "remove";
   const labelName = payload.label.name;
@@ -45,12 +43,16 @@ export async function handleLabelsAccess() {
 
     if (payload.action === "labeled") {
       // remove the label
-      await removeLabel(labelName);
+      await removeLabel(context, labelName);
     } else if (payload.action === "unlabeled") {
       // add the label
-      await addLabelToIssue(labelName);
+      await addLabelToIssue(context, labelName);
     }
-    await addCommentToIssue(`@${sender}, You are not allowed to ${eventName} ${labelName}`, payload.issue.number);
+    await addCommentToIssue(
+      context,
+      `@${sender}, You are not allowed to ${eventName} ${labelName}`,
+      payload.issue.number
+    );
     logger.info("No access to edit label", { sender, label: labelName });
     return false;
   }

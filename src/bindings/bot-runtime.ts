@@ -1,19 +1,12 @@
-import { Context } from "probot";
-import { BotConfig } from "../types";
 import { createAdapters } from "../adapters";
 import { Logs } from "../adapters/supabase";
-import { GitHubEvent } from "../types/payload";
 
 class Runtime {
   private static instance: Runtime;
-  private _eventContext: Context[];
-  private _botConfig: BotConfig;
   private _adapters: ReturnType<typeof createAdapters>;
   private _logger: Logs;
 
   private constructor() {
-    this._eventContext = [] as Context[];
-    this._botConfig = {} as BotConfig;
     this._adapters = {} as ReturnType<typeof createAdapters>;
     this._logger = {} as Logs;
   }
@@ -23,34 +16,6 @@ class Runtime {
       Runtime.instance = new Runtime();
     }
     return Runtime.instance;
-  }
-
-  // public eventContextByKeyPair(keyPair: { [key: string]: string }) {
-  //   const [key, value] = Object.entries(keyPair)[0];
-  //   return this._eventContext.find((context) => context[key] === value);
-  // }
-  public eventContextByType(name: GitHubEvent) {
-    return this._eventContext.find((context) => context.name === name);
-  }
-  // public eventContextById(id: string) {
-  //   return this._eventContext.find((context) => context.id === id);
-  // }
-
-  public get latestEventContext() {
-    const latestContext = this._eventContext[this._eventContext.length - 1];
-    return latestContext;
-  }
-
-  public set latestEventContext(context: Context) {
-    this._eventContext.push(context);
-  }
-
-  public get botConfig(): BotConfig {
-    return this._botConfig;
-  }
-
-  public set botConfig(config: BotConfig) {
-    this._botConfig = config;
   }
 
   public get adapters(): ReturnType<typeof createAdapters> {

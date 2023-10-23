@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
 import { getAllIssueComments, getAllPullRequestReviews, parseComments } from "../../helpers";
 import { getLatestMergedPullRequest, getLinkedPullRequests } from "../../helpers/parser";
-import { UserType } from "../../types";
+import { Context, UserType } from "../../types";
 
 import { calculateRewardValue } from "./calculate-reward-value";
 import { IncentivesCalculationResult } from "./incentives-calculation";
@@ -10,11 +10,11 @@ import { ItemsToExclude } from "./post";
 import { RewardsResponse } from "./handle-issue-closed";
 
 export async function calculateReviewContributorRewards(
+  context: Context,
   incentivesCalculation: IncentivesCalculationResult
 ): Promise<RewardsResponse> {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const context = runtime.latestEventContext;
   const title = "Reviewer";
   const user = incentivesCalculation.issue.user;
 
@@ -24,13 +24,13 @@ export async function calculateReviewContributorRewards(
     issue: incentivesCalculation.issue.number,
   });
 
-  const latestLinkedPullRequest = await getLatestMergedPullRequest(linkedPullRequest);
+  const latestLinkedPullRequest = await getLatestMergedPullRequest(context, linkedPullRequest);
 
   if (!latestLinkedPullRequest) {
     throw logger.info(`No linked pull requests found`);
   }
 
-  const comments = await getAllIssueComments(incentivesCalculation.issue.number);
+  const comments = await getAllIssueComments(context, incentivesCalculation.issue.number);
   const permitComments = comments.filter(
     (content) =>
       content.body.includes(title) &&
@@ -48,7 +48,7 @@ export async function calculateReviewContributorRewards(
   }
 
   const prReviews = await getAllPullRequestReviews(context, latestLinkedPullRequest.number, "full");
-  const prComments = await getAllIssueComments(latestLinkedPullRequest.number, "full");
+  const prComments = await getAllIssueComments(context, latestLinkedPullRequest.number, "full");
 
   logger.info(`Getting the pull request reviews done.`, { prReviews }); // I put the brackets around the object to make it easier to read in the logs (you see the variable name)
 

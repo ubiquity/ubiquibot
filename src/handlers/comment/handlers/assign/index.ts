@@ -6,7 +6,7 @@ import {
   getAssignedIssues,
   getAvailableOpenedPullRequests,
 } from "../../../../helpers";
-import { Comment, IssueType, Payload, User } from "../../../../types";
+import { Comment, IssueType, Payload, User, Context } from "../../../../types";
 import { isParentIssue } from "../../../pricing";
 import { assignTableComment } from "../table";
 import { checkTaskStale } from "./check-task-stale";
@@ -14,11 +14,11 @@ import { generateAssignmentComment } from "./generate-assignment-comment";
 import { getMultiplierInfoToDisplay } from "./get-multiplier-info-to-display";
 import { getTimeLabelsAssigned } from "./get-time-labels-assigned";
 
-export async function assign(body: string) {
+export async function assign(context: Context, body: string) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const config = runtime.botConfig;
-  const payload = runtime.latestEventContext.payload as Payload;
+  const config = context.config;
+  const payload = context.event.payload as Payload;
   const issue = payload.issue;
 
   const staleTask = config.assign.staleTaskTime;
@@ -40,14 +40,14 @@ export async function assign(body: string) {
     );
   }
 
-  const openedPullRequests = await getAvailableOpenedPullRequests(payload.sender.login);
+  const openedPullRequests = await getAvailableOpenedPullRequests(context, payload.sender.login);
   logger.info(
     `Opened Pull Requests with approved reviews or with no reviews but over 24 hours have passed: ${JSON.stringify(
       openedPullRequests
     )}`
   );
 
-  const assignedIssues = await getAssignedIssues(payload.sender.login);
+  const assignedIssues = await getAssignedIssues(context, payload.sender.login);
   logger.info("Max issue allowed is", config.assign.maxConcurrentTasks);
 
   // check for max and enforce max
@@ -86,14 +86,14 @@ export async function assign(body: string) {
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     logger.info("Adding the assignee", { assignee: payload.sender.login });
-    await addAssignees(issue.number, [payload.sender.login]);
+    await addAssignees(context, issue.number, [payload.sender.login]);
   }
 
   const isTaskStale = checkTaskStale(staleTask, issue);
 
   // double check whether the assign message has been already posted or not
   logger.info("Creating an issue comment", { comment });
-  const issueComments = await getAllIssueComments(issue.number);
+  const issueComments = await getAllIssueComments(context, issue.number);
   const comments = issueComments.sort(
     (a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
@@ -103,7 +103,7 @@ export async function assign(body: string) {
       multiplierAmount: multiplierAmount,
       multiplierReason: multiplierReason,
       totalPriceOfTask: totalPriceOfTask,
-    } = await getMultiplierInfoToDisplay(payload.sender.id, payload.repository.id, issue);
+    } = await getMultiplierInfoToDisplay(context, payload.sender.id, payload.repository.id, issue);
     return (
       assignTableComment({
         multiplierAmount,

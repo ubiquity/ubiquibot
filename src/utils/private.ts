@@ -6,16 +6,19 @@ import Runtime from "../bindings/bot-runtime";
 import { DefaultConfig } from "../configs";
 import { upsertLastCommentToIssue } from "../helpers/issue";
 import { ConfigSchema, MergedConfig, Payload } from "../types";
-import { Config } from "../types/config";
+import { BotConfig, Config } from "../types/config";
 import { validate } from "./ajv";
+
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
 const KEY_NAME = "privateKeyEncrypted";
 const KEY_PREFIX = "HSK_";
+
 export async function getConfig(context: Context) {
   const orgConfig = await downloadConfig(context, "org");
   const repoConfig = await downloadConfig(context, "repo");
   const payload = context.payload as Payload;
+
   let parsedOrg: Config | null;
   if (typeof orgConfig === "string") {
     parsedOrg = parseYAML(orgConfig);
@@ -26,10 +29,12 @@ export async function getConfig(context: Context) {
     const { valid, error } = validate(ConfigSchema, parsedOrg);
     if (!valid) {
       const err = new Error(`Invalid org config: ${error}`);
-      if (payload.issue) await upsertLastCommentToIssue(payload.issue.number, err.message);
+      if (payload.issue)
+        await upsertLastCommentToIssue({ event: context, config: {} as BotConfig }, payload.issue.number, err.message);
       throw err;
     }
   }
+
   let parsedRepo: Config | null;
   if (typeof repoConfig === "string") {
     parsedRepo = parseYAML(repoConfig);
@@ -40,11 +45,14 @@ export async function getConfig(context: Context) {
     const { valid, error } = validate(ConfigSchema, parsedRepo);
     if (!valid) {
       const err = new Error(`Invalid repo config: ${error}`);
-      if (payload.issue) await upsertLastCommentToIssue(payload.issue.number, err.message);
+      if (payload.issue)
+        await upsertLastCommentToIssue({ event: context, config: {} as BotConfig }, payload.issue.number, err.message);
       throw err;
     }
   }
+
   const parsedDefault: MergedConfig = DefaultConfig;
+
   const keys = { private: null, public: null } as { private: string | null; public: string | null };
   try {
     if (parsedRepo && parsedRepo[KEY_NAME]) {
@@ -61,6 +69,7 @@ export async function getConfig(context: Context) {
   const configData = { keys, ...mergedConfigData };
   return configData;
 }
+
 async function downloadConfig(context: Context, type: "org" | "repo") {
   const payload = context.payload as Payload;
   let repo;
@@ -74,19 +83,23 @@ async function downloadConfig(context: Context, type: "org" | "repo") {
     owner = payload.repository.owner.login;
   }
   if (!repo || !owner) return null;
+
   const { data } = await context.octokit.rest.repos.getContent({
     owner,
     repo,
     path: CONFIG_PATH,
     mediaType: { format: "raw" },
   });
+
   return data;
 }
+
 interface MergedConfigs {
   parsedRepo: Config | null;
   parsedOrg: Config | null;
   parsedDefault: MergedConfig;
 }
+
 export function parseYAML(data?: string) {
   try {
     if (data) {
@@ -120,8 +133,10 @@ async function getPrivateAndPublicKeys(cipherText: string, keys: { private: stri
   keys.private = walletPrivateKey?.replace(KEY_PREFIX, "");
   return keys;
 }
+
 async function getScalarKey(X25519_PRIVATE_KEY: string) {
   const logger = Runtime.getState().logger;
+
   if (X25519_PRIVATE_KEY !== null) {
     await sodium.ready;
     // console.trace();
@@ -133,6 +148,7 @@ async function getScalarKey(X25519_PRIVATE_KEY: string) {
     return null;
   }
 }
+
 function mergeConfigs(configs: MergedConfigs) {
   return merge({}, configs.parsedDefault, configs.parsedOrg, configs.parsedRepo);
 }

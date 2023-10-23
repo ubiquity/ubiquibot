@@ -1,6 +1,6 @@
 import Runtime from "../../bindings/bot-runtime";
 import { createCommitComment, getFileContent } from "../../helpers";
-import { CommitsPayload, PushPayload, ConfigSchema } from "../../types";
+import { CommitsPayload, PushPayload, ConfigSchema, Context } from "../../types";
 import { parseYAML } from "../../utils/private";
 import { validate } from "../../utils/ajv";
 
@@ -21,12 +21,11 @@ export function getCommitChanges(commits: CommitsPayload[]) {
   return changes;
 }
 
-export async function validateConfigChange() {
+export async function validateConfigChange(context: Context) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
-  const context = runtime.latestEventContext;
-  const payload = context.payload as PushPayload;
+  const payload = context.event.payload as PushPayload;
 
   if (!payload.ref.startsWith("refs/heads/")) {
     logger.debug("Skipping push events, not a branch");
@@ -52,6 +51,7 @@ export async function validateConfigChange() {
     }
 
     const configFileContent = await getFileContent(
+      context,
       payload.repository.owner.login,
       payload.repository.name,
       payload.ref.split("refs/heads/")[1],
@@ -65,6 +65,7 @@ export async function validateConfigChange() {
       const { valid, error } = validate(ConfigSchema, config);
       if (!valid) {
         await createCommitComment(
+          context,
           `@${payload.sender.login} Config validation failed! ${error}`,
           commitSha,
           BASE_RATE_FILE

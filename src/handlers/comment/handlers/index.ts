@@ -1,4 +1,4 @@
-import { UserCommands } from "../../../types";
+import { Context, UserCommands } from "../../../types";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
 // Commented out until Gnosis Safe is integrated (https://github.com/ubiquity/ubiquibot/issues/353)
@@ -13,7 +13,6 @@ import { registerWallet } from "./wallet";
 
 import { autoPay } from "./payout";
 import { query } from "./query";
-import Runtime from "../../../bindings/bot-runtime";
 
 export * from "./ask";
 export * from "./assign";
@@ -26,8 +25,8 @@ export * from "./unassign";
 export * from "./wallet";
 
 // Parses the comment body and figure out the command name a user wants
-export function commentParser(body: string): null | string {
-  const userCommandIds = userCommands().map((cmd) => cmd.id);
+export function commentParser(context: Context, body: string): null | string {
+  const userCommandIds = userCommands(context).map((cmd) => cmd.id);
   const regex = new RegExp(`^(${userCommandIds.join("|")})\\b`); // Regex pattern to match any command at the beginning of the body
 
   const matches = regex.exec(body);
@@ -41,8 +40,8 @@ export function commentParser(body: string): null | string {
   return null;
 }
 
-export function userCommands(): UserCommands[] {
-  const accountForWalletVerification = walletVerificationDetails();
+export function userCommands(context: Context): UserCommands[] {
+  const accountForWalletVerification = walletVerificationDetails(context);
   return [
     {
       id: "/start",
@@ -113,7 +112,7 @@ export function userCommands(): UserCommands[] {
   ];
 }
 
-function walletVerificationDetails() {
+function walletVerificationDetails(context: Context) {
   const base = {
     description: "Register your wallet address for payments.",
     example: "/wallet ubq.eth",
@@ -126,7 +125,7 @@ function walletVerificationDetails() {
       "0xe2a3e34a63f3def2c29605de82225b79e1398190b542be917ef88a8e93ff9dc91bdc3ef9b12ed711550f6d2cbbb50671aa3f14a665b709ec391f3e603d0899a41b",
   };
 
-  const walletVerificationEnabled = Runtime.getState().botConfig.wallet.registerWalletWithVerification;
+  const walletVerificationEnabled = context.config.wallet.registerWalletWithVerification;
   if (walletVerificationEnabled) {
     return {
       description: `${base.description} ${withVerification.description}`,

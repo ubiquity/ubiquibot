@@ -1,25 +1,26 @@
 import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
 import { getAllIssueComments, getIssueDescription } from "../../helpers";
-import { UserType } from "../../types";
+import { Context, UserType } from "../../types";
 import { taskInfo } from "../wildcard";
 import { generatePermitForComment } from "./generate-permit-for-comment";
 import { IncentivesCalculationResult } from "./incentives-calculation";
 import { RewardsResponse } from "./handle-issue-closed";
 
 export async function calculateIssueCreatorReward(
+  context: Context,
   incentivesCalculation: IncentivesCalculationResult
 ): Promise<RewardsResponse> {
   const title = `Task Creator`;
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
-  const issueDetailed = taskInfo(incentivesCalculation.issue);
+  const issueDetailed = taskInfo(context, incentivesCalculation.issue);
   if (!issueDetailed.isTask) {
     throw logger.error("its not a funded task");
   }
 
-  const comments = await getAllIssueComments(incentivesCalculation.issue.number);
+  const comments = await getAllIssueComments(context, incentivesCalculation.issue.number);
   const permitComments = comments.filter(
     (content) =>
       content.body.includes(title) &&
@@ -37,7 +38,7 @@ export async function calculateIssueCreatorReward(
     throw logger.error("skipping payment permit generation because `assignee` is `undefined`.");
   }
 
-  const description = await getIssueDescription(incentivesCalculation.issue.number, "html");
+  const description = await getIssueDescription(context, incentivesCalculation.issue.number, "html");
   if (!description) {
     throw logger.error(
       `Skipping to generate a permit url because issue description is empty. description: ${description}`

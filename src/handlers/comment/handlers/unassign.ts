@@ -1,19 +1,18 @@
 import { removeAssignees } from "../../../helpers";
 import Runtime from "../../../bindings/bot-runtime";
-import { Payload } from "../../../types";
+import { Context, Payload } from "../../../types";
 import { closePullRequestForAnIssue } from "../../assign/index";
 
-export async function unassign(body: string) {
+export async function unassign(context: Context, body: string) {
   const runtime = Runtime.getState();
-  const { payload: _payload } = runtime.latestEventContext;
   const logger = runtime.logger;
   if (!body.startsWith("/stop")) {
     return logger.error("Skipping to unassign", { body });
   }
 
-  const payload = _payload as Payload;
+  const payload = context.event.payload as Payload;
   logger.info("Running '/stop' command handler", { sender: payload.sender.login });
-  const issue = (_payload as Payload).issue;
+  const issue = payload.issue;
   if (!issue) {
     return logger.info(`Skipping '/stop' because of no issue instance`);
   }
@@ -32,8 +31,9 @@ export async function unassign(body: string) {
   });
 
   if (shouldUnassign) {
-    await closePullRequestForAnIssue();
+    await closePullRequestForAnIssue(context);
     await removeAssignees(
+      context,
       issueNumber,
       assignees.map((i) => i.login)
     );

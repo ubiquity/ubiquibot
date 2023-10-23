@@ -3,11 +3,11 @@
 // Normally this is forbidden
 
 import { SupabaseClient } from "@supabase/supabase-js";
-import Runtime from "../../../../bindings/bot-runtime";
 import { Database } from "../../types";
 import { prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
 import { execSync } from "child_process";
+import { Context } from "../../../../types";
 
 type LogFunction = (message: string, metadata?: any) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
@@ -220,10 +220,9 @@ export class Logs extends Super {
     });
   }
 
-  constructor(supabase: SupabaseClient) {
-    super(supabase);
-    const runtime = Runtime.getState();
-    const logConfig = runtime.botConfig.log;
+  constructor(supabase: SupabaseClient, context: Context) {
+    super(supabase, context);
+    const logConfig = this.context.config.log;
 
     this.environment = logConfig.logEnvironment;
     this.retryLimit = logConfig.retryLimit;
@@ -362,11 +361,11 @@ export class Logs extends Super {
   }
 
   private _postComment(message: string) {
-    this.runtime.latestEventContext.octokit.issues
+    this.context.event.octokit.issues
       .createComment({
-        owner: this.runtime.latestEventContext.issue().owner,
-        repo: this.runtime.latestEventContext.issue().repo,
-        issue_number: this.runtime.latestEventContext.issue().issue_number,
+        owner: this.context.event.issue().owner,
+        repo: this.context.event.issue().repo,
+        issue_number: this.context.event.issue().issue_number,
         body: message,
       })
       // .then((x) => console.trace(x))

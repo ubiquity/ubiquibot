@@ -1,16 +1,15 @@
 import { userCommands } from ".";
 import Runtime from "../../../bindings/bot-runtime";
 
-import { IssueType, Payload } from "../../../types";
+import { Context, IssueType, Payload } from "../../../types";
 
-export async function listAvailableCommands(body: string) {
+export async function listAvailableCommands(context: Context, body: string) {
   const runtime = Runtime.getState();
-  const { payload: _payload } = runtime.latestEventContext;
   const logger = runtime.logger;
   if (body != "/help") {
     return logger.info("Skipping to list available commands.", { body });
   }
-  const payload = _payload as Payload;
+  const payload = context.event.payload as Payload;
   const issue = payload.issue;
 
   if (!issue) {
@@ -21,14 +20,14 @@ export async function listAvailableCommands(body: string) {
     return logger.info("Skipping '/start', reason: closed ");
   }
 
-  return generateHelpMenu();
+  return generateHelpMenu(context);
 }
 
-export function generateHelpMenu() {
-  const config = Runtime.getState().botConfig;
+export function generateHelpMenu(context: Context) {
+  const config = context.config;
   const startEnabled = config.command.find((command) => command.name === "start");
   let helpMenu = "### Available Commands\n\n| Command | Description | Example |\n| --- | --- | --- |\n";
-  const commands = userCommands();
+  const commands = userCommands(context);
 
   commands.map(
     (command) =>

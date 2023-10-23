@@ -2,7 +2,7 @@ import { constants, ethers } from "ethers";
 import { Logs } from "../../../adapters/supabase";
 import Runtime from "../../../bindings/bot-runtime";
 import { resolveAddress } from "../../../helpers";
-import { Payload } from "../../../types";
+import { Context, Payload } from "../../../types";
 // Extracts ensname from raw text.
 function extractEnsName(text: string) {
   // Define a regular expression to match ENS names
@@ -17,10 +17,10 @@ function extractEnsName(text: string) {
   }
 }
 
-export async function registerWallet(body: string) {
+export async function registerWallet(context: Context, body: string) {
   const runtime = Runtime.getState();
-  const payload = runtime.latestEventContext.payload as Payload;
-  const config = runtime.botConfig;
+  const payload = context.event.payload as Payload;
+  const config = context.config;
   const logger = runtime.logger;
   const sender = payload.sender.login;
 
@@ -60,6 +60,7 @@ export async function registerWallet(body: string) {
     throw new Error("Payload comment is undefined");
   }
 }
+
 function _registerWalletWithVerification(body: string, address: string, logger: Logs) {
   const regexForSigHash = /(0x[a-fA-F0-9]{130})/g;
   const sigHashMatches = body.match(regexForSigHash);

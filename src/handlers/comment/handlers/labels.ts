@@ -1,15 +1,14 @@
 import Runtime from "../../../bindings/bot-runtime";
 import { isUserAdminOrBillingManager } from "../../../helpers";
-import { Payload } from "../../../types";
+import { Context, Payload } from "../../../types";
 
-export async function setLabels(body: string) {
+export async function setLabels(context: Context, body: string) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
   const logger = runtime.logger;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const sender = payload.sender.login;
 
-  const sufficientPrivileges = await isUserAdminOrBillingManager(sender, context);
+  const sufficientPrivileges = await isUserAdminOrBillingManager(context, sender);
   if (!sufficientPrivileges)
     return logger.info(`You are not an admin and do not have the required permissions to access this function.`); // if sender is not admin, return
 

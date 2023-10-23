@@ -3,7 +3,7 @@ import Decimal from "decimal.js";
 import { BigNumber, ethers } from "ethers";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 import Runtime from "../bindings/bot-runtime";
-import { Payload } from "../types";
+import { Payload, Context } from "../types";
 // import { savePermit } from "../adapters/supabase";
 
 const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on all networks
@@ -46,6 +46,7 @@ export type GeneratedPermit = {
 
 export const generatePermit2Signature = async (
   // Generates permit2 signature data with `spender` and `amountInETH`
+  context: Context,
   spender: string,
   amountInEth: Decimal,
   identifier: string,
@@ -53,7 +54,7 @@ export const generatePermit2Signature = async (
 ): Promise<{ permit: GeneratedPermit; payoutUrl: string }> => {
   const {
     payout: { evmNetworkId, privateKey, permitBaseUrl, rpc, paymentToken },
-  } = Runtime.getState().botConfig;
+  } = context.config;
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   const provider = new ethers.providers.JsonRpcProvider(rpc);
@@ -106,6 +107,7 @@ export const generatePermit2Signature = async (
 };
 
 export async function savePermitToDB(
+  context: Context,
   contributorId: number,
   txData: GeneratedPermit,
   evmNetworkId: number,
@@ -114,8 +116,7 @@ export async function savePermitToDB(
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const comment = payload.comment;
   if (!comment) throw logger.error("Cannot save permit to DB, missing comment");
 

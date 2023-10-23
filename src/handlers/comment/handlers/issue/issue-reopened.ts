@@ -8,24 +8,24 @@ import {
   getTokenSymbol,
 } from "../../../../helpers";
 // import { Payload } from "../../../../types";
-import { Payload } from "../../../../types/payload";
+import { Payload, Context } from "../../../../types";
 
 // type IssuePayload = Context<"issues.reopened">; // ["payload"]
 
-export async function issueReopened() {
+export async function issueReopened(context: Context) {
   const runtime = Runtime.getState();
   const { logger } = runtime;
   // if (!eventContext) {
   //   throw new Error("No event context found");
   // }
 
-  const payload = runtime.latestEventContext.payload as Payload;
+  const payload = context.event.payload as Payload;
   const issue = payload.issue;
 
   if (!issue) throw logger.error("No issue found in payload", payload);
 
-  const comments = await getAllIssueComments(issue.number);
-  const permitBaseUrl = runtime.botConfig.payout.permitBaseUrl;
+  const comments = await getAllIssueComments(context, issue.number);
+  const permitBaseUrl = context.config.payout.permitBaseUrl;
   const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
   const permitComment = comments.find((e) => e.user.type === "Bot" && e.body.match(claimUrlRegex));
 
@@ -50,7 +50,7 @@ export async function issueReopened() {
     const tokenAddress = claim.permit.permitted.token;
     const tokenSymbol = await getTokenSymbol(tokenAddress, rpc);
 
-    const events = await getAllIssueAssignEvents(issue.number);
+    const events = await getAllIssueAssignEvents(context, issue.number);
     if (events.length === 0) {
       return logger.warn(`No assignment found`);
     }

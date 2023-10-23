@@ -10,6 +10,7 @@ import {
 import { IncentivesCalculationResult } from "./incentives-calculation";
 
 interface HandleIssueClosed {
+  context: Context;
   creatorReward: RewardsResponse;
   assigneeReward: RewardsResponse;
   conversationRewards: RewardsResponse;
@@ -27,6 +28,7 @@ interface RewardByUser {
   debug?: Record<string, { count: number; reward: Decimal }>;
 }
 export async function handleIssueClosed({
+  context,
   creatorReward,
   assigneeReward,
   conversationRewards,
@@ -35,7 +37,7 @@ export async function handleIssueClosed({
 }: HandleIssueClosed) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const { comments } = runtime.botConfig;
+  const { comments } = context.config;
   const issueNumber = incentivesCalculation.issue.number;
 
   const title = ["Issue-Assignee"];
@@ -209,6 +211,7 @@ export async function handleIssueClosed({
     }
 
     const { payoutUrl, permit } = await generatePermit2Signature(
+      context,
       reward.account,
       reward.priceInDecimal,
       reward.issueId,
@@ -226,15 +229,15 @@ export async function handleIssueClosed({
     if (!org) {
       throw logger.error("org is undefined", incentivesCalculation.payload);
     }
-    await savePermitToDB(Number(reward.userId), permit, incentivesCalculation.evmNetworkId, org);
+    await savePermitToDB(context, Number(reward.userId), permit, incentivesCalculation.evmNetworkId, org);
     permitComment = comment;
 
     logger.warn("Skipping to generate a permit url for missing accounts.", conversationRewards.fallbackReward);
   }
 
-  if (permitComment) await addCommentToIssue(permitComment.trim() + comments.promotionComment, issueNumber);
+  if (permitComment) await addCommentToIssue(context, permitComment.trim() + comments.promotionComment, issueNumber);
 
-  await deleteLabel(incentivesCalculation.issueDetailed.priceLabel);
+  await deleteLabel(context, incentivesCalculation.issueDetailed.priceLabel);
 }
 
 export interface RewardsResponse {
@@ -256,7 +259,7 @@ export interface RewardsResponse {
 
 //
 
-import { Comment } from "../../types";
+import { Comment, Context } from "../../types";
 interface RemovePenalty {
   userId: number;
   amount: Decimal;

@@ -1,19 +1,20 @@
-import { User, UserType } from "../../types";
+import { Context, User, UserType } from "../../types";
 import { commentParser } from "../comment";
 import { Comment } from "../../types";
 import { Logs } from "../../adapters/supabase";
 interface WalkComments {
+  context: Context;
   issueComments: Comment[];
   assignee: User;
   logger: Logs;
   issueCommentsByUser: Record<string, { id: string; comments: string[] }>;
 }
 
-export function walkComments({ issueComments, assignee, logger, issueCommentsByUser }: WalkComments) {
+export function walkComments({ context, issueComments, assignee, logger, issueCommentsByUser }: WalkComments) {
   for (const issueComment of issueComments) {
     const user = issueComment.user;
     if (user.type == UserType.Bot || user.login == assignee.login) continue;
-    const command = commentParser(issueComment.body);
+    const command = commentParser(context, issueComment.body);
     if (command) {
       logger.info(`Skipping to parse the comment because it contains commands.`, { issueComment });
       continue;

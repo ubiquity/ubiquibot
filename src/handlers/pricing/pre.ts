@@ -1,13 +1,14 @@
 import Runtime from "../../bindings/bot-runtime";
 import { calculateLabelValue, createLabel, listLabelsForRepo } from "../../helpers";
+import { Context } from "../../types";
 import { calculateTaskPrice } from "../shared/pricing";
 
 // This just checks all the labels in the config have been set in gh issue
 // If there's something missing, they will be added
 
-export async function syncPriceLabelsToConfig() {
+export async function syncPriceLabelsToConfig(context: Context) {
   const runtime = Runtime.getState();
-  const config = runtime.botConfig;
+  const config = context.config;
   const logger = runtime.logger;
 
   const { assistivePricing } = config.mode;
@@ -23,6 +24,7 @@ export async function syncPriceLabelsToConfig() {
   for (const timeLabel of config.price.timeLabels) {
     for (const priorityLabel of config.price.priorityLabels) {
       const targetPrice = calculateTaskPrice(
+        context,
         calculateLabelValue(timeLabel),
         calculateLabelValue(priorityLabel),
         config.price.priceMultiplier
@@ -36,7 +38,7 @@ export async function syncPriceLabelsToConfig() {
   logger.debug("Got needed labels for setting up price ", { neededLabels });
 
   // List all the labels for a repository
-  const repoLabels = await listLabelsForRepo();
+  const repoLabels = await listLabelsForRepo(context);
 
   // Get the missing labels
   const missingLabels = neededLabels.filter((label) => !repoLabels.map((i) => i.name).includes(label));
@@ -44,7 +46,7 @@ export async function syncPriceLabelsToConfig() {
   // Create missing labels
   if (missingLabels.length > 0) {
     logger.info("Missing labels found, creating them", { missingLabels });
-    await Promise.all(missingLabels.map((label) => createLabel(label)));
+    await Promise.all(missingLabels.map((label) => createLabel(context, label)));
     logger.info(`Creating missing labels done`);
   }
 }

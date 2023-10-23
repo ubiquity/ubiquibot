@@ -1,5 +1,5 @@
 import Runtime from "../bindings/bot-runtime";
-import { Payload, StreamlinedComment, UserType } from "../types";
+import { Context, Payload, StreamlinedComment, UserType } from "../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../helpers";
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
@@ -55,16 +55,16 @@ All replies MUST end with "\n\n <!--- { 'UbiquiBot': 'answer' } ---> ".\n
 
 // best used alongside getAllLinkedIssuesAndPullsInBody() in helpers/issue
 export async function decideContextGPT(
+  context: Context,
   chatHistory: CreateChatCompletionRequestMessage[],
   streamlined: StreamlinedComment[],
   linkedPRStreamlined: StreamlinedComment[],
   linkedIssueStreamlined: StreamlinedComment[]
 ) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
   const logger = runtime.logger;
 
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const issue = payload.issue;
 
   if (!issue) {
@@ -72,9 +72,9 @@ export async function decideContextGPT(
   }
 
   // standard comments
-  const comments = await getAllIssueComments(issue.number);
+  const comments = await getAllIssueComments(context, issue.number);
   // raw so we can grab the <!--- { 'UbiquiBot': 'answer' } ---> tag
-  const commentsRaw = await getAllIssueComments(issue.number, "raw");
+  const commentsRaw = await getAllIssueComments(context, issue.number, "raw");
 
   if (!comments) {
     logger.info(`Error getting issue comments`);
@@ -98,7 +98,7 @@ export async function decideContextGPT(
   });
 
   // returns the conversational context from all linked issues and prs
-  const links = await getAllLinkedIssuesAndPullsInBody(issue.number);
+  const links = await getAllLinkedIssuesAndPullsInBody(context, issue.number);
 
   if (typeof links === "string") {
     return logger.info("Error getting linked issues or prs: ", { links });
@@ -126,16 +126,16 @@ export async function decideContextGPT(
   );
 
   // we'll use the first response to determine the context of future calls
-  const res = await askGPT(chatHistory);
+  const res = await askGPT(context, chatHistory);
 
   return res;
 }
 
-export async function askGPT(chatHistory: CreateChatCompletionRequestMessage[]) {
+export async function askGPT(context: Context, chatHistory: CreateChatCompletionRequestMessage[]) {
   // base askGPT function
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const config = runtime.botConfig;
+  const config = context.config;
 
   if (!config.ask.apiKey) {
     throw logger.error(

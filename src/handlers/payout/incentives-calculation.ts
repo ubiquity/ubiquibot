@@ -7,7 +7,7 @@ import {
   wasIssueReopened,
   getAllIssueAssignEvents,
 } from "../../helpers";
-import { UserType, Payload, StateReason, Comment, Incentives, Issue, User } from "../../types";
+import { UserType, Payload, StateReason, Comment, Incentives, Issue, User, Context } from "../../types";
 import { taskInfo } from "../wildcard";
 import { isParentIssue } from "../pricing";
 import Decimal from "decimal.js";
@@ -41,17 +41,16 @@ export interface IncentivesCalculationResult {
   claimUrlRegex: RegExp;
 }
 
-export async function incentivesCalculation(): Promise<IncentivesCalculationResult> {
+export async function incentivesCalculation(context: Context): Promise<IncentivesCalculationResult> {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
   const {
     payout: { paymentToken, rpc, permitBaseUrl, evmNetworkId, privateKey },
     mode: { incentiveMode, permitMaxPrice },
     price: { incentives, issueCreatorMultiplier, priceMultiplier },
     publicAccessControl: accessControl,
-  } = runtime.botConfig;
+  } = context.config;
   const logger = runtime.logger;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const issue = payload.issue;
   const { repository, organization } = payload;
   const id = organization?.id || repository?.id; // repository?.id as fallback
@@ -59,13 +58,13 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     throw new Error("Permit generation skipped because issue is undefined");
   }
   if (accessControl.fundExternalClosedIssue) {
-    const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
+    const userHasPermission = await checkUserPermissionForRepoAndOrg(context, payload.sender.login);
     if (!userHasPermission) {
       throw new Error("Permit generation disabled because this issue has been closed by an external contributor.");
     }
   }
-  const comments = await getAllIssueComments(issue.number);
-  const wasReopened = await wasIssueReopened(issue.number);
+  const comments = await getAllIssueComments(context, issue.number);
+  const wasReopened = await wasIssueReopened(context, issue.number);
   const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
   const permitCommentIndex = comments.findIndex((e) => e.user.type === UserType.Bot && e.body.match(claimUrlRegex));
   if (wasReopened && permitCommentIndex !== -1) {
@@ -89,7 +88,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
     }
     const claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
     const amount = new Decimal(claim.permit.permitted.amount);
-    const events = await getAllIssueAssignEvents(issue.number);
+    const events = await getAllIssueAssignEvents(context, issue.number);
     if (events.length === 0) {
       throw logger.error(`No assignment found`);
     }
@@ -118,7 +117,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   }
   logger.info(`Checking if the issue is a parent issue.`);
   if (issue.body && isParentIssue(issue.body)) {
-    await clearAllPriceLabelsOnIssue();
+    await clearAllPriceLabelsOnIssue(context);
     throw logger.error("Permit generation disabled because this is a collection of issues.");
   }
   logger.info("Checking if the issue is an eligible task.", { issue });
@@ -138,7 +137,7 @@ export async function incentivesCalculation(): Promise<IncentivesCalculationResu
   if (permitMaxPrice == 0 || !permitMaxPrice) {
     throw logger.warn("Skipping to generate permit2 url, reason: permitMaxPrice is 0 or undefined", { permitMaxPrice });
   }
-  const issueDetailed = taskInfo(issue);
+  const issueDetailed = taskInfo(context, issue);
   if (!issueDetailed.isTask) {
     throw logger.warn(`Skipping... its not an eligible task`);
   }

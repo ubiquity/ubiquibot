@@ -1,7 +1,7 @@
 import Decimal from "decimal.js";
 import Runtime from "../../bindings/bot-runtime";
 import { getAllIssueComments, parseComments } from "../../helpers";
-import { Comment, Payload, UserType } from "../../types";
+import { Comment, Context, Payload, UserType } from "../../types";
 
 import { calculateRewardValue } from "./calculate-reward-value";
 import { IncentivesCalculationResult } from "./incentives-calculation";
@@ -12,14 +12,14 @@ import { RewardsResponse } from "./handle-issue-closed";
 // Incentivize the contributors based on their contribution.
 // The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
 export async function calculateIssueConversationReward(
+  context: Context,
   calculateIncentives: IncentivesCalculationResult
 ): Promise<RewardsResponse> {
   const title = `Conversation`;
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const issue = payload.issue;
   const user = payload.sender;
 
@@ -50,11 +50,11 @@ export async function calculateIssueConversationReward(
   const assignee = assignees.length > 0 ? assignees[0] : undefined;
   if (!assignee) throw logger.info("Skipping payment permit generation because `assignee` is `undefined`.");
 
-  const issueComments = await getAllIssueComments(calculateIncentives.issue.number, "raw");
+  const issueComments = await getAllIssueComments(context, calculateIncentives.issue.number, "raw");
   logger.info("Getting the issue comments done.", { issueComments });
   const issueCommentsByUser: Record<string, { id: string; comments: string[] }> = {};
 
-  walkComments({ issueComments, assignee, logger, issueCommentsByUser });
+  walkComments({ context, issueComments, assignee, logger, issueCommentsByUser });
 
   logger.info("Filtering by user type...", { issueCommentsByUser });
 

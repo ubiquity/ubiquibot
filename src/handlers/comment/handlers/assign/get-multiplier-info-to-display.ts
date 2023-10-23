@@ -1,8 +1,8 @@
-import { Issue } from "../../../../types";
+import { Context, Issue } from "../../../../types";
 import { taskInfo } from "../../../wildcard";
 import { getUserMultiplier } from "./get-user-multiplier";
 
-export async function getMultiplierInfoToDisplay(senderId: number, repoId: number, issue: Issue) {
+export async function getMultiplierInfoToDisplay(context: Context, senderId: number, repoId: number, issue: Issue) {
   const userMultiplier = await getUserMultiplier(senderId, repoId);
   const value = userMultiplier?.value || null;
   const reason = userMultiplier?.reason || null;
@@ -12,7 +12,7 @@ export async function getMultiplierInfoToDisplay(senderId: number, repoId: numbe
   if (value && value != 1) {
     totalPriceOfTask = `Permit generation disabled because price label is not set.`;
 
-    const issueDetailed = taskInfo(issue);
+    const issueDetailed = taskInfo(context, issue);
     const priceLabel = issueDetailed.priceLabel;
 
     console.trace(issueDetailed);

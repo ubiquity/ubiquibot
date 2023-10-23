@@ -1,16 +1,14 @@
-import Runtime from "../bindings/bot-runtime";
-import { Payload } from "../types";
+import { Context, Payload } from "../types";
 
 export async function createCommitComment(
+  context: Context,
   body: string,
   commitSha: string,
   path?: string,
   owner?: string,
   repo?: string
 ) {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   if (!owner) {
     owner = payload.repository.owner.login;
   }
@@ -18,7 +16,7 @@ export async function createCommitComment(
     repo = payload.repository.name;
   }
 
-  await context.octokit.rest.repos.createCommitComment({
+  await context.event.octokit.rest.repos.createCommitComment({
     owner: owner,
     repo: repo,
     commit_sha: commitSha,

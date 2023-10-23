@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { BotConfig } from "../types";
+import { Context } from "../types";
 import { Access } from "./supabase/helpers/tables/access";
 import { Label } from "./supabase/helpers/tables/label";
 import { Locations } from "./supabase/helpers/tables/locations";
@@ -10,19 +10,19 @@ import { User } from "./supabase/helpers/tables/user";
 import { Wallet } from "./supabase/helpers/tables/wallet";
 import { Database } from "./supabase/types";
 
-export function createAdapters(config: BotConfig) {
-  const client = generateSupabase(config.supabase.url, config.supabase.key);
+export function createAdapters(context: Context) {
+  const client = generateSupabase(context.config.supabase.url, context.config.supabase.key);
   return {
     supabase: {
-      access: new Access(client),
-      wallet: new Wallet(client),
-      user: new User(client),
-      debit: new Settlement(client),
-      settlement: new Settlement(client),
-      label: new Label(client),
-      logs: new Logs(client),
-      locations: new Locations(client),
-      super: new Super(client),
+      access: new Access(client, context),
+      wallet: new Wallet(client, context),
+      user: new User(client, context),
+      debit: new Settlement(client, context),
+      settlement: new Settlement(client, context),
+      label: new Label(client, context),
+      logs: new Logs(client, context),
+      locations: new Locations(client, context),
+      super: new Super(client, context),
     },
   };
 }

@@ -1,14 +1,20 @@
 import Runtime from "../bindings/bot-runtime";
+import { Context } from "../types";
 
 // Get the previous file content
-export async function getPreviousFileContent(owner: string, repo: string, branch: string, filePath: string) {
+export async function getPreviousFileContent(
+  context: Context,
+  owner: string,
+  repo: string,
+  branch: string,
+  filePath: string
+) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const context = runtime.latestEventContext;
 
   try {
     // Get the latest commit of the branch
-    const branchData = await context.octokit.repos.getBranch({
+    const branchData = await context.event.octokit.repos.getBranch({
       owner,
       repo,
       branch,
@@ -16,7 +22,7 @@ export async function getPreviousFileContent(owner: string, repo: string, branch
     const latestCommitSha = branchData.data.commit.sha;
 
     // Get the commit details
-    const commitData = await context.octokit.repos.getCommit({
+    const commitData = await context.event.octokit.repos.getCommit({
       owner,
       repo,
       ref: latestCommitSha,
@@ -27,7 +33,7 @@ export async function getPreviousFileContent(owner: string, repo: string, branch
     if (file) {
       // Retrieve the previous file content from the commit's parent
       const previousCommitSha = commitData.data.parents[0].sha;
-      const previousCommit = await context.octokit.git.getCommit({
+      const previousCommit = await context.event.octokit.git.getCommit({
         owner,
         repo,
         commit_sha: previousCommitSha,
@@ -35,7 +41,7 @@ export async function getPreviousFileContent(owner: string, repo: string, branch
 
       // Retrieve the previous file tree
       const previousTreeSha = previousCommit.data.tree.sha;
-      const previousTree = await context.octokit.git.getTree({
+      const previousTree = await context.event.octokit.git.getTree({
         owner,
         repo,
         tree_sha: previousTreeSha,
@@ -46,7 +52,7 @@ export async function getPreviousFileContent(owner: string, repo: string, branch
       const previousFile = previousTree.data.tree.find((item) => item.path === filePath);
       if (previousFile && previousFile.sha) {
         // Get the previous file content
-        const previousFileContent = await context.octokit.git.getBlob({
+        const previousFileContent = await context.event.octokit.git.getBlob({
           owner,
           repo,
           file_sha: previousFile.sha,
@@ -62,6 +68,7 @@ export async function getPreviousFileContent(owner: string, repo: string, branch
 }
 
 export async function getFileContent(
+  context: Context,
   owner: string,
   repo: string,
   branch: string,
@@ -70,12 +77,11 @@ export async function getFileContent(
 ): Promise<string | null> {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const context = runtime.latestEventContext;
 
   try {
     if (!commitSha) {
       // Get the latest commit of the branch
-      const branchData = await context.octokit.repos.getBranch({
+      const branchData = await context.event.octokit.repos.getBranch({
         owner,
         repo,
         branch,
@@ -84,7 +90,7 @@ export async function getFileContent(
     }
 
     // Get the commit details
-    const commitData = await context.octokit.repos.getCommit({
+    const commitData = await context.event.octokit.repos.getCommit({
       owner,
       repo,
       ref: commitSha,
@@ -94,7 +100,7 @@ export async function getFileContent(
     const file = commitData.data.files ? commitData.data.files.find((file) => file.filename === filePath) : undefined;
     if (file) {
       // Retrieve the file tree
-      const tree = await context.octokit.git.getTree({
+      const tree = await context.event.octokit.git.getTree({
         owner,
         repo,
         tree_sha: commitData.data.commit.tree.sha,
@@ -105,7 +111,7 @@ export async function getFileContent(
       const file = tree.data.tree.find((item) => item.path === filePath);
       if (file && file.sha) {
         // Get the previous file content
-        const fileContent = await context.octokit.git.getBlob({
+        const fileContent = await context.event.octokit.git.getBlob({
           owner,
           repo,
           file_sha: file.sha,

@@ -12,7 +12,7 @@
  */
 
 import { Static } from "@sinclair/typebox";
-import { PayoutConfigSchema } from "../types";
+import { PayoutConfigSchema, Context } from "../types";
 import { isUserAdminOrBillingManager } from "./issue";
 import Runtime from "../bindings/bot-runtime";
 // import { getAccessLevel } from "../adapters/supabase";
@@ -48,11 +48,10 @@ export const getPayoutConfigByNetworkId = (evmNetworkId: number): PayoutConfigPa
   };
 };
 
-export async function hasLabelEditPermission(label: string, caller: string) {
+export async function hasLabelEditPermission(context: Context, label: string, caller: string) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
   const logger = runtime.logger;
-  const sufficientPrivileges = await isUserAdminOrBillingManager(caller, context);
+  const sufficientPrivileges = await isUserAdminOrBillingManager(context, caller);
 
   // get text before :
   const match = label.split(":");
