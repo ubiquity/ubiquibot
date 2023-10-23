@@ -180,13 +180,13 @@ For payment to work in your local instance, ubiquibot must be set up in a Github
 
 ## How to QA any additions to the bot
 
-Make sure you have your local instance of ubiquibot running.
-
-1. Fork the ubiquibot repo and add your local instance of ubiquibot to the forked repository.
-2. Enable Github action running on the forked repo and allow `issues` on the settings tab.
-3. Create a [QA issue](https://github.com/ubiquibot/staging/issues/21) similar to this where you show the feature working in the forked repo.
-4. Describe carefully the steps taken to get the feature working, this way our team can easily verify.
-5. Link that QA issue to the pull request as indicated on the template before requesting a review.
+1. [Create](https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/creating-a-new-organization-from-scratch) a new github organization for testing purposes
+2. [Fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo#forking-a-repository) the [ubiquibot](https://github.com/ubiquity/ubiquibot) repository into your test organization
+3. Install the [QA app](https://github.com/apps/ubiquibot-qa) into your forked ubiquibot repository
+4. Solve one of the [issues](https://github.com/ubiquity/ubiquibot/issues) and commit changes to the `development` branch of your forked ubiquibot repository
+5. Create a QA issue similar to [this](https://github.com/web4er/ubiquibot/issues/38) where you show how the feature is working in the forked ubiquibot repository
+6. Describe carefully the steps taken to get the feature working, this way our team can easily verify
+7. Link that QA issue to the pull request as indicated on the pull request template before requesting a review
 
 ## How to create a new release
 
