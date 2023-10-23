@@ -1,9 +1,10 @@
 import { Comment, Issue } from "../../../../types/payload";
-import { _calculateAllCommentScores } from "./_calculateAllCommentScores";
+import { _calculateAllCommentScores } from "./_calculate-all-comment-scores";
 
 export async function calculateQuantScore(issue: Issue, contributorComments: Comment[]) {
   // _calculateSpecificationScore(issue.body, specificationScoringRubric);
-  await _calculateAllCommentScores(issue, contributorComments);
+  const scoringRubrics = await _calculateAllCommentScores(issue, contributorComments);
+  return scoringRubrics;
 }
 
 // function _calculateSpecificationScore(specification: string, rubric: SpecificationScoringRubric) {

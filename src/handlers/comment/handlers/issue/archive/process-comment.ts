@@ -1,5 +1,5 @@
-import { calculateQualScore } from "./calculate-quality-score";
-import { CommentScore } from "./issue-closed";
+import { calculateQualScore } from "../calculate-quality-score";
+import { CommentScore } from "../issue-closed";
 // Define your types and interfaces as before...
 
 // Your CommentScoringConfig
