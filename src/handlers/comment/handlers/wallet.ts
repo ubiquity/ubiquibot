@@ -79,7 +79,7 @@ export const registerWallet = async (context: BotContext, body: string) => {
       logger.info("Skipping to register a wallet address because user is trying to set their address to null address");
       return `Cannot set address to null address`;
     }
-    await upsertWalletAddress(sender, address);
+    await upsertWalletAddress(context, sender, address);
     return `Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`;
   }
 

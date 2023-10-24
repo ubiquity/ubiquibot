@@ -84,7 +84,7 @@ export const incentivesCalculation = async (context: BotContext): Promise<Incent
   }
 
   if (accessControl.organization) {
-    const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
+    const userHasPermission = await checkUserPermissionForRepoAndOrg(context, payload.sender.login);
 
     if (!userHasPermission) {
       throw new Error("Permit generation disabled because this issue has been closed by an external contributor.");
@@ -101,13 +101,13 @@ export const incentivesCalculation = async (context: BotContext): Promise<Incent
     const permitComment = comments[permitCommentIdx];
     const permitUrl = permitComment.body.match(claimUrlRegex);
     if (!permitUrl || permitUrl.length < 2) {
-      logger.error(`Permit URL not found`);
+      logger.error(context, `Permit URL not found`);
       throw new Error("Permit generation skipped because permit URL not found");
     }
     const url = new URL(permitUrl[1]);
     const claimBase64 = url.searchParams.get("claim");
     if (!claimBase64) {
-      logger.error(`Permit claim search parameter not found`);
+      logger.error(context, `Permit claim search parameter not found`);
       throw new Error("Permit generation skipped because permit claim search parameter not found");
     }
     let networkId = url.searchParams.get("network");
@@ -118,7 +118,7 @@ export const incentivesCalculation = async (context: BotContext): Promise<Incent
     try {
       claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
     } catch (err: unknown) {
-      logger.error(`${err}`);
+      logger.error(context, `${err}`);
       throw new Error("Permit generation skipped because permit claim is invalid");
     }
     const amount = BigNumber.from(claim.permit.permitted.amount);
@@ -127,7 +127,7 @@ export const incentivesCalculation = async (context: BotContext): Promise<Incent
     // extract assignee
     const events = await getAllIssueAssignEvents(context, issue.number);
     if (events.length === 0) {
-      logger.error(`No assignment found`);
+      logger.error(context, `No assignment found`);
       throw new Error("Permit generation skipped because no assignment found");
     }
     const assignee = events[0].assignee.login;
@@ -135,7 +135,7 @@ export const incentivesCalculation = async (context: BotContext): Promise<Incent
     try {
       await removePenalty(assignee, payload.repository.full_name, tokenAddress, networkId, amount);
     } catch (err) {
-      logger.error(`Failed to remove penalty: ${err}`);
+      logger.error(context, `Failed to remove penalty: ${err}`);
       throw new Error("Permit generation skipped because failed to remove penalty");
     }
 
@@ -160,7 +160,7 @@ export const incentivesCalculation = async (context: BotContext): Promise<Incent
 
   logger.info(`Checking if the issue is a parent issue.`);
   if (issue.body && isParentIssue(issue.body)) {
-    logger.error("Permit generation disabled because this is a collection of issues.");
+    logger.error(context, "Permit generation disabled because this is a collection of issues.");
     await clearAllPriceLabelsOnIssue(context);
     throw new Error("Permit generation disabled because this is a collection of issues.");
   }

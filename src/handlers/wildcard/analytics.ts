@@ -84,7 +84,7 @@ export const collectAnalytics = async (context: BotContext): Promise<void> => {
         .toString()}`
     );
 
-    await Promise.all(userProfilesToUpsert.map((i) => upsertUser(i)));
+    await Promise.all(userProfilesToUpsert.map((i) => upsertUser(context, i)));
 
     // No need to update the record for the bounties already closed
     const bountiesToUpsert = bounties.filter((bounty) => (bounty.state === IssueType.CLOSED ? bounty.number > maximumIssueNumber : true));
@@ -93,7 +93,7 @@ export const collectAnalytics = async (context: BotContext): Promise<void> => {
       bountiesToUpsert.map((i) => {
         const additions = bountyInfo(context, i as Issue);
         if (additions.timelabel && additions.priorityLabel && additions.priceLabel)
-          return upsertIssue(i as Issue, {
+          return upsertIssue(context, i as Issue, {
             labels: {
               timeline: additions.timelabel,
               priority: additions.priorityLabel,

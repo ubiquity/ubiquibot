@@ -18,7 +18,7 @@ export interface LinkedPR {
   prHref: string;
 }
 
-export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitParser) => {
+export const gitLinkedIssueParser = async (context: BotContext, { owner, repo, pull_number }: GitParser) => {
   const logger = getLogger();
   try {
     const { data } = await axios.get(`https://github.com/${owner}/${repo}/pull/${pull_number}`);
@@ -33,12 +33,12 @@ export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitPars
     const issueUrl = linkedIssues[0].querySelector("a")?.attrs?.href || "";
     return issueUrl;
   } catch (error) {
-    logger.error(`${JSON.stringify(error)}`);
+    logger.error(context, `${JSON.stringify(error)}`);
     return null;
   }
 };
 
-export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser): Promise<LinkedPR[]> => {
+export const gitLinkedPrParser = async (context: BotContext, { owner, repo, issue_number }: GitParser): Promise<LinkedPR[]> => {
   const logger = getLogger();
   try {
     const prData = [];
@@ -71,7 +71,7 @@ export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser
 
     return prData;
   } catch (error) {
-    logger.error(`${JSON.stringify(error)}`);
+    logger.error(context, `${JSON.stringify(error)}`);
     return [];
   }
 };

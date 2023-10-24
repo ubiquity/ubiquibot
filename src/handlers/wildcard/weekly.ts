@@ -17,7 +17,7 @@ export const checkWeeklyUpdate = async (context: BotContext) => {
   const lastTime = await getLastWeeklyTime();
   if (lastTime == undefined || new Date(lastTime.getTime() + SEVEN_DAYS) < curTime) {
     await run(context);
-    await updateLastWeeklyTime(curTime);
+    await updateLastWeeklyTime(context, curTime);
   } else {
     log.info(`Skipping to collect the weekly analytics because 7 days have not passed`);
   }

@@ -22,7 +22,7 @@ export const watchLabelChange = async (context: BotContext) => {
   }
 
   // check if user is authorized to make the change
-  const hasAccess = await hasLabelEditPermission(currentLabel, triggerUser, repository.full_name);
+  const hasAccess = await hasLabelEditPermission(context, currentLabel, triggerUser, repository.full_name);
 
   await saveLabelChange(triggerUser, full_name, previousLabel, currentLabel, hasAccess);
   logger.debug("watchLabelChange: label name change saved to db");

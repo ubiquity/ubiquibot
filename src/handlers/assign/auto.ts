@@ -17,7 +17,7 @@ export const checkPullRequests = async (context: BotContext) => {
 
   // Loop through the pull requests and assign them to their respective issues if needed
   for (const pull of pulls) {
-    const linkedIssue = await gitLinkedIssueParser({
+    const linkedIssue = await gitLinkedIssueParser(context, {
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       pull_number: pull.number,

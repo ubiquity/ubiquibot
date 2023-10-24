@@ -50,7 +50,7 @@ export const getPayoutConfigByNetworkId = (networkId: number): PayoutConfigParti
 
 export const hasLabelEditPermission = async (context: BotContext, label: string, caller: string, repository: string) => {
   const logger = getLogger();
-  const permissionLevel = await getUserPermission(caller, context);
+  const permissionLevel = await getUserPermission(context, caller);
 
   // get text before :
   const match = label.split(":");

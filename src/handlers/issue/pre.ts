@@ -8,7 +8,7 @@ export const findDuplicateOne = async (context: BotContext) => {
   const issue = payload.issue;
 
   if (!issue?.body) return;
-  const importantWords = await extractImportantWords(issue);
+  const importantWords = await extractImportantWords(context, issue);
   const perPage = 10;
   let curPage = 1;
 
@@ -27,7 +27,7 @@ export const findDuplicateOne = async (context: BotContext) => {
           for (const result of response.data.items) {
             if (!result.body) continue;
             if (result.id === issue.id) continue;
-            const similarity = await measureSimilarity(issue, result as Issue);
+            const similarity = await measureSimilarity(context, issue, result as Issue);
             if (similarity > parseInt(process.env.SIMILARITY_THRESHOLD || "80")) {
               await upsertCommentToIssue(
                 context,
@@ -43,7 +43,7 @@ export const findDuplicateOne = async (context: BotContext) => {
         else curPage++;
       }
     } catch (e: unknown) {
-      logger.error(`Could not find any issues, reason: ${e}`);
+      logger.error(context, `Could not find any issues, reason: ${e}`);
     }
   }
 };

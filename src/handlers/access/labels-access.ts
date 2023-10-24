@@ -13,7 +13,7 @@ export const handleLabelsAccess = async (context: BotContext) => {
   if (!payload.label?.name) return;
   const sender = payload.sender.login;
   const repo = payload.repository;
-  const permissionLevel = await getUserPermission(sender, context);
+  const permissionLevel = await getUserPermission(context, sender);
   // event in plain english
   const eventName = payload.action === "labeled" ? "add" : "remove";
   const labelName = payload.label.name;

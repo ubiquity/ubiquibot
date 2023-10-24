@@ -63,7 +63,7 @@ export const commentWithAssignMessage = async (context: BotContext): Promise<voi
   const commitMessage = `${flattened_assignees} ${deadLinePrefix} ${endDate.toUTCString().replace("GMT", "UTC")}`;
   logger.debug(`Creating an issue comment, commit_msg: ${commitMessage}`);
 
-  await addCommentToIssue(context, commit_msg, payload.issue?.number);
+  await addCommentToIssue(context, commitMessage, payload.issue?.number);
 };
 
 export const closePullRequestForAnIssue = async (context: BotContext): Promise<void> => {
@@ -71,7 +71,7 @@ export const closePullRequestForAnIssue = async (context: BotContext): Promise<v
   const payload = context.payload as Payload;
   if (!payload.issue?.number) return;
 
-  const prs = await gitLinkedPrParser({
+  const prs = await gitLinkedPrParser(context, {
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     issue_number: payload.issue.number,

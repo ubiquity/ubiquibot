@@ -15,8 +15,8 @@ export const getAdapters = () => adapters;
 export type Logger = {
   info: (msg: string | object, options?: JSON) => void;
   debug: (msg: string | object, options?: JSON) => void;
-  warn: (msg: string | object, options?: JSON) => void;
-  error: (msg: string | object, options?: JSON) => void;
+  warn: (context: BotContext, msg: string | object, options?: JSON) => void;
+  error: (context: BotContext, msg: string | object, options?: JSON) => void;
 };
 
 let logger: Logger;
@@ -58,7 +58,7 @@ export const bindEvents = async (_context: ProbotContext): Promise<void> => {
   }
 
   if (botConfigError) {
-    logger.error(botConfigError.toString());
+    logger.error(context, botConfigError.toString());
     if (eventName === GithubEvent.PUSH_EVENT) {
       await validateConfigChange(context);
     }
@@ -93,7 +93,7 @@ export const bindEvents = async (_context: ProbotContext): Promise<void> => {
     const valid = validate(payload);
     if (!valid) {
       logger.info("Payload schema validation failed!!!", payload);
-      if (validate.errors) logger.warn(validate.errors);
+      if (validate.errors) logger.warn(context, validate.errors);
       return;
     }
 
@@ -108,7 +108,7 @@ export const bindEvents = async (_context: ProbotContext): Promise<void> => {
   // Get the handlers for the action
   const handlers = processors[eventName];
   if (!handlers) {
-    logger.warn(`No handler configured for event: ${eventName}`);
+    logger.warn(context, `No handler configured for event: ${eventName}`);
     return;
   }
 

@@ -118,6 +118,6 @@ export const updateLabelsFromBaseRate = async (context: BotContext, owner: strin
       }
     }
   } catch (error: unknown) {
-    logger.error(`Error updating labels, error: ${error}`);
+    logger.error(context, `Error updating labels, error: ${error}`);
   }
 };

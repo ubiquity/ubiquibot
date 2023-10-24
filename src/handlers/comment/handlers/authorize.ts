@@ -20,7 +20,7 @@ export const approveLabelChange = async (context: BotContext) => {
 
   // check if sender is admin
   // passing in context so we don't have to make another request to get the user
-  const permissionLevel = await getUserPermission(sender, context);
+  const permissionLevel = await getUserPermission(context, sender);
 
   // if sender is not admin, return
   if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {

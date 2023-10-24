@@ -115,7 +115,7 @@ export const savePermitToDB = async (context: BotContext, bountyHunterId: number
   const repository = payload.repository;
   const organization = payload.organization;
   if (!issue || !repository) {
-    logger.error("Cannot save permit to DB, missing issue, repository or organization");
+    logger.error(context, "Cannot save permit to DB, missing issue, repository or organization");
     throw new Error("Cannot save permit to DB, missing issue, repository or organization");
   }
 

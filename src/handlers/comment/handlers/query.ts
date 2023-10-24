@@ -29,7 +29,7 @@ export const query = async (context: BotContext, body: string) => {
     if (!data) {
       logger.info(`Access info does not exist for @${user}`);
       try {
-        await upsertAccessControl(user, repo.full_name, "time_access", true);
+        await upsertAccessControl(context, user, repo.full_name, "time_access", true);
         data = {
           multiplier: false,
           priority: false,
@@ -56,7 +56,7 @@ export const query = async (context: BotContext, body: string) => {
       `;
     }
   } else {
-    logger.error("Invalid body for query command");
+    logger.error(context, "Invalid body for query command");
     return `Invalid syntax for query command \n usage /query @user`;
   }
 };

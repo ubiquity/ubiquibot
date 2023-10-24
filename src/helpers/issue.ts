@@ -34,7 +34,7 @@ export const getAllIssueEvents = async (context: BotContext) => {
     }
   } catch (e: unknown) {
     shouldFetch = false;
-    logger.error(`Getting all issue events failed, reason: ${e}`);
+    logger.error(context, `Getting all issue events failed, reason: ${e}`);
     return null;
   }
   return events;
@@ -201,20 +201,19 @@ export const upsertCommentToIssue = async (context: BotContext, issue_number: nu
   }
 };
 
-export const upsertLastCommentToIssue = async (issue_number: number, commentBody: string) => {
+export const upsertLastCommentToIssue = async (context: BotContext, issue_number: number, commentBody: string) => {
   const logger = getLogger();
 
   try {
-    const comments = await getAllIssueComments(issue_number);
+    const comments = await getAllIssueComments(context, issue_number);
 
-    if (comments.length > 0 && comments[comments.length - 1].body !== commentBody) await addCommentToIssue(commentBody, issue_number);
+    if (comments.length > 0 && comments[comments.length - 1].body !== commentBody) await addCommentToIssue(context, commentBody, issue_number);
   } catch (e: unknown) {
     logger.debug(`Upserting last comment failed! reason: ${e}`);
   }
 };
 
-export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[]> => {
-  const context = getBotContext();
+export const getCommentsOfIssue = async (context: BotContext, issue_number: number): Promise<Comment[]> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -384,15 +383,15 @@ export const removeAssignees = async (context: BotContext, issue_number: number,
   }
 };
 
-export const checkUserPermissionForRepoAndOrg = async (username: string, context: Context): Promise<boolean> => {
-  const permissionForRepo = await checkUserPermissionForRepo(username, context);
-  const permissionForOrg = await checkUserPermissionForOrg(username, context);
-  const userPermission = await getUserPermission(username, context);
+export const checkUserPermissionForRepoAndOrg = async (context: BotContext, username: string): Promise<boolean> => {
+  const permissionForRepo = await checkUserPermissionForRepo(context, username);
+  const permissionForOrg = await checkUserPermissionForOrg(context, username);
+  const userPermission = await getUserPermission(context, username);
 
   return permissionForOrg || permissionForRepo || userPermission === "admin" || userPermission === "billing_manager";
 };
 
-export const checkUserPermissionForRepo = async (username: string, context: Context): Promise<boolean> => {
+export const checkUserPermissionForRepo = async (context: BotContext, username: string): Promise<boolean> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -405,12 +404,12 @@ export const checkUserPermissionForRepo = async (username: string, context: Cont
 
     return res.status === 204;
   } catch (e: unknown) {
-    logger.error(`Checking if user permisson for repo failed! reason: ${e}`);
+    logger.error(context, `Checking if user permisson for repo failed! reason: ${e}`);
     return false;
   }
 };
 
-export const checkUserPermissionForOrg = async (username: string, context: Context): Promise<boolean> => {
+export const checkUserPermissionForOrg = async (context: BotContext, username: string): Promise<boolean> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.organization) return false;
@@ -423,12 +422,12 @@ export const checkUserPermissionForOrg = async (username: string, context: Conte
     // skipping status check due to type error of checkMembershipForUser function of octokit
     return true;
   } catch (e: unknown) {
-    logger.error(`Checking if user permisson for org failed! reason: ${e}`);
+    logger.error(context, `Checking if user permisson for org failed! reason: ${e}`);
     return false;
   }
 };
 
-export const getUserPermission = async (username: string, context: Context): Promise<string> => {
+export const getUserPermission = async (context: BotContext, username: string): Promise<string> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -601,7 +600,7 @@ export const getPullRequestReviews = async (
   }
 };
 
-export const getReviewRequests = async (context: Context, pull_number: number, owner: string, repo: string) => {
+export const getReviewRequests = async (context: BotContext, pull_number: number, owner: string, repo: string) => {
   const logger = getLogger();
   try {
     const response = await context.octokit.pulls.listRequestedReviewers({
@@ -611,7 +610,7 @@ export const getReviewRequests = async (context: Context, pull_number: number, o
     });
     return response.data;
   } catch (e: unknown) {
-    logger.error(`Error: could not get requested reviewers, reason: ${e}`);
+    logger.error(context, `Error: could not get requested reviewers, reason: ${e}`);
     return null;
   }
 };

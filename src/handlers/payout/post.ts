@@ -162,7 +162,7 @@ export const calculatePullRequestReviewsReward = async (context: BotContext, inc
   const logger = getLogger();
   const title = "Review-Reviewer";
 
-  const linkedPullRequest = await gitLinkedPrParser({
+  const linkedPullRequest = await gitLinkedPrParser(context, {
     owner: incentivesCalculation.payload.repository.owner.login,
     repo: incentivesCalculation.payload.repository.name,
     issue_number: incentivesCalculation.issue.number,

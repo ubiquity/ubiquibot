@@ -67,7 +67,7 @@ export const autoPay = async (context: BotContext, body: string) => {
   const res = body.match(pattern);
 
   if (res) {
-    const userPermission = await getUserPermission(payload.sender.login, context);
+    const userPermission = await getUserPermission(context, payload.sender.login);
     if (userPermission !== "admin" && userPermission !== "billing_manager") {
       return "You must be an `admin` or `billing_manager` to toggle automatic payments for completed issues.";
     }

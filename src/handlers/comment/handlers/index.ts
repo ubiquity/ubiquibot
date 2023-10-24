@@ -181,13 +181,13 @@ export const issueReopenedCallback = async (context: BotContext): Promise<void> 
     const permitComment = comments[permitCommentIdx];
     const permitUrl = permitComment.body.match(claimUrlRegex);
     if (!permitUrl || permitUrl.length < 2) {
-      logger.error(`Permit URL not found`);
+      logger.error(context, `Permit URL not found`);
       return;
     }
     const url = new URL(permitUrl[1]);
     const claimBase64 = url.searchParams.get("claim");
     if (!claimBase64) {
-      logger.error(`Permit claim search parameter not found`);
+      logger.error(context, `Permit claim search parameter not found`);
       return;
     }
     let networkId = url.searchParams.get("network");
@@ -199,7 +199,7 @@ export const issueReopenedCallback = async (context: BotContext): Promise<void> 
     try {
       claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
     } catch (err: unknown) {
-      logger.error(`Error parsing claim: ${err}`);
+      logger.error(context, `Error parsing claim: ${err}`);
       return;
     }
     const amount = BigNumber.from(claim.permit.permitted.amount);
@@ -210,7 +210,7 @@ export const issueReopenedCallback = async (context: BotContext): Promise<void> 
     // find latest assignment before the permit comment
     const events = await getAllIssueAssignEvents(context, issue.number);
     if (events.length === 0) {
-      logger.error(`No assignment found`);
+      logger.error(context, `No assignment found`);
       return;
     }
     const assignee = events[0].assignee.login;
@@ -220,7 +220,7 @@ export const issueReopenedCallback = async (context: BotContext): Promise<void> 
       try {
         await addPenalty(assignee, repository.full_name, tokenAddress, networkId.toString(), amount);
       } catch (err) {
-        logger.error(`Error writing penalty to db: ${err}`);
+        logger.error(context, `Error writing penalty to db: ${err}`);
         return;
       }
 

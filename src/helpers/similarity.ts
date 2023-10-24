@@ -3,10 +3,11 @@ import axios, { AxiosError } from "axios";
 import { ajv } from "../utils";
 import { Static, Type } from "@sinclair/typebox";
 import { backOff } from "exponential-backoff";
-import { Issue } from "../types";
+import { BotContext, Issue } from "../types";
 
-export const extractImportantWords = async (issue: Issue): Promise<string[]> => {
+export const extractImportantWords = async (context: BotContext, issue: Issue): Promise<string[]> => {
   const res = await getAnswerFromChatGPT(
+    context,
     "",
     `${
       process.env.CHATGPT_USER_PROMPT_FOR_IMPORTANT_WORDS ||
@@ -18,8 +19,9 @@ export const extractImportantWords = async (issue: Issue): Promise<string[]> => 
   return res.split(/[,# ]/);
 };
 
-export const measureSimilarity = async (first: Issue, second: Issue): Promise<number> => {
+export const measureSimilarity = async (context: BotContext, first: Issue, second: Issue): Promise<number> => {
   const res = await getAnswerFromChatGPT(
+    context,
     "",
     `${(
       process.env.CHATGPT_USER_PROMPT_FOR_MEASURE_SIMILARITY ||
@@ -48,7 +50,13 @@ const ChoicesSchema = Type.Object({
 
 type Choices = Static<typeof ChoicesSchema>;
 
-export const getAnswerFromChatGPT = async (systemPrompt: string, userPrompt: string, temperature = 0, max_tokens = 1500): Promise<string> => {
+export const getAnswerFromChatGPT = async (
+  context: BotContext,
+  systemPrompt: string,
+  userPrompt: string,
+  temperature = 0,
+  max_tokens = 1500
+): Promise<string> => {
   const logger = getLogger();
   const body = JSON.stringify({
     model: "gpt-3.5-turbo",
@@ -87,18 +95,18 @@ export const getAnswerFromChatGPT = async (systemPrompt: string, userPrompt: str
     const validate = ajv.compile(ChoicesSchema);
     const valid = validate(data);
     if (!valid) {
-      logger.error(`Error occured from OpenAI`);
+      logger.error(context, `Error occured from OpenAI`);
       return "";
     }
     const { choices: choice } = data;
     if (choice.length <= 0) {
-      logger.error(`No result from OpenAI`);
+      logger.error(context, `No result from OpenAI`);
       return "";
     }
     const answer = choice[0].message.content;
     return answer;
   } catch (error) {
-    logger.error(`Getting response from ChatGPT failed: ${error}`);
+    logger.error(context, `Getting response from ChatGPT failed: ${error}`);
     return "";
   }
 };

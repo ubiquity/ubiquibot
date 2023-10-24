@@ -14,7 +14,7 @@ export const pricingLabelLogic = async (context: BotContext): Promise<void> => {
   const labelNames = labels.map((i) => i.name);
   logger.info(`Checking if the issue is a parent issue.`);
   if (payload.issue.body && isParentIssue(payload.issue.body)) {
-    logger.error("Identified as parent issue. Disabling price label.");
+    logger.error(context, "Identified as parent issue. Disabling price label.");
     const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));
     if (issuePrices.length) {
       await addCommentToIssue(context, GLOBAL_STRINGS.skipPriceLabelGenerationComment, payload.issue.number);

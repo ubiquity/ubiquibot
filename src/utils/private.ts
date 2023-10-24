@@ -1,6 +1,6 @@
 import _sodium from "libsodium-wrappers";
 import YAML from "yaml";
-import { MergedConfig, Payload } from "../types";
+import { BotContext, MergedConfig, Payload } from "../types";
 import { Context } from "probot";
 import merge from "lodash/merge";
 
@@ -108,7 +108,7 @@ const mergeConfigs = (configs: MergedConfigs) => {
   return merge({}, configs.parsedDefault, configs.parsedOrg, configs.parsedRepo);
 };
 
-export const getWideConfig = async (context: Context) => {
+export const getWideConfig = async (context: BotContext) => {
   const orgConfig = await getConfigSuperset(context, "org", CONFIG_PATH);
   const repoConfig = await getConfigSuperset(context, "repo", CONFIG_PATH);
   const payload = context.payload as Payload;
@@ -119,7 +119,7 @@ export const getWideConfig = async (context: Context) => {
     const { valid, error } = validate(WideConfigSchema, parsedOrg);
     if (!valid) {
       const err = new Error(`Invalid org config: ${error}`);
-      if (payload.issue) await upsertLastCommentToIssue(payload.issue.number, err.message);
+      if (payload.issue) await upsertLastCommentToIssue(context, payload.issue.number, err.message);
       throw err;
     }
   }
@@ -130,7 +130,7 @@ export const getWideConfig = async (context: Context) => {
     const { valid, error } = validate(WideConfigSchema, parsedRepo);
     if (!valid) {
       const err = new Error(`Invalid repo config: ${error}`);
-      if (payload.issue) await upsertLastCommentToIssue(payload.issue.number, err.message);
+      if (payload.issue) await upsertLastCommentToIssue(context, payload.issue.number, err.message);
       throw err;
     }
   }
