@@ -47,15 +47,15 @@ export class ScoringRubric {
     ul: new ElementScoreConfig("ul", ONE),
     li: new ElementScoreConfig("li", ONE),
     p: new ElementScoreConfig("p", ONE),
-    img: new ElementScoreConfig("img", ONE),
+    img: new ElementScoreConfig("img", ZERO), // disabled
     code: new ElementScoreConfig("code", ONE),
     table: new ElementScoreConfig("table", ONE),
     td: new ElementScoreConfig("td", ONE),
     tr: new ElementScoreConfig("tr", ONE),
     br: new ElementScoreConfig("br", ONE),
-    blockquote: new ElementScoreConfig("blockquote", ONE),
-    em: new ElementScoreConfig("em", ONE),
-    strong: new ElementScoreConfig("strong", ONE),
+    blockquote: new ElementScoreConfig("blockquote", ZERO), // disabled
+    em: new ElementScoreConfig("em", ZERO), // disabled
+    strong: new ElementScoreConfig("strong", ZERO), // disabled
     hr: new ElementScoreConfig("hr", ONE),
     del: new ElementScoreConfig("del", ONE),
     pre: new ElementScoreConfig("pre", ONE),
