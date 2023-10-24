@@ -201,7 +201,20 @@ export const upsertCommentToIssue = async (context: BotContext, issue_number: nu
   }
 };
 
-export const getCommentsOfIssue = async (context: BotContext, issue_number: number): Promise<Comment[]> => {
+export const upsertLastCommentToIssue = async (issue_number: number, commentBody: string) => {
+  const logger = getLogger();
+
+  try {
+    const comments = await getAllIssueComments(issue_number);
+
+    if (comments.length > 0 && comments[comments.length - 1].body !== commentBody) await addCommentToIssue(commentBody, issue_number);
+  } catch (e: unknown) {
+    logger.debug(`Upserting last comment failed! reason: ${e}`);
+  }
+};
+
+export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[]> => {
+  const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
 

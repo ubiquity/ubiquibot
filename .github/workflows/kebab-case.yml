@@ -20,11 +20,11 @@ jobs:
             "^\.\/dist"
             "^\.\/build"
             "^\.\/vendor"
+            "^\.\/test"
             "^\.\/\.next"
             "\.sql$"
             "\.md$"
             "\.d.ts$"
-            "^\.\/\log-app"
           )
           while read -r file; do
             basefile=$(basename "$file")
