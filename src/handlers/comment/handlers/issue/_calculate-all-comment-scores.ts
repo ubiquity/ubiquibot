@@ -23,6 +23,8 @@ const scoringByRole = {
 };
 
 export async function _calculateAllCommentScores(issue: Issue, contributorComments: Comment[]) {
+  const runtime = Runtime.getState();
+
   const usersOfCommentsByRole: UsersOfCommentsByRole = await _getUsersInRolesEnsureUnique(issue, contributorComments);
   const commentsByRole = _filterCommentsByRole(usersOfCommentsByRole, contributorComments);
   const roles = Object.keys(usersOfCommentsByRole) as IssueRole[]; // ["Issue Issuer", "Issue Assignee", "Issue Collaborator", "Issue Default"]
@@ -32,7 +34,7 @@ export async function _calculateAllCommentScores(issue: Issue, contributorCommen
     const scoring = scoringByRole[role];
     const selection = usersOfCommentsByRole[role];
     if (!selection) {
-      console.trace("no assignee");
+      runtime.logger.verbose(`No ${role} found`);
       continue;
     }
     if (Array.isArray(selection)) {

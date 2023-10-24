@@ -13,7 +13,7 @@ export async function startCommandHandler() {
     return logger.error("Issue is not defined");
   }
 
-  const assignees = payload.issue?.assignees;
+  const assignees = payload.issue.assignees;
 
   // If no valid assignees exist, log a debug message and return
   if (assignees.length === 0) {

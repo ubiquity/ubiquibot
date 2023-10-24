@@ -14,8 +14,8 @@ const ONE = new Decimal(1);
 
 type ScoringRubricConstructor = {
   role: IssueRole;
-  multiplier?: number;
-  wordValue?: number;
+  multiplier: number;
+  wordValue: number;
 };
 export class ScoringRubric {
   public role: IssueRole;
@@ -31,13 +31,14 @@ export class ScoringRubric {
     [userId: number]: {
       [commentId: number]: {
         wordScoreTotal: Decimal;
-        wordScoreDetails?: { [word: string]: Decimal }; // Add this line
+        wordScoreDetails: { [word: string]: Decimal };
         elementScoreTotal: Decimal;
-        elementScoreDetails?: { [key: string]: { count: number; score: Decimal } }; // Add this line
+        elementScoreDetails: { [key: string]: { count: number; score: Decimal; words: number } };
       };
     };
   } = {};
-  private _elementConfig: { [key: string]: { value: Decimal; disabled?: boolean } } = {
+
+  private _elementConfig: { [key: string]: { element: string; value: Decimal; disabled?: boolean } } = {
     img: new ElementScoreConfig({ element: "img", value: NEG_ONE, ignored: true }), // disabled
     blockquote: new ElementScoreConfig({ element: "blockquote", value: NEG_ONE, ignored: true }), // disabled
     em: new ElementScoreConfig({ element: "em", value: NEG_ONE, ignored: true }), // disabled
@@ -171,6 +172,7 @@ export class ScoringRubric {
         wordScoreTotal: NEG_ONE,
         elementScoreTotal: NEG_ONE,
         wordScoreDetails: {},
+        elementScoreDetails: {},
       };
     }
     this.commentScores[userId][commentId].wordScoreTotal = totalWordScore;
@@ -193,7 +195,7 @@ export class ScoringRubric {
     const selectedUser = _.mapValues(_.cloneDeep(this._elementConfig), () => ({
       count: 0,
       score: ZERO,
-      words: 0, // Add this line
+      words: 0,
     }));
 
     let totalElementScore = ZERO;
@@ -201,7 +203,7 @@ export class ScoringRubric {
       const tag = selectedUser[incomingTag];
       tag.count = this._countTags(htmlString, incomingTag);
       tag.score = this._elementConfig[incomingTag].value.times(tag.count);
-      tag.words = this._countWordsInTag(htmlString, incomingTag); // Add this line
+      tag.words = this._countWordsInTag(htmlString, incomingTag);
       if (tag.count !== 0 || !tag.score.isZero()) {
         totalElementScore = totalElementScore.plus(tag.score);
       } else {
@@ -222,7 +224,8 @@ export class ScoringRubric {
       this.commentScores[userId][comment.id] = {
         wordScoreTotal: NEG_ONE,
         elementScoreTotal: NEG_ONE,
-        elementScoreDetails: {}, // Add this line
+        elementScoreDetails: {},
+        wordScoreDetails: {},
       };
     }
     this.commentScores[userId][comment.id].elementScoreTotal = totalElementScore;

@@ -91,7 +91,7 @@ const UserSchema = Type.Object({
 
 export type User = Static<typeof UserSchema>;
 // type UserProfile= Static<typeof UserProfileSchema>;
-enum _AuthorAssociation {
+export enum _AuthorAssociation {
   OWNER = "OWNER",
   COLLABORATOR = "COLLABORATOR",
   MEMBER = "MEMBER",

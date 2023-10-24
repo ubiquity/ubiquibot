@@ -11,7 +11,7 @@ import { createDevPoolPR } from "./pull-request";
 import { validateConfigChange } from "./push";
 import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
 import { onLabelChangeSetPricing } from "./pricing/pricing-label";
-import { issueReopened } from "./comment/handlers/issue/archive/issue-reopened";
+import Runtime from "../bindings/bot-runtime";
 
 /**
  * @dev
@@ -19,6 +19,8 @@ import { issueReopened } from "./comment/handlers/issue/archive/issue-reopened";
  * main action MUST return a message to comment on the issue. its return type MUST BE either `string` for plaintext or `LogReturn` for color to signal success, warning, or failure status
  * TODO: all MUST receive `Context` as the only parameter
  */
+
+const runtime = Runtime.getState();
 
 export const processors: Record<string, Handler> = {
   [GitHubEvent.ISSUES_OPENED]: {
@@ -28,7 +30,7 @@ export const processors: Record<string, Handler> = {
   },
   [GitHubEvent.ISSUES_REOPENED]: {
     pre: [],
-    action: [issueReopened],
+    action: [async () => runtime.logger.debug("TODO: replace ISSUES_REOPENED handler")],
     post: [],
   },
   [GitHubEvent.ISSUES_LABELED]: {
