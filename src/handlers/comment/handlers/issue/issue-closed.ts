@@ -9,7 +9,6 @@ import Decimal from "decimal.js";
 import { IssueRole } from "./archive/calculate-score-typings";
 import { ScoringRubric } from "./scoring-rubric";
 
-// TODO: make a filter to scrub out block quotes
 const botCommandsAndCommentsFilter = (comment: Comment) =>
   !comment.body.startsWith("/") /* No Commands */ && comment.user.type === "User"; /* No Bots */
 

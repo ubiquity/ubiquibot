@@ -1,3 +1,4 @@
+import { JSDOM } from "jsdom";
 // TODO: should be inherited from default config. This is a temporary solution.
 import Decimal from "decimal.js";
 import { IssueRole } from "./archive/calculate-score-typings";
@@ -36,30 +37,31 @@ export class ScoringRubric {
       };
     };
   } = {};
-  private _elementConfig: { [key: string]: { value: Decimal } } = {
-    h1: new ElementScoreConfig("h1", ONE),
-    h2: new ElementScoreConfig("h2", ONE),
-    h3: new ElementScoreConfig("h3", ONE),
-    h4: new ElementScoreConfig("h4", ONE),
-    h5: new ElementScoreConfig("h5", ONE),
-    h6: new ElementScoreConfig("h6", ONE),
-    a: new ElementScoreConfig("a", ONE),
-    ul: new ElementScoreConfig("ul", ONE),
-    li: new ElementScoreConfig("li", ONE),
-    p: new ElementScoreConfig("p", ONE),
-    img: new ElementScoreConfig("img", ZERO), // disabled
-    code: new ElementScoreConfig("code", ONE),
-    table: new ElementScoreConfig("table", ONE),
-    td: new ElementScoreConfig("td", ONE),
-    tr: new ElementScoreConfig("tr", ONE),
-    br: new ElementScoreConfig("br", ONE),
-    blockquote: new ElementScoreConfig("blockquote", ZERO), // disabled
-    em: new ElementScoreConfig("em", ZERO), // disabled
-    strong: new ElementScoreConfig("strong", ZERO), // disabled
-    hr: new ElementScoreConfig("hr", ONE),
-    del: new ElementScoreConfig("del", ONE),
-    pre: new ElementScoreConfig("pre", ONE),
-    ol: new ElementScoreConfig("ol", ONE),
+  private _elementConfig: { [key: string]: { value: Decimal; disabled?: boolean } } = {
+    img: new ElementScoreConfig({ element: "img", value: NEG_ONE, ignored: true }), // disabled
+    blockquote: new ElementScoreConfig({ element: "blockquote", value: NEG_ONE, ignored: true }), // disabled
+    em: new ElementScoreConfig({ element: "em", value: NEG_ONE, ignored: true }), // disabled
+    strong: new ElementScoreConfig({ element: "strong", value: NEG_ONE, ignored: true }), // disabled
+
+    h1: new ElementScoreConfig({ element: "h1", value: ONE }),
+    h2: new ElementScoreConfig({ element: "h2", value: ONE }),
+    h3: new ElementScoreConfig({ element: "h3", value: ONE }),
+    h4: new ElementScoreConfig({ element: "h4", value: ONE }),
+    h5: new ElementScoreConfig({ element: "h5", value: ONE }),
+    h6: new ElementScoreConfig({ element: "h6", value: ONE }),
+    a: new ElementScoreConfig({ element: "a", value: ONE }),
+    // ul: new ElementScoreConfig({ element: "ul", value: ONE }),
+    li: new ElementScoreConfig({ element: "li", value: ONE }),
+    // p: new ElementScoreConfig({ element: "p", value: ZERO }),
+    code: new ElementScoreConfig({ element: "code", value: ONE }),
+    // table: new ElementScoreConfig({ element: "table", value: ONE }),
+    td: new ElementScoreConfig({ element: "td", value: ONE }),
+    // tr: new ElementScoreConfig({ element: "tr", value: ONE }),
+    br: new ElementScoreConfig({ element: "br", value: ONE }),
+    hr: new ElementScoreConfig({ element: "hr", value: ONE }),
+    // del: new ElementScoreConfig({ element: "del", value: ONE }),
+    // pre: new ElementScoreConfig({ element: "pre", value: ONE }),
+    // ol: new ElementScoreConfig({ element: "ol", value: ONE }),
   };
 
   constructor({ role, multiplier = 1, wordValue = 0 }: ScoringRubricConstructor) {
@@ -77,9 +79,7 @@ export class ScoringRubric {
         ? Object.values(userElementScore).reduce((total, { score }) => total.plus(score), ZERO)
         : ZERO;
 
-      const totalWordScore = userWordScoreDetails
-        ? Object.values(userWordScoreDetails).reduce((total: Decimal, count: Decimal) => total.plus(count), ZERO)
-        : ZERO;
+      const totalWordScore = userWordScoreDetails instanceof Decimal ? userWordScoreDetails : ZERO;
 
       this.userWordScoreTotals[userId] = new Decimal(totalElementScore).plus(new Decimal(totalWordScore));
 
@@ -104,13 +104,41 @@ export class ScoringRubric {
     return score;
   }
   public computeWordScore(comment: Comment, userId: number) {
-    const words = comment.body.match(/\w+/g) || [];
+    const words = this._getWordsNotInDisabledElements(comment);
     const wordScoreDetails = this._calculateWordScores(words);
     const totalWordScore = this._calculateTotalScore(wordScoreDetails);
 
     this._storeCommentWordScore(userId, comment.id, totalWordScore, wordScoreDetails);
 
     return this.commentScores[userId][comment.id].wordScoreDetails;
+  }
+
+  private _getWordsNotInDisabledElements(comment: Comment): string[] {
+    const htmlString = md.render(comment.body);
+    const dom = new JSDOM(htmlString);
+    const doc = dom.window.document;
+    const disabledElements = Object.entries(this._elementConfig)
+      .filter(([_, config]) => config.disabled)
+      .map(([elementName, _]) => elementName);
+
+    disabledElements.forEach((elementName) => {
+      const elements = doc.getElementsByTagName(elementName);
+      for (let i = 0; i < elements.length; i++) {
+        this._removeTextContent(elements[i]); // Recursively remove text content
+      }
+    });
+
+    // Provide a default value when textContent is null
+    return (doc.body.textContent || "").match(/\w+/g) || [];
+  }
+
+  private _removeTextContent(element: Element): void {
+    if (element.hasChildNodes()) {
+      for (const child of Array.from(element.childNodes)) {
+        this._removeTextContent(child as Element);
+      }
+    }
+    element.textContent = ""; // Remove the text content of the element
   }
 
   private _calculateWordScores(words: string[]): { [key: string]: Decimal } {
@@ -213,6 +241,10 @@ export class ScoringRubric {
   }
 
   private _countTags(html: string, tag: string) {
+    if (this._elementConfig[tag].disabled) {
+      return 0;
+    }
+
     const regex = new RegExp(`<${tag}[^>]*>`, "g");
     return (html.match(regex) || []).length;
   }
