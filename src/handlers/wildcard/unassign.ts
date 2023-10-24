@@ -22,10 +22,10 @@ export async function checkTasksToUnassign() {
   // because GitHub's REST API v3 considers every pull request an issue
   const issues_opened = await listAllIssuesForRepo(IssueType.OPEN);
 
-  const assigned_issues = issues_opened.filter((issue) => issue.assignee);
+  const assignedIssues = issues_opened.filter((issue) => issue.assignee);
 
   // Checking the tasks in parallel
-  const res = await Promise.all(assigned_issues.map(async (issue: Issue) => checkTaskToUnassign(issue)));
+  const res = await Promise.all(assignedIssues.map(async (issue: Issue) => checkTaskToUnassign(issue)));
   logger.info("Checking expired tasks done!", { total: res.length, unassigned: res.filter((i) => i).length });
 }
 
@@ -38,8 +38,15 @@ async function checkTaskToUnassign(issue: Issue) {
   const { disqualifyTime, followUpTime } = unassign;
 
   logger.info("Checking the task to unassign...", { issue_number: issue.number });
-  const assignees = issue.assignees.map((i) => i.login);
+  const assignees = (issue.assignees ? issue.assignees.map((i) => i?.login) : []).filter(Boolean);
   const comments = await getAllIssueComments(issue.number);
+
+  let lastActivity = await lastActivityTime(
+    issue,
+    comments,
+    assignees.filter((assignee): assignee is string => assignee !== undefined)
+  );
+
   if (!comments || comments.length == 0) return false;
 
   const askUpdateComments = comments
@@ -51,9 +58,13 @@ async function checkTaskToUnassign(issue: Issue) {
       ? new Date(askUpdateComments[0].created_at).getTime()
       : new Date(issue.created_at).getTime();
   const curTimestamp = new Date().getTime();
-  const lastActivity = await lastActivityTime(issue, comments);
+  lastActivity = await lastActivityTime(
+    issue,
+    comments,
+    assignees.filter((assignee): assignee is string => assignee !== undefined)
+  );
   const passedDuration = curTimestamp - lastActivity.getTime();
-  const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee.login);
+  const pullRequest = issue.assignee ? await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee.login) : [];
 
   if (pullRequest.length > 0) {
     const reviewRequests = await getReviewRequests(
@@ -70,8 +81,8 @@ async function checkTaskToUnassign(issue: Issue) {
   if (passedDuration >= disqualifyTime || passedDuration >= followUpTime) {
     if (passedDuration >= disqualifyTime) {
       // remove assignees from the issue
-      await removeAssignees(issue.number, assignees);
-
+      const validAssignees = assignees.filter((assignee): assignee is string => assignee !== undefined);
+      await removeAssignees(issue.number, validAssignees);
       return logger.warn("The task has been unassigned due to lack of updates", {
         issue_number: issue.number,
         passedDuration,
@@ -104,11 +115,11 @@ async function checkTaskToUnassign(issue: Issue) {
   }
 }
 
-async function lastActivityTime(issue: Issue, comments: Comment[]): Promise<Date> {
+async function lastActivityTime(issue: Issue, comments: Comment[], assignees: string[]): Promise<Date> {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   logger.info("Checking the latest activity for the issue...", { issue_number: issue.number });
-  const assignees = issue.assignees.map((i) => i.login);
+  await removeAssignees(issue.number, assignees);
   const activities: Date[] = [new Date(issue.created_at)];
 
   const lastAssignCommentOfHunter = comments

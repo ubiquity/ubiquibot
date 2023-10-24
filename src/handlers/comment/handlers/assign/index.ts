@@ -59,7 +59,7 @@ export async function assign(body: string) {
   if (issue.state == IssueType.CLOSED) {
     throw logger.warn("Skipping '/start' since the issue is closed");
   }
-  const assignees: User[] = payload.issue?.assignees ?? [];
+  const assignees: User[] = (payload.issue?.assignees ?? []).filter(Boolean) as User[];
 
   if (assignees.length !== 0) {
     throw logger.warn("Skipping '/start' since the issue is already assigned");

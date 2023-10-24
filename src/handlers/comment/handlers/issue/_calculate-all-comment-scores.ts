@@ -1,8 +1,10 @@
 import Runtime from "../../../../bindings/bot-runtime";
 import { Comment, Issue, User } from "../../../../types/payload";
-import { IssueRole } from "./archive/calculate-score-typings";
+// import { IssueRole } from "./archive/calculate-score-typings";
 import { getCollaboratorsForRepo } from "./get-collaborator-ids-for-repo";
 import { ScoringRubric } from "./scoring-rubric";
+
+export type IssueRole = "Issue Issuer" | "Issue Assignee" | "Issue Collaborator" | "Issue Default";
 
 type UsersOfCommentsByRole = {
   "Issue Issuer": User;
@@ -85,34 +87,34 @@ function _filterCommentsByRole(usersOfCommentsByRole: UsersOfCommentsByRole, con
   };
 }
 
-async function _getUsersInRoles(issue: Issue, contributorComments: Comment[]) {
-  // This finds every user from the comments and
-  // derives which role they fall under
-  // this can be redundant, as a user can be an issuer, assignee and a collaborator
-  const context = Runtime.getState().latestEventContext;
+// async function _getUsersInRoles(issue: Issue, contributorComments: Comment[]) {
+//   // This finds every user from the comments and
+//   // derives which role they fall under
+//   // this can be redundant, as a user can be an issuer, assignee and a collaborator
+//   const context = Runtime.getState().latestEventContext;
 
-  const issueIssuerUser = issue.user;
-  const issueAssigneeUser = issue.assignee;
-  const collaboratorUsers = await getCollaboratorsForRepo(context);
+//   const issueIssuerUser = issue.user;
+//   const issueAssigneeUser = issue.assignee;
+//   const collaboratorUsers = await getCollaboratorsForRepo(context);
 
-  const roleIds = {
-    "Issue Issuer": issueIssuerUser,
-    "Issue Assignee": issueAssigneeUser,
-    "Issue Collaborator": collaboratorUsers,
-    "Issue Default": (function getRemainderUsers() {
-      const allRoleUsers = [issueIssuerUser, issueAssigneeUser, ...collaboratorUsers];
-      const humanUsersWhoCommented = contributorComments
-        .filter((comment) => comment.user.type === "User")
-        .map((comment) => comment.user);
+//   const roleIds = {
+//     "Issue Issuer": issueIssuerUser,
+//     "Issue Assignee": issueAssigneeUser,
+//     "Issue Collaborator": collaboratorUsers,
+//     "Issue Default": (function getRemainderUsers() {
+//       const allRoleUsers = [issueIssuerUser, issueAssigneeUser, ...collaboratorUsers];
+//       const humanUsersWhoCommented = contributorComments
+//         .filter((comment) => comment.user.type === "User")
+//         .map((comment) => comment.user);
 
-      const remainingUsers = humanUsersWhoCommented.filter(
-        (user: User) => !allRoleUsers.some((_user) => _user?.id === user.id)
-      );
-      return remainingUsers;
-    })(),
-  };
-  return roleIds;
-}
+//       const remainingUsers = humanUsersWhoCommented.filter(
+//         (user: User) => !allRoleUsers.some((_user) => _user?.id === user.id)
+//       );
+//       return remainingUsers;
+//     })(),
+//   };
+//   return roleIds;
+// }
 
 async function _getUsersInRolesEnsureUnique(issue: Issue, contributorComments: Comment[]) {
   const context = Runtime.getState().latestEventContext;

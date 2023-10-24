@@ -1,13 +1,11 @@
+import Decimal from "decimal.js";
 import Runtime from "../../../../bindings/bot-runtime";
 import { getAllIssueComments } from "../../../../helpers";
-import { Issue, Payload } from "../../../../types/payload";
+import { Comment, Issue, Payload } from "../../../../types/payload";
 import { calculateQualScore } from "./calculate-quality-score";
 import { calculateQuantScore } from "./calculate-quantity-score";
-import { Comment } from "../../../../types/payload";
-import util from "util";
-import Decimal from "decimal.js";
-import { IssueRole } from "./archive/calculate-score-typings";
 import { ScoringRubric } from "./scoring-rubric";
+import { postPermits } from "./post-permits";
 
 const botCommandsAndCommentsFilter = (comment: Comment) =>
   !comment.body.startsWith("/") /* No Commands */ && comment.user.type === "User"; /* No Bots */
@@ -15,9 +13,20 @@ const botCommandsAndCommentsFilter = (comment: Comment) =>
 export async function issueClosed() {
   const { issue, logger } = preamble();
   const issueComments = await getAllIssueComments(issue.number);
-
   const contributorComments = issueComments.filter(botCommandsAndCommentsFilter);
+  const totals = await calculateScores(issue, contributorComments);
 
+  // TODO: check if the permits were already posted before posting
+  // TODO: calculate issue specification score.
+  // TODO: calculate pull request conversation score.
+  // TODO: post the permits to the issue
+
+  await postPermits(totals, contributorComments, issue);
+
+  return logger.ok("Issue closed. Check metadata for scoring details.", totals);
+}
+
+async function calculateScores(issue: Issue, contributorComments: Comment[]) {
   const qualityScore = await calculateQualScore(issue, contributorComments); // the issue specification is not included in this array scoring, it is only for the other contributor comments
   const qualityScoresWithMetaData = qualityScore.relevanceScores.map((score, index) => ({
     commentId: contributorComments[index].id,
@@ -27,29 +36,7 @@ export async function issueClosed() {
   const quantityScore = await calculateQuantScore(issue, contributorComments);
 
   const totals = applyQualityScoreToQuantityScore(qualityScoresWithMetaData, quantityScore);
-
-  // util.inspect.defaultOptions.depth = 10;
-  // util.inspect.defaultOptions.colors = true;
-  // util.inspect.defaultOptions.showHidden = true;
-  // util.inspect.defaultOptions.maxArrayLength = Infinity;
-  // util.inspect.defaultOptions.compact = false;
-  // util.inspect.defaultOptions.breakLength = Infinity;
-  // util.inspect.defaultOptions.maxStringLength = Infinity;
-  // const buffer = util.inspect(
-  //   {
-  //     // qualityScore,
-  //     // commentQualityMapping,
-  //     // quantityScore,
-  //     totals,
-  //   },
-  //   false,
-  //   null,
-  //   true /* enable colors */
-  // );
-
-  // console.log(buffer);
-
-  return logger.ok("Issue closed. Check metadata for scoring details.", totals);
+  return totals;
 }
 
 function preamble() {

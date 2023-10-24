@@ -1,11 +1,11 @@
 import { JSDOM } from "jsdom";
 // TODO: should be inherited from default config. This is a temporary solution.
 import Decimal from "decimal.js";
-import { IssueRole } from "./archive/calculate-score-typings";
 import MarkdownIt from "markdown-it";
 import { ElementScoreConfig } from "./element-score-config";
 import _ from "lodash";
 import { Comment } from "../../../../types/payload";
+import { IssueRole } from "./_calculate-all-comment-scores";
 
 const md = new MarkdownIt();
 const NEG_ONE = new Decimal(-1);

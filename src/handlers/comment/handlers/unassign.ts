@@ -24,10 +24,10 @@ export async function unassign(body: string) {
   if (assignees.length == 0) {
     return logger.warn("No assignees found for issue", { issueNumber });
   }
-  const shouldUnassign = payload.sender.login.toLowerCase() == assignees[0].login.toLowerCase();
+  const shouldUnassign = assignees[0]?.login.toLowerCase() == payload.sender.login.toLowerCase();
   logger.debug("Unassigning sender", {
     sender: payload.sender.login.toLowerCase(),
-    assignee: assignees[0].login.toLowerCase(),
+    assignee: assignees[0]?.login.toLowerCase(),
     shouldUnassign,
   });
 
@@ -35,7 +35,7 @@ export async function unassign(body: string) {
     await closePullRequestForAnIssue();
     await removeAssignees(
       issueNumber,
-      assignees.map((i) => i.login)
+      assignees.map((i) => i?.login).filter((login): login is string => login !== undefined)
     );
     return logger.ok("You have been unassigned from the task", { issueNumber, user: payload.sender.login });
   }

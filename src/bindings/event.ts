@@ -17,7 +17,6 @@ import { Payload } from "../types/payload";
 import { ajv } from "../utils";
 import Runtime from "./bot-runtime";
 import { loadConfig } from "./config";
-import util from "util";
 const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
 type PreHandlerWithType = { type: string; actions: PreActionHandler[] };
 type HandlerWithType = { type: string; actions: MainActionHandler[] };
