@@ -1,6 +1,4 @@
-import { getBotConfig, getBotContext, getLogger } from "../bindings";
-import { Payload, StreamlinedComment, UserType } from "../types";
-import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../helpers";
+import { getBotConfig, getLogger } from "../bindings";
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { ErrorDiff } from "../utils/helpers";
@@ -61,77 +59,7 @@ Example:[
  * @param linkedPRStreamlined an array of comments in the form of { login: string, body: string }
  * @param linkedIssueStreamlined an array of comments in the form of { login: string, body: string }
  */
-export const decideContextGPT = async (
-  chatHistory: CreateChatCompletionRequestMessage[],
-  streamlined: StreamlinedComment[],
-  linkedPRStreamlined: StreamlinedComment[],
-  linkedIssueStreamlined: StreamlinedComment[]
-) => {
-  const context = getBotContext();
-  const logger = getLogger();
-
-  const payload = context.payload as Payload;
-  const issue = payload.issue;
-
-  if (!issue) {
-    return `Payload issue is undefined`;
-  }
-
-  // standard comments
-  const comments = await getAllIssueComments(issue.number);
-  // raw so we can grab the <!--- { 'UbiquityAI': 'answer' } ---> tag
-  const commentsRaw = await getAllIssueComments(issue.number, "raw");
-
-  if (!comments) {
-    logger.info(`Error getting issue comments`);
-    return `Error getting issue comments`;
-  }
-
-  // add the first comment of the issue/pull request
-  streamlined.push({
-    login: issue.user.login,
-    body: issue.body,
-  });
-
-  // add the rest
-  comments.forEach(async (comment, i) => {
-    if (comment.user.type == UserType.User || commentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
-      streamlined.push({
-        login: comment.user.login,
-        body: comment.body,
-      });
-    }
-  });
-
-  // returns the conversational context from all linked issues and prs
-  const links = await getAllLinkedIssuesAndPullsInBody(issue.number);
-
-  if (typeof links === "string") {
-    logger.info(`Error getting linked issues or prs: ${links}`);
-    return `Error getting linked issues or prs: ${links}`;
-  }
-
-  linkedIssueStreamlined = links.linkedIssues;
-  linkedPRStreamlined = links.linkedPrs;
-
-  chatHistory.push(
-    {
-      role: "system",
-      content: "This issue/Pr context: \n" + JSON.stringify(streamlined),
-      name: "UbiquityAI",
-    } as CreateChatCompletionRequestMessage,
-    {
-      role: "system",
-      content: "Linked issue(s) context: \n" + JSON.stringify(linkedIssueStreamlined),
-      name: "UbiquityAI",
-    } as CreateChatCompletionRequestMessage,
-    {
-      role: "system",
-      content: "Linked Pr(s) context: \n" + JSON.stringify(linkedPRStreamlined),
-      name: "UbiquityAI",
-    } as CreateChatCompletionRequestMessage
-  );
-
+export const decideContextGPT = async (chatHistory: CreateChatCompletionRequestMessage[]) => {
   // we'll use the first response to determine the context of future calls
   const res = await askGPT("", chatHistory);
 

@@ -1,9 +1,11 @@
 import { getBotContext, getLogger } from "../../../bindings";
 import { Payload, StreamlinedComment, UserType } from "../../../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers";
-import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
-import { askGPT, decideContextGPT, sysMsg } from "../../../helpers/gpt";
+import { ChatCompletionMessageParam } from "openai/resources/chat";
+import { askGPT, gptContextTemplate, sysMsg } from "../../../helpers/gpt";
 import { ErrorDiff } from "../../../utils/helpers";
+import fetch from "node-fetch";
+import { SentencePieceProcessor, cleanText } from "sentencepiece-js";
 
 /**
  * @param body The question to ask
@@ -13,7 +15,6 @@ export const ask = async (body: string) => {
   const logger = getLogger();
 
   const payload = context.payload as Payload;
-  const sender = payload.sender.login;
   const issue = payload.issue;
 
   if (!body) {
@@ -24,20 +25,44 @@ export const ask = async (body: string) => {
     return `This command can only be used on issues`;
   }
 
-  const chatHistory: CreateChatCompletionRequestMessage[] = [];
+  let chatHistory: ChatCompletionMessageParam[] = [];
   const streamlined: StreamlinedComment[] = [];
   let linkedPRStreamlined: StreamlinedComment[] = [];
   let linkedIssueStreamlined: StreamlinedComment[] = [];
 
-  const regex = /^\/ask\s(.+)$/;
+  const regex = /^\/ask\s*([\s\S]*)$/;
   const matches = body.match(regex);
 
   if (matches) {
     const [, body] = matches;
 
-    // standard comments
+    const sp = new SentencePieceProcessor();
+    try {
+      await sp.load(process.cwd() + "/src/declarations/tokenizer.model");
+      await sp.loadVocabulary(process.cwd() + "/src/declarations/tokenizer.model");
+    } catch (err) {
+      console.log("====================================");
+      console.log("err", err);
+      console.log("====================================");
+    }
+
+    const encodee = (s: string, bos = true) => {
+      const bosID = sp.encodeIds("<s>")[0];
+      const eosID = sp.encodeIds("</s>")[0];
+
+      if (typeof s !== "string") {
+        throw new Error("encodee only accepts strings");
+      }
+      let t = sp.encodeIds(s);
+
+      if (bos) {
+        t = [bosID, ...t];
+      }
+      t = [...t, eosID];
+      return t;
+    };
+
     const comments = await getAllIssueComments(issue.number);
-    // raw so we can grab the <!--- { 'UbiquityAI': 'answer' } ---> tag
     const commentsRaw = await getAllIssueComments(issue.number, "raw");
 
     if (!comments) {
@@ -45,13 +70,11 @@ export const ask = async (body: string) => {
       return ErrorDiff(`Error getting issue comments`);
     }
 
-    // add the first comment of the issue/pull request
     streamlined.push({
       login: issue.user.login,
       body: issue.body,
     });
 
-    // add the rest
     comments.forEach(async (comment, i) => {
       if (comment.user.type == UserType.User || commentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
         streamlined.push({
@@ -71,49 +94,221 @@ export const ask = async (body: string) => {
       linkedPRStreamlined = links.linkedPrs;
     }
 
-    // let chatgpt deduce what is the most relevant context
-    const gptDecidedContext = await decideContextGPT(chatHistory, streamlined, linkedPRStreamlined, linkedIssueStreamlined);
+    const formatChat = (chat: { role?: string; content?: string; login?: string; body?: string }[]) => {
+      if (chat.length === 0) return "";
+      let chatString = "";
+      chat.reduce((acc, message) => {
+        if (!message) return acc;
+        const role = acc.role || acc.login;
+        const content = acc.content || acc.body;
 
-    if (linkedIssueStreamlined.length == 0 && linkedPRStreamlined.length == 0) {
-      // No external context to add
-      chatHistory.push(
-        {
-          role: "system",
-          content: sysMsg,
-          name: "UbiquityAI",
-        } as CreateChatCompletionRequestMessage,
-        {
-          role: "user",
-          content: body,
-          name: sender,
-        } as CreateChatCompletionRequestMessage
-      );
-    } else {
-      chatHistory.push(
-        {
-          role: "system",
-          content: sysMsg, // provide the answer template
-          name: "UbiquityAI",
-        } as CreateChatCompletionRequestMessage,
-        {
-          role: "system",
-          content: "Original Context: " + JSON.stringify(gptDecidedContext), // provide the context
-          name: "system",
-        } as CreateChatCompletionRequestMessage,
-        {
-          role: "user",
-          content: "Question: " + JSON.stringify(body), // provide the question
-          name: "user",
-        } as CreateChatCompletionRequestMessage
-      );
+        chatString += `${cleanText(role)}: ${cleanText(content)}\n\n`;
+
+        acc = {
+          role,
+          content,
+        };
+
+        return acc;
+      });
+      console.log("chatString", chatString);
+      return chatString;
+    };
+
+    chatHistory.push(
+      {
+        role: "system",
+        content: gptContextTemplate,
+      },
+      {
+        role: "user",
+        content: `This issue/Pr context: \n ${JSON.stringify(streamlined)}`,
+      }
+    );
+
+    if (linkedIssueStreamlined.length > 0) {
+      chatHistory.push({
+        role: "user",
+        content: `Linked issue(s) context: \n ${JSON.stringify(linkedIssueStreamlined)}`,
+      });
+    } else if (linkedPRStreamlined.length > 0) {
+      chatHistory.push({
+        role: "user",
+        content: `Linked Pr(s) context: \n ${JSON.stringify(linkedPRStreamlined)}`,
+      });
     }
 
-    const gptResponse = await askGPT(body, chatHistory);
+    const gptDecidedContext = await askGPT("ContextCall", chatHistory);
 
-    if (typeof gptResponse === "string") {
-      return gptResponse;
-    } else if (gptResponse.answer) {
-      return gptResponse.answer;
+    const gptAnswer = typeof gptDecidedContext === "string" ? gptDecidedContext : gptDecidedContext.answer || "";
+    const contextTokens = encodee(cleanText(gptAnswer));
+
+    // console.log("gptDecidedContext", gptDecidedContext);
+    // console.log("contextTokens", contextTokens);
+
+    // const commentBeforeQuestion = streamlined[streamlined.length - 2];
+    // const secondLast = streamlined[streamlined.length - 3];
+
+    // const latestComments = [commentBeforeQuestion, secondLast];
+
+    // const fmLatestComments = formatChat(latestComments);
+
+    // const fmStreamlined = formatChat(streamlined);
+
+    // const formats = [
+    //   {
+    //     quarter: "1st",
+    //     content: `IssueSpec:  + ${issue.body} \n LastTwoComments: ${fmLatestComments} \n Question: ${body}`,
+    //     current: contextTokens,
+    //   },
+    //   {
+    //     quarter: "2nd",
+    //     content: `IssueSpec:  + ${issue.body} \n LinkedIssueContext: ${formatChat(
+    //       linkedIssueStreamlined
+    //     )}\n LastTwoComments: ${fmLatestComments} \n Question: ${body}`,
+    //     current: contextTokens,
+    //   },
+    //   {
+    //     quarter: "3rd",
+    //     content: `IssueSpec:  + ${issue.body} \n LinkedIssueContext: ${formatChat(linkedIssueStreamlined)}\n LinkedPRContext: ${formatChat(
+    //       linkedPRStreamlined
+    //     )} LastTwoComments: ${latestComments} \n Question: ${body}`,
+    //     current: contextTokens,
+    //   },
+    //   {
+    //     quarter: "4th",
+    //     content: `IssueSpec:  + ${issue.body} \n LinkedIssueContext: ${formatChat(linkedIssueStreamlined)}\n LinkedPRContext: ${formatChat(
+    //       linkedPRStreamlined
+    //     )} CurrentIssueComments: ${fmStreamlined} \n Question: ${body}`,
+    //     current: contextTokens,
+    //   },
+    // ];
+
+    // const remainingTokens = (s: string) => {
+    //   const max = 4096;
+    //   const tokens = encodee(s).length;
+    //   let nextActiveFourth = "";
+
+    //   if (tokens < max / 4) {
+    //     nextActiveFourth = "1st";
+    //   } else if (tokens < max / 2) {
+    //     nextActiveFourth = "2nd";
+    //   } else if (tokens < (max / 4) * 3) {
+    //     nextActiveFourth = "3rd";
+    //   } else if (tokens < max) {
+    //     nextActiveFourth = "4th";
+    //   } else {
+    //     nextActiveFourth = "Max";
+    //   }
+
+    //   const remaining = {
+    //     content: s,
+    //     current: tokens + formats[0].current,
+    //     quarter: nextActiveFourth,
+    //   };
+
+    //   return remaining;
+    // };
+
+    // let selectedFormat = "";
+    // let closestTokenCount = 0;
+
+    // for (const format of formats) {
+    //   const tokenCount = remainingTokens(cleanText(format.content)).current;
+    //   if (tokenCount > closestTokenCount && tokenCount < 4096) {
+    //     closestTokenCount = tokenCount;
+    //     selectedFormat = format.content;
+    //   }
+    // }
+
+    // if (selectedFormat === "") {
+    //   return "Format selection failed.";
+    // }
+
+    // console.log("========================");
+    // console.log("=== selectedFormat ===", selectedFormat);
+
+    // const { quarter, current } = remainingTokens(cleanText(selectedFormat));
+
+    // if (current >= 4096) {
+    //   return "Format selection failed.";
+    // }
+
+    chatHistory = [];
+
+    const tokenSize = contextTokens.length + encodee(body).length;
+
+    if (tokenSize > 4096) {
+      return "Your question is too long. Please ask a shorter question.";
+    }
+
+    chatHistory.push(
+      {
+        role: "system",
+        content: `${sysMsg}`,
+      },
+      {
+        role: "user",
+        content: `Context: ${cleanText(gptAnswer)} \n Question: ${body}`,
+      }
+    );
+
+    const chats = chatHistory.map((chat) => {
+      return {
+        role: chat.role,
+        content: chat.content ? cleanText(chat.content) : "",
+      };
+    });
+
+    const finalTokens = encodee(formatChat(chats), false);
+
+    const options = {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        authorization: "Bearer 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",
+      },
+      body: JSON.stringify({
+        model: "mistral-7b-instruct",
+        messages: chatHistory,
+      }),
+    };
+
+    const ans = await fetch("https://api.perplexity.ai/chat/completions", options).then((response) => response.json().catch((err) => console.log(err)));
+    const answer = { tokens: ans.usage, text: ans.choices[0].message.content };
+    const gptRes = await askGPT(body, chatHistory);
+
+    const gptAns = typeof gptRes === "string" ? gptRes : gptRes.answer || "";
+    const gptTokens = typeof gptRes === "string" ? [] : gptRes.tokenUsage || [];
+
+    const comment = `
+### Perp Tokens
+\`\`\`json
+${JSON.stringify(answer.tokens)}
+\`\`\`
+
+### GPT Tokens
+\`\`\`json
+${JSON.stringify(gptTokens)}
+\`\`\
+
+### SPP Tokens
+\`\`\`json
+Note: JSON in responses are throwing this off rn:  ${finalTokens.length + contextTokens.length} tokens
+\`\`\`
+
+### Perp Response
+${answer.text}
+
+</hr>
+
+### GPT Response
+${gptAns}
+`;
+
+    if (answer) {
+      return comment;
     } else {
       return ErrorDiff(`Error getting response from GPT`);
     }
