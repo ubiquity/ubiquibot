@@ -104,6 +104,9 @@ After aforemention steps then installation shall be complete
 
 ## Update an Existing Github App (bot)
 
+After you hit http://localhost:3000 you have the option to edit an existing app (if you think you have already registered a bot and when to reuse that same app)
+![existing](https://github.com/ubiquity/ubiquibot/assets/41552663/f696f3c1-1941-4bf4-b7a8-95d88f63e030)
+
 
 
 **Note:** When setting up the project, please do not rename the `.env.example` file to `.env` as it will delete the environment example from the repository.
