@@ -102,6 +102,7 @@ After aforemention steps then installation shall be complete
 
 ### Congratulations! you successfully installed Ubiquibot (new or to an existing app)
 
+
 ## Update an Existing Github App (bot)
 
 After you hit http://localhost:3000 you have the option to edit an existing app (if you think you have already registered a bot and when to reuse that same app)
@@ -125,6 +126,12 @@ Update APP_ID at .env accordingly
 In the same page it is super important that you re-generated and save a private key that you'll be using at .env you open the file and paste it
 
 ![logo](https://github.com/ubiquity/ubiquibot/assets/41552663/716639d4-4646-4f14-bc3f-a39cfaf0fada)
+
+Important things with private keys (.pem) at .env
+
+1. The private key gets automatically filled after the app is installed to a github handle
+2. The private key cannot be in spaces like that
+3. The private key is a string into its env var rather than a just opened info without "" otherwise it will not be recognized and you'll get unauthorized access
 
 
 
