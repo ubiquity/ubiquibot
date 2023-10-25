@@ -82,11 +82,6 @@ After following the steps you should see
 
 ![setup7](https://github.com/ubiquity/ubiquibot/assets/41552663/bbcf0e40-456c-4dd4-93e4-75de87d4d340)
 
-
-If you go again to http://localhost:3000 after the bot is installed on your handle you shall see
-
-![ubiquity](https://github.com/ubiquity/ubiquibot/assets/41552663/f06250b9-1e3f-44c2-8ee8-efcf34baadd8)
-
 Restart the server for the installation to take efect
 
 ![setup10](https://github.com/ubiquity/ubiquibot/assets/41552663/916cc5c3-dfdc-45c7-8d10-65afdce25e29)
