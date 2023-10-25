@@ -2,49 +2,15 @@ import { Comment, Issue } from "../../../../types/payload";
 import OpenAI from "openai";
 import { encodingForModel } from "js-tiktoken";
 import Runtime from "../../../../bindings/bot-runtime";
+import { colorizeText, Colors } from "../../../../adapters/supabase/helpers/pretty-logs";
+import Decimal from "decimal.js";
 
 const openai = new OpenAI(); // apiKey: // defaults to process.env["OPENAI_API_KEY"]
 
 export async function calculateQualScore(issue: Issue, contributorComments: Comment[]) {
-  const runtime = Runtime.getState();
   const sumOfConversationTokens = countTokensOfConversation(issue, contributorComments);
   const estimatedOptimalModel = estimateOptimalModel(sumOfConversationTokens);
-
-  let relevanceScores: number[] = [];
-  let attempts = 0;
-  const MAX_ATTEMPTS = 3; // Set the maximum number of attempts
-
-  while (attempts < MAX_ATTEMPTS) {
-    relevanceScores = await gptRelevance(
-      estimatedOptimalModel,
-      issue.body,
-      contributorComments.map((comment) => comment.body)
-    );
-
-    if (relevanceScores.length === contributorComments.length) {
-      break;
-    }
-
-    attempts++;
-
-    if (attempts === MAX_ATTEMPTS) {
-      runtime.logger.info("Maximum number of attempts reached. Defaulting all comment relevance scores to 1.", {
-        relevanceScores: relevanceScores,
-        contributorComments: contributorComments.length,
-      });
-      runtime.logger.warn(
-        "Relevance scores per comment array length from OpenAI do not match the number of comments in this conversation. Defaulting all comment relevance scores to 1. You can try closing and reopening this issue to recalculate the relevance scores.",
-        { relevanceScores: relevanceScores, contributorComments: contributorComments.length },
-        true
-      );
-      return {
-        relevanceScores: contributorComments.map(() => 1),
-        sumOfConversationTokens,
-        model: null,
-      };
-    }
-  }
-
+  const relevanceScores = await sampleQualityScores(contributorComments, estimatedOptimalModel, issue);
   return { relevanceScores, sumOfConversationTokens, model: estimatedOptimalModel };
 }
 
@@ -85,10 +51,15 @@ export function countTokensOfConversation(issue: Issue, comments: Comment[]) {
   return totalSumOfTokens;
 }
 
-export async function gptRelevance(model: string, ISSUE_SPECIFICATION_BODY: string, CONVERSATION_STRINGS: string[]) {
+export async function gptRelevance(
+  model: string,
+  ISSUE_SPECIFICATION_BODY: string,
+  CONVERSATION_STRINGS: string[],
+  ARRAY_LENGTH = CONVERSATION_STRINGS.length
+) {
   const PROMPT = `I need to evaluate the relevance of GitHub contributors' comments to a specific issue specification. Specifically, I'm interested in how much each comment helps to further define the issue specification or contributes new information or research relevant to the issue. Please provide a float between 0 and 1 to represent the degree of relevance. A score of 1 indicates that the comment is entirely relevant and adds significant value to the issue, whereas a score of 0 indicates no relevance or added value. Each contributor's comment is on a new line.\n\nIssue Specification:\n\`\`\`\n${ISSUE_SPECIFICATION_BODY}\n\`\`\`\n\nConversation:\n\`\`\`\n${CONVERSATION_STRINGS.join(
     "\n"
-  )}\n\`\`\`\n\n\nTo what degree are each of the comments in the conversation relevant and valuable to further defining the issue specification? Please reply with an array of float numbers between 0 and 1, corresponding to each comment in the order they appear. Each float should represent the degree of relevance and added value of the comment to the issue.`;
+  )}\n\`\`\`\n\n\nTo what degree are each of the comments in the conversation relevant and valuable to further defining the issue specification? Please reply with an array of float numbers between 0 and 1, corresponding to each comment in the order they appear. Each float should represent the degree of relevance and added value of the comment to the issue. The total length of the array in your response should equal exactly ${ARRAY_LENGTH} elements.`;
   const response: OpenAI.Chat.ChatCompletion = await openai.chat.completions.create({
     model: model,
     messages: [
@@ -98,16 +69,111 @@ export async function gptRelevance(model: string, ISSUE_SPECIFICATION_BODY: stri
       },
     ],
     temperature: 1,
-    max_tokens: 1024,
+    max_tokens: 64,
     top_p: 1,
     frequency_penalty: 0,
     presence_penalty: 0,
   });
 
+  const totalTokensUsed = response.usage?.total_tokens;
+  console.trace({ totalTokensUsed });
   try {
     const parsedResponse = JSON.parse(response.choices[0].message.content as "[1, 1, 0.5, 0]") as number[];
     return parsedResponse;
   } catch (error) {
     return [];
   }
+}
+
+async function sampleQualityScores(
+  contributorComments: Comment[],
+  estimatedOptimalModel: ReturnType<typeof estimateOptimalModel>,
+  issue: Issue
+) {
+  const BATCH_SIZE = 10;
+  const BATCHES = 1;
+  const correctLength = contributorComments.length;
+  const batchSamples = [] as Decimal[][];
+
+  for (let attempt = 0; attempt < BATCHES; attempt++) {
+    const fetchedSamples = await fetchSamples({
+      contributorComments,
+      estimatedOptimalModel,
+      issue,
+      maxConcurrency: BATCH_SIZE,
+    });
+    const filteredSamples = filterSamples(fetchedSamples, correctLength);
+    const averagedSample = averageSamples(filteredSamples, 10);
+    batchSamples.push(averagedSample);
+  }
+  const average = averageSamples(batchSamples, 2);
+
+  console.trace({
+    batchSamples,
+    average,
+  });
+  return average;
+}
+
+async function fetchSamples({
+  contributorComments,
+  estimatedOptimalModel,
+  issue,
+  maxConcurrency,
+}: InEachRequestParams) {
+  const commentsSerialized = contributorComments.map((comment) => comment.body);
+  const batchPromises = [];
+  for (let i = 0; i < maxConcurrency; i++) {
+    const requestPromise = gptRelevance(estimatedOptimalModel, issue.body, commentsSerialized);
+    batchPromises.push(requestPromise);
+  }
+  const batchResults = await Promise.all(batchPromises);
+  console.trace({ batchResults });
+  return batchResults;
+}
+
+// if (allRelevanceScores[0].length !== contributorComments.length) {
+//   runtime.logger.warn(
+//     "Relevance scores per comment array length from OpenAI do not match the number of comments in this conversation. Defaulting all comment relevance scores to 1. You can try closing and reopening this issue to recalculate the relevance scores.",
+//     { relevanceScores: allRelevanceScores, contributorComments: contributorComments.length },
+//     true
+//   );
+//   return {
+//     relevanceScores: contributorComments.map(() => 1),
+//     sumOfConversationTokens,
+//     model: null,
+//   };
+// }
+interface InEachRequestParams {
+  contributorComments: Comment[];
+  estimatedOptimalModel: ReturnType<typeof estimateOptimalModel>;
+  issue: Issue;
+  maxConcurrency: number;
+}
+
+function filterSamples(batchResults: number[][], correctLength: number) {
+  return batchResults.filter((result) => {
+    if (!correctLength) {
+      console.trace(colorizeText(result.toString(), Colors.fgRed));
+      return false;
+    } else {
+      // console.trace(colorizeText(result.toString(), Colors.fgGreen));
+      return true;
+    }
+  });
+}
+
+function averageSamples(batchResults: (number | Decimal)[][], precision) {
+  const averageScores = batchResults[0]
+    .map((_, columnIndex) => {
+      let sum = new Decimal(0);
+      batchResults.forEach((row) => {
+        sum = sum.plus(row[columnIndex]);
+      });
+      return sum.dividedBy(batchResults.length);
+    })
+    .map((score) => score.toDecimalPlaces(4));
+
+  console.trace(`${JSON.stringify(batchResults)} -> ${JSON.stringify(averageScores)}`);
+  return averageScores;
 }

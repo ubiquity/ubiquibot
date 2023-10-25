@@ -1,7 +1,7 @@
 import util from "util";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-enum Colors {
+export enum Colors {
   reset = "\x1b[0m",
   bright = "\x1b[1m",
   dim = "\x1b[2m",
@@ -167,7 +167,7 @@ function _log(type: keyof typeof prettyLogs, message: any) {
   }
 }
 
-function colorizeText(text: string, color: Colors): string {
+export function colorizeText(text: string, color: Colors): string {
   if (!color) {
     throw new Error(`Invalid color: ${color}`);
   }
