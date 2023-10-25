@@ -83,7 +83,7 @@ After following the steps you should see
 ![setup7](https://github.com/ubiquity/ubiquibot/assets/41552663/bbcf0e40-456c-4dd4-93e4-75de87d4d340)
 
 
-If you go again to localhost:3000 after the bot is installed on your handle you shall see
+If you go again to http://localhost:3000 after the bot is installed on your handle you shall see
 
 ![ubiquity](https://github.com/ubiquity/ubiquibot/assets/41552663/f06250b9-1e3f-44c2-8ee8-efcf34baadd8)
 
@@ -91,9 +91,16 @@ Restart the server for the installation to take efect
 
 ![setup10](https://github.com/ubiquity/ubiquibot/assets/41552663/916cc5c3-dfdc-45c7-8d10-65afdce25e29)
 
-After aforemoention steps then installation shall be complete
+After aforemention steps then installation shall be complete
 
 ![setup11](https://github.com/ubiquity/ubiquibot/assets/41552663/0e88fec0-fa8b-4d34-8cc8-024c99b5b640)
+
+# Seeing this page below after hitting http://localhost:3000 again?
+
+![trylocal](https://github.com/ubiquity/ubiquibot/assets/41552663/e958e7e4-6d42-44d1-a5cf-a090911f062c)
+
+Congratulations! you successfully installed Ubiquibot (new or to an existing app)
+
 
 
 **Note:** When setting up the project, please do not rename the `.env.example` file to `.env` as it will delete the environment example from the repository.
