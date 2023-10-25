@@ -136,7 +136,7 @@ If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically ge
 **Important things with private keys (.pem) at .env**
 
 1. The private key gets automatically filled after the app is installed to a github handle but not as an existing app
-2. The private key cannot be in spaces like that
+2. The private key cannot be separated in spaces
 3. The private key is a string into its env var rather than a just opened info without "" otherwise it will not be recognized and you'll get unauthorized access
 
 
