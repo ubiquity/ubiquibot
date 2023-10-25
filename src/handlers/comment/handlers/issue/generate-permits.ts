@@ -109,14 +109,22 @@ function generateDetailsTable(totals: FinalScores, contributorComments: Comment[
       } else {
         elementScoreDetailsStr = "-";
       }
-      const quantScore = commentScore.wordAndElementScoreTotal;
-      const qualScore = commentScore.qualityScore;
-      const credit = commentScore.finalScore;
+      const quantScore = zeroToHyphen(commentScore.wordAndElementScoreTotal);
+      const qualScore = zeroToHyphen(commentScore.qualityScore);
+      const credit = zeroToHyphen(commentScore.finalScore);
 
       tableRows += `<tr><td><h6><a href="${commentUrl}">${truncatedBody}</a></h6></td><td>${quantScore}</td><td>${qualScore}</td><td>${credit}</td><td>${elementScoreDetailsStr}</td></tr>`;
     }
   }
-  return `<table><tbody><tr><td>Comment</td><td>QuantScore</td><td>QualScore</td><td>Credit</td><td>Element Score Details</td></tr>${tableRows}</tbody></table>`;
+  return `<table><tbody><tr><td>Comment</td><td>Formatting</td><td>Relevance</td><td>Reward</td><td>Formatting Stats</td></tr>${tableRows}</tbody></table>`;
+}
+
+function zeroToHyphen(value: number | Decimal) {
+  if (value instanceof Decimal ? value.isZero() : value === 0) {
+    return "-";
+  } else {
+    return value.toString();
+  }
 }
 
 function mapIdsToNames(contributorComments: Comment[]) {

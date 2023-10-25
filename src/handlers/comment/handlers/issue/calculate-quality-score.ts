@@ -106,7 +106,7 @@ async function sampleQualityScores(
     const averagedSample = averageSamples(filteredSamples, 10);
     batchSamples.push(averagedSample);
   }
-  const average = averageSamples(batchSamples, 2);
+  const average = averageSamples(batchSamples, 4);
 
   console.trace({
     batchSamples,
@@ -163,7 +163,7 @@ function filterSamples(batchResults: number[][], correctLength: number) {
   });
 }
 
-function averageSamples(batchResults: (number | Decimal)[][], precision) {
+function averageSamples(batchResults: (number | Decimal)[][], precision: number) {
   const averageScores = batchResults[0]
     .map((_, columnIndex) => {
       let sum = new Decimal(0);
@@ -172,7 +172,7 @@ function averageSamples(batchResults: (number | Decimal)[][], precision) {
       });
       return sum.dividedBy(batchResults.length);
     })
-    .map((score) => score.toDecimalPlaces(4));
+    .map((score) => score.toDecimalPlaces(precision));
 
   console.trace(`${JSON.stringify(batchResults)} -> ${JSON.stringify(averageScores)}`);
   return averageScores;
