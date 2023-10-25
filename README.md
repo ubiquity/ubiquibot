@@ -58,7 +58,7 @@ If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically ge
 Should output:
 ![setup](https://github.com/ubiquity/ubiquibot/assets/41552663/febf0e61-0402-4b25-838a-a64c1c385984)
 
-You may proceed to go to localhost:3000 and you should see
+You may proceed to go to http://localhost:3000 and you should see
 
 ![setup1](https://github.com/ubiquity/ubiquibot/assets/41552663/4b9d7565-8bd4-4e2a-864d-a086fedfe24d)
 
@@ -95,7 +95,7 @@ After aforemention steps then installation shall be complete
 
 ![setup11](https://github.com/ubiquity/ubiquibot/assets/41552663/0e88fec0-fa8b-4d34-8cc8-024c99b5b640)
 
-# Seeing this page below after hitting http://localhost:3000 again?
+## Seeing this page below after hitting http://localhost:3000 again?
 
 ![trylocal](https://github.com/ubiquity/ubiquibot/assets/41552663/e958e7e4-6d42-44d1-a5cf-a090911f062c)
 
@@ -220,7 +220,7 @@ DISQUALIFY_TIME="7 days" // 7 days
 4. Open 2 terminal instances:
    - in one instance run `yarn build --watch` (compiles the Typescript code)
    - in another instance run `yarn start:watch` (runs the bot locally)
-5. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
+5. Open `http://localhost:3000` and follow instructions to add the bot to one of your repositories.
 
 At this point the `.env` files auto-fill the empty fields (`PRIVATE_KEY` and `APP_ID`) if it is not previously filled.
 Now you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react.
