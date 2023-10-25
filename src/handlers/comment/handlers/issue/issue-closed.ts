@@ -25,6 +25,7 @@ export async function issueClosed() {
   // TODO: calculate assignee score.
   // TODO: calculate pull request conversation score.
   // TODO: post the permits to the issue
+  // TODO: design metadata system for permit parsing
 
   const comment = await generatePermits(totals, contributorComments);
 

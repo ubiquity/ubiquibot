@@ -9,6 +9,7 @@ import { Database } from "../../types";
 import { prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
 import { execSync } from "child_process";
+import { logger } from "ethers";
 
 type LogFunction = (message: string, metadata?: any) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
@@ -307,7 +308,7 @@ export class Logs extends Super {
   }
 
   static _commentMetaData(metadata: any, level: LogLevel) {
-    console.trace("the main place that metadata is being serialized as an html comment");
+    Runtime.getState().logger.debug("the main place that metadata is being serialized as an html comment");
     const prettySerialized = JSON.stringify(metadata, null, 2);
     // first check if metadata is an error, then post it as a json comment
     // otherwise post it as an html comment

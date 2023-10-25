@@ -68,10 +68,11 @@ const SupabaseConfigSchema = Type.Object({
 
 // type LogNotification= Static<typeof LogNotificationSchema>;
 
-export const PayoutConfigSchema = Type.Object({
+const PayoutConfigSchema = Type.Object({
   evmNetworkId: Type.Number(),
   rpc: Type.String(),
   privateKey: Type.Union([Type.String(), Type.Null()]),
+  publicKey: Type.Union([Type.String(), Type.Null()]),
   paymentToken: Type.String(),
   permitBaseUrl: Type.String(),
 });

@@ -1,6 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import Decimal from "decimal.js";
-import { GeneratedPermit } from "../../../../helpers/permit";
 import { Comment, Payload } from "../../../../types/payload";
 import { Database } from "../../types/database";
 import { Super } from "./super";
@@ -20,7 +19,7 @@ type AddCreditWithPermit = {
   userId: number;
   amount: Decimal;
   comment: Comment;
-  permit?: GeneratedPermit;
+  transactionData?: unknown;
   networkId?: number;
   organization?: Payload["organization"];
 };
@@ -87,7 +86,7 @@ export class Settlement extends Super {
     userId,
     amount,
     // comment,
-    permit,
+    transactionData,
     networkId,
     organization,
   }: AddCreditWithPermit) {
@@ -107,16 +106,16 @@ export class Settlement extends Super {
 
     // Insert into the permits table if permit data is provided
     let permitInsertData;
-    if (permit) {
+    if (transactionData) {
       if (!organization) throw new Error("Organization not provided");
       if (!networkId) throw new Error("Network ID not provided");
 
       const permitData: PermitInsert = {
-        amount: permit.permit.permitted.amount,
-        nonce: permit.permit.nonce,
-        deadline: permit.permit.deadline,
-        signature: permit.signature,
-        token_id: await this._lookupTokenId(networkId, permit.permit.permitted.token),
+        amount: transactionData.permit.permitted.amount,
+        nonce: transactionData.permit.nonce,
+        deadline: transactionData.permit.deadline,
+        signature: transactionData.signature,
+        token_id: await this._lookupTokenId(networkId, transactionData.permit.permitted.token),
         partner_id: organization.id,
         beneficiary_id: userId,
       };

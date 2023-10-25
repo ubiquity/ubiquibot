@@ -179,7 +179,7 @@ function createRenderCatchAll(handlerType: AllHandlersWithTypes, activeHandler: 
       const { logMessage } = report;
 
       if (report.metadata) {
-        console.trace("this is the second place that metadata is being serialized as an html comment");
+        runtime.logger.debug("this is the second place that metadata is being serialized as an html comment");
         let metadataSerialized;
         const prettySerialized = JSON.stringify(report.metadata, null, 2);
         // first check if metadata is an error, then post it as a json comment

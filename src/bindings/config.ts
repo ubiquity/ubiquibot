@@ -61,6 +61,7 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
       evmNetworkId: evmNetworkId,
       rpc: rpc,
       privateKey: keys.private,
+      publicKey: keys.public,
       paymentToken: paymentToken,
       permitBaseUrl: process.env.PERMIT_BASE_URL || permitBaseUrl,
     },

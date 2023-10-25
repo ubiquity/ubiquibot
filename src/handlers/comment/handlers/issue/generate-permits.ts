@@ -3,8 +3,10 @@ import { stringify } from "yaml";
 import Runtime from "../../../../bindings/bot-runtime";
 import { getTokenSymbol } from "../../../../helpers/contracts";
 import { Comment } from "../../../../types";
+import { generatePermit2Signature } from "./generate-permit-2-signature";
 import { FinalScores } from "./issue-closed";
 import { IssueRole } from "./_calculate-all-comment-scores";
+import { ethers } from "ethers";
 
 export async function generatePermits(totals: FinalScores, contributorComments: Comment[]) {
   const runtime = Runtime.getState();
@@ -20,18 +22,30 @@ async function generateComments(
   contributorComments: Comment[]
 ) {
   const detailsTable = generateDetailsTable(totals, contributorComments);
-  const evmNetworkId = runtime.botConfig.payout.evmNetworkId;
   const tokenSymbol = await getTokenSymbol(runtime.botConfig.payout.paymentToken, runtime.botConfig.payout.rpc);
   const HTMLs = [] as string[];
   for (const userId in totals) {
     const userTotals = totals[userId];
-    const base64Permit = "xxx";
+
     const tokenAmount = userTotals.total;
     const contributorName = userIdToNameMap[userId];
     const issueRole = userTotals.role;
+
+    const key = runtime.botConfig.payout.privateKey;
+    if (!key) throw runtime.logger.warn("No bot wallet private key defined");
+    // const spenderAddress = new ethers.Wallet(runtime.botConfig.payout.privateKey as string).address;
+
+    const beneficiaryAddress = await runtime.adapters.supabase.wallet.getAddress(parseInt(userId));
+
+    const permit = await generatePermit2Signature({
+      beneficiary: beneficiaryAddress,
+      amount: tokenAmount,
+      identifier: issueRole,
+      userId: userId,
+    });
+
     const html = generateHtml({
-      base64Permit,
-      evmNetworkId,
+      permit: permit.url,
       tokenAmount,
       tokenSymbol,
       contributorName,
@@ -43,8 +57,7 @@ async function generateComments(
   return HTMLs.join();
 }
 function generateHtml({
-  base64Permit,
-  evmNetworkId,
+  permit,
   tokenAmount,
   tokenSymbol,
   contributorName,
@@ -57,7 +70,7 @@ function generateHtml({
       <b
         ><h3>
           <a
-            href="https://pay.ubq.fi/?claim=${base64Permit}&network=${evmNetworkId}"
+            href="${permit.toString()}"
           >
             [ ${tokenAmount} ${tokenSymbol} ]</a
           >
@@ -114,8 +127,7 @@ function mapIdsToNames(contributorComments: Comment[]) {
   }, {} as { [userId: number]: string });
 }
 interface GenerateHtmlParams {
-  base64Permit: string;
-  evmNetworkId: number;
+  permit: URL;
   tokenAmount: Decimal;
   tokenSymbol: string;
   contributorName: string;

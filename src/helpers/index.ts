@@ -1,7 +1,6 @@
 export * from "./shared";
 export * from "./issue";
 export * from "./label";
-export * from "./permit";
 export * from "./ens";
 export * from "./contracts";
 export * from "./comment";

@@ -1,7 +1,7 @@
 import Runtime from "../../bindings/bot-runtime";
 import { createCommitComment, getFileContent } from "../../helpers";
 import { CommitsPayload, PushPayload, ConfigSchema } from "../../types";
-import { parseYAML } from "../../utils/private";
+import { parseYamlConfig } from "../../utils/private";
 import { validate } from "../../utils/ajv";
 
 export const ZERO_SHA = "0000000000000000000000000000000000000000";
@@ -61,7 +61,7 @@ export async function validateConfigChange() {
 
     if (configFileContent) {
       const decodedConfig = Buffer.from(configFileContent, "base64").toString();
-      const config = parseYAML(decodedConfig);
+      const config = parseYamlConfig(decodedConfig);
       const { valid, error } = validate(ConfigSchema, config);
       if (!valid) {
         await createCommitComment(
