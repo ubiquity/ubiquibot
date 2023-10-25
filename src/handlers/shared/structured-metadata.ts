@@ -21,6 +21,7 @@ function parseStructuredMetadata(comment: string) {
 
   let metadata;
   try {
+    // TODO: fix metadata writing to encode html comments inside json without the html parser getting confused
     metadata = JSON.parse(jsonString.trim());
   } catch (error) {
     console.error("Failed to parse JSON:", error);

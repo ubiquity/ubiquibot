@@ -9,19 +9,18 @@ import { FinalScores } from "./issue-closed";
 import { IssueRole } from "./_calculate-all-comment-scores";
 
 export async function generatePermits(totals: FinalScores, contributorComments: Comment[]) {
-  const runtime = Runtime.getState();
   const userIdToNameMap = mapIdsToNames(contributorComments);
-  const { html: comment, permits } = await generateComment(runtime, totals, userIdToNameMap, contributorComments);
+  const { html: comment, permits } = await generateComment(totals, userIdToNameMap, contributorComments);
   const metadata = structuredMetadata.create("Permits", { permits, totals });
   return comment.concat("\n", metadata);
 }
 
 async function generateComment(
-  runtime: Runtime,
   totals: FinalScores,
   userIdToNameMap: { [userId: number]: string },
   contributorComments: Comment[]
 ) {
+  const runtime = Runtime.getState();
   const detailsTable = generateDetailsTable(totals, contributorComments);
   const tokenSymbol = await getTokenSymbol(runtime.botConfig.payout.paymentToken, runtime.botConfig.payout.rpc);
   const HTMLs = [] as string[];
@@ -95,7 +94,7 @@ function generateDetailsTable(totals: FinalScores, contributorComments: Comment[
     for (const commentScore of userTotals.comments) {
       const comment = contributorComments.find((comment) => comment.id === commentScore.commentId) as Comment;
       const commentUrl = comment.html_url;
-      const truncatedBody = comment ? comment.body.substring(0, 32).concat("...") : "";
+      const truncatedBody = comment ? comment.body.substring(0, 64).concat("...") : "";
 
       const elementScoreDetails = commentScore.elementScoreDetails;
 
@@ -118,10 +117,17 @@ function generateDetailsTable(totals: FinalScores, contributorComments: Comment[
       const qualScore = zeroToHyphen(commentScore.qualityScore);
       const credit = zeroToHyphen(commentScore.finalScore);
 
-      tableRows += `<tr><td><h6><a href="${commentUrl}">${truncatedBody}</a></h6></td><td>${elementScoreDetailsStr}</td><td>${quantScore}</td><td>${qualScore}</td><td>${credit}</td></tr>`;
+      let quantScoreCell;
+      if (elementScoreDetailsStr != "-") {
+        quantScoreCell = `<details><summary>${quantScore}</summary>${elementScoreDetailsStr}</details>`;
+      } else {
+        quantScoreCell = quantScore;
+      }
+
+      tableRows += `<tr><td><h6><a href="${commentUrl}">${truncatedBody}</a></h6></td><td>${quantScoreCell}</td><td>${qualScore}</td><td>${credit}</td></tr>`;
     }
   }
-  return `<table><tbody><tr><td>Comment</td><td>Formatting Stats</td><td>Formatting Score</td><td>Relevance</td><td>Reward</td></tr>${tableRows}</tbody></table>`;
+  return `<table><tbody><tr><td>Comment</td><td>Formatting</td><td>Relevance</td><td>Reward</td></tr>${tableRows}</tbody></table>`;
 }
 
 function zeroToHyphen(value: number | Decimal) {
