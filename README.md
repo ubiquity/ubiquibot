@@ -61,38 +61,38 @@ If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically ge
 
 ### Register a new Github App
 
-Should output:
+**Should output:**
 ![setup](https://github.com/ubiquity/ubiquibot/assets/41552663/febf0e61-0402-4b25-838a-a64c1c385984)
 
-You may proceed to go to http://localhost:3000 and you should see
+**You may proceed to go to http://localhost:3000 and you should see**
 
 ![setup1](https://github.com/ubiquity/ubiquibot/assets/41552663/4b9d7565-8bd4-4e2a-864d-a086fedfe24d)
 
-Click on Register a Github App
+**Click on Register a Github App**
 
 ![setup3](https://github.com/ubiquity/ubiquibot/assets/41552663/0052feba-e823-419b-acde-d997d68ac553)
 
-Provide the bot a name
+**Provide the bot a name**
 
 ![setup3](https://github.com/ubiquity/ubiquibot/assets/41552663/0052feba-e823-419b-acde-d997d68ac553)
 
 ![setup4](https://github.com/ubiquity/ubiquibot/assets/41552663/f65e166b-c3fb-4e22-9f49-d622e3922eb7)
 
-Select a handle where to install the bot
+**Select a handle where to install the bot**
 
-Select in which repo the bot shall be available
+**Select in which repo the bot shall be available**
 
 ![setup6](https://github.com/ubiquity/ubiquibot/assets/41552663/dce6b338-abd8-4b54-b990-2cc6cf686d30)
 
-After following the steps you should see
+**After following the steps you should see**
 
 ![setup7](https://github.com/ubiquity/ubiquibot/assets/41552663/bbcf0e40-456c-4dd4-93e4-75de87d4d340)
 
-Restart the server for the installation to take efect
+**Restart the server for the installation to take effect**
 
 ![setup10](https://github.com/ubiquity/ubiquibot/assets/41552663/916cc5c3-dfdc-45c7-8d10-65afdce25e29)
 
-After aforemention steps then installation shall be complete
+**After aforemention steps then installation shall be complete**
 
 ![setup11](https://github.com/ubiquity/ubiquibot/assets/41552663/0e88fec0-fa8b-4d34-8cc8-024c99b5b640)
 
@@ -105,25 +105,25 @@ After aforemention steps then installation shall be complete
 
 ## Update an Existing Github App (bot)
 
-After you hit http://localhost:3000 you have the option to edit an existing app (if you think you have already registered a bot and when to reuse that same app)
+**After you hit http://localhost:3000 you have the option to edit an existing app (if you think you have already registered a bot and when to reuse that same app)**
 ![existing](https://github.com/ubiquity/ubiquibot/assets/41552663/f696f3c1-1941-4bf4-b7a8-95d88f63e030)
 
-on your Github settings hit to:
+**on your Github settings hit to:**
 
 ![repoaccess](https://github.com/ubiquity/ubiquibot/assets/41552663/bb389559-aaec-4bec-8ac0-97cefea63b16)
 
-Then at the same time hit to "APP SETTINGS"
+**hen at the same time hit to "APP SETTINGS"**
 
 
-Update the WebHook URL by the one auto-provided by the bot's installation page (this is a must) and edit the webhook secret that you'll use at .env
+**Update the WebHook URL by the one auto-provided by the bot's installation page (this is a must) and edit the webhook secret that you'll use at .env**
 
 ![secret](https://github.com/ubiquity/ubiquibot/assets/41552663/41e9d872-f628-491e-8156-31bec8870ae7)
 
-Update APP_ID at .env accordingly
+**Update APP_ID at .env accordingly**
 
 ![ubiqui](https://github.com/ubiquity/ubiquibot/assets/41552663/a760b497-84f2-4574-aa49-757be3dc3e71)
 
-In the same page it is super important that you re-generated and save a private key that you'll be using at .env you open the file and paste it
+**In the same page it is super important that you re-generated and save a private key that you'll be using at .env you open the file and paste it**
 
 ![logo](https://github.com/ubiquity/ubiquibot/assets/41552663/716639d4-4646-4f14-bc3f-a39cfaf0fada)
 
