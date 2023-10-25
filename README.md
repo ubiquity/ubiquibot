@@ -99,7 +99,7 @@ After aforemention steps then installation shall be complete
 
 ![trylocal](https://github.com/ubiquity/ubiquibot/assets/41552663/e958e7e4-6d42-44d1-a5cf-a090911f062c)
 
-Congratulations! you successfully installed Ubiquibot (new or to an existing app)
+### Congratulations! you successfully installed Ubiquibot (new or to an existing app)
 
 
 
