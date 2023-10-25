@@ -107,6 +107,8 @@ After aforemention steps then installation shall be complete
 After you hit http://localhost:3000 you have the option to edit an existing app (if you think you have already registered a bot and when to reuse that same app)
 ![existing](https://github.com/ubiquity/ubiquibot/assets/41552663/f696f3c1-1941-4bf4-b7a8-95d88f63e030)
 
+Update the WebHook URL by the one auto-provided by the bot's installation page (this is a must)
+
 ![secret](https://github.com/ubiquity/ubiquibot/assets/41552663/41e9d872-f628-491e-8156-31bec8870ae7)
 
 ## The Good News it's after you install the bot by using an existing app you'll get
