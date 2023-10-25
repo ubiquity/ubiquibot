@@ -59,6 +59,8 @@ If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically ge
 
 ## How to run locally
 
+### Register a new Github App
+
 Should output:
 ![setup](https://github.com/ubiquity/ubiquibot/assets/41552663/febf0e61-0402-4b25-838a-a64c1c385984)
 
@@ -99,6 +101,8 @@ After aforemention steps then installation shall be complete
 ![trylocal](https://github.com/ubiquity/ubiquibot/assets/41552663/e958e7e4-6d42-44d1-a5cf-a090911f062c)
 
 ### Congratulations! you successfully installed Ubiquibot (new or to an existing app)
+
+## Update an Existing Github App (bot)
 
 
 
