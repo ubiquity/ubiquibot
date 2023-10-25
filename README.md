@@ -111,6 +111,11 @@ Update the WebHook URL by the one auto-provided by the bot's installation page (
 
 ![secret](https://github.com/ubiquity/ubiquibot/assets/41552663/41e9d872-f628-491e-8156-31bec8870ae7)
 
+Update APP_ID at .env accordingly
+
+![ubiqui](https://github.com/ubiquity/ubiquibot/assets/41552663/a760b497-84f2-4574-aa49-757be3dc3e71)
+
+
 ## The Good News it's after you install the bot by using an existing app you'll get
 
 ![success](https://github.com/ubiquity/ubiquibot/assets/41552663/87e85b37-c077-41f1-a7dc-41047d8a3b20)
