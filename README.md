@@ -57,6 +57,8 @@ yarn start:watch
 
 If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically generated when you install the app on your repository.
 
+## How to run locally
+
 Should output:
 ![setup](https://github.com/ubiquity/ubiquibot/assets/41552663/febf0e61-0402-4b25-838a-a64c1c385984)
 
@@ -167,8 +169,6 @@ To test the bot, you can:
 `registerWalletWithVerification` can be `true` or `false`. If enabled, it requires a signed message to set wallet address. This prevents users from setting wallet address from centralized exchanges, which would make payments impossible to claim.
 
 `promotionComment` is a message that is appended to the payment permit comment.
-
-## How to run locally
 
 ### Supase Database
 
