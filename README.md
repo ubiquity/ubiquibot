@@ -115,6 +115,11 @@ Update APP_ID at .env accordingly
 
 ![ubiqui](https://github.com/ubiquity/ubiquibot/assets/41552663/a760b497-84f2-4574-aa49-757be3dc3e71)
 
+In the same page it is super important that you re-generated and save a private key that you'll be using at .env you open the file and paste it
+
+![logo](https://github.com/ubiquity/ubiquibot/assets/41552663/716639d4-4646-4f14-bc3f-a39cfaf0fada)
+
+
 
 ## The Good News it's after you install the bot by using an existing app you'll get
 
