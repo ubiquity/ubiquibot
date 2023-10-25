@@ -111,6 +111,8 @@ on your Github settings hit to:
 
 ![repoaccess](https://github.com/ubiquity/ubiquibot/assets/41552663/bb389559-aaec-4bec-8ac0-97cefea63b16)
 
+Then at the same time hit to "APP SETTINGS"
+
 
 Update the WebHook URL by the one auto-provided by the bot's installation page (this is a must) and edit the webhook secret that you'll use at .env
 
