@@ -48,8 +48,8 @@ export async function pricingLabel(context: Context) {
   const minTimeLabel = sortLabelsByValue(recognizedTimeLabels).shift();
   const minPriorityLabel = sortLabelsByValue(recognizedPriorityLabels).shift();
 
-  if (!minTimeLabel) return logger.warn(`No time label to calculate price`);
-  if (!minPriorityLabel) return logger.warn("No priority label to calculate price");
+  if (!minTimeLabel) throw logger.warn(`No time label to calculate price`);
+  if (!minPriorityLabel) throw logger.warn("No priority label to calculate price");
 
   const targetPriceLabel = setPrice(context, minTimeLabel, minPriorityLabel);
 
