@@ -127,18 +127,17 @@ In the same page it is super important that you re-generated and save a private 
 
 ![logo](https://github.com/ubiquity/ubiquibot/assets/41552663/716639d4-4646-4f14-bc3f-a39cfaf0fada)
 
-Important things with private keys (.pem) at .env
-
-1. The private key gets automatically filled after the app is installed to a github handle
-2. The private key cannot be in spaces like that
-3. The private key is a string into its env var rather than a just opened info without "" otherwise it will not be recognized and you'll get unauthorized access
-
-
 
 ## The Good News it's after you install the bot by using an existing app you'll get
 
 ![success](https://github.com/ubiquity/ubiquibot/assets/41552663/87e85b37-c077-41f1-a7dc-41047d8a3b20)
 
+
+**Important things with private keys (.pem) at .env**
+
+1. The private key gets automatically filled after the app is installed to a github handle but not as an existing app
+2. The private key cannot be in spaces like that
+3. The private key is a string into its env var rather than a just opened info without "" otherwise it will not be recognized and you'll get unauthorized access
 
 
 **Note:** When setting up the project, please do not rename the `.env.example` file to `.env` as it will delete the environment example from the repository.
