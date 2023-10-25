@@ -3,19 +3,20 @@ import { stringify } from "yaml";
 import Runtime from "../../../../bindings/bot-runtime";
 import { getTokenSymbol } from "../../../../helpers/contracts";
 import { Comment } from "../../../../types";
+import structuredMetadata from "../../../shared/structured-metadata";
 import { generatePermit2Signature } from "./generate-permit-2-signature";
 import { FinalScores } from "./issue-closed";
 import { IssueRole } from "./_calculate-all-comment-scores";
-import { ethers } from "ethers";
 
 export async function generatePermits(totals: FinalScores, contributorComments: Comment[]) {
   const runtime = Runtime.getState();
   const userIdToNameMap = mapIdsToNames(contributorComments);
-  const comments = await generateComments(runtime, totals, userIdToNameMap, contributorComments);
-  return comments;
+  const { html: comment, permits } = await generateComment(runtime, totals, userIdToNameMap, contributorComments);
+  const metadata = structuredMetadata.create("Permits", { permits, totals });
+  return comment.concat("\n", metadata);
 }
 
-async function generateComments(
+async function generateComment(
   runtime: Runtime,
   totals: FinalScores,
   userIdToNameMap: { [userId: number]: string },
@@ -24,6 +25,9 @@ async function generateComments(
   const detailsTable = generateDetailsTable(totals, contributorComments);
   const tokenSymbol = await getTokenSymbol(runtime.botConfig.payout.paymentToken, runtime.botConfig.payout.rpc);
   const HTMLs = [] as string[];
+
+  const permits = [];
+
   for (const userId in totals) {
     const userTotals = totals[userId];
 
@@ -33,7 +37,6 @@ async function generateComments(
 
     const key = runtime.botConfig.payout.privateKey;
     if (!key) throw runtime.logger.warn("No bot wallet private key defined");
-    // const spenderAddress = new ethers.Wallet(runtime.botConfig.payout.privateKey as string).address;
 
     const beneficiaryAddress = await runtime.adapters.supabase.wallet.getAddress(parseInt(userId));
 
@@ -43,6 +46,8 @@ async function generateComments(
       identifier: issueRole,
       userId: userId,
     });
+
+    permits.push(permit);
 
     const html = generateHtml({
       permit: permit.url,
@@ -54,7 +59,7 @@ async function generateComments(
     });
     HTMLs.push(html);
   }
-  return HTMLs.join();
+  return { html: HTMLs.join("\n"), permits };
 }
 function generateHtml({
   permit,
@@ -113,10 +118,10 @@ function generateDetailsTable(totals: FinalScores, contributorComments: Comment[
       const qualScore = zeroToHyphen(commentScore.qualityScore);
       const credit = zeroToHyphen(commentScore.finalScore);
 
-      tableRows += `<tr><td><h6><a href="${commentUrl}">${truncatedBody}</a></h6></td><td>${quantScore}</td><td>${qualScore}</td><td>${credit}</td><td>${elementScoreDetailsStr}</td></tr>`;
+      tableRows += `<tr><td><h6><a href="${commentUrl}">${truncatedBody}</a></h6></td><td>${elementScoreDetailsStr}</td><td>${quantScore}</td><td>${qualScore}</td><td>${credit}</td></tr>`;
     }
   }
-  return `<table><tbody><tr><td>Comment</td><td>Formatting</td><td>Relevance</td><td>Reward</td><td>Formatting Stats</td></tr>${tableRows}</tbody></table>`;
+  return `<table><tbody><tr><td>Comment</td><td>Formatting Stats</td><td>Formatting Score</td><td>Relevance</td><td>Reward</td></tr>${tableRows}</tbody></table>`;
 }
 
 function zeroToHyphen(value: number | Decimal) {

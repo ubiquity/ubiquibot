@@ -1,9 +1,8 @@
 import { Comment, Issue } from "../../../../types/payload";
 import OpenAI from "openai";
 import { encodingForModel } from "js-tiktoken";
-import Runtime from "../../../../bindings/bot-runtime";
-import { colorizeText, Colors } from "../../../../adapters/supabase/helpers/pretty-logs";
 import Decimal from "decimal.js";
+import Runtime from "../../../../bindings/bot-runtime";
 
 const openai = new OpenAI(); // apiKey: // defaults to process.env["OPENAI_API_KEY"]
 
@@ -75,8 +74,6 @@ export async function gptRelevance(
     presence_penalty: 0,
   });
 
-  const totalTokensUsed = response.usage?.total_tokens;
-  console.trace({ totalTokensUsed });
   try {
     const parsedResponse = JSON.parse(response.choices[0].message.content as "[1, 1, 0.5, 0]") as number[];
     return parsedResponse;
@@ -108,10 +105,6 @@ async function sampleQualityScores(
   }
   const average = averageSamples(batchSamples, 4);
 
-  console.trace({
-    batchSamples,
-    average,
-  });
   return average;
 }
 
@@ -128,22 +121,9 @@ async function fetchSamples({
     batchPromises.push(requestPromise);
   }
   const batchResults = await Promise.all(batchPromises);
-  console.trace({ batchResults });
   return batchResults;
 }
 
-// if (allRelevanceScores[0].length !== contributorComments.length) {
-//   runtime.logger.warn(
-//     "Relevance scores per comment array length from OpenAI do not match the number of comments in this conversation. Defaulting all comment relevance scores to 1. You can try closing and reopening this issue to recalculate the relevance scores.",
-//     { relevanceScores: allRelevanceScores, contributorComments: contributorComments.length },
-//     true
-//   );
-//   return {
-//     relevanceScores: contributorComments.map(() => 1),
-//     sumOfConversationTokens,
-//     model: null,
-//   };
-// }
 interface InEachRequestParams {
   contributorComments: Comment[];
   estimatedOptimalModel: ReturnType<typeof estimateOptimalModel>;
@@ -153,11 +133,13 @@ interface InEachRequestParams {
 
 function filterSamples(batchResults: number[][], correctLength: number) {
   return batchResults.filter((result) => {
-    if (!correctLength) {
-      console.trace(colorizeText(result.toString(), Colors.fgRed));
+    if (result.length != correctLength) {
+      Runtime.getState().logger.error("Correct length is not defined", {
+        batchResultsLength: batchResults.length,
+        result,
+      });
       return false;
     } else {
-      // console.trace(colorizeText(result.toString(), Colors.fgGreen));
       return true;
     }
   });
@@ -174,6 +156,6 @@ function averageSamples(batchResults: (number | Decimal)[][], precision: number)
     })
     .map((score) => score.toDecimalPlaces(precision));
 
-  console.trace(`${JSON.stringify(batchResults)} -> ${JSON.stringify(averageScores)}`);
+  // console.trace(`${JSON.stringify(batchResults)} -> ${JSON.stringify(averageScores)}`);
   return averageScores;
 }

@@ -3,10 +3,9 @@ import Decimal from "decimal.js";
 import { BigNumber, ethers } from "ethers";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 import Runtime from "../../../../bindings/bot-runtime";
-import { PAYMENT_TOKEN_PER_NETWORK } from "../../../../helpers/payout";
 
 export async function generatePermit2Signature({
-  beneficiary: spender,
+  beneficiary,
   amount,
   identifier,
   userId,
@@ -39,7 +38,7 @@ export async function generatePermit2Signature({
       token: paymentToken,
       amount: ethers.utils.parseUnits(amount.toString(), 18),
     },
-    spender: spender,
+    spender: beneficiary,
     nonce: BigNumber.from(keccak256(toUtf8Bytes(identifier + userId))),
     deadline: MaxUint256,
   };
@@ -74,13 +73,21 @@ export async function generatePermit2Signature({
     signature: signature,
   };
 
+  // const transactionDataV2 = {
+  //   token: permitTransferFromData.permitted.token,
+  //   nonce: permitTransferFromData.nonce.toString(),
+  //   deadline: permitTransferFromData.deadline.toString(),
+  //   beneficiary: permitTransferFromData.spender,
+  //   amount: permitTransferFromData.permitted.amount.toString(),
+  // };
+
   const base64encodedTxData = Buffer.from(JSON.stringify(transactionData)).toString("base64");
 
   const url = new URL("https://pay.ubq.fi/");
   url.searchParams.append("claim", base64encodedTxData);
   url.searchParams.append("network", evmNetworkId.toString());
 
-  runtime.logger.info("Generated permit2 signature", { transactionData, url, "url.toString()": url.toString() });
+  runtime.logger.info("Generated permit2 signature", { transactionData, url });
 
   return { transactionData, url };
 }

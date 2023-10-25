@@ -2,30 +2,46 @@ import Decimal from "decimal.js";
 import Runtime from "../../../../bindings/bot-runtime";
 import { getAllIssueComments } from "../../../../helpers";
 import { Comment, Issue, Payload } from "../../../../types/payload";
+import structuredMetadata from "../../../shared/structured-metadata";
 import { calculateQualScore } from "./calculate-quality-score";
 import { calculateQuantScore } from "./calculate-quantity-score";
 import { generatePermits } from "./generate-permits";
 import { ScoringRubric } from "./scoring-rubric";
 import { IssueRole } from "./_calculate-all-comment-scores";
 
-const botCommandsAndCommentsFilter = (comment: Comment) =>
+const botCommandsAndHumanCommentsFilter = (comment: Comment) =>
   !comment.body.startsWith("/") /* No Commands */ && comment.user.type === "User"; /* No Bots */
 
+const botCommentsFilter = (comment: Comment) => comment.user.type === "Bot"; /* No Humans */
+
 export async function issueClosed() {
-  const { issue } = preamble();
+  const { issue, logger } = preamble();
   const issueComments = await getAllIssueComments(issue.number);
-  const contributorComments = issueComments.filter(botCommandsAndCommentsFilter);
+  const botComments = issueComments.filter(botCommentsFilter);
+  const contributorComments = issueComments.filter(botCommandsAndHumanCommentsFilter);
+
+  // check if the permits were already posted before posting
+  botComments.forEach((comment) => {
+    const parsed = structuredMetadata.parse(comment.body);
+    if (parsed) {
+      console.trace(parsed);
+      if (parsed.caller === "generatePermits") {
+        console.trace(parsed.metadata);
+        throw logger.warn("Permit already posted");
+      }
+    }
+  });
+
   const totals = await calculateScores(issue, contributorComments);
 
   // console.trace({ totals: util.inspect({ totals }, { showHidden: true, depth: null }) });
 
-  // TODO: check if the permits were already posted before posting
   // TODO: delegate permit calculation to GitHub Action
   // TODO: calculate issue specification score.
   // TODO: calculate assignee score.
   // TODO: calculate pull request conversation score.
-  // TODO: post the permits to the issue
-  // TODO: design metadata system for permit parsing
+  // post the permits to the issue
+  // design metadata system for permit parsing
 
   const comment = await generatePermits(totals, contributorComments);
 
@@ -58,7 +74,7 @@ function preamble() {
 }
 
 export function applyQualityScoreToQuantityScore(
-  qualityScoresWithCommentIds: { commentId: number; userId: number; score: number }[],
+  qualityScoresWithCommentIds: { commentId: number; userId: number; score: Decimal }[],
   quantityScore: ScoringRubric[]
 ) {
   const finalScores = {} as FinalScores;
@@ -111,7 +127,7 @@ export interface FinalScores {
 interface CommentScoreDetails {
   commentId: number;
   wordAndElementScoreTotal: Decimal;
-  qualityScore: number;
+  qualityScore: Decimal;
   finalScore: Decimal;
   wordScoreTotal: Decimal;
   elementScoreTotal: Decimal;
