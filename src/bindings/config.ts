@@ -32,10 +32,10 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
     staleTaskTime,
     timeLabels,
     newContributorGreeting,
-    timeRangeForMaxIssue,
+    reviewDelayTolerance,
     permitBaseUrl,
-    followUpTime,
-    disqualifyTime,
+    taskFollowUpDuration,
+    taskDisqualifyDuration,
   } = await getConfig(context);
 
   // const config = await getConfig(context);
@@ -66,12 +66,9 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
       permitBaseUrl: process.env.PERMIT_BASE_URL || permitBaseUrl,
     },
     unassign: {
-      timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE
-        ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE)
-        : timeRangeForMaxIssue,
-
-      followUpTime: ms(process.env.FOLLOW_UP_TIME || followUpTime),
-      disqualifyTime: ms(process.env.DISQUALIFY_TIME || disqualifyTime),
+      reviewDelayTolerance: ms(reviewDelayTolerance),
+      taskFollowUpDuration: ms(taskFollowUpDuration),
+      taskDisqualifyDuration: ms(taskDisqualifyDuration),
     },
     supabase: {
       url: process.env.SUPABASE_URL ?? null,
@@ -103,11 +100,14 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
     throw runtime.logger.error("Invalid config", validate.errors);
   }
 
-  if (botConfig.unassign.followUpTime < 0 || botConfig.unassign.disqualifyTime < 0) {
-    throw runtime.logger.error("Invalid time interval, followUpTime or disqualifyTime cannot be negative", {
-      followUpTime: botConfig.unassign.followUpTime,
-      disqualifyTime: botConfig.unassign.disqualifyTime,
-    });
+  if (botConfig.unassign.taskFollowUpDuration < 0 || botConfig.unassign.taskDisqualifyDuration < 0) {
+    throw runtime.logger.error(
+      "Invalid time interval, taskFollowUpDuration or taskDisqualifyDuration cannot be negative",
+      {
+        taskFollowUpDuration: botConfig.unassign.taskFollowUpDuration,
+        taskDisqualifyDuration: botConfig.unassign.taskDisqualifyDuration,
+      }
+    );
   }
 
   return botConfig;

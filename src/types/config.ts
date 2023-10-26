@@ -78,9 +78,9 @@ const PayoutConfigSchema = Type.Object({
 });
 
 const UnassignConfigSchema = Type.Object({
-  followUpTime: Type.Number(),
-  disqualifyTime: Type.Number(),
-  timeRangeForMaxIssue: Type.Number(),
+  taskFollowUpDuration: Type.Number(),
+  taskDisqualifyDuration: Type.Number(),
+  reviewDelayTolerance: Type.Number(),
 });
 
 const ModeSchema = Type.Object({
@@ -231,10 +231,10 @@ const MergedConfigSchema = Type.Object({
   staleTaskTime: Type.String(),
   timeLabels: Type.Array(LabelFromConfigSchema),
   staleBountyTime: Type.String(),
-  timeRangeForMaxIssue: Type.Number(),
+  reviewDelayTolerance: Type.String(),
   permitBaseUrl: Type.String(),
-  followUpTime: Type.String(),
-  disqualifyTime: Type.String(),
+  taskFollowUpDuration: Type.String(),
+  taskDisqualifyDuration: Type.String(),
 });
 
 export type MergedConfig = Static<typeof MergedConfigSchema>;
