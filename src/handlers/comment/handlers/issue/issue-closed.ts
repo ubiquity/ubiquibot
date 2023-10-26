@@ -1,8 +1,9 @@
 import Decimal from "decimal.js";
+import { Logs } from "../../../../adapters/supabase";
 import Runtime from "../../../../bindings/bot-runtime";
-import { getAllIssueComments } from "../../../../helpers";
+import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../../helpers";
 import { getLinkedPullRequests } from "../../../../helpers/parser";
-import { Comment, Issue, Payload } from "../../../../types/payload";
+import { Comment, Issue, Payload, StateReason } from "../../../../types/payload";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { calculateQualScore } from "./calculate-quality-score";
 import { calculateQuantScore } from "./calculate-quantity-score";
@@ -24,6 +25,14 @@ export async function issueClosed() {
   const repository = payload?.repository?.name;
   const issueNumber = issue.number;
 
+  // === //
+
+  // Check if the issue was closed as completed. Otherwise, skip.
+
+  // === //
+
+  await preflightChecks(issue, logger, issueComments);
+
   // DONE: calculate pull request conversation score.
   const linkedPullRequests = await getLinkedPullRequests({ owner, repository, issue: issueNumber });
   if (linkedPullRequests.length) {
@@ -34,10 +43,7 @@ export async function issueClosed() {
     }
   }
 
-  const botComments = issueComments.filter(botCommentsFilter);
   const contributorComments = issueComments.filter(botCommandsAndHumanCommentsFilter);
-
-  checkIfPermitsAlreadyPosted(botComments); // DONE: check if the permits were already posted before posting
 
   // TODO: calculate issue specification score.
   // TODO: calculate assignee score.
@@ -49,14 +55,32 @@ export async function issueClosed() {
   // console.trace({ totals: util.inspect({ totals }, { showHidden: true, depth: null }) });
 }
 
-function checkIfPermitsAlreadyPosted(botComments: Comment[]) {
+async function preflightChecks(issue: Issue, logger: Logs, issueComments: Comment[]) {
+  const { payload, context, config } = preamble();
+  if (!issue) throw logger.error("Permit generation skipped because issue is undefined");
+  if (issue.state !== "closed" || issue.closed_at === null)
+    throw logger.info("Issue was not closed as completed. Skipping.", { issue });
+  if (config.publicAccessControl.fundExternalClosedIssue) {
+    const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
+    if (!userHasPermission)
+      throw logger.warn("Permit generation disabled because this issue has been closed by an external contributor.");
+  }
+
+  // TODO: make sure a price is set before generating permits.
+  const priceLabels = issue.labels.find((label) => label.name.startsWith("Price: "));
+  if (!priceLabels)
+    throw logger.warn("No price label has been set. Skipping permit generation.", { labels: issue.labels });
+
+  const botComments = issueComments.filter(botCommentsFilter);
+  checkIfPermitsAlreadyPosted(botComments, logger); // DONE: check if the permits were already posted before posting them again
+}
+
+function checkIfPermitsAlreadyPosted(botComments: Comment[], logger: Logs) {
   botComments.forEach((comment) => {
     const parsed = structuredMetadata.parse(comment.body);
     if (parsed) {
-      // console.trace(parsed);
       if (parsed.caller === "generatePermits") {
-        // console.trace(parsed.metadata);
-        throw Runtime.getState().logger.warn("Permit already posted");
+        throw logger.warn("Permit already posted");
       }
     }
   });
@@ -81,8 +105,9 @@ function preamble() {
   const logger = runtime.logger;
   const payload = context.payload as Payload;
   const issue = payload.issue as Issue;
+  const config = runtime.botConfig;
   if (!issue) throw runtime.logger.error("Issue is not defined");
-  return { issue, payload, context, runtime, logger };
+  return { issue, payload, context, runtime, logger, config };
 }
 
 export function applyQualityScoreToQuantityScore(
@@ -96,7 +121,7 @@ export function applyQualityScoreToQuantityScore(
       const usersQuantityScores = scoringRubric.commentScores[userId];
       if (!usersQuantityScores) return;
       const userCommentScore = usersQuantityScores[commentId];
-      if (!userCommentScore) throw new Error("userCommentScore is undefined");
+      if (!userCommentScore) throw logger.error("userCommentScore is undefined");
 
       const quantityScore = userCommentScore.wordScoreTotal.plus(userCommentScore.elementScoreTotal);
 

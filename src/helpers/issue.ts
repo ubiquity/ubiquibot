@@ -303,39 +303,6 @@ export async function getAllIssueAssignEvents(issueNumber: number): Promise<Assi
   return result.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
 }
 
-export async function wasIssueReopened(issueNumber: number): Promise<boolean> {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
-  let shouldFetch = true;
-  let page_number = 1;
-  try {
-    while (shouldFetch) {
-      const response = await context.octokit.rest.issues.listEvents({
-        owner: payload.repository.owner.login,
-        repo: payload.repository.name,
-        issue_number: issueNumber,
-        per_page: 100,
-        page: page_number,
-      });
-
-      await checkRateLimitGit(response?.headers);
-
-      // Fixing infinite loop here, it keeps looping even when its an empty array
-      if (response?.data?.length > 0) {
-        if (response.data.filter((item) => item.event === "reopened").length > 0) return true;
-        page_number++;
-      } else {
-        shouldFetch = false;
-      }
-    }
-  } catch (e: unknown) {
-    shouldFetch = false;
-  }
-
-  return false;
-}
-
 export async function checkUserPermissionForRepoAndOrg(username: string, context: Context): Promise<boolean> {
   const permissionForRepo = await checkUserPermissionForRepo(username, context);
   const permissionForOrg = await checkUserPermissionForOrg(username, context);
