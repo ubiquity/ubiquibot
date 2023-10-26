@@ -2,6 +2,7 @@ import { getBotConfig, getBotContext, getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs";
 import { addCommentToIssue, addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getLabel, calculateWeight, getAllLabeledEvents } from "../../helpers";
 import { Payload, UserType } from "../../types";
+import { ErrorDiff } from "../../utils/helpers";
 import { handleLabelsAccess } from "../access";
 import { getTargetPriceLabel } from "../shared";
 
@@ -12,6 +13,18 @@ export const pricingLabelLogic = async (): Promise<void> => {
   const payload = context.payload as Payload;
   if (!payload.issue) return;
   const labels = payload.issue.labels;
+
+  const doubleTimePrefix = labels.filter((label) => label.name.toString().startsWith("Time:")).length > 1;
+  const doublePriorityPrefix = labels.filter((label) => label.name.toString().startsWith("Priority:")).length > 1;
+  const doublePrefix = doubleTimePrefix || doublePriorityPrefix;
+
+  if (doublePrefix) {
+    await addCommentToIssue(
+      ErrorDiff("Be careful not to add two labels of the same catergory or issue pricing will default to the lowest value."),
+      payload.issue.number
+    );
+  }
+
   const labelNames = labels.map((i) => i.name);
   logger.info(`Checking if the issue is a parent issue.`);
   if (payload.issue.body && isParentIssue(payload.issue.body)) {
