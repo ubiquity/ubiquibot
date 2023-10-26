@@ -92,7 +92,7 @@ const ModeSchema = Type.Object({
 
 const AssignSchema = Type.Object({
   maxConcurrentTasks: Type.Number(),
-  staleTaskTime: Type.Number(),
+  staleTaskTime: Type.Optional(Type.Number()), // Not sure if this should be optional
 });
 
 const LogConfigSchema = Type.Object({

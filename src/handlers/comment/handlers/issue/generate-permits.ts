@@ -79,7 +79,7 @@ function generateHtml({
             [ ${tokenAmount} ${tokenSymbol} ]</a
           >
         </h3>
-        <h6>&nbsp;${issueRole}&nbsp;@${contributorName}</h6></b
+        <h6>&nbsp;${issueRole}&nbsp;Comments&nbsp;@${contributorName}</h6></b
       >
     </summary>
     ${detailsTable}

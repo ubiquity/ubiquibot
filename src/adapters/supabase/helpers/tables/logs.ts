@@ -9,7 +9,6 @@ import { Database } from "../../types";
 import { prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
 import { execSync } from "child_process";
-import { logger } from "ethers";
 
 type LogFunction = (message: string, metadata?: any) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
@@ -101,7 +100,7 @@ export class Logs extends Super {
 
     const stackLines = new Error().stack?.split("\n") || [];
     if (stackLines.length > 3) {
-      const callerLine = stackLines[3];
+      const callerLine = stackLines[3].replace(process.cwd(), "");
       const match = callerLine.match(/at (\S+)/);
       if (match) {
         metadata.caller = match[1];

@@ -50,8 +50,6 @@ export async function generatePermit2Signature({
     evmNetworkId
   );
 
-  console.trace({ domain, types, values });
-
   const signature = await adminWallet._signTypedData(domain, types, values).catch((error) => {
     throw runtime.logger.debug("Failed to sign typed data", error);
   });
@@ -87,7 +85,7 @@ export async function generatePermit2Signature({
   url.searchParams.append("claim", base64encodedTxData);
   url.searchParams.append("network", evmNetworkId.toString());
 
-  runtime.logger.info("Generated permit2 signature", { transactionData, url });
+  runtime.logger.info("Generated permit2 signature", { transactionData, url: url.toString() });
 
   return { transactionData, url };
 }

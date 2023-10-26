@@ -1,4 +1,3 @@
-import { removeAssignees } from "../../../helpers";
 import Runtime from "../../../bindings/bot-runtime";
 import { Payload } from "../../../types";
 import { closePullRequestForAnIssue } from "../../assign/index";
@@ -33,10 +32,15 @@ export async function unassign(body: string) {
 
   if (shouldUnassign) {
     await closePullRequestForAnIssue();
-    await removeAssignees(
-      issueNumber,
-      assignees.map((i) => i?.login).filter((login): login is string => login !== undefined)
-    );
+    const { login } = payload.repository.owner;
+    const { name: repo } = payload.repository;
+    const context = runtime.latestEventContext;
+    await context.octokit.rest.issues.removeAssignees({
+      owner: login,
+      repo: repo,
+      issue_number: issueNumber,
+      assignees: [payload.sender.login],
+    });
     return logger.ok("You have been unassigned from the task", { issueNumber, user: payload.sender.login });
   }
   return logger.warn("You are not assigned to this task", { issueNumber, user: payload.sender.login });

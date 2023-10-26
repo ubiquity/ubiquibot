@@ -19,12 +19,12 @@ export async function issueClosed() {
   // TODO: delegate permit calculation to GitHub Action
   const { issue, logger, payload } = preamble();
   const issueComments = await getAllIssueComments(issue.number);
-  const owner = payload?.organization?.login;
+  const owner = payload?.organization?.login || payload.repository.owner.login;
   if (!owner) throw logger.error("Owner is not defined");
   const repository = payload?.repository?.name;
   const issueNumber = issue.number;
 
-  // TODO: calculate pull request conversation score.
+  // DONE: calculate pull request conversation score.
   const linkedPullRequests = await getLinkedPullRequests({ owner, repository, issue: issueNumber });
   if (linkedPullRequests.length) {
     const linkedCommentsPromises = linkedPullRequests.map((pull) => getAllIssueComments(pull.number));
@@ -53,9 +53,9 @@ function checkIfPermitsAlreadyPosted(botComments: Comment[]) {
   botComments.forEach((comment) => {
     const parsed = structuredMetadata.parse(comment.body);
     if (parsed) {
-      console.trace(parsed);
+      // console.trace(parsed);
       if (parsed.caller === "generatePermits") {
-        console.trace(parsed.metadata);
+        // console.trace(parsed.metadata);
         throw Runtime.getState().logger.warn("Permit already posted");
       }
     }

@@ -63,7 +63,7 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
       privateKey: keys.private,
       publicKey: keys.public,
       paymentToken: paymentToken,
-      permitBaseUrl: process.env.PERMIT_BASE_URL || permitBaseUrl,
+      permitBaseUrl: permitBaseUrl,
     },
     unassign: {
       reviewDelayTolerance: ms(reviewDelayTolerance),
@@ -97,7 +97,7 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
   const validate = ajv.compile(BotConfigSchema);
   const valid = validate(botConfig);
   if (!valid) {
-    throw runtime.logger.error("Invalid config", validate.errors);
+    throw new Error(JSON.stringify(validate.errors));
   }
 
   if (botConfig.unassign.taskFollowUpDuration < 0 || botConfig.unassign.taskDisqualifyDuration < 0) {

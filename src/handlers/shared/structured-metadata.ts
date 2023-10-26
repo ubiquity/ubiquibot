@@ -5,7 +5,7 @@ function createStructuredMetadata(type: string, metadata: unknown) {
   const stackLine = new Error().stack?.split("\n")[2] ?? "";
   const caller = stackLine.match(/at (\S+)/)?.[1] ?? "";
   const revision = execSync("git rev-parse --short HEAD").toString().trim();
-  return `<!-- Ubiquity - ${type} - ${caller} - ${revision}\n${jsonString}\n-->`;
+  return [`<!-- Ubiquity - ${type} - ${caller} - ${revision}`, jsonString, "-->"].join("\n");
 }
 
 function parseStructuredMetadata(comment: string) {
@@ -24,7 +24,9 @@ function parseStructuredMetadata(comment: string) {
     // TODO: fix metadata writing to encode html comments inside json without the html parser getting confused
     metadata = JSON.parse(jsonString.trim());
   } catch (error) {
+    console.trace(jsonString);
     console.error("Failed to parse JSON:", error);
+
     return null;
   }
 

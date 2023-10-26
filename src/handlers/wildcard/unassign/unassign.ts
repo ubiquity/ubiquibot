@@ -1,7 +1,7 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { Logs } from "../../../adapters/supabase";
 import Runtime from "../../../bindings/bot-runtime";
-import { listAllIssuesForRepo } from "../../../helpers";
+import { listAllIssuesAndPullsForRepo } from "../../../helpers";
 import { Issue, IssueType, Payload } from "../../../types";
 
 type IssuesListEventsResponseData = RestEndpointMethodTypes["issues"]["listEvents"]["response"]["data"];
@@ -10,12 +10,9 @@ type PullsListCommitsResponseData = RestEndpointMethodTypes["pulls"]["listCommit
 export async function checkTasksToUnassign() {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  // List all the issues in the repository. It may include `pull_request`
-  // because GitHub's REST API v3 considers every pull request an issue
-  const issuesOpened = await listAllIssuesForRepo(IssueType.OPEN);
-  const assignedIssues = issuesOpened.filter((issue) => issue.assignee);
+  const issuesAndPullsOpened = await listAllIssuesAndPullsForRepo(IssueType.OPEN);
+  const assignedIssues = issuesAndPullsOpened.filter((issue) => issue.assignee);
 
-  // Checking the tasks in parallel
   const tasksToUnassign = await Promise.all(
     assignedIssues.map(async (assignedIssue: Issue) => checkTaskToUnassign(assignedIssue))
   );
