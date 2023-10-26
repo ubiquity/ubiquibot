@@ -77,11 +77,11 @@ export const DefaultConfig: MergedConfig = {
     setLabel: true,
     fundExternalClosedIssue: true,
   },
-  staleTaskTime: "0d",
-  timeRangeForMaxIssue: 24, //24
+  staleTaskTime: "1 month",
+  reviewDelayTolerance: "24 hours", //24
   permitBaseUrl: "https://pay.ubq.fi",
-  followUpTime: "4 days",
-  disqualifyTime: "7 days",
+  taskFollowUpDuration: "4 days",
+  taskDisqualifyDuration: "7 days",
   staleBountyTime: "7 days",
   newContributorGreeting: {
     enabled: false,

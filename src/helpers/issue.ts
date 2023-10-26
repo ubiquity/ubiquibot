@@ -106,7 +106,7 @@ export async function addLabelToIssue(labelName: string) {
   }
 }
 
-async function listIssuesForRepo(
+async function listIssuesAndPullsForRepo(
   state: "open" | "closed" | "all" = "open",
   per_page = 100,
   page = 1,
@@ -135,13 +135,13 @@ async function listIssuesForRepo(
   }
 }
 
-export async function listAllIssuesForRepo(state: "open" | "closed" | "all" = "open") {
+export async function listAllIssuesAndPullsForRepo(state: "open" | "closed" | "all") {
   const issuesArr = [] as Issue[];
   const perPage = 100;
   let fetchDone = false;
   let curPage = 1;
   while (!fetchDone) {
-    const issues = (await listIssuesForRepo(state, perPage, curPage)) as Issue[];
+    const issues = (await listIssuesAndPullsForRepo(state, perPage, curPage)) as Issue[];
 
     // push the objects to array
     issuesArr.push(...issues);
@@ -334,23 +334,6 @@ export async function wasIssueReopened(issueNumber: number): Promise<boolean> {
   }
 
   return false;
-}
-
-export async function removeAssignees(issueNumber: number, assignees: string[]) {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-
-  const payload = context.payload as Payload;
-  try {
-    await context.octokit.rest.issues.removeAssignees({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: issueNumber,
-      assignees,
-    });
-  } catch (e: unknown) {
-    runtime.logger.debug("Removing assignees failed!", e);
-  }
 }
 
 export async function checkUserPermissionForRepoAndOrg(username: string, context: Context): Promise<boolean> {
@@ -659,7 +642,7 @@ export async function getAssignedIssues(username: string) {
   const perPage = 100;
   let curPage = 1;
   while (!fetchDone) {
-    const issues = await listIssuesForRepo(IssueType.OPEN, perPage, curPage);
+    const issues = await listIssuesAndPullsForRepo(IssueType.OPEN, perPage, curPage);
 
     // push the objects to array
     issuesArr.push(...issues);
@@ -720,8 +703,8 @@ export async function getAvailableOpenedPullRequests(username: string) {
   const context = runtime.latestEventContext;
 
   const unassignConfig = runtime.botConfig.unassign;
-  const { timeRangeForMaxIssue } = unassignConfig;
-  if (!timeRangeForMaxIssue) return [];
+  const { reviewDelayTolerance } = unassignConfig;
+  if (!reviewDelayTolerance) return [];
 
   const openedPullRequests = await getOpenedPullRequests(username);
   const result = [] as typeof openedPullRequests;
@@ -740,7 +723,7 @@ export async function getAvailableOpenedPullRequests(username: string) {
     if (
       reviews.length === 0 &&
       (new Date().getTime() - new Date(openedPullRequest.created_at).getTime()) / (1000 * 60 * 60) >=
-        timeRangeForMaxIssue
+        reviewDelayTolerance
     ) {
       result.push(openedPullRequest);
     }

@@ -57,14 +57,15 @@ export async function bindEvents(eventContext: Context) {
   // Skip validation for installation event and push
   if (!NO_VALIDATION.includes(eventName)) {
     // Validate payload
+    // console.trace({ payload });
     const validate = ajv.compile(PayloadSchema);
     const valid = validate(payload);
     if (!valid) {
-      runtime.logger.info("Payload schema validation failed!", payload);
+      // runtime.logger.info("Payload schema validation failed!", payload);
       if (validate.errors) {
-        runtime.logger.warn("validation errors", validate.errors);
+        return runtime.logger.error("validation errors", validate.errors);
       }
-      return;
+      // return;
     }
 
     // Check if we should skip the event
@@ -167,23 +168,23 @@ async function renderMainActionOutput(response: string | void | LogReturn, actio
 }
 
 function createRenderCatchAll(handlerType: AllHandlersWithTypes, activeHandler: AllHandlers) {
-  return async function renderCatchAll(logReturn: LogReturn | Error | unknown) {
+  return async function renderCatchAll(report: LogReturn | Error | unknown) {
     const runtime = Runtime.getState();
     const payload = runtime.latestEventContext.payload as Payload;
     const issue = payload.issue;
     if (!issue) return runtime.logger.error("Issue is null. Skipping", { issue });
 
-    if (logReturn instanceof LogReturn) {
+    if (report instanceof LogReturn) {
       // already made it to console so it should just post the comment
-      const { logMessage } = logReturn;
+      const { logMessage } = report;
 
-      if (logReturn.metadata) {
-        console.trace("this is the second place that metadata is being serialized as an html comment");
+      if (report.metadata) {
+        runtime.logger.debug("this is the second place that metadata is being serialized as an html comment");
         let metadataSerialized;
-        const prettySerialized = JSON.stringify(logReturn.metadata, null, 2);
+        const prettySerialized = JSON.stringify(report.metadata, null, 2);
         // first check if metadata is an error, then post it as a json comment
         // otherwise post it as an html comment
-        if (logReturn.logMessage.type === ("error" as LogMessage["type"])) {
+        if (report.logMessage.type === ("error" as LogMessage["type"])) {
           metadataSerialized = ["```json", prettySerialized, "```"].join("\n");
         } else {
           metadataSerialized = ["<!--", prettySerialized, "-->"].join("\n");
@@ -193,16 +194,33 @@ function createRenderCatchAll(handlerType: AllHandlersWithTypes, activeHandler: 
       } else {
         return await addCommentToIssue(logMessage.diff, issue.number);
       }
-    } else if (logReturn instanceof Error) {
+    } else if (report instanceof Error) {
+      // convert error to normal object
+      const error = {
+        name: report.name,
+        message: report.message,
+        stack: report.stack,
+      };
+
       return runtime.logger.error(
         "action has an uncaught error",
-        { logReturn, handlerType, activeHandler: activeHandler.name },
+        { logReturn: report, handlerType, activeHandler: activeHandler.name, error },
         true
       );
     } else {
+      // could be supabase error
+      // interface SupabaseError {
+      //   code: "PGRST116";
+      //   details: "The result contains 0 rows";
+      //   hint: null;
+      //   message: "JSON object requested, multiple (or no) rows returned";
+      // }
+
+      // report as SupabaseError
+
       return runtime.logger.error(
         "action returned an unexpected value",
-        { logReturn, handlerType, activeHandler: activeHandler.name },
+        { logReturn: report, handlerType, activeHandler: activeHandler.name },
         true
       );
     }

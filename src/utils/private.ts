@@ -18,7 +18,7 @@ export async function getConfig(context: Context) {
   const payload = context.payload as Payload;
   let parsedOrg: Config | null;
   if (typeof orgConfig === "string") {
-    parsedOrg = parseYAML(orgConfig);
+    parsedOrg = parseYamlConfig(orgConfig);
   } else {
     parsedOrg = null;
   }
@@ -32,7 +32,7 @@ export async function getConfig(context: Context) {
   }
   let parsedRepo: Config | null;
   if (typeof repoConfig === "string") {
-    parsedRepo = parseYAML(repoConfig);
+    parsedRepo = parseYamlConfig(repoConfig);
   } else {
     parsedRepo = null;
   }
@@ -87,7 +87,7 @@ interface MergedConfigs {
   parsedOrg: Config | null;
   parsedDefault: MergedConfig;
 }
-export function parseYAML(data?: string) {
+export function parseYamlConfig(data?: string) {
   try {
     if (data) {
       const parsedData = YAML.parse(data) as Config;

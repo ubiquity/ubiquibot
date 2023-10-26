@@ -1,15 +1,13 @@
 import { Context } from "probot";
 import Runtime from "../bindings/bot-runtime";
+import { getLabel } from "../handlers/pricing/pricing-label";
+import { calculateTaskPrice } from "../handlers/shared/pricing";
+import { calculateLabelValue } from "../helpers";
 import { Label, Payload } from "../types";
 import { deleteLabel } from "./issue";
-import { calculateLabelValue } from "../helpers";
-import { calculateTaskPrice } from "../handlers/shared/pricing";
 
 // cspell:disable
-const COLORS = {
-  default: "ededed",
-  price: "1f883d",
-};
+const COLORS = { default: "ededed", price: "1f883d" };
 // cspell:enable
 
 export async function listLabelsForRepo(): Promise<Label[]> {
@@ -28,44 +26,19 @@ export async function listLabelsForRepo(): Promise<Label[]> {
     return res.data;
   }
 
-  throw new Error(`Failed to fetch lists of labels, code: ${res.status}`);
+  throw runtime.logger.error("Failed to fetch lists of labels", { status: res.status });
 }
 
-export async function createLabel(name: string, labelType?: keyof typeof COLORS): Promise<void> {
+export async function createLabel(name: string, labelType = "default" as keyof typeof COLORS): Promise<void> {
   const runtime = Runtime.getState();
   const context = runtime.latestEventContext;
-  const logger = runtime.logger;
-  // console.trace("createLabel", { name, labelType });
   const payload = context.payload as Payload;
-  try {
-    await context.octokit.rest.issues.createLabel({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      name,
-      color: COLORS[labelType ?? "default"],
-    });
-  } catch (err: unknown) {
-    logger.debug("Error creating a label: ", err);
-  }
-}
-
-export async function getLabel(name: string): Promise<boolean> {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const logger = runtime.logger;
-  const payload = context.payload as Payload;
-  try {
-    const res = await context.octokit.rest.issues.getLabel({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      name,
-    });
-    return res.status === 200 ? true : false;
-  } catch (err: unknown) {
-    logger.debug("Error getting a label: ", err);
-  }
-
-  return false;
+  await context.octokit.rest.issues.createLabel({
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    name,
+    color: COLORS[labelType],
+  });
 }
 
 // Function to update labels based on the base rate difference
@@ -111,36 +84,32 @@ export async function updateLabelsFromBaseRate(
 
   logger.debug("Got used labels: ", { usedLabels });
 
-  try {
-    for (const label of usedLabels) {
-      if (label.startsWith("Price: ")) {
-        const labelData = labels.find((obj) => obj["name"] === label) as Label;
-        const index = uniquePreviousLabels.findIndex((obj) => obj === label);
+  for (const label of usedLabels) {
+    if (label.startsWith("Price: ")) {
+      const labelData = labels.find((obj) => obj["name"] === label) as Label;
+      const index = uniquePreviousLabels.findIndex((obj) => obj === label);
 
-        const exist = await getLabel(uniqueNewLabels[index]);
-        if (exist) {
-          // we have to delete first
-          logger.debug("Label already exists, deleting it", { label });
-          await deleteLabel(uniqueNewLabels[index]);
-        }
-
-        // we can update safely
-        await context.octokit.issues.updateLabel({
-          owner,
-          repo,
-          name: label,
-          new_name: uniqueNewLabels[index],
-          color: labelData.color,
-          description: labelData.description,
-          headers: {
-            "X-GitHub-Api-Version": "2022-11-28",
-          },
-        });
-
-        logger.debug("Label updated", { label, to: uniqueNewLabels[index] });
+      const exist = await getLabel(uniqueNewLabels[index]);
+      if (exist) {
+        // we have to delete first
+        logger.debug("Label already exists, deleting it", { label });
+        await deleteLabel(uniqueNewLabels[index]);
       }
+
+      // we can update safely
+      await context.octokit.issues.updateLabel({
+        owner,
+        repo,
+        name: label,
+        new_name: uniqueNewLabels[index],
+        color: labelData.color,
+        description: labelData.description,
+        headers: {
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      });
+
+      logger.debug("Label updated", { label, to: uniqueNewLabels[index] });
     }
-  } catch (error: unknown) {
-    logger.error("Error updating labels", { error });
   }
 }

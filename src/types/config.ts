@@ -68,18 +68,19 @@ const SupabaseConfigSchema = Type.Object({
 
 // type LogNotification= Static<typeof LogNotificationSchema>;
 
-export const PayoutConfigSchema = Type.Object({
+const PayoutConfigSchema = Type.Object({
   evmNetworkId: Type.Number(),
   rpc: Type.String(),
   privateKey: Type.Union([Type.String(), Type.Null()]),
+  publicKey: Type.Union([Type.String(), Type.Null()]),
   paymentToken: Type.String(),
   permitBaseUrl: Type.String(),
 });
 
 const UnassignConfigSchema = Type.Object({
-  followUpTime: Type.Number(),
-  disqualifyTime: Type.Number(),
-  timeRangeForMaxIssue: Type.Number(),
+  taskFollowUpDuration: Type.Number(),
+  taskDisqualifyDuration: Type.Number(),
+  reviewDelayTolerance: Type.Number(),
 });
 
 const ModeSchema = Type.Object({
@@ -91,7 +92,7 @@ const ModeSchema = Type.Object({
 
 const AssignSchema = Type.Object({
   maxConcurrentTasks: Type.Number(),
-  staleTaskTime: Type.Number(),
+  staleTaskTime: Type.Optional(Type.Number()), // Not sure if this should be optional
 });
 
 const LogConfigSchema = Type.Object({
@@ -230,10 +231,10 @@ const MergedConfigSchema = Type.Object({
   staleTaskTime: Type.String(),
   timeLabels: Type.Array(LabelFromConfigSchema),
   staleBountyTime: Type.String(),
-  timeRangeForMaxIssue: Type.Number(),
+  reviewDelayTolerance: Type.String(),
   permitBaseUrl: Type.String(),
-  followUpTime: Type.String(),
-  disqualifyTime: Type.String(),
+  taskFollowUpDuration: Type.String(),
+  taskDisqualifyDuration: Type.String(),
 });
 
 export type MergedConfig = Static<typeof MergedConfigSchema>;
