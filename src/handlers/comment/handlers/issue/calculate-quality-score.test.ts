@@ -6,35 +6,38 @@ import {
 } from "./calculate-quality-score";
 import { Comment, Issue, User, UserType } from "../../../../types/payload";
 
-describe("*** Real OpenAI API Call *** calculateQualScore", () => {
-  it("should calculate quality score", async () => {
-    const issue = { body: "my topic is about apples" } as Issue;
-    const comments: Comment[] = [
-      { body: "the apple is red", user: { type: UserType.User } as User } as Comment,
-      { body: "it is juicy", user: { type: UserType.User } as User } as Comment,
-      { body: "bananas are great", user: { type: UserType.User } as User } as Comment,
-    ];
-    const result = await calculateQualScore(issue, comments);
-    expect(result).toBeDefined();
-    expect(result.relevanceScores).toBeDefined();
-    expect(Array.isArray(result.relevanceScores)).toBe(true);
-    expect(typeof result.sumOfConversationTokens).toBe("number");
-    expect(typeof result.model).toBe("string");
+// Do not run real API calls inside of VSCode because it keeps running the tests in the background
+if (process.env.NODE_ENV !== "test") {
+  describe("*** Real OpenAI API Call *** calculateQualScore", () => {
+    it("should calculate quality score", async () => {
+      const issue = { body: "my topic is about apples" } as Issue;
+      const comments: Comment[] = [
+        { body: "the apple is red", user: { type: UserType.User } as User } as Comment,
+        { body: "it is juicy", user: { type: UserType.User } as User } as Comment,
+        { body: "bananas are great", user: { type: UserType.User } as User } as Comment,
+      ];
+      const result = await calculateQualScore(issue, comments);
+      expect(result).toBeDefined();
+      expect(result.relevanceScores).toBeDefined();
+      expect(Array.isArray(result.relevanceScores)).toBe(true);
+      expect(typeof result.sumOfConversationTokens).toBe("number");
+      expect(typeof result.model).toBe("string");
+    });
   });
-});
 
-describe("*** Real OpenAI API Call *** gptRelevance", () => {
-  it("should calculate gpt relevance", async () => {
-    const result = await gptRelevance("gpt-3.5-turbo", "my topic is about apples", [
-      "the apple is red",
-      "it is juicy",
-      "bananas are great",
-    ]);
-    expect(result[0]).toBeGreaterThan(0);
-    expect(result[1]).toBeGreaterThan(0);
-    expect(result[result.length - 1]).toBe(0);
+  describe("*** Real OpenAI API Call *** gptRelevance", () => {
+    it("should calculate gpt relevance", async () => {
+      const result = await gptRelevance("gpt-3.5-turbo", "my topic is about apples", [
+        "the apple is red",
+        "it is juicy",
+        "bananas are great",
+      ]);
+      expect(result[0]).toBeGreaterThan(0);
+      expect(result[1]).toBeGreaterThan(0);
+      expect(result[result.length - 1]).toBe(0);
+    });
   });
-});
+}
 
 describe("countTokensOfConversation", () => {
   it("should count tokens of conversation", () => {

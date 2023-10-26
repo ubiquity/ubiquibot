@@ -1,6 +1,7 @@
 import Decimal from "decimal.js";
 import Runtime from "../../../../bindings/bot-runtime";
 import { getAllIssueComments } from "../../../../helpers";
+import { getLinkedPullRequests } from "../../../../helpers/parser";
 import { Comment, Issue, Payload } from "../../../../types/payload";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { calculateQualScore } from "./calculate-quality-score";
@@ -15,39 +16,50 @@ const botCommandsAndHumanCommentsFilter = (comment: Comment) =>
 const botCommentsFilter = (comment: Comment) => comment.user.type === "Bot"; /* No Humans */
 
 export async function issueClosed() {
-  const { issue, logger } = preamble();
+  // TODO: delegate permit calculation to GitHub Action
+  const { issue, logger, payload } = preamble();
   const issueComments = await getAllIssueComments(issue.number);
+  const owner = payload?.organization?.login;
+  if (!owner) throw logger.error("Owner is not defined");
+  const repository = payload?.repository?.name;
+  const issueNumber = issue.number;
+
+  // TODO: calculate pull request conversation score.
+  const linkedPullRequests = await getLinkedPullRequests({ owner, repository, issue: issueNumber });
+  if (linkedPullRequests.length) {
+    const linkedCommentsPromises = linkedPullRequests.map((pull) => getAllIssueComments(pull.number));
+    const linkedCommentsResolved = await Promise.all(linkedCommentsPromises);
+    for (const linkedComments of linkedCommentsResolved) {
+      issueComments.push(...linkedComments);
+    }
+  }
+
   const botComments = issueComments.filter(botCommentsFilter);
   const contributorComments = issueComments.filter(botCommandsAndHumanCommentsFilter);
 
-  // check if the permits were already posted before posting
+  checkIfPermitsAlreadyPosted(botComments); // DONE: check if the permits were already posted before posting
+
+  // TODO: calculate issue specification score.
+  // TODO: calculate assignee score.
+
+  const issueTotals = await calculateScores(issue, contributorComments);
+  const comment = await generatePermits(issueTotals, contributorComments); // DONE: design metadata system for permit parsing
+  return comment; // DONE: post the permits to the issue
+
+  // console.trace({ totals: util.inspect({ totals }, { showHidden: true, depth: null }) });
+}
+
+function checkIfPermitsAlreadyPosted(botComments: Comment[]) {
   botComments.forEach((comment) => {
     const parsed = structuredMetadata.parse(comment.body);
     if (parsed) {
       console.trace(parsed);
       if (parsed.caller === "generatePermits") {
         console.trace(parsed.metadata);
-        throw logger.warn("Permit already posted");
+        throw Runtime.getState().logger.warn("Permit already posted");
       }
     }
   });
-
-  const totals = await calculateScores(issue, contributorComments);
-
-  // console.trace({ totals: util.inspect({ totals }, { showHidden: true, depth: null }) });
-
-  // TODO: delegate permit calculation to GitHub Action
-  // TODO: calculate issue specification score.
-  // TODO: calculate assignee score.
-  // TODO: calculate pull request conversation score.
-  // post the permits to the issue
-  // design metadata system for permit parsing
-
-  const comment = await generatePermits(totals, contributorComments);
-
-  return comment;
-
-  // return logger.ok("Issue closed. Check metadata for scoring details.", totals);
 }
 
 async function calculateScores(issue: Issue, contributorComments: Comment[]) {

@@ -336,23 +336,6 @@ export async function wasIssueReopened(issueNumber: number): Promise<boolean> {
   return false;
 }
 
-export async function removeAssignees(issueNumber: number, assignees: string[]) {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-
-  const payload = context.payload as Payload;
-  try {
-    await context.octokit.rest.issues.removeAssignees({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: issueNumber,
-      assignees,
-    });
-  } catch (e: unknown) {
-    runtime.logger.debug("Removing assignees failed!", e);
-  }
-}
-
 export async function checkUserPermissionForRepoAndOrg(username: string, context: Context): Promise<boolean> {
   const permissionForRepo = await checkUserPermissionForRepo(username, context);
   const permissionForOrg = await checkUserPermissionForOrg(username, context);
@@ -720,8 +703,8 @@ export async function getAvailableOpenedPullRequests(username: string) {
   const context = runtime.latestEventContext;
 
   const unassignConfig = runtime.botConfig.unassign;
-  const { timeRangeForMaxIssue } = unassignConfig;
-  if (!timeRangeForMaxIssue) return [];
+  const { reviewDelayTolerance } = unassignConfig;
+  if (!reviewDelayTolerance) return [];
 
   const openedPullRequests = await getOpenedPullRequests(username);
   const result = [] as typeof openedPullRequests;
@@ -740,7 +723,7 @@ export async function getAvailableOpenedPullRequests(username: string) {
     if (
       reviews.length === 0 &&
       (new Date().getTime() - new Date(openedPullRequest.created_at).getTime()) / (1000 * 60 * 60) >=
-        timeRangeForMaxIssue
+        reviewDelayTolerance
     ) {
       result.push(openedPullRequest);
     }

@@ -1,2 +1,2 @@
-export * from "./unassign";
+export * from "./unassign/unassign";
 export * from "./analytics";
