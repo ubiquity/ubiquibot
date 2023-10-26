@@ -28,7 +28,7 @@ jobs:
 
       - name: Restore database dump to Supabase
         run: |
-          PGPASSWORD=${{ secrets.SUPABASE_DB_PASSWORD }} psql -h db.mtzoltkenufqksfcwqtn.supabase.co -p 5432 -d postgres -U postgres < schema.sql
-          PGPASSWORD=${{ secrets.SUPABASE_DB_PASSWORD }} psql -h db.mtzoltkenufqksfcwqtn.supabase.co -p 5432 -d postgres -U postgres < data.sql
+          PGPASSWORD=${{ secrets.SUPABASE_DB_PASSWORD }} psql -h ${{ secrets.SUPABASE_DB_URL }} -p ${{ secrets.SUPABASE_PORT }} -d ${{ secrets.SUPABASE_NAME }} -U ${{ secrets.SUPABASE_USER }} < schema.sql
+          PGPASSWORD=${{ secrets.SUPABASE_DB_PASSWORD }} psql -h ${{ secrets.SUPABASE_DB_URL }} -p ${{ secrets.SUPABASE_PORT }} -d ${{ secrets.SUPABASE_NAME }} -U ${{ secrets.SUPABASE_USER }} < data.sql
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
