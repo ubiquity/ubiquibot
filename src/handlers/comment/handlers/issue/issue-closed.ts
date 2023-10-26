@@ -58,7 +58,7 @@ export async function issueClosed() {
 async function preflightChecks(issue: Issue, logger: Logs, issueComments: Comment[]) {
   const { payload, context, config } = preamble();
   if (!issue) throw logger.error("Permit generation skipped because issue is undefined");
-  if (issue.state !== "closed" || issue.closed_at === null)
+  if (issue.state_reason !== StateReason.COMPLETED)
     throw logger.info("Issue was not closed as completed. Skipping.", { issue });
   if (config.publicAccessControl.fundExternalClosedIssue) {
     const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
@@ -121,7 +121,7 @@ export function applyQualityScoreToQuantityScore(
       const usersQuantityScores = scoringRubric.commentScores[userId];
       if (!usersQuantityScores) return;
       const userCommentScore = usersQuantityScores[commentId];
-      if (!userCommentScore) throw logger.error("userCommentScore is undefined");
+      if (!userCommentScore) throw Runtime.getState().logger.error("userCommentScore is undefined");
 
       const quantityScore = userCommentScore.wordScoreTotal.plus(userCommentScore.elementScoreTotal);
 
