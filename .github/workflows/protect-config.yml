@@ -1,0 +1,90 @@
+name: Check for config changes
+
+on:
+  pull_request:
+    paths:
+      - '.github/ubiquibot-config.yml'
+  push:
+    paths:
+      - '.github/ubiquibot-config.yml'
+
+jobs:
+  permission_check:
+    runs-on: ubuntu-latest
+    outputs:
+      is_admin: ${{ steps.check_permissions.outputs.is_admin }}
+
+    steps:
+    - name: GraphQL Query
+      id: check_permissions
+      run: |
+        org_name="${{ github.repository_owner }}"
+
+        payload=$(jq -n \
+          --arg org_name "$org_name" \
+          --arg actor "${{ github.actor }}" \
+          '{
+            query: "query GetUserOrgRole($orgLogin: String!, $userLogin: String!) {
+              user(login: $userLogin) {
+                organization(login: $orgLogin) {
+                  membersWithRole(first: 100) {
+                    edges {
+                      node {
+                        login
+                      }
+                      role
+                    }
+                  }
+                }
+              }
+            }",
+            variables: {
+              orgLogin: $org_name,
+              userLogin: $actor
+            }
+          }'
+        )
+        
+        response=$(curl -s -H "Authorization: token ${{ secrets.GIT_TOKEN }}" -X POST -d "$payload" https://api.github.com/graphql)
+        user_role=$(echo "$response" | jq -r --arg actor "${{ github.actor }}" '.data.user.organization.membersWithRole.edges[] | select(.node.login == $actor) | .role')
+       
+        if [[ "$user_role" == "ADMIN" ]]; then
+            echo "::set-output name=is_admin::true"
+        else
+            echo "::set-output name=is_admin::false"
+        fi
+
+  check_config_changes:
+    needs: permission_check
+    if: needs.permission_check.outputs.is_admin == 'false'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    - name: Install jq and yq
+      run: |
+        sudo apt-get -y install jq
+        sudo wget https://github.com/mikefarah/yq/releases/download/v4.6.0/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
+
+    - name: Check for changes in guarded properties
+      run: |
+        git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+        git checkout ${{ github.base_ref }}
+        
+        # Convert the YAML to JSON with proper key quotes for jq
+        yq eval -j .github/ubiquibot-config.yml > base_config.json
+        git checkout ${{ github.sha }}
+        yq eval -j .github/ubiquibot-config.yml > current_config.json
+
+        # Guarded properties
+        guarded_props=("evmNetworkId" "priceMultiplier" "issueCreatorMultiplier" "paymentPermitMaxPrice" "assistivePricing" "commentIncentives" "incentives.comment.elements" "incentives.comment.totals.word" "enableAccessControl.label" "enableAccessControl.organization")
+
+        for prop in "${guarded_props[@]}"; do
+          base_value=$(jq -r ".${prop}" base_config.json)
+          current_value=$(jq -r ".${prop}" current_config.json)
+          if [[ "$base_value" != "$current_value" ]]; then
+            echo "Guarded property ${prop} has been modified!"
+            exit 1
+          fi
+        done
