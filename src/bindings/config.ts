@@ -1,14 +1,11 @@
 import ms from "ms";
-
 import { BotConfig, BotConfigSchema } from "../types";
-
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
-import { getConfig } from "../utils/private";
+import { getConfig } from "../utils/get-config";
 import { LogLevel } from "../adapters/supabase/helpers/tables/logs";
 import Runtime from "./bot-runtime";
-
 export async function loadConfig(context: Context): Promise<BotConfig> {
   const {
     assistivePricing,
@@ -35,18 +32,11 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
     taskFollowUpDuration,
     taskDisqualifyDuration,
   } = await getConfig(context);
-
-  // const config = await getConfig(context);
-  // console.trace(util.inspect(config, { showHidden: true, depth: null, breakLength: Infinity }));
-
   const runtime = Runtime.getState();
-
   if (!keys.private) {
     console.trace("X25519_PRIVATE_KEY not defined");
   }
-
   const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
-
   const botConfig: BotConfig = {
     log: {
       logEnvironment: process.env.LOG_ENVIRONMENT || "production",
@@ -68,38 +58,24 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
       taskFollowUpDuration: ms(taskFollowUpDuration),
       taskDisqualifyDuration: ms(taskDisqualifyDuration),
     },
-    supabase: {
-      url: process.env.SUPABASE_URL ?? null,
-      key: process.env.SUPABASE_KEY ?? null,
-    },
-
-    mode: {
-      maxPermitPrice,
-      assistivePricing,
-    },
+    supabase: { url: process.env.SUPABASE_URL ?? null, key: process.env.SUPABASE_KEY ?? null },
+    mode: { maxPermitPrice, assistivePricing },
     command: commandSettings,
-    assign: {
-      maxConcurrentTasks: maxConcurrentTasks,
-      staleTaskTime: ms(staleTaskTime),
-    },
+    assign: { maxConcurrentTasks: maxConcurrentTasks, staleTaskTime: ms(staleTaskTime) },
     sodium: { privateKey: keys.private, publicKey: keys.public },
     wallet: { registerWalletWithVerification: registerWalletWithVerification },
     ask: { apiKey: process.env.OPENAI_API_KEY || openAIKey, tokenLimit: openAITokenLimit || 0 },
     publicAccessControl: publicAccessControl,
     newContributorGreeting: newContributorGreeting,
   };
-
   if (botConfig.payout.privateKey == null) {
     botConfig.mode.maxPermitPrice = 0;
   }
-
   const validate = ajv.compile(BotConfigSchema);
   const valid = validate(botConfig);
   if (!valid) {
-    // console.trace("BotConfigSchema validation failed!", botConfig);
     throw new Error(JSON.stringify(validate.errors, null, 2));
   }
-
   if (botConfig.unassign.taskFollowUpDuration < 0 || botConfig.unassign.taskDisqualifyDuration < 0) {
     throw runtime.logger.error(
       "Invalid time interval, taskFollowUpDuration or taskDisqualifyDuration cannot be negative",
@@ -109,6 +85,5 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
       }
     );
   }
-
   return botConfig;
 }

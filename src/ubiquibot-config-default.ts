@@ -1,14 +1,8 @@
-import { MergedConfig } from "../types";
-
 import fs from "fs";
 import path from "path";
+import { MergedConfig } from "./types";
 
 const commandFiles = fs.readdirSync(path.resolve(__dirname, "../../src/handlers/comment/handlers"));
-const commandSettings = commandFiles.map((file) => {
-  const commandName = path.basename(file, path.extname(file));
-  return { name: commandName, enabled: false };
-});
-
 const promotionComment =
   "###### If you enjoy the DevPool experience, please follow [Ubiquity on GitHub](https://github.com/ubiquity) and star [this repo](https://github.com/ubiquity/devpool-directory) to show your support. It helps a lot!";
 
@@ -36,7 +30,10 @@ export const DefaultConfig: MergedConfig = {
     { name: "Priority: 4 (Urgent)" },
     { name: "Priority: 5 (Emergency)" },
   ],
-  commandSettings: commandSettings, // dynamic mount based on file names
+  commandSettings: commandFiles.map((file) => {
+    const commandName = path.basename(file, path.extname(file));
+    return { name: commandName, enabled: false };
+  }), // dynamic mount based on file names
   incentives: {
     comment: {
       elements: {

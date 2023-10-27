@@ -1,7 +1,7 @@
 import Runtime from "../../bindings/bot-runtime";
 import { createCommitComment, getFileContent } from "../../helpers";
 import { CommitsPayload, PushPayload, ConfigSchema } from "../../types";
-import { parseYamlConfig } from "../../utils/private";
+import { parseYamlConfig } from "../../utils/get-config";
 import { validate } from "../../utils/ajv";
 
 export const ZERO_SHA = "0000000000000000000000000000000000000000";

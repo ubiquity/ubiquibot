@@ -1,2 +1,2 @@
 export * from "./ajv";
-export * from "./github";
+export * from "./check-github-rate-limit";
