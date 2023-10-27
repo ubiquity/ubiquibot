@@ -57,7 +57,7 @@ export const repoConfig: Config = {
   // openAIKey: null,
   // privateKeyEncrypted: null,
   openAITokenLimit: 100000,
-  staleTaskTime: "15 minutes",
+  taskStaleTimeoutDuration: "15 minutes",
 
   newContributorGreeting: {
     enabled: true,

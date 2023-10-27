@@ -23,7 +23,6 @@ const CommentIncentivesSchema = Type.Object(
   },
   { additionalProperties: false }
 );
-// type CommentIncentives= Static<typeof CommentIncentivesSchema>;
 
 const IncentivesSchema = Type.Object(
   {
@@ -41,77 +40,6 @@ const CommandItemSchema = Type.Object(
   },
   { additionalProperties: false }
 );
-// type CommandItem= Static<typeof CommandItemSchema>;
-
-const PriceConfigSchema = Type.Object({
-  priceMultiplier: Type.Number(),
-  issueCreatorMultiplier: Type.Number(),
-  timeLabels: Type.Array(LabelFromConfigSchema),
-  priorityLabels: Type.Array(LabelFromConfigSchema),
-  incentives: IncentivesSchema,
-  defaultLabels: Type.Array(Type.String()),
-});
-// type PriceConfig= Static<typeof PriceConfigSchema>;
-
-const SupabaseConfigSchema = Type.Object({
-  url: Type.Union([Type.String(), Type.Null()]),
-  key: Type.Union([Type.String(), Type.Null()]),
-});
-
-// const LogNotificationSchema = Type.Object({
-//   url: Type.String(),
-//   secret: Type.String(),
-//   groupId: Type.Number(),
-//   topicId: Type.Number(),
-//   enabled: Type.Boolean(),
-// });
-
-// type LogNotification= Static<typeof LogNotificationSchema>;
-
-const PayoutConfigSchema = Type.Object({
-  evmNetworkId: Type.Number(),
-  rpc: Type.String(),
-  privateKey: Type.Union([Type.String(), Type.Null()]),
-  publicKey: Type.Union([Type.String(), Type.Null()]),
-  paymentToken: Type.String(),
-  permitBaseUrl: Type.String(),
-});
-
-const UnassignConfigSchema = Type.Object({
-  taskFollowUpDuration: Type.Number(),
-  taskDisqualifyDuration: Type.Number(),
-  reviewDelayTolerance: Type.Number(),
-});
-
-const ModeSchema = Type.Object({
-  maxPermitPrice: Type.Number(),
-  assistivePricing: Type.Boolean(),
-});
-
-const AssignSchema = Type.Object({
-  maxConcurrentTasks: Type.Number(),
-  staleTaskTime: Type.Number(),
-});
-
-const LogConfigSchema = Type.Object({
-  logEnvironment: Type.String(),
-  level: Type.Enum(LogLevel),
-  retryLimit: Type.Number(),
-});
-
-const SodiumSchema = Type.Object({
-  publicKey: Type.Union([Type.String(), Type.Null()]),
-  privateKey: Type.Union([Type.String(), Type.Null()]),
-});
-
-const CommentsSchema = Type.Object({
-  promotionComment: Type.String(),
-});
-
-const AskSchema = Type.Object({
-  apiKey: Type.Optional(Type.String()),
-  tokenLimit: Type.Number(),
-});
 
 const NewContributorGreetingSchema = Type.Object({
   enabled: Type.Boolean(),
@@ -119,38 +47,76 @@ const NewContributorGreetingSchema = Type.Object({
   displayHelpMenu: Type.Boolean(),
   footer: Type.String(),
 });
-// type NewContributorGreeting= Static<typeof NewContributorGreetingSchema>;
-
-const CommandConfigSchema = Type.Array(CommandItemSchema);
-
-// type CommandConfig= Static<typeof CommandConfigSchema>;
-const WalletSchema = Type.Object({
-  registerWalletWithVerification: Type.Boolean(),
-});
 
 const PublicAccessControlSchema = Type.Object({
   setLabel: Type.Boolean(),
   fundExternalClosedIssue: Type.Boolean(),
 });
 
-// type AccessControl= Static<typeof PublicAccessControlSchema>;
-
 export const BotConfigSchema = Type.Object({
-  log: LogConfigSchema,
-  price: PriceConfigSchema,
-  payout: PayoutConfigSchema,
-  unassign: UnassignConfigSchema,
-  supabase: SupabaseConfigSchema,
-  // logNotification: LogNotificationSchema,
-  mode: ModeSchema,
-  assign: AssignSchema,
-  sodium: SodiumSchema,
-  comments: CommentsSchema,
-  command: CommandConfigSchema,
-  wallet: WalletSchema,
-  ask: AskSchema,
-  publicAccessControl: PublicAccessControlSchema,
-  newContributorGreeting: NewContributorGreetingSchema,
+  log: Type.Object({
+    logEnvironment: Type.String(),
+    level: Type.Enum(LogLevel),
+    retryLimit: Type.Number(),
+  }),
+  price: Type.Object({
+    priceMultiplier: Type.Number(),
+    issueCreatorMultiplier: Type.Number(),
+    timeLabels: Type.Array(LabelFromConfigSchema),
+    priorityLabels: Type.Array(LabelFromConfigSchema),
+    incentives: IncentivesSchema,
+    defaultLabels: Type.Array(Type.String()),
+  }),
+  payout: Type.Object({
+    evmNetworkId: Type.Number(),
+    rpc: Type.String(),
+    privateKey: Type.Union([Type.String(), Type.Null()]),
+    publicKey: Type.Union([Type.String(), Type.Null()]),
+    paymentToken: Type.String(),
+    permitBaseUrl: Type.String(),
+  }),
+  unassign: Type.Object({
+    taskFollowUpDuration: Type.String(),
+    taskDisqualifyDuration: Type.String(),
+    reviewDelayTolerance: Type.String(),
+  }),
+  supabase: Type.Object({
+    url: Type.Union([Type.String(), Type.Null()]),
+    key: Type.Union([Type.String(), Type.Null()]),
+  }),
+  mode: Type.Object({
+    maxPermitPrice: Type.Number(),
+    assistivePricing: Type.Boolean(),
+  }),
+  assign: Type.Object({
+    maxConcurrentTasks: Type.Number(),
+    taskStaleTimeoutDuration: Type.Number(),
+  }),
+  sodium: Type.Object({
+    publicKey: Type.Union([Type.String(), Type.Null()]),
+    privateKey: Type.Union([Type.String(), Type.Null()]),
+  }),
+  comments: Type.Object({
+    promotionComment: Type.String(),
+  }),
+  command: Type.Array(CommandItemSchema),
+  wallet: Type.Object({
+    registerWalletWithVerification: Type.Boolean(),
+  }),
+  ask: Type.Object({
+    apiKey: Type.Optional(Type.String()),
+    tokenLimit: Type.Number(),
+  }),
+  publicAccessControl: Type.Object({
+    setLabel: Type.Boolean(),
+    fundExternalClosedIssue: Type.Boolean(),
+  }),
+  newContributorGreeting: Type.Object({
+    enabled: Type.Boolean(),
+    header: Type.String(),
+    displayHelpMenu: Type.Boolean(),
+    footer: Type.String(),
+  }),
 });
 
 export type BotConfig = Static<typeof BotConfigSchema>;
@@ -161,17 +127,6 @@ const StreamlinedCommentSchema = Type.Object({
 });
 
 export type StreamlinedComment = Static<typeof StreamlinedCommentSchema>;
-
-// const GPTResponseSchema = Type.Object({
-//   answer: Type.Optional(Type.String()),
-//   tokenUsage: Type.Object({
-//     output: Type.Optional(Type.Number()),
-//     input: Type.Optional(Type.Number()),
-//     total: Type.Optional(Type.Number()),
-//   }),
-// });
-
-// type GPTResponse= Static<typeof GPTResponseSchema>;
 
 export const ConfigSchema = Type.Object(
   {
@@ -191,7 +146,7 @@ export const ConfigSchema = Type.Object(
     publicAccessControl: Type.Optional(PublicAccessControlSchema),
     openAIKey: Type.Optional(Type.String()),
     openAITokenLimit: Type.Optional(Type.Number()),
-    staleTaskTime: Type.Optional(Type.String()),
+    taskStaleTimeoutDuration: Type.Optional(Type.String()),
     privateKeyEncrypted: Type.Optional(Type.String()),
     newContributorGreeting: Type.Optional(NewContributorGreetingSchema),
   },
@@ -204,30 +159,30 @@ export type Config = Static<typeof ConfigSchema>;
 
 // export type Config = Config;
 
-const MergedConfigSchema = Type.Object({
-  assistivePricing: Type.Boolean(),
-  commandSettings: Type.Array(CommandItemSchema),
-  defaultLabels: Type.Array(Type.String()),
-  evmNetworkId: Type.Number(),
-  incentives: IncentivesSchema,
-  issueCreatorMultiplier: Type.Number(),
-  maxConcurrentTasks: Type.Number(),
-  newContributorGreeting: NewContributorGreetingSchema,
-  openAIKey: Type.Optional(Type.String()),
-  openAITokenLimit: Type.Optional(Type.Number()),
-  maxPermitPrice: Type.Number(),
-  priceMultiplier: Type.Number(),
-  priorityLabels: Type.Array(LabelFromConfigSchema),
-  privateKeyEncrypted: Type.Optional(Type.String()),
-  promotionComment: Type.String(),
-  publicAccessControl: PublicAccessControlSchema,
-  registerWalletWithVerification: Type.Boolean(),
-  staleTaskTime: Type.String(),
-  timeLabels: Type.Array(LabelFromConfigSchema),
-  reviewDelayTolerance: Type.String(),
-  permitBaseUrl: Type.String(),
-  taskFollowUpDuration: Type.String(),
-  taskDisqualifyDuration: Type.String(),
-});
+// const MergedConfigSchema = Type.Object({
+//   assistivePricing: Type.Boolean(),
+//   commandSettings: Type.Array(CommandItemSchema),
+//   defaultLabels: Type.Array(Type.String()),
+//   evmNetworkId: Type.Number(),
+//   incentives: IncentivesSchema,
+//   issueCreatorMultiplier: Type.Number(),
+//   maxConcurrentTasks: Type.Number(),
+//   newContributorGreeting: NewContributorGreetingSchema,
+//   openAIKey: Type.Optional(Type.String()),
+//   openAITokenLimit: Type.Optional(Type.Number()),
+//   maxPermitPrice: Type.Number(),
+//   priceMultiplier: Type.Number(),
+//   priorityLabels: Type.Array(LabelFromConfigSchema),
+//   privateKeyEncrypted: Type.Optional(Type.String()),
+//   promotionComment: Type.String(),
+//   publicAccessControl: PublicAccessControlSchema,
+//   registerWalletWithVerification: Type.Boolean(),
+//   taskStaleTimeoutDuration: Type.String(),
+//   timeLabels: Type.Array(LabelFromConfigSchema),
+//   reviewDelayTolerance: Type.String(),
+//   permitBaseUrl: Type.String(),
+//   taskFollowUpDuration: Type.String(),
+//   taskDisqualifyDuration: Type.String(),
+// });
 
-export type MergedConfig = Static<typeof MergedConfigSchema>;
+// export type MergedConfig = Static<typeof MergedConfigSchema>;

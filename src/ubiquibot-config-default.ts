@@ -1,11 +1,11 @@
 import fs from "fs";
+import ms from "ms";
 import path from "path";
-import { MergedConfig } from "./types";
 const commandFiles = fs.readdirSync(path.resolve(__dirname, "../src/handlers/comment/handlers"));
 const promotionComment =
   "###### If you enjoy the DevPool experience, please follow [Ubiquity on GitHub](https://github.com/ubiquity) and star [this repo](https://github.com/ubiquity/devpool-directory) to show your support. It helps a lot!";
 
-export const DefaultConfig: MergedConfig = {
+export default {
   evmNetworkId: 1,
   priceMultiplier: 1,
   issueCreatorMultiplier: 1,
@@ -69,7 +69,7 @@ export const DefaultConfig: MergedConfig = {
     setLabel: true,
     fundExternalClosedIssue: true,
   },
-  staleTaskTime: "1 month",
+  taskStaleTimeoutDuration: "1 month",
   reviewDelayTolerance: "1 day",
   permitBaseUrl: "https://pay.ubq.fi",
   taskFollowUpDuration: "0.5 weeks",

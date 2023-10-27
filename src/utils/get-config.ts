@@ -4,62 +4,55 @@ import { Context } from "probot";
 import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
 import { upsertLastCommentToIssue } from "../helpers/issue";
-import { ConfigSchema, MergedConfig, Payload } from "../types";
+import { ConfigSchema, Payload } from "../types";
 import { Config } from "../types/config";
 import { validate } from "./ajv";
-import { DefaultConfig } from "../ubiquibot-config-default";
+import defaultConfiguration from "../ubiquibot-config-default";
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
-const KEY_NAME = "privateKeyEncrypted";
+const PRIVATE_KEY_ENCRYPTED_PROPERTY_NAME = "privateKeyEncrypted";
 const KEY_PREFIX = "HSK_";
-export async function getConfig(context: Context) {
-  const orgConfig = await downloadConfig(context, "org");
-  const repoConfig = await downloadConfig(context, "repo");
-  const payload = context.payload as Payload;
-  let parsedOrg: Config | null;
-  if (typeof orgConfig === "string") {
-    parsedOrg = parseYamlConfig(orgConfig);
-  } else {
-    parsedOrg = null;
-  }
-  if (parsedOrg) {
-    const { valid, error } = validate(ConfigSchema, parsedOrg);
-    if (!valid) {
-      const err = new Error(`Invalid org config: ${error}`);
-      if (payload.issue) await upsertLastCommentToIssue(payload.issue.number, err.message);
-      throw err;
-    }
-  }
-  let parsedRepo: Config | null;
-  if (typeof repoConfig === "string") {
-    parsedRepo = parseYamlConfig(repoConfig);
-  } else {
-    parsedRepo = null;
-  }
-  if (parsedRepo) {
-    const { valid, error } = validate(ConfigSchema, parsedRepo);
-    if (!valid) {
-      const err = new Error(`Invalid repo config: ${error}`);
-      if (payload.issue) await upsertLastCommentToIssue(payload.issue.number, err.message);
-      throw err;
-    }
-  }
-  const parsedDefault: MergedConfig = DefaultConfig;
-  const keys = { private: null, public: null } as { private: string | null; public: string | null };
+
+async function downloadConfigs(context: Context) {
+  const organizationConfigRaw = await downloadConfig(context, "org");
+  const repositoryConfigRaw = await downloadConfig(context, "repo");
+
+  const parsedOrganization = parseYamlConfig(organizationConfigRaw);
+  const parsedRepository = parseYamlConfig(repositoryConfigRaw);
+
+  if (parsedOrganization) await validateConfiguration(context.payload, parsedOrganization);
+  if (parsedRepository) await validateConfiguration(context.payload, parsedRepository);
+
+  return {
+    organization: parsedOrganization,
+    repository: parsedRepository,
+  };
+}
+
+type Keys = { private: string | null; public: string | null };
+type DefaultConfigurationWithKeys = { keys: Keys } & typeof defaultConfiguration;
+
+export async function getConfig(context: Context): Promise<DefaultConfigurationWithKeys> {
+  const configuration = await downloadConfigs(context);
+  const keys = await getKeys(configuration);
+  const merged = merge({}, defaultConfiguration, configuration.organization, configuration.repository);
+  return { keys, ...merged };
+}
+
+async function getKeys(configuration: { repository: Config | null; organization: Config | null }) {
+  let keys: Keys = { private: null, public: null };
   try {
-    if (parsedRepo && parsedRepo[KEY_NAME]) {
-      await getPrivateAndPublicKeys(parsedRepo[KEY_NAME], keys);
-    } else if (parsedOrg && parsedOrg[KEY_NAME]) {
-      await getPrivateAndPublicKeys(parsedOrg[KEY_NAME], keys);
+    if (configuration.repository && configuration.repository[PRIVATE_KEY_ENCRYPTED_PROPERTY_NAME]) {
+      keys = await getPrivateAndPublicKeys(configuration.repository[PRIVATE_KEY_ENCRYPTED_PROPERTY_NAME]);
+    } else if (configuration.organization && configuration.organization[PRIVATE_KEY_ENCRYPTED_PROPERTY_NAME]) {
+      keys = await getPrivateAndPublicKeys(configuration.organization[PRIVATE_KEY_ENCRYPTED_PROPERTY_NAME]);
     }
   } catch (error) {
     console.warn("Failed to get keys", { error });
   }
-  const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
-  const mergedConfigData: MergedConfig = mergeConfigs(configs);
-  const configData = { keys, ...mergedConfigData };
-  return configData;
+  return keys;
 }
+
 async function downloadConfig(context: Context, type: "org" | "repo") {
   const payload = context.payload as Payload;
   let repo: string;
@@ -78,14 +71,14 @@ async function downloadConfig(context: Context, type: "org" | "repo") {
     path: CONFIG_PATH,
     mediaType: { format: "raw" },
   });
-  return data;
+  return data as unknown as string; // not sure why the types are wrong but this is definitely returning a string
 }
-interface MergedConfigs {
-  parsedRepo: Config | null;
-  parsedOrg: Config | null;
-  parsedDefault: MergedConfig;
-}
-export function parseYamlConfig(data?: string) {
+// interface MergedConfigs {
+//   parsedRepo: Config | null;
+//   parsedOrg: Config | null;
+//   parsedDefault: MergedConfig;
+// }
+export function parseYamlConfig(data: null | string): Config | null {
   try {
     if (data) {
       const parsedData = YAML.parse(data) as Config;
@@ -98,23 +91,28 @@ export function parseYamlConfig(data?: string) {
   return null;
 }
 
-async function getPrivateAndPublicKeys(cipherText: string, keys: { private: string | null; public: string | null }) {
+async function getPrivateAndPublicKeys(cipherText: string) {
+  const keys: Keys = {
+    private: null,
+    public: null,
+  };
+
   await sodium.ready;
   const X25519_PRIVATE_KEY = process.env.X25519_PRIVATE_KEY;
   if (!X25519_PRIVATE_KEY) {
-    return console.warn("X25519_PRIVATE_KEY is not defined");
+    console.warn("X25519_PRIVATE_KEY is not defined");
+    return keys;
   }
   keys.public = await getScalarKey(X25519_PRIVATE_KEY);
   if (!keys.public) {
-    return console.warn("Public key is null");
+    console.warn("Public key is null");
+    return keys;
   }
-  // console.trace();
   const binPub = sodium.from_base64(keys.public, sodium.base64_variants.URLSAFE_NO_PADDING);
   const binPriv = sodium.from_base64(X25519_PRIVATE_KEY, sodium.base64_variants.URLSAFE_NO_PADDING);
   const binCipher = sodium.from_base64(cipherText, sodium.base64_variants.URLSAFE_NO_PADDING);
 
   const walletPrivateKey: string | null = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
-  // console.trace({ walletPrivateKey });
   keys.private = walletPrivateKey?.replace(KEY_PREFIX, "");
   return keys;
 }
@@ -131,6 +129,12 @@ async function getScalarKey(X25519_PRIVATE_KEY: string) {
     return null;
   }
 }
-function mergeConfigs(configs: MergedConfigs) {
-  return merge({}, configs.parsedDefault, configs.parsedOrg, configs.parsedRepo);
+
+async function validateConfiguration(payload, parsedConfiguration: Config | null) {
+  const { valid, error } = validate(ConfigSchema, parsedConfiguration);
+  if (!valid) {
+    const err = new Error(error);
+    if (payload.issue) await upsertLastCommentToIssue(payload.issue.number, err.message);
+    throw err;
+  }
 }

@@ -20,7 +20,7 @@ export async function assign(body: string) {
   const payload = runtime.latestEventContext.payload as Payload;
   const issue = payload.issue;
 
-  const staleTask = config.assign.staleTaskTime;
+  const taskStaleTimeoutDuration = config.assign.taskStaleTimeoutDuration;
   const startEnabled = config.command.find((command) => command.name === "start");
 
   logger.info("Received '/start' command", { sender: payload.sender.login, body });
@@ -88,7 +88,7 @@ export async function assign(body: string) {
     await addAssignees(issue.number, [payload.sender.login]);
   }
 
-  const isTaskStale = checkTaskStale(staleTask, issue);
+  const isTaskStale = checkTaskStale(taskStaleTimeoutDuration, issue);
 
   // double check whether the assign message has been already posted or not
   logger.info("Creating an issue comment", { comment });
