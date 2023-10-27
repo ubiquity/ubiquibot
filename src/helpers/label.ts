@@ -1,6 +1,6 @@
 import { Context } from "probot";
 import Runtime from "../bindings/bot-runtime";
-import { getLabel } from "../handlers/pricing/pricing-label";
+import { labelExists } from "../handlers/pricing/pricing-label";
 import { calculateTaskPrice } from "../handlers/shared/pricing";
 import { calculateLabelValue } from "../helpers";
 import { Label, Payload } from "../types";
@@ -89,7 +89,7 @@ export async function updateLabelsFromBaseRate(
       const labelData = labels.find((obj) => obj["name"] === label) as Label;
       const index = uniquePreviousLabels.findIndex((obj) => obj === label);
 
-      const exist = await getLabel(uniqueNewLabels[index]);
+      const exist = await labelExists(uniqueNewLabels[index]);
       if (exist) {
         // we have to delete first
         logger.debug("Label already exists, deleting it", { label });

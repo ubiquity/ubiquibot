@@ -55,7 +55,6 @@ export async function getConfig(context: Context) {
   } catch (error) {
     console.warn("Failed to get keys", { error });
   }
-  // console.trace({ keys });
   const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
   const mergedConfigData: MergedConfig = mergeConfigs(configs);
   const configData = { keys, ...mergedConfigData };
@@ -63,12 +62,11 @@ export async function getConfig(context: Context) {
 }
 async function downloadConfig(context: Context, type: "org" | "repo") {
   const payload = context.payload as Payload;
-  let repo;
-  let owner;
+  let repo: string;
+  let owner: string;
   if (type === "org") {
     repo = CONFIG_REPO;
-    owner = payload.organization?.login;
-    owner = payload.repository.owner.login;
+    owner = payload.organization?.login || payload.repository.owner.login;
   } else {
     repo = payload.repository.name;
     owner = payload.repository.owner.login;

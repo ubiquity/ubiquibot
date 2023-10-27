@@ -69,20 +69,20 @@ export async function clearAllPriceLabelsOnIssue() {
   if (!payload.issue) return;
 
   const labels = payload.issue.labels;
-  const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));
+  const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price: "));
 
   if (!issuePrices.length) return;
 
-  try {
-    await context.octokit.issues.removeLabel({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: payload.issue.number,
-      name: issuePrices[0].name.toString(),
-    });
-  } catch (e: unknown) {
-    runtime.logger.debug("Clearing all price labels failed!", e);
-  }
+  // try {
+  await context.octokit.issues.removeLabel({
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    issue_number: payload.issue.number,
+    name: issuePrices[0].name,
+  });
+  // } catch (e: unknown) {
+  //   runtime.logger.debug("Clearing all price labels failed!", e);
+  // }
 }
 
 export async function addLabelToIssue(labelName: string) {

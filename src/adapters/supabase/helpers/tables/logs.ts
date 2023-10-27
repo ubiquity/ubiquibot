@@ -100,7 +100,7 @@ export class Logs extends Super {
 
     const stackLines = new Error().stack?.split("\n") || [];
     if (stackLines.length > 3) {
-      const callerLine = stackLines[3].replace(process.cwd(), "");
+      const callerLine = stackLines[3]; // .replace(process.cwd(), "");
       const match = callerLine.match(/at (\S+)/);
       if (match) {
         metadata.caller = match[1];

@@ -79,7 +79,9 @@ function checkIfPermitsAlreadyPosted(botComments: Comment[], logger: Logs) {
   botComments.forEach((comment) => {
     const parsed = structuredMetadata.parse(comment.body);
     if (parsed) {
+      console.trace({ parsed });
       if (parsed.caller === "generatePermits") {
+        console.trace({ parsed });
         throw logger.warn("Permit already posted");
       }
     }

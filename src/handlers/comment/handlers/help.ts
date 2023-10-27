@@ -1,7 +1,6 @@
 import { userCommands } from ".";
 import Runtime from "../../../bindings/bot-runtime";
-
-import { IssueType, Payload } from "../../../types";
+import { Payload } from "../../../types";
 
 export async function listAvailableCommands(body: string) {
   const runtime = Runtime.getState();
@@ -15,10 +14,6 @@ export async function listAvailableCommands(body: string) {
 
   if (!issue) {
     return logger.info("Skipping /help, reason: not issue");
-  }
-
-  if (issue.state == IssueType.CLOSED) {
-    return logger.info("Skipping '/start', reason: closed ");
   }
 
   return generateHelpMenu();

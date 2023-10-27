@@ -15,15 +15,13 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
     priceMultiplier,
     commandSettings,
     defaultLabels,
-    disableAnalytics,
     evmNetworkId,
-    incentiveMode,
     incentives,
     issueCreatorMultiplier,
     maxConcurrentTasks,
     openAIKey,
     openAITokenLimit,
-    permitMaxPrice,
+    maxPermitPrice,
     priorityLabels,
     keys,
     promotionComment,
@@ -76,13 +74,14 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
     },
 
     mode: {
-      permitMaxPrice,
-      disableAnalytics,
-      incentiveMode,
+      maxPermitPrice,
       assistivePricing,
     },
     command: commandSettings,
-    assign: { maxConcurrentTasks: maxConcurrentTasks, staleTaskTime: ms(staleTaskTime) },
+    assign: {
+      maxConcurrentTasks: maxConcurrentTasks,
+      staleTaskTime: ms(staleTaskTime),
+    },
     sodium: { privateKey: keys.private, publicKey: keys.public },
     wallet: { registerWalletWithVerification: registerWalletWithVerification },
     ask: { apiKey: process.env.OPENAI_API_KEY || openAIKey, tokenLimit: openAITokenLimit || 0 },
@@ -91,13 +90,14 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
   };
 
   if (botConfig.payout.privateKey == null) {
-    botConfig.mode.permitMaxPrice = 0;
+    botConfig.mode.maxPermitPrice = 0;
   }
 
   const validate = ajv.compile(BotConfigSchema);
   const valid = validate(botConfig);
   if (!valid) {
-    throw new Error(JSON.stringify(validate.errors));
+    // console.trace("BotConfigSchema validation failed!", botConfig);
+    throw new Error(JSON.stringify(validate.errors, null, 2));
   }
 
   if (botConfig.unassign.taskFollowUpDuration < 0 || botConfig.unassign.taskDisqualifyDuration < 0) {

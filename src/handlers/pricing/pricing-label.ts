@@ -1,9 +1,9 @@
 import Runtime from "../../bindings/bot-runtime";
 import { addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getAllLabeledEvents } from "../../helpers";
-import { Label, LabelFromConfig, Payload, UserType } from "../../types";
+import { BotConfig, Label, LabelFromConfig, Payload, UserType } from "../../types";
 import { labelAccessPermissionsCheck } from "../access";
-import { isParentIssue, handleParentIssue, sortLabelsByValue } from "./action";
 import { setPrice } from "../shared/pricing";
+import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./action";
 
 export async function onLabelChangeSetPricing() {
   const runtime = Runtime.getState();
@@ -32,6 +32,32 @@ export async function onLabelChangeSetPricing() {
 
   if (!labels) throw logger.warn(`No labels to calculate price`);
 
+  const recognizedLabels = getRecognizedLabels(labels, config);
+
+  if (!recognizedLabels.time.length || !recognizedLabels.priority.length) {
+    logger.warn("No recognized labels to calculate price");
+    await clearAllPriceLabelsOnIssue();
+    return;
+  }
+
+  const minLabels = getMinLabels(recognizedLabels);
+
+  if (!minLabels.time || !minLabels.priority) {
+    logger.warn("No label to calculate price");
+    return;
+  }
+
+  const targetPriceLabel = setPrice(minLabels.time, minLabels.priority);
+
+  if (targetPriceLabel) {
+    await handleTargetPriceLabel(targetPriceLabel, labelNames, assistivePricing);
+  } else {
+    await clearAllPriceLabelsOnIssue();
+    logger.info(`Skipping action...`);
+  }
+}
+
+function getRecognizedLabels(labels: Label[], config: BotConfig) {
   const isRecognizedLabel = (label: Label, labelConfig: LabelFromConfig[]) =>
     (typeof label === "string" || typeof label === "object") && labelConfig.some((item) => item.name === label.name);
 
@@ -43,35 +69,14 @@ export async function onLabelChangeSetPricing() {
     isRecognizedLabel(label, config.price.priorityLabels)
   );
 
-  if (!recognizedTimeLabels.length) {
-    logger.warn("No recognized time labels to calculate price");
-    await clearAllPriceLabelsOnIssue();
-  }
-  if (!recognizedPriorityLabels.length) {
-    logger.warn("No recognized priority labels to calculate price");
-    await clearAllPriceLabelsOnIssue();
-  }
+  return { time: recognizedTimeLabels, priority: recognizedPriorityLabels };
+}
 
-  const minTimeLabel = sortLabelsByValue(recognizedTimeLabels).shift();
-  const minPriorityLabel = sortLabelsByValue(recognizedPriorityLabels).shift();
+function getMinLabels(recognizedLabels: { time: Label[]; priority: Label[] }) {
+  const minTimeLabel = sortLabelsByValue(recognizedLabels.time).shift();
+  const minPriorityLabel = sortLabelsByValue(recognizedLabels.priority).shift();
 
-  if (!minTimeLabel) {
-    logger.warn(`No time label to calculate price`);
-    return;
-  }
-  if (!minPriorityLabel) {
-    logger.warn("No priority label to calculate price");
-    return;
-  }
-
-  const targetPriceLabel = setPrice(minTimeLabel, minPriorityLabel);
-
-  if (targetPriceLabel) {
-    await handleTargetPriceLabel(targetPriceLabel, labelNames, assistivePricing);
-  } else {
-    await clearAllPriceLabelsOnIssue();
-    logger.info(`Skipping action...`);
-  }
+  return { time: minTimeLabel, priority: minPriorityLabel };
 }
 
 async function handleTargetPriceLabel(targetPriceLabel: string, labelNames: string[], assistivePricing: boolean) {
@@ -80,7 +85,7 @@ async function handleTargetPriceLabel(targetPriceLabel: string, labelNames: stri
   if (_targetPriceLabel) {
     await handleExistingPriceLabel(targetPriceLabel, assistivePricing);
   } else {
-    await handleNewPriceLabel(targetPriceLabel, assistivePricing);
+    await addPriceLabelToIssue(targetPriceLabel, assistivePricing);
   }
 }
 
@@ -99,14 +104,11 @@ async function handleExistingPriceLabel(targetPriceLabel: string, assistivePrici
   }
 }
 
-async function handleNewPriceLabel(targetPriceLabel: string, assistivePricing: boolean) {
-  await addPriceLabelToIssue(targetPriceLabel, assistivePricing);
-}
 async function addPriceLabelToIssue(targetPriceLabel: string, assistivePricing: boolean) {
   const logger = Runtime.getState().logger;
   await clearAllPriceLabelsOnIssue();
 
-  const exists = await getLabel(targetPriceLabel);
+  const exists = await labelExists(targetPriceLabel);
   if (assistivePricing && !exists) {
     logger.info("Assistive pricing is enabled, creating label...", { targetPriceLabel });
     await createLabel(targetPriceLabel, "price");
@@ -115,7 +117,7 @@ async function addPriceLabelToIssue(targetPriceLabel: string, assistivePricing: 
   await addLabelToIssue(targetPriceLabel);
 }
 
-export async function getLabel(name: string): Promise<boolean> {
+export async function labelExists(name: string): Promise<boolean> {
   const runtime = Runtime.getState();
   const context = runtime.latestEventContext;
   const payload = context.payload as Payload;
@@ -124,5 +126,5 @@ export async function getLabel(name: string): Promise<boolean> {
     repo: payload.repository.name,
     name,
   });
-  return res.status === 200 ? true : false;
+  return res.status === 200;
 }

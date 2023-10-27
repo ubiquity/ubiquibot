@@ -19,8 +19,7 @@ export const repoConfig: Config = {
     { name: "Priority: 5 (Emergency)" },
   ],
   defaultLabels: ["Time: <1 Hour", "Priority: 1 (Normal)"],
-  permitMaxPrice: 1000,
-  incentiveMode: true,
+  maxPermitPrice: 1000,
   maxConcurrentTasks: 5,
   promotionComment: null,
   assistivePricing: true,
@@ -36,7 +35,6 @@ export const repoConfig: Config = {
     { name: "help", enabled: true },
     { name: "payout", enabled: true },
   ],
-  disableAnalytics: true,
   publicAccessControl: {
     setLabel: true,
     fundExternalClosedIssue: true,
