@@ -4,7 +4,7 @@ import { Label } from "../../types/label";
 
 export function calculateTaskPrice(timeValue: number, priorityValue: number, baseValue?: number): number {
   const runtime = Runtime.getState();
-  const base = baseValue ?? runtime.botConfig.price.priceMultiplier;
+  const base = baseValue ?? runtime.botConfig.price.basePriceMultiplier;
   const priority = priorityValue / 10; // floats cause bad math
   const price = 1000 * base * timeValue * priority;
   return price;

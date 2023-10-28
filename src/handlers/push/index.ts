@@ -1,8 +1,8 @@
 import Runtime from "../../bindings/bot-runtime";
 import { createCommitComment, getFileContent } from "../../helpers";
-import { CommitsPayload, PushPayload, ConfigSchema } from "../../types";
-import { parseYamlConfig } from "../../utils/get-config";
-import { validate } from "../../utils/ajv";
+import { CommitsPayload, PushPayload, PublicConfigurationValues } from "../../types";
+import { parseYaml } from "../../utils/generate-configuration";
+import { validateTypes } from "../../utils/ajv";
 
 export const ZERO_SHA = "0000000000000000000000000000000000000000";
 export const BASE_RATE_FILE = ".github/ubiquibot-config.yml";
@@ -61,8 +61,8 @@ export async function validateConfigChange() {
 
     if (configFileContent) {
       const decodedConfig = Buffer.from(configFileContent, "base64").toString();
-      const config = parseYamlConfig(decodedConfig);
-      const { valid, error } = validate(ConfigSchema, config);
+      const config = parseYaml(decodedConfig);
+      const { valid, error } = validateTypes(PublicConfigurationValues, config);
       if (!valid) {
         await createCommitComment(
           `@${payload.sender.login} Config validation failed! ${error}`,

@@ -1,19 +1,19 @@
 import { Context } from "probot";
-import { BotConfig } from "../types";
 import { createAdapters } from "../adapters";
 import { Logs } from "../adapters/supabase";
+import { AllConfigurationTypes } from "../types/configuration";
 import { GitHubEvent } from "../types/payload";
 
 class Runtime {
   private static instance: Runtime;
   private _eventContext: Context[];
-  private _botConfig: BotConfig;
+  private _botConfig: AllConfigurationTypes;
   private _adapters: ReturnType<typeof createAdapters>;
   private _logger: Logs;
 
   private constructor() {
     this._eventContext = [] as Context[];
-    this._botConfig = {} as BotConfig;
+    this._botConfig = {} as AllConfigurationTypes;
     this._adapters = {} as ReturnType<typeof createAdapters>;
     this._logger = {} as Logs;
   }
@@ -45,11 +45,11 @@ class Runtime {
     this._eventContext.push(context);
   }
 
-  public get botConfig(): BotConfig {
+  public get botConfig(): AllConfigurationTypes {
     return this._botConfig;
   }
 
-  public set botConfig(config: BotConfig) {
+  public set botConfig(config: AllConfigurationTypes) {
     this._botConfig = config;
   }
 

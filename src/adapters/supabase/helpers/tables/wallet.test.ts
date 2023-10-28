@@ -3,7 +3,7 @@ dotenv.config();
 
 import { Context } from "probot";
 import { createAdapters } from "../../..";
-import { loadConfig } from "../../../../bindings/config";
+import { loadConfiguration } from "../../../../bindings/config";
 import { User } from "../../../../types";
 const SUPABASE_URL = process.env.SUPABASE_URL;
 if (!SUPABASE_URL) throw new Error("SUPABASE_URL is not defined");
@@ -13,7 +13,7 @@ if (!SUPABASE_KEY) throw new Error("SUPABASE_KEY is not defined");
 const mockContext = { supabase: { url: SUPABASE_URL, key: SUPABASE_KEY } } as unknown as Context;
 
 async function getWalletAddressAndUrlTest(context: Context) {
-  const botConfig = await loadConfig(context);
+  const botConfig = await loadConfiguration(context);
   const { wallet } = createAdapters(botConfig).supabase;
   const userId = 4975670 as User["id"];
   const results = [] as unknown[];

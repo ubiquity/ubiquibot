@@ -61,7 +61,7 @@ export async function updateLabelsFromBaseRate(
       const targetPrice = calculateTaskPrice(
         calculateLabelValue(timeLabel),
         calculateLabelValue(priorityLabel),
-        config.price.priceMultiplier
+        config.price.basePriceMultiplier
       );
       const targetPriceLabel = `Price: ${targetPrice} USD`;
       newLabels.push(targetPriceLabel);

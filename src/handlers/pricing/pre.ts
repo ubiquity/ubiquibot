@@ -10,7 +10,7 @@ export async function syncPriceLabelsToConfig() {
   const config = runtime.botConfig;
   const logger = runtime.logger;
 
-  const { assistivePricing } = config.mode;
+  const { assistivePricing } = config.features;
 
   if (!assistivePricing) {
     logger.info(`Assistive pricing is disabled`);
@@ -20,12 +20,12 @@ export async function syncPriceLabelsToConfig() {
   const timeLabels = config.price.timeLabels.map((i) => i.name);
   const priorityLabels = config.price.priorityLabels.map((i) => i.name);
   const aiLabels: string[] = [];
-  for (const timeLabel of config.price.timeLabels) {
-    for (const priorityLabel of config.price.priorityLabels) {
+  for (const timeLabel of config.labels.time) {
+    for (const priorityLabel of config.labels.priority) {
       const targetPrice = calculateTaskPrice(
         calculateLabelValue(timeLabel),
         calculateLabelValue(priorityLabel),
-        config.price.priceMultiplier
+        config.payments.basePriceMultiplier
       );
       const targetPriceLabel = `Price: ${targetPrice} USD`;
       aiLabels.push(targetPriceLabel);

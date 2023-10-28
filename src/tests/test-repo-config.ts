@@ -1,8 +1,6 @@
-import { Config } from "../types";
-
-export const repoConfig: Config = {
+export const configuration = {
   evmNetworkId: 100,
-  priceMultiplier: 1,
+  basePriceMultiplier: 1,
   issueCreatorMultiplier: 1,
   timeLabels: [
     { name: "Time: <1 Hour" },
@@ -54,9 +52,6 @@ export const repoConfig: Config = {
       },
     },
   },
-  // openAIKey: null,
-  // privateKeyEncrypted: null,
-  openAITokenLimit: 100000,
   taskStaleTimeoutDuration: "15 minutes",
 
   newContributorGreeting: {
