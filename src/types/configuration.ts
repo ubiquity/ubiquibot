@@ -43,13 +43,13 @@ export const PublicConfigurationValues = o(
     features: o(
       {
         assistivePricing: optional(b()),
-        defaultLabels: optional(o(a(s()), only)),
+        defaultLabels: optional(a(s())),
         newContributorGreeting: optional(
           o(
             {
               // enabled: b(),
               header: s(),
-              showHelpMenu: b(),
+              displayHelpMenu: b(),
               footer: s(),
             },
             only
@@ -88,17 +88,14 @@ export const PublicConfigurationValues = o(
       only
     ),
 
-    commands: o(
-      a(
-        o(
-          {
-            name: s(),
-            enabled: b(),
-          },
-          only
-        )
-      ),
-      only
+    commands: a(
+      o(
+        {
+          name: s(),
+          enabled: b(),
+        },
+        only
+      )
     ),
 
     incentives: o(
@@ -135,9 +132,9 @@ export const PublicConfigurationValues = o(
 
     miscellaneous: o(
       {
-        maxConcurrentTasks: optional(o(num(), only)),
-        promotionComment: optional(o(s(), only)),
-        registerWalletWithVerification: optional(o(b(), only)),
+        maxConcurrentTasks: optional(num()),
+        promotionComment: optional(s()),
+        registerWalletWithVerification: optional(b()),
       },
       only
     ),

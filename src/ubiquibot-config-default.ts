@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { validHTMLElements } from "./handlers/comment/handlers/issue/valid-html-elements";
+import { LogLevel } from "./adapters/supabase/helpers/tables/logs";
 
 const commandFiles = fs.readdirSync(path.resolve(__dirname, "../src/handlers/comment/handlers"));
 const commands = commandFiles.map((file) => {
@@ -19,11 +20,17 @@ const allHtmlElementsSetToZero = validHTMLElements.reduce<Record<keyof HTMLEleme
 );
 
 export default {
+  logs: {
+    environment: "development",
+    level: LogLevel.SILLY,
+    retryLimit: 8,
+  },
+
   features: {
     assistivePricing: false,
     defaultLabels: [],
     newContributorGreeting: {
-      enabled: true,
+      // enabled: true,
       header:
         "Thank you for contributing! \
         Please be sure to set your wallet address \
