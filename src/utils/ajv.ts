@@ -39,25 +39,30 @@ function getAdditionalProperties() {
     .map((error) => error.params.additionalProperty);
 }
 
-export function validateTypes(
-  schema: Schema,
-  data: unknown
-): { valid: true; error: undefined } | { valid: false; error: string } {
-  try {
-    const valid = ajv.validate(schema, data);
-    if (!valid) {
-      const additionalProperties = getAdditionalProperties();
-      return {
-        valid: false,
-        error: `${ajv.errorsText()}. ${
-          additionalProperties && additionalProperties.length > 0
-            ? `Unnecessary properties: ${additionalProperties.join(", ")}`
-            : null
-        }`,
-      };
-    }
-    return { valid: true, error: undefined };
-  } catch (error) {
-    throw console.trace(error);
+export function validateTypes(schema: Schema, data) {
+  // : { valid: true; error: undefined } | { valid: false; error: string }
+  // try {
+  const valid = ajv.validate(schema, data);
+
+  if (!valid) {
+    const additionalProperties = getAdditionalProperties();
+    return {
+      valid: false,
+      error: `${ajv.errorsText()}. ${
+        additionalProperties && additionalProperties.length > 0
+          ? `Unnecessary properties: ${additionalProperties.join(", ")}`
+          : null
+      }`,
+    };
+    // return { valid: false, error: ajv.errorsText() };
+    // throw new Error(ajv.errorsText());
   }
+
+  // return data;
+
+  // }
+  return { valid: true, error: null };
+  // } catch (error) {
+  // throw console.trace(error);
+  // }
 }

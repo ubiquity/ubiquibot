@@ -1,7 +1,7 @@
 import { Context } from "probot";
 import { createAdapters } from "../adapters";
 import { Logs } from "../adapters/supabase";
-import { AllConfigurationTypes } from "../types/configuration";
+import { AllConfigurationTypes } from "../types/configuration-types";
 import { GitHubEvent } from "../types/payload";
 
 class Runtime {

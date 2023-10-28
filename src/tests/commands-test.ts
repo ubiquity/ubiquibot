@@ -58,7 +58,7 @@ export function setServer(value: Server) {
 }
 
 export const orgConfig: Config = {
-  privateKeyEncrypted:
+  privateEncrypted:
     "YU-tFJFczN3JPVoJu0pQKSbWoeiCFPjKiTXMoFnJxDDxUNX-BBXc6ZHkcQcHVjdOd6ZcEnU1o2jU3F-i05mGJPmhF2rhQYXkNlxu5U5fZMMcgxJ9INhAmktzRBUxWncg4L1HOalZIoQ7gm3nk1a84g",
 };
 

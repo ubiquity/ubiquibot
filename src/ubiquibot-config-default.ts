@@ -30,7 +30,6 @@ export default {
     assistivePricing: false,
     defaultLabels: [],
     newContributorGreeting: {
-      // enabled: true,
       header:
         "Thank you for contributing! \
         Please be sure to set your wallet address \

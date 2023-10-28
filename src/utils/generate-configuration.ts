@@ -5,10 +5,10 @@ import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
 import { upsertLastCommentToIssue } from "../helpers/issue";
 import { Payload, PublicConfigurationValues } from "../types";
-import { AllConfigurationTypes, PublicConfigurationTypes } from "../types/configuration";
+import { AllConfigurationTypes, AllConfigurationValues, PublicConfigurationTypes } from "../types/configuration-types";
 import defaultConfiguration from "../ubiquibot-config-default";
 import { validateTypes } from "./ajv";
-
+import util from "util";
 const UBIQUIBOT_CONFIG_REPOSITORY = "ubiquibot-config";
 const UBIQUIBOT_CONFIG_FULL_PATH = ".github/ubiquibot-config.yml";
 const KEY_PREFIX = "HSK_";
@@ -33,10 +33,28 @@ export async function generateConfiguration(context: Context): Promise<AllConfig
   );
 
   if (organizationConfiguration) {
-    await validate(organizationConfiguration, payload.issue?.number);
+    // console.dir({
+    // AllConfigurationValues: ,
+    // organizationConfiguration,
+    // });
+    console.dir(organizationConfiguration, { depth: null, colors: true });
+    const { valid, error } = validateTypes(AllConfigurationValues, organizationConfiguration);
+    if (!valid) {
+      const issue = payload.issue?.number;
+      const err = new Error(error?.toString());
+      if (issue) await upsertLastCommentToIssue(issue, err.message);
+      throw err;
+    }
   }
   if (repositoryConfiguration) {
-    await validate(repositoryConfiguration, payload.issue?.number);
+    console.dir(PublicConfigurationValues, { depth: null, colors: true });
+    const { valid, error } = validateTypes(PublicConfigurationValues, repositoryConfiguration);
+    if (!valid) {
+      const issue = payload.issue?.number;
+      const err = new Error(error?.toString());
+      if (issue) await upsertLastCommentToIssue(issue, err.message);
+      throw err;
+    }
   }
 
   const keys = await getKeys(organizationConfiguration); // only decrypt keys from org config
@@ -130,13 +148,4 @@ async function getScalarKey(X25519_PRIVATE_KEY: string) {
   const binPriv = sodium.from_base64(X25519_PRIVATE_KEY, sodium.base64_variants.URLSAFE_NO_PADDING);
   const scalerPub = sodium.crypto_scalarmult_base(binPriv, "base64");
   return scalerPub;
-}
-
-async function validate(parsedConfiguration: AllConfigurationTypes | PublicConfigurationTypes | null, issue?: number) {
-  const { valid, error } = validateTypes(PublicConfigurationValues, parsedConfiguration);
-  if (!valid) {
-    const err = new Error(error);
-    if (issue) await upsertLastCommentToIssue(issue, err.message);
-    throw err;
-  }
 }

@@ -5,12 +5,17 @@ import { Context } from "probot";
 import { generateConfiguration } from "../utils/generate-configuration";
 import { LogLevel } from "../adapters/supabase/helpers/tables/logs";
 import Runtime from "./bot-runtime";
-import { AllConfigurationTypes, PublicConfigurationValues } from "../types/configuration";
+import {
+  AllConfigurationTypes,
+  PublicConfigurationTypes,
+  PublicConfigurationValues,
+} from "../types/configuration-types";
 import defaultConfiguration from "../ubiquibot-config-default";
 
-const defaultConfigValidation = validateTypes(PublicConfigurationValues, defaultConfiguration); // validate default config
-if (defaultConfigValidation.error) {
-  throw new Error(defaultConfigValidation.error);
+const defaultConfigurationValidation = validateTypes(PublicConfigurationValues, defaultConfiguration);
+
+if (defaultConfigurationValidation.error) {
+  throw new Error(defaultConfigurationValidation.error);
 }
 
 export async function loadConfiguration(context: Context): Promise<AllConfigurationTypes> {
