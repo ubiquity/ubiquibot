@@ -15,14 +15,14 @@ export class User extends Super {
     return data.id;
   }
 
-  public async getMultiplier(userId: number, repositoryId: number): Promise<{ value: number; reason: string } | null> {
+  public async getMultiplier(userId: number, repositoryId: number) {
     const locationData = await this.runtime.adapters.supabase.locations.getLocationsFromRepo(repositoryId);
     if (locationData && locationData.length > 0) {
       const accessData = await this.getAccessData(locationData, userId);
       if (accessData) {
         return {
-          value: accessData.multiplier,
-          reason: accessData.multiplier_reason,
+          value: accessData.multiplier || null,
+          reason: accessData.multiplier_reason || null,
         };
       }
     }

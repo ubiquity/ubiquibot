@@ -68,24 +68,23 @@ const SupabaseConfigSchema = Type.Object({
 
 // type LogNotification= Static<typeof LogNotificationSchema>;
 
-export const PayoutConfigSchema = Type.Object({
+const PayoutConfigSchema = Type.Object({
   evmNetworkId: Type.Number(),
   rpc: Type.String(),
   privateKey: Type.Union([Type.String(), Type.Null()]),
+  publicKey: Type.Union([Type.String(), Type.Null()]),
   paymentToken: Type.String(),
   permitBaseUrl: Type.String(),
 });
 
 const UnassignConfigSchema = Type.Object({
-  followUpTime: Type.Number(),
-  disqualifyTime: Type.Number(),
-  timeRangeForMaxIssue: Type.Number(),
+  taskFollowUpDuration: Type.Number(),
+  taskDisqualifyDuration: Type.Number(),
+  reviewDelayTolerance: Type.Number(),
 });
 
 const ModeSchema = Type.Object({
-  permitMaxPrice: Type.Number(),
-  disableAnalytics: Type.Boolean(),
-  incentiveMode: Type.Boolean(),
+  maxPermitPrice: Type.Number(),
   assistivePricing: Type.Boolean(),
 });
 
@@ -117,7 +116,7 @@ const AskSchema = Type.Object({
 const NewContributorGreetingSchema = Type.Object({
   enabled: Type.Boolean(),
   header: Type.String(),
-  helpMenu: Type.Boolean(),
+  displayHelpMenu: Type.Boolean(),
   footer: Type.String(),
 });
 // type NewContributorGreeting= Static<typeof NewContributorGreetingSchema>;
@@ -181,11 +180,9 @@ export const ConfigSchema = Type.Object(
     issueCreatorMultiplier: Type.Optional(Type.Number()),
     timeLabels: Type.Optional(Type.Array(LabelFromConfigSchema)),
     priorityLabels: Type.Optional(Type.Array(LabelFromConfigSchema)),
-    permitMaxPrice: Type.Optional(Type.Number()),
+    maxPermitPrice: Type.Optional(Type.Number()),
     commandSettings: Type.Optional(Type.Array(CommandItemSchema)),
     promotionComment: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-    disableAnalytics: Type.Optional(Type.Boolean()),
-    incentiveMode: Type.Optional(Type.Boolean()),
     assistivePricing: Type.Optional(Type.Boolean()),
     maxConcurrentTasks: Type.Optional(Type.Number()),
     incentives: Type.Optional(IncentivesSchema),
@@ -210,9 +207,7 @@ export type Config = Static<typeof ConfigSchema>;
 const MergedConfigSchema = Type.Object({
   assistivePricing: Type.Boolean(),
   commandSettings: Type.Array(CommandItemSchema),
-  incentiveMode: Type.Boolean(),
   defaultLabels: Type.Array(Type.String()),
-  disableAnalytics: Type.Boolean(),
   evmNetworkId: Type.Number(),
   incentives: IncentivesSchema,
   issueCreatorMultiplier: Type.Number(),
@@ -220,7 +215,7 @@ const MergedConfigSchema = Type.Object({
   newContributorGreeting: NewContributorGreetingSchema,
   openAIKey: Type.Optional(Type.String()),
   openAITokenLimit: Type.Optional(Type.Number()),
-  permitMaxPrice: Type.Number(),
+  maxPermitPrice: Type.Number(),
   priceMultiplier: Type.Number(),
   priorityLabels: Type.Array(LabelFromConfigSchema),
   privateKeyEncrypted: Type.Optional(Type.String()),
@@ -229,11 +224,10 @@ const MergedConfigSchema = Type.Object({
   registerWalletWithVerification: Type.Boolean(),
   staleTaskTime: Type.String(),
   timeLabels: Type.Array(LabelFromConfigSchema),
-  staleBountyTime: Type.String(),
-  timeRangeForMaxIssue: Type.Number(),
+  reviewDelayTolerance: Type.String(),
   permitBaseUrl: Type.String(),
-  followUpTime: Type.String(),
-  disqualifyTime: Type.String(),
+  taskFollowUpDuration: Type.String(),
+  taskDisqualifyDuration: Type.String(),
 });
 
 export type MergedConfig = Static<typeof MergedConfigSchema>;

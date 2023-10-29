@@ -1,30 +1,19 @@
-import { MergedConfig } from "../types";
-
 import fs from "fs";
 import path from "path";
-
-const commandFiles = fs.readdirSync(path.resolve(__dirname, "../../src/handlers/comment/handlers"));
-const commandSettings = commandFiles.map((file) => {
-  const commandName = path.basename(file, path.extname(file));
-  return {
-    name: commandName,
-    enabled: false,
-  };
-});
-// console.trace({ commandSettings });
+import { MergedConfig } from "./types";
+const commandFiles = fs.readdirSync(path.resolve(__dirname, "../src/handlers/comment/handlers"));
+const promotionComment =
+  "###### If you enjoy the DevPool experience, please follow [Ubiquity on GitHub](https://github.com/ubiquity) and star [this repo](https://github.com/ubiquity/devpool-directory) to show your support. It helps a lot!";
 
 export const DefaultConfig: MergedConfig = {
   evmNetworkId: 1,
   priceMultiplier: 1,
   issueCreatorMultiplier: 1,
-  permitMaxPrice: Number.MAX_SAFE_INTEGER,
+  maxPermitPrice: Number.MAX_SAFE_INTEGER,
   maxConcurrentTasks: Number.MAX_SAFE_INTEGER,
   assistivePricing: false,
-  disableAnalytics: false,
-  incentiveMode: false,
   registerWalletWithVerification: false,
-  promotionComment:
-    "\n<h6>If you enjoy the DevPool experience, please follow <a href='https://github.com/ubiquity'>Ubiquity on GitHub</a> and star <a href='https://github.com/ubiquity/devpool-directory'>this repo</a> to show your support. It helps a lot!</h6>",
+  promotionComment,
   defaultLabels: [],
   timeLabels: [
     { name: "Time: <1 Hour" },
@@ -40,7 +29,10 @@ export const DefaultConfig: MergedConfig = {
     { name: "Priority: 4 (Urgent)" },
     { name: "Priority: 5 (Emergency)" },
   ],
-  commandSettings: commandSettings, // dynamic mount based on file names
+  commandSettings: commandFiles.map((file) => {
+    const commandName = path.basename(file, path.extname(file));
+    return { name: commandName, enabled: false };
+  }), // dynamic mount based on file names
   incentives: {
     comment: {
       elements: {
@@ -77,18 +69,16 @@ export const DefaultConfig: MergedConfig = {
     setLabel: true,
     fundExternalClosedIssue: true,
   },
-  staleTaskTime: "0d",
-  timeRangeForMaxIssue: 24, //24
+  staleTaskTime: "1 month",
+  reviewDelayTolerance: "1 day",
   permitBaseUrl: "https://pay.ubq.fi",
-  followUpTime: "4 days",
-  disqualifyTime: "7 days",
-  staleBountyTime: "7 days",
+  taskFollowUpDuration: "0.5 weeks",
+  taskDisqualifyDuration: "1 week",
   newContributorGreeting: {
-    enabled: false,
+    enabled: true,
     header:
-      "Thank you for contributing! Please be sure to set your wallet address before completing your first task so that the automatic payout upon task completion will work for you.",
-    helpMenu: true,
-    footer:
-      "###### Also please star this repository and [@ubiquity/devpool-directory](https://github.com/ubiquity/devpool-directory/) to show your support. It helps a lot!",
+      "Thank you for contributing! Please be sure to set your wallet address before completing your first task so that you can collect your reward.",
+    displayHelpMenu: true,
+    footer: promotionComment,
   },
 };

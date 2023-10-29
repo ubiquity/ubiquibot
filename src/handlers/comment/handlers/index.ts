@@ -94,7 +94,7 @@ export function userCommands(context: Context): UserCommands[] {
     {
       id: "/labels",
       description: "Set access control, for admins only.",
-      example: "/labels @user priority time price",
+      example: "/labels @user priority time price", // Ensure there are spaces between words
       handler: setLabels,
     },
     {

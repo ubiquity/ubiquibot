@@ -12,7 +12,7 @@ export async function startCommandHandler(context: Context) {
     return logger.error("Issue is not defined");
   }
 
-  const assignees = payload.issue?.assignees;
+  const assignees = payload.issue.assignees;
 
   // If no valid assignees exist, log a debug message and return
   if (assignees.length === 0) {
@@ -20,7 +20,7 @@ export async function startCommandHandler(context: Context) {
   }
 
   // Flatten assignees into a string
-  const flattenedAssignees = assignees.reduce((acc, assignee) => `${acc} @${assignee.login}`, null);
+  const flattenedAssignees = assignees.reduce((acc, assignee) => `${acc} @${assignee?.login}`, "");
 
   // Extract labels from payload
   const labels = payload.issue?.labels;

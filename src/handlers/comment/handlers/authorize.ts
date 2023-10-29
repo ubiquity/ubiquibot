@@ -1,7 +1,7 @@
 import Runtime from "../../../bindings/bot-runtime";
 import { isUserAdminOrBillingManager } from "../../../helpers";
 import { Context, Payload } from "../../../types";
-import { taskInfo } from "../../wildcard";
+import { taskPaymentMetaData } from "../../wildcard";
 
 export async function authorizeLabelChanges(context: Context) {
   const runtime = Runtime.getState();
@@ -29,20 +29,22 @@ export async function authorizeLabelChanges(context: Context) {
     );
   }
 
-  const issueDetailed = taskInfo(context, issue);
+  const task = taskPaymentMetaData(context, issue);
 
-  if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timeLabel) {
-    throw runtime.logger.error("No valid task label on this issue", { issueDetailed });
+  if (!task.priceLabel || !task.priorityLabel || !task.timeLabel) {
+    throw runtime.logger.error("Missing required labels", { issueDetailed: task });
   }
 
   // get current repository node id from payload and pass it to getLabelChanges function to get label changes
   const labelChanges = await label.getLabelChanges(repository.node_id);
 
-  // Approve label changes
-  labelChanges.forEach(async (labelChange) => {
-    await label.approveLabelChange(labelChange.id);
-    return logger.info("Approved label change", { labelChange });
-  });
+  if (labelChanges) {
+    // Approve label changes
+    labelChanges.forEach(async (labelChange) => {
+      await label.approveLabelChange(labelChange.id);
+      return logger.info("Approved label change", { labelChange });
+    });
+  }
 
   return runtime.logger.ok("Label change has been approved, permit can now be generated");
 }

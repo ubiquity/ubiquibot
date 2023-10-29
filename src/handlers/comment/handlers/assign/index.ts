@@ -2,11 +2,10 @@ import Runtime from "../../../../bindings/bot-runtime";
 import {
   addAssignees,
   calculateDurations,
-  getAllIssueComments,
   getAssignedIssues,
   getAvailableOpenedPullRequests,
 } from "../../../../helpers";
-import { Comment, IssueType, Payload, User, Context } from "../../../../types";
+import { IssueType, Payload, User, Context } from "../../../../types";
 import { isParentIssue } from "../../../pricing";
 import { assignTableComment } from "../table";
 import { checkTaskStale } from "./check-task-stale";
@@ -60,7 +59,7 @@ export async function assign(context: Context, body: string) {
   if (issue.state == IssueType.CLOSED) {
     throw logger.warn("Skipping '/start' since the issue is closed");
   }
-  const assignees: User[] = payload.issue?.assignees ?? [];
+  const assignees: User[] = (payload.issue?.assignees ?? []).filter(Boolean) as User[];
 
   if (assignees.length !== 0) {
     throw logger.warn("Skipping '/start' since the issue is already assigned");
@@ -93,28 +92,28 @@ export async function assign(context: Context, body: string) {
 
   // double check whether the assign message has been already posted or not
   logger.info("Creating an issue comment", { comment });
-  const issueComments = await getAllIssueComments(context, issue.number);
-  const comments = issueComments.sort(
-    (a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  // const issueComments = await getAllIssueComments(issue.number);
+  // const comments = issueComments.sort(
+  //   (a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  // );
+  // const latestComment = comments.length > 0 ? comments[0].body : undefined;
+
+  const {
+    multiplierAmount: multiplierAmount,
+    multiplierReason: multiplierReason,
+    totalPriceOfTask: totalPriceOfTask,
+  } = await getMultiplierInfoToDisplay(context, payload.sender.id, payload.repository.id, issue);
+  return (
+    assignTableComment({
+      multiplierAmount,
+      multiplierReason,
+      totalPriceOfTask,
+      isTaskStale,
+      daysElapsedSinceTaskCreation: comment.daysElapsedSinceTaskCreation,
+      taskDeadline: comment.deadline,
+      registeredWallet: comment.registeredWallet,
+    }) + comment.tips
   );
-  const latestComment = comments.length > 0 ? comments[0].body : undefined;
-  if (latestComment && comment.timeLimit != latestComment) {
-    const {
-      multiplierAmount: multiplierAmount,
-      multiplierReason: multiplierReason,
-      totalPriceOfTask: totalPriceOfTask,
-    } = await getMultiplierInfoToDisplay(context, payload.sender.id, payload.repository.id, issue);
-    return (
-      assignTableComment({
-        multiplierAmount,
-        multiplierReason,
-        totalPriceOfTask,
-        isTaskStale,
-        daysElapsedSinceTaskCreation: comment.daysElapsedSinceTaskCreation,
-        taskDeadline: comment.timeLimit,
-        registeredWallet: comment.registeredWallet,
-      }) + comment.tips
-    );
-  }
-  throw logger.warn("The assign message has been already posted");
+
+  // throw logger.warn("The assign message has been already posted");
 }

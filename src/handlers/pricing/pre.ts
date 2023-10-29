@@ -34,14 +34,13 @@ export async function syncPriceLabelsToConfig(context: Context) {
     }
   }
 
-  const neededLabels: string[] = [...timeLabels, ...priorityLabels];
-  logger.debug("Got needed labels for setting up price ", { neededLabels });
+  const pricingLabels: string[] = [...timeLabels, ...priorityLabels];
 
   // List all the labels for a repository
-  const repoLabels = await listLabelsForRepo(context);
+  const allLabels = await listLabelsForRepo(context);
 
   // Get the missing labels
-  const missingLabels = neededLabels.filter((label) => !repoLabels.map((i) => i.name).includes(label));
+  const missingLabels = pricingLabels.filter((label) => !allLabels.map((i) => i.name).includes(label));
 
   // Create missing labels
   if (missingLabels.length > 0) {

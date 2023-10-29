@@ -1,4 +1,3 @@
-import { removeAssignees } from "../../../helpers";
 import Runtime from "../../../bindings/bot-runtime";
 import { Context, Payload } from "../../../types";
 import { closePullRequestForAnIssue } from "../../assign/index";
@@ -23,20 +22,23 @@ export async function unassign(context: Context, body: string) {
   if (assignees.length == 0) {
     return logger.warn("No assignees found for issue", { issueNumber });
   }
-  const shouldUnassign = payload.sender.login.toLowerCase() == assignees[0].login.toLowerCase();
+  const shouldUnassign = assignees[0]?.login.toLowerCase() == payload.sender.login.toLowerCase();
   logger.debug("Unassigning sender", {
     sender: payload.sender.login.toLowerCase(),
-    assignee: assignees[0].login.toLowerCase(),
+    assignee: assignees[0]?.login.toLowerCase(),
     shouldUnassign,
   });
 
   if (shouldUnassign) {
     await closePullRequestForAnIssue(context);
-    await removeAssignees(
-      context,
-      issueNumber,
-      assignees.map((i) => i.login)
-    );
+    const { login } = payload.repository.owner;
+    const { name: repo } = payload.repository;
+    await context.event.octokit.rest.issues.removeAssignees({
+      owner: login,
+      repo: repo,
+      issue_number: issueNumber,
+      assignees: [payload.sender.login],
+    });
     return logger.ok("You have been unassigned from the task", { issueNumber, user: payload.sender.login });
   }
   return logger.warn("You are not assigned to this task", { issueNumber, user: payload.sender.login });

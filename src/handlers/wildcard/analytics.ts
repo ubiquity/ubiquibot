@@ -2,14 +2,14 @@ import { calculateLabelValue } from "../../helpers";
 import { Issue, Context } from "../../types";
 
 //  Checks the issue whether it's an open task for public self assignment
-export function taskInfo(
+export function taskPaymentMetaData(
   context: Context,
   issue: Issue
 ): {
-  isTask: boolean;
-  timeLabel?: string;
-  priorityLabel?: string;
-  priceLabel?: string;
+  eligibleForPayment: boolean;
+  timeLabel: string | null;
+  priorityLabel: string | null;
+  priceLabel: string | null;
 } {
   const { price } = context.config;
   const labels = issue.labels;
@@ -22,16 +22,17 @@ export function taskInfo(
   const minTimeLabel =
     timeLabels.length > 0
       ? timeLabels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b)).name
-      : undefined;
+      : null;
+
   const minPriorityLabel =
     priorityLabels.length > 0
       ? priorityLabels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b)).name
-      : undefined;
+      : null;
 
-  const priceLabel = labels.find((label) => label.name.includes("Price"))?.name;
+  const priceLabel = labels.find((label) => label.name.includes("Price"))?.name || null;
 
   return {
-    isTask,
+    eligibleForPayment: isTask,
     timeLabel: minTimeLabel,
     priorityLabel: minPriorityLabel,
     priceLabel,

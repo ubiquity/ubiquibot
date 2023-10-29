@@ -66,7 +66,7 @@ export class Wallet extends Super {
   }
 
   private async _checkIfUserExists(userId: number) {
-    const { data, error } = await this.supabase.from("users").select("*").eq("id", userId).single();
+    const { data, error } = await this.supabase.from("users").select("*").eq("id", userId).maybeSingle();
     if (error) throw error;
     return data as UserRow;
   }
@@ -89,7 +89,7 @@ export class Wallet extends Super {
       .single()) as { data: LocationRow; error: PostgrestError | null };
 
     if (locationError) {
-      throw locationError;
+      throw new Error(locationError.message);
     }
 
     // Get the ID of the inserted location
@@ -102,7 +102,7 @@ export class Wallet extends Super {
       .single();
 
     if (userError) {
-      throw userError;
+      throw new Error(userError.message);
     }
 
     return userData as UserRow;
@@ -111,7 +111,7 @@ export class Wallet extends Super {
   private async _checkIfWalletExists(
     userData: UserRow
   ): Promise<{ data: WalletRow | null; error: PostgrestError | null }> {
-    const { data, error } = await this.supabase.from("wallets").select("*").eq("id", userData.wallet_id).single();
+    const { data, error } = await this.supabase.from("wallets").select("*").eq("id", userData.wallet_id).maybeSingle();
 
     return { data: data as WalletRow, error };
   }
@@ -177,7 +177,7 @@ export class Wallet extends Super {
       address: address,
     } as WalletRow;
 
-    await this.supabase.from("wallets").update(basicLocationInfo).eq("id", walletId).single();
+    await this.supabase.from("wallets").update(basicLocationInfo).eq("id", walletId).maybeSingle();
   }
 
   private async _enrichLocationMetaData(walletData: WalletRow, locationMetaData: LocationMetaData) {

@@ -3,12 +3,11 @@ import merge from "lodash/merge";
 import { Context } from "probot";
 import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
-import { DefaultConfig } from "../configs";
 import { upsertLastCommentToIssue } from "../helpers/issue";
 import { ConfigSchema, MergedConfig, Payload } from "../types";
 import { BotConfig, Config } from "../types/config";
 import { validate } from "./ajv";
-
+import { DefaultConfig } from "../ubiquibot-config-default";
 const CONFIG_REPO = "ubiquibot-config";
 const CONFIG_PATH = ".github/ubiquibot-config.yml";
 const KEY_NAME = "privateKeyEncrypted";
@@ -21,7 +20,7 @@ export async function getConfig(context: Context) {
 
   let parsedOrg: Config | null;
   if (typeof orgConfig === "string") {
-    parsedOrg = parseYAML(orgConfig);
+    parsedOrg = parseYamlConfig(orgConfig);
   } else {
     parsedOrg = null;
   }
@@ -37,7 +36,7 @@ export async function getConfig(context: Context) {
 
   let parsedRepo: Config | null;
   if (typeof repoConfig === "string") {
-    parsedRepo = parseYAML(repoConfig);
+    parsedRepo = parseYamlConfig(repoConfig);
   } else {
     parsedRepo = null;
   }
@@ -63,7 +62,6 @@ export async function getConfig(context: Context) {
   } catch (error) {
     console.warn("Failed to get keys", { error });
   }
-  // console.trace({ keys });
   const configs: MergedConfigs = { parsedDefault, parsedOrg, parsedRepo };
   const mergedConfigData: MergedConfig = mergeConfigs(configs);
   const configData = { keys, ...mergedConfigData };
@@ -72,12 +70,11 @@ export async function getConfig(context: Context) {
 
 async function downloadConfig(context: Context, type: "org" | "repo") {
   const payload = context.payload as Payload;
-  let repo;
-  let owner;
+  let repo: string;
+  let owner: string;
   if (type === "org") {
     repo = CONFIG_REPO;
-    owner = payload.organization?.login;
-    owner = payload.repository.owner.login;
+    owner = payload.organization?.login || payload.repository.owner.login;
   } else {
     repo = payload.repository.name;
     owner = payload.repository.owner.login;
@@ -100,7 +97,7 @@ interface MergedConfigs {
   parsedDefault: MergedConfig;
 }
 
-export function parseYAML(data?: string) {
+export function parseYamlConfig(data?: string) {
   try {
     if (data) {
       const parsedData = YAML.parse(data) as Config;

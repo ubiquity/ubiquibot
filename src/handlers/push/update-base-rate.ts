@@ -2,7 +2,7 @@ import Runtime from "../../bindings/bot-runtime";
 
 import { getPreviousFileContent, listLabelsForRepo, updateLabelsFromBaseRate } from "../../helpers";
 import { Label, PushPayload, Context } from "../../types";
-import { parseYAML } from "../../utils/private";
+import { parseYamlConfig } from "../../utils/get-config";
 
 export async function updateBaseRate(context: Context, filePath: string) {
   const runtime = Runtime.getState();
@@ -14,27 +14,29 @@ export async function updateBaseRate(context: Context, filePath: string) {
   const repo = payload.repository.name;
 
   // get previous config
-  const preFileContent = await getPreviousFileContent(context, owner, repo, branch, filePath);
+  const previousFileContent = await getPreviousFileContent(context, owner, repo, branch, filePath);
 
-  if (!preFileContent) {
-    logger.debug("Getting previous file content failed");
-    return;
+  if (!previousFileContent) {
+    throw logger.error("Getting previous file content failed");
   }
-  const previousContent = Buffer.from(preFileContent, "base64").toString();
-  const previousConfig = await parseYAML(previousContent);
+  const previousConfigRaw = Buffer.from(previousFileContent, "base64").toString();
+  const previousConfigParsed = parseYamlConfig(previousConfigRaw);
 
-  if (!previousConfig || !previousConfig["priceMultiplier"]) {
-    logger.debug("No multiplier found in file object");
-    return;
+  if (!previousConfigParsed || !previousConfigParsed.priceMultiplier) {
+    throw logger.warn("No multiplier found in previous config");
   }
 
-  const previousBaseRate = previousConfig["priceMultiplier"];
+  const previousBaseRate = previousConfigParsed.priceMultiplier;
+
+  if (!previousBaseRate) {
+    throw logger.warn("No base rate found in previous config");
+  }
 
   // fetch all labels
   const repoLabels = await listLabelsForRepo(context);
 
   if (repoLabels.length === 0) {
-    return logger.debug("No labels on this repo");
+    throw logger.warn("No labels on this repo");
   }
 
   return await updateLabelsFromBaseRate(context, owner, repo, repoLabels as Label[], previousBaseRate);

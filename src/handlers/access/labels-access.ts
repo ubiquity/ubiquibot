@@ -2,7 +2,7 @@ import Runtime from "../../bindings/bot-runtime";
 import { addCommentToIssue, isUserAdminOrBillingManager, removeLabel, addLabelToIssue } from "../../helpers";
 import { Context, Payload, UserType } from "../../types";
 
-export async function handleLabelsAccess(context: Context) {
+export async function labelAccessPermissionsCheck(context: Context) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   const { publicAccessControl } = context.config;
@@ -24,8 +24,9 @@ export async function handleLabelsAccess(context: Context) {
   const match = payload.label?.name?.split(":");
   if (match.length == 0) return;
   const labelType = match[0].toLowerCase();
+
   if (sufficientPrivileges) {
-    logger.info("Admin/Billing Manager has full control over all labels", {
+    logger.info("Admin and billing managers have full control over all labels", {
       repo: repo.full_name,
       user: sender,
       labelType,
@@ -40,6 +41,8 @@ export async function handleLabelsAccess(context: Context) {
     if (accessible) {
       return true;
     }
+
+    console.trace({ "payload.action": payload.action });
 
     if (payload.action === "labeled") {
       // remove the label

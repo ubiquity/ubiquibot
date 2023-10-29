@@ -1,6 +1,33 @@
 import util from "util";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+export enum Colors {
+  reset = "\x1b[0m",
+  bright = "\x1b[1m",
+  dim = "\x1b[2m",
+  underscore = "\x1b[4m",
+  blink = "\x1b[5m",
+  reverse = "\x1b[7m",
+  hidden = "\x1b[8m",
+
+  fgBlack = "\x1b[30m",
+  fgRed = "\x1b[31m",
+  fgGreen = "\x1b[32m",
+  fgYellow = "\x1b[33m",
+  fgBlue = "\x1b[34m",
+  fgMagenta = "\x1b[35m",
+  fgCyan = "\x1b[36m",
+  fgWhite = "\x1b[37m",
+
+  bgBlack = "\x1b[40m",
+  bgRed = "\x1b[41m",
+  bgGreen = "\x1b[42m",
+  bgYellow = "\x1b[43m",
+  bgBlue = "\x1b[44m",
+  bgMagenta = "\x1b[45m",
+  bgCyan = "\x1b[46m",
+  bgWhite = "\x1b[47m",
+}
 
 export const prettyLogs = {
   error: function logError(message: string, metadata?: any) {
@@ -57,9 +84,7 @@ function logWithStack(type: keyof typeof prettyLogs, message: string, metadata?:
       const stackTrace = new Error().stack?.split("\n");
       if (stackTrace) {
         stackTrace.splice(0, 4);
-        stack = stackTrace
-          .filter((line) => line.includes("/src/")) // adjust this path to match your source code
-          .join("\n");
+        stack = stackTrace.filter((line) => line.includes(".ts:")).join("\n");
       }
     }
     const newMetadata = { ...metadata };
@@ -74,12 +99,12 @@ function logWithStack(type: keyof typeof prettyLogs, message: string, metadata?:
 
     if (typeof stack == "string") {
       const prettyStack = formatStackTrace(stack, 1);
-      const colorizedStack = colorizeText(prettyStack, "dim");
+      const colorizedStack = colorizeText(prettyStack, Colors.dim);
       _log(type, colorizedStack);
     } else if (stack) {
       // console.trace({ type: typeof stack, stack });
       const prettyStack = formatStackTrace((stack as unknown as string[]).join("\n"), 1);
-      const colorizedStack = colorizeText(prettyStack, "dim");
+      const colorizedStack = colorizeText(prettyStack, Colors.dim);
       _log(type, colorizedStack);
     } else {
       throw new Error("Stack is null");
@@ -123,54 +148,30 @@ function _log(type: keyof typeof prettyLogs, message: any) {
 
   const fullLogString = logString;
 
-  const colorMap: Record<keyof typeof prettyLogs, string[]> = {
-    error: ["error", "fgRed"],
-    ok: ["log", "fgGreen"],
-    warn: ["warn", "fgYellow"],
-    info: ["info", "dim"],
-    debug: ["debug", "dim"],
-    http: ["debug", "dim"],
-    verbose: ["debug", "dim"],
-    silly: ["debug", "dim"],
+  const colorMap: Record<keyof typeof prettyLogs, [keyof typeof console, Colors]> = {
+    error: ["error", Colors.fgRed],
+    ok: ["log", Colors.fgGreen],
+    warn: ["warn", Colors.fgYellow],
+    info: ["info", Colors.dim],
+    debug: ["debug", Colors.fgMagenta],
+    http: ["debug", Colors.dim],
+    verbose: ["debug", Colors.dim],
+    silly: ["debug", Colors.dim],
   };
 
   const _console = console[colorMap[type][0] as keyof typeof console] as (...args: string[]) => void;
   if (typeof _console === "function") {
-    _console(colorizeText(fullLogString, colorMap[type][1] as keyof typeof colors));
+    _console(colorizeText(fullLogString, colorMap[type][1]));
   } else {
     throw new Error(fullLogString);
   }
 }
 
-const colors = {
-  reset: "\x1b[0m",
-  bright: "\x1b[1m",
-  dim: "\x1b[2m",
-  underscore: "\x1b[4m",
-  blink: "\x1b[5m",
-  reverse: "\x1b[7m",
-  hidden: "\x1b[8m",
-
-  fgBlack: "\x1b[30m",
-  fgRed: "\x1b[31m",
-  fgGreen: "\x1b[32m",
-  fgYellow: "\x1b[33m",
-  fgBlue: "\x1b[34m",
-  fgMagenta: "\x1b[35m",
-  fgCyan: "\x1b[36m",
-  fgWhite: "\x1b[37m",
-
-  bgBlack: "\x1b[40m",
-  bgRed: "\x1b[41m",
-  bgGreen: "\x1b[42m",
-  bgYellow: "\x1b[43m",
-  bgBlue: "\x1b[44m",
-  bgMagenta: "\x1b[45m",
-  bgCyan: "\x1b[46m",
-  bgWhite: "\x1b[47m",
-};
-function colorizeText(text: string, color: keyof typeof colors): string {
-  return colors[color].concat(text).concat(colors.reset);
+export function colorizeText(text: string, color: Colors): string {
+  if (!color) {
+    throw new Error(`Invalid color: ${color}`);
+  }
+  return color.concat(text).concat(Colors.reset);
 }
 
 function formatStackTrace(stack: string, linesToRemove = 0, prefix = ""): string {

@@ -1,7 +1,6 @@
 import { userCommands } from ".";
 import Runtime from "../../../bindings/bot-runtime";
-
-import { Context, IssueType, Payload } from "../../../types";
+import { Context, Payload } from "../../../types";
 
 export async function listAvailableCommands(context: Context, body: string) {
   const runtime = Runtime.getState();
@@ -14,10 +13,6 @@ export async function listAvailableCommands(context: Context, body: string) {
 
   if (!issue) {
     return logger.info("Skipping /help, reason: not issue");
-  }
-
-  if (issue.state == IssueType.CLOSED) {
-    return logger.info("Skipping '/start', reason: closed ");
   }
 
   return generateHelpMenu(context);
@@ -44,26 +39,17 @@ export function generateHelpMenu(context: Context) {
 
 function breakLongString(str: string, maxLen = 24) {
   const newStr = [] as string[];
-  let spaceIndex = str.lastIndexOf(" ", maxLen);
+  let spaceIndex = str.indexOf(" ", maxLen); // Find the first space after maxLen
 
-  while (str.length > maxLen) {
-    if (spaceIndex > -1) {
-      newStr.push(str.slice(0, spaceIndex));
-      str = str.slice(spaceIndex + 1);
-    } else {
-      const forcedBreakIndex = str.slice(0, maxLen).lastIndexOf(" ");
-      if (forcedBreakIndex !== -1) {
-        newStr.push(str.slice(0, forcedBreakIndex));
-        str = str.slice(forcedBreakIndex + 1);
-      } else {
-        newStr.push(str.slice(0, maxLen));
-        str = str.slice(maxLen);
-      }
-    }
-    spaceIndex = str.lastIndexOf(" ", maxLen);
+  while (str.length > maxLen && spaceIndex !== -1) {
+    newStr.push(str.slice(0, spaceIndex));
+    str = str.slice(spaceIndex + 1);
+    spaceIndex = str.indexOf(" ", maxLen);
   }
 
-  return newStr.join("<br>").concat(str);
+  newStr.push(str); // Push the remaining part of the string
+
+  return newStr.join("<br>");
 }
 
 function breakSentences(str: string) {

@@ -1,29 +1,24 @@
 import ms from "ms";
-
 import { BotConfig, BotConfigSchema } from "../types";
-
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
 import { Context } from "probot";
-import { getConfig } from "../utils/private";
+import { getConfig } from "../utils/get-config";
 import { LogLevel } from "../adapters/supabase/helpers/tables/logs";
 import Runtime from "./bot-runtime";
-
 export async function loadConfig(context: Context): Promise<BotConfig> {
   const {
     assistivePricing,
     priceMultiplier,
     commandSettings,
     defaultLabels,
-    disableAnalytics,
     evmNetworkId,
-    incentiveMode,
     incentives,
     issueCreatorMultiplier,
     maxConcurrentTasks,
     openAIKey,
     openAITokenLimit,
-    permitMaxPrice,
+    maxPermitPrice,
     priorityLabels,
     keys,
     promotionComment,
@@ -32,23 +27,16 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
     staleTaskTime,
     timeLabels,
     newContributorGreeting,
-    timeRangeForMaxIssue,
+    reviewDelayTolerance,
     permitBaseUrl,
-    followUpTime,
-    disqualifyTime,
+    taskFollowUpDuration,
+    taskDisqualifyDuration,
   } = await getConfig(context);
-
-  // const config = await getConfig(context);
-  // console.trace(util.inspect(config, { showHidden: true, depth: null, breakLength: Infinity }));
-
   const runtime = Runtime.getState();
-
   if (!keys.private) {
     console.trace("X25519_PRIVATE_KEY not defined");
   }
-
   const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
-
   const botConfig: BotConfig = {
     log: {
       logEnvironment: process.env.LOG_ENVIRONMENT || "production",
@@ -61,28 +49,17 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
       evmNetworkId: evmNetworkId,
       rpc: rpc,
       privateKey: keys.private,
+      publicKey: keys.public,
       paymentToken: paymentToken,
-      permitBaseUrl: process.env.PERMIT_BASE_URL || permitBaseUrl,
+      permitBaseUrl: permitBaseUrl,
     },
     unassign: {
-      timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE
-        ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE)
-        : timeRangeForMaxIssue,
-
-      followUpTime: ms(process.env.FOLLOW_UP_TIME || followUpTime),
-      disqualifyTime: ms(process.env.DISQUALIFY_TIME || disqualifyTime),
+      reviewDelayTolerance: ms(reviewDelayTolerance),
+      taskFollowUpDuration: ms(taskFollowUpDuration),
+      taskDisqualifyDuration: ms(taskDisqualifyDuration),
     },
-    supabase: {
-      url: process.env.SUPABASE_URL ?? null,
-      key: process.env.SUPABASE_KEY ?? null,
-    },
-
-    mode: {
-      permitMaxPrice,
-      disableAnalytics,
-      incentiveMode,
-      assistivePricing,
-    },
+    supabase: { url: process.env.SUPABASE_URL ?? null, key: process.env.SUPABASE_KEY ?? null },
+    mode: { maxPermitPrice, assistivePricing },
     command: commandSettings,
     assign: { maxConcurrentTasks: maxConcurrentTasks, staleTaskTime: ms(staleTaskTime) },
     sodium: { privateKey: keys.private, publicKey: keys.public },
@@ -91,23 +68,22 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
     publicAccessControl: publicAccessControl,
     newContributorGreeting: newContributorGreeting,
   };
-
   if (botConfig.payout.privateKey == null) {
-    botConfig.mode.permitMaxPrice = 0;
+    botConfig.mode.maxPermitPrice = 0;
   }
-
   const validate = ajv.compile(BotConfigSchema);
   const valid = validate(botConfig);
   if (!valid) {
-    throw runtime.logger.error("Invalid config", validate.errors);
+    throw new Error(JSON.stringify(validate.errors, null, 2));
   }
-
-  if (botConfig.unassign.followUpTime < 0 || botConfig.unassign.disqualifyTime < 0) {
-    throw runtime.logger.error("Invalid time interval, followUpTime or disqualifyTime cannot be negative", {
-      followUpTime: botConfig.unassign.followUpTime,
-      disqualifyTime: botConfig.unassign.disqualifyTime,
-    });
+  if (botConfig.unassign.taskFollowUpDuration < 0 || botConfig.unassign.taskDisqualifyDuration < 0) {
+    throw runtime.logger.error(
+      "Invalid time interval, taskFollowUpDuration or taskDisqualifyDuration cannot be negative",
+      {
+        taskFollowUpDuration: botConfig.unassign.taskFollowUpDuration,
+        taskDisqualifyDuration: botConfig.unassign.taskDisqualifyDuration,
+      }
+    );
   }
-
   return botConfig;
 }

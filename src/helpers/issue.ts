@@ -59,25 +59,24 @@ export async function getAllLabeledEvents(context: Context) {
 }
 
 export async function clearAllPriceLabelsOnIssue(context: Context) {
-  const runtime = Runtime.getState();
   const payload = context.event.payload as Payload;
   if (!payload.issue) return;
 
   const labels = payload.issue.labels;
-  const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));
+  const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price: "));
 
   if (!issuePrices.length) return;
 
-  try {
-    await context.event.octokit.issues.removeLabel({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: payload.issue.number,
-      name: issuePrices[0].name.toString(),
-    });
-  } catch (e: unknown) {
-    runtime.logger.debug("Clearing all price labels failed!", e);
-  }
+  // try {
+  await context.event.octokit.issues.removeLabel({
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    issue_number: payload.issue.number,
+    name: issuePrices[0].name,
+  });
+  // } catch (e: unknown) {
+  //   runtime.logger.debug("Clearing all price labels failed!", e);
+  // }
 }
 
 export async function addLabelToIssue(context: Context, labelName: string) {
@@ -100,7 +99,7 @@ export async function addLabelToIssue(context: Context, labelName: string) {
   }
 }
 
-async function listIssuesForRepo(
+async function listIssuesAndPullsForRepo(
   context: Context,
   state: "open" | "closed" | "all" = "open",
   per_page = 100,
@@ -128,13 +127,13 @@ async function listIssuesForRepo(
   }
 }
 
-export async function listAllIssuesForRepo(context: Context, state: "open" | "closed" | "all" = "open") {
+export async function listAllIssuesAndPullsForRepo(context: Context, state: "open" | "closed" | "all") {
   const issuesArr = [] as Issue[];
   const perPage = 100;
   let fetchDone = false;
   let curPage = 1;
   while (!fetchDone) {
-    const issues = (await listIssuesForRepo(context, state, perPage, curPage)) as Issue[];
+    const issues = (await listIssuesAndPullsForRepo(context, state, perPage, curPage)) as Issue[];
 
     // push the objects to array
     issuesArr.push(...issues);
@@ -290,53 +289,6 @@ export async function getAllIssueAssignEvents(context: Context, issueNumber: num
   }
 
   return result.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
-}
-
-export async function wasIssueReopened(context: Context, issueNumber: number): Promise<boolean> {
-  const payload = context.event.payload as Payload;
-  let shouldFetch = true;
-  let page_number = 1;
-  try {
-    while (shouldFetch) {
-      const response = await context.event.octokit.rest.issues.listEvents({
-        owner: payload.repository.owner.login,
-        repo: payload.repository.name,
-        issue_number: issueNumber,
-        per_page: 100,
-        page: page_number,
-      });
-
-      await checkRateLimitGit(response?.headers);
-
-      // Fixing infinite loop here, it keeps looping even when its an empty array
-      if (response?.data?.length > 0) {
-        if (response.data.filter((item) => item.event === "reopened").length > 0) return true;
-        page_number++;
-      } else {
-        shouldFetch = false;
-      }
-    }
-  } catch (e: unknown) {
-    shouldFetch = false;
-  }
-
-  return false;
-}
-
-export async function removeAssignees(context: Context, issueNumber: number, assignees: string[]) {
-  const runtime = Runtime.getState();
-
-  const payload = context.event.payload as Payload;
-  try {
-    await context.event.octokit.rest.issues.removeAssignees({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: issueNumber,
-      assignees,
-    });
-  } catch (e: unknown) {
-    runtime.logger.debug("Removing assignees failed!", e);
-  }
 }
 
 export async function checkUserPermissionForRepoAndOrg(context: Context, username: string): Promise<boolean> {
@@ -639,7 +591,7 @@ export async function getAssignedIssues(context: Context, username: string) {
   const perPage = 100;
   let curPage = 1;
   while (!fetchDone) {
-    const issues = await listIssuesForRepo(context, IssueType.OPEN, perPage, curPage);
+    const issues = await listIssuesAndPullsForRepo(context, IssueType.OPEN, perPage, curPage);
 
     // push the objects to array
     issuesArr.push(...issues);
@@ -694,8 +646,8 @@ export async function getCommitsOnPullRequest(context: Context, pullNumber: numb
 
 export async function getAvailableOpenedPullRequests(context: Context, username: string) {
   const unassignConfig = context.config.unassign;
-  const { timeRangeForMaxIssue } = unassignConfig;
-  if (!timeRangeForMaxIssue) return [];
+  const { reviewDelayTolerance } = unassignConfig;
+  if (!reviewDelayTolerance) return [];
 
   const openedPullRequests = await getOpenedPullRequests(context, username);
   const result = [] as typeof openedPullRequests;
@@ -714,7 +666,7 @@ export async function getAvailableOpenedPullRequests(context: Context, username:
     if (
       reviews.length === 0 &&
       (new Date().getTime() - new Date(openedPullRequest.created_at).getTime()) / (1000 * 60 * 60) >=
-        timeRangeForMaxIssue
+        reviewDelayTolerance
     ) {
       result.push(openedPullRequest);
     }

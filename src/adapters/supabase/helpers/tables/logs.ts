@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // This is disabled because logs should be able to log any type of data
 // Normally this is forbidden
+// TODO: break this apart into smaller files.
 
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "../../types";
@@ -8,6 +9,7 @@ import { prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
 import { execSync } from "child_process";
 import { Context } from "../../../../types";
+import Runtime from "../../../../bindings/bot-runtime";
 
 type LogFunction = (message: string, metadata?: any) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
@@ -99,7 +101,7 @@ export class Logs extends Super {
 
     const stackLines = new Error().stack?.split("\n") || [];
     if (stackLines.length > 3) {
-      const callerLine = stackLines[3];
+      const callerLine = stackLines[3]; // .replace(process.cwd(), "");
       const match = callerLine.match(/at (\S+)/);
       if (match) {
         metadata.caller = match[1];
@@ -305,7 +307,7 @@ export class Logs extends Super {
   }
 
   static _commentMetaData(metadata: any, level: LogLevel) {
-    console.trace("the main place that metadata is being serialized as an html comment");
+    Runtime.getState().logger.debug("the main place that metadata is being serialized as an html comment");
     const prettySerialized = JSON.stringify(metadata, null, 2);
     // first check if metadata is an error, then post it as a json comment
     // otherwise post it as an html comment
