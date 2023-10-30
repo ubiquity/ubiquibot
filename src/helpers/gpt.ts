@@ -178,3 +178,49 @@ export const askGPT = async (question: string, chatHistory: CreateChatCompletion
 
   return { answer, tokenUsage };
 };
+
+/**
+ * What is embedding?
+ *    An embedding is a vector of floating point numbers to measure the relatedness of text strings.
+ * How can I get an embedding using OpenAI?
+ *    To get an embedding, send your text string to the embeddings API endpoint along with a choice of embedding model ID (e.g., text-embedding-ada-002).
+ *    The response will contain an embedding, which you can extract, save, and use.
+ *
+ * Example Request:
+ *
+ *  curl https://api.openai.com/v1/embeddings \
+ *  -H "Content-Type: application/json" \
+ *  -H "Authorization: Bearer $OPENAI_API_KEY" \
+ *  -d '{
+ *     "input": "Your text string goes here",
+ *      "model": "text-embedding-ada-002"
+ *   }'
+ *
+ * Example Response:
+ *
+ * {
+ *  "data": [
+ *    {
+ *      "embedding": [
+ *        -0.006929283495992422,
+ *        -0.005336422007530928,
+ *        ...
+ *        -4.547132266452536e-05,
+ *        -0.024047505110502243
+ *      ],
+ *      "index": 0,
+ *      "object": "embedding"
+ *    }
+ *  ],
+ *  "model": "text-embedding-ada-002",
+ *  "object": "list",
+ *  "usage": {
+ *    "prompt_tokens": 5,
+ *    "total_tokens": 5
+ *  }
+ * }
+ * @param words - The input data to generate the embedding for
+ */
+export const generateEmbeddings = async (words: string): Promise<Array<number>> => {
+  throw new Error("Not implemented yet");
+};

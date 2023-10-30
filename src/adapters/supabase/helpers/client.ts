@@ -573,3 +573,15 @@ export const _approveLabelChange = async (changeId: number) => {
 
   return;
 };
+
+/**
+ * Upserts embeddings vector to the `embeddings` table
+ * @param org - The organization name
+ * @param repo - The repository name
+ * @param issue - The issue number
+ * @param embeddings - The vector of floating point numbers
+ */
+export const upsertEmbeddings = async (org: string, repo: string, issue: number, embeddings: Array<number>) => {
+  // TODO: Insert or Update embeddings data
+  return;
+};
