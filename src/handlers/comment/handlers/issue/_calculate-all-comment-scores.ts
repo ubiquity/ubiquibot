@@ -1,4 +1,5 @@
 import Runtime from "../../../../bindings/bot-runtime";
+import { Context } from "../../../../types";
 import { Comment, Issue, User } from "../../../../types/payload";
 // import { IssueRole } from "./archive/calculate-score-typings";
 import { getCollaboratorsForRepo } from "./get-collaborator-ids-for-repo";
@@ -22,10 +23,14 @@ const scoringByRole = {
   [key in IssueRole]: ScoringRubric;
 };
 
-export async function _calculateAllCommentScores(issue: Issue, contributorComments: Comment[]) {
+export async function _calculateAllCommentScores(context: Context, issue: Issue, contributorComments: Comment[]) {
   const runtime = Runtime.getState();
 
-  const usersOfCommentsByRole: UsersOfCommentsByRole = await _getUsersInRolesEnsureUnique(issue, contributorComments);
+  const usersOfCommentsByRole: UsersOfCommentsByRole = await _getUsersInRolesEnsureUnique(
+    context,
+    issue,
+    contributorComments
+  );
   const commentsByRole = _filterCommentsByRole(usersOfCommentsByRole, contributorComments);
   const roles = Object.keys(usersOfCommentsByRole) as IssueRole[]; // ["Issue Issuer", "Issue Assignee", "Issue Collaborator", "Issue Default"]
 
@@ -118,9 +123,7 @@ function _filterCommentsByRole(usersOfCommentsByRole: UsersOfCommentsByRole, con
 //   return roleIds;
 // }
 
-async function _getUsersInRolesEnsureUnique(issue: Issue, contributorComments: Comment[]) {
-  const context = Runtime.getState().latestEventContext;
-
+async function _getUsersInRolesEnsureUnique(context: Context, issue: Issue, contributorComments: Comment[]) {
   const issueIssuerUser = issue.user;
   const issueAssigneeUser = issue.assignee;
   const collaboratorUsers = await getCollaboratorsForRepo(context);

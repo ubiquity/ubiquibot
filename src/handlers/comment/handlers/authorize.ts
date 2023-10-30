@@ -1,14 +1,13 @@
 import Runtime from "../../../bindings/bot-runtime";
 import { isUserAdminOrBillingManager } from "../../../helpers";
-import { Payload } from "../../../types";
+import { Context, Payload } from "../../../types";
 import { taskPaymentMetaData } from "../../wildcard";
 
-export async function authorizeLabelChanges() {
+export async function authorizeLabelChanges(context: Context) {
   const runtime = Runtime.getState();
   const { label } = runtime.adapters.supabase;
-  const context = runtime.latestEventContext;
   const logger = runtime.logger;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const sender = payload.sender.login;
 
   logger.info("Running '/authorize' command handler", { sender });
@@ -20,7 +19,7 @@ export async function authorizeLabelChanges() {
 
   // check if sender is admin
   // passing in context so we don't have to make another request to get the user
-  const sufficientPrivileges = await isUserAdminOrBillingManager(sender, context);
+  const sufficientPrivileges = await isUserAdminOrBillingManager(context, sender);
 
   // if sender is not admin, return
   if (sufficientPrivileges) {
@@ -30,7 +29,7 @@ export async function authorizeLabelChanges() {
     );
   }
 
-  const task = taskPaymentMetaData(issue);
+  const task = taskPaymentMetaData(context, issue);
 
   if (!task.priceLabel || !task.priorityLabel || !task.timeLabel) {
     throw runtime.logger.error("Missing required labels", { issueDetailed: task });

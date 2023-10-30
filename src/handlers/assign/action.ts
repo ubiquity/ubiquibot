@@ -1,14 +1,13 @@
 import Runtime from "../../bindings/bot-runtime";
 import { calculateDurations, calculateLabelValue, closePullRequest } from "../../helpers";
 import { getLinkedPullRequests } from "../../helpers/parser";
-import { Label, Payload } from "../../types";
+import { Context, Label, Payload } from "../../types";
 
-export async function startCommandHandler() {
+export async function startCommandHandler(context: Context) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const config = runtime.botConfig;
+  const config = context.config;
   const logger = runtime.logger;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   if (!payload.issue) {
     return logger.error("Issue is not defined");
   }
@@ -76,11 +75,10 @@ export async function startCommandHandler() {
   return logger.info(commitMessage);
 }
 
-export async function closePullRequestForAnIssue() {
+export async function closePullRequestForAnIssue(context: Context) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
   const logger = runtime.logger;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   if (!payload.issue?.number) {
     throw logger.error("Issue is not defined");
   }
@@ -98,7 +96,7 @@ export async function closePullRequestForAnIssue() {
   logger.info(`Opened prs`, linkedPullRequests);
   let comment = `These linked pull requests are closed: `;
   for (let i = 0; i < linkedPullRequests.length; i++) {
-    await closePullRequest(linkedPullRequests[i].number);
+    await closePullRequest(context, linkedPullRequests[i].number);
     comment += ` <a href="${linkedPullRequests[i].href}">#${linkedPullRequests[i].number}</a> `;
   }
   return logger.info(comment);

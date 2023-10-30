@@ -1,13 +1,12 @@
 import Runtime from "../../bindings/bot-runtime";
 import { hasLabelEditPermission } from "../../helpers";
-import { Payload } from "../../types";
+import { Context, Payload } from "../../types";
 
-export async function watchLabelChange() {
+export async function watchLabelChange(context: Context) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const context = runtime.latestEventContext;
 
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const { label, changes, sender } = payload;
 
   const previousLabel = changes?.name?.from;
@@ -22,7 +21,7 @@ export async function watchLabelChange() {
   }
 
   // check if user is authorized to make the change
-  const hasAccess = await hasLabelEditPermission(currentLabel, triggerUser);
+  const hasAccess = await hasLabelEditPermission(context, currentLabel, triggerUser);
 
   const { supabase } = Runtime.getState().adapters;
 

@@ -1,6 +1,6 @@
 import Runtime from "../../../bindings/bot-runtime";
 import { isUserAdminOrBillingManager } from "../../../helpers";
-import { Payload } from "../../../types";
+import { Context, Payload } from "../../../types";
 /**
  * You can use this command to set a multiplier for a user.
  * It will accept arguments in any order.
@@ -12,11 +12,10 @@ import { Payload } from "../../../types";
  * /multiplier 0.5 "Multiplier reason" @user
  * /multiplier @user "Multiplier reason" 0.5
  **/
-export async function multiplier(body: string) {
+export async function multiplier(context: Context, body: string) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
   const logger = runtime.logger;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const sender = payload.sender.login;
   const repo = payload.repository;
   const comment = payload.comment;
@@ -45,7 +44,7 @@ export async function multiplier(body: string) {
     username = username || sender;
     // check if sender is admin or billing_manager
     // passing in context so we don't have to make another request to get the user
-    const sufficientPrivileges = await isUserAdminOrBillingManager(sender, context);
+    const sufficientPrivileges = await isUserAdminOrBillingManager(context, sender);
 
     // if sender is not admin or billing_manager, check db for access
     if (sufficientPrivileges) {

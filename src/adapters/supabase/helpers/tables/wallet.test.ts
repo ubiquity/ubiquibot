@@ -1,20 +1,21 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { Context } from "probot";
+import { Context as ProbotContext } from "probot";
 import { createAdapters } from "../../..";
 import { loadConfig } from "../../../../bindings/config";
-import { User } from "../../../../types";
+import { Context, User } from "../../../../types";
 const SUPABASE_URL = process.env.SUPABASE_URL;
 if (!SUPABASE_URL) throw new Error("SUPABASE_URL is not defined");
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 if (!SUPABASE_KEY) throw new Error("SUPABASE_KEY is not defined");
 
-const mockContext = { supabase: { url: SUPABASE_URL, key: SUPABASE_KEY } } as unknown as Context;
+const mockContext = { supabase: { url: SUPABASE_URL, key: SUPABASE_KEY } } as unknown as ProbotContext;
 
-async function getWalletAddressAndUrlTest(context: Context) {
-  const botConfig = await loadConfig(context);
-  const { wallet } = createAdapters(botConfig).supabase;
+async function getWalletAddressAndUrlTest(eventContext: ProbotContext) {
+  const botConfig = await loadConfig(eventContext);
+  const context: Context = { event: eventContext, config: botConfig };
+  const { wallet } = createAdapters(context).supabase;
   const userId = 4975670 as User["id"];
   const results = [] as unknown[];
   try {

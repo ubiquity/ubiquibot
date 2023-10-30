@@ -1,7 +1,7 @@
 import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
-import { Context } from "probot/lib/context";
+import { Context as ProbotContext } from "probot/lib/context";
 import Runtime from "../../../../bindings/bot-runtime";
-import { User } from "../../../../types";
+import { Context, User } from "../../../../types";
 import { Database } from "../../types/database";
 import { Super } from "./super";
 import { UserRow } from "./user";
@@ -11,23 +11,24 @@ type WalletRow = Database["public"]["Tables"]["wallets"]["Row"];
 type WalletInsert = Database["public"]["Tables"]["wallets"]["Insert"];
 type UserWithWallet = (UserRow & { wallets: WalletRow | null })[];
 
-type IssueCommentPayload = Context<"issue_comment.created">["payload"] | Context<"issue_comment.edited">["payload"];
+type IssueCommentPayload =
+  | ProbotContext<"issue_comment.created">["payload"]
+  | ProbotContext<"issue_comment.edited">["payload"];
 
 export class Wallet extends Super {
-  constructor(supabase: SupabaseClient) {
-    super(supabase);
+  constructor(supabase: SupabaseClient, context: Context) {
+    super(supabase, context);
   }
+
   public async getAddress(id: number): Promise<string> {
     const userWithWallet = await this._getUserWithWallet(id);
     return this._validateAndGetWalletAddress(userWithWallet);
   }
 
   public async upsertWalletAddress(address: string) {
-    const runtime = Runtime.getState();
-    const eventContext = runtime.latestEventContext;
-    const payload = eventContext.payload as
-      | Context<"issue_comment.created">["payload"]
-      | Context<"issue_comment.edited">["payload"];
+    const payload = this.context.event.payload as
+      | ProbotContext<"issue_comment.created">["payload"]
+      | ProbotContext<"issue_comment.edited">["payload"];
 
     const userData = await this._getUserData(payload);
     const registeredWalletData = await this._getRegisteredWalletData(userData);
@@ -69,6 +70,7 @@ export class Wallet extends Super {
     if (error) throw error;
     return data as UserRow;
   }
+
   private async _getUserData(payload: IssueCommentPayload): Promise<UserRow> {
     const user = await this._checkIfUserExists(payload.sender.id);
     let userData = user;
@@ -78,6 +80,7 @@ export class Wallet extends Super {
     }
     return userData;
   }
+
   private async _registerNewUser(user: User, locationMetaData: LocationMetaData): Promise<UserRow> {
     // Insert the location metadata into the locations table
     const { data: locationData, error: locationError } = (await this.supabase
@@ -104,6 +107,7 @@ export class Wallet extends Super {
 
     return userData as UserRow;
   }
+
   private async _checkIfWalletExists(
     userData: UserRow
   ): Promise<{ data: WalletRow | null; error: PostgrestError | null }> {
@@ -111,6 +115,7 @@ export class Wallet extends Super {
 
     return { data: data as WalletRow, error };
   }
+
   private async _updateWalletId(walletId: number, userId: number) {
     const { error } = await this.supabase.from("users").update({ wallet_id: walletId }).eq("id", userId);
 
@@ -118,6 +123,7 @@ export class Wallet extends Super {
       throw error;
     }
   }
+
   private async _getRegisteredWalletData(userData: UserRow): Promise<WalletRow> {
     const walletResponse = await this._checkIfWalletExists(userData);
     const walletData = walletResponse.data as WalletRow;

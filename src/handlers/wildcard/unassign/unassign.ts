@@ -2,29 +2,28 @@ import { RestEndpointMethodTypes } from "@octokit/rest";
 import { Logs } from "../../../adapters/supabase";
 import Runtime from "../../../bindings/bot-runtime";
 import { listAllIssuesAndPullsForRepo } from "../../../helpers";
-import { Issue, IssueType, Payload } from "../../../types";
+import { Context, Issue, IssueType, Payload } from "../../../types";
 
 type IssuesListEventsResponseData = RestEndpointMethodTypes["issues"]["listEvents"]["response"]["data"];
 type PullsListCommitsResponseData = RestEndpointMethodTypes["pulls"]["listCommits"]["response"]["data"];
 
-export async function checkTasksToUnassign() {
+export async function checkTasksToUnassign(context: Context) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const issuesAndPullsOpened = await listAllIssuesAndPullsForRepo(IssueType.OPEN);
+  const issuesAndPullsOpened = await listAllIssuesAndPullsForRepo(context, IssueType.OPEN);
   const assignedIssues = issuesAndPullsOpened.filter((issue) => issue.assignee);
 
   const tasksToUnassign = await Promise.all(
-    assignedIssues.map(async (assignedIssue: Issue) => checkTaskToUnassign(assignedIssue))
+    assignedIssues.map(async (assignedIssue: Issue) => checkTaskToUnassign(context, assignedIssue))
   );
   logger.ok("Checked all the tasks to unassign", { tasksToUnassign });
 }
 
-async function checkTaskToUnassign(assignedIssue: Issue) {
+async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
-  const unassign = runtime.botConfig.unassign;
+  const payload = context.event.payload as Payload;
+  const unassign = context.config.unassign;
   const { taskDisqualifyDuration, taskFollowUpDuration } = unassign;
 
   logger.info("Checking for neglected tasks", { issueNumber: assignedIssue.number });
@@ -45,7 +44,7 @@ async function checkTaskToUnassign(assignedIssue: Issue) {
 
   // DONE: check events - e.g. https://api.github.com/repos/ubiquity/ubiquibot/issues/644/events?per_page=100
 
-  const { assigneeEvents, assigneeCommits } = await aggregateAssigneeActivity(login, name, number, assignees);
+  const { assigneeEvents, assigneeCommits } = await aggregateAssigneeActivity(context, login, name, number, assignees);
 
   // Check if the assignee did any "event activity" or commit within the timeout window
   const { activeAssigneesInDisqualifyDuration, activeAssigneesInFollowUpDuration } = getActiveAssignees(
@@ -56,7 +55,7 @@ async function checkTaskToUnassign(assignedIssue: Issue) {
     taskFollowUpDuration
   );
 
-  const disqualifiedAssignees = await disqualifyIdleAssignees({
+  const disqualifiedAssignees = await disqualifyIdleAssignees(context, {
     assignees,
     activeAssigneesInDisqualifyDuration,
     login,
@@ -66,7 +65,7 @@ async function checkTaskToUnassign(assignedIssue: Issue) {
   });
 
   // DONE: follow up with those who are in `assignees` and not inside of `disqualifiedAssignees` or `activeAssigneesInFollowUpDuration`
-  await followUpWithTheRest({
+  await followUpWithTheRest(context, {
     assignees,
     disqualifiedAssignees,
     activeAssigneesInFollowUpDuration,
@@ -80,18 +79,19 @@ async function checkTaskToUnassign(assignedIssue: Issue) {
   return logger.ok("Checked task to unassign", { issueNumber: assignedIssue.number, disqualifiedAssignees });
 }
 
-async function followUpWithTheRest({
-  assignees,
-  disqualifiedAssignees,
-  activeAssigneesInFollowUpDuration,
-  login,
-  name,
-  number,
-  logger,
-  taskDisqualifyDuration,
-}: FollowUpWithTheRest) {
-  const context = Runtime.getState().latestEventContext;
-
+async function followUpWithTheRest(
+  context: Context,
+  {
+    assignees,
+    disqualifiedAssignees,
+    activeAssigneesInFollowUpDuration,
+    login,
+    name,
+    number,
+    logger,
+    taskDisqualifyDuration,
+  }: FollowUpWithTheRest
+) {
   const followUpAssignees = assignees.filter((assignee) => {
     return !disqualifiedAssignees.includes(assignee) && !activeAssigneesInFollowUpDuration.includes(assignee);
   });
@@ -103,6 +103,7 @@ async function followUpWithTheRest({
 
     // Fetch recent comments
     const hasRecentFollowUp = await checkIfFollowUpAlreadyPosted(
+      context,
       login,
       name,
       number,
@@ -112,7 +113,7 @@ async function followUpWithTheRest({
 
     if (!hasRecentFollowUp) {
       try {
-        await context.octokit.rest.issues.createComment({
+        await context.event.octokit.rest.issues.createComment({
           owner: login,
           repo: name,
           issue_number: number,
@@ -127,14 +128,14 @@ async function followUpWithTheRest({
 }
 
 async function checkIfFollowUpAlreadyPosted(
+  context: Context,
   login: string,
   name: string,
   number: number,
   followUpMessage: string,
   disqualificationPeriod: number
 ) {
-  const context = Runtime.getState().latestEventContext;
-  const comments = await context.octokit.rest.issues.listComments({
+  const comments = await context.event.octokit.rest.issues.listComments({
     owner: login,
     repo: name,
     issue_number: number,
@@ -153,12 +154,18 @@ async function checkIfFollowUpAlreadyPosted(
   return hasRecentFollowUp;
 }
 
-async function aggregateAssigneeActivity(login: string, name: string, number: number, assignees: string[]) {
-  const allEvents = await getAllEvents(login, name, number);
+async function aggregateAssigneeActivity(
+  context: Context,
+  login: string,
+  name: string,
+  number: number,
+  assignees: string[]
+) {
+  const allEvents = await getAllEvents(context, login, name, number);
   const assigneeEvents = allEvents.filter((event) => assignees.includes(event.actor.login)); // Filter all events by assignees
 
   // DONE: check commits - e.g. https://api.github.com/repos/ubiquity/ubiquibot/pulls/644/commits?per_page=100
-  const allCommits = await getAllCommits(login, name, number);
+  const allCommits = await getAllCommits(context, login, name, number);
 
   // Filter all commits by assignees
   const assigneeCommits = allCommits.filter((commit) => {
@@ -171,21 +178,15 @@ async function aggregateAssigneeActivity(login: string, name: string, number: nu
   return { assigneeEvents, assigneeCommits };
 }
 
-async function disqualifyIdleAssignees({
-  assignees,
-  activeAssigneesInDisqualifyDuration,
-  login,
-  name,
-  number,
-  logger,
-}: DisqualifyIdleAssignees) {
-  const context = Runtime.getState().latestEventContext;
-
+async function disqualifyIdleAssignees(
+  context: Context,
+  { assignees, activeAssigneesInDisqualifyDuration, login, name, number, logger }: DisqualifyIdleAssignees
+) {
   const idleAssignees = assignees.filter((assignee) => !activeAssigneesInDisqualifyDuration.includes(assignee));
 
   if (idleAssignees.length > 0) {
     try {
-      await context.octokit.rest.issues.removeAssignees({
+      await context.event.octokit.rest.issues.removeAssignees({
         owner: login,
         repo: name,
         issue_number: number,
@@ -266,11 +267,10 @@ function getActiveAssigneesInDisqualifyDuration(
   });
 }
 
-async function getAllEvents(owner: string, repo: string, issue_number: number) {
-  const context = Runtime.getState().latestEventContext;
+async function getAllEvents(context: Context, owner: string, repo: string, issue_number: number) {
   let allEvents: IssuesListEventsResponseData = [];
   let page = 1;
-  let events = await context.octokit.issues.listEvents({
+  let events = await context.event.octokit.issues.listEvents({
     owner,
     repo,
     issue_number,
@@ -282,7 +282,7 @@ async function getAllEvents(owner: string, repo: string, issue_number: number) {
     allEvents = allEvents.concat(events.data.filter(isCorrectType) as IssuesListEventsResponseData);
 
     page++;
-    events = await context.octokit.issues.listEvents({
+    events = await context.event.octokit.issues.listEvents({
       owner,
       repo,
       issue_number,
@@ -293,14 +293,13 @@ async function getAllEvents(owner: string, repo: string, issue_number: number) {
   return allEvents;
 }
 
-async function getAllCommits(owner: string, repo: string, pull_number: number) {
-  const context = Runtime.getState().latestEventContext;
+async function getAllCommits(context: Context, owner: string, repo: string, pull_number: number) {
   let allCommits: PullsListCommitsResponseData = [];
   let commitPage = 1;
   let hasMoreCommits = true;
 
   while (hasMoreCommits) {
-    const commits = await context.octokit.pulls.listCommits({
+    const commits = await context.event.octokit.pulls.listCommits({
       owner,
       repo,
       pull_number,
