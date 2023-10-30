@@ -221,6 +221,26 @@ export const askGPT = async (question: string, chatHistory: CreateChatCompletion
  * }
  * @param words - The input data to generate the embedding for
  */
-export const generateEmbeddings = async (words: string): Promise<Array<number>> => {
-  throw new Error("Not implemented yet");
+export const generateEmbeddings = async (words: string): Promise<number[]> => {
+  const logger = getLogger();
+  const config = getBotConfig();
+
+  if (!config.ask.apiKey) {
+    logger.info(`No OpenAI API Key provided`);
+    throw new Error("You must configure the `openai-api-key` property in the bot configuration in order to use AI powered features.");
+  }
+
+  const openai = new OpenAI({
+    apiKey: config.ask.apiKey,
+  });
+
+  const embedding = await openai.embeddings.create({
+    // TODO: A couple of embedding models exist and `text-embedding-ada-002` is the one recommended by OpenAI
+    //  because it's better, cheaper and simpler to use.
+    // We might need to move the hardcoded model: `text-embedding-ada-002` to the bot configuration for better extensibility
+    model: "text-embedding-ada-002",
+    input: words,
+  });
+
+  return embedding.data[0]["embedding"] as number[];
 };
