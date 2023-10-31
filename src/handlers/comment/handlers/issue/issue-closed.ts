@@ -16,7 +16,7 @@ const botCommandsAndHumanCommentsFilter = (comment: Comment) =>
 
 const botCommentsFilter = (comment: Comment) => comment.user.type === "Bot"; /* No Humans */
 
-export async function issueClosed(context: Context) {
+export async function issueClosed() {
   // TODO: delegate permit calculation to GitHub Action
   const { issue, issueComments, owner, repository, issueNumber, logger, config, payload, context } =
     await getEssentials();
@@ -44,7 +44,7 @@ async function getPullRequestComments(owner: string, repository: string, issueNu
   const pullRequestComments: Comment[] = [];
   const linkedPullRequests = await getLinkedPullRequests({ owner, repository, issue: issueNumber });
   if (linkedPullRequests.length) {
-    const linkedCommentsPromises = linkedPullRequests.map((pull) => getAllIssueComments(context, pull.number));
+    const linkedCommentsPromises = linkedPullRequests.map((pull) => getAllIssueComments(pull.number));
     const linkedCommentsResolved = await Promise.all(linkedCommentsPromises);
     for (const linkedComments of linkedCommentsResolved) {
       pullRequestComments.push(...linkedComments);
@@ -90,7 +90,7 @@ async function preflightChecks({
   if (issue.state_reason !== StateReason.COMPLETED)
     throw logger.info("Issue was not closed as completed. Skipping.", { issue });
   if (config.publicAccessControl.fundExternalClosedIssue) {
-    const userHasPermission = await checkUserPermissionForRepoAndOrg(context, payload.sender.login);
+    const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
     if (!userHasPermission)
       throw logger.warn("Permit generation disabled because this issue has been closed by an external contributor.");
   }
