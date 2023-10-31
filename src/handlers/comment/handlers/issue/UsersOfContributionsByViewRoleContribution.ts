@@ -15,16 +15,16 @@ export type UsersOfContributionsByViewRoleContribution = {
   // end comments
 
   // start reviews
-  "Review Issuer Approval": User;
-  "Review Issuer Rejection": User;
-  "Review Collaborator Approval": User[];
-  "Review Collaborator Rejection": User[];
+  // "Review Issuer Approval": User;
+  // "Review Issuer Rejection": User;
+  // "Review Collaborator Approval": User[];
+  // "Review Collaborator Rejection": User[];
   // end reviews
 
   // start code
-  "Review Issuer Code": User;
-  "Review Assignee Code": User;
-  "Review Collaborator Code": User[];
+  // "Review Issuer Code": User;
+  // "Review Assignee Code": User;
+  // "Review Collaborator Code": User[];
   // end code
 
   // start specification
