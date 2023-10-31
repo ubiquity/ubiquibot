@@ -5,10 +5,10 @@ import { getLinkedPullRequests } from "../../../../helpers/parser";
 import { BotConfig, Context } from "../../../../types";
 import { Comment, Issue, Payload, StateReason, User } from "../../../../types/payload";
 import structuredMetadata from "../../../shared/structured-metadata";
-import { calculateAssigneeScores } from "./calculateAssigneeScores";
-import { calculateQualityAndQuantityScores } from "./calculateQualityAndQuantityScores";
+import { assigneeScoring } from "./assignee-scoring";
+import { evaluateComments, FinalScores } from "./evaluate-comments";
 import { generatePermits } from "./generate-permits";
-import { _calculateIssueSpecificationScore } from "./_calculate-all-comment-scores";
+import { specificationScoring } from "./specification-scoring";
 
 const botCommandsAndHumanCommentsFilter = (comment: Comment) =>
   !comment.body.startsWith("/") /* No Commands */ && comment.user.type === "User"; /* No Bots */
@@ -20,7 +20,7 @@ export async function issueClosed(context: Context) {
 
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const issue = payload.issue as Issue;
   const config = context.config;
 
@@ -28,26 +28,34 @@ export async function issueClosed(context: Context) {
 
   await preflightChecks({ issue, logger, issueComments, config, payload, context });
 
-  const pullRequestComments = await getPullRequestComments(owner, repository, issueNumber);
-  const humanComments = {
-    issue: issueComments.filter(botCommandsAndHumanCommentsFilter),
-    review: pullRequestComments.filter(botCommandsAndHumanCommentsFilter),
-  }; // [...issueComments, ...pullRequestComments];
+  const finalScores = await getScores();
 
-  // const humanComments = allComments.filter(botCommandsAndHumanCommentsFilter);
-
-  // DONE: calculate issue specification score. should save on the same scoring rubric as the comments.
-  await _calculateIssueSpecificationScore(issue, issue.body);
-  // DONE: calculate assignee score.
-  const nonNullAssignees = issue.assignees.filter((assignee): assignee is User => Boolean(assignee));
-  const assigneeScores = await calculateAssigneeScores(issue, nonNullAssignees);
-  // await calculateAssigneeScore(issue, issue.assignees);
-
-  const issueCommentScores = await calculateQualityAndQuantityScores(context, issue, humanComments.issue);
-  const reviewCommentScores = await calculateQualityAndQuantityScores(context, issue, humanComments.review);
-
-  const permitComment = await generatePermits(context, issueCommentScores, humanComments); // DONE: design metadata system for permit parsing
+  const permitComment = await generatePermits(context, finalScores, proof); // DONE: design metadata system for permit parsing
   return permitComment; // DONE: post the permits to the issue
+
+  async function getScores() {
+    return {
+      specification: await specificationScoring({ context, issue }),
+      assignees: await assigneeScoring({
+        context,
+        issue,
+        proof: issue.assignees.filter((assignee): assignee is User => Boolean(assignee)),
+      }),
+      issueComments: await evaluateComments({
+        context,
+        issue,
+        proof: issueComments.filter(botCommandsAndHumanCommentsFilter),
+      }),
+      reviewComments: await evaluateComments({
+        context,
+        issue,
+        proof: (await getPullRequestComments(owner, repository, issueNumber)).filter(botCommandsAndHumanCommentsFilter),
+      }),
+      // reviewApprovals
+      // reviewRejections
+      // reviewCode
+    } as { [key: string]: FinalScores };
+  }
 }
 
 async function getPullRequestComments(owner: string, repository: string, issueNumber: number) {

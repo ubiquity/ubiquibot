@@ -5,7 +5,7 @@ import MarkdownIt from "markdown-it";
 import { ElementScoreConfig, ElementScoreConfigParams } from "./element-score-config";
 import _ from "lodash";
 import { Comment } from "../../../../types/payload";
-import { ContributionStyles } from "./_calculate-all-comment-scores";
+import { ContributionStyles } from "./specification-scoring";
 
 const md = new MarkdownIt();
 // const NEG_ONE = new Decimal(-1);
@@ -17,7 +17,7 @@ type ScoringRubricConstructor = {
   formattingMultiplier: number;
   wordValue: number;
 };
-export class ScoringRubric {
+export class CommentScoringRubric {
   public role: ContributionStyles;
   public roleWordScore: Decimal;
   public roleWordScoreMultiplier!: Decimal;

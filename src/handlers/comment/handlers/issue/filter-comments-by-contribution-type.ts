@@ -1,8 +1,8 @@
 import { Comment, User } from "../../../../types/payload";
-import { UsersOfContributionsByViewRoleContribution } from "./UsersOfContributionsByViewRoleContribution";
+import { ContributionStyleTypes } from "./contribution-style-types";
 
-export function _filterCommentsByRole(
-  usersOfCommentsByRole: UsersOfContributionsByViewRoleContribution,
+export function filterCommentsByContributionType(
+  usersOfCommentsByRole: ContributionStyleTypes,
   contributorComments: Comment[]
 ) {
   return {
@@ -28,20 +28,22 @@ export function _filterCommentsByRole(
       }
     }),
     "Review Issuer Comment": null,
-    "Review Assignee Comment": null,
+    "Review Assignee Comment": contributorComments.filter(
+      (comment: Comment) => comment.user.id === usersOfCommentsByRole["Review Assignee Comment"]?.id || null
+    ),
     "Review Collaborator Comment": null,
     "Review Default Comment": null,
 
     // start reviews
-    "Review Issuer Approval": null,
-    "Review Issuer Rejection": null,
-    "Review Collaborator Approval": null,
-    "Review Collaborator Rejection": null,
+    // "Review Issuer Approval": null,
+    // "Review Issuer Rejection": null,
+    // "Review Collaborator Approval": null,
+    // "Review Collaborator Rejection": null,
     // end reviews
     // start code
-    "Review Issuer Code": null,
-    "Review Assignee Code": null,
-    "Review Collaborator Code": null,
+    // "Review Issuer Code": null,
+    // "Review Assignee Code": null,
+    // "Review Collaborator Code": null,
     // end code
     // start specification
     "Issue Issuer Specification": null,

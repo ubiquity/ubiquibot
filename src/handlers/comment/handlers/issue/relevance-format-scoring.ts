@@ -1,16 +1,16 @@
 import Decimal from "decimal.js";
 import Runtime from "../../../../bindings/bot-runtime";
-import { ScoringRubric } from "./scoring-rubric";
-import { FinalScores } from "./calculateQualityAndQuantityScores";
+import { CommentScoringRubric } from "./comment-scoring-rubric";
+import { FinalScores } from "./evaluate-comments";
 
-export function applyQualityScoreToQuantityScore(
-  qualityScoresWithCommentIds: { commentId: number; userId: number; score: Decimal }[],
-  quantityScore: ScoringRubric[]
+export function relevanceAndFormatScoring(
+  relevance: { commentId: number; userId: number; score: Decimal }[],
+  formatting: CommentScoringRubric[]
 ) {
   const finalScores = {} as FinalScores;
 
-  qualityScoresWithCommentIds.forEach(({ commentId, userId, score }) => {
-    quantityScore.forEach((scoringRubric) => {
+  relevance.forEach(({ commentId, userId, score }) => {
+    formatting.forEach((scoringRubric) => {
       const usersQuantityScores = scoringRubric.commentScores[userId];
       if (!usersQuantityScores) return;
       const userCommentScore = usersQuantityScores[commentId];

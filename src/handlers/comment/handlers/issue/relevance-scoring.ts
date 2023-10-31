@@ -6,11 +6,11 @@ import Runtime from "../../../../bindings/bot-runtime";
 
 const openai = new OpenAI(); // apiKey: // defaults to process.env["OPENAI_API_KEY"]
 
-export async function calculateQualScore(issue: Issue, contributorComments: Comment[]) {
-  const sumOfConversationTokens = countTokensOfConversation(issue, contributorComments);
-  const estimatedOptimalModel = estimateOptimalModel(sumOfConversationTokens);
-  const relevanceScores = await sampleQualityScores(contributorComments, estimatedOptimalModel, issue);
-  return { relevanceScores, sumOfConversationTokens, model: estimatedOptimalModel };
+export async function relevanceScoring(issue: Issue, contributorComments: Comment[]) {
+  const tokens = countTokensOfConversation(issue, contributorComments);
+  const estimatedOptimalModel = estimateOptimalModel(tokens);
+  const score = await sampleRelevanceScores(contributorComments, estimatedOptimalModel, issue);
+  return { score, tokens, model: estimatedOptimalModel };
 }
 
 export function estimateOptimalModel(sumOfTokens: number) {
@@ -82,7 +82,7 @@ export async function gptRelevance(
   }
 }
 
-async function sampleQualityScores(
+async function sampleRelevanceScores(
   contributorComments: Comment[],
   estimatedOptimalModel: ReturnType<typeof estimateOptimalModel>,
   issue: Issue

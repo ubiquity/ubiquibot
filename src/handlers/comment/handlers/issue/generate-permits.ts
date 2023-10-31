@@ -5,8 +5,8 @@ import { getTokenSymbol } from "../../../../helpers/contracts";
 import { Comment, Context } from "../../../../types";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { generatePermit2Signature } from "./generate-permit-2-signature";
-import { FinalScores } from "./calculateQualityAndQuantityScores";
-import { ContributionStyles } from "./_calculate-all-comment-scores";
+import { FinalScores } from "./evaluate-comments";
+import { ContributionStyles } from "./specification-scoring";
 
 export async function generatePermits(
   context: Context,

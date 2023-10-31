@@ -1,51 +1,51 @@
-import { ScoringRubric } from "./scoring-rubric";
-import { ContributionStyles } from "./_calculate-all-comment-scores";
+import { CommentScoringRubric } from "./comment-scoring-rubric";
+import { ContributionStyles } from "./specification-scoring";
 
-export const scoringByRole = {
+export const commentScoringByContributionStyle = {
   // TODO: make this configurable
 
-  "Issue Issuer Comment": new ScoringRubric({
+  "Issue Issuer Comment": new CommentScoringRubric({
     role: "Issue Issuer Comment",
     formattingMultiplier: 1,
     wordValue: 0.2,
   }),
-  "Issue Assignee Comment": new ScoringRubric({
+  "Issue Assignee Comment": new CommentScoringRubric({
     role: "Issue Assignee Comment",
     formattingMultiplier: 0,
     wordValue: 0,
   }),
-  "Issue Collaborator Comment": new ScoringRubric({
+  "Issue Collaborator Comment": new CommentScoringRubric({
     role: "Issue Collaborator Comment",
     formattingMultiplier: 1,
     wordValue: 0.1,
   }),
-  "Issue Default Comment": new ScoringRubric({
+  "Issue Default Comment": new CommentScoringRubric({
     role: "Issue Default Comment",
     formattingMultiplier: 0.25,
     wordValue: 0.1,
   }),
-  "Review Issuer Comment": new ScoringRubric({
+  "Review Issuer Comment": new CommentScoringRubric({
     role: "Review Issuer Comment",
     formattingMultiplier: 2,
     wordValue: 0.2,
   }),
-  "Review Assignee Comment": new ScoringRubric({
+  "Review Assignee Comment": new CommentScoringRubric({
     role: "Review Assignee Comment",
     formattingMultiplier: 1,
     wordValue: 0.1,
   }),
-  "Review Collaborator Comment": new ScoringRubric({
+  "Review Collaborator Comment": new CommentScoringRubric({
     role: "Review Collaborator Comment",
     formattingMultiplier: 1,
     wordValue: 0.1,
   }),
-  "Review Default Comment": new ScoringRubric({
+  "Review Default Comment": new CommentScoringRubric({
     role: "Review Default Comment",
     formattingMultiplier: 0.25,
     wordValue: 0.1,
   }),
   // end comments
-  "Issue Issuer Specification": new ScoringRubric({
+  "Issue Issuer Specification": new CommentScoringRubric({
     role: "Issue Issuer Specification",
     formattingMultiplier: 3,
     wordValue: 0.2,
@@ -82,5 +82,5 @@ export const scoringByRole = {
   //   wordValue: 1,
   // }),
 } as {
-  [key in ContributionStyles]: ScoringRubric;
+  [key in ContributionStyles]: CommentScoringRubric;
 };

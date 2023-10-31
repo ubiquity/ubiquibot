@@ -1,7 +1,7 @@
 import { User } from "../../../../types/payload";
 
 // [VIEW] [ROLE] [CONTRIBUTION]
-export type UsersOfContributionsByViewRoleContribution = {
+export type ContributionStyleTypes = {
   // start comments
   "Issue Issuer Comment": User;
   "Issue Assignee Comment": null | User;
@@ -9,7 +9,7 @@ export type UsersOfContributionsByViewRoleContribution = {
   "Issue Default Comment": User[];
 
   "Review Issuer Comment": User;
-  "Review Assignee Comment": User;
+  "Review Assignee Comment": null | User;
   "Review Collaborator Comment": User[];
   "Review Default Comment": User[];
   // end comments

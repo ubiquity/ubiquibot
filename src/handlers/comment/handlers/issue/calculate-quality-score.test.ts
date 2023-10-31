@@ -1,9 +1,4 @@
-import {
-  calculateQualScore,
-  estimateOptimalModel,
-  countTokensOfConversation,
-  gptRelevance,
-} from "./calculate-quality-score";
+import { relevanceScoring, estimateOptimalModel, countTokensOfConversation, gptRelevance } from "./relevance-scoring";
 import { Comment, Issue, User, UserType } from "../../../../types/payload";
 
 // Do not run real API calls inside of VSCode because it keeps running the tests in the background
@@ -16,11 +11,11 @@ if (process.env.NODE_ENV !== "test") {
         { body: "it is juicy", user: { type: UserType.User } as User } as Comment,
         { body: "bananas are great", user: { type: UserType.User } as User } as Comment,
       ];
-      const result = await calculateQualScore(issue, comments);
+      const result = await relevanceScoring(issue, comments);
       expect(result).toBeDefined();
-      expect(result.relevanceScores).toBeDefined();
-      expect(Array.isArray(result.relevanceScores)).toBe(true);
-      expect(typeof result.sumOfConversationTokens).toBe("number");
+      expect(result.score).toBeDefined();
+      expect(Array.isArray(result.score)).toBe(true);
+      expect(typeof result.tokens).toBe("number");
       expect(typeof result.model).toBe("string");
     });
   });
@@ -86,11 +81,11 @@ describe("calculateQualScore", () => {
     const issue = { body: "issue body" } as Issue;
     const comment = { body: "comment body", user: { type: "User" } } as Comment;
     const comments = [comment, comment, comment] as Comment[];
-    const result = await calculateQualScore(issue, comments);
+    const result = await relevanceScoring(issue, comments);
     expect(result).toBeDefined();
-    expect(result.relevanceScores).toBeDefined();
-    expect(Array.isArray(result.relevanceScores)).toBe(true);
-    expect(typeof result.sumOfConversationTokens).toBe("number");
+    expect(result.score).toBeDefined();
+    expect(Array.isArray(result.score)).toBe(true);
+    expect(typeof result.tokens).toBe("number");
     expect(typeof result.model).toBe("string");
   });
 });
