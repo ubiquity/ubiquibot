@@ -1,5 +1,5 @@
 const incentives = {
-  multiplier: null,
+  formatMultiplier: null,
   wordValue: null,
 };
 

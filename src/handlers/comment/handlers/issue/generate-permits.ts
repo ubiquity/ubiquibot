@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import { stringify } from "yaml";
 import Runtime from "../../../../bindings/bot-runtime";
 import { getTokenSymbol } from "../../../../helpers/contracts";
-import { Comment, Context } from "../../../../types";
+import { Comment, Context, Issue } from "../../../../types";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { generatePermit2Signature } from "./generate-permit-2-signature";
 import { FinalScores } from "./evaluate-comments";
@@ -11,20 +11,41 @@ import { ContributionStyles } from "./specification-scoring";
 export async function generatePermits(
   context: Context,
   totals: FinalScores,
-  contributorComments: Comment[],
-  contributorSpecification?: string
+  issueAssigneeTask: { source: Issue; score: { [userId: number]: Decimal } },
+  issueIssuerSpecification: { source: Comment[]; score: FinalScores },
+  issueContributorComments: { source: Comment[]; score: FinalScores },
+  reviewContributorComments: { source: Comment[]; score: FinalScores }
+
+  // contributorSpecification?: string
   // contributorApproval?: unknown,
   // contributorRejection?: unknown,
   // contributorCode?: unknown
 ) {
   const userIdToNameMap = mapIdsToNames(
-    contributorComments,
-    contributorSpecification
+    issueAssigneeTask,
+    issueIssuerSpecification,
+    issueContributorComments,
+    reviewContributorComments
+
+    // contributorComments,
+    // contributorSpecification
+
     // contributorApproval,
     // contributorRejection,
     // contributorCode
   );
-  const { html: comment, permits } = await generateComment(context, totals, userIdToNameMap, contributorComments);
+
+  const { html: comment, permits } = await generateComment(
+    context,
+    totals,
+    userIdToNameMap,
+
+    issueAssigneeTask,
+    issueIssuerSpecification,
+    issueContributorComments,
+    reviewContributorComments
+  );
+  // const { html: comment, permits } = await generateComment(context, totals, userIdToNameMap, contributorComments);
   const metadata = structuredMetadata.create("Permits", { permits, totals });
   return comment.concat("\n", metadata);
 }
@@ -33,8 +54,14 @@ async function generateComment(
   context: Context,
   totals: FinalScores,
   userIdToNameMap: { [userId: number]: string },
-  contributorComments: Comment[],
-  contributorSpecification?: string
+
+  issueAssigneeTask: { source: Issue; score: { [userId: number]: Decimal } },
+  issueIssuerSpecification: { source: Comment[]; score: FinalScores },
+  issueContributorComments: { source: Comment[]; score: FinalScores },
+  reviewContributorComments: { source: Comment[]; score: FinalScores }
+
+  // contributorComments: Comment[],
+  // contributorSpecification?: string
   // contributorApproval?: unknown,
   // contributorRejection?: unknown,
   // contributorCode?: unknown
@@ -43,6 +70,7 @@ async function generateComment(
   const {
     payout: { paymentToken, rpc, privateKey },
   } = context.config;
+
   const detailsTable = generateDetailsTable(
     totals,
     contributorComments,
@@ -174,17 +202,51 @@ function zeroToHyphen(value: number | Decimal) {
 }
 
 function mapIdsToNames(
-  contributorComments: Comment[],
-  contributorSpecification?: string
+  issueAssigneeTask: { source: Issue; score: { [userId: number]: Decimal } },
+  issueIssuerSpecification: { source: Comment[]; score: FinalScores },
+  issueContributorComments: { source: Comment[]; score: FinalScores },
+  reviewContributorComments: { source: Comment[]; score: FinalScores }
+
+  // contributorComments: Comment[],
+  // contributorSpecification?: string
+
   // contributorApproval?: unknown,
   // contributorRejection?: unknown,
   // contributorCode?: unknown
 ) {
-  return contributorComments.reduce((accumulator, comment: Comment) => {
-    const userId = comment.user.id;
-    accumulator[userId] = comment.user.login;
-    return accumulator;
-  }, {} as { [userId: number]: string });
+  const userIdToNameMap = {} as { [userId: number]: string };
+
+  for (const userId in issueAssigneeTask.score) {
+    const user = issueAssigneeTask.source.assignees.find((assignee) => assignee.id === parseInt(userId));
+    if (!user) throw Runtime.getState().logger.warn("User is undefined");
+    userIdToNameMap[userId] = user.login;
+  }
+
+  for (const userId in issueIssuerSpecification.score) {
+    const user = issueIssuerSpecification.source.find((comment) => comment.user.id === parseInt(userId));
+    if (!user) throw Runtime.getState().logger.warn("User is undefined");
+    userIdToNameMap[userId] = user.user.login;
+  }
+
+  for (const userId in issueContributorComments.score) {
+    const user = issueContributorComments.source.find((comment) => comment.user.id === parseInt(userId));
+    if (!user) throw Runtime.getState().logger.warn("User is undefined");
+    userIdToNameMap[userId] = user.user.login;
+  }
+
+  for (const userId in reviewContributorComments.score) {
+    const user = reviewContributorComments.source.find((comment) => comment.user.id === parseInt(userId));
+    if (!user) throw Runtime.getState().logger.warn("User is undefined");
+    userIdToNameMap[userId] = user.user.login;
+  }
+
+  return userIdToNameMap;
+
+  // return contributorComments.reduce((accumulator, comment: Comment) => {
+  //   const userId = comment.user.id;
+  //   accumulator[userId] = comment.user.login;
+  //   return accumulator;
+  // }, {} as { [userId: number]: string });
 }
 interface GenerateHtmlParams {
   permit: URL;

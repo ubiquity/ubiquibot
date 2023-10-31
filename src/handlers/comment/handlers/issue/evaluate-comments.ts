@@ -9,13 +9,13 @@ type ContextIssue = { context: Context; issue: Issue };
 export async function evaluateComments({
   context,
   issue,
-  proof,
-}: ContextIssue & { proof: Comment[] }): Promise<FinalScores> {
-  const relevance = await relevanceScoring(issue, proof); // the issue specification is not included in this array scoring, it is only for the other contributor comments
-  const relevanceWithMetaData = relevance.score.map(enrichRelevanceData(proof));
-  const formatting = await formatScoring(context, issue, proof);
-  const totals = relevanceAndFormatScoring(relevanceWithMetaData, formatting);
-  return totals;
+  source,
+}: ContextIssue & { source: Comment[] }): Promise<{ source: Comment[]; score: FinalScores }> {
+  const relevance = await relevanceScoring(issue, source); // the issue specification is not included in this array scoring, it is only for the other contributor comments
+  const relevanceWithMetaData = relevance.score.map(enrichRelevanceData(source));
+  const formatting = await formatScoring(context, issue, source);
+  const score = relevanceAndFormatScoring(relevanceWithMetaData, formatting);
+  return { score, source };
 }
 
 export function enrichRelevanceData(

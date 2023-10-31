@@ -1,16 +1,15 @@
 import Decimal from "decimal.js";
 import Runtime from "../../../../bindings/bot-runtime";
-import { Context } from "../../../../types/context";
 import { Issue, User } from "../../../../types/payload";
-import { FinalScores } from "./evaluate-comments";
-type ContextIssue = { context: Context; issue: Issue };
 
 export async function assigneeScoring({
-  context,
   issue,
-  proof,
-}: ContextIssue & { proof: User[] }): Promise<FinalScores> {
-  const assigneeRewards = proof.reduce((accumulator, assignee) => {
+  source,
+}: {
+  issue: Issue;
+  source: User[];
+}): Promise<{ source: Issue; score: { [userId: number]: Decimal } }> {
+  const assigneeRewards = source.reduce((accumulator, assignee) => {
     const assigneeScore = new Decimal(0);
     accumulator[assignee.id] = assigneeScore;
     return accumulator;
@@ -33,7 +32,7 @@ export async function assigneeScoring({
   const price = new Decimal(priceLabel);
 
   // get the number of assignees
-  const numberOfAssignees = proof.length;
+  const numberOfAssignees = source.length;
 
   for (const assigneeId in assigneeRewards) {
     // get the assignee multiplier
@@ -45,5 +44,5 @@ export async function assigneeScoring({
     assigneeRewards[assigneeId] = total;
   }
 
-  return assigneeRewards;
+  return { score: assigneeRewards, source: issue };
 }

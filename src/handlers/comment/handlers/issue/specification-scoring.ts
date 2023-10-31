@@ -16,7 +16,10 @@ export type ContributionStyles = keyof ContributionStyleTypes;
 
 type ContextIssue = { context: Context; issue: Issue };
 
-export async function specificationScoring({ context, issue }: ContextIssue): Promise<FinalScores> {
+export async function specificationScoring({
+  context,
+  issue,
+}: ContextIssue): Promise<{ source: Comment[]; score: FinalScores }> {
   const issueAsComment = {
     body: issue.body,
     user: issue.user,
@@ -38,8 +41,8 @@ export async function specificationScoring({ context, issue }: ContextIssue): Pr
   ];
 
   const formatting = await formatScoring(context, issue, [issueAsComment]);
-  const totals = relevanceAndFormatScoring(RELEVANT, formatting);
-  return totals;
+  const score = relevanceAndFormatScoring(RELEVANT, formatting);
+  return { score, source: [issueAsComment] };
 }
 
 export async function allCommentScoring({ context, issue, proof }: ContextIssue & { proof: Comment[] }) {
