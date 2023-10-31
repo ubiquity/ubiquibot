@@ -581,7 +581,33 @@ export const _approveLabelChange = async (changeId: number) => {
  * @param issue - The issue number
  * @param embeddings - The vector of floating point numbers
  */
-export const upsertEmbeddings = async (org: string, repo: string, issue: number, embeddings: Array<number>) => {
-  // TODO: Insert or Update embeddings data
-  return;
+export const upsertEmbeddings = async (org: string, repo: string, issue: number, embedding: number[]) => {
+  const { supabase } = getAdapters();
+  const logger = getLogger();
+  const { data } = await supabase.from("embeddings").select("*").eq("org", org).eq("repo", repo).eq("issue", issue).single();
+  if (data) {
+    // Update the existing record with the new embedding for a given set.
+    const id = data["id"] as number;
+    const { error } = await supabase.from("embeddings").upsert({
+      id: id,
+      embedding,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) {
+      logger.info(`Updating embedding table failed. id: ${id}, org: ${org}, repo: ${repo}, issue: ${issue}, embedding: ${embedding.join(", ")}`);
+    }
+  } else {
+    // Insert a new record to the `embeddings` table.
+    const { error } = await supabase.from("embeddings").upsert({
+      org,
+      repo,
+      issue,
+      embedding,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    if (error) {
+      logger.info(`Inserting to embedding table failed. org: ${org}, repo: ${repo}, issue: ${issue}, embedding: ${embedding.join(", ")}`);
+    }
+  }
 };
