@@ -5,8 +5,8 @@ import { getTokenSymbol } from "../../../../helpers/contracts";
 import { Comment } from "../../../../types";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { generatePermit2Signature } from "./generate-permit-2-signature";
-import { FinalScores } from "./issue-closed";
-import { IssueRole } from "./_calculate-all-comment-scores";
+import { FinalScores } from "./calculateQualityAndQuantityScores";
+import { ContributionStyles } from "./_calculate-all-comment-scores";
 
 export async function generatePermits(totals: FinalScores, contributorComments: Comment[]) {
   const userIdToNameMap = mapIdsToNames(contributorComments);
@@ -151,5 +151,5 @@ interface GenerateHtmlParams {
   tokenSymbol: string;
   contributorName: string;
   detailsTable: string;
-  issueRole: IssueRole;
+  issueRole: ContributionStyles;
 }

@@ -2,47 +2,46 @@ import { JSDOM } from "jsdom";
 // TODO: should be inherited from default config. This is a temporary solution.
 import Decimal from "decimal.js";
 import MarkdownIt from "markdown-it";
-import { ElementScoreConfig } from "./element-score-config";
+import { ElementScoreConfig, ElementScoreConfigParams } from "./element-score-config";
 import _ from "lodash";
 import { Comment } from "../../../../types/payload";
-import { IssueRole } from "./_calculate-all-comment-scores";
+import { ContributionStyles } from "./_calculate-all-comment-scores";
 
 const md = new MarkdownIt();
-const NEG_ONE = new Decimal(-1);
+// const NEG_ONE = new Decimal(-1);
 const ZERO = new Decimal(0);
 const ONE = new Decimal(1);
 
 type ScoringRubricConstructor = {
-  role: IssueRole;
-  multiplier: number;
+  role: ContributionStyles;
+  formattingMultiplier: number;
   wordValue: number;
 };
 export class ScoringRubric {
-  public role: IssueRole;
-  public roleWordScore: Decimal = ONE;
-  public roleWordScoreMultiplier: Decimal = ONE;
+  public role: ContributionStyles;
+  public roleWordScore: Decimal;
+  public roleWordScoreMultiplier!: Decimal;
   public userWordScoreTotals: { [userId: number]: Decimal } = {};
   public userElementScoreTotals: { [userId: number]: Decimal } = {};
-  // public userWordScoreDetails: { [id: number]: { [word: string]: Decimal } } = {};
   public userElementScoreDetails: {
     [userId: number]: { [commentId: string]: { count: number; score: Decimal; words: number } };
   } = {};
   public commentScores: {
     [userId: number]: {
       [commentId: number]: {
-        wordScoreTotal: Decimal;
+        wordScoreTotal: null | Decimal;
         wordScoreDetails: { [word: string]: Decimal };
-        elementScoreTotal: Decimal;
+        elementScoreTotal: null | Decimal;
         elementScoreDetails: { [key: string]: { count: number; score: Decimal; words: number } };
       };
     };
   } = {};
 
-  private _elementConfig: { [key: string]: { element: string; value: Decimal; disabled?: boolean } } = {
-    img: new ElementScoreConfig({ element: "img", value: NEG_ONE, ignored: true }), // disabled
-    blockquote: new ElementScoreConfig({ element: "blockquote", value: NEG_ONE, ignored: true }), // disabled
-    em: new ElementScoreConfig({ element: "em", value: NEG_ONE, ignored: true }), // disabled
-    strong: new ElementScoreConfig({ element: "strong", value: NEG_ONE, ignored: true }), // disabled
+  private _elementConfig: { [key: string]: ElementScoreConfigParams } = {
+    img: new ElementScoreConfig({ element: "img", disabled: true }), // disabled
+    blockquote: new ElementScoreConfig({ element: "blockquote", disabled: true }), // disabled
+    em: new ElementScoreConfig({ element: "em", disabled: true }), // disabled
+    strong: new ElementScoreConfig({ element: "strong", disabled: true }), // disabled
 
     h1: new ElementScoreConfig({ element: "h1", value: ONE }),
     h2: new ElementScoreConfig({ element: "h2", value: ONE }),
@@ -65,9 +64,9 @@ export class ScoringRubric {
     // ol: new ElementScoreConfig({ element: "ol", value: ONE }),
   };
 
-  constructor({ role, multiplier = 1, wordValue = 0 }: ScoringRubricConstructor) {
+  constructor({ role, formattingMultiplier: formattingMultiplier = 1, wordValue = 0 }: ScoringRubricConstructor) {
     this.role = role;
-    this._applyRoleMultiplier(multiplier);
+    this._applyRoleMultiplier(formattingMultiplier);
     this.roleWordScore = new Decimal(wordValue);
   }
 
@@ -104,7 +103,8 @@ export class ScoringRubric {
     }
     return score;
   }
-  public computeWordScore(comment: Comment, userId: number) {
+
+  public computeWordScore(comment: Comment | { body: string; id: number }, userId: number) {
     const words = this._getWordsNotInDisabledElements(comment);
     const wordScoreDetails = this._calculateWordScores(words);
     const totalWordScore = this._calculateTotalScore(wordScoreDetails);
@@ -114,7 +114,7 @@ export class ScoringRubric {
     return this.commentScores[userId][comment.id].wordScoreDetails;
   }
 
-  private _getWordsNotInDisabledElements(comment: Comment): string[] {
+  private _getWordsNotInDisabledElements(comment: Comment | { body: string }): string[] {
     const htmlString = md.render(comment.body);
     const dom = new JSDOM(htmlString);
     const doc = dom.window.document;
@@ -169,8 +169,8 @@ export class ScoringRubric {
     }
     if (!this.commentScores[userId][commentId]) {
       this.commentScores[userId][commentId] = {
-        wordScoreTotal: NEG_ONE,
-        elementScoreTotal: NEG_ONE,
+        wordScoreTotal: null,
+        elementScoreTotal: null,
         wordScoreDetails: {},
         elementScoreDetails: {},
       };
@@ -202,7 +202,10 @@ export class ScoringRubric {
     for (const incomingTag in selectedUser) {
       const tag = selectedUser[incomingTag];
       tag.count = this._countTags(htmlString, incomingTag);
-      tag.score = this._elementConfig[incomingTag].value.times(tag.count);
+      const value = this._elementConfig[incomingTag].value;
+      if (value) {
+        tag.score = value.times(tag.count);
+      }
       tag.words = this._countWordsInTag(htmlString, incomingTag);
       if (tag.count !== 0 || !tag.score.isZero()) {
         totalElementScore = totalElementScore.plus(tag.score);
@@ -222,8 +225,8 @@ export class ScoringRubric {
     }
     if (!this.commentScores[userId][comment.id]) {
       this.commentScores[userId][comment.id] = {
-        wordScoreTotal: NEG_ONE,
-        elementScoreTotal: NEG_ONE,
+        wordScoreTotal: null,
+        elementScoreTotal: null,
         elementScoreDetails: {},
         wordScoreDetails: {},
       };
@@ -237,7 +240,10 @@ export class ScoringRubric {
   private _applyRoleMultiplier(multiplier = 1) {
     for (const userId in this._elementConfig) {
       const selection = this._elementConfig[userId];
-      selection.value = selection.value.times(multiplier);
+      const value = selection.value;
+      if (value) {
+        selection.value = value.times(multiplier);
+      }
     }
 
     this.roleWordScoreMultiplier = this.roleWordScoreMultiplier.times(multiplier);
