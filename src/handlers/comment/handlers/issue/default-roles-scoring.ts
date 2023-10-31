@@ -9,9 +9,9 @@ type RoleAction = {
       name?: string;
       specification?: typeof incentives;
       comment?: typeof incentives;
-      approval?: typeof incentives;
-      rejection?: typeof incentives;
-      code?: typeof incentives;
+      //   approval?: typeof incentives;
+      //   rejection?: typeof incentives;
+      //   code?: typeof incentives;
     };
   };
 };
@@ -24,9 +24,9 @@ const roles: RoleAction = {
     },
     review: {
       comment: incentives,
-      approval: incentives,
-      rejection: incentives,
-      code: incentives,
+      //   approval: incentives,
+      //   rejection: incentives,
+      //   code: incentives,
     },
   },
   assignee: {
@@ -35,7 +35,7 @@ const roles: RoleAction = {
     },
     review: {
       comment: incentives,
-      code: incentives,
+      //   code: incentives,
     },
   },
   collaborator: {
@@ -44,9 +44,9 @@ const roles: RoleAction = {
     },
     review: {
       comment: incentives,
-      approval: incentives,
-      rejection: incentives,
-      code: incentives,
+      //   approval: incentives,
+      //   rejection: incentives,
+      //   code: incentives,
     },
   },
   default: {

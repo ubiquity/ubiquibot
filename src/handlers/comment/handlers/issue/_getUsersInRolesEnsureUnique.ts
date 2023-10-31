@@ -1,10 +1,9 @@
 import Runtime from "../../../../bindings/bot-runtime";
+import { Context } from "../../../../types";
 import { Comment, Issue, User } from "../../../../types/payload";
 import { getCollaboratorsForRepo } from "./get-collaborator-ids-for-repo";
 
-export async function _getUsersInRolesEnsureUnique(issue: Issue, contributorComments: Comment[]) {
-  const context = Runtime.getState().latestEventContext;
-
+export async function _getUsersInRolesEnsureUnique(context: Context, issue: Issue, contributorComments: Comment[]) {
   const issueIssuerUser = issue.user;
   const issueAssigneeUser = issue.assignee;
   const collaboratorUsers = await getCollaboratorsForRepo(context);

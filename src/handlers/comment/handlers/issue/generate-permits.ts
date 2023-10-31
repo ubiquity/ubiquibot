@@ -8,8 +8,22 @@ import { generatePermit2Signature } from "./generate-permit-2-signature";
 import { FinalScores } from "./calculateQualityAndQuantityScores";
 import { ContributionStyles } from "./_calculate-all-comment-scores";
 
-export async function generatePermits(context: Context, totals: FinalScores, contributorComments: Comment[]) {
-  const userIdToNameMap = mapIdsToNames(contributorComments);
+export async function generatePermits(
+  context: Context,
+  totals: FinalScores,
+  contributorComments: Comment[],
+  contributorSpecification?: string,
+  contributorApproval?: unknown,
+  contributorRejection?: unknown,
+  contributorCode?: unknown
+) {
+  const userIdToNameMap = mapIdsToNames(
+    contributorComments,
+    contributorSpecification,
+    contributorApproval,
+    contributorRejection,
+    contributorCode
+  );
   const { html: comment, permits } = await generateComment(context, totals, userIdToNameMap, contributorComments);
   const metadata = structuredMetadata.create("Permits", { permits, totals });
   return comment.concat("\n", metadata);
@@ -19,13 +33,24 @@ async function generateComment(
   context: Context,
   totals: FinalScores,
   userIdToNameMap: { [userId: number]: string },
-  contributorComments: Comment[]
+  contributorComments: Comment[],
+  contributorSpecification?: string,
+  contributorApproval?: unknown,
+  contributorRejection?: unknown,
+  contributorCode?: unknown
 ) {
   const runtime = Runtime.getState();
   const {
     payout: { paymentToken, rpc, privateKey },
   } = context.config;
-  const detailsTable = generateDetailsTable(totals, contributorComments);
+  const detailsTable = generateDetailsTable(
+    totals,
+    contributorComments,
+    contributorSpecification,
+    contributorApproval,
+    contributorRejection,
+    contributorCode
+  );
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const HTMLs = [] as string[];
 
@@ -90,7 +115,14 @@ function generateHtml({
   `;
 }
 
-function generateDetailsTable(totals: FinalScores, contributorComments: Comment[]) {
+function generateDetailsTable(
+  totals: FinalScores,
+  contributorComments: Comment[],
+  contributorSpecification?: string,
+  contributorApproval?: unknown,
+  contributorRejection?: unknown,
+  contributorCode?: unknown
+) {
   let tableRows = "";
   for (const userId in totals) {
     const userTotals = totals[userId];
@@ -141,7 +173,13 @@ function zeroToHyphen(value: number | Decimal) {
   }
 }
 
-function mapIdsToNames(contributorComments: Comment[]) {
+function mapIdsToNames(
+  contributorComments: Comment[],
+  contributorSpecification?: string,
+  contributorApproval?: unknown,
+  contributorRejection?: unknown,
+  contributorCode?: unknown
+) {
   return contributorComments.reduce((accumulator, comment: Comment) => {
     const userId = comment.user.id;
     accumulator[userId] = comment.user.login;

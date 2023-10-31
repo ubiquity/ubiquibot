@@ -1,4 +1,4 @@
-import { Comment, Issue, Context } from "../../../../types";
+import { Comment, Context, Issue } from "../../../../types";
 import { _calculateAllCommentScores } from "./_calculate-all-comment-scores";
 
 export async function calculateQuantScore(context: Context, issue: Issue, contributorComments: Comment[]) {

@@ -21,6 +21,7 @@ export async function _calculateAllCommentScores(context: Context, issue: Issue,
   const runtime = Runtime.getState();
 
   const usersOfCommentsByRole: UsersOfContributionsByContributionStyle = await _getUsersInRolesEnsureUnique(
+    context,
     issue,
     contributorComments
   );

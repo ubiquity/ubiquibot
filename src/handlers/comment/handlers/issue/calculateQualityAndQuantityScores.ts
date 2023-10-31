@@ -4,14 +4,16 @@ import { applyQualityScoreToQuantityScore } from "./applyQualityScoreToQuantityS
 import { calculateQualScore } from "./calculate-quality-score";
 import { calculateQuantScore } from "./calculate-quantity-score";
 import { ContributionStyles } from "./_calculate-all-comment-scores";
+import { Context } from "../../../../types/context";
 
 export async function calculateQualityAndQuantityScores(
+  context: Context,
   issue: Issue,
   contributorComments: Comment[]
 ): Promise<FinalScores> {
   const qualityScore = await calculateQualScore(issue, contributorComments); // the issue specification is not included in this array scoring, it is only for the other contributor comments
   const qualityScoresWithMetaData = qualityScore.relevanceScores.map(qualAndMeta());
-  const quantityScore = await calculateQuantScore(issue, contributorComments);
+  const quantityScore = await calculateQuantScore(context, issue, contributorComments);
 
   const totals = applyQualityScoreToQuantityScore(qualityScoresWithMetaData, quantityScore);
   return totals;
@@ -34,6 +36,10 @@ export interface FinalScores {
     role: ContributionStyles;
     total: Decimal;
     comments: CommentScoreDetails[];
+    specification: CommentScoreDetails | null;
+    // approval: unknown; // CommentScoreDetails | null;
+    // rejection: unknown; // CommentScoreDetails | null;
+    // code: unknown; // CommentScoreDetails | null;
   };
 }
 interface CommentScoreDetails {

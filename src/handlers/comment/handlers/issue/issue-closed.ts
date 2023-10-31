@@ -1,9 +1,8 @@
-import { Context } from "probot";
 import { Logs } from "../../../../adapters/supabase";
 import Runtime from "../../../../bindings/bot-runtime";
 import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../../helpers";
 import { getLinkedPullRequests } from "../../../../helpers/parser";
-import { BotConfig } from "../../../../types";
+import { BotConfig, Context } from "../../../../types";
 import { Comment, Issue, Payload, StateReason, User } from "../../../../types/payload";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { calculateAssigneeScores } from "./calculateAssigneeScores";
@@ -16,27 +15,38 @@ const botCommandsAndHumanCommentsFilter = (comment: Comment) =>
 
 const botCommentsFilter = (comment: Comment) => comment.user.type === "Bot"; /* No Humans */
 
-export async function issueClosed() {
+export async function issueClosed(context: Context) {
   // TODO: delegate permit calculation to GitHub Action
-  const { issue, issueComments, owner, repository, issueNumber, logger, config, payload, context } =
-    await getEssentials();
+
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+  const payload = context.payload as Payload;
+  const issue = payload.issue as Issue;
+  const config = context.config;
+
+  const { issueComments, owner, repository, issueNumber } = await getEssentials(context);
+
   await preflightChecks({ issue, logger, issueComments, config, payload, context });
 
   const pullRequestComments = await getPullRequestComments(owner, repository, issueNumber);
-  const allComments = [...issueComments, ...pullRequestComments];
+  const humanComments = {
+    issue: issueComments.filter(botCommandsAndHumanCommentsFilter),
+    review: pullRequestComments.filter(botCommandsAndHumanCommentsFilter),
+  }; // [...issueComments, ...pullRequestComments];
 
-  const humanComments = allComments.filter(botCommandsAndHumanCommentsFilter);
+  // const humanComments = allComments.filter(botCommandsAndHumanCommentsFilter);
 
-  // TODO: calculate issue specification score. should save on the same scoring rubric as the comments.
-  // const specificationScore =
+  // DONE: calculate issue specification score. should save on the same scoring rubric as the comments.
   await _calculateIssueSpecificationScore(issue, issue.body);
-  // TODO: calculate assignee score.
+  // DONE: calculate assignee score.
   const nonNullAssignees = issue.assignees.filter((assignee): assignee is User => Boolean(assignee));
   const assigneeScores = await calculateAssigneeScores(issue, nonNullAssignees);
   // await calculateAssigneeScore(issue, issue.assignees);
 
-  const commentScores = await calculateQualityAndQuantityScores(issue, humanComments);
-  const permitComment = await generatePermits(commentScores, humanComments); // DONE: design metadata system for permit parsing
+  const issueCommentScores = await calculateQualityAndQuantityScores(context, issue, humanComments.issue);
+  const reviewCommentScores = await calculateQualityAndQuantityScores(context, issue, humanComments.review);
+
+  const permitComment = await generatePermits(context, issueCommentScores, humanComments); // DONE: design metadata system for permit parsing
   return permitComment; // DONE: post the permits to the issue
 }
 
@@ -44,7 +54,7 @@ async function getPullRequestComments(owner: string, repository: string, issueNu
   const pullRequestComments: Comment[] = [];
   const linkedPullRequests = await getLinkedPullRequests({ owner, repository, issue: issueNumber });
   if (linkedPullRequests.length) {
-    const linkedCommentsPromises = linkedPullRequests.map((pull) => getAllIssueComments(pull.number));
+    const linkedCommentsPromises = linkedPullRequests.map((pull) => getAllIssueComments(context, pull.number));
     const linkedCommentsResolved = await Promise.all(linkedCommentsPromises);
     for (const linkedComments of linkedCommentsResolved) {
       pullRequestComments.push(...linkedComments);
@@ -53,20 +63,17 @@ async function getPullRequestComments(owner: string, repository: string, issueNu
   return pullRequestComments;
 }
 
-async function getEssentials() {
+async function getEssentials(context) {
+  const issue = context.payload.issue as Issue;
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
   const logger = runtime.logger;
-  const payload = context.payload as Payload;
-  const issue = payload.issue as Issue;
-  const config = runtime.botConfig;
   if (!issue) throw runtime.logger.error("Issue is not defined");
-  const issueComments = await getAllIssueComments(issue.number);
-  const owner = payload?.organization?.login || payload.repository.owner.login;
+  const issueComments = await getAllIssueComments(context, issue.number);
+  const owner = context.payload?.organization?.login || context.payload.repository.owner.login;
   if (!owner) throw logger.error("Owner is not defined");
-  const repository = payload?.repository?.name;
+  const repository = context.payload?.repository?.name;
   const issueNumber = issue.number;
-  return { issue, payload, context, runtime, logger, config, issueComments, owner, repository, issueNumber };
+  return { issue, runtime, logger, issueComments, owner, repository, issueNumber };
 }
 // console.trace({ totals: util.inspect({ totals }, { showHidden: true, depth: null }) });
 
@@ -78,19 +85,12 @@ interface PreflightChecks {
   payload: Payload;
   context: Context;
 }
-async function preflightChecks({
-  issue,
-  logger,
-  issueComments,
-  config = Runtime.getState().botConfig,
-  payload,
-  context,
-}: PreflightChecks) {
+async function preflightChecks({ issue, logger, issueComments, config, payload, context }: PreflightChecks) {
   if (!issue) throw logger.error("Permit generation skipped because issue is undefined");
   if (issue.state_reason !== StateReason.COMPLETED)
     throw logger.info("Issue was not closed as completed. Skipping.", { issue });
   if (config.publicAccessControl.fundExternalClosedIssue) {
-    const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
+    const userHasPermission = await checkUserPermissionForRepoAndOrg(context, payload.sender.login);
     if (!userHasPermission)
       throw logger.warn("Permit generation disabled because this issue has been closed by an external contributor.");
   }
