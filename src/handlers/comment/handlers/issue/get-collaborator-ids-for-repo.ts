@@ -1,9 +1,9 @@
 import Runtime from "../../../../bindings/bot-runtime";
-import { Payload, User } from "../../../../types/payload";
-import { Context } from "probot/lib/context";
+import { Payload, User, Context } from "../../../../types";
+
 export async function getCollaboratorsForRepo(context: Context): Promise<User[]> {
   const runtime = Runtime.getState();
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const collaboratorUsers: User[] = [];
 
   try {
@@ -11,7 +11,7 @@ export async function getCollaboratorsForRepo(context: Context): Promise<User[]>
     let shouldFetch = true;
 
     while (shouldFetch) {
-      const res = await context.octokit.rest.repos.listCollaborators({
+      const res = await context.event.octokit.rest.repos.listCollaborators({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
         per_page: 100,

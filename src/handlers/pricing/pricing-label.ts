@@ -1,26 +1,25 @@
 import Runtime from "../../bindings/bot-runtime";
 import { addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getAllLabeledEvents } from "../../helpers";
-import { BotConfig, Label, LabelFromConfig, Payload, UserType } from "../../types";
+import { BotConfig, Context, Label, LabelFromConfig, Payload, UserType } from "../../types";
 import { labelAccessPermissionsCheck } from "../access";
 import { setPrice } from "../shared/pricing";
 import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./action";
 
-export async function onLabelChangeSetPricing() {
+export async function onLabelChangeSetPricing(context: Context) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const config = Runtime.getState().botConfig;
+  const config = context.config;
   const logger = runtime.logger;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   if (!payload.issue) throw logger.error("Issue is not defined");
 
   const labels = payload.issue.labels;
   const labelNames = labels.map((i) => i.name);
 
   if (payload.issue.body && isParentIssue(payload.issue.body)) {
-    await handleParentIssue(labels);
+    await handleParentIssue(context, labels);
     return;
   }
-  const permission = await labelAccessPermissionsCheck();
+  const permission = await labelAccessPermissionsCheck(context);
   if (!permission) {
     if (config.publicAccessControl.setLabel === false) {
       throw logger.warn("No public access control to set labels");
@@ -36,7 +35,7 @@ export async function onLabelChangeSetPricing() {
 
   if (!recognizedLabels.time.length || !recognizedLabels.priority.length) {
     logger.warn("No recognized labels to calculate price");
-    await clearAllPriceLabelsOnIssue();
+    await clearAllPriceLabelsOnIssue(context);
     return;
   }
 
@@ -47,12 +46,12 @@ export async function onLabelChangeSetPricing() {
     return;
   }
 
-  const targetPriceLabel = setPrice(minLabels.time, minLabels.priority);
+  const targetPriceLabel = setPrice(context, minLabels.time, minLabels.priority);
 
   if (targetPriceLabel) {
-    await handleTargetPriceLabel(targetPriceLabel, labelNames, assistivePricing);
+    await handleTargetPriceLabel(context, targetPriceLabel, labelNames, assistivePricing);
   } else {
-    await clearAllPriceLabelsOnIssue();
+    await clearAllPriceLabelsOnIssue(context);
     logger.info(`Skipping action...`);
   }
 }
@@ -79,19 +78,24 @@ function getMinLabels(recognizedLabels: { time: Label[]; priority: Label[] }) {
   return { time: minTimeLabel, priority: minPriorityLabel };
 }
 
-async function handleTargetPriceLabel(targetPriceLabel: string, labelNames: string[], assistivePricing: boolean) {
+async function handleTargetPriceLabel(
+  context: Context,
+  targetPriceLabel: string,
+  labelNames: string[],
+  assistivePricing: boolean
+) {
   const _targetPriceLabel = labelNames.find((name) => name.includes("Price") && name.includes(targetPriceLabel));
 
   if (_targetPriceLabel) {
-    await handleExistingPriceLabel(targetPriceLabel, assistivePricing);
+    await handleExistingPriceLabel(context, targetPriceLabel, assistivePricing);
   } else {
-    await addPriceLabelToIssue(targetPriceLabel, assistivePricing);
+    await addPriceLabelToIssue(context, targetPriceLabel, assistivePricing);
   }
 }
 
-async function handleExistingPriceLabel(targetPriceLabel: string, assistivePricing: boolean) {
+async function handleExistingPriceLabel(context: Context, targetPriceLabel: string, assistivePricing: boolean) {
   const logger = Runtime.getState().logger;
-  let labeledEvents = await getAllLabeledEvents();
+  let labeledEvents = await getAllLabeledEvents(context);
   if (!labeledEvents) return logger.warn("No labeled events found");
 
   labeledEvents = labeledEvents.filter((event) => event.label?.name.includes("Price"));
@@ -100,28 +104,26 @@ async function handleExistingPriceLabel(targetPriceLabel: string, assistivePrici
   if (labeledEvents[labeledEvents.length - 1].actor?.type == UserType.User) {
     logger.info(`Skipping... already exists`);
   } else {
-    await addPriceLabelToIssue(targetPriceLabel, assistivePricing);
+    await addPriceLabelToIssue(context, targetPriceLabel, assistivePricing);
   }
 }
 
-async function addPriceLabelToIssue(targetPriceLabel: string, assistivePricing: boolean) {
+async function addPriceLabelToIssue(context: Context, targetPriceLabel: string, assistivePricing: boolean) {
   const logger = Runtime.getState().logger;
-  await clearAllPriceLabelsOnIssue();
+  await clearAllPriceLabelsOnIssue(context);
 
-  const exists = await labelExists(targetPriceLabel);
+  const exists = await labelExists(context, targetPriceLabel);
   if (assistivePricing && !exists) {
     logger.info("Assistive pricing is enabled, creating label...", { targetPriceLabel });
-    await createLabel(targetPriceLabel, "price");
+    await createLabel(context, targetPriceLabel, "price");
   }
 
-  await addLabelToIssue(targetPriceLabel);
+  await addLabelToIssue(context, targetPriceLabel);
 }
 
-export async function labelExists(name: string): Promise<boolean> {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
-  const res = await context.octokit.rest.issues.getLabel({
+export async function labelExists(context: Context, name: string): Promise<boolean> {
+  const payload = context.event.payload as Payload;
+  const res = await context.event.octokit.rest.issues.getLabel({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     name,

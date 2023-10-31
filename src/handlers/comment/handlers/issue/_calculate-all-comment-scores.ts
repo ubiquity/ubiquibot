@@ -1,4 +1,5 @@
 import Runtime from "../../../../bindings/bot-runtime";
+import { Context } from "../../../../types";
 import { Comment, Issue, User } from "../../../../types/payload";
 // import { IssueRole } from "./archive/calculate-score-typings";
 import { ScoringRubric } from "./scoring-rubric";
@@ -16,7 +17,7 @@ export async function _calculateIssueSpecificationScore(issue: Issue, specificat
   return scoringRubric;
 }
 
-export async function _calculateAllCommentScores(issue: Issue, contributorComments: Comment[]) {
+export async function _calculateAllCommentScores(context: Context, issue: Issue, contributorComments: Comment[]) {
   const runtime = Runtime.getState();
 
   const usersOfCommentsByRole: UsersOfContributionsByContributionStyle = await _getUsersInRolesEnsureUnique(

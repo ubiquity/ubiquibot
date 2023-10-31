@@ -2,27 +2,31 @@ import Decimal from "decimal.js";
 import { stringify } from "yaml";
 import Runtime from "../../../../bindings/bot-runtime";
 import { getTokenSymbol } from "../../../../helpers/contracts";
-import { Comment } from "../../../../types";
+import { Comment, Context } from "../../../../types";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { generatePermit2Signature } from "./generate-permit-2-signature";
 import { FinalScores } from "./calculateQualityAndQuantityScores";
 import { ContributionStyles } from "./_calculate-all-comment-scores";
 
-export async function generatePermits(totals: FinalScores, contributorComments: Comment[]) {
+export async function generatePermits(context: Context, totals: FinalScores, contributorComments: Comment[]) {
   const userIdToNameMap = mapIdsToNames(contributorComments);
-  const { html: comment, permits } = await generateComment(totals, userIdToNameMap, contributorComments);
+  const { html: comment, permits } = await generateComment(context, totals, userIdToNameMap, contributorComments);
   const metadata = structuredMetadata.create("Permits", { permits, totals });
   return comment.concat("\n", metadata);
 }
 
 async function generateComment(
+  context: Context,
   totals: FinalScores,
   userIdToNameMap: { [userId: number]: string },
   contributorComments: Comment[]
 ) {
   const runtime = Runtime.getState();
+  const {
+    payout: { paymentToken, rpc, privateKey },
+  } = context.config;
   const detailsTable = generateDetailsTable(totals, contributorComments);
-  const tokenSymbol = await getTokenSymbol(runtime.botConfig.payout.paymentToken, runtime.botConfig.payout.rpc);
+  const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const HTMLs = [] as string[];
 
   const permits = [];
@@ -34,12 +38,11 @@ async function generateComment(
     const contributorName = userIdToNameMap[userId];
     const issueRole = userTotals.role;
 
-    const key = runtime.botConfig.payout.privateKey;
-    if (!key) throw runtime.logger.warn("No bot wallet private key defined");
+    if (!privateKey) throw runtime.logger.warn("No bot wallet private key defined");
 
     const beneficiaryAddress = await runtime.adapters.supabase.wallet.getAddress(parseInt(userId));
 
-    const permit = await generatePermit2Signature({
+    const permit = await generatePermit2Signature(context, {
       beneficiary: beneficiaryAddress,
       amount: tokenAmount,
       identifier: issueRole,

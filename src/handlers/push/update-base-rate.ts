@@ -1,20 +1,20 @@
-import { Context } from "probot";
 import Runtime from "../../bindings/bot-runtime";
 
 import { getPreviousFileContent, listLabelsForRepo, updateLabelsFromBaseRate } from "../../helpers";
-import { Label, PushPayload } from "../../types";
+import { Label, PushPayload, Context } from "../../types";
 import { parseYamlConfig } from "../../utils/get-config";
 
-export async function updateBaseRate(context: Context, payload: PushPayload, filePath: string) {
+export async function updateBaseRate(context: Context, filePath: string) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   // Get default branch from ref
+  const payload = context.event.payload as PushPayload;
   const branch = payload.ref?.split("refs/heads/")[1];
   const owner = payload.repository.owner.login;
   const repo = payload.repository.name;
 
   // get previous config
-  const previousFileContent = await getPreviousFileContent(owner, repo, branch, filePath);
+  const previousFileContent = await getPreviousFileContent(context, owner, repo, branch, filePath);
 
   if (!previousFileContent) {
     throw logger.error("Getting previous file content failed");
@@ -33,11 +33,11 @@ export async function updateBaseRate(context: Context, payload: PushPayload, fil
   }
 
   // fetch all labels
-  const repoLabels = await listLabelsForRepo();
+  const repoLabels = await listLabelsForRepo(context);
 
   if (repoLabels.length === 0) {
     throw logger.warn("No labels on this repo");
   }
 
-  return await updateLabelsFromBaseRate(owner, repo, context, repoLabels as Label[], previousBaseRate);
+  return await updateLabelsFromBaseRate(context, owner, repo, repoLabels as Label[], previousBaseRate);
 }

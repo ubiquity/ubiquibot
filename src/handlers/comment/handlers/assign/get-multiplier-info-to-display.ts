@@ -1,8 +1,8 @@
-import { Issue } from "../../../../types";
+import { Issue, Context } from "../../../../types";
 import { taskPaymentMetaData } from "../../../wildcard";
 import { getUserMultiplier } from "./get-user-multiplier";
 
-export async function getMultiplierInfoToDisplay(senderId: number, repoId: number, issue: Issue) {
+export async function getMultiplierInfoToDisplay(context: Context, senderId: number, repoId: number, issue: Issue) {
   const userMultiplier = await getUserMultiplier(senderId, repoId);
   const value = userMultiplier?.value || null;
   const reason = userMultiplier?.reason || null;
@@ -10,7 +10,7 @@ export async function getMultiplierInfoToDisplay(senderId: number, repoId: numbe
   let totalPriceOfTask: string | null = null;
 
   if (value && value != 1) {
-    const task = taskPaymentMetaData(issue);
+    const task = taskPaymentMetaData(context, issue);
 
     if (task.priceLabel) {
       const price = parsePrice(task.priceLabel);

@@ -1,12 +1,11 @@
 import Runtime from "../../../bindings/bot-runtime";
-import { Payload } from "../../../types";
+import { Context, Payload } from "../../../types";
 import _ from "lodash";
 
-export async function query(body: string) {
+export async function query(context: Context, body: string) {
   const runtime = Runtime.getState(),
-    context = runtime.latestEventContext,
     logger = runtime.logger,
-    payload = context.payload as Payload,
+    payload = context.event.payload as Payload,
     sender = payload.sender.login;
 
   logger.info("Running '/query' command handler", { sender });
@@ -23,7 +22,7 @@ export async function query(body: string) {
   }
 
   const database = runtime.adapters.supabase;
-  const usernameResponse = await context.octokit.users.getByUsername({ username });
+  const usernameResponse = await context.event.octokit.users.getByUsername({ username });
   const user = usernameResponse.data;
   if (!user) {
     throw logger.error("User not found", { username });

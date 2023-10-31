@@ -1,6 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Super } from "./super";
 import { Database } from "../../types/database";
+import { Context } from "../../../../types";
 
 // currently trying to save all of the location metadata of the event.
 // seems that focusing on the IssueComments will provide the most value
@@ -16,8 +17,8 @@ export class Locations extends Super {
   node_id: string | undefined;
   node_type: string | undefined;
 
-  constructor(supabase: SupabaseClient) {
-    super(supabase);
+  constructor(supabase: SupabaseClient, context: Context) {
+    super(supabase, context);
   }
 
   public async getLocationsFromRepo(repositoryId: number) {
@@ -61,7 +62,7 @@ export class Locations extends Super {
       }
     `;
 
-    this.locationResponse = (await this.runtime.latestEventContext.octokit.graphql(graphQlQuery)) as LocationResponse;
+    this.locationResponse = (await this.context.event.octokit.graphql(graphQlQuery)) as LocationResponse;
     console.trace(this.locationResponse);
 
     this.user_id = this.locationResponse.data.node.author.id;

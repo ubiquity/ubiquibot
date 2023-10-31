@@ -1,11 +1,10 @@
 import Runtime from "../../../bindings/bot-runtime";
-import { Payload } from "../../../types";
+import { Context, Payload } from "../../../types";
 import { isUserAdminOrBillingManager } from "../../../helpers/issue";
 
-export async function autoPay(body: string) {
+export async function autoPay(context: Context, body: string) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const logger = runtime.logger;
 
   logger.info("Running '/autopay' command handler", { sender: payload.sender.login });
@@ -14,7 +13,7 @@ export async function autoPay(body: string) {
   const autopayCommand = body.match(pattern);
 
   if (autopayCommand) {
-    const hasSufficientPrivileges = await isUserAdminOrBillingManager(payload.sender.login, context);
+    const hasSufficientPrivileges = await isUserAdminOrBillingManager(context, payload.sender.login);
     if (!hasSufficientPrivileges) {
       return logger.warn(
         "You must be an 'admin' or 'billing_manager' to toggle automatic payments for completed issues."

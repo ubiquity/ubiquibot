@@ -1,18 +1,15 @@
 import ms from "ms";
-import Runtime from "../bindings/bot-runtime";
-import { Label, LabelFromConfig, Payload, UserType } from "../types";
+import { Label, LabelFromConfig, Payload, UserType, Context } from "../types";
 
 const contextNamesToSkip = ["workflow_run"];
 
-export function shouldSkip() {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
+export function shouldSkip(context: Context) {
+  const payload = context.event.payload as Payload;
   const response = { stop: false, reason: null } as { stop: boolean; reason: string | null };
 
-  if (contextNamesToSkip.includes(context.name)) {
+  if (contextNamesToSkip.includes(context.event.name)) {
     response.stop = true;
-    response.reason = `excluded context name: "${context.name}"`;
+    response.reason = `excluded context name: "${context.event.name}"`;
   } else if (payload.sender.type === UserType.Bot) {
     response.stop = true;
     response.reason = "sender is a bot";

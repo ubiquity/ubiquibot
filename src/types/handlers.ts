@@ -1,14 +1,15 @@
 import { LogReturn } from "../adapters/supabase/helpers/tables/logs";
+import { Context } from "./context";
 
 export type HandlerReturnValuesNoVoid = string | LogReturn;
 
-export type MainActionHandler = (/* TODO: context: Context */) => Promise<HandlerReturnValuesNoVoid>;
-type CommandsHandler = (body: string) => Promise<HandlerReturnValuesNoVoid>;
+export type MainActionHandler = (context: Context) => Promise<HandlerReturnValuesNoVoid>;
+type CommandsHandler = (context: Context, body: string) => Promise<HandlerReturnValuesNoVoid>;
 
-export type PreActionHandler = (/* TODO: context: Context */) => Promise<void>;
-export type PostActionHandler = (/* TODO: context: Context */) => Promise<void>;
+export type PreActionHandler = (context: Context) => Promise<void>;
+export type PostActionHandler = (context: Context) => Promise<void>;
 
-export type WildCardHandler = (/* TODO: context: Context */) => Promise<void>;
+export type WildCardHandler = (context: Context) => Promise<void>;
 
 /**
  * @dev A set of handlers to do a pre/main/post action for a given action

@@ -1,12 +1,11 @@
 import Runtime from "../../bindings/bot-runtime";
 import { addAssignees, getAllPullRequests, getIssueByNumber, getPullByNumber } from "../../helpers";
 import { getLinkedIssues } from "../../helpers/parser";
-import { Payload } from "../../types";
+import { Context, Payload } from "../../types";
 
 // Check for pull requests linked to their respective issues but not assigned to them
-export async function checkPullRequests() {
+export async function checkPullRequests(context: Context) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
   const logger = runtime.logger;
   const pulls = await getAllPullRequests(context);
 
@@ -14,7 +13,7 @@ export async function checkPullRequests() {
     return logger.debug(`No pull requests found at this time`);
   }
 
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   // Loop through the pull requests and assign them to their respective issues if needed
   for (const pull of pulls) {
     const linkedIssue = await getLinkedIssues({
@@ -52,7 +51,7 @@ export async function checkPullRequests() {
 
     const assignedUsernames = issue.assignees.map((assignee) => assignee.login);
     if (!assignedUsernames.includes(opener)) {
-      await addAssignees(+linkedIssueNumber, [opener]);
+      await addAssignees(context, +linkedIssueNumber, [opener]);
       logger.debug("Assigned pull request opener to issue", {
         pullRequest: pull.number,
         issue: linkedIssueNumber,
