@@ -15,7 +15,7 @@ export function filterCommentsByContributionType(
     "Issue Collaborator Comment": contributorComments.filter((comment: Comment) =>
       usersOfCommentsByRole["Issue Collaborator Comment"].filter((user: User) => user.id == comment.user.id)
     ),
-    "Issue Default Comment": contributorComments.filter((comment: Comment) => {
+    "Issue Contributor Comment": contributorComments.filter((comment: Comment) => {
       const checks =
         comment.user.type === "User" &&
         !usersOfCommentsByRole["Issue Collaborator Comment"].some((user: User) => user.id == comment.user.id) &&
@@ -32,7 +32,7 @@ export function filterCommentsByContributionType(
       (comment: Comment) => comment.user.id === usersOfCommentsByRole["Review Assignee Comment"]?.id || null
     ),
     "Review Collaborator Comment": null,
-    "Review Default Comment": null,
+    "Review Contributor Comment": null,
 
     // start reviews
     // "Review Issuer Approval": null,

@@ -146,6 +146,14 @@ function checkIfPermitsAlreadyPosted(botComments: Comment[], logger: Logs) {
   });
 }
 
+function addScoreToTotal(userId: number, score: Decimal | { total: Decimal }) {
+  if (typeof score === "object" && "total" in score) {
+    totals[userId] = totals[userId] ? totals[userId].plus(score.total) : score.total;
+  } else if (score instanceof Decimal) {
+    totals[userId] = totals[userId] ? totals[userId].plus(score) : score;
+  }
+}
+
 function calculateTotalScores(
   issueAssigneeTask: { source: Issue; score: { [userId: number]: Decimal } },
   issueIssuerSpecification: { source: Comment[]; score: FinalScores },
@@ -154,33 +162,10 @@ function calculateTotalScores(
 ): { [userId: number]: Decimal } {
   const totals: { [userId: number]: Decimal } = {};
 
-  // 1. Change the type of `totals` to match the expected type in `generatePermits` function
-  // or change the expected type in `generatePermits` function to match the type of `totals`
-
-  // 2. Check the type of `scoreObject[userId]` before using it
-  const addScores = (scoreObject: { [userId: number]: Decimal | { total: Decimal } }) => {
-    for (const userId in scoreObject) {
-      if (typeof scoreObject[userId] === "object" && "total" in scoreObject[userId]) {
-        if (totals[userId]) {
-          totals[userId] = totals[userId].plus((scoreObject[userId] as { total: Decimal }).total);
-        } else {
-          totals[userId] = (scoreObject[userId] as { total: Decimal }).total;
-        }
-      } else if (scoreObject[userId] instanceof Decimal) {
-        if (totals[userId]) {
-          totals[userId] = totals[userId].plus(scoreObject[userId]);
-        } else {
-          totals[userId] = scoreObject[userId];
-        }
-      }
-    }
-  };
-
-  // Add scores from each object
-  addScores(issueAssigneeTask.score);
-  addScores(issueIssuerSpecification.score);
-  addScores(issueContributorComments.score);
-  addScores(reviewContributorComments.score);
+  Object.entries(issueAssigneeTask.score).forEach(([userId, score]) => addScoreToTotal(Number(userId), score));
+  Object.entries(issueIssuerSpecification.score).forEach(([userId, score]) => addScoreToTotal(Number(userId), score));
+  Object.entries(issueContributorComments.score).forEach(([userId, score]) => addScoreToTotal(Number(userId), score));
+  Object.entries(reviewContributorComments.score).forEach(([userId, score]) => addScoreToTotal(Number(userId), score));
 
   return totals;
 }

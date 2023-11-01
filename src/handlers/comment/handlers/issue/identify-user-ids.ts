@@ -21,7 +21,7 @@ export async function identifyUserIds(context: Context, issue: Issue, contributo
     "Issue Collaborator Comment": collaboratorUsers.filter(
       (user: User) => user.id !== issueIssuerUser.id && (!issueAssigneeUser || user.id !== issueAssigneeUser.id)
     ),
-    "Issue Default Comment": humanUsersWhoCommented.filter(
+    "Issue Contributor Comment": humanUsersWhoCommented.filter(
       (user: User) => !allRoleUsers.some((_user) => _user?.id === user.id)
     ),
 
@@ -31,7 +31,7 @@ export async function identifyUserIds(context: Context, issue: Issue, contributo
     "Review Collaborator Comment": collaboratorUsers.filter(
       (user: User) => user.id !== issueIssuerUser.id && (!issueAssigneeUser || user.id !== issueAssigneeUser.id)
     ),
-    "Review Default Comment": humanUsersWhoCommented.filter(
+    "Review Contributor Comment": humanUsersWhoCommented.filter(
       (user: User) => !allRoleUsers.some((_user) => _user?.id === user.id)
     ),
     // end comments

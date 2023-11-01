@@ -6,12 +6,12 @@ export type ContributionStyleTypes = {
   "Issue Issuer Comment": User;
   "Issue Assignee Comment": null | User;
   "Issue Collaborator Comment": User[];
-  "Issue Default Comment": User[];
+  "Issue Contributor Comment": User[];
 
   "Review Issuer Comment": User;
   "Review Assignee Comment": null | User;
   "Review Collaborator Comment": User[];
-  "Review Default Comment": User[];
+  "Review Contributor Comment": User[];
   // end comments
 
   // start reviews

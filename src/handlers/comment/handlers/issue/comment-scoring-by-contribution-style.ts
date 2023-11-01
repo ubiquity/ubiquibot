@@ -19,8 +19,8 @@ export const commentScoringByContributionStyle = {
     formattingMultiplier: 1,
     wordValue: 0.1,
   }),
-  "Issue Default Comment": new CommentScoringRubric({
-    role: "Issue Default Comment",
+  "Issue Contributor Comment": new CommentScoringRubric({
+    role: "Issue Contributor Comment",
     formattingMultiplier: 0.25,
     wordValue: 0.1,
   }),
@@ -39,8 +39,8 @@ export const commentScoringByContributionStyle = {
     formattingMultiplier: 1,
     wordValue: 0.1,
   }),
-  "Review Default Comment": new CommentScoringRubric({
-    role: "Review Default Comment",
+  "Review Contributor Comment": new CommentScoringRubric({
+    role: "Review Contributor Comment",
     formattingMultiplier: 0.25,
     wordValue: 0.1,
   }),
