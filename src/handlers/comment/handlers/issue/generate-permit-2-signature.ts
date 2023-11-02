@@ -3,17 +3,16 @@ import Decimal from "decimal.js";
 import { BigNumber, ethers } from "ethers";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 import Runtime from "../../../../bindings/bot-runtime";
+import { Context } from "../../../../types";
 
-export async function generatePermit2Signature({
-  beneficiary,
-  amount,
-  identifier,
-  userId,
-}: GeneratePermit2SignatureParams) {
+export async function generatePermit2Signature(
+  context: Context,
+  { beneficiary, amount, identifier, userId }: GeneratePermit2SignatureParams
+) {
   const runtime = Runtime.getState();
-  const rpc = runtime.botConfig.payout.rpc;
-  const privateKey = runtime.botConfig.payout.privateKey;
-  const paymentToken = runtime.botConfig.payout.paymentToken;
+  const {
+    payout: { privateKey, paymentToken, rpc, evmNetworkId },
+  } = context.config;
 
   if (!rpc) throw runtime.logger.error("RPC is not defined");
   if (!privateKey) throw runtime.logger.error("Private key is not defined");
@@ -43,7 +42,6 @@ export async function generatePermit2Signature({
     deadline: MaxUint256,
   };
 
-  const evmNetworkId = runtime.botConfig.payout.evmNetworkId;
   const { domain, types, values } = SignatureTransfer.getPermitData(
     permitTransferFromData,
     PERMIT2_ADDRESS,

@@ -1,19 +1,18 @@
 import Runtime from "../../bindings/bot-runtime";
-import { Comment, Payload } from "../../types";
+import { Comment, Payload, Context } from "../../types";
 import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCommentInRepository } from "./handlers/first";
 
-export async function commentCreatedOrEdited() {
+export async function commentCreatedOrEdited(context: Context) {
   const runtime = Runtime.getState(),
-    config = runtime.botConfig,
+    config = context.config,
     logger = runtime.logger,
-    context = runtime.latestEventContext,
-    payload = context.payload as Payload;
+    payload = context.event.payload as Payload;
 
   const comment = payload.comment as Comment;
 
   const body = comment.body;
-  const commentedCommand = commentParser(body);
+  const commentedCommand = commentParser(context, body);
 
   if (!comment) {
     logger.info(`Comment is null. Skipping`);
@@ -24,10 +23,10 @@ export async function commentCreatedOrEdited() {
   }
 
   if (commentedCommand) {
-    await verifyFirstCommentInRepository();
+    await verifyFirstCommentInRepository(context);
   }
 
-  const allCommands = userCommands();
+  const allCommands = userCommands(context);
   const userCommand = allCommands.find((i) => i.id == commentedCommand);
 
   if (userCommand) {
@@ -40,7 +39,7 @@ export async function commentCreatedOrEdited() {
       return logger.warn("Skipping because it is disabled on this repo.", { id });
     }
 
-    return await handler(body);
+    return await handler(context, body);
   } else {
     const sanitizedBody = body.replace(/<!--[\s\S]*?-->/g, "");
     return logger.verbose("I do not understand how to respond to that command", { sanitizedBody });

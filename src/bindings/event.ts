@@ -1,4 +1,4 @@
-import { Context } from "probot";
+import { Context as ProbotContext } from "probot";
 import { createAdapters } from "../adapters";
 import { LogReturn } from "../adapters/supabase";
 import { LogMessage } from "../adapters/supabase/helpers/tables/logs";
@@ -16,7 +16,9 @@ import {
 import { Payload } from "../types/payload";
 import { ajv } from "../utils";
 import Runtime from "./bot-runtime";
-import { loadConfiguration } from "./config";
+import { loadConfig } from "./config";
+import { Context } from "../types";
+
 const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
 type PreHandlerWithType = { type: string; actions: PreActionHandler[] };
 type HandlerWithType = { type: string; actions: MainActionHandler[] };
@@ -24,15 +26,20 @@ type WildCardHandlerWithType = { type: string; actions: WildCardHandler[] };
 type PostHandlerWithType = { type: string; actions: PostActionHandler[] };
 type AllHandlersWithTypes = PreHandlerWithType | HandlerWithType | PostHandlerWithType;
 type AllHandlers = PreActionHandler | MainActionHandler | PostActionHandler;
-export async function bindEvents(eventContext: Context) {
-  const runtime = Runtime.getState();
-  runtime.latestEventContext = eventContext;
-  runtime.botConfig = await loadConfiguration(eventContext);
 
-  runtime.adapters = createAdapters(runtime.botConfig);
+export async function bindEvents(eventContext: ProbotContext) {
+  const runtime = Runtime.getState();
+
+  const botConfig = await loadConfig(eventContext);
+  const context: Context = {
+    event: eventContext,
+    config: botConfig,
+  };
+
+  runtime.adapters = createAdapters(context);
   runtime.logger = runtime.adapters.supabase.logs;
 
-  if (!runtime.botConfig.payout.privateKey) {
+  if (!context.config.payout.privateKey) {
     runtime.logger.warn("No EVM private key found");
   }
 
@@ -40,7 +47,7 @@ export async function bindEvents(eventContext: Context) {
   const allowedEvents = Object.values(GitHubEvent) as string[];
   const eventName = payload?.action ? `${eventContext.name}.${payload?.action}` : eventContext.name; // some events wont have actions as this grows
   if (eventName === GitHubEvent.PUSH_EVENT) {
-    await validateConfigChange();
+    await validateConfigChange(context);
   }
 
   if (!runtime.logger) {
@@ -69,7 +76,7 @@ export async function bindEvents(eventContext: Context) {
     }
 
     // Check if we should skip the event
-    const should = shouldSkip();
+    const should = shouldSkip(context);
     if (should.stop) {
       return runtime.logger.info("Skipping the event.", { reason: should.reason });
     }
@@ -99,7 +106,7 @@ export async function bindEvents(eventContext: Context) {
       handlers: "${functionNames.join(", ")}"`
     );
 
-    await logAnyReturnFromHandlers(handlerWithType);
+    await logAnyReturnFromHandlers(context, handlerWithType);
   }
 
   // Skip wildcard handlers for installation event and push event
@@ -110,20 +117,20 @@ export async function bindEvents(eventContext: Context) {
     const functionNames = wildcardProcessors.map((action) => action?.name);
     runtime.logger.info(`Running wildcard handlers: "${functionNames.join(", ")}"`);
     const wildCardHandlerType: WildCardHandlerWithType = { type: "wildcard", actions: wildcardProcessors };
-    await logAnyReturnFromHandlers(wildCardHandlerType);
+    await logAnyReturnFromHandlers(context, wildCardHandlerType);
   }
 }
 
-async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
+async function logAnyReturnFromHandlers(context: Context, handlerType: AllHandlersWithTypes) {
   for (const action of handlerType.actions) {
-    const renderCatchAllWithContext = createRenderCatchAll(handlerType, action);
+    const renderCatchAllWithContext = createRenderCatchAll(context, handlerType, action);
     try {
       // checkHandler(action);
-      const response = await action();
+      const response = await action(context);
 
       if (handlerType.type === "main") {
         // only log main handler results
-        await renderMainActionOutput(response, action);
+        await renderMainActionOutput(context, response, action);
       } else {
         const runtime = Runtime.getState();
         runtime.logger.ok("Completed", { action: action.name, type: handlerType.type });
@@ -134,9 +141,9 @@ async function logAnyReturnFromHandlers(handlerType: AllHandlersWithTypes) {
   }
 }
 
-async function renderMainActionOutput(response: string | void | LogReturn, action: AllHandlers) {
+async function renderMainActionOutput(context: Context, response: string | void | LogReturn, action: AllHandlers) {
   const runtime = Runtime.getState();
-  const payload = runtime.latestEventContext.payload as Payload;
+  const payload = context.event.payload as Payload;
   const issueNumber = payload.issue?.number;
   if (!issueNumber) {
     throw new Error("No issue number found");
@@ -153,10 +160,10 @@ async function renderMainActionOutput(response: string | void | LogReturn, actio
       serializedComment = response.logMessage.diff;
     }
 
-    await addCommentToIssue(serializedComment, issueNumber);
+    await addCommentToIssue(context, serializedComment, issueNumber);
     // runtime.logger[response.logMessage.type as LogMessage["type"]](response.logMessage.raw, response.metadata, true);
   } else if (typeof response == "string") {
-    await addCommentToIssue(response, issueNumber);
+    await addCommentToIssue(context, response, issueNumber);
     // runtime.logger.debug(response, null, true);
   } else {
     runtime.logger.error(
@@ -167,10 +174,10 @@ async function renderMainActionOutput(response: string | void | LogReturn, actio
   }
 }
 
-function createRenderCatchAll(handlerType: AllHandlersWithTypes, activeHandler: AllHandlers) {
+function createRenderCatchAll(context: Context, handlerType: AllHandlersWithTypes, activeHandler: AllHandlers) {
   return async function renderCatchAll(report: LogReturn | Error | unknown) {
     const runtime = Runtime.getState();
-    const payload = runtime.latestEventContext.payload as Payload;
+    const payload = context.event.payload as Payload;
     const issue = payload.issue;
     if (!issue) return runtime.logger.error("Issue is null. Skipping", { issue });
 
@@ -190,9 +197,9 @@ function createRenderCatchAll(handlerType: AllHandlersWithTypes, activeHandler: 
           metadataSerialized = ["<!--", prettySerialized, "-->"].join("\n");
         }
 
-        return await addCommentToIssue([logMessage.diff, metadataSerialized].join("\n"), issue.number);
+        return await addCommentToIssue(context, [logMessage.diff, metadataSerialized].join("\n"), issue.number);
       } else {
-        return await addCommentToIssue(logMessage.diff, issue.number);
+        return await addCommentToIssue(context, logMessage.diff, issue.number);
       }
     } else if (report instanceof Error) {
       // convert error to normal object

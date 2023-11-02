@@ -12,6 +12,7 @@
  */
 
 import Runtime from "../bindings/bot-runtime";
+import { Context } from "../types";
 import { isUserAdminOrBillingManager } from "./issue";
 
 // available tokens for payouts
@@ -38,11 +39,10 @@ export function getPayoutConfigByNetworkId(evmNetworkId: number) {
   };
 }
 
-export async function hasLabelEditPermission(label: string, caller: string) {
+export async function hasLabelEditPermission(context: Context, label: string, caller: string) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
   const logger = runtime.logger;
-  const sufficientPrivileges = await isUserAdminOrBillingManager(caller, context);
+  const sufficientPrivileges = await isUserAdminOrBillingManager(context, caller);
 
   // get text before :
   const match = label.split(":");

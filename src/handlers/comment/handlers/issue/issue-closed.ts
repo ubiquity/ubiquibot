@@ -3,7 +3,7 @@ import { Logs } from "../../../../adapters/supabase";
 import Runtime from "../../../../bindings/bot-runtime";
 import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../../helpers";
 import { getLinkedPullRequests } from "../../../../helpers/parser";
-import { Comment, Issue, Payload, StateReason } from "../../../../types/payload";
+import { Comment, Issue, Payload, StateReason, Context } from "../../../../types";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { calculateQualScore } from "./calculate-quality-score";
 import { calculateQuantScore } from "./calculate-quantity-score";
@@ -16,10 +16,10 @@ const botCommandsAndHumanCommentsFilter = (comment: Comment) =>
 
 const botCommentsFilter = (comment: Comment) => comment.user.type === "Bot"; /* No Humans */
 
-export async function issueClosed() {
+export async function issueClosed(context: Context) {
   // TODO: delegate permit calculation to GitHub Action
-  const { issue, logger, payload } = preamble();
-  const issueComments = await getAllIssueComments(issue.number);
+  const { issue, logger, payload } = preamble(context);
+  const issueComments = await getAllIssueComments(context, issue.number);
   const owner = payload?.organization?.login || payload.repository.owner.login;
   if (!owner) throw logger.error("Owner is not defined");
   const repository = payload?.repository?.name;
@@ -31,12 +31,12 @@ export async function issueClosed() {
 
   // === //
 
-  await preflightChecks(issue, logger, issueComments);
+  await preflightChecks(context, issue, logger, issueComments);
 
   // DONE: calculate pull request conversation score.
   const linkedPullRequests = await getLinkedPullRequests({ owner, repository, issue: issueNumber });
   if (linkedPullRequests.length) {
-    const linkedCommentsPromises = linkedPullRequests.map((pull) => getAllIssueComments(pull.number));
+    const linkedCommentsPromises = linkedPullRequests.map((pull) => getAllIssueComments(context, pull.number));
     const linkedCommentsResolved = await Promise.all(linkedCommentsPromises);
     for (const linkedComments of linkedCommentsResolved) {
       issueComments.push(...linkedComments);
@@ -48,20 +48,20 @@ export async function issueClosed() {
   // TODO: calculate issue specification score.
   // TODO: calculate assignee score.
 
-  const issueTotals = await calculateScores(issue, contributorComments);
-  const comment = await generatePermits(issueTotals, contributorComments); // DONE: design metadata system for permit parsing
+  const issueTotals = await calculateScores(context, issue, contributorComments);
+  const comment = await generatePermits(context, issueTotals, contributorComments); // DONE: design metadata system for permit parsing
   return comment; // DONE: post the permits to the issue
 
   // console.trace({ totals: util.inspect({ totals }, { showHidden: true, depth: null }) });
 }
 
-async function preflightChecks(issue: Issue, logger: Logs, issueComments: Comment[]) {
-  const { payload, context, config } = preamble();
+async function preflightChecks(context: Context, issue: Issue, logger: Logs, issueComments: Comment[]) {
+  const { payload, config } = preamble(context);
   if (!issue) throw logger.error("Permit generation skipped because issue is undefined");
   if (issue.state_reason !== StateReason.COMPLETED)
     throw logger.info("Issue was not closed as completed. Skipping.", { issue });
   if (config.publicAccessControl.fundExternalClosedIssue) {
-    const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
+    const userHasPermission = await checkUserPermissionForRepoAndOrg(context, payload.sender.login);
     if (!userHasPermission)
       throw logger.warn("Permit generation disabled because this issue has been closed by an external contributor.");
   }
@@ -88,26 +88,25 @@ function checkIfPermitsAlreadyPosted(botComments: Comment[], logger: Logs) {
   });
 }
 
-async function calculateScores(issue: Issue, contributorComments: Comment[]) {
+async function calculateScores(context: Context, issue: Issue, contributorComments: Comment[]) {
   const qualityScore = await calculateQualScore(issue, contributorComments); // the issue specification is not included in this array scoring, it is only for the other contributor comments
   const qualityScoresWithMetaData = qualityScore.relevanceScores.map((score, index) => ({
     commentId: contributorComments[index].id,
     userId: contributorComments[index].user.id,
     score,
   }));
-  const quantityScore = await calculateQuantScore(issue, contributorComments);
+  const quantityScore = await calculateQuantScore(context, issue, contributorComments);
 
   const totals = applyQualityScoreToQuantityScore(qualityScoresWithMetaData, quantityScore);
   return totals;
 }
 
-function preamble() {
+function preamble(context: Context) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
   const logger = runtime.logger;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const issue = payload.issue as Issue;
-  const config = runtime.botConfig;
+  const config = context.config;
   if (!issue) throw runtime.logger.error("Issue is not defined");
   return { issue, payload, context, runtime, logger, config };
 }

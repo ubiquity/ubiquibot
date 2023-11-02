@@ -1,19 +1,21 @@
-import Runtime from "../../bindings/bot-runtime";
 import { calculateLabelValue } from "../../helpers";
-import { Issue } from "../../types";
+import { Issue, Context } from "../../types";
 
 //  Checks the issue whether it's an open task for public self assignment
-export function taskPaymentMetaData(issue: Issue): {
+export function taskPaymentMetaData(
+  context: Context,
+  issue: Issue
+): {
   eligibleForPayment: boolean;
   timeLabel: string | null;
   priorityLabel: string | null;
   priceLabel: string | null;
 } {
-  const config = Runtime.getState().botConfig;
+  const { price } = context.config;
   const labels = issue.labels;
 
-  const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
-  const priorityLabels = config.price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
+  const timeLabels = price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
+  const priorityLabels = price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
 
   const isTask = timeLabels.length > 0 && priorityLabels.length > 0;
 

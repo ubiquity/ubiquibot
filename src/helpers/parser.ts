@@ -2,6 +2,7 @@ import axios from "axios";
 import { HTMLElement, parse } from "node-html-parser";
 import { getPullByNumber } from "./issue";
 import Runtime from "../bindings/bot-runtime";
+import { Context } from "../types";
 
 interface GetLinkedParams {
   owner: string;
@@ -72,9 +73,7 @@ export async function getLinkedPullRequests({
   return collection;
 }
 
-export async function getLatestMergedPullRequest(pulls: GetLinkedResults[]) {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
+export async function getLatestMergedPullRequest(context: Context, pulls: GetLinkedResults[]) {
   let latestMergedPullRequest;
 
   for (const pullRequest of pulls) {

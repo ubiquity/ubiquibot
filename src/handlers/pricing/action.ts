@@ -1,12 +1,12 @@
 import Runtime from "../../bindings/bot-runtime";
 import { calculateLabelValue, clearAllPriceLabelsOnIssue } from "../../helpers";
-import { Label } from "../../types";
+import { Label, Context } from "../../types";
 
-export async function handleParentIssue(labels: Label[]) {
+export async function handleParentIssue(context: Context, labels: Label[]) {
   const runtime = Runtime.getState();
   const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));
   if (issuePrices.length) {
-    await clearAllPriceLabelsOnIssue();
+    await clearAllPriceLabelsOnIssue(context);
   }
   throw runtime.logger.warn("Pricing is disabled on parent issues.");
 }

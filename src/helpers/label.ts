@@ -1,21 +1,19 @@
-import { Context } from "probot";
 import Runtime from "../bindings/bot-runtime";
 import { labelExists } from "../handlers/pricing/pricing-label";
 import { calculateTaskPrice } from "../handlers/shared/pricing";
 import { calculateLabelValue } from "../helpers";
-import { Label, Payload } from "../types";
+import { Label, Payload, Context } from "../types";
 import { deleteLabel } from "./issue";
 
 // cspell:disable
 const COLORS = { default: "ededed", price: "1f883d" };
 // cspell:enable
 
-export async function listLabelsForRepo(): Promise<Label[]> {
+export async function listLabelsForRepo(context: Context): Promise<Label[]> {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
 
-  const res = await context.octokit.rest.issues.listLabelsForRepo({
+  const res = await context.event.octokit.rest.issues.listLabelsForRepo({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     per_page: 100,
@@ -29,11 +27,13 @@ export async function listLabelsForRepo(): Promise<Label[]> {
   throw runtime.logger.error("Failed to fetch lists of labels", { status: res.status });
 }
 
-export async function createLabel(name: string, labelType = "default" as keyof typeof COLORS): Promise<void> {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
-  await context.octokit.rest.issues.createLabel({
+export async function createLabel(
+  context: Context,
+  name: string,
+  labelType = "default" as keyof typeof COLORS
+): Promise<void> {
+  const payload = context.event.payload as Payload;
+  await context.event.octokit.rest.issues.createLabel({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     name,
@@ -43,15 +43,15 @@ export async function createLabel(name: string, labelType = "default" as keyof t
 
 // Function to update labels based on the base rate difference
 export async function updateLabelsFromBaseRate(
+  context: Context,
   owner: string,
   repo: string,
-  context: Context,
   labels: Label[],
   previousBaseRate: number
 ) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const config = runtime.botConfig;
+  const config = context.config;
 
   const newLabels: string[] = [];
   const previousLabels: string[] = [];
@@ -59,6 +59,7 @@ export async function updateLabelsFromBaseRate(
   for (const timeLabel of config.price.timeLabels) {
     for (const priorityLabel of config.price.priorityLabels) {
       const targetPrice = calculateTaskPrice(
+        context,
         calculateLabelValue(timeLabel),
         calculateLabelValue(priorityLabel),
         config.price.basePriceMultiplier
@@ -67,6 +68,7 @@ export async function updateLabelsFromBaseRate(
       newLabels.push(targetPriceLabel);
 
       const previousTargetPrice = calculateTaskPrice(
+        context,
         calculateLabelValue(timeLabel),
         calculateLabelValue(priorityLabel),
         previousBaseRate
@@ -89,15 +91,15 @@ export async function updateLabelsFromBaseRate(
       const labelData = labels.find((obj) => obj["name"] === label) as Label;
       const index = uniquePreviousLabels.findIndex((obj) => obj === label);
 
-      const exist = await labelExists(uniqueNewLabels[index]);
+      const exist = await labelExists(context, uniqueNewLabels[index]);
       if (exist) {
         // we have to delete first
         logger.debug("Label already exists, deleting it", { label });
-        await deleteLabel(uniqueNewLabels[index]);
+        await deleteLabel(context, uniqueNewLabels[index]);
       }
 
       // we can update safely
-      await context.octokit.issues.updateLabel({
+      await context.event.octokit.issues.updateLabel({
         owner,
         repo,
         name: label,

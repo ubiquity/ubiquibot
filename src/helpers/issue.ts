@@ -1,4 +1,3 @@
-import { Context } from "probot";
 import {
   AssignEvent,
   Comment,
@@ -11,16 +10,14 @@ import {
 import { checkRateLimitGit } from "../utils";
 import Runtime from "../bindings/bot-runtime";
 import { LogReturn } from "../adapters/supabase";
-import { Payload } from "../types/payload";
+import { Payload, Context } from "../types";
 
 type PromiseType<T> = T extends Promise<infer U> ? U : never;
 
-async function getAllIssueEvents() {
-  type Event = PromiseType<ReturnType<typeof context.octokit.issues.listEvents>>["data"][0];
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
+async function getAllIssueEvents(context: Context) {
+  type Event = PromiseType<ReturnType<typeof context.event.octokit.issues.listEvents>>["data"][0];
 
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   if (!payload.issue) return;
 
   let shouldFetch = true;
@@ -34,7 +31,7 @@ async function getAllIssueEvents() {
     const repo = payload.repository.name;
     const owner = payload.repository.owner.login;
 
-    const response = await context.octokit.issues.listEvents({
+    const response = await context.event.octokit.issues.listEvents({
       owner: owner,
       repo: repo,
       issue_number: payload.issue.number,
@@ -55,17 +52,14 @@ async function getAllIssueEvents() {
   return events;
 }
 
-export async function getAllLabeledEvents() {
-  const events = await getAllIssueEvents();
+export async function getAllLabeledEvents(context: Context) {
+  const events = await getAllIssueEvents(context);
   if (!events) return null;
   return events.filter((event) => event.event === "labeled");
 }
 
-export async function clearAllPriceLabelsOnIssue() {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-
-  const payload = context.payload as Payload;
+export async function clearAllPriceLabelsOnIssue(context: Context) {
+  const payload = context.event.payload as Payload;
   if (!payload.issue) return;
 
   const labels = payload.issue.labels;
@@ -74,7 +68,7 @@ export async function clearAllPriceLabelsOnIssue() {
   if (!issuePrices.length) return;
 
   // try {
-  await context.octokit.issues.removeLabel({
+  await context.event.octokit.issues.removeLabel({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     issue_number: payload.issue.number,
@@ -85,17 +79,16 @@ export async function clearAllPriceLabelsOnIssue() {
   // }
 }
 
-export async function addLabelToIssue(labelName: string) {
+export async function addLabelToIssue(context: Context, labelName: string) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
 
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   if (!payload.issue) {
     throw runtime.logger.error("Issue object is null");
   }
 
   try {
-    await context.octokit.issues.addLabels({
+    await context.event.octokit.issues.addLabels({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: payload.issue.number,
@@ -107,16 +100,15 @@ export async function addLabelToIssue(labelName: string) {
 }
 
 async function listIssuesAndPullsForRepo(
+  context: Context,
   state: "open" | "closed" | "all" = "open",
   per_page = 100,
   page = 1,
   sort: "created" | "updated" | "comments" = "created",
   direction: "desc" | "asc" = "desc"
 ) {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
-  const response = await context.octokit.issues.listForRepo({
+  const payload = context.event.payload as Payload;
+  const response = await context.event.octokit.issues.listForRepo({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     state,
@@ -135,13 +127,13 @@ async function listIssuesAndPullsForRepo(
   }
 }
 
-export async function listAllIssuesAndPullsForRepo(state: "open" | "closed" | "all") {
+export async function listAllIssuesAndPullsForRepo(context: Context, state: "open" | "closed" | "all") {
   const issuesArr = [] as Issue[];
   const perPage = 100;
   let fetchDone = false;
   let curPage = 1;
   while (!fetchDone) {
-    const issues = (await listIssuesAndPullsForRepo(state, perPage, curPage)) as Issue[];
+    const issues = (await listIssuesAndPullsForRepo(context, state, perPage, curPage)) as Issue[];
 
     // push the objects to array
     issuesArr.push(...issues);
@@ -153,7 +145,7 @@ export async function listAllIssuesAndPullsForRepo(state: "open" | "closed" | "a
   return issuesArr;
 }
 
-export async function addCommentToIssue(message: HandlerReturnValuesNoVoid, issueNumber: number) {
+export async function addCommentToIssue(context: Context, message: HandlerReturnValuesNoVoid, issueNumber: number) {
   let comment = message as string;
   const runtime = Runtime.getState();
   if (message instanceof LogReturn) {
@@ -165,11 +157,10 @@ export async function addCommentToIssue(message: HandlerReturnValuesNoVoid, issu
     const metadataSerializedAsComment = `<!-- ${metadataSerialized} -->`;
     comment = comment.concat(metadataSerializedAsComment);
   }
-  const context = runtime.latestEventContext;
 
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   try {
-    await context.octokit.issues.createComment({
+    await context.event.octokit.issues.createComment({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: issueNumber,
@@ -180,28 +171,28 @@ export async function addCommentToIssue(message: HandlerReturnValuesNoVoid, issu
   }
 }
 
-export async function upsertLastCommentToIssue(issue_number: number, commentBody: string) {
+export async function upsertLastCommentToIssue(context: Context, issue_number: number, commentBody: string) {
   const runtime = Runtime.getState();
 
   try {
-    const comments = await getAllIssueComments(issue_number);
+    const comments = await getAllIssueComments(context, issue_number);
 
     if (comments.length > 0 && comments[comments.length - 1].body !== commentBody)
-      await addCommentToIssue(commentBody, issue_number);
+      await addCommentToIssue(context, commentBody, issue_number);
   } catch (e: unknown) {
     runtime.logger.debug("Upserting last comment failed!", e);
   }
 }
 
 export async function getIssueDescription(
+  context: Context,
   issueNumber: number,
   format: "raw" | "html" | "text" = "raw"
 ): Promise<string> {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
 
-  const payload = context.payload as Payload;
-  const response = await context.octokit.rest.issues.get({
+  const payload = context.event.payload as Payload;
+  const response = await context.event.octokit.rest.issues.get({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     issue_number: issueNumber,
@@ -228,18 +219,17 @@ export async function getIssueDescription(
 }
 
 export async function getAllIssueComments(
+  context: Context,
   issueNumber: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ): Promise<Comment[]> {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const result: Comment[] = [];
   let shouldFetch = true;
   let page_number = 1;
   try {
     while (shouldFetch) {
-      const response = await context.octokit.rest.issues.listComments({
+      const response = await context.event.octokit.rest.issues.listComments({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
         issue_number: issueNumber,
@@ -269,16 +259,14 @@ export async function getAllIssueComments(
   return result;
 }
 
-export async function getAllIssueAssignEvents(issueNumber: number): Promise<AssignEvent[]> {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
+export async function getAllIssueAssignEvents(context: Context, issueNumber: number): Promise<AssignEvent[]> {
+  const payload = context.event.payload as Payload;
   const result: AssignEvent[] = [];
   let shouldFetch = true;
   let page_number = 1;
   try {
     while (shouldFetch) {
-      const response = await context.octokit.rest.issues.listEvents({
+      const response = await context.event.octokit.rest.issues.listEvents({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
         issue_number: issueNumber,
@@ -303,20 +291,20 @@ export async function getAllIssueAssignEvents(issueNumber: number): Promise<Assi
   return result.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
 }
 
-export async function checkUserPermissionForRepoAndOrg(username: string, context: Context): Promise<boolean> {
-  const permissionForRepo = await checkUserPermissionForRepo(username, context);
-  const permissionForOrg = await checkUserPermissionForOrg(username, context);
-  const userPermission = await isUserAdminOrBillingManager(username, context);
+export async function checkUserPermissionForRepoAndOrg(context: Context, username: string): Promise<boolean> {
+  const permissionForRepo = await checkUserPermissionForRepo(context, username);
+  const permissionForOrg = await checkUserPermissionForOrg(context, username);
+  const userPermission = await isUserAdminOrBillingManager(context, username);
 
   return permissionForOrg || permissionForRepo || userPermission === "admin";
 }
 
-async function checkUserPermissionForRepo(username: string, context: Context): Promise<boolean> {
+async function checkUserPermissionForRepo(context: Context, username: string): Promise<boolean> {
   const runtime = Runtime.getState();
 
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   try {
-    const res = await context.octokit.rest.repos.checkCollaborator({
+    const res = await context.event.octokit.rest.repos.checkCollaborator({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       username,
@@ -329,14 +317,14 @@ async function checkUserPermissionForRepo(username: string, context: Context): P
   }
 }
 
-async function checkUserPermissionForOrg(username: string, context: Context): Promise<boolean> {
+async function checkUserPermissionForOrg(context: Context, username: string): Promise<boolean> {
   const runtime = Runtime.getState();
 
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   if (!payload.organization) return false;
 
   try {
-    await context.octokit.rest.orgs.checkMembershipForUser({
+    await context.event.octokit.rest.orgs.checkMembershipForUser({
       org: payload.organization.login,
       username,
     });
@@ -349,10 +337,10 @@ async function checkUserPermissionForOrg(username: string, context: Context): Pr
 }
 
 export async function isUserAdminOrBillingManager(
-  username: string,
-  context: Context
+  context: Context,
+  username: string
 ): Promise<"admin" | "billing_manager" | false> {
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   const isAdmin = await checkIfIsAdmin();
   if (isAdmin) return "admin";
 
@@ -362,7 +350,7 @@ export async function isUserAdminOrBillingManager(
   return false;
 
   async function checkIfIsAdmin() {
-    const response = await context.octokit.rest.repos.getCollaboratorPermissionLevel({
+    const response = await context.event.octokit.rest.repos.getCollaboratorPermissionLevel({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       username,
@@ -378,7 +366,7 @@ export async function isUserAdminOrBillingManager(
     const runtime = Runtime.getState();
 
     if (!payload.organization) throw runtime.logger.error(`No organization found in payload!`);
-    const { data: membership } = await context.octokit.rest.orgs.getMembershipForUser({
+    const { data: membership } = await context.event.octokit.rest.orgs.getMembershipForUser({
       org: payload.organization.login,
       username: payload.repository.owner.login,
     });
@@ -392,13 +380,12 @@ export async function isUserAdminOrBillingManager(
   }
 }
 
-export async function addAssignees(issue: number, assignees: string[]) {
+export async function addAssignees(context: Context, issue: number, assignees: string[]) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
 
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   try {
-    await context.octokit.rest.issues.addAssignees({
+    await context.event.octokit.rest.issues.addAssignees({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: issue,
@@ -409,18 +396,17 @@ export async function addAssignees(issue: number, assignees: string[]) {
   }
 }
 
-export async function deleteLabel(label: string) {
+export async function deleteLabel(context: Context, label: string) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
 
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   try {
-    const response = await context.octokit.rest.search.issuesAndPullRequests({
+    const response = await context.event.octokit.rest.search.issuesAndPullRequests({
       q: `repo:${payload.repository.owner.login}/${payload.repository.name} label:"${label}" state:open`,
     });
     if (response.data.items.length === 0) {
       //remove label
-      await context.octokit.rest.issues.deleteLabel({
+      await context.event.octokit.rest.issues.deleteLabel({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
         name: label,
@@ -431,18 +417,17 @@ export async function deleteLabel(label: string) {
   }
 }
 
-export async function removeLabel(name: string) {
+export async function removeLabel(context: Context, name: string) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
 
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   if (!payload.issue) {
     runtime.logger.debug("Invalid issue object");
     return;
   }
 
   try {
-    await context.octokit.issues.removeLabel({
+    await context.event.octokit.issues.removeLabel({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: payload.issue.number,
@@ -454,7 +439,7 @@ export async function removeLabel(name: string) {
 }
 
 export async function getAllPullRequests(context: Context, state: "open" | "closed" | "all" = "open") {
-  type Pulls = PromiseType<ReturnType<typeof context.octokit.rest.pulls.list>>["data"][0];
+  type Pulls = PromiseType<ReturnType<typeof context.event.octokit.rest.pulls.list>>["data"][0];
   const prArr = [] as Pulls[];
   let fetchDone = false;
   const perPage = 100;
@@ -477,8 +462,8 @@ async function getPullRequests(
   per_page: number,
   page: number
 ) {
-  const payload = context.payload as Payload;
-  const { data: pulls } = await context.octokit.rest.pulls.list({
+  const payload = context.event.payload as Payload;
+  const { data: pulls } = await context.event.octokit.rest.pulls.list({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     state,
@@ -488,12 +473,11 @@ async function getPullRequests(
   return pulls;
 }
 
-export async function closePullRequest(pull_number: number) {
+export async function closePullRequest(context: Context, pull_number: number) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   try {
-    await context.octokit.rest.pulls.update({
+    await context.event.octokit.rest.pulls.update({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       pull_number,
@@ -509,7 +493,7 @@ export async function getAllPullRequestReviews(
   pull_number: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ) {
-  type Reviews = PromiseType<ReturnType<typeof context.octokit.rest.pulls.listReviews>>["data"][0];
+  type Reviews = PromiseType<ReturnType<typeof context.event.octokit.rest.pulls.listReviews>>["data"][0];
   const prArr = [] as Reviews[];
   let fetchDone = false;
   const perPage = 100;
@@ -535,9 +519,9 @@ async function getPullRequestReviews(
 ) {
   const runtime = Runtime.getState();
 
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   try {
-    const { data: reviews } = await context.octokit.rest.pulls.listReviews({
+    const { data: reviews } = await context.event.octokit.rest.pulls.listReviews({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       pull_number,
@@ -558,7 +542,7 @@ export async function getReviewRequests(context: Context, pull_number: number, o
   const runtime = Runtime.getState();
 
   try {
-    const response = await context.octokit.pulls.listRequestedReviewers({
+    const response = await context.event.octokit.pulls.listRequestedReviewers({
       owner: owner,
       repo: repo,
       pull_number: pull_number,
@@ -573,9 +557,9 @@ export async function getReviewRequests(context: Context, pull_number: number, o
 export async function getIssueByNumber(context: Context, issueNumber: number) {
   const runtime = Runtime.getState();
 
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as Payload;
   try {
-    const { data: issue } = await context.octokit.rest.issues.get({
+    const { data: issue } = await context.event.octokit.rest.issues.get({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: issueNumber,
@@ -590,8 +574,8 @@ export async function getIssueByNumber(context: Context, issueNumber: number) {
 export async function getPullByNumber(context: Context, pull: number) {
   // const runtime = Runtime.getState();
 
-  const payload = context.payload as Payload;
-  const response = await context.octokit.rest.pulls.get({
+  const payload = context.event.payload as Payload;
+  const response = await context.event.octokit.rest.pulls.get({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     pull_number: pull,
@@ -600,16 +584,14 @@ export async function getPullByNumber(context: Context, pull: number) {
 }
 
 // Get issues assigned to a username
-export async function getAssignedIssues(username: string) {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  type Issues = PromiseType<ReturnType<typeof context.octokit.issues.listForRepo>>["data"][0];
+export async function getAssignedIssues(context: Context, username: string) {
+  type Issues = PromiseType<ReturnType<typeof context.event.octokit.issues.listForRepo>>["data"][0];
   const issuesArr = [] as Issues[];
   let fetchDone = false;
   const perPage = 100;
   let curPage = 1;
   while (!fetchDone) {
-    const issues = await listIssuesAndPullsForRepo(IssueType.OPEN, perPage, curPage);
+    const issues = await listIssuesAndPullsForRepo(context, IssueType.OPEN, perPage, curPage);
 
     // push the objects to array
     issuesArr.push(...issues);
@@ -626,8 +608,8 @@ export async function getAssignedIssues(username: string) {
   return assigned_issues;
 }
 
-export async function getOpenedPullRequestsForAnIssue(issueNumber: number, userName: string) {
-  const pulls = await getOpenedPullRequests(userName);
+export async function getOpenedPullRequestsForAnIssue(context: Context, issueNumber: number, userName: string) {
+  const pulls = await getOpenedPullRequests(context, userName);
 
   return pulls.filter((pull) => {
     if (!pull.body) return false;
@@ -641,19 +623,16 @@ export async function getOpenedPullRequestsForAnIssue(issueNumber: number, userN
   });
 }
 
-async function getOpenedPullRequests(username: string) {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
+async function getOpenedPullRequests(context: Context, username: string) {
   const prs = await getAllPullRequests(context, "open");
   return prs.filter((pr) => !pr.draft && (pr.user?.login === username || !username));
 }
 
-export async function getCommitsOnPullRequest(pullNumber: number) {
+export async function getCommitsOnPullRequest(context: Context, pullNumber: number) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-  const payload = runtime.latestEventContext.payload as Payload;
+  const payload = context.event.payload as Payload;
   try {
-    const { data: commits } = await context.octokit.rest.pulls.listCommits({
+    const { data: commits } = await context.event.octokit.rest.pulls.listCommits({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       pull_number: pullNumber,
@@ -665,15 +644,12 @@ export async function getCommitsOnPullRequest(pullNumber: number) {
   }
 }
 
-export async function getAvailableOpenedPullRequests(username: string) {
-  const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
-
-  const unassignConfig = runtime.botConfig.unassign;
+export async function getAvailableOpenedPullRequests(context: Context, username: string) {
+  const unassignConfig = context.config.unassign;
   const { reviewDelayTolerance } = unassignConfig;
   if (!reviewDelayTolerance) return [];
 
-  const openedPullRequests = await getOpenedPullRequests(username);
+  const openedPullRequests = await getOpenedPullRequests(context, username);
   const result = [] as typeof openedPullRequests;
 
   for (let i = 0; i < openedPullRequests.length; i++) {
@@ -699,9 +675,8 @@ export async function getAvailableOpenedPullRequests(username: string) {
 }
 
 // Strips out all links from the body of an issue or pull request and fetches the conversational context from each linked issue or pull request
-export async function getAllLinkedIssuesAndPullsInBody(issueNumber: number) {
+export async function getAllLinkedIssuesAndPullsInBody(context: Context, issueNumber: number) {
   const runtime = Runtime.getState();
-  const context = runtime.latestEventContext;
   const logger = runtime.logger;
 
   const issue = await getIssueByNumber(context, issueNumber);
@@ -751,8 +726,8 @@ export async function getAllLinkedIssuesAndPullsInBody(issueNumber: number) {
             login: "system",
             body: `=============== Pull Request #${pr.number}: ${pr.title} + ===============\n ${pr.body}}`,
           });
-          const prComments = await getAllIssueComments(linkedPrs[i]);
-          const prCommentsRaw = await getAllIssueComments(linkedPrs[i], "raw");
+          const prComments = await getAllIssueComments(context, linkedPrs[i]);
+          const prCommentsRaw = await getAllIssueComments(context, linkedPrs[i], "raw");
           prComments.forEach(async (comment, i) => {
             if (
               comment.user.type == UserType.User ||
@@ -776,8 +751,8 @@ export async function getAllLinkedIssuesAndPullsInBody(issueNumber: number) {
             login: "system",
             body: `=============== Issue #${issue.number}: ${issue.title} + ===============\n ${issue.body} `,
           });
-          const issueComments = await getAllIssueComments(linkedIssues[i]);
-          const issueCommentsRaw = await getAllIssueComments(linkedIssues[i], "raw");
+          const issueComments = await getAllIssueComments(context, linkedIssues[i]);
+          const issueCommentsRaw = await getAllIssueComments(context, linkedIssues[i], "raw");
           issueComments.forEach(async (comment, i) => {
             if (
               comment.user.type == UserType.User ||
