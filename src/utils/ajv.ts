@@ -1,9 +1,12 @@
-import Ajv, { Schema } from "ajv";
+import Ajv, { Schema, ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
 
 export const ajv = addFormats(
   new Ajv({
-    strict: false,
+    strict: true,
+    removeAdditional: true,
+    useDefaults: true,
+    allErrors: true,
   }),
   {
     formats: [
@@ -39,10 +42,15 @@ function getAdditionalProperties() {
     .map((error) => error.params.additionalProperty);
 }
 
-export function validateTypes(schema: Schema, data) {
+export function validateTypes(schema: Schema | ValidateFunction, data: unknown) {
   // : { valid: true; error: undefined } | { valid: false; error: string }
   // try {
-  const valid = ajv.validate(schema, data);
+  let valid: boolean;
+  if (schema instanceof Function) {
+    valid = schema(data);
+  } else {
+    valid = ajv.validate(schema, data);
+  }
 
   if (!valid) {
     const additionalProperties = getAdditionalProperties();

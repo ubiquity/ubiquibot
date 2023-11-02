@@ -4,19 +4,19 @@ import { Context } from "probot";
 import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
 import { upsertLastCommentToIssue } from "../helpers/issue";
-import { Payload, PublicConfigurationValues } from "../types";
-import { AllConfigurationTypes, AllConfigurationValues, PublicConfigurationTypes } from "../types/configuration-types";
+import { Payload, BotConfigSchema, BotConfig } from "../types";
 import defaultConfiguration from "../ubiquibot-config-default";
 import { validateTypes } from "./ajv";
-import util from "util";
+import { z } from "zod";
+
 const UBIQUIBOT_CONFIG_REPOSITORY = "ubiquibot-config";
 const UBIQUIBOT_CONFIG_FULL_PATH = ".github/ubiquibot-config.yml";
 const KEY_PREFIX = "HSK_";
 
-export async function generateConfiguration(context: Context): Promise<AllConfigurationTypes> {
+export async function generateConfiguration(context: Context): Promise<BotConfig> {
   const payload = context.payload as Payload;
 
-  const organizationConfiguration: AllConfigurationTypes = parseYaml(
+  const organizationConfiguration = parseYaml(
     await download({
       context,
       repository: UBIQUIBOT_CONFIG_REPOSITORY,
@@ -24,7 +24,7 @@ export async function generateConfiguration(context: Context): Promise<AllConfig
     })
   );
 
-  const repositoryConfiguration: PublicConfigurationTypes = parseYaml(
+  const repositoryConfiguration = parseYaml(
     await download({
       context,
       repository: payload.repository.name,
@@ -32,45 +32,46 @@ export async function generateConfiguration(context: Context): Promise<AllConfig
     })
   );
 
+  let orgConfig: BotConfig | undefined;
   if (organizationConfiguration) {
-    // console.dir({
-    // AllConfigurationValues: ,
-    // organizationConfiguration,
-    // });
     console.dir(organizationConfiguration, { depth: null, colors: true });
-    const { valid, error } = validateTypes(AllConfigurationValues, organizationConfiguration);
-    if (!valid) {
-      const issue = payload.issue?.number;
-      const err = new Error(error?.toString());
-      if (issue) await upsertLastCommentToIssue(issue, err.message);
-      throw err;
+    const result = BotConfigSchema.safeParse(organizationConfiguration);
+    if (!result.success) {
+      const errorsWithoutStrict = result.error.issues.filter(
+        (issue) => issue.code !== z.ZodIssueCode.unrecognized_keys
+      );
+      if (errorsWithoutStrict.length > 0) {
+        const err = new Error(result.error.toString());
+        throw err;
+      } else {
+        // make comment
+      }
     }
+    orgConfig = result.data;
   }
+
+  let repoConfig: BotConfig | undefined;
   if (repositoryConfiguration) {
-    console.dir(PublicConfigurationValues, { depth: null, colors: true });
-    const { valid, error } = validateTypes(PublicConfigurationValues, repositoryConfiguration);
-    if (!valid) {
-      const issue = payload.issue?.number;
-      const err = new Error(error?.toString());
-      if (issue) await upsertLastCommentToIssue(issue, err.message);
-      throw err;
+    console.dir(repositoryConfiguration, { depth: null, colors: true });
+    const result = BotConfigSchema.safeParse(repositoryConfiguration);
+    if (!result.success) {
+      // TODO
+    } else {
+      repoConfig = result.data;
     }
   }
 
-  const keys = await getKeys(organizationConfiguration); // only decrypt keys from org config
-  const merged = merge(keys, defaultConfiguration, organizationConfiguration, repositoryConfiguration);
-  return merged;
-}
-
-async function getKeys(configuration: AllConfigurationTypes | null) {
-  try {
-    if (configuration?.keys.evmPrivateEncrypted) {
-      return await decryptKeys(configuration.keys.evmPrivateEncrypted);
-    }
-  } catch (error) {
-    console.warn("Failed to get keys", { error });
+  const merged = merge({}, orgConfig, repoConfig);
+  const result = BotConfigSchema.safeParse(merged);
+  if (!result.success) {
+    // TODO
+    /*const issue = payload.issue?.number;
+    const err = new Error(error?.toString());
+    if (issue) await upsertLastCommentToIssue(issue, err.message);
+    throw err;*/
+  } else {
+    return result.data;
   }
-  return { private: null, public: null };
 }
 
 // async function fetchConfigurations(context: Context, type: "org" | "repo") {
@@ -94,15 +95,27 @@ async function getKeys(configuration: AllConfigurationTypes | null) {
 //   return data as unknown as string; // not sure why the types are wrong but this is definitely returning a string
 // }
 
-async function download({ context, repository, owner }: { context: Context; repository: string; owner: string }) {
+async function download({
+  context,
+  repository,
+  owner,
+}: {
+  context: Context;
+  repository: string;
+  owner: string;
+}): Promise<string | null> {
   if (!repository || !owner) throw new Error("Repo or owner is not defined");
-  const { data } = await context.octokit.rest.repos.getContent({
-    owner,
-    repo: repository,
-    path: UBIQUIBOT_CONFIG_FULL_PATH,
-    mediaType: { format: "raw" },
-  });
-  return data as unknown as string; // not sure why the types are wrong but this is definitely returning a string
+  try {
+    const { data } = await context.octokit.rest.repos.getContent({
+      owner,
+      repo: repository,
+      path: UBIQUIBOT_CONFIG_FULL_PATH,
+      mediaType: { format: "raw" },
+    });
+    return data as unknown as string; // this will be a string if media format is raw
+  } catch (err) {
+    return null;
+  }
 }
 
 export function parseYaml(data: null | string) {
@@ -143,6 +156,7 @@ async function decryptKeys(cipherText: string) {
   _private = walletPrivateKey?.replace(KEY_PREFIX, "");
   return { private: _private, public: _public };
 }
+
 async function getScalarKey(X25519_PRIVATE_KEY: string) {
   await sodium.ready;
   const binPriv = sodium.from_base64(X25519_PRIVATE_KEY, sodium.base64_variants.URLSAFE_NO_PADDING);
