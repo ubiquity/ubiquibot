@@ -1,7 +1,7 @@
 import Ajv, { Schema } from "ajv";
 import addFormats from "ajv-formats";
 
-export const ajv = addFormats(new Ajv(), {
+export const ajv = addFormats(new Ajv({ allErrors: true }), {
   formats: [
     "date",
     "time",
@@ -34,20 +34,26 @@ function getAdditionalProperties() {
     .map((error) => error.params.additionalProperty);
 }
 
+function formatErrors(errors, additionalProperties) {
+  const errorTexts = errors.map((error) => ajv.errorsText([error]));
+  const additionalPropsText =
+    additionalProperties?.length > 0
+      ? `data must NOT have additional properties: ${additionalProperties.join(", ")}`
+      : "";
+  return [...errorTexts, additionalPropsText].filter(Boolean);
+}
+
 export function validate(
   scheme: string | Schema,
   data: unknown
-): { valid: true; error: undefined } | { valid: false; error: string } {
-  const valid = ajv.validate(scheme, data);
-  if (!valid) {
+): { valid: true; error: undefined } | { valid: false; error: string[] } {
+  ajv.validate(scheme, data);
+  const errors = ajv.errors;
+  if (errors) {
     const additionalProperties = getAdditionalProperties();
     return {
       valid: false,
-      error: `${ajv.errorsText()}. ${
-        additionalProperties && additionalProperties.length > 0
-          ? `Unnecessary properties: ${additionalProperties.join(", ")}`
-          : null
-      }`,
+      error: formatErrors(errors, additionalProperties),
     };
   }
   return { valid: true, error: undefined };
