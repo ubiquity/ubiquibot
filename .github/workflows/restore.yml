@@ -1,0 +1,33 @@
+name: Database restore
+
+on:
+  workflow_dispatch:
+    inputs:
+      restore-trigger:
+        description: 'Trigger database restore'
+        required: false
+        default: 'manual-restore'
+
+jobs:
+  restore_db:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      supabase_db_url: ${{ secrets.SUPABASE_DB_URL }}   # Encrypted Supabase DB URL
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - name: Restore roles
+        run: supabase db restore --db-url "$supabase_db_url" -f roles.sql --role-only
+      
+      - name: Restore schema
+        run: supabase db restore --db-url "$supabase_db_url" -f schema.sql
+      
+      - name: Restore data
+        run: supabase db restore --db-url "$supabase_db_url" -f data.sql --data-only

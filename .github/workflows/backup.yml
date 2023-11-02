@@ -1,0 +1,40 @@
+name: Database backup
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:   
+  run_db_backup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      supabase_db_url: ${{ secrets.SUPABASE_DB_URL }}   # Encrypted Supabase DB URL
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+      
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - name: Backup roles
+        run: supabase db dump --db-url "$supabase_db_url" -f roles.sql --role-only
+      
+      - name: Backup schema
+        run: supabase db dump --db-url "$supabase_db_url" -f schema.sql
+      
+      - name: Backup data
+        run: supabase db dump --db-url "$supabase_db_url" -f data.sql --data-only --use-copy
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Database backup
