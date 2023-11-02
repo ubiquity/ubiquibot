@@ -69,7 +69,7 @@ function toTitleCase(str: string): string {
 function populateNameProperty(roles: RoleAction): void {
   for (const [role, values] of Object.entries(roles)) {
     for (const [view, incentives] of Object.entries(values)) {
-      for (const [incentiveType, incentiveConfig] of Object.entries(incentives)) {
+      for (const [incentiveType] of Object.entries(incentives)) {
         const titleCaseName = toTitleCase(`${view} ${role} ${incentiveType}`);
         incentives.name = titleCaseName;
       }

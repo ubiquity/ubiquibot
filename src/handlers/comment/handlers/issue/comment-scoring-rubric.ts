@@ -20,7 +20,7 @@ type ScoringRubricConstructor = {
 export class CommentScoringRubric {
   public role: ContributionStyles;
   public roleWordScore: Decimal;
-  public roleWordScoreMultiplier!: Decimal;
+  public roleWordScoreMultiplier!: number;
   public userWordScoreTotals: { [userId: number]: Decimal } = {};
   public userElementScoreTotals: { [userId: number]: Decimal } = {};
   public userElementScoreDetails: {
@@ -64,7 +64,7 @@ export class CommentScoringRubric {
     // ol: new ElementScoreConfig({ element: "ol", value: ONE }),
   };
 
-  constructor({ role, formattingMultiplier: formattingMultiplier = 1, wordValue = 0 }: ScoringRubricConstructor) {
+  constructor({ role, formattingMultiplier = 1, wordValue = 0 }: ScoringRubricConstructor) {
     this.role = role;
     this._applyRoleMultiplier(formattingMultiplier);
     this.roleWordScore = new Decimal(wordValue);
@@ -237,7 +237,7 @@ export class CommentScoringRubric {
     return htmlString;
   }
 
-  private _applyRoleMultiplier(multiplier = 1) {
+  private _applyRoleMultiplier(multiplier: number) {
     for (const userId in this._elementConfig) {
       const selection = this._elementConfig[userId];
       const value = selection.value;
@@ -246,7 +246,7 @@ export class CommentScoringRubric {
       }
     }
 
-    this.roleWordScoreMultiplier = this.roleWordScoreMultiplier.times(multiplier);
+    this.roleWordScoreMultiplier = multiplier;
   }
 
   private _countTags(html: string, tag: string) {

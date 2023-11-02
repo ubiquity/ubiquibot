@@ -46,18 +46,6 @@ export async function issueClosed(context: Context) {
         await getPullRequestComments(context, owner, repository, issueNumber)
       ).filter(botCommandsAndHumanCommentsFilter),
     });
-  // reviewApprovals
-  // reviewRejections
-  // reviewCode
-
-  // { issueAssigneeTaskScore: issueAssigneeTask.score },
-  // { issueIssuerSpecificationScore: issueIssuerSpecification.score },
-
-  // const totals = Object.assign(
-  //   {},
-  //   { issueContributorCommentsScore: issueContributorComments.score },
-  //   { reviewContributorCommentsScore: reviewContributorComments.score }
-  // );
 
   const totals = calculateTotalScores(
     issueAssigneeTask,
@@ -65,6 +53,8 @@ export async function issueClosed(context: Context) {
     issueContributorComments,
     reviewContributorComments
   );
+
+  console.dir(totals, { depth: null, colors: true });
 
   const permitComment = await generatePermits(
     context,
@@ -146,7 +136,7 @@ function checkIfPermitsAlreadyPosted(botComments: Comment[], logger: Logs) {
   });
 }
 
-function addScoreToTotal(userId: number, score: Decimal | { total: Decimal }) {
+function addScoreToTotal(userId: number, score: Decimal | { total: Decimal }, totals: { [userId: number]: Decimal }) {
   if (typeof score === "object" && "total" in score) {
     totals[userId] = totals[userId] ? totals[userId].plus(score.total) : score.total;
   } else if (score instanceof Decimal) {
@@ -162,10 +152,16 @@ function calculateTotalScores(
 ): { [userId: number]: Decimal } {
   const totals: { [userId: number]: Decimal } = {};
 
-  Object.entries(issueAssigneeTask.score).forEach(([userId, score]) => addScoreToTotal(Number(userId), score));
-  Object.entries(issueIssuerSpecification.score).forEach(([userId, score]) => addScoreToTotal(Number(userId), score));
-  Object.entries(issueContributorComments.score).forEach(([userId, score]) => addScoreToTotal(Number(userId), score));
-  Object.entries(reviewContributorComments.score).forEach(([userId, score]) => addScoreToTotal(Number(userId), score));
+  Object.entries(issueAssigneeTask.score).forEach(([userId, score]) => addScoreToTotal(Number(userId), score, totals));
+  Object.entries(issueIssuerSpecification.score).forEach(([userId, score]) =>
+    addScoreToTotal(Number(userId), score, totals)
+  );
+  Object.entries(issueContributorComments.score).forEach(([userId, score]) =>
+    addScoreToTotal(Number(userId), score, totals)
+  );
+  Object.entries(reviewContributorComments.score).forEach(([userId, score]) =>
+    addScoreToTotal(Number(userId), score, totals)
+  );
 
   return totals;
 }

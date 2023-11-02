@@ -1,4 +1,4 @@
-import Ajv, { Schema } from "ajv";
+import Ajv, { ErrorObject, Schema } from "ajv";
 import addFormats from "ajv-formats";
 
 export const ajv = addFormats(new Ajv({ allErrors: true }), {
@@ -34,8 +34,8 @@ function getAdditionalProperties() {
     .map((error) => error.params.additionalProperty);
 }
 
-function formatErrors(errors, additionalProperties) {
-  const errorTexts = errors.map((error) => ajv.errorsText([error]));
+function formatErrors(errors: any[], additionalProperties: any[] | undefined) {
+  const errorTexts = errors.map((error: ErrorObject<string, Record<string, any>, unknown>) => ajv.errorsText([error]));
   const additionalPropsText =
     additionalProperties?.length > 0
       ? `data must NOT have additional properties: ${additionalProperties.join(", ")}`

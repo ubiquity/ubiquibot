@@ -628,22 +628,6 @@ async function getOpenedPullRequests(context: Context, username: string) {
   return prs.filter((pr) => !pr.draft && (pr.user?.login === username || !username));
 }
 
-export async function getCommitsOnPullRequest(context: Context, pullNumber: number) {
-  const runtime = Runtime.getState();
-  const payload = context.event.payload as Payload;
-  try {
-    const { data: commits } = await context.event.octokit.rest.pulls.listCommits({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      pull_number: pullNumber,
-    });
-    return commits;
-  } catch (e: unknown) {
-    runtime.logger.debug("Fetching pull request commits failed!", e);
-    return [];
-  }
-}
-
 export async function getAvailableOpenedPullRequests(context: Context, username: string) {
   const unassignConfig = context.config.unassign;
   const { reviewDelayTolerance } = unassignConfig;

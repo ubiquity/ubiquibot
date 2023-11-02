@@ -20,7 +20,7 @@ type AddCreditWithPermit = {
   userId: number;
   amount: Decimal;
   comment: Comment;
-  transactionData?: unknown;
+  transactionData?: any;
   networkId?: number;
   organization?: Payload["organization"];
 };

@@ -1,7 +1,7 @@
 import Decimal from "decimal.js";
 import { View, Role, Contribution } from "../reward-oop/classes/view-role-contribution-enums";
 
-export interface PermitComment {
+export class PermitComment {
   role: Role;
   username: string;
   payment: {
@@ -20,6 +20,13 @@ export interface PermitComment {
       reward: Decimal;
     }[];
   };
+
+  constructor(role: Role, username: string, payment: any, details: any) {
+    this.role = role;
+    this.username = username;
+    this.payment = payment;
+    this.details = details;
+  }
 }
 
 interface DetailsOverview {

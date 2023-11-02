@@ -30,7 +30,7 @@ type ViewTypes = {
   [key in View]: RoleTypes;
 };
 
-const validCombinations: ViewTypes = {
+export const validCombinations: ViewTypes = {
   [View.ISSUE]: {
     [Role.ISSUER]: {
       [Contribution.COMMENT]: true,
