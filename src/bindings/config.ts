@@ -54,14 +54,14 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
       permitBaseUrl: permitBaseUrl,
     },
     unassign: {
-      reviewDelayTolerance: ms(reviewDelayTolerance),
-      taskFollowUpDuration: ms(taskFollowUpDuration),
-      taskDisqualifyDuration: ms(taskDisqualifyDuration),
+      reviewDelayTolerance: safeMs(reviewDelayTolerance),
+      taskFollowUpDuration: safeMs(taskFollowUpDuration),
+      taskDisqualifyDuration: safeMs(taskDisqualifyDuration),
     },
     supabase: { url: process.env.SUPABASE_URL ?? null, key: process.env.SUPABASE_KEY ?? null },
     mode: { maxPermitPrice, assistivePricing },
     command: commandSettings,
-    assign: { maxConcurrentTasks: maxConcurrentTasks, staleTaskTime: ms(staleTaskTime) },
+    assign: { maxConcurrentTasks: maxConcurrentTasks, staleTaskTime: safeMs(staleTaskTime) },
     sodium: { privateKey: keys.private, publicKey: keys.public },
     wallet: { registerWalletWithVerification: registerWalletWithVerification },
     ask: { apiKey: process.env.OPENAI_API_KEY || openAIKey, tokenLimit: openAITokenLimit || 0 },
@@ -86,4 +86,12 @@ export async function loadConfig(context: Context): Promise<BotConfig> {
     );
   }
   return botConfig;
+}
+
+function safeMs(value: string) {
+  const parsed = ms(value);
+  if (!parsed) {
+    throw new Error(`Invalid time interval: ${value}`);
+  }
+  return parsed;
 }
