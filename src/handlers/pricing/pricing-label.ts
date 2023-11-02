@@ -5,7 +5,7 @@ import { labelAccessPermissionsCheck } from "../access";
 import { setPrice } from "../shared/pricing";
 import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./action";
 
-export async function onLabelChangeSetPricing(context: Context) {
+export async function onLabelChangeSetPricing(context: Context): Promise<void> {
   const runtime = Runtime.getState();
   const config = context.config;
   const logger = runtime.logger;
@@ -30,6 +30,31 @@ export async function onLabelChangeSetPricing(context: Context) {
   const { assistivePricing } = config.mode;
 
   if (!labels) throw logger.warn(`No labels to calculate price`);
+
+  // here we should make an exception if it was a price label that was just set to just skip this action
+  const isPayloadToSetPrice = payload.label?.name.includes("Price: ");
+  if (isPayloadToSetPrice) {
+    logger.info("This is setting the price label directly so skipping the rest of the action.");
+
+    // make sure to clear all other price labels except for the smallest price label.
+
+    const priceLabels = labels.filter((label) => label.name.includes("Price: "));
+    const sortedPriceLabels = sortLabelsByValue(priceLabels);
+    const smallestPriceLabel = sortedPriceLabels.shift();
+    const smallestPriceLabelName = smallestPriceLabel?.name;
+    if (smallestPriceLabelName) {
+      for (const label of sortedPriceLabels) {
+        await context.event.octokit.issues.removeLabel({
+          owner: payload.repository.owner.login,
+          repo: payload.repository.name,
+          issue_number: payload.issue.number,
+          name: label.name,
+        });
+      }
+    }
+
+    return;
+  }
 
   const recognizedLabels = getRecognizedLabels(labels, config);
 

@@ -64,22 +64,13 @@ async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
   );
 
   // assigneeEvents
-  interface AssignedEventExample {
-    id: 10841266730;
-    node_id: "AE_lADOJE8L5s51pPgazwAAAAKGMJoq";
-    url: "https://api.github.com/repos/pavlovcik/ubiquibot/issues/events/10841266730";
-    actor: User;
-    event: "assigned";
-    commit_id: null;
-    commit_url: null;
-    created_at: "2023-11-02T09:13:58Z";
-    assignee: User;
-    assigner: User;
-    performed_via_github_app: null;
-  }
-  const assignEventsOfAssignee = assigneeEvents.filter((event: AssignedEventExample) => {
+
+  const assignEventsOfAssignee = assigneeEvents.filter((event) => {
     // check if the event is an assign event and if the assignee is the same as the assignee we're checking
-    return event.assignee.login === login && event.event == "assigned";
+    if (event.event == "assigned") {
+      const assignedEvent = event as AssignedEventExample;
+      return assignedEvent.assignee.login === login;
+    }
   });
   // get latest assign event by checking created_at
   const latestAssignEvent = assignEventsOfAssignee.reduce((latestEvent, currentEvent) => {
@@ -413,4 +404,17 @@ interface GetAllCommits {
   owner: string;
   repo: string;
   pullNumber: number;
+}
+interface AssignedEventExample {
+  id: 10841266730;
+  node_id: "AE_lADOJE8L5s51pPgazwAAAAKGMJoq";
+  url: "https://api.github.com/repos/pavlovcik/ubiquibot/issues/events/10841266730";
+  actor: User;
+  event: "assigned";
+  commit_id: null;
+  commit_url: null;
+  created_at: "2023-11-02T09:13:58Z";
+  assignee: User;
+  assigner: User;
+  performed_via_github_app: null;
 }
