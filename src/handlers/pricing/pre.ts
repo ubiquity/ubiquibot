@@ -11,15 +11,18 @@ export async function syncPriceLabelsToConfig(context: Context) {
   const config = context.config;
   const logger = runtime.logger;
 
-  const { assistivePricing } = config.features;
+  const {
+    features: { assistivePricing },
+    labels,
+  } = config;
 
   if (!assistivePricing) {
     logger.info(`Assistive pricing is disabled`);
     return;
   }
 
-  const timeLabels = config.price.timeLabels.map((i) => i.name);
-  const priorityLabels = config.price.priorityLabels.map((i) => i.name);
+  const timeLabels = labels.time.map((i) => i.name);
+  const priorityLabels = labels.priority.map((i) => i.name);
   const aiLabels: string[] = [];
   for (const timeLabel of config.labels.time) {
     for (const priorityLabel of config.labels.priority) {

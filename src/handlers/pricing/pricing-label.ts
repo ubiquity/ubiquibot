@@ -1,6 +1,6 @@
 import Runtime from "../../bindings/bot-runtime";
 import { addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getAllLabeledEvents } from "../../helpers";
-import { BotConfig, Context, Label, LabelFromConfig, Payload, UserType } from "../../types";
+import { BotConfig, Context, Label, Payload, UserType } from "../../types";
 import { labelAccessPermissionsCheck } from "../access";
 import { setPrice } from "../shared/pricing";
 import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./action";
@@ -21,13 +21,13 @@ export async function onLabelChangeSetPricing(context: Context) {
   }
   const permission = await labelAccessPermissionsCheck(context);
   if (!permission) {
-    if (config.publicAccessControl.setLabel === false) {
+    if (config.features.publicAccessControl.setLabel === false) {
       throw logger.warn("No public access control to set labels");
     }
     throw logger.warn("No permission to set labels");
   }
 
-  const { assistivePricing } = config.mode;
+  const { assistivePricing } = config.features;
 
   if (!labels) throw logger.warn(`No labels to calculate price`);
 
@@ -57,15 +57,13 @@ export async function onLabelChangeSetPricing(context: Context) {
 }
 
 function getRecognizedLabels(labels: Label[], config: BotConfig) {
-  const isRecognizedLabel = (label: Label, labelConfig: LabelFromConfig[]) =>
+  const isRecognizedLabel = (label: Label, labelConfig: { name: string }[]) =>
     (typeof label === "string" || typeof label === "object") && labelConfig.some((item) => item.name === label.name);
 
-  const recognizedTimeLabels: Label[] = labels.filter((label: Label) =>
-    isRecognizedLabel(label, config.price.timeLabels)
-  );
+  const recognizedTimeLabels: Label[] = labels.filter((label: Label) => isRecognizedLabel(label, config.labels.time));
 
   const recognizedPriorityLabels: Label[] = labels.filter((label: Label) =>
-    isRecognizedLabel(label, config.price.priorityLabels)
+    isRecognizedLabel(label, config.labels.priority)
   );
 
   return { time: recognizedTimeLabels, priority: recognizedPriorityLabels };

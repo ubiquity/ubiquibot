@@ -8,8 +8,9 @@ import { Database } from "../../types";
 import { prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
 import { execSync } from "child_process";
-import { Context } from "../../../../types";
+import { Context, LogLevel } from "../../../../types";
 import Runtime from "../../../../bindings/bot-runtime";
+import { env } from "../../../../bindings/env";
 
 type LogFunction = (message: string, metadata?: any) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
@@ -224,11 +225,10 @@ export class Logs extends Super {
 
   constructor(supabase: SupabaseClient, context: Context) {
     super(supabase, context);
-    const logConfig = this.context.config.log;
 
-    this.environment = logConfig.logEnvironment;
-    this.retryLimit = logConfig.retryLimit;
-    this.maxLevel = this._getNumericLevel(logConfig.level ?? LogLevel.DEBUG);
+    this.environment = env.LOG_ENVIRONMENT;
+    this.retryLimit = env.LOG_RETRY_LIMIT;
+    this.maxLevel = this._getNumericLevel(env.LOG_LEVEL);
   }
 
   private async _sendLogsToSupabase(log: LogInsert) {
@@ -410,14 +410,4 @@ export class Logs extends Super {
     }
     return obj;
   }
-}
-
-export enum LogLevel {
-  ERROR = "error",
-  WARN = "warn",
-  INFO = "info",
-  HTTP = "http",
-  VERBOSE = "verbose",
-  DEBUG = "debug",
-  SILLY = "silly",
 }

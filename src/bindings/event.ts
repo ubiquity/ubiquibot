@@ -16,7 +16,7 @@ import {
 import { Payload } from "../types/payload";
 import { ajv } from "../utils";
 import Runtime from "./bot-runtime";
-import { loadConfig } from "./config";
+import { loadConfiguration } from "./config";
 import { Context } from "../types";
 
 const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
@@ -30,7 +30,7 @@ type AllHandlers = PreActionHandler | MainActionHandler | PostActionHandler;
 export async function bindEvents(eventContext: ProbotContext) {
   const runtime = Runtime.getState();
 
-  const botConfig = await loadConfig(eventContext);
+  const botConfig = await loadConfiguration(eventContext);
   const context: Context = {
     event: eventContext,
     config: botConfig,
@@ -39,7 +39,7 @@ export async function bindEvents(eventContext: ProbotContext) {
   runtime.adapters = createAdapters(context);
   runtime.logger = runtime.adapters.supabase.logs;
 
-  if (!context.config.payout.privateKey) {
+  if (!context.config.keys.evmPrivateEncrypted) {
     runtime.logger.warn("No EVM private key found");
   }
 

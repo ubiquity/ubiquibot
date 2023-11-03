@@ -56,13 +56,13 @@ export async function updateLabelsFromBaseRate(
   const newLabels: string[] = [];
   const previousLabels: string[] = [];
 
-  for (const timeLabel of config.price.timeLabels) {
-    for (const priorityLabel of config.price.priorityLabels) {
+  for (const timeLabel of config.labels.time) {
+    for (const priorityLabel of config.labels.priority) {
       const targetPrice = calculateTaskPrice(
         context,
         calculateLabelValue(timeLabel),
         calculateLabelValue(priorityLabel),
-        config.price.basePriceMultiplier
+        config.payments.basePriceMultiplier
       );
       const targetPriceLabel = `Price: ${targetPrice} USD`;
       newLabels.push(targetPriceLabel);

@@ -1,8 +1,8 @@
+import { Value } from "@sinclair/typebox/value";
 import Runtime from "../../bindings/bot-runtime";
 import { createCommitComment, getFileContent } from "../../helpers";
-import { CommitsPayload, PushPayload, ConfigSchema, Context } from "../../types";
-import { parseYamlConfig } from "../../utils/get-config";
-import { validate } from "../../utils/ajv";
+import { CommitsPayload, PushPayload, Context, validateBotConfig, BotConfigSchema } from "../../types";
+import { parseYaml } from "../../utils/generate-configuration";
 
 export const ZERO_SHA = "0000000000000000000000000000000000000000";
 export const BASE_RATE_FILE = ".github/ubiquibot-config.yml";
@@ -61,16 +61,17 @@ export async function validateConfigChange(context: Context) {
 
     if (configFileContent) {
       const decodedConfig = Buffer.from(configFileContent, "base64").toString();
-      const config = parseYaml(decodedConfig);
-      const { valid, error } = validateTypes(PublicConfigurationValues, config);
-      if (!valid) {
+      let config = parseYaml(decodedConfig);
+      config = Value.Decode(BotConfigSchema, config);
+      const result = validateBotConfig(config);
+      if (!result) {
         await createCommitComment(
           context,
-          `@${payload.sender.login} Config validation failed! ${error}`,
+          `@${payload.sender.login} Config validation failed! ${validateBotConfig.errors}`,
           commitSha,
           BASE_RATE_FILE
         );
-        logger.info("Config validation failed!", error);
+        logger.info("Config validation failed!", validateBotConfig.errors);
       }
     }
   }

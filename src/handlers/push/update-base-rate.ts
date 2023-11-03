@@ -2,7 +2,7 @@ import Runtime from "../../bindings/bot-runtime";
 
 import { getPreviousFileContent, listLabelsForRepo, updateLabelsFromBaseRate } from "../../helpers";
 import { Label, PushPayload, Context } from "../../types";
-import { parseYamlConfig } from "../../utils/get-config";
+import { parseYaml } from "../../utils/generate-configuration";
 
 export async function updateBaseRate(context: Context, filePath: string) {
   const runtime = Runtime.getState();

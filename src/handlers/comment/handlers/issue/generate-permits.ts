@@ -7,6 +7,7 @@ import structuredMetadata from "../../../shared/structured-metadata";
 import { generatePermit2Signature } from "./generate-permit-2-signature";
 import { FinalScores } from "./issue-closed";
 import { IssueRole } from "./_calculate-all-comment-scores";
+import { getPayoutConfigByNetworkId } from "../../../../helpers";
 
 export async function generatePermits(context: Context, totals: FinalScores, contributorComments: Comment[]) {
   const userIdToNameMap = mapIdsToNames(contributorComments);
@@ -23,8 +24,10 @@ async function generateComment(
 ) {
   const runtime = Runtime.getState();
   const {
-    payout: { paymentToken, rpc, privateKey },
+    payments: { evmNetworkId },
+    keys: { evmPrivateEncrypted },
   } = context.config;
+  const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
   const detailsTable = generateDetailsTable(totals, contributorComments);
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const HTMLs = [] as string[];
@@ -38,7 +41,7 @@ async function generateComment(
     const contributorName = userIdToNameMap[userId];
     const issueRole = userTotals.role;
 
-    if (!privateKey) throw runtime.logger.warn("No bot wallet private key defined");
+    if (!evmPrivateEncrypted) throw runtime.logger.warn("No bot wallet private key defined");
 
     const beneficiaryAddress = await runtime.adapters.supabase.wallet.getAddress(parseInt(userId));
 

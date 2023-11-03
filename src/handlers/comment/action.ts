@@ -12,7 +12,7 @@ export async function commentCreatedOrEdited(context: Context) {
   const comment = payload.comment as Comment;
 
   const body = comment.body;
-  const commentedCommand = commentParser(context, body);
+  const commentedCommand = commentParser(body);
 
   if (!comment) {
     logger.info(`Comment is null. Skipping`);
@@ -26,14 +26,14 @@ export async function commentCreatedOrEdited(context: Context) {
     await verifyFirstCommentInRepository(context);
   }
 
-  const allCommands = userCommands(context);
+  const allCommands = userCommands(config.miscellaneous.registerWalletWithVerification);
   const userCommand = allCommands.find((i) => i.id == commentedCommand);
 
   if (userCommand) {
     const { id, handler } = userCommand;
     logger.info("Running a comment handler", { id, handler: handler.name });
 
-    const feature = config.command.find((e) => e.name === id.split("/")[1]);
+    const feature = config.commands.find((e) => e.name === id.split("/")[1]);
 
     if (feature?.enabled === false && id !== "/help") {
       return logger.warn("Skipping because it is disabled on this repo.", { id });

@@ -645,8 +645,7 @@ export async function getCommitsOnPullRequest(context: Context, pullNumber: numb
 }
 
 export async function getAvailableOpenedPullRequests(context: Context, username: string) {
-  const unassignConfig = context.config.unassign;
-  const { reviewDelayTolerance } = unassignConfig;
+  const { reviewDelayTolerance } = context.config.timers;
   if (!reviewDelayTolerance) return [];
 
   const openedPullRequests = await getOpenedPullRequests(context, username);

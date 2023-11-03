@@ -23,8 +23,9 @@ async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   const payload = context.event.payload as Payload;
-  const unassign = context.config.unassign;
-  const { taskDisqualifyDuration, taskFollowUpDuration } = unassign;
+  const {
+    timers: { taskDisqualifyDuration, taskFollowUpDuration },
+  } = context.config;
 
   logger.info("Checking for neglected tasks", { issueNumber: assignedIssue.number });
 

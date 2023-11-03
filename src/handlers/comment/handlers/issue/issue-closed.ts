@@ -60,7 +60,7 @@ async function preflightChecks(context: Context, issue: Issue, logger: Logs, iss
   if (!issue) throw logger.error("Permit generation skipped because issue is undefined");
   if (issue.state_reason !== StateReason.COMPLETED)
     throw logger.info("Issue was not closed as completed. Skipping.", { issue });
-  if (config.publicAccessControl.fundExternalClosedIssue) {
+  if (config.features.publicAccessControl.fundExternalClosedIssue) {
     const userHasPermission = await checkUserPermissionForRepoAndOrg(context, payload.sender.login);
     if (!userHasPermission)
       throw logger.warn("Permit generation disabled because this issue has been closed by an external contributor.");

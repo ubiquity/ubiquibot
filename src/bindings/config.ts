@@ -1,24 +1,8 @@
-import ms from "ms";
-import { getPayoutConfigByNetworkId } from "../helpers";
-import { ajv, validateTypes } from "../utils";
-import { Context } from "probot";
+import { Context as ProbotContext } from "probot";
 import { generateConfiguration } from "../utils/generate-configuration";
-import { LogLevel } from "../adapters/supabase/helpers/tables/logs";
-import Runtime from "./bot-runtime";
-import {
-  AllConfigurationTypes,
-  PublicConfigurationTypes,
-  PublicConfigurationValues,
-} from "../types/configuration-types";
-import defaultConfiguration from "../ubiquibot-config-default";
+import { BotConfig } from "../types/configuration-types";
 
-const defaultConfigurationValidation = validateTypes(PublicConfigurationValues, defaultConfiguration);
-
-if (defaultConfigurationValidation.error) {
-  throw new Error(defaultConfigurationValidation.error);
-}
-
-export async function loadConfiguration(context: Context): Promise<AllConfigurationTypes> {
+export async function loadConfiguration(context: ProbotContext): Promise<BotConfig> {
   // const runtime = Runtime.getState();
   const configuration = await generateConfiguration(context);
   console.trace({ configuration });

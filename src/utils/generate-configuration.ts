@@ -1,22 +1,18 @@
-import sodium from "libsodium-wrappers";
 import merge from "lodash/merge";
 import { Context } from "probot";
 import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
-import { upsertLastCommentToIssue } from "../helpers/issue";
-import { Payload, BotConfigSchema, BotConfig } from "../types";
-import defaultConfiguration from "../ubiquibot-config-default";
-import { validateTypes } from "./ajv";
-import { z } from "zod";
+import { Payload, BotConfig, validateBotConfig, BotConfigSchema } from "../types";
+import { DefinedError } from "ajv";
+import { Value } from "@sinclair/typebox/value";
 
 const UBIQUIBOT_CONFIG_REPOSITORY = "ubiquibot-config";
 const UBIQUIBOT_CONFIG_FULL_PATH = ".github/ubiquibot-config.yml";
-const KEY_PREFIX = "HSK_";
 
 export async function generateConfiguration(context: Context): Promise<BotConfig> {
   const payload = context.payload as Payload;
 
-  const organizationConfiguration = parseYaml(
+  let organizationConfiguration = parseYaml(
     await download({
       context,
       repository: UBIQUIBOT_CONFIG_REPOSITORY,
@@ -24,7 +20,7 @@ export async function generateConfiguration(context: Context): Promise<BotConfig
     })
   );
 
-  const repositoryConfiguration = parseYaml(
+  let repositoryConfiguration = parseYaml(
     await download({
       context,
       repository: payload.repository.name,
@@ -35,43 +31,81 @@ export async function generateConfiguration(context: Context): Promise<BotConfig
   let orgConfig: BotConfig | undefined;
   if (organizationConfiguration) {
     console.dir(organizationConfiguration, { depth: null, colors: true });
-    const result = BotConfigSchema.safeParse(organizationConfiguration);
-    if (!result.success) {
-      const errorsWithoutStrict = result.error.issues.filter(
-        (issue) => issue.code !== z.ZodIssueCode.unrecognized_keys
+    organizationConfiguration = Value.Decode(BotConfigSchema, organizationConfiguration);
+    const valid = validateBotConfig(organizationConfiguration);
+    if (!valid) {
+      const errors = (validateBotConfig.errors as DefinedError[]).filter(
+        (error) => !(error.keyword === "required" && error.params.missingProperty === "evmPrivateEncrypted")
       );
-      if (errorsWithoutStrict.length > 0) {
-        const err = new Error(result.error.toString());
-        throw err;
-      } else {
-        // make comment
-      }
+      const err = generateValidationError(errors as DefinedError[]);
+      if (err instanceof Error) throw err;
+      if (payload.issue?.number)
+        await context.octokit.issues.createComment({
+          owner: payload.repository.owner.login,
+          repo: payload.repository.name,
+          issue_number: payload.issue?.number,
+          body: err,
+        });
     }
-    orgConfig = result.data;
+    orgConfig = organizationConfiguration as BotConfig;
   }
 
   let repoConfig: BotConfig | undefined;
   if (repositoryConfiguration) {
     console.dir(repositoryConfiguration, { depth: null, colors: true });
-    const result = BotConfigSchema.safeParse(repositoryConfiguration);
-    if (!result.success) {
-      // TODO
-    } else {
-      repoConfig = result.data;
+    repositoryConfiguration = Value.Decode(BotConfigSchema, repositoryConfiguration);
+    const valid = validateBotConfig(repositoryConfiguration);
+    if (!valid) {
+      const errors = (validateBotConfig.errors as DefinedError[]).filter(
+        (error) => !(error.keyword === "required" && error.params.missingProperty === "evmPrivateEncrypted")
+      );
+      const err = generateValidationError(errors as DefinedError[]);
+      if (err instanceof Error) throw err;
+      if (payload.issue?.number)
+        await context.octokit.issues.createComment({
+          owner: payload.repository.owner.login,
+          repo: payload.repository.name,
+          issue_number: payload.issue?.number,
+          body: err,
+        });
     }
+    repoConfig = repositoryConfiguration as BotConfig;
   }
 
   const merged = merge({}, orgConfig, repoConfig);
-  const result = BotConfigSchema.safeParse(merged);
-  if (!result.success) {
-    // TODO
-    /*const issue = payload.issue?.number;
-    const err = new Error(error?.toString());
-    if (issue) await upsertLastCommentToIssue(issue, err.message);
-    throw err;*/
-  } else {
-    return result.data;
+  const valid = validateBotConfig(merged);
+  if (!valid) {
+    const err = generateValidationError(validateBotConfig.errors as DefinedError[]);
+    if (err instanceof Error) throw err;
+    if (payload.issue?.number)
+      await context.octokit.issues.createComment({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        issue_number: payload.issue?.number,
+        body: err,
+      });
   }
+  return merged as BotConfig;
+}
+
+function generateValidationError(errors: DefinedError[]): Error | string {
+  const errorsWithoutStrict = errors.filter((error) => error.keyword !== "additionalProperties");
+  const errorsOnlyStrict = errors.filter((error) => error.keyword === "additionalProperties");
+  const isValid = errorsWithoutStrict.length === 0;
+  const message = `${isValid ? "Valid" : "Invalid"} configuration.
+${!isValid && "Errors: \n" + errorsWithoutStrict.map((error) => error.message).join("\n")}
+${
+  errorsOnlyStrict.length > 0
+    ? `Warning! Unneccesary properties: 
+      ${errorsOnlyStrict
+        .map(
+          (error) =>
+            error.keyword === "additionalProperties" && error.instancePath + "/" + error.params.additionalProperty
+        )
+        .join("\n")}`
+    : ""
+}`;
+  return isValid ? message : new Error(message);
 }
 
 // async function fetchConfigurations(context: Context, type: "org" | "repo") {
@@ -129,37 +163,4 @@ export function parseYaml(data: null | string) {
     logger.error("Failed to parse YAML", { error });
   }
   return null;
-}
-
-async function decryptKeys(cipherText: string) {
-  await sodium.ready;
-
-  let _public: null | string = null;
-  let _private: null | string = null;
-
-  const X25519_PRIVATE_KEY = process.env.X25519_PRIVATE_KEY;
-
-  if (!X25519_PRIVATE_KEY) {
-    console.warn("X25519_PRIVATE_KEY is not defined");
-    return { private: null, public: null };
-  }
-  _public = await getScalarKey(X25519_PRIVATE_KEY);
-  if (!_public) {
-    console.warn("Public key is null");
-    return { private: null, public: null };
-  }
-  const binPub = sodium.from_base64(_public, sodium.base64_variants.URLSAFE_NO_PADDING);
-  const binPriv = sodium.from_base64(X25519_PRIVATE_KEY, sodium.base64_variants.URLSAFE_NO_PADDING);
-  const binCipher = sodium.from_base64(cipherText, sodium.base64_variants.URLSAFE_NO_PADDING);
-
-  const walletPrivateKey: string | null = sodium.crypto_box_seal_open(binCipher, binPub, binPriv, "text");
-  _private = walletPrivateKey?.replace(KEY_PREFIX, "");
-  return { private: _private, public: _public };
-}
-
-async function getScalarKey(X25519_PRIVATE_KEY: string) {
-  await sodium.ready;
-  const binPriv = sodium.from_base64(X25519_PRIVATE_KEY, sodium.base64_variants.URLSAFE_NO_PADDING);
-  const scalerPub = sodium.crypto_scalarmult_base(binPriv, "base64");
-  return scalerPub;
 }

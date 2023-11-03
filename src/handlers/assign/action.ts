@@ -33,7 +33,7 @@ export async function startCommandHandler(context: Context) {
   // Filter out labels that match the time labels defined in the config
   const timeLabelsAssigned: Label[] = labels.filter((label) =>
     typeof label === "string" || typeof label === "object"
-      ? config.price.timeLabels.some((item) => item.name === label.name)
+      ? config.labels.time.some((item) => item.name === label.name)
       : false
   );
 

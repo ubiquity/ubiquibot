@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { validHTMLElements } from "./handlers/comment/handlers/issue/valid-html-elements";
-import { LogLevel } from "./adapters/supabase/helpers/tables/logs";
+import { LogLevel } from "./types";
 
 const commandFiles = fs.readdirSync(path.resolve(__dirname, "../src/handlers/comment/handlers"));
 const commands = commandFiles.map((file) => {

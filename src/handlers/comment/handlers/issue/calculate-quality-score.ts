@@ -4,7 +4,7 @@ import { encodingForModel } from "js-tiktoken";
 import Decimal from "decimal.js";
 import Runtime from "../../../../bindings/bot-runtime";
 
-const openai = new OpenAI(); // apiKey: // defaults to process.env["OPENAI_API_KEY"]
+//const openai = new OpenAI(); // apiKey: // defaults to process.env["OPENAI_API_KEY"]
 
 export async function calculateQualScore(issue: Issue, contributorComments: Comment[]) {
   const sumOfConversationTokens = countTokensOfConversation(issue, contributorComments);

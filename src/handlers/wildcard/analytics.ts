@@ -11,11 +11,10 @@ export function taskPaymentMetaData(
   priorityLabel: string | null;
   priceLabel: string | null;
 } {
-  const { price } = context.config;
-  const labels = issue.labels;
+  const { labels } = context.config;
 
-  const timeLabels = price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
-  const priorityLabels = price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
+  const timeLabels = labels.time.filter((item) => issue.labels.map((i) => i.name).includes(item.name));
+  const priorityLabels = labels.priority.filter((item) => issue.labels.map((i) => i.name).includes(item.name));
 
   const isTask = timeLabels.length > 0 && priorityLabels.length > 0;
 
@@ -29,7 +28,7 @@ export function taskPaymentMetaData(
       ? priorityLabels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b)).name
       : null;
 
-  const priceLabel = labels.find((label) => label.name.includes("Price"))?.name || null;
+  const priceLabel = issue.labels.find((label) => label.name.includes("Price"))?.name || null;
 
   return {
     eligibleForPayment: isTask,

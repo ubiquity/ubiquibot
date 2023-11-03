@@ -1,5 +1,5 @@
 import ms from "ms";
-import { Label, LabelFromConfig, Payload, UserType, Context } from "../types";
+import { Label, Payload, UserType, Context } from "../types";
 
 const contextNamesToSkip = ["workflow_run"];
 
@@ -18,7 +18,7 @@ export function shouldSkip(context: Context) {
   return response;
 }
 
-export function calculateLabelValue(label: LabelFromConfig): number {
+export function calculateLabelValue(label: { name: string }): number {
   const matches = label.name.match(/\d+/);
   const number = matches && matches.length > 0 ? parseInt(matches[0]) || 0 : 0;
   if (label.name.toLowerCase().includes("priority")) return number;

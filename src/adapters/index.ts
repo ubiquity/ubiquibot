@@ -9,25 +9,22 @@ import { Super } from "./supabase/helpers/tables/super";
 import { User } from "./supabase/helpers/tables/user";
 import { Wallet } from "./supabase/helpers/tables/wallet";
 import { Database } from "./supabase/types";
+import { env } from "../bindings/env";
+
+const supabaseClient = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_KEY, { auth: { persistSession: false } });
 
 export function createAdapters(context: Context) {
-  const client = generateSupabase(context.config.supabase.url, context.config.supabase.key);
   return {
     supabase: {
-      access: new Access(client, context),
-      wallet: new Wallet(client, context),
-      user: new User(client, context),
-      debit: new Settlement(client, context),
-      settlement: new Settlement(client, context),
-      label: new Label(client, context),
-      logs: new Logs(client, context),
-      locations: new Locations(client, context),
-      super: new Super(client, context),
+      access: new Access(supabaseClient, context),
+      wallet: new Wallet(supabaseClient, context),
+      user: new User(supabaseClient, context),
+      debit: new Settlement(supabaseClient, context),
+      settlement: new Settlement(supabaseClient, context),
+      label: new Label(supabaseClient, context),
+      logs: new Logs(supabaseClient, context),
+      locations: new Locations(supabaseClient, context),
+      super: new Super(supabaseClient, context),
     },
   };
-}
-
-function generateSupabase(url?: string | null, key?: string | null) {
-  if (!url || !key) throw new Error("Supabase URL or key is not defined");
-  return createClient<Database>(url, key, { auth: { persistSession: false } });
 }

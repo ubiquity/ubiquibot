@@ -5,7 +5,9 @@ import { Context, Payload, UserType } from "../../types";
 export async function labelAccessPermissionsCheck(context: Context) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  const { publicAccessControl } = context.config;
+  const {
+    features: { publicAccessControl },
+  } = context.config;
   if (!publicAccessControl.setLabel) return true;
 
   const payload = context.event.payload as Payload;
