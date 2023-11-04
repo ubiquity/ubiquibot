@@ -1,4 +1,4 @@
-import { EnvConfig, validateEnvConfig } from "../types";
+import { EnvConfig, validateEnvConfig } from "../types/configuration-types";
 import dotenv from "dotenv";
 dotenv.config();
 

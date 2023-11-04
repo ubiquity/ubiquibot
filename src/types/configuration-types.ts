@@ -2,7 +2,7 @@ import { Type as T, Static, TProperties, TObject, ObjectOptions, StringOptions, 
 import { LogLevel } from "../types";
 import { validHTMLElements } from "../handlers/comment/handlers/issue/valid-html-elements";
 import { userCommands } from "../handlers";
-import { ajv } from "../utils";
+import { ajv } from "../utils/ajv";
 import ms from "ms";
 
 const promotionComment =
@@ -35,106 +35,6 @@ const defaultPriorityLabels = [
   { name: "Priority: 5 (Emergency)" },
 ];
 
-/*
-export const EnvConfigSchema = z.object({
-  WEBHOOK_PROXY_URL: z.string().url(),
-  LOG_ENVIRONMENT: z.string().default("development"),
-  LOG_LEVEL: z.nativeEnum(LogLevel).default(LogLevel.SILLY),
-  LOG_RETRY_LIMIT: z.number().default(8),
-  SUPABASE_URL: z.string().url(),
-  SUPABASE_KEY: z.string(),
-  X25519_PRIVATE_KEY: z.string(),
-  PRIVATE_KEY: z.string(),
-  APP_ID: z.number(),
-});
-
-export type EnvConfig = z.infer<typeof EnvConfigSchema>;
-
-export const BotConfigSchema = z.strictObject({
-  keys: z.strictObject({
-    evmPrivateEncrypted: z.string().optional(),
-    openAi: z.string().optional(),
-  }),
-  features: z.strictObject({
-    assistivePricing: z.boolean().default(false),
-    defaultLabels: z.string().array().default([]),
-    newContributorGreeting: z
-      .strictObject({
-        header: z.string().default(
-          "Thank you for contributing! \
-        Please be sure to set your wallet address \
-        before completing your first task so that you can \
-        collect your reward."
-        ),
-        displayHelpMenu: z.boolean().default(true),
-        footer: z.string().default(promotionComment),
-      })
-      .default({}),
-    publicAccessControl: z
-      .strictObject({
-        setLabel: z.boolean().default(true),
-        fundExternalClosedIssue: z.boolean().default(true),
-      })
-      .default({}),
-  }),
-  timers: z
-    .strictObject({
-      reviewDelayTolerance: z.string().default("1 day"),
-      taskStaleTimeoutDuration: z.string().default("1 month"),
-      taskFollowUpDuration: z.string().default("0.5 weeks"),
-      taskDisqualifyDuration: z.string().default("1 week"),
-    })
-    .default({}),
-  payments: z
-    .strictObject({
-      maxPermitPrice: z.number().default(Number.MAX_SAFE_INTEGER),
-      evmNetworkId: z.number().default(1),
-      basePriceMultiplier: z.number().default(1),
-      issueCreatorMultiplier: z.number().default(1),
-    })
-    .default({}),
-  commands: z.array(
-    z.strictObject({
-      name: z.string(),
-      enabled: z.boolean(),
-    })
-  ),
-  incentives: z
-    .strictObject({
-      comment: z
-        .strictObject({
-          elements: z.record(z.union(HtmlEntities), z.number()).default(allHtmlElementsSetToZero),
-          totals: z
-            .strictObject({
-              character: z.number().default(0),
-              word: z.number().default(0),
-              sentence: z.number().default(0),
-              paragraph: z.number().default(0),
-              comment: z.number().default(0),
-            })
-            .default({}),
-        })
-        .default({}),
-    })
-    .default({}),
-  labels: z
-    .strictObject({
-      time: z.array(z.strictObject({ name: z.string() })).default(defaultTimeLabels),
-      priority: z.array(z.strictObject({ name: z.string() })).default(defaultPriorityLabels),
-    })
-    .default({}),
-  miscellaneous: z
-    .strictObject({
-      maxConcurrentTasks: z.number().default(Number.MAX_SAFE_INTEGER),
-      promotionComment: z.string().default(promotionComment),
-      registerWalletWithVerification: z.boolean().default(false),
-    })
-    .default({}),
-});
-
-export type BotConfig = z.infer<typeof BotConfigSchema>;
-*/
-
 function StrictObject<T extends TProperties>(obj: T, options?: ObjectOptions): TObject<T> {
   return T.Object<T>(obj, { additionalProperties: false, default: {}, ...options });
 }
@@ -164,69 +64,72 @@ export const EnvConfigSchema = T.Object({
 export const validateEnvConfig = ajv.compile(EnvConfigSchema);
 export type EnvConfig = Static<typeof EnvConfigSchema>;
 
-export const BotConfigSchema = StrictObject({
-  keys: StrictObject({
-    evmPrivateEncrypted: T.String(),
-    openAi: T.Optional(T.String()),
-  }),
-  features: StrictObject({
-    assistivePricing: T.Boolean({ default: false }),
-    defaultLabels: T.Array(T.String(), { default: [] }),
-    newContributorGreeting: StrictObject({
-      enabled: T.Boolean({ default: false }),
-      header: T.String({ default: defaultGreetingHeader }),
-      displayHelpMenu: T.Boolean({ default: true }),
-      footer: T.String({ default: promotionComment }),
+export const BotConfigSchema = StrictObject(
+  {
+    keys: StrictObject({
+      evmPrivateEncrypted: T.String(),
+      openAi: T.Optional(T.String()),
     }),
-    publicAccessControl: StrictObject({
-      setLabel: T.Boolean({ default: true }),
-      fundExternalClosedIssue: T.Boolean({ default: true }),
-    }),
-  }),
-  openai: StrictObject({
-    tokenLimit: T.Number({ default: 100000 }),
-  }),
-  timers: StrictObject({
-    reviewDelayTolerance: stringDuration({ default: "1 day" }),
-    taskStaleTimeoutDuration: stringDuration({ default: "1 month" }),
-    taskFollowUpDuration: stringDuration({ default: "0.5 weeks" }),
-    taskDisqualifyDuration: stringDuration({ default: "1 week" }),
-  }),
-  payments: StrictObject({
-    maxPermitPrice: T.Number({ default: Number.MAX_SAFE_INTEGER }),
-    evmNetworkId: T.Number({ default: 1 }),
-    basePriceMultiplier: T.Number({ default: 1 }),
-    issueCreatorMultiplier: T.Number({ default: 1 }),
-  }),
-  commands: T.Array(
-    StrictObject({
-      name: T.String(),
-      enabled: T.Boolean(),
-    }),
-    { default: allCommands }
-  ),
-  incentives: StrictObject({
-    comment: StrictObject({
-      elements: T.Record(T.Union(HtmlEntities), T.Number(), { default: allHtmlElementsSetToZero }),
-      totals: StrictObject({
-        character: T.Number({ default: 0, minimum: 0 }),
-        word: T.Number({ default: 0, minimum: 0 }),
-        sentence: T.Number({ default: 0, minimum: 0 }),
-        paragraph: T.Number({ default: 0, minimum: 0 }),
-        comment: T.Number({ default: 0, minimum: 0 }),
+    features: StrictObject({
+      assistivePricing: T.Boolean({ default: false }),
+      defaultLabels: T.Array(T.String(), { default: [] }),
+      newContributorGreeting: StrictObject({
+        enabled: T.Boolean({ default: false }),
+        header: T.String({ default: defaultGreetingHeader }),
+        displayHelpMenu: T.Boolean({ default: true }),
+        footer: T.String({ default: promotionComment }),
+      }),
+      publicAccessControl: StrictObject({
+        setLabel: T.Boolean({ default: true }),
+        fundExternalClosedIssue: T.Boolean({ default: true }),
       }),
     }),
-  }),
-  labels: StrictObject({
-    time: T.Array(StrictObject({ name: T.String() }), { default: defaultTimeLabels }),
-    priority: T.Array(StrictObject({ name: T.String() }), { default: defaultPriorityLabels }),
-  }),
-  miscellaneous: StrictObject({
-    maxConcurrentTasks: T.Number({ default: Number.MAX_SAFE_INTEGER }),
-    promotionComment: T.String({ default: promotionComment }),
-    registerWalletWithVerification: T.Boolean({ default: false }),
-  }),
-});
+    openai: StrictObject({
+      tokenLimit: T.Number({ default: 100000 }),
+    }),
+    timers: StrictObject({
+      reviewDelayTolerance: stringDuration({ default: "1 day" }),
+      taskStaleTimeoutDuration: stringDuration({ default: "1 month" }),
+      taskFollowUpDuration: stringDuration({ default: "0.5 weeks" }),
+      taskDisqualifyDuration: stringDuration({ default: "1 week" }),
+    }),
+    payments: StrictObject({
+      maxPermitPrice: T.Number({ default: Number.MAX_SAFE_INTEGER }),
+      evmNetworkId: T.Number({ default: 1 }),
+      basePriceMultiplier: T.Number({ default: 1 }),
+      issueCreatorMultiplier: T.Number({ default: 1 }),
+    }),
+    commands: T.Array(
+      StrictObject({
+        name: T.String(),
+        enabled: T.Boolean(),
+      }),
+      { default: allCommands }
+    ),
+    incentives: StrictObject({
+      comment: StrictObject({
+        elements: T.Record(T.Union(HtmlEntities), T.Number(), { default: allHtmlElementsSetToZero }),
+        totals: StrictObject({
+          character: T.Number({ default: 0, minimum: 0 }),
+          word: T.Number({ default: 0, minimum: 0 }),
+          sentence: T.Number({ default: 0, minimum: 0 }),
+          paragraph: T.Number({ default: 0, minimum: 0 }),
+          comment: T.Number({ default: 0, minimum: 0 }),
+        }),
+      }),
+    }),
+    labels: StrictObject({
+      time: T.Array(StrictObject({ name: T.String() }), { default: defaultTimeLabels }),
+      priority: T.Array(StrictObject({ name: T.String() }), { default: defaultPriorityLabels }),
+    }),
+    miscellaneous: StrictObject({
+      maxConcurrentTasks: T.Number({ default: Number.MAX_SAFE_INTEGER }),
+      promotionComment: T.String({ default: promotionComment }),
+      registerWalletWithVerification: T.Boolean({ default: false }),
+    }),
+  },
+  { default: undefined }
+);
 export const validateBotConfig = ajv.compile(BotConfigSchema);
 
 export type BotConfig = StaticDecode<typeof BotConfigSchema>;

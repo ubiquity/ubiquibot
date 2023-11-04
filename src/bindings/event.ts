@@ -5,19 +5,12 @@ import { LogMessage } from "../adapters/supabase/helpers/tables/logs";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
 import { addCommentToIssue, shouldSkip } from "../helpers";
-import {
-  GitHubEvent,
-  MainActionHandler,
-  PayloadSchema,
-  PostActionHandler,
-  PreActionHandler,
-  WildCardHandler,
-} from "../types";
-import { Payload } from "../types/payload";
-import { ajv } from "../utils";
+import { MainActionHandler, PostActionHandler, PreActionHandler, WildCardHandler } from "../types/handlers";
+import { Payload, PayloadSchema, GitHubEvent } from "../types/payload";
+import { ajv } from "../utils/ajv";
 import Runtime from "./bot-runtime";
 import { loadConfiguration } from "./config";
-import { Context } from "../types";
+import { Context } from "../types/context";
 
 const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
 type PreHandlerWithType = { type: string; actions: PreActionHandler[] };

@@ -10,6 +10,7 @@ import { User } from "./supabase/helpers/tables/user";
 import { Wallet } from "./supabase/helpers/tables/wallet";
 import { Database } from "./supabase/types";
 import { env } from "../bindings/env";
+import OpenAI from "openai";
 
 const supabaseClient = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_KEY, { auth: { persistSession: false } });
 
@@ -22,9 +23,10 @@ export function createAdapters(context: Context) {
       debit: new Settlement(supabaseClient, context),
       settlement: new Settlement(supabaseClient, context),
       label: new Label(supabaseClient, context),
-      logs: new Logs(supabaseClient, context),
+      logs: new Logs(supabaseClient, context, env.LOG_ENVIRONMENT, env.LOG_RETRY_LIMIT, env.LOG_LEVEL),
       locations: new Locations(supabaseClient, context),
       super: new Super(supabaseClient, context),
     },
+    openAi: context.config.keys.openAi ? new OpenAI({ apiKey: context.config.keys.openAi }) : null,
   };
 }

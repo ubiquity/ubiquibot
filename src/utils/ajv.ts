@@ -7,6 +7,7 @@ export const ajv = addFormats(
     removeAdditional: true,
     useDefaults: true,
     allErrors: true,
+    coerceTypes: true,
   }),
   {
     formats: [
