@@ -16,6 +16,7 @@ export async function generatePermit2Signature(
     payments: { evmNetworkId },
     keys: { evmPrivateEncrypted },
   } = context.config;
+  if (!evmPrivateEncrypted) throw runtime.logger.warn("No bot wallet private key defined");
   const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
   const { privateKey } = await decryptKeys(evmPrivateEncrypted);
 

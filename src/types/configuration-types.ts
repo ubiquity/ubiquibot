@@ -1,4 +1,4 @@
-import { Type as T, Static, TProperties, TObject, ObjectOptions, StringOptions, StaticDecode } from "@sinclair/typebox";
+import { Type as T, Static, TProperties, ObjectOptions, StringOptions, StaticDecode } from "@sinclair/typebox";
 import { LogLevel } from "../types";
 import { validHTMLElements } from "../handlers/comment/handlers/issue/valid-html-elements";
 import { userCommands } from "../handlers";
@@ -35,13 +35,17 @@ const defaultPriorityLabels = [
   { name: "Priority: 5 (Emergency)" },
 ];
 
-function StrictObject<T extends TProperties>(obj: T, options?: ObjectOptions): TObject<T> {
+function StrictObject<T extends TProperties>(obj: T, options?: ObjectOptions) {
   return T.Object<T>(obj, { additionalProperties: false, default: {}, ...options });
 }
 
 function stringDuration(options?: StringOptions) {
   return T.Transform(T.String(options))
     .Decode((value) => {
+      const decoded = ms(value);
+      if (decoded === undefined || isNaN(decoded)) {
+        throw new Error(`Invalid duration string: ${value}`);
+      }
       return ms(value);
     })
     .Encode((value) => {
@@ -52,7 +56,7 @@ function stringDuration(options?: StringOptions) {
 export const EnvConfigSchema = T.Object({
   WEBHOOK_PROXY_URL: T.String({ format: "uri" }),
   LOG_ENVIRONMENT: T.String({ default: "production" }),
-  LOG_LEVEL: T.Enum(LogLevel),
+  LOG_LEVEL: T.Enum(LogLevel, { default: LogLevel.SILLY }),
   LOG_RETRY_LIMIT: T.Number({ default: 8 }),
   SUPABASE_URL: T.String({ format: "uri" }),
   SUPABASE_KEY: T.String(),
@@ -67,7 +71,7 @@ export type EnvConfig = Static<typeof EnvConfigSchema>;
 export const BotConfigSchema = StrictObject(
   {
     keys: StrictObject({
-      evmPrivateEncrypted: T.String(),
+      evmPrivateEncrypted: T.Optional(T.String()),
       openAi: T.Optional(T.String()),
     }),
     features: StrictObject({
@@ -89,7 +93,7 @@ export const BotConfigSchema = StrictObject(
     }),
     timers: StrictObject({
       reviewDelayTolerance: stringDuration({ default: "1 day" }),
-      taskStaleTimeoutDuration: stringDuration({ default: "1 month" }),
+      taskStaleTimeoutDuration: stringDuration({ default: "4 weeks" }),
       taskFollowUpDuration: stringDuration({ default: "0.5 weeks" }),
       taskDisqualifyDuration: stringDuration({ default: "1 week" }),
     }),
@@ -108,7 +112,7 @@ export const BotConfigSchema = StrictObject(
     ),
     incentives: StrictObject({
       comment: StrictObject({
-        elements: T.Record(T.Union(HtmlEntities), T.Number(), { default: allHtmlElementsSetToZero }),
+        elements: T.Record(T.Union(HtmlEntities), T.Number({ default: 0 }), { default: allHtmlElementsSetToZero }),
         totals: StrictObject({
           character: T.Number({ default: 0, minimum: 0 }),
           word: T.Number({ default: 0, minimum: 0 }),

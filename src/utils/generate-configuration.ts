@@ -1,5 +1,5 @@
 import merge from "lodash/merge";
-import { Context } from "probot";
+import { Context as ProbotContext } from "probot";
 import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
 import { Payload, BotConfig, validateBotConfig, BotConfigSchema } from "../types";
@@ -9,10 +9,10 @@ import { Value } from "@sinclair/typebox/value";
 const UBIQUIBOT_CONFIG_REPOSITORY = "ubiquibot-config";
 const UBIQUIBOT_CONFIG_FULL_PATH = ".github/ubiquibot-config.yml";
 
-export async function generateConfiguration(context: Context): Promise<BotConfig> {
+export async function generateConfiguration(context: ProbotContext): Promise<BotConfig> {
   const payload = context.payload as Payload;
 
-  let organizationConfiguration = parseYaml(
+  const organizationConfiguration = parseYaml(
     await download({
       context,
       repository: UBIQUIBOT_CONFIG_REPOSITORY,
@@ -20,7 +20,7 @@ export async function generateConfiguration(context: Context): Promise<BotConfig
     })
   );
 
-  let repositoryConfiguration = parseYaml(
+  const repositoryConfiguration = parseYaml(
     await download({
       context,
       repository: payload.repository.name,
@@ -30,14 +30,9 @@ export async function generateConfiguration(context: Context): Promise<BotConfig
 
   let orgConfig: BotConfig | undefined;
   if (organizationConfiguration) {
-    console.dir(organizationConfiguration, { depth: null, colors: true });
-    organizationConfiguration = Value.Decode(BotConfigSchema, organizationConfiguration);
     const valid = validateBotConfig(organizationConfiguration);
     if (!valid) {
-      const errors = (validateBotConfig.errors as DefinedError[]).filter(
-        (error) => !(error.keyword === "required" && error.params.missingProperty === "evmPrivateEncrypted")
-      );
-      const err = generateValidationError(errors as DefinedError[]);
+      const err = generateValidationError(validateBotConfig.errors as DefinedError[]);
       if (err instanceof Error) throw err;
       if (payload.issue?.number)
         await context.octokit.issues.createComment({
@@ -52,14 +47,9 @@ export async function generateConfiguration(context: Context): Promise<BotConfig
 
   let repoConfig: BotConfig | undefined;
   if (repositoryConfiguration) {
-    console.dir(repositoryConfiguration, { depth: null, colors: true });
-    repositoryConfiguration = Value.Decode(BotConfigSchema, repositoryConfiguration);
     const valid = validateBotConfig(repositoryConfiguration);
     if (!valid) {
-      const errors = (validateBotConfig.errors as DefinedError[]).filter(
-        (error) => !(error.keyword === "required" && error.params.missingProperty === "evmPrivateEncrypted")
-      );
-      const err = generateValidationError(errors as DefinedError[]);
+      const err = generateValidationError(validateBotConfig.errors as DefinedError[]);
       if (err instanceof Error) throw err;
       if (payload.issue?.number)
         await context.octokit.issues.createComment({
@@ -72,7 +62,7 @@ export async function generateConfiguration(context: Context): Promise<BotConfig
     repoConfig = repositoryConfiguration as BotConfig;
   }
 
-  const merged = merge({}, orgConfig, repoConfig);
+  let merged = merge({}, orgConfig, repoConfig);
   const valid = validateBotConfig(merged);
   if (!valid) {
     const err = generateValidationError(validateBotConfig.errors as DefinedError[]);
@@ -85,6 +75,16 @@ export async function generateConfiguration(context: Context): Promise<BotConfig
         body: err,
       });
   }
+
+  // this will run transform functions
+  try {
+    merged = Value.Decode(BotConfigSchema, merged);
+  } catch (err) {
+    console.error(JSON.stringify(err, null, 2));
+    throw err;
+  }
+
+  console.dir(merged, { depth: null, colors: true });
   return merged as BotConfig;
 }
 
@@ -108,33 +108,12 @@ ${
   return isValid ? message : new Error(message);
 }
 
-// async function fetchConfigurations(context: Context, type: "org" | "repo") {
-//   const payload = context.payload as Payload;
-//   let repo: string;
-//   let owner: string;
-//   if (type === "org") {
-//     repo = CONFIG_REPO;
-//     owner = payload.organization?.login || payload.repository.owner.login;
-//   } else {
-//     repo = payload.repository.name;
-//     owner = payload.repository.owner.login;
-//   }
-//   if (!repo || !owner) return null;
-//   const { data } = await context.octokit.rest.repos.getContent({
-//     owner,
-//     repo,
-//     path: CONFIG_PATH,
-//     mediaType: { format: "raw" },
-//   });
-//   return data as unknown as string; // not sure why the types are wrong but this is definitely returning a string
-// }
-
 async function download({
   context,
   repository,
   owner,
 }: {
-  context: Context;
+  context: ProbotContext;
   repository: string;
   owner: string;
 }): Promise<string | null> {

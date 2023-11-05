@@ -12,6 +12,8 @@ import Runtime from "./bot-runtime";
 import { loadConfiguration } from "./config";
 import { Context } from "../types/context";
 
+const allowedEvents = Object.values(GitHubEvent) as string[];
+
 const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
 type PreHandlerWithType = { type: string; actions: PreActionHandler[] };
 type HandlerWithType = { type: string; actions: MainActionHandler[] };
@@ -19,6 +21,8 @@ type WildCardHandlerWithType = { type: string; actions: WildCardHandler[] };
 type PostHandlerWithType = { type: string; actions: PostActionHandler[] };
 type AllHandlersWithTypes = PreHandlerWithType | HandlerWithType | PostHandlerWithType;
 type AllHandlers = PreActionHandler | MainActionHandler | PostActionHandler;
+
+const validatePayload = ajv.compile(PayloadSchema);
 
 export async function bindEvents(eventContext: ProbotContext) {
   const runtime = Runtime.getState();
@@ -37,8 +41,8 @@ export async function bindEvents(eventContext: ProbotContext) {
   }
 
   const payload = eventContext.payload as Payload;
-  const allowedEvents = Object.values(GitHubEvent) as string[];
   const eventName = payload?.action ? `${eventContext.name}.${payload?.action}` : eventContext.name; // some events wont have actions as this grows
+
   if (eventName === GitHubEvent.PUSH_EVENT) {
     await validateConfigChange(context);
   }
@@ -47,7 +51,7 @@ export async function bindEvents(eventContext: ProbotContext) {
     throw new Error("Failed to create logger");
   }
 
-  runtime.logger.info("Binding events", { id: eventContext.id, name: eventName, allowedEvents });
+  runtime.logger.info("Event received", { id: eventContext.id, name: eventName });
 
   if (!allowedEvents.includes(eventName)) {
     // just check if its on the watch list
@@ -58,12 +62,11 @@ export async function bindEvents(eventContext: ProbotContext) {
   if (!NO_VALIDATION.includes(eventName)) {
     // Validate payload
     // console.trace({ payload });
-    const validate = ajv.compile(PayloadSchema);
-    const valid = validate(payload);
+    const valid = validatePayload(payload);
     if (!valid) {
       // runtime.logger.info("Payload schema validation failed!", payload);
-      if (validate.errors) {
-        return runtime.logger.error("validation errors", validate.errors);
+      if (validatePayload.errors) {
+        return runtime.logger.error("validation errors", validatePayload.errors);
       }
       // return;
     }
