@@ -326,13 +326,12 @@ async function getAllEvents({ context, owner, repo, issueNumber }: GetAllEvents)
   while (events.data.length > 0) {
     allEvents = allEvents.concat(events.data.filter(isCorrectType) as IssuesListEventsResponseData);
 
-    page++;
     events = await context.event.octokit.issues.listEvents({
       owner,
       repo,
       issue_number: issueNumber,
       per_page: 100,
-      page: page,
+      page: ++page,
     });
   }
   return allEvents;

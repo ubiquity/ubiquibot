@@ -2,83 +2,28 @@ import Decimal from "decimal.js";
 import { stringify } from "yaml";
 import Runtime from "../../../../bindings/bot-runtime";
 import { getTokenSymbol } from "../../../../helpers/contracts";
-import { Comment, Context, Issue } from "../../../../types";
+import { Comment, Context } from "../../../../types";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { generatePermit2Signature } from "./generate-permit-2-signature";
-import { FinalScores } from "./evaluate-comments";
-import { ContributionStyles } from "./specification-scoring";
+import { ContributorClassNames } from "./specification-scoring";
+import { ScoresByUser, CommentDetailsType } from "./issue-shared-types";
+import { FormatScoreDetails, Tags } from "./comment-scoring-rubric";
 
-export async function generatePermits(
-  context: Context,
-  totals: FinalScores,
-  issueAssigneeTask: { source: Issue; score: { [userId: number]: Decimal } },
-  issueIssuerSpecification: { source: Comment[]; score: FinalScores },
-  issueContributorComments: { source: Comment[]; score: FinalScores },
-  reviewContributorComments: { source: Comment[]; score: FinalScores }
+export async function generatePermits(context: Context, totals: ScoresByUser) {
+  // const userIdToNameMap = mapIdsToNames(totals);
 
-  // contributorSpecification?: string
-  // contributorApproval?: unknown,
-  // contributorRejection?: unknown,
-  // contributorCode?: unknown
-) {
-  const userIdToNameMap = mapIdsToNames(
-    issueAssigneeTask,
-    issueIssuerSpecification,
-    issueContributorComments,
-    reviewContributorComments
-
-    // contributorComments,
-    // contributorSpecification
-
-    // contributorApproval,
-    // contributorRejection,
-    // contributorCode
-  );
-
-  const { html: comment, permits } = await generateComment(
-    context,
-    totals,
-    userIdToNameMap,
-
-    issueAssigneeTask,
-    issueIssuerSpecification,
-    issueContributorComments,
-    reviewContributorComments
-  );
-  // const { html: comment, permits } = await generateComment(context, totals, userIdToNameMap, contributorComments);
+  const { html: comment, permits } = await generateComment(context, totals);
   const metadata = structuredMetadata.create("Permits", { permits, totals });
   return comment.concat("\n", metadata);
 }
 
-async function generateComment(
-  context: Context,
-  totals: FinalScores,
-  userIdToNameMap: { [userId: number]: string },
-
-  issueAssigneeTask: { source: Issue; score: { [userId: number]: Decimal } },
-  issueIssuerSpecification: { source: Comment[]; score: FinalScores },
-  issueContributorComments: { source: Comment[]; score: FinalScores },
-  reviewContributorComments: { source: Comment[]; score: FinalScores }
-
-  // contributorComments: Comment[],
-  // contributorSpecification?: string
-  // contributorApproval?: unknown,
-  // contributorRejection?: unknown,
-  // contributorCode?: unknown
-) {
+async function generateComment(context: Context, totals: ScoresByUser) {
   const runtime = Runtime.getState();
   const {
     payout: { paymentToken, rpc, privateKey },
   } = context.config;
 
-  const detailsTable = generateDetailsTable(
-    totals,
-    contributorComments,
-    contributorSpecification
-    // contributorApproval,
-    // contributorRejection,
-    // contributorCode
-  );
+  const detailsTable = generateDetailsTable(totals);
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const HTMLs = [] as string[];
 
@@ -88,8 +33,9 @@ async function generateComment(
     const userTotals = totals[userId];
 
     const tokenAmount = userTotals.total;
-    const contributorName = userIdToNameMap[userId];
-    const issueRole = userTotals.role;
+
+    const contributorName = userTotals.username;
+    const contributionClassName = userTotals.class;
 
     if (!privateKey) throw runtime.logger.warn("No bot wallet private key defined");
 
@@ -98,7 +44,7 @@ async function generateComment(
     const permit = await generatePermit2Signature(context, {
       beneficiary: beneficiaryAddress,
       amount: tokenAmount,
-      identifier: issueRole,
+      identifier: contributionClassName,
       userId: userId,
     });
 
@@ -110,7 +56,7 @@ async function generateComment(
       tokenSymbol,
       contributorName,
       detailsTable,
-      issueRole,
+      issueRole: contributionClassName,
     });
     HTMLs.push(html);
   }
@@ -143,51 +89,59 @@ function generateHtml({
   `;
 }
 
-function generateDetailsTable(
-  totals: FinalScores,
-  contributorComments: Comment[],
-  contributorSpecification?: string
-  // contributorApproval?: unknown,
-  // contributorRejection?: unknown,
-  // contributorCode?: unknown
-) {
+function generateDetailsTable(totals: ScoresByUser) {
   let tableRows = "";
-  for (const userId in totals) {
-    const userTotals = totals[userId];
-    for (const commentScore of userTotals.comments) {
-      const comment = contributorComments.find((comment) => comment.id === commentScore.commentId) as Comment;
-      const commentUrl = comment.html_url;
-      const truncatedBody = comment ? comment.body.substring(0, 64).concat("...") : "";
 
-      const elementScoreDetails = commentScore.elementScoreDetails;
+  for (const user of Object.values(totals)) {
+    for (const detail of user.details) {
+      const sourceDetails = detail.source;
+      const scoringDetails = detail.scoring;
+      // they will have the same index and length to refer to the same comment
+      // const specificationDetails = scoringDetails.specification;
+      // const taskDetails = scoringDetails.task;
 
-      const newElementScoreDetails = {} as { [elementId: string]: { count: number; score: number; words: number } };
-      for (const key in elementScoreDetails) {
-        newElementScoreDetails[key] = {
-          ...elementScoreDetails[key],
-          score: Number(elementScoreDetails[key].score),
-        };
+      const commentSources = sourceDetails.comments;
+      const commentScores = scoringDetails.comments;
+
+      if (!commentSources) continue;
+      if (!commentScores) continue;
+
+      for (const index in commentSources) {
+        //
+        const commentSource = commentSources[index];
+        const commentScore = commentScores[index];
+
+        const commentUrl = commentSource.html_url;
+        const truncatedBody = commentSource ? commentSource.body.substring(0, 64).concat("...") : "";
+        const formatScoreDetails = commentScore.formattingScoreDetails;
+
+        const newFormatScoreDetails = {} as FormatScoreDetails; // { [elementId: string]: { count: number; score: number; words: number } };
+        for (const _element in formatScoreDetails) {
+          const element = _element as Tags;
+          newFormatScoreDetails[element] = {
+            ...formatScoreDetails[element],
+            score: Number(formatScoreDetails[element].score),
+          };
+        }
+        let formatDetailsStr = "";
+        if (newFormatScoreDetails && Object.keys(newFormatScoreDetails).length > 0) {
+          const ymlElementScores = stringify(newFormatScoreDetails);
+          formatDetailsStr = ["", `<pre>${ymlElementScores}</pre>`, ""].join("\n"); // weird rendering quirk with pre that needs breaks
+        } else {
+          formatDetailsStr = "-";
+        }
+
+        const quantScore = zeroToHyphen(commentScore.wordScore.plus(commentScore.formattingScore));
+        const qualScore = zeroToHyphen(commentScore.relevanceScore);
+        const credit = zeroToHyphen(commentScore.finalScore);
+        let formatScoreCell;
+        if (formatDetailsStr != "-") {
+          formatScoreCell = `<details><summary>${quantScore}</summary>${formatDetailsStr}</details>`;
+        } else {
+          formatScoreCell = quantScore;
+        }
+        tableRows += `<tr><td><h6><a href="${commentUrl}">${truncatedBody}</a></h6></td><td>${formatScoreCell}</td><td>${qualScore}</td><td>${credit}</td></tr>`;
       }
-
-      let elementScoreDetailsStr = "";
-      if (newElementScoreDetails && Object.keys(newElementScoreDetails).length > 0) {
-        const ymlElementScores = stringify(newElementScoreDetails);
-        elementScoreDetailsStr = ["", `<pre>${ymlElementScores}</pre>`, ""].join("\n"); // weird rendering quirk with pre that needs breaks
-      } else {
-        elementScoreDetailsStr = "-";
-      }
-      const quantScore = zeroToHyphen(commentScore.wordAndElementScoreTotal);
-      const qualScore = zeroToHyphen(commentScore.qualityScore);
-      const credit = zeroToHyphen(commentScore.finalScore);
-
-      let quantScoreCell;
-      if (elementScoreDetailsStr != "-") {
-        quantScoreCell = `<details><summary>${quantScore}</summary>${elementScoreDetailsStr}</details>`;
-      } else {
-        quantScoreCell = quantScore;
-      }
-
-      tableRows += `<tr><td><h6><a href="${commentUrl}">${truncatedBody}</a></h6></td><td>${quantScoreCell}</td><td>${qualScore}</td><td>${credit}</td></tr>`;
     }
   }
   return `<table><tbody><tr><td>Comment</td><td>Formatting</td><td>Relevance</td><td>Reward</td></tr>${tableRows}</tbody></table>`;
@@ -201,58 +155,22 @@ function zeroToHyphen(value: number | Decimal) {
   }
 }
 
-function mapIdsToNames(
-  issueAssigneeTask: { source: Issue; score: { [userId: number]: Decimal } },
-  issueIssuerSpecification: { source: Comment[]; score: FinalScores },
-  issueContributorComments: { source: Comment[]; score: FinalScores },
-  reviewContributorComments: { source: Comment[]; score: FinalScores }
-
-  // contributorComments: Comment[],
-  // contributorSpecification?: string
-
-  // contributorApproval?: unknown,
-  // contributorRejection?: unknown,
-  // contributorCode?: unknown
-) {
-  const userIdToNameMap = {} as { [userId: number]: string };
-
-  for (const userId in issueAssigneeTask.score) {
-    const user = issueAssigneeTask.source.assignees.find((assignee) => assignee.id === parseInt(userId));
-    if (!user) throw Runtime.getState().logger.warn("User is undefined");
-    userIdToNameMap[userId] = user.login;
-  }
-
-  for (const userId in issueIssuerSpecification.score) {
-    const user = issueIssuerSpecification.source.find((comment) => comment.user.id === parseInt(userId));
-    if (!user) throw Runtime.getState().logger.warn("User is undefined");
-    userIdToNameMap[userId] = user.user.login;
-  }
-
-  for (const userId in issueContributorComments.score) {
-    const user = issueContributorComments.source.find((comment) => comment.user.id === parseInt(userId));
-    if (!user) throw Runtime.getState().logger.warn("User is undefined");
-    userIdToNameMap[userId] = user.user.login;
-  }
-
-  for (const userId in reviewContributorComments.score) {
-    const user = reviewContributorComments.source.find((comment) => comment.user.id === parseInt(userId));
-    if (!user) throw Runtime.getState().logger.warn("User is undefined");
-    userIdToNameMap[userId] = user.user.login;
-  }
-
-  return userIdToNameMap;
-
-  // return contributorComments.reduce((accumulator, comment: Comment) => {
-  //   const userId = comment.user.id;
-  //   accumulator[userId] = comment.user.login;
-  //   return accumulator;
-  // }, {} as { [userId: number]: string });
-}
+// function mapIdsToNames(allUserTotals: ScoresByUser) {
+//   const userIdToNameMap = {} as { [userId: string]: string };
+//   for (const userId in allUserTotals) {
+//     userIdToNameMap[userId] = allUserTotals[userId].details[0].username;
+//   }
+//   return userIdToNameMap;
+// }
 interface GenerateHtmlParams {
   permit: URL;
   tokenAmount: Decimal;
   tokenSymbol: string;
   contributorName: string;
   detailsTable: string;
-  issueRole: ContributionStyles;
+  issueRole: ContributorClassNames;
 }
+
+// const ee = new EventEmitter();
+// ee.on("ok", ({ message }: { message: string }) => console.log(message));
+// ee.emit("ok", { message: "ok" });

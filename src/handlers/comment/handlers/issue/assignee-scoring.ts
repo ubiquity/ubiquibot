@@ -1,20 +1,9 @@
 import Decimal from "decimal.js";
 import Runtime from "../../../../bindings/bot-runtime";
 import { Issue, User } from "../../../../types/payload";
+import { ScoresByUser, ScoreDetails } from "./issue-shared-types";
 
-export async function assigneeScoring({
-  issue,
-  source,
-}: {
-  issue: Issue;
-  source: User[];
-}): Promise<{ source: Issue; score: { [userId: number]: Decimal } }> {
-  const assigneeRewards = source.reduce((accumulator, assignee) => {
-    const assigneeScore = new Decimal(0);
-    accumulator[assignee.id] = assigneeScore;
-    return accumulator;
-  }, {} as { [userId: number]: Decimal });
-
+export async function assigneeScoring({ issue, source }: { issue: Issue; source: User[] }): Promise<ScoresByUser[]> {
   // get the price label
   const priceLabels = issue.labels.filter((label) => label.name.startsWith("Price: "));
   if (!priceLabels) throw Runtime.getState().logger.warn("Price label is undefined");
@@ -26,7 +15,12 @@ export async function assigneeScoring({
       const priceB = parseFloat(b.name.replace("Price: ", ""));
       return priceA - priceB;
     })[0]
-    .name.replace("Price: ", "");
+    .name.match(/\d+(\.\d+)?/)
+    ?.shift();
+
+  if (!priceLabel) {
+    throw Runtime.getState().logger.warn("Price label is undefined");
+  }
 
   // get the price
   const price = new Decimal(priceLabel);
@@ -34,15 +28,42 @@ export async function assigneeScoring({
   // get the number of assignees
   const numberOfAssignees = source.length;
 
-  for (const assigneeId in assigneeRewards) {
+  const assigneeRewards = source.map((assignee) => {
     // get the assignee multiplier
-    const assigneeMultiplier = 1; // TODO: get the assignee multiplier from the database
+    const assigneeMultiplier = new Decimal(1); // TODO: get the assignee multiplier from the database
 
     // calculate the total
-    const total = price.div(numberOfAssignees).times(assigneeMultiplier);
-    // return the total
-    assigneeRewards[assigneeId] = total;
-  }
+    const score = price.div(numberOfAssignees).times(assigneeMultiplier);
 
-  return { score: assigneeRewards, source: issue };
+    // return the total
+    const details: ScoreDetails = {
+      score: score,
+      scoring: {
+        comments: null,
+        specification: null,
+        task: {
+          finalScore: score,
+          multiplier: assigneeMultiplier,
+        },
+      },
+      source: {
+        comments: null,
+        issue: issue,
+      },
+    };
+
+    const totals: ScoresByUser = {
+      [assignee.id]: {
+        total: score,
+        userId: assignee.id,
+        username: assignee.login,
+        class: "Issue Assignee Task",
+        details: [details],
+      },
+    };
+
+    return totals;
+  });
+
+  return assigneeRewards;
 }

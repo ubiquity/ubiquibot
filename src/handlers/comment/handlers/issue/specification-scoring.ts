@@ -1,25 +1,23 @@
+import Decimal from "decimal.js";
+
 import Runtime from "../../../../bindings/bot-runtime";
 import { Context } from "../../../../types";
 import { Comment, Issue, User } from "../../../../types/payload";
-// import { IssueRole } from "./archive/calculate-score-typings";
-import Decimal from "decimal.js";
-import { commentScoringByContributionStyle } from "./comment-scoring-by-contribution-style";
-import { CommentScoringRubric } from "./comment-scoring-rubric";
-import { ContributionStyleTypes } from "./contribution-style-types";
-import { FinalScores } from "./evaluate-comments";
+import { commentScoringByContributionClass } from "./comment-scoring-by-contribution-style";
+import { CommentScoring } from "./comment-scoring-rubric";
+import { ContributorClasses } from "./contribution-style-types";
+import { filterCommentsByContributionStyleType } from "./filter-comments-by-contribution-type";
 import { formatScoring } from "./format-scoring";
 import { identifyUserIds } from "./identify-user-ids";
+import { ScoresByUser } from "./issue-shared-types";
 import { relevanceAndFormatScoring } from "./relevance-format-scoring";
-import { filterCommentsByContributionType } from "./filter-comments-by-contribution-type";
 
-export type ContributionStyles = keyof ContributionStyleTypes;
+// import { IssueRole } from "./archive/calculate-score-typings";
+export type ContributorClassNames = keyof ContributorClasses;
 
 type ContextIssue = { context: Context; issue: Issue };
 
-export async function specificationScoring({
-  context,
-  issue,
-}: ContextIssue): Promise<{ source: Comment[]; score: FinalScores }> {
+export async function specificationScoring({ context, issue }: ContextIssue): Promise<DetailedSource> {
   const issueAsComment = {
     body: issue.body,
     user: issue.user,
@@ -41,21 +39,37 @@ export async function specificationScoring({
   ];
 
   const formatting = await formatScoring(context, issue, [issueAsComment]);
-  const score = relevanceAndFormatScoring(RELEVANT, formatting);
-  return { score, source: [issueAsComment] };
+  const scoreDetails = relevanceAndFormatScoring(RELEVANT, formatting);
+
+  const source: ScoresByUser = {
+    class: "Issue Issuer Specification",
+    userId: issue.user.id,
+    username: issue.user.login,
+    score: scoreDetails.finalScore,
+    scoring: {
+      comment: null,
+      specification: scoreDetails,
+      task: null,
+    },
+    source: {
+      comment: null,
+      issue: issue,
+    },
+  };
+  return source;
 }
 
 export async function allCommentScoring({ context, issue, proof }: ContextIssue & { proof: Comment[] }) {
   const runtime = Runtime.getState();
 
-  const usersOfCommentsByRole: ContributionStyleTypes = await identifyUserIds(context, issue, proof);
-  const commentsByRole = filterCommentsByContributionType(usersOfCommentsByRole, proof);
-  const contributionStyles = Object.keys(usersOfCommentsByRole) as ContributionStyles[];
+  const usersOfCommentsByRole: ContributorClasses = await identifyUserIds(context, issue, proof);
+  const commentsByRole = filterCommentsByContributionStyleType(usersOfCommentsByRole, proof);
+  const contributionStyles = Object.keys(usersOfCommentsByRole) as ContributorClassNames[];
 
-  const scoringRubrics = [] as CommentScoringRubric[];
+  const scoringRubrics = [] as CommentScoring[];
 
   for (const contributionStyle of contributionStyles) {
-    const scoring = commentScoringByContributionStyle[contributionStyle];
+    const scoring = commentScoringByContributionClass[contributionStyle];
     const selection = usersOfCommentsByRole[contributionStyle];
     if (!selection) {
       runtime.logger.verbose(`No ${contributionStyle} found`);
@@ -85,7 +99,7 @@ export async function allCommentScoring({ context, issue, proof }: ContextIssue 
   return scoringRubrics;
 }
 
-function perUserCommentScoring(user: User, comments: Comment[], scoringRubric: CommentScoringRubric) {
+function perUserCommentScoring(user: User, comments: Comment[], scoringRubric: CommentScoring) {
   for (const comment of comments) {
     scoringRubric.computeWordScore(comment, user.id);
     scoringRubric.computeElementScore(comment, user.id);

@@ -1,17 +1,14 @@
-import Decimal from "decimal.js";
 import { Logs } from "../../../../adapters/supabase";
 import Runtime from "../../../../bindings/bot-runtime";
 import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../../helpers";
-import { getLinkedPullRequests } from "../../../../helpers/parser";
 import { BotConfig, Context } from "../../../../types";
-import { Comment, Issue, Payload, StateReason, User } from "../../../../types/payload";
+import { Comment, Issue, Payload, StateReason } from "../../../../types/payload";
 import structuredMetadata from "../../../shared/structured-metadata";
-import { assigneeScoring as assigneeTaskScoring } from "./assignee-scoring";
-import { evaluateComments, FinalScores } from "./evaluate-comments";
 import { generatePermits } from "./generate-permits";
-import { specificationScoring as issuerSpecificationScoring } from "./specification-scoring";
+import { scoreSources } from "./scoreSources";
+import { sumTotalScoresPerContributor } from "./sumTotalScoresPerContributor";
 
-const botCommandsAndHumanCommentsFilter = (comment: Comment) =>
+export const botCommandsAndHumanCommentsFilter = (comment: Comment) =>
   !comment.body.startsWith("/") /* No Commands */ && comment.user.type === "User"; /* No Bots */
 
 const botCommentsFilter = (comment: Comment) => comment.user.type === "Bot"; /* No Humans */
@@ -26,58 +23,15 @@ export async function issueClosed(context: Context) {
   const config = context.config;
 
   const { issueComments, owner, repository, issueNumber } = await getEssentials(context);
-
   await preflightChecks({ issue, logger, issueComments, config, payload, context });
 
-  const issueAssigneeTask = await assigneeTaskScoring({
-      issue,
-      source: issue.assignees.filter((assignee): assignee is User => Boolean(assignee)),
-    }),
-    issueIssuerSpecification = await issuerSpecificationScoring({ context, issue }),
-    issueContributorComments = await evaluateComments({
-      context,
-      issue,
-      source: issueComments.filter(botCommandsAndHumanCommentsFilter),
-    }),
-    reviewContributorComments = await evaluateComments({
-      context,
-      issue,
-      source: (
-        await getPullRequestComments(context, owner, repository, issueNumber)
-      ).filter(botCommandsAndHumanCommentsFilter),
-    });
+  // ===
 
-  const totals = calculateTotalScores(
-    issueAssigneeTask,
-    issueIssuerSpecification,
-    issueContributorComments,
-    reviewContributorComments
-  );
+  const sourceScores = await scoreSources({ context, issue, issueComments, owner, repository, issueNumber });
+  const contributorTotalScores = sumTotalScoresPerContributor(sourceScores);
 
-  console.dir(totals, { depth: null, colors: true });
-
-  const permitComment = await generatePermits(
-    context,
-    totals,
-    issueAssigneeTask,
-    issueIssuerSpecification,
-    issueContributorComments,
-    reviewContributorComments
-  );
+  const permitComment = await generatePermits(context, contributorTotalScores);
   return permitComment;
-}
-
-async function getPullRequestComments(context: Context, owner: string, repository: string, issueNumber: number) {
-  const pullRequestComments: Comment[] = [];
-  const linkedPullRequests = await getLinkedPullRequests({ owner, repository, issue: issueNumber });
-  if (linkedPullRequests.length) {
-    const linkedCommentsPromises = linkedPullRequests.map((pull) => getAllIssueComments(context, pull.number));
-    const linkedCommentsResolved = await Promise.all(linkedCommentsPromises);
-    for (const linkedComments of linkedCommentsResolved) {
-      pullRequestComments.push(...linkedComments);
-    }
-  }
-  return pullRequestComments;
 }
 
 async function getEssentials(context: Context) {
@@ -128,40 +82,10 @@ function checkIfPermitsAlreadyPosted(botComments: Comment[], logger: Logs) {
     if (parsed) {
       console.trace({ parsed });
       if (parsed.caller === "generatePermits") {
-        // in the metadata we store what function rendered the comment
+        // in the comment metadata we store what function rendered the comment
         console.trace({ parsed });
         throw logger.warn("Permit already posted");
       }
     }
   });
-}
-
-function addScoreToTotal(userId: number, score: Decimal | { total: Decimal }, totals: { [userId: number]: Decimal }) {
-  if (typeof score === "object" && "total" in score) {
-    totals[userId] = totals[userId] ? totals[userId].plus(score.total) : score.total;
-  } else if (score instanceof Decimal) {
-    totals[userId] = totals[userId] ? totals[userId].plus(score) : score;
-  }
-}
-
-function calculateTotalScores(
-  issueAssigneeTask: { source: Issue; score: { [userId: number]: Decimal } },
-  issueIssuerSpecification: { source: Comment[]; score: FinalScores },
-  issueContributorComments: { source: Comment[]; score: FinalScores },
-  reviewContributorComments: { source: Comment[]; score: FinalScores }
-): { [userId: number]: Decimal } {
-  const totals: { [userId: number]: Decimal } = {};
-
-  Object.entries(issueAssigneeTask.score).forEach(([userId, score]) => addScoreToTotal(Number(userId), score, totals));
-  Object.entries(issueIssuerSpecification.score).forEach(([userId, score]) =>
-    addScoreToTotal(Number(userId), score, totals)
-  );
-  Object.entries(issueContributorComments.score).forEach(([userId, score]) =>
-    addScoreToTotal(Number(userId), score, totals)
-  );
-  Object.entries(reviewContributorComments.score).forEach(([userId, score]) =>
-    addScoreToTotal(Number(userId), score, totals)
-  );
-
-  return totals;
 }

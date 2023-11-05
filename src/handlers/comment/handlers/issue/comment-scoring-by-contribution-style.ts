@@ -1,52 +1,52 @@
-import { CommentScoringRubric } from "./comment-scoring-rubric";
-import { ContributionStyles } from "./specification-scoring";
+import { CommentScoring } from "./comment-scoring-rubric";
+import { ContributorClassNames } from "./specification-scoring";
 
-export const commentScoringByContributionStyle = {
+export const commentScoringByContributionClass = {
   // TODO: make this configurable
 
-  "Issue Issuer Comment": new CommentScoringRubric({
-    role: "Issue Issuer Comment",
+  "Issue Issuer Comment": new CommentScoring({
+    contributionClass: "Issue Issuer Comment",
     formattingMultiplier: 1,
     wordValue: 0.2,
   }),
-  "Issue Assignee Comment": new CommentScoringRubric({
-    role: "Issue Assignee Comment",
+  "Issue Assignee Comment": new CommentScoring({
+    contributionClass: "Issue Assignee Comment",
     formattingMultiplier: 0,
     wordValue: 0,
   }),
-  "Issue Collaborator Comment": new CommentScoringRubric({
-    role: "Issue Collaborator Comment",
+  "Issue Collaborator Comment": new CommentScoring({
+    contributionClass: "Issue Collaborator Comment",
     formattingMultiplier: 1,
     wordValue: 0.1,
   }),
-  "Issue Contributor Comment": new CommentScoringRubric({
-    role: "Issue Contributor Comment",
+  "Issue Contributor Comment": new CommentScoring({
+    contributionClass: "Issue Contributor Comment",
     formattingMultiplier: 0.25,
     wordValue: 0.1,
   }),
-  "Review Issuer Comment": new CommentScoringRubric({
-    role: "Review Issuer Comment",
+  "Review Issuer Comment": new CommentScoring({
+    contributionClass: "Review Issuer Comment",
     formattingMultiplier: 2,
     wordValue: 0.2,
   }),
-  "Review Assignee Comment": new CommentScoringRubric({
-    role: "Review Assignee Comment",
+  "Review Assignee Comment": new CommentScoring({
+    contributionClass: "Review Assignee Comment",
     formattingMultiplier: 1,
     wordValue: 0.1,
   }),
-  "Review Collaborator Comment": new CommentScoringRubric({
-    role: "Review Collaborator Comment",
+  "Review Collaborator Comment": new CommentScoring({
+    contributionClass: "Review Collaborator Comment",
     formattingMultiplier: 1,
     wordValue: 0.1,
   }),
-  "Review Contributor Comment": new CommentScoringRubric({
-    role: "Review Contributor Comment",
+  "Review Contributor Comment": new CommentScoring({
+    contributionClass: "Review Contributor Comment",
     formattingMultiplier: 0.25,
     wordValue: 0.1,
   }),
   // end comments
-  "Issue Issuer Specification": new CommentScoringRubric({
-    role: "Issue Issuer Specification",
+  "Issue Issuer Specification": new CommentScoring({
+    contributionClass: "Issue Issuer Specification",
     formattingMultiplier: 3,
     wordValue: 0.2,
   }),
@@ -82,5 +82,5 @@ export const commentScoringByContributionStyle = {
   //   wordValue: 1,
   // }),
 } as {
-  [key in ContributionStyles]: CommentScoringRubric;
+  [key in ContributorClassNames]: CommentScoring;
 };

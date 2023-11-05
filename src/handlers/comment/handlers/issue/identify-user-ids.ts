@@ -1,4 +1,3 @@
-import Runtime from "../../../../bindings/bot-runtime";
 import { Context } from "../../../../types";
 import { Comment, Issue, User } from "../../../../types/payload";
 import { getCollaboratorsForRepo } from "./get-collaborator-ids-for-repo";
@@ -49,6 +48,7 @@ export async function identifyUserIds(context: Context, issue: Issue, contributo
     // start specification
     "Issue Issuer Specification": issueIssuerUser,
     // end specification
+    "Issue Assignee Task": issueAssigneeUser,
   };
   return roleIds;
 }

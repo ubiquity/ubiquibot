@@ -1,15 +1,17 @@
 import { User } from "../../../../types/payload";
 
+type IssueAssignee = User[] | User | null; // Sometimes issues have no assignee
+
 // [VIEW] [ROLE] [CONTRIBUTION]
-export type ContributionStyleTypes = {
+export type ContributorClasses = {
   // start comments
   "Issue Issuer Comment": User;
-  "Issue Assignee Comment": null | User;
+  "Issue Assignee Comment": IssueAssignee;
   "Issue Collaborator Comment": User[];
   "Issue Contributor Comment": User[];
 
   "Review Issuer Comment": User;
-  "Review Assignee Comment": null | User;
+  "Review Assignee Comment": IssueAssignee;
   "Review Collaborator Comment": User[];
   "Review Contributor Comment": User[];
   // end comments
@@ -30,4 +32,6 @@ export type ContributionStyleTypes = {
   // start specification
   "Issue Issuer Specification": User;
   // end specification
+
+  "Issue Assignee Task": IssueAssignee;
 };

@@ -2,77 +2,96 @@ import { JSDOM } from "jsdom";
 // TODO: should be inherited from default config. This is a temporary solution.
 import Decimal from "decimal.js";
 import MarkdownIt from "markdown-it";
-import { ElementScoreConfig, ElementScoreConfigParams } from "./element-score-config";
+import { FormatScoreConfig, FormatScoreConfigParams } from "./element-score-config";
 import _ from "lodash";
 import { Comment } from "../../../../types/payload";
-import { ContributionStyles } from "./specification-scoring";
+import { ContributorClassNames } from "./specification-scoring";
+
+export type Tags = keyof HTMLElementTagNameMap;
+
+type FormatConfigMap = {
+  [tagName in Tags]?: FormatScoreConfigParams;
+};
+
+export type FormatScoreDetails = {
+  [tagName in Tags]?: {
+    count: number;
+    score: Decimal;
+    words: number;
+  };
+};
 
 const md = new MarkdownIt();
-// const NEG_ONE = new Decimal(-1);
 const ZERO = new Decimal(0);
 const ONE = new Decimal(1);
 
-type ScoringRubricConstructor = {
-  role: ContributionStyles;
+type CommentScoringConstructor = {
+  contributionClass: ContributorClassNames;
   formattingMultiplier: number;
   wordValue: number;
 };
-export class CommentScoringRubric {
-  public role: ContributionStyles;
+export class CommentScoring {
+  public contributionClass: ContributorClassNames;
   public roleWordScore: Decimal;
   public roleWordScoreMultiplier!: number;
   public userWordScoreTotals: { [userId: number]: Decimal } = {};
-  public userElementScoreTotals: { [userId: number]: Decimal } = {};
-  public userElementScoreDetails: {
-    [userId: number]: { [commentId: string]: { count: number; score: Decimal; words: number } };
+  public userFormatScoreTotals: { [userId: number]: Decimal } = {};
+  public userFormatScoreDetails: {
+    [userId: number]: {
+      [commentId: string]: {
+        count: number;
+        score: Decimal;
+        words: number;
+      };
+    };
   } = {};
   public commentScores: {
     [userId: number]: {
       [commentId: number]: {
-        wordScoreTotal: null | Decimal;
+        wordScoreTotal: Decimal;
         wordScoreDetails: { [word: string]: Decimal };
-        elementScoreTotal: null | Decimal;
-        elementScoreDetails: { [key: string]: { count: number; score: Decimal; words: number } };
+        formatScoreTotal: Decimal;
+        formatScoreDetails: FormatScoreDetails;
       };
     };
   } = {};
 
-  private _elementConfig: { [key: string]: ElementScoreConfigParams } = {
-    img: new ElementScoreConfig({ element: "img", disabled: true }), // disabled
-    blockquote: new ElementScoreConfig({ element: "blockquote", disabled: true }), // disabled
-    em: new ElementScoreConfig({ element: "em", disabled: true }), // disabled
-    strong: new ElementScoreConfig({ element: "strong", disabled: true }), // disabled
+  private _formatConfig: FormatConfigMap = {
+    img: new FormatScoreConfig({ element: "img", disabled: true }), // disabled
+    blockquote: new FormatScoreConfig({ element: "blockquote", disabled: true }), // disabled
+    em: new FormatScoreConfig({ element: "em", disabled: true }), // disabled
+    strong: new FormatScoreConfig({ element: "strong", disabled: true }), // disabled
 
-    h1: new ElementScoreConfig({ element: "h1", value: ONE }),
-    h2: new ElementScoreConfig({ element: "h2", value: ONE }),
-    h3: new ElementScoreConfig({ element: "h3", value: ONE }),
-    h4: new ElementScoreConfig({ element: "h4", value: ONE }),
-    h5: new ElementScoreConfig({ element: "h5", value: ONE }),
-    h6: new ElementScoreConfig({ element: "h6", value: ONE }),
-    a: new ElementScoreConfig({ element: "a", value: ONE }),
+    h1: new FormatScoreConfig({ element: "h1", value: ONE }),
+    h2: new FormatScoreConfig({ element: "h2", value: ONE }),
+    h3: new FormatScoreConfig({ element: "h3", value: ONE }),
+    h4: new FormatScoreConfig({ element: "h4", value: ONE }),
+    h5: new FormatScoreConfig({ element: "h5", value: ONE }),
+    h6: new FormatScoreConfig({ element: "h6", value: ONE }),
+    a: new FormatScoreConfig({ element: "a", value: ONE }),
     // ul: new ElementScoreConfig({ element: "ul", value: ONE }),
-    li: new ElementScoreConfig({ element: "li", value: ONE }),
+    li: new FormatScoreConfig({ element: "li", value: ONE }),
     // p: new ElementScoreConfig({ element: "p", value: ZERO }),
-    code: new ElementScoreConfig({ element: "code", value: ONE }),
+    code: new FormatScoreConfig({ element: "code", value: ONE }),
     // table: new ElementScoreConfig({ element: "table", value: ONE }),
-    td: new ElementScoreConfig({ element: "td", value: ONE }),
+    td: new FormatScoreConfig({ element: "td", value: ONE }),
     // tr: new ElementScoreConfig({ element: "tr", value: ONE }),
-    br: new ElementScoreConfig({ element: "br", value: ONE }),
-    hr: new ElementScoreConfig({ element: "hr", value: ONE }),
+    br: new FormatScoreConfig({ element: "br", value: ONE }),
+    hr: new FormatScoreConfig({ element: "hr", value: ONE }),
     // del: new ElementScoreConfig({ element: "del", value: ONE }),
     // pre: new ElementScoreConfig({ element: "pre", value: ONE }),
     // ol: new ElementScoreConfig({ element: "ol", value: ONE }),
   };
 
-  constructor({ role, formattingMultiplier = 1, wordValue = 0 }: ScoringRubricConstructor) {
-    this.role = role;
+  constructor({ contributionClass, formattingMultiplier = 1, wordValue = 0 }: CommentScoringConstructor) {
+    this.contributionClass = contributionClass;
     this._applyRoleMultiplier(formattingMultiplier);
     this.roleWordScore = new Decimal(wordValue);
   }
 
   public compileUserScores(): void {
-    for (const userId in this.userElementScoreDetails) {
-      const userElementScore = this.userElementScoreDetails[userId];
+    for (const userId in this.userFormatScoreDetails) {
+      const userElementScore = this.userFormatScoreDetails[userId];
       const userWordScoreDetails = this.userWordScoreTotals[userId];
 
       const totalElementScore = userElementScore
@@ -84,8 +103,8 @@ export class CommentScoringRubric {
       this.userWordScoreTotals[userId] = new Decimal(totalElementScore).plus(new Decimal(totalWordScore));
 
       // Calculate total element score across all comments for the user
-      this.userElementScoreTotals[userId] = Object.values(this.commentScores[userId] || {}).reduce(
-        (total, { elementScoreDetails }) => {
+      this.userFormatScoreTotals[userId] = Object.values(this.commentScores[userId] || {}).reduce(
+        (total, { formatScoreDetails: elementScoreDetails }) => {
           const elementScore = elementScoreDetails
             ? Object.values(elementScoreDetails).reduce((total, { score }) => total.plus(score), ZERO)
             : ZERO;
@@ -118,7 +137,7 @@ export class CommentScoringRubric {
     const htmlString = md.render(comment.body);
     const dom = new JSDOM(htmlString);
     const doc = dom.window.document;
-    const disabledElements = Object.entries(this._elementConfig)
+    const disabledElements = Object.entries(this._formatConfig)
       .filter(([_, config]) => config.disabled)
       .map(([elementName, _]) => elementName);
 
@@ -169,10 +188,10 @@ export class CommentScoringRubric {
     }
     if (!this.commentScores[userId][commentId]) {
       this.commentScores[userId][commentId] = {
-        wordScoreTotal: null,
-        elementScoreTotal: null,
+        wordScoreTotal: ZERO,
+        formatScoreTotal: ZERO,
         wordScoreDetails: {},
-        elementScoreDetails: {},
+        formatScoreDetails: {},
       };
     }
     this.commentScores[userId][commentId].wordScoreTotal = totalWordScore;
@@ -192,32 +211,32 @@ export class CommentScoringRubric {
 
   public computeElementScore(comment: Comment, userId: number) {
     const htmlString = md.render(comment.body);
-    const selectedUser = _.mapValues(_.cloneDeep(this._elementConfig), () => ({
+    const elementStatistics = _.mapValues(_.cloneDeep(this._formatConfig), () => ({
       count: 0,
       score: ZERO,
       words: 0,
     }));
 
     let totalElementScore = ZERO;
-    for (const incomingTag in selectedUser) {
-      const tag = selectedUser[incomingTag];
-      tag.count = this._countTags(htmlString, incomingTag);
-      const value = this._elementConfig[incomingTag].value;
-      if (value) {
-        tag.score = value.times(tag.count);
-      }
-      tag.words = this._countWordsInTag(htmlString, incomingTag);
+
+    for (const _elementName in elementStatistics) {
+      const elementName = _elementName as Tags;
+      const tag = elementStatistics[elementName];
+      if (!tag) continue;
+
+      tag.count = this._countTags(htmlString, elementName);
+      const value = this._formatConfig[elementName]?.value;
+      if (value) tag.score = value.times(tag.count);
+
+      tag.words = this._countWordsInTag(htmlString, elementName);
       if (tag.count !== 0 || !tag.score.isZero()) {
         totalElementScore = totalElementScore.plus(tag.score);
       } else {
-        delete selectedUser[incomingTag]; // Delete the element if count and score are both zero
+        delete elementStatistics[elementName]; // Delete the element if count and score are both zero
       }
     }
 
-    if (!this.userElementScoreDetails[userId]) {
-      this.userElementScoreDetails[userId] = {};
-    }
-    this.userElementScoreDetails[userId] = selectedUser;
+    this.userFormatScoreDetails[userId] = elementStatistics;
 
     // Store the element score for the comment
     if (!this.commentScores[userId]) {
@@ -225,32 +244,31 @@ export class CommentScoringRubric {
     }
     if (!this.commentScores[userId][comment.id]) {
       this.commentScores[userId][comment.id] = {
-        wordScoreTotal: null,
-        elementScoreTotal: null,
-        elementScoreDetails: {},
+        wordScoreTotal: ZERO,
+        formatScoreTotal: ZERO,
+        formatScoreDetails: {},
         wordScoreDetails: {},
       };
     }
-    this.commentScores[userId][comment.id].elementScoreTotal = totalElementScore;
-    this.commentScores[userId][comment.id].elementScoreDetails = selectedUser; // Change this line
+    this.commentScores[userId][comment.id].formatScoreTotal = totalElementScore;
+    this.commentScores[userId][comment.id].formatScoreDetails = elementStatistics;
 
     return htmlString;
   }
 
   private _applyRoleMultiplier(multiplier: number) {
-    for (const userId in this._elementConfig) {
-      const selection = this._elementConfig[userId];
-      const value = selection.value;
+    for (const tag in this._formatConfig) {
+      const selection = this._formatConfig[tag as Tags];
+      const value = selection?.value;
       if (value) {
         selection.value = value.times(multiplier);
       }
     }
-
     this.roleWordScoreMultiplier = multiplier;
   }
 
-  private _countTags(html: string, tag: string) {
-    if (this._elementConfig[tag].disabled) {
+  private _countTags(html: string, tag: Tags) {
+    if (this._formatConfig[tag]?.disabled) {
       return 0;
     }
 

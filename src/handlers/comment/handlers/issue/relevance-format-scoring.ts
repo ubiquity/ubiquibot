@@ -1,48 +1,46 @@
 import Decimal from "decimal.js";
 import Runtime from "../../../../bindings/bot-runtime";
-import { CommentScoringRubric } from "./comment-scoring-rubric";
-import { FinalScores } from "./evaluate-comments";
+import { CommentScoring } from "./comment-scoring-rubric";
+import { CommentScoreDetails, ScoreDetails, ScoresByUser } from "./issue-shared-types";
 
 export function relevanceAndFormatScoring(
-  relevance: { commentId: number; userId: number; score: Decimal }[],
-  formatting: CommentScoringRubric[]
-) {
-  const finalScores = {} as FinalScores;
+  relevanceScore: { commentId: number; userId: number; score: Decimal }[],
+  formatScore: CommentScoring[]
+): ScoresByUser {
+  const detailedSource = {} as ScoreDetails;
 
-  relevance.forEach(({ commentId, userId, score }) => {
-    formatting.forEach((scoringRubric) => {
-      const usersQuantityScores = scoringRubric.commentScores[userId];
+  relevanceScore.forEach((relevance) => {
+    formatScore.forEach((format) => {
+      // const { commentId, userId, score: relevanceScore } = relevanceScore;
+
+      const usersQuantityScores = format.commentScores[relevance.userId];
       if (!usersQuantityScores) return;
-      const userCommentScore = usersQuantityScores[commentId];
+      const userCommentScore = usersQuantityScores[relevance.commentId];
       if (!userCommentScore) throw Runtime.getState().logger.error("userCommentScore is undefined");
 
-      const quantityScore = userCommentScore.wordScoreTotal.plus(userCommentScore.elementScoreTotal);
+      const wordAndFormatScore = userCommentScore.wordScoreTotal.plus(userCommentScore.formatScoreTotal);
 
-      if (!finalScores[userId]) {
-        finalScores[userId] = {
-          role: scoringRubric.role,
-          total: new Decimal(0),
-          comments: [],
-        };
-      }
-
-      const comment = {
-        commentId: commentId,
-        wordAndElementScoreTotal: quantityScore,
-        qualityScore: score,
-        finalScore: quantityScore.times(score),
-        wordScoreTotal: userCommentScore.wordScoreTotal,
-        elementScoreTotal: userCommentScore.elementScoreTotal,
+      const commentScoreDetails: CommentScoreDetails = {
+        commentId: relevance.commentId,
+        // wordAndFormattingScoreTotal: wordAndFormatScore,
+        relevanceScore: relevance.score,
+        finalScore: wordAndFormatScore.times(relevance.score),
+        wordScore: userCommentScore.wordScoreTotal,
+        formattingScore: userCommentScore.formatScoreTotal,
         wordScoreDetails: userCommentScore.wordScoreDetails || null,
-        elementScoreDetails: userCommentScore.elementScoreDetails || null,
+        formattingScoreDetails: userCommentScore.formatScoreDetails || null,
       };
 
-      finalScores[userId].total = finalScores[userId].total.plus(quantityScore.times(score));
+      if (!detailedSource[userId]) {
+        detailedSource[userId] = [commentScoreDetails];
+      }
+
+      detailedSource[userId].total = detailedSource[userId].total.plus(wordAndFormatScore.times(relevance));
       // finalScores[userId].total = finalScores[userId].total.plus(comment.finalScore);
-      finalScores[userId].role = scoringRubric.role;
-      finalScores[userId].comments.push(comment);
+      detailedSource[userId].role = format.contributionClass;
+      detailedSource[userId].comments.push(commentScoreDetails);
     });
   });
 
-  return finalScores;
+  return detailedSource;
 }

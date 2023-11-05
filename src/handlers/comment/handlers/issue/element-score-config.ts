@@ -1,16 +1,16 @@
 import Decimal from "decimal.js";
 import { validHTMLElements } from "./valid-html-elements";
-export interface ElementScoreConfigParams {
+export interface FormatScoreConfigParams {
   element: string;
   value?: null | Decimal;
   disabled?: boolean;
 }
-export class ElementScoreConfig {
+export class FormatScoreConfig {
   public element: keyof HTMLElementTagNameMap;
   public value: null | Decimal = null;
   public disabled: boolean;
 
-  constructor({ element, value = null, disabled = false }: ElementScoreConfigParams) {
+  constructor({ element, value = null, disabled = false }: FormatScoreConfigParams) {
     if (!this._isHTMLElement(element)) {
       throw new Error(`Invalid HTML element: ${element}`);
     }
