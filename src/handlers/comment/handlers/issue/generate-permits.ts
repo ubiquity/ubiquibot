@@ -1,13 +1,14 @@
 import Decimal from "decimal.js";
 import { stringify } from "yaml";
+
 import Runtime from "../../../../bindings/bot-runtime";
 import { getTokenSymbol } from "../../../../helpers/contracts";
-import { Comment, Context } from "../../../../types";
+import { Context } from "../../../../types";
 import structuredMetadata from "../../../shared/structured-metadata";
-import { generatePermit2Signature } from "./generate-permit-2-signature";
-import { ContributorClassNames } from "./specification-scoring";
-import { ScoresByUser, CommentDetailsType } from "./issue-shared-types";
 import { FormatScoreDetails, Tags } from "./comment-scoring-rubric";
+import { generatePermit2Signature } from "./generate-permit-2-signature";
+import { ScoresByUser } from "./issue-shared-types";
+import { ContributorClassNames } from "./specification-scoring";
 
 export async function generatePermits(context: Context, totals: ScoresByUser) {
   // const userIdToNameMap = mapIdsToNames(totals);
@@ -115,32 +116,24 @@ function generateDetailsTable(totals: ScoresByUser) {
         const truncatedBody = commentSource ? commentSource.body.substring(0, 64).concat("...") : "";
         const formatScoreDetails = commentScore.formattingScoreDetails;
 
-        const newFormatScoreDetails = {} as FormatScoreDetails; // { [elementId: string]: { count: number; score: number; words: number } };
-        for (const _element in formatScoreDetails) {
-          const element = _element as Tags;
-          newFormatScoreDetails[element] = {
-            ...formatScoreDetails[element],
-            score: Number(formatScoreDetails[element].score),
-          };
-        }
         let formatDetailsStr = "";
-        if (newFormatScoreDetails && Object.keys(newFormatScoreDetails).length > 0) {
-          const ymlElementScores = stringify(newFormatScoreDetails);
+        if (formatScoreDetails && Object.keys(formatScoreDetails).length > 0) {
+          const ymlElementScores = stringify(formatScoreDetails);
           formatDetailsStr = ["", `<pre>${ymlElementScores}</pre>`, ""].join("\n"); // weird rendering quirk with pre that needs breaks
         } else {
           formatDetailsStr = "-";
         }
 
-        const quantScore = zeroToHyphen(commentScore.wordScore.plus(commentScore.formattingScore));
-        const qualScore = zeroToHyphen(commentScore.relevanceScore);
-        const credit = zeroToHyphen(commentScore.finalScore);
+        const formatScore = zeroToHyphen(commentScore.wordScore.plus(commentScore.formattingScore));
+        const relevanceScore = zeroToHyphen(commentScore.relevanceScore);
+        const totalScore = zeroToHyphen(commentScore.finalScore);
         let formatScoreCell;
         if (formatDetailsStr != "-") {
-          formatScoreCell = `<details><summary>${quantScore}</summary>${formatDetailsStr}</details>`;
+          formatScoreCell = `<details><summary>${formatScore}</summary>${formatDetailsStr}</details>`;
         } else {
-          formatScoreCell = quantScore;
+          formatScoreCell = formatScore;
         }
-        tableRows += `<tr><td><h6><a href="${commentUrl}">${truncatedBody}</a></h6></td><td>${formatScoreCell}</td><td>${qualScore}</td><td>${credit}</td></tr>`;
+        tableRows += `<tr><td><h6><a href="${commentUrl}">${truncatedBody}</a></h6></td><td>${formatScoreCell}</td><td>${relevanceScore}</td><td>${totalScore}</td></tr>`;
       }
     }
   }
@@ -155,13 +148,6 @@ function zeroToHyphen(value: number | Decimal) {
   }
 }
 
-// function mapIdsToNames(allUserTotals: ScoresByUser) {
-//   const userIdToNameMap = {} as { [userId: string]: string };
-//   for (const userId in allUserTotals) {
-//     userIdToNameMap[userId] = allUserTotals[userId].details[0].username;
-//   }
-//   return userIdToNameMap;
-// }
 interface GenerateHtmlParams {
   permit: URL;
   tokenAmount: Decimal;
@@ -170,7 +156,3 @@ interface GenerateHtmlParams {
   detailsTable: string;
   issueRole: ContributorClassNames;
 }
-
-// const ee = new EventEmitter();
-// ee.on("ok", ({ message }: { message: string }) => console.log(message));
-// ee.emit("ok", { message: "ok" });
