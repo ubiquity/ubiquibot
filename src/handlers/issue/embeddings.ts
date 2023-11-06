@@ -1,4 +1,4 @@
-import { getAdapters, getBotConfig, getBotContext, getLogger } from "../../bindings";
+import { getBotContext, getLogger } from "../../bindings";
 import { Payload } from "../../types";
 import { generateEmbeddings } from "../../helpers";
 import { upsertEmbeddings } from "../../adapters/supabase";
