@@ -6,20 +6,9 @@ import MarkdownIt from "markdown-it";
 import { Comment } from "../../../../types/payload";
 import { FormatScoreConfig, FormatScoreConfigParams } from "./element-score-config";
 import { ContributorClassNames } from "./specification-scoring";
+import Runtime from "../../../../bindings/bot-runtime";
 
 export type Tags = keyof HTMLElementTagNameMap;
-
-type FormatConfigMap = {
-  [tagName in Tags]?: FormatScoreConfigParams;
-};
-
-export type FormatScoreDetails = {
-  [tagName in Tags]?: {
-    count: number;
-    score: Decimal;
-    words: number;
-  };
-};
 
 const md = new MarkdownIt();
 const ZERO = new Decimal(0);
@@ -31,7 +20,9 @@ type CommentScoringConstructor = {
   wordValue: number;
 };
 export class CommentScoring {
-  public contributionClass: ContributorClassNames;
+  public contributionClass: ContributorClassNames; // This instance is used to calculate the score for this contribution `[view][role] "Comment"` class
+  // public viewWordScore: Decimal; // TODO: implement
+  // public viewWordScoreMultiplier!: number; // TODO: implement
   public roleWordScore: Decimal;
   public roleWordScoreMultiplier!: number;
   public commentScores: {
@@ -41,16 +32,26 @@ export class CommentScoring {
       formatScoreTotal: Decimal;
       details: {
         [commentId: number]: {
+          // nullable because this is handled elsewhere in the program logic
+          relevanceScoreComment: null | Decimal;
+          // clarityScoreComment: null | Decimal; // TODO: implement
           wordScoreComment: Decimal;
           wordScoreCommentDetails: { [word: string]: Decimal };
           formatScoreComment: Decimal;
-          formatScoreCommentDetails: FormatScoreDetails;
+          formatScoreCommentDetails: {
+            [tagName in Tags]?: {
+              count: number;
+              score: Decimal;
+              words: number;
+            };
+          };
+          comment: Comment;
         };
       };
     };
   } = {};
 
-  private _formatConfig: FormatConfigMap = {
+  private _formatConfig: { [tagName in Tags]?: FormatScoreConfigParams } = {
     img: new FormatScoreConfig({ element: "img", disabled: true }), // disabled
     blockquote: new FormatScoreConfig({ element: "blockquote", disabled: true }), // disabled
     em: new FormatScoreConfig({ element: "em", disabled: true }), // disabled
@@ -77,10 +78,19 @@ export class CommentScoring {
     // ol: new ElementScoreConfig({ element: "ol", value: ONE }),
   };
 
+  private renderCache: { [commentId: number]: string } = {};
+
   constructor({ contributionClass, formattingMultiplier = 1, wordValue = 0 }: CommentScoringConstructor) {
     this.contributionClass = contributionClass;
     this._applyRoleMultiplier(formattingMultiplier);
     this.roleWordScore = new Decimal(wordValue);
+  }
+
+  private _getRenderedCommentBody(comment: Comment): string {
+    if (!this.renderCache[comment.id]) {
+      this.renderCache[comment.id] = md.render(comment.body);
+    }
+    return this.renderCache[comment.id];
   }
 
   public compileTotalUserScores(): void {
@@ -110,18 +120,8 @@ export class CommentScoring {
     return score;
   }
 
-  public computeWordScore(comment: Comment | { body: string; id: number }, userId: number) {
-    const words = this._getWordsNotInDisabledElements(comment);
-    const wordScoreDetails = this._calculateWordScores(words);
-    const totalWordScore = this._calculateTotalScore(wordScoreDetails);
-
-    this._storeCommentWordScore(userId, comment.id, totalWordScore, wordScoreDetails);
-
-    return this.commentScores[userId].details[comment.id].wordScoreCommentDetails;
-  }
-
-  private _getWordsNotInDisabledElements(comment: Comment | { body: string }): string[] {
-    const htmlString = md.render(comment.body);
+  private _getWordsNotInDisabledElements(comment: Comment): string[] {
+    const htmlString = this._getRenderedCommentBody(comment);
     const dom = new JSDOM(htmlString);
     const doc = dom.window.document;
     const disabledElements = Object.entries(this._formatConfig)
@@ -148,42 +148,30 @@ export class CommentScoring {
     element.textContent = ""; // Remove the text content of the element
   }
 
-  private _calculateWordScores(words: string[]): { [key: string]: Decimal } {
-    const wordScoreDetails: { [key: string]: Decimal } = {};
+  private _calculateWordScores(
+    words: string[]
+  ): (typeof this.commentScores)[number]["details"][number]["wordScoreCommentDetails"] {
+    const wordScoreCommentDetails: { [key: string]: Decimal } = {};
 
     for (const word of words) {
-      let counter = wordScoreDetails[word] || ZERO;
+      let counter = wordScoreCommentDetails[word] || ZERO;
       counter = counter.plus(this.roleWordScore);
-      wordScoreDetails[word] = counter;
+      wordScoreCommentDetails[word] = counter;
     }
 
-    return wordScoreDetails;
+    return wordScoreCommentDetails;
   }
 
-  private _calculateTotalScore(wordScoreDetails: { [key: string]: Decimal }): Decimal {
-    return Object.values(wordScoreDetails).reduce((total: Decimal, count: Decimal) => total.plus(count), ZERO);
+  private _calculateWordScoresTotals(
+    wordScoreCommentDetails: (typeof this.commentScores)[number]["details"][number]["wordScoreCommentDetails"]
+  ): Decimal {
+    let totalScore = ZERO;
+    for (const score of Object.values(wordScoreCommentDetails)) {
+      totalScore = totalScore.plus(score);
+    }
+    return totalScore;
   }
 
-  private _storeCommentWordScore(
-    userId: number,
-    commentId: number,
-    totalWordScore: Decimal,
-    wordScoreDetails: { [key: string]: Decimal }
-  ): void {
-    if (!this.commentScores[userId]) {
-      this.commentScores[userId] = {} as (typeof this.commentScores)[number];
-    }
-    if (!this.commentScores[userId].details[commentId]) {
-      this.commentScores[userId].details[commentId] = {
-        wordScoreComment: ZERO,
-        formatScoreComment: ZERO,
-        wordScoreCommentDetails: {},
-        formatScoreCommentDetails: {},
-      };
-    }
-    this.commentScores[userId].details[commentId].wordScoreComment = totalWordScore;
-    this.commentScores[userId].details[commentId].wordScoreCommentDetails = wordScoreDetails;
-  }
   private _countWordsInTag(html: string, tag: string): number {
     const regex = new RegExp(`<${tag}[^>]*>(.*?)</${tag}>`, "g");
     let match;
@@ -197,8 +185,8 @@ export class CommentScoring {
   }
 
   public computeElementScore(comment: Comment, userId: number) {
-    const htmlString = md.render(comment.body);
-    const elementStatistics = _.mapValues(_.cloneDeep(this._formatConfig), () => ({
+    const htmlString = this._getRenderedCommentBody(comment);
+    const formatStatistics = _.mapValues(_.cloneDeep(this._formatConfig), () => ({
       count: 0,
       score: ZERO,
       words: 0,
@@ -206,9 +194,9 @@ export class CommentScoring {
 
     let totalElementScore = ZERO;
 
-    for (const _elementName in elementStatistics) {
+    for (const _elementName in formatStatistics) {
       const elementName = _elementName as Tags;
-      const tag = elementStatistics[elementName];
+      const tag = formatStatistics[elementName];
       if (!tag) continue;
 
       tag.count = this._countTags(htmlString, elementName);
@@ -219,30 +207,47 @@ export class CommentScoring {
       if (tag.count !== 0 || !tag.score.isZero()) {
         totalElementScore = totalElementScore.plus(tag.score);
       } else {
-        delete elementStatistics[elementName]; // Delete the element if count and score are both zero
+        delete formatStatistics[elementName]; // Delete the element if count and score are both zero
       }
     }
 
-    // Initialize user and comment details if not already present
-    if (!this.commentScores[userId]) {
-      this.commentScores[userId] = {} as (typeof this.commentScores)[number];
-    }
-    if (!this.commentScores[userId].details[comment.id]) {
-      this.commentScores[userId].details[comment.id] = {
-        wordScoreComment: ZERO,
-        formatScoreComment: ZERO,
-        formatScoreCommentDetails: {},
-        wordScoreCommentDetails: {},
-      };
-    }
-
+    this._initialize(comment, userId);
     // Store the element score for the comment
     this.commentScores[userId].details[comment.id].formatScoreComment = totalElementScore;
-    this.commentScores[userId].details[comment.id].formatScoreCommentDetails = elementStatistics;
+    this.commentScores[userId].details[comment.id].formatScoreCommentDetails = formatStatistics;
 
     return htmlString;
   }
 
+  private _initialize(comment: Comment, userId: number) {
+    if (!this.commentScores[userId]) {
+      Runtime.getState().logger.debug("good thing we initialized, was unsure if necessary");
+      this.commentScores[userId] = {} as (typeof this.commentScores)[number];
+    }
+    if (!this.commentScores[userId].details[comment.id]) {
+      Runtime.getState().logger.debug("good thing we initialized, was unsure if necessary");
+      this.commentScores[userId].details[comment.id] = {
+        relevanceScoreComment: null,
+        wordScoreComment: ZERO,
+        formatScoreComment: ZERO,
+        formatScoreCommentDetails: {},
+        wordScoreCommentDetails: {},
+        comment,
+      };
+    }
+  }
+
+  public computeWordScore(comment: Comment, userId: number) {
+    const words = this._getWordsNotInDisabledElements(comment);
+    const wordScoreDetails = this._calculateWordScores(words);
+
+    this._initialize(comment, userId);
+    this.commentScores[userId].details[comment.id].comment = comment;
+    this.commentScores[userId].details[comment.id].wordScoreComment = this._calculateWordScoresTotals(wordScoreDetails);
+    this.commentScores[userId].details[comment.id].wordScoreCommentDetails = wordScoreDetails;
+
+    return wordScoreDetails;
+  }
   private _applyRoleMultiplier(multiplier: number) {
     for (const tag in this._formatConfig) {
       const selection = this._formatConfig[tag as Tags];
