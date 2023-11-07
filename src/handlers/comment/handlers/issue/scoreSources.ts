@@ -1,50 +1,53 @@
-import { Issue, User } from "../../../../types/payload";
-import { assigneeScoring as assigneeTaskScoring } from "./assignee-scoring";
-import { evaluateComments } from "./evaluate-comments";
-import { specificationScoring as issuerSpecificationScoring } from "./specification-scoring";
-import { botCommandsAndHumanCommentsFilter } from "./issue-closed";
-import { getPullRequestComments } from "./getPullRequestComments";
-import { ScoresByUser } from "./issue-shared-types";
 import { Context } from "../../../../types/context";
-import { Comment } from "../../../../types/payload";
+import { Comment, Issue, User } from "../../../../types/payload";
+import { assigneeScoring as assigneeTaskScoring } from "./assignee-scoring";
+import { commentsScoring } from "./evaluate-comments";
+import { getPullRequestComments } from "./getPullRequestComments";
+import { botCommandsAndHumanCommentsFilter } from "./issue-closed";
+import { UserScoreDetails } from "./issue-shared-types";
+import { specificationScoring as issuerSpecificationScoring } from "./specification-scoring";
 
-export interface ScoringAndSourcesByContributionClass {
-  issueIssuerSpecification: ScoresByUser; // only one person can write the specification
-  issueAssigneeTask: ScoresByUser[]; // can be multiple assignees
-  issueContributorComments: ScoresByUser[];
-  reviewContributorComments: ScoresByUser[];
-}
-
-export async function scoreSources({
+export async function aggregateAndScoreContributions({
   context,
   issue,
   issueComments,
   owner,
   repository,
   issueNumber,
-}: ScoreParams): Promise<ScoringAndSourcesByContributionClass> {
-  return {
-    issueIssuerSpecification: await issuerSpecificationScoring({ context, issue }),
+}: ScoreParams): Promise<UserScoreDetails[]> {
+  // different ways to earn:
+  // 1. write a specification
+  // 2. be assigned a task and complete it
+  // 3. comment on the issue
+  // 4. comment on the pull request
+  // 5. review the pull request
+  // 6. contribute code
 
-    issueAssigneeTask: await assigneeTaskScoring({
-      issue,
-      source: issue.assignees.filter((assignee): assignee is User => Boolean(assignee)),
-    }),
+  const issueIssuerSpecification = await issuerSpecificationScoring({ context, issue });
 
-    issueContributorComments: await evaluateComments({
-      context,
-      issue,
-      source: issueComments.filter(botCommandsAndHumanCommentsFilter),
-    }),
+  const issueAssigneeTask = await assigneeTaskScoring({
+    issue,
+    source: issue.assignees.filter((assignee): assignee is User => Boolean(assignee)),
+  });
 
-    reviewContributorComments: await evaluateComments({
-      context,
-      issue,
-      source: (
-        await getPullRequestComments(context, owner, repository, issueNumber)
-      ).filter(botCommandsAndHumanCommentsFilter),
-    }),
-  };
+  const issueContributorComments = await commentsScoring({
+    context,
+    issue,
+    source: issueComments.filter(botCommandsAndHumanCommentsFilter),
+  });
+
+  const reviewContributorComments = await commentsScoring({
+    context,
+    issue,
+    source: (
+      await getPullRequestComments(context, owner, repository, issueNumber)
+    ).filter(botCommandsAndHumanCommentsFilter),
+  });
+
+  // TODO: review pull request scoring
+  // TODO: code contribution scoring
+
+  return [...issueIssuerSpecification, ...issueAssigneeTask, ...issueContributorComments, ...reviewContributorComments];
 }
 
 interface ScoreParams {

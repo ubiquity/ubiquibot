@@ -1,9 +1,15 @@
 import Decimal from "decimal.js";
 import Runtime from "../../../../bindings/bot-runtime";
 import { Issue, User } from "../../../../types/payload";
-import { ScoresByUser, ScoreDetails } from "./issue-shared-types";
+import { UserScoreDetails } from "./issue-shared-types";
 
-export async function assigneeScoring({ issue, source }: { issue: Issue; source: User[] }): Promise<ScoresByUser[]> {
+export async function assigneeScoring({
+  issue,
+  source,
+}: {
+  issue: Issue;
+  source: User[];
+}): Promise<UserScoreDetails[]> {
   // get the price label
   const priceLabels = issue.labels.filter((label) => label.name.startsWith("Price: "));
   if (!priceLabels) throw Runtime.getState().logger.warn("Price label is undefined");
@@ -33,36 +39,32 @@ export async function assigneeScoring({ issue, source }: { issue: Issue; source:
     const assigneeMultiplier = new Decimal(1); // TODO: get the assignee multiplier from the database
 
     // calculate the total
-    const score = price.div(numberOfAssignees).times(assigneeMultiplier);
+    const splitReward = price.div(numberOfAssignees).times(assigneeMultiplier);
 
     // return the total
-    const details: ScoreDetails = {
-      score: score,
+    const details: UserScoreDetails = {
+      score: splitReward,
+
+      view: "Issue",
+      role: "Assignee",
+      contribution: "Task",
+
       scoring: {
         comments: null,
         specification: null,
         task: {
-          finalScore: score,
           multiplier: assigneeMultiplier,
+          priceLabel: price,
         },
       },
       source: {
         comments: null,
         issue: issue,
+        user: assignee,
       },
     };
 
-    const totals: ScoresByUser = {
-      [assignee.id]: {
-        total: score,
-        userId: assignee.id,
-        username: assignee.login,
-        class: "Issue Assignee Task",
-        details: [details],
-      },
-    };
-
-    return totals;
+    return details;
   });
 
   return assigneeRewards;

@@ -1,13 +1,13 @@
 import Decimal from "decimal.js";
 
 import { Context } from "../../../../types/context";
-import { Comment, Issue } from "../../../../types/payload";
-import { formatScoring } from "./format-scoring";
-import { ScoresByUser } from "./issue-shared-types";
+import { Comment, Issue, User } from "../../../../types/payload";
+import { allCommentScoring } from "./allCommentScoring";
+import { UserScoreDetails } from "./issue-shared-types";
 import { relevanceAndFormatScoring } from "./relevance-format-scoring";
 import { relevanceScoring } from "./relevance-scoring";
 
-export async function evaluateComments({
+export async function commentsScoring({
   context,
   issue,
   source,
@@ -15,36 +15,33 @@ export async function evaluateComments({
   context: Context;
   issue: Issue;
   source: Comment[];
-}): Promise<ScoresByUser[]> {
-  const relevance = await relevanceScoring(issue, source); // the issue specification is not included in this array scoring, it is only for the other contributor comments
+}): Promise<UserScoreDetails[]> {
+  const relevance = await relevanceScoring(issue, source);
   const relevanceWithMetaData = relevance.score.map(enrichRelevanceData(source));
-  const formatting = await formatScoring(context, issue, source);
-  const score = relevanceAndFormatScoring(relevanceWithMetaData, formatting);
+  const formatting = await allCommentScoring({ context, issue, proof: source });
+  const scoresByUser = relevanceAndFormatScoring({
+    relevanceScore: relevanceWithMetaData,
+    formatScore: formatting,
+    issue,
+  });
 
-  const result = score.map((score: { userId: number; commentId: number; score: Decimal }) => ({
-    class: "Issue Contributor Comment",
-    userId: score.userId,
-    username: source.find((comment) => comment.id === score.commentId)?.user.login ?? "unknown",
-    score: score.score,
-    scoring: {
-      comment: score,
-      specification: null,
-      task: null,
-    },
-    source: {
-      comment: source,
-      issue: issue,
-    },
-  }));
+  // const result: UserScoreDetails[] = Object.entries(scoresByUser).map(([userId, score]) => ({ [userId]: score }));
+
   return result;
+}
+
+export interface EnrichedRelevance {
+  comment: Comment;
+  user: User;
+  score: Decimal;
 }
 
 export function enrichRelevanceData(
   contributorComments: Comment[]
-): (value: Decimal, index: number, array: Decimal[]) => { commentId: number; userId: number; score: Decimal } {
+): (value: Decimal, index: number, array: Decimal[]) => EnrichedRelevance {
   return (score, index) => ({
-    commentId: contributorComments[index].id,
-    userId: contributorComments[index].user.id,
+    comment: contributorComments[index],
+    user: contributorComments[index].user,
     score,
   });
 }

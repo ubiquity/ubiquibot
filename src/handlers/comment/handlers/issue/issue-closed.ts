@@ -5,8 +5,8 @@ import { BotConfig, Context } from "../../../../types";
 import { Comment, Issue, Payload, StateReason } from "../../../../types/payload";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { generatePermits } from "./generate-permits";
-import { scoreSources } from "./scoreSources";
-import { sumTotalScoresPerContributor } from "./sumTotalScoresPerContributor";
+import { aggregateAndScoreContributions } from "./scoreSources";
+import { sumTotalScores } from "./sumTotalScoresPerContributor";
 
 export const botCommandsAndHumanCommentsFilter = (comment: Comment) =>
   !comment.body.startsWith("/") /* No Commands */ && comment.user.type === "User"; /* No Bots */
@@ -25,12 +25,22 @@ export async function issueClosed(context: Context) {
   const { issueComments, owner, repository, issueNumber } = await getEssentials(context);
   await preflightChecks({ issue, logger, issueComments, config, payload, context });
 
-  // ===
+  // === Calculate Permit === //
 
-  const sourceScores = await scoreSources({ context, issue, issueComments, owner, repository, issueNumber });
-  const contributorTotalScores = sumTotalScoresPerContributor(sourceScores);
-
+  // 1. score sources will credit every contributor for every one of their contributions
+  const sourceScores = await aggregateAndScoreContributions({
+    context,
+    issue,
+    issueComments,
+    owner,
+    repository,
+    issueNumber,
+  });
+  // 2. sum total scores will sum the scores of every contribution, and organize them by contributor
+  const contributorTotalScores = sumTotalScores(sourceScores);
+  // 3. generate permits will generate a payment for every contributor
   const permitComment = await generatePermits(context, contributorTotalScores);
+  // 4. return the permit comment
   return permitComment;
 }
 
@@ -49,7 +59,7 @@ async function getEssentials(context: Context) {
 }
 // console.trace({ totals: util.inspect({ totals }, { showHidden: true, depth: null }) });
 
-interface PreflightChecks {
+interface PreflightChecksParams {
   issue: Issue;
   logger: Logs;
   issueComments: Comment[];
@@ -57,7 +67,7 @@ interface PreflightChecks {
   payload: Payload;
   context: Context;
 }
-async function preflightChecks({ issue, logger, issueComments, config, payload, context }: PreflightChecks) {
+async function preflightChecks({ issue, logger, issueComments, config, payload, context }: PreflightChecksParams) {
   if (!issue) throw logger.error("Permit generation skipped because issue is undefined");
   if (issue.state_reason !== StateReason.COMPLETED)
     throw logger.info("Issue was not closed as completed. Skipping.", { issue });
@@ -67,13 +77,13 @@ async function preflightChecks({ issue, logger, issueComments, config, payload, 
       throw logger.warn("Permit generation disabled because this issue has been closed by an external contributor.");
   }
 
-  // DONE: make sure a price is set before generating permits.
   const priceLabels = issue.labels.find((label) => label.name.startsWith("Price: "));
-  if (!priceLabels)
+  if (!priceLabels) {
     throw logger.warn("No price label has been set. Skipping permit generation.", { labels: issue.labels });
+  }
 
   const botComments = issueComments.filter(botCommentsFilter);
-  checkIfPermitsAlreadyPosted(botComments, logger); // DONE: check if the permits were already posted before posting them again
+  checkIfPermitsAlreadyPosted(botComments, logger);
 }
 
 function checkIfPermitsAlreadyPosted(botComments: Comment[], logger: Logs) {

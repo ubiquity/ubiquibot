@@ -1,19 +1,22 @@
 import Decimal from "decimal.js";
-import { Comment, Issue } from "../../../../types/payload";
-import { ContributorClassNames } from "./specification-scoring";
+import { Comment, Issue, User } from "../../../../types/payload";
 import { CommentScoring } from "./comment-scoring-rubric";
-export interface ScoresByUser {
-  [userId: string]: ScoreOfUser;
-}
-export interface ScoreOfUser {
-  total: Decimal;
-  userId: number;
-  username: string;
+import { ContributorContribution, ContributorRole, ContributorView } from "./contribution-style-types";
+import { ContributorClassNames } from "./specification-scoring";
+
+export interface UserScoreTotals {
   class: ContributorClassNames;
-  details: ScoreDetails[];
+  total: Decimal;
+  details: UserScoreDetails[];
+  user: User;
 }
-export interface ScoreDetails {
+export interface UserScoreDetails {
   score: Decimal;
+
+  view: ContributorView;
+  role: ContributorRole;
+  contribution: ContributorContribution;
+
   scoring: {
     comments: CommentScoreDetails[] | null;
     specification: CommentScoreDetails | null;
@@ -22,10 +25,11 @@ export interface ScoreDetails {
   source: {
     comments: null | Comment[];
     issue: Issue;
+    user: User;
   };
 }
 
-export type CommentDetailsType = (typeof CommentScoring.prototype.userFormatScoreDetails)[number][string];
+export type CommentDetailsType = (typeof CommentScoring.prototype.userFormatScoreDetails)[number][number];
 export interface CommentScoreDetails {
   commentId: number;
   // wordAndFormattingScore: Decimal;
@@ -40,6 +44,6 @@ export interface CommentScoreDetails {
   formattingScoreDetails: CommentDetailsType;
 }
 interface TaskScoreDetails {
-  finalScore: Decimal;
+  priceLabel: Decimal;
   multiplier: Decimal;
 }

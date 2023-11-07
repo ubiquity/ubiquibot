@@ -1,46 +1,52 @@
 import Decimal from "decimal.js";
-import Runtime from "../../../../bindings/bot-runtime";
+import { Issue } from "../../../../types/payload";
 import { CommentScoring } from "./comment-scoring-rubric";
-import { CommentScoreDetails, ScoreDetails, ScoresByUser } from "./issue-shared-types";
+import { UserScoreDetails } from "./issue-shared-types";
+import { EnrichedRelevance } from "./evaluate-comments";
+
+// this can be used in two contexts:
+// 1. to score an array of comments
+// 2. to score an issue specification
 
 export function relevanceAndFormatScoring(
-  relevanceScore: { commentId: number; userId: number; score: Decimal }[],
-  formatScore: CommentScoring[]
-): ScoresByUser {
-  const detailedSource = {} as ScoreDetails;
-
-  relevanceScore.forEach((relevance) => {
-    formatScore.forEach((format) => {
-      // const { commentId, userId, score: relevanceScore } = relevanceScore;
-
-      const usersQuantityScores = format.commentScores[relevance.userId];
-      if (!usersQuantityScores) return;
-      const userCommentScore = usersQuantityScores[relevance.commentId];
-      if (!userCommentScore) throw Runtime.getState().logger.error("userCommentScore is undefined");
-
-      const wordAndFormatScore = userCommentScore.wordScoreTotal.plus(userCommentScore.formatScoreTotal);
-
-      const commentScoreDetails: CommentScoreDetails = {
-        commentId: relevance.commentId,
-        // wordAndFormattingScoreTotal: wordAndFormatScore,
-        relevanceScore: relevance.score,
-        finalScore: wordAndFormatScore.times(relevance.score),
-        wordScore: userCommentScore.wordScoreTotal,
-        formattingScore: userCommentScore.formatScoreTotal,
-        wordScoreDetails: userCommentScore.wordScoreDetails || null,
-        formattingScoreDetails: userCommentScore.formatScoreDetails || null,
-      };
-
-      if (!detailedSource[userId]) {
-        detailedSource[userId] = [commentScoreDetails];
-      }
-
-      detailedSource[userId].total = detailedSource[userId].total.plus(wordAndFormatScore.times(relevance));
-      // finalScores[userId].total = finalScores[userId].total.plus(comment.finalScore);
-      detailedSource[userId].role = format.contributionClass;
-      detailedSource[userId].comments.push(commentScoreDetails);
-    });
-  });
-
-  return detailedSource;
+  relevanceScore: EnrichedRelevance[],
+  formatScore: CommentScoring[],
+  issue: Issue
+): UserScoreDetails[] {
+  const details = [] as UserScoreDetails[];
+  const scoresByUser = {} as { [userId: string]: Decimal };
+  const scoresByUserDetails = {} as { [userId: string]: UserScoreDetails };
 }
+
+/*
+export interface EnrichedRelevance {
+  comment: Comment;
+  user: User;
+  score: Decimal;
+}
+*/
+
+/*
+  public contributionClass: ContributorClassNames;
+  public userWordScoreTotals: { [userId: number]: Decimal } = {};
+  public userFormatScoreTotals: { [userId: number]: Decimal } = {};
+  public userFormatScoreDetails: {
+    [userId: number]: {
+      [commentId: number]: {
+        count: number;
+        score: Decimal;
+        words: number;
+      };
+    };
+  } = {};
+  public commentScores: {
+    [userId: number]: {
+      [commentId: number]: {
+        wordScoreTotal: Decimal;
+        wordScoreDetails: { [word: string]: Decimal };
+        formatScoreTotal: Decimal;
+        formatScoreDetails: FormatScoreDetails;
+      };
+    };
+  } = {};
+*/

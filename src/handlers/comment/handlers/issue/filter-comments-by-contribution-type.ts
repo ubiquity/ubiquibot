@@ -1,11 +1,11 @@
 import { Comment, User } from "../../../../types/payload";
-import { ContributorClasses } from "./contribution-style-types";
+import { ContributorClass } from "./contribution-style-types";
 
 export function filterCommentsByContributionStyleType(
-  usersOfCommentsByRole: ContributorClasses,
+  usersOfCommentsByRole: ContributorClass,
   contributorComments: Comment[]
 ): ContributionStyleTypesMap {
-  function filterComments(role: keyof ContributorClasses) {
+  function filterComments(role: keyof ContributorClass) {
     const users = usersOfCommentsByRole[role];
     if (!users) return null;
     if (Array.isArray(users)) {
@@ -29,5 +29,5 @@ export function filterCommentsByContributionStyleType(
   } as ContributionStyleTypesMap;
 }
 type ContributionStyleTypesMap = {
-  [K in keyof ContributorClasses]: null | Comment[];
+  [K in keyof ContributorClass]: null | Comment[];
 };
