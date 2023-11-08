@@ -3,19 +3,41 @@ import Decimal from "decimal.js";
 import { Context } from "../../../../types";
 import { Comment, Issue } from "../../../../types/payload";
 import { allCommentScoring } from "./allCommentScoring";
-import { ContributorClass } from "./contribution-style-types";
+import { ContributorClass, ContributorClassAll, ContributorView } from "./contribution-style-types";
 import { UserScoreDetails } from "./issue-shared-types";
-import { relevanceAndFormatScoring } from "./relevance-format-scoring";
+import { addRelevanceAndFormatScoring } from "./relevance-format-scoring";
 
 // import { IssueRole } from "./archive/calculate-score-typings";
 export type ContributorClassNames = keyof ContributorClass;
+export type ContributorClassNamesAll = keyof ContributorClassAll;
 
 export type ContextIssue = { context: Context; issue: Issue };
 
-export async function specificationScoring({ context, issue }: ContextIssue): Promise<UserScoreDetails[]> {
+export async function specificationScoring({
+  context,
+  issue,
+  view,
+}: ContextIssue & { view: ContributorView }): Promise<UserScoreDetails[]> {
   const userScoreDetails = [] as UserScoreDetails[];
 
-  const issueAsComment = {
+  const issueAsComment = castIssueAsComment(issue);
+
+  // synthetic relevance score
+  const RELEVANT = [{ comment: issueAsComment, user: issue.user, score: new Decimal(1) }];
+
+  const formatting = await allCommentScoring({ context, issue, comments: [issueAsComment], view });
+  const scoreDetails = addRelevanceAndFormatScoring(RELEVANT, formatting);
+
+  for (const user in scoreDetails) {
+    const userScore = scoreDetails[user];
+    userScoreDetails.push(userScore);
+  }
+
+  return userScoreDetails;
+}
+
+function castIssueAsComment(issue: Issue): Comment {
+  return {
     body: issue.body,
     user: issue.user,
     created_at: issue.created_at,
@@ -26,22 +48,4 @@ export async function specificationScoring({ context, issue }: ContextIssue): Pr
     html_url: issue.html_url,
     url: issue.url,
   } as Comment;
-
-  const RELEVANT = [
-    {
-      commentId: issue.id,
-      userId: issue.user.id,
-      score: new Decimal(1),
-    },
-  ];
-
-  const formatting = await allCommentScoring({ context, issue, proof: [issueAsComment] });
-  const scoreDetails = relevanceAndFormatScoring({ relevanceScore: RELEVANT, formatScore: formatting, issue });
-
-  for (const user in scoreDetails) {
-    const userScore = scoreDetails[user];
-    userScoreDetails.push(userScore);
-  }
-
-  return userScoreDetails;
 }

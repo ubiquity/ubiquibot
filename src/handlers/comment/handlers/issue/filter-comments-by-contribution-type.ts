@@ -1,33 +1,38 @@
 import { Comment, User } from "../../../../types/payload";
-import { ContributorClass } from "./contribution-style-types";
+import { ContributorClasses, ContributorView } from "./contribution-style-types";
+type CommentsSortedByClass = {
+  [className in keyof ContributorClasses]: null | Comment[];
+};
 
-export function filterCommentsByContributionStyleType(
-  usersOfCommentsByRole: ContributorClass,
-  contributorComments: Comment[]
-): ContributionStyleTypesMap {
-  function filterComments(role: keyof ContributorClass) {
-    const users = usersOfCommentsByRole[role];
-    if (!users) return null;
-    if (Array.isArray(users)) {
-      return contributorComments.filter((comment: Comment) => users.some((user: User) => user.id == comment.user.id));
-    } else {
-      return contributorComments.filter((comment: Comment) => comment.user.id === users.id);
+export function sortCommentsByClass(
+  usersByClass: ContributorClasses,
+  contributorComments: Comment[],
+  view: ContributorView
+): CommentsSortedByClass {
+  const result = {} as CommentsSortedByClass;
+
+  for (const role of Object.keys(usersByClass)) {
+    if (role.startsWith(view)) {
+      const key = role as keyof ContributorClasses;
+      if (key in usersByClass) {
+        result[key] = filterComments(key, usersByClass, contributorComments);
+      }
     }
   }
 
-  return {
-    "Issue Issuer Comment": filterComments("Issue Issuer Comment"),
-    "Issue Assignee Comment": filterComments("Issue Assignee Comment"),
-    "Issue Collaborator Comment": filterComments("Issue Collaborator Comment"),
-    "Issue Contributor Comment": filterComments("Issue Contributor Comment"),
-    "Review Issuer Comment": filterComments("Review Issuer Comment"),
-    "Review Assignee Comment": filterComments("Review Assignee Comment"),
-    "Review Collaborator Comment": filterComments("Review Collaborator Comment"),
-    "Review Contributor Comment": filterComments("Review Contributor Comment"),
-    "Issue Issuer Specification": filterComments("Issue Issuer Specification"),
-    "Issue Assignee Task": filterComments("Issue Assignee Task"),
-  } as ContributionStyleTypesMap;
+  return result;
 }
-type ContributionStyleTypesMap = {
-  [K in keyof ContributorClass]: null | Comment[];
-};
+
+function filterComments(
+  role: keyof ContributorClasses,
+  usersOfCommentsByRole: ContributorClasses,
+  contributorComments: Comment[]
+): Comment[] | null {
+  const users = usersOfCommentsByRole[role];
+  if (!users) return null;
+  if (Array.isArray(users)) {
+    return contributorComments.filter((comment: Comment) => users.some((user: User) => user.id == comment.user.id));
+  } else {
+    return contributorComments.filter((comment: Comment) => comment.user.id === users.id);
+  }
+}

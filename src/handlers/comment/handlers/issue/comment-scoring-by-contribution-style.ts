@@ -1,5 +1,5 @@
 import { CommentScoring } from "./comment-scoring-rubric";
-import { ContributorClassNames } from "./specification-scoring";
+import { ContributorClassNamesAll } from "./specification-scoring";
 
 export const commentScoringByContributionClass = {
   // TODO: make this configurable
@@ -52,35 +52,43 @@ export const commentScoringByContributionClass = {
   }),
 
   // // start reviews
-  // "Review Issuer Approval": new ScoringRubric({
-  //   role: "Review Issuer Approval",
-  //   formattingMultiplier: 1,
-  //   wordValue: 2,
-  // }),
-  // "Review Issuer Rejection": new ScoringRubric({
-  //   role: "Review Issuer Rejection",
-  //   formattingMultiplier: 1,
-  //   wordValue: 2,
-  // }),
-  // "Review Collaborator Approval": new ScoringRubric({
-  //   role: "Review Collaborator Approval",
-  //   formattingMultiplier: 1,
-  //   wordValue: 1,
-  // }),
-  // "Review Collaborator Rejection": new ScoringRubric({
-  //   role: "Review Collaborator Rejection",
-  //   formattingMultiplier: 1,
-  //   wordValue: 1,
-  // }),
+  "Review Issuer Approval": new CommentScoring({
+    contributionClass: "Review Issuer Approval",
+    formattingMultiplier: 1,
+    wordValue: 2,
+  }),
+  "Review Issuer Rejection": new CommentScoring({
+    contributionClass: "Review Issuer Rejection",
+    formattingMultiplier: 1,
+    wordValue: 2,
+  }),
+  "Review Collaborator Approval": new CommentScoring({
+    contributionClass: "Review Collaborator Approval",
+    formattingMultiplier: 1,
+    wordValue: 1,
+  }),
+  "Review Collaborator Rejection": new CommentScoring({
+    contributionClass: "Review Collaborator Rejection",
+    formattingMultiplier: 1,
+    wordValue: 1,
+  }),
   // // end reviews
   // // start code
-  // "Review Issuer Code": new ScoringRubric({ role: "Review Issuer Code", formattingMultiplier: 1, wordValue: 1 }),
-  // "Review Assignee Code": new ScoringRubric({ role: "Review Assignee Code", formattingMultiplier: 0, wordValue: 0 }),
-  // "Review Collaborator Code": new ScoringRubric({
-  //   role: "Review Collaborator Code",
-  //   formattingMultiplier: 1,
-  //   wordValue: 1,
-  // }),
+  "Review Issuer Code": new CommentScoring({
+    contributionClass: "Review Issuer Code",
+    formattingMultiplier: 1,
+    wordValue: 1,
+  }),
+  "Review Assignee Code": new CommentScoring({
+    contributionClass: "Review Assignee Code",
+    formattingMultiplier: 0,
+    wordValue: 0,
+  }),
+  "Review Collaborator Code": new CommentScoring({
+    contributionClass: "Review Collaborator Code",
+    formattingMultiplier: 1,
+    wordValue: 1,
+  }),
 } as {
-  [key in ContributorClassNames]: CommentScoring;
+  [key in ContributorClassNamesAll]: CommentScoring;
 };

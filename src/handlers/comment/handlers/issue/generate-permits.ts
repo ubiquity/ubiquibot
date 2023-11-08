@@ -5,12 +5,11 @@ import Runtime from "../../../../bindings/bot-runtime";
 import { getTokenSymbol } from "../../../../helpers/contracts";
 import { Context } from "../../../../types";
 import structuredMetadata from "../../../shared/structured-metadata";
-import { FormatScoreDetails, Tags } from "./comment-scoring-rubric";
 import { generatePermit2Signature } from "./generate-permit-2-signature";
-import { ScoresByUser } from "./issue-shared-types";
+import { UserScoreDetails } from "./issue-shared-types";
 import { ContributorClassNames } from "./specification-scoring";
 
-export async function generatePermits(context: Context, totals: ScoresByUser) {
+export async function generatePermits(context: Context, totals: unknown) {
   // const userIdToNameMap = mapIdsToNames(totals);
 
   const { html: comment, permits } = await generateComment(context, totals);
@@ -18,12 +17,12 @@ export async function generatePermits(context: Context, totals: ScoresByUser) {
   return comment.concat("\n", metadata);
 }
 
-async function generateComment(context: Context, totals: ScoresByUser) {
+async function generateComment(context: Context, totals: unknown) {
   const runtime = Runtime.getState();
   const {
     payout: { paymentToken, rpc, privateKey },
   } = context.config;
-
+  const contributionsOverview = generateContributionsOverview(totals);
   const detailsTable = generateDetailsTable(totals);
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const HTMLs = [] as string[];
@@ -88,6 +87,29 @@ function generateHtml({
     ${detailsTable}
   </details>
   `;
+}
+
+function generateContributionsOverview(userScoreDetails: UserScoreDetails) {
+  const buffer = [
+    "<h6>Contributions Overview</h6>",
+    "<table><thead>",
+    "<tr><th>View</th><th>Contribution</th><th>Count</th><th>Reward</th>",
+    "</thead><tbody>",
+  ];
+
+  /**
+   * Example
+   *
+   * Contributions Overview
+   * | View | Contribution | Count | Reward |
+   * | --- | --- | --- | --- |
+   * | Issue | Specification | 1 | 1 |
+   * | Issue | Comment | 6 | 1 |
+   * | Review | Comment | 4 | 1 |
+   * | Review | Approval | 1 | 1 |
+   * | Review | Rejection | 3 | 1 |
+   */
+  return buffer.join("\n");
 }
 
 function generateDetailsTable(totals: ScoresByUser) {

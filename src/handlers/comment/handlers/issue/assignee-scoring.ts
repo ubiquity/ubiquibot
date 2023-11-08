@@ -1,14 +1,17 @@
 import Decimal from "decimal.js";
 import Runtime from "../../../../bindings/bot-runtime";
 import { Issue, User } from "../../../../types/payload";
+import { ContributorView } from "./contribution-style-types";
 import { UserScoreDetails } from "./issue-shared-types";
 
 export async function assigneeScoring({
   issue,
   source,
+  view,
 }: {
   issue: Issue;
   source: User[];
+  view: ContributorView;
 }): Promise<UserScoreDetails[]> {
   // get the price label
   const priceLabels = issue.labels.filter((label) => label.name.startsWith("Price: "));
@@ -45,20 +48,16 @@ export async function assigneeScoring({
     const details: UserScoreDetails = {
       score: splitReward,
 
-      view: "Issue",
+      view: view,
       role: "Assignee",
       contribution: "Task",
 
       scoring: {
         comments: null,
         specification: null,
-        task: {
-          multiplier: assigneeMultiplier,
-          priceLabel: price,
-        },
+        task: price,
       },
       source: {
-        comments: null,
         issue: issue,
         user: assignee,
       },

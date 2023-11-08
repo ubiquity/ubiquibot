@@ -3,10 +3,10 @@ import { JSDOM } from "jsdom";
 import Decimal from "decimal.js";
 import _ from "lodash";
 import MarkdownIt from "markdown-it";
+import Runtime from "../../../../bindings/bot-runtime";
 import { Comment } from "../../../../types/payload";
 import { FormatScoreConfig, FormatScoreConfigParams } from "./element-score-config";
-import { ContributorClassNames } from "./specification-scoring";
-import Runtime from "../../../../bindings/bot-runtime";
+import { ContributorClassNames, ContributorClassNamesAll } from "./specification-scoring";
 
 export type Tags = keyof HTMLElementTagNameMap;
 
@@ -15,7 +15,7 @@ const ZERO = new Decimal(0);
 const ONE = new Decimal(1);
 
 type CommentScoringConstructor = {
-  contributionClass: ContributorClassNames;
+  contributionClass: ContributorClassNamesAll;
   formattingMultiplier: number;
   wordValue: number;
 };
@@ -150,7 +150,7 @@ export class CommentScoring {
 
   private _calculateWordScores(
     words: string[]
-  ): (typeof this.commentScores)[number]["details"][number]["wordScoreCommentDetails"] {
+  ): (typeof CommentScoring.prototype.commentScores)[number]["details"][number]["wordScoreCommentDetails"] {
     const wordScoreCommentDetails: { [key: string]: Decimal } = {};
 
     for (const word of words) {
@@ -163,7 +163,7 @@ export class CommentScoring {
   }
 
   private _calculateWordScoresTotals(
-    wordScoreCommentDetails: (typeof this.commentScores)[number]["details"][number]["wordScoreCommentDetails"]
+    wordScoreCommentDetails: (typeof CommentScoring.prototype.commentScores)[number]["details"][number]["wordScoreCommentDetails"]
   ): Decimal {
     let totalScore = ZERO;
     for (const score of Object.values(wordScoreCommentDetails)) {
