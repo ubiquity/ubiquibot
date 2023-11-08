@@ -23,7 +23,8 @@ export interface UserScoreDetails {
   contribution: null | ContributorContribution;
 
   scoring: {
-    comments: null | CommentScoring;
+    issueComments: null | CommentScoring;
+    reviewComments: null | CommentScoring;
     specification: null | CommentScoring;
     task: null | Decimal;
     // approvals: unknown;

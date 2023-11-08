@@ -6,10 +6,11 @@ import { getTokenSymbol } from "../../../../helpers/contracts";
 import { Context } from "../../../../types";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { generatePermit2Signature } from "./generate-permit-2-signature";
-import { UserScoreDetails } from "./issue-shared-types";
-import { ContributorClassNames } from "./specification-scoring";
+import { UserScoreTotals } from "./issue-shared-types";
 
-export async function generatePermits(context: Context, totals: unknown) {
+type TotalsById = { [userId: string]: UserScoreTotals };
+
+export async function generatePermits(context: Context, totals: TotalsById) {
   // const userIdToNameMap = mapIdsToNames(totals);
 
   const { html: comment, permits } = await generateComment(context, totals);
@@ -17,13 +18,13 @@ export async function generatePermits(context: Context, totals: unknown) {
   return comment.concat("\n", metadata);
 }
 
-async function generateComment(context: Context, totals: unknown) {
+async function generateComment(context: Context, totals: TotalsById) {
   const runtime = Runtime.getState();
   const {
     payout: { paymentToken, rpc, privateKey },
   } = context.config;
-  const contributionsOverview = generateContributionsOverview(totals);
-  const detailsTable = generateDetailsTable(totals);
+  const contributionsOverviewTable = generateContributionsOverview(totals);
+  const conversationIncentivesTable = generateDetailsTable(totals);
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const HTMLs = [] as string[];
 
@@ -34,8 +35,8 @@ async function generateComment(context: Context, totals: unknown) {
 
     const tokenAmount = userTotals.total;
 
-    const contributorName = userTotals.username;
-    const contributionClassName = userTotals.class;
+    const contributorName = userTotals.user.login;
+    // const contributionClassName = userTotals.details[0].contribution as ContributorClassNames;
 
     if (!privateKey) throw runtime.logger.warn("No bot wallet private key defined");
 
@@ -44,7 +45,6 @@ async function generateComment(context: Context, totals: unknown) {
     const permit = await generatePermit2Signature(context, {
       beneficiary: beneficiaryAddress,
       amount: tokenAmount,
-      identifier: contributionClassName,
       userId: userId,
     });
 
@@ -55,8 +55,8 @@ async function generateComment(context: Context, totals: unknown) {
       tokenAmount,
       tokenSymbol,
       contributorName,
-      detailsTable,
-      issueRole: contributionClassName,
+      contributionsOverviewTable,
+      detailsTable: conversationIncentivesTable,
     });
     HTMLs.push(html);
   }
@@ -67,8 +67,8 @@ function generateHtml({
   tokenAmount,
   tokenSymbol,
   contributorName,
+  contributionsOverviewTable,
   detailsTable,
-  issueRole,
 }: GenerateHtmlParams) {
   return `
   <details>
@@ -81,15 +81,16 @@ function generateHtml({
             [ ${tokenAmount} ${tokenSymbol} ]</a
           >
         </h3>
-        <h6>&nbsp;${issueRole}&nbsp;Comments&nbsp;@${contributorName}</h6></b
+        <h6>@${contributorName}</h6></b
       >
     </summary>
+    ${contributionsOverviewTable}
     ${detailsTable}
   </details>
   `;
 }
 
-function generateContributionsOverview(userScoreDetails: UserScoreDetails) {
+function generateContributionsOverview(userScoreDetails: TotalsById) {
   const buffer = [
     "<h6>Contributions Overview</h6>",
     "<table><thead>",
@@ -97,6 +98,50 @@ function generateContributionsOverview(userScoreDetails: UserScoreDetails) {
     "</thead><tbody>",
   ];
 
+  const newRow = (view: string, contribution: string, count: string, reward: string) =>
+    `<tr><td>${view}</td><td>${contribution}</td><td>${count}</td><td>${reward}</td></tr>`;
+
+  for (const entries of Object.entries(userScoreDetails)) {
+    const userId = Number(entries[0]);
+    const userScore = entries[1];
+    for (const detail of userScore.details) {
+      const { specification, issueComments, reviewComments, task } = detail.scoring;
+
+      if (specification) {
+        buffer.push(
+          newRow(
+            "Issue",
+            "Specification",
+            specification?.length.toString() || "-",
+            specification?.commentScores[userId].totalScoreTotal.toString() || "-"
+          )
+        );
+      }
+      if (issueComments) {
+        buffer.push(
+          newRow(
+            "Issue",
+            "Comment",
+            issueComments?.length.toString() || "-",
+            issueComments?.commentScores[userId].totalScoreTotal.toString() || "-"
+          )
+        );
+      }
+      if (reviewComments) {
+        buffer.push(
+          newRow(
+            "Review",
+            "Comment",
+            reviewComments?.length.toString() || "-",
+            reviewComments?.commentScores[userId].totalScoreTotal.toString() || "-"
+          )
+        );
+      }
+      if (task) {
+        buffer.push(newRow("Issue", "Task", task?.toString() || "-", task?.toString() || "-"));
+      }
+    }
+  }
   /**
    * Example
    *
@@ -109,22 +154,32 @@ function generateContributionsOverview(userScoreDetails: UserScoreDetails) {
    * | Review | Approval | 1 | 1 |
    * | Review | Rejection | 3 | 1 |
    */
+  buffer.push("</tbody></table>");
   return buffer.join("\n");
 }
 
-function generateDetailsTable(totals: ScoresByUser) {
+function generateDetailsTable(totals: TotalsById) {
   let tableRows = "";
 
   for (const user of Object.values(totals)) {
     for (const detail of user.details) {
-      const sourceDetails = detail.source;
-      const scoringDetails = detail.scoring;
-      // they will have the same index and length to refer to the same comment
-      // const specificationDetails = scoringDetails.specification;
-      // const taskDetails = scoringDetails.task;
+      const userId = detail.source.user.id;
 
-      const commentSources = sourceDetails.comments;
-      const commentScores = scoringDetails.comments;
+      const commentSources = [];
+      const specificationComments = detail.scoring.specification?.commentScores[userId].details;
+      const issueComments = detail.scoring.issueComments?.commentScores[userId].details;
+      const reviewComments = detail.scoring.reviewComments?.commentScores[userId].details;
+      if (specificationComments) commentSources.push(...specificationComments);
+      if (issueComments) commentSources.push(...issueComments);
+      if (reviewComments) commentSources.push(...reviewComments);
+
+      const commentScores = [];
+      const specificationCommentScores = detail.scoring.specification?.commentScores[userId].details;
+      const issueCommentScores = detail.scoring.issueComments?.commentScores[userId].details;
+      const reviewCommentScores = detail.scoring.reviewComments?.commentScores[userId].details;
+      if (specificationCommentScores) commentScores.push(...specificationCommentScores);
+      if (issueCommentScores) commentScores.push(...issueCommentScores);
+      if (reviewCommentScores) commentScores.push(...reviewCommentScores);
 
       if (!commentSources) continue;
       if (!commentScores) continue;
@@ -175,6 +230,6 @@ interface GenerateHtmlParams {
   tokenAmount: Decimal;
   tokenSymbol: string;
   contributorName: string;
+  contributionsOverviewTable: string;
   detailsTable: string;
-  issueRole: ContributorClassNames;
 }

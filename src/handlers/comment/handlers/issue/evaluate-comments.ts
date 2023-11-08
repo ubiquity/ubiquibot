@@ -26,8 +26,6 @@ export async function commentsScoring({
   const formatting: CommentScoring[] = await allCommentScoring({ context, issue, comments: source, view });
   const formattingWithRelevance: CommentScoring[] = addRelevanceAndFormatScoring(relevanceWithMetaData, formatting);
 
-  const buffer: UserScoreDetails[] = [];
-
   const userScoreDetails = formattingWithRelevance.reduce((acc, commentScoring) => {
     for (const userId in commentScoring.commentScores) {
       const userScore = commentScoring.commentScores[userId];
@@ -38,7 +36,7 @@ export async function commentsScoring({
         role: null,
         contribution: "Comment",
         scoring: {
-          comments: commentScoring,
+          issueComments: commentScoring,
           specification: null,
           task: null,
         },

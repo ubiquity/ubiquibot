@@ -53,7 +53,7 @@ export async function assigneeScoring({
       contribution: "Task",
 
       scoring: {
-        comments: null,
+        issueComments: null,
         specification: null,
         task: price,
       },

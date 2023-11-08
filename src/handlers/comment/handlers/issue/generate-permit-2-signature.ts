@@ -7,7 +7,7 @@ import { Context } from "../../../../types";
 
 export async function generatePermit2Signature(
   context: Context,
-  { beneficiary, amount, identifier, userId }: GeneratePermit2SignatureParams
+  { beneficiary, amount, userId }: GeneratePermit2SignatureParams
 ) {
   const runtime = Runtime.getState();
   const {
@@ -38,7 +38,7 @@ export async function generatePermit2Signature(
       amount: ethers.utils.parseUnits(amount.toString(), 18),
     },
     spender: beneficiary,
-    nonce: BigNumber.from(keccak256(toUtf8Bytes(identifier + userId))),
+    nonce: BigNumber.from(keccak256(toUtf8Bytes(userId))),
     deadline: MaxUint256,
   };
 
@@ -90,7 +90,7 @@ export async function generatePermit2Signature(
 interface GeneratePermit2SignatureParams {
   beneficiary: string;
   amount: Decimal;
-  identifier: string;
+
   userId: string;
 }
 

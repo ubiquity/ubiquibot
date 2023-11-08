@@ -26,14 +26,15 @@ export class CommentScoring {
   public roleWordScore: Decimal;
   public roleWordScoreMultiplier!: number;
   public commentScores: {
-    [userId: number]: {
-      totalScore: Decimal;
+    [userId: string]: {
+      totalScoreTotal: Decimal;
       wordScoreTotal: Decimal;
       formatScoreTotal: Decimal;
       details: {
-        [commentId: number]: {
-          // nullable because this is handled elsewhere in the program logic
-          relevanceScoreComment: null | Decimal;
+        [commentId: string]: {
+          totalScoreComment: Decimal;
+
+          relevanceScoreComment: null | Decimal; // nullable because this is handled elsewhere in the program logic
           // clarityScoreComment: null | Decimal; // TODO: implement
           wordScoreComment: Decimal;
           wordScoreCommentDetails: { [word: string]: Decimal };
