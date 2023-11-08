@@ -45,6 +45,7 @@ export type ContributorClasses = {
   "Review Collaborator Code": Collaborator;
   // end code
 };
+export type ContributorClassesKeys = keyof ContributorClasses;
 export type ContributorView = "Issue" | "Review";
 export type ContributorRole = "Issuer" | "Assignee" | "Collaborator" | "Contributor";
 export type ContributorContribution = "Comment" | "Approval" | "Rejection" | "Code" | "Specification" | "Task";

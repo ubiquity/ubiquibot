@@ -3,13 +3,10 @@ import Decimal from "decimal.js";
 import { Context } from "../../../../types";
 import { Comment, Issue } from "../../../../types/payload";
 import { allCommentScoring } from "./allCommentScoring";
-import { ContributorClass, ContributorClassAll, ContributorView } from "./contribution-style-types";
 import { UserScoreDetails } from "./issue-shared-types";
 import { addRelevanceAndFormatScoring } from "./relevance-format-scoring";
 
-// import { IssueRole } from "./archive/calculate-score-typings";
-export type ContributorClassNames = keyof ContributorClass;
-export type ContributorClassNamesAll = keyof ContributorClassAll;
+import { ContributorView } from "./contribution-style-types";
 
 export type ContextIssue = { context: Context; issue: Issue };
 
@@ -30,9 +27,25 @@ export async function specificationScoring({
 
   for (const user in scoreDetails) {
     const userScore = scoreDetails[user];
-    userScoreDetails.push(userScore);
-  }
+    const userScoreDetail: UserScoreDetails = {
+      score: userScore.commentScores[issue.id].totalScoreTotal,
+      view: view,
+      role: "Issuer",
+      contribution: "Specification",
+      scoring: {
+        specification: userScore,
+        issueComments: null,
+        reviewComments: null,
+        task: null,
+      },
+      source: {
+        user: issue.user,
+        issue: issue,
+      },
+    };
 
+    userScoreDetails.push(userScoreDetail);
+  }
   return userScoreDetails;
 }
 

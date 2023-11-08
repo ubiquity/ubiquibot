@@ -2,7 +2,7 @@ import { UserScoreDetails, UserScoreTotals } from "./issue-shared-types";
 
 export function sumTotalScores(allSourceScores: UserScoreDetails[]): { [userId: string]: UserScoreTotals } {
   const totals = allSourceScores.reduce((accumulator, currentScore) => {
-    const { score, scoring, source } = currentScore;
+    const { score, source } = currentScore;
     const userId = source.user.id;
     // const username = source.user.login;
     if (!accumulator[userId]) {

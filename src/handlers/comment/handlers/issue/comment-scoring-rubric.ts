@@ -5,8 +5,8 @@ import _ from "lodash";
 import MarkdownIt from "markdown-it";
 import Runtime from "../../../../bindings/bot-runtime";
 import { Comment } from "../../../../types/payload";
+import { ContributorClassesKeys } from "./contribution-style-types";
 import { FormatScoreConfig, FormatScoreConfigParams } from "./element-score-config";
-import { ContributorClassNames, ContributorClassNamesAll } from "./specification-scoring";
 
 export type Tags = keyof HTMLElementTagNameMap;
 
@@ -15,12 +15,12 @@ const ZERO = new Decimal(0);
 const ONE = new Decimal(1);
 
 type CommentScoringConstructor = {
-  contributionClass: ContributorClassNamesAll;
+  contributionClass: ContributorClassesKeys;
   formattingMultiplier: number;
   wordValue: number;
 };
 export class CommentScoring {
-  public contributionClass: ContributorClassNames; // This instance is used to calculate the score for this contribution `[view][role] "Comment"` class
+  public contributionClass: ContributorClassesKeys; // This instance is used to calculate the score for this contribution `[view][role] "Comment"` class
   // public viewWordScore: Decimal; // TODO: implement
   // public viewWordScoreMultiplier!: number; // TODO: implement
   public roleWordScore: Decimal;

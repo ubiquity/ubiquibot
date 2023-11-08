@@ -2,12 +2,12 @@ import Runtime from "../../../../bindings/bot-runtime";
 import { Comment } from "../../../../types/payload";
 import { commentScoringByContributionClass } from "./comment-scoring-by-contribution-style";
 import { CommentScoring } from "./comment-scoring-rubric";
-import { ContributorView } from "./contribution-style-types";
+import { ContributorClassesKeys, ContributorView } from "./contribution-style-types";
 import { sortCommentsByClass } from "./filter-comments-by-contribution-type";
 import { sortUsersByClass } from "./identify-user-ids";
 import { perUserCommentScoring } from "./perUserCommentScoring";
 
-import { ContextIssue, ContributorClassNamesAll } from "./specification-scoring";
+import { ContextIssue } from "./specification-scoring";
 export async function allCommentScoring({
   context,
   issue,
@@ -16,9 +16,9 @@ export async function allCommentScoring({
 }: ContextIssue & { comments: Comment[]; view: ContributorView }): Promise<CommentScoring[]> {
   const usersByClass = await sortUsersByClass(context, issue, comments);
   const commentsByClass = sortCommentsByClass(usersByClass, comments, view);
-  const contributionStyles = Object.keys(usersByClass) as ContributorClassNamesAll[];
+  const contributionClasses = Object.keys(usersByClass).map((key) => key as ContributorClassesKeys);
 
-  return contributionStyles.flatMap((contributionStyle) => {
+  return contributionClasses.flatMap((contributionStyle) => {
     const scoring = commentScoringByContributionClass[contributionStyle];
     const selection = usersByClass[contributionStyle as keyof typeof usersByClass];
 

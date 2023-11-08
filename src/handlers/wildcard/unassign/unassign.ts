@@ -82,7 +82,7 @@ async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
   const latestAssignEventTime = new Date(latestAssignEvent.created_at).getTime();
   const now = Date.now();
 
-  const assigneesWithinGracePeriod = assignees.filter((assignee) => {
+  const assigneesWithinGracePeriod = assignees.filter(() => {
     return now - latestAssignEventTime < taskDisqualifyDuration;
   });
 

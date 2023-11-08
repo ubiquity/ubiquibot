@@ -1,5 +1,5 @@
 import { CommentScoring } from "./comment-scoring-rubric";
-import { ContributorClassNamesAll } from "./specification-scoring";
+import { ContributorClasses } from "./contribution-style-types";
 
 export const commentScoringByContributionClass = {
   // TODO: make this configurable
@@ -90,5 +90,5 @@ export const commentScoringByContributionClass = {
     wordValue: 1,
   }),
 } as {
-  [key in ContributorClassNamesAll]: CommentScoring;
+  [key in keyof ContributorClasses]: CommentScoring;
 };
