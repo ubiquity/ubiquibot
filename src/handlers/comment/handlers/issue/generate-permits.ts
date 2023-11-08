@@ -112,8 +112,8 @@ function generateContributionsOverview(userScoreDetails: TotalsById) {
           newRow(
             "Issue",
             "Specification",
-            specification?.length.toString() || "-",
-            specification?.commentScores[userId].totalScoreTotal.toString() || "-"
+            specification.commentScores[userId].details.length.toString() || "-",
+            specification.commentScores[userId].totalScoreTotal.toString() || "-"
           )
         );
       }
@@ -122,8 +122,8 @@ function generateContributionsOverview(userScoreDetails: TotalsById) {
           newRow(
             "Issue",
             "Comment",
-            issueComments?.length.toString() || "-",
-            issueComments?.commentScores[userId].totalScoreTotal.toString() || "-"
+            issueComments.commentScores[userId].details.toString() || "-",
+            issueComments.commentScores[userId].totalScoreTotal.toString() || "-"
           )
         );
       }
@@ -132,8 +132,8 @@ function generateContributionsOverview(userScoreDetails: TotalsById) {
           newRow(
             "Review",
             "Comment",
-            reviewComments?.length.toString() || "-",
-            reviewComments?.commentScores[userId].totalScoreTotal.toString() || "-"
+            reviewComments.commentScores[userId].details.toString() || "-",
+            reviewComments.commentScores[userId].totalScoreTotal.toString() || "-"
           )
         );
       }
@@ -169,17 +169,17 @@ function generateDetailsTable(totals: TotalsById) {
       const specificationComments = detail.scoring.specification?.commentScores[userId].details;
       const issueComments = detail.scoring.issueComments?.commentScores[userId].details;
       const reviewComments = detail.scoring.reviewComments?.commentScores[userId].details;
-      if (specificationComments) commentSources.push(...specificationComments);
-      if (issueComments) commentSources.push(...issueComments);
-      if (reviewComments) commentSources.push(...reviewComments);
+      if (specificationComments) commentSources.push(...Object.values(specificationComments));
+      if (issueComments) commentSources.push(...Object.values(issueComments));
+      if (reviewComments) commentSources.push(...Object.values(reviewComments));
 
       const commentScores = [];
       const specificationCommentScores = detail.scoring.specification?.commentScores[userId].details;
       const issueCommentScores = detail.scoring.issueComments?.commentScores[userId].details;
       const reviewCommentScores = detail.scoring.reviewComments?.commentScores[userId].details;
-      if (specificationCommentScores) commentScores.push(...specificationCommentScores);
-      if (issueCommentScores) commentScores.push(...issueCommentScores);
-      if (reviewCommentScores) commentScores.push(...reviewCommentScores);
+      if (specificationCommentScores) commentScores.push(...Object.values(specificationCommentScores));
+      if (issueCommentScores) commentScores.push(...Object.values(issueCommentScores));
+      if (reviewCommentScores) commentScores.push(...Object.values(reviewCommentScores));
 
       if (!commentSources) continue;
       if (!commentScores) continue;
@@ -189,9 +189,9 @@ function generateDetailsTable(totals: TotalsById) {
         const commentSource = commentSources[index];
         const commentScore = commentScores[index];
 
-        const commentUrl = commentSource.html_url;
-        const truncatedBody = commentSource ? commentSource.body.substring(0, 64).concat("...") : "";
-        const formatScoreDetails = commentScore.formattingScoreDetails;
+        const commentUrl = commentSource.comment.html_url;
+        const truncatedBody = commentSource ? commentSource.comment.body.substring(0, 64).concat("...") : "";
+        const formatScoreDetails = commentScore.formatScoreCommentDetails;
 
         let formatDetailsStr = "";
         if (formatScoreDetails && Object.keys(formatScoreDetails).length > 0) {
@@ -201,9 +201,9 @@ function generateDetailsTable(totals: TotalsById) {
           formatDetailsStr = "-";
         }
 
-        const formatScore = zeroToHyphen(commentScore.wordScore.plus(commentScore.formattingScore));
-        const relevanceScore = zeroToHyphen(commentScore.relevanceScore);
-        const totalScore = zeroToHyphen(commentScore.finalScore);
+        const formatScore = zeroToHyphen(commentScore.wordScoreComment.plus(commentScore.formatScoreComment));
+        const relevanceScore = zeroToHyphen(commentScore.relevanceScoreComment);
+        const totalScore = zeroToHyphen(commentScore.totalScoreComment);
         let formatScoreCell;
         if (formatDetailsStr != "-") {
           formatScoreCell = `<details><summary>${formatScore}</summary>${formatDetailsStr}</details>`;
