@@ -31,12 +31,13 @@ export async function commentsScoring({
       const userScore = commentScoring.commentScores[userId];
 
       const userScoreDetail: UserScoreDetails = {
-        score: userScore.totalScore,
+        score: userScore.totalScoreTotal,
         view,
         role: null,
         contribution: "Comment",
         scoring: {
-          issueComments: commentScoring,
+          issueComments: view === "Issue" ? commentScoring : null,
+          reviewComments: view === "Review" ? commentScoring : null,
           specification: null,
           task: null,
         },

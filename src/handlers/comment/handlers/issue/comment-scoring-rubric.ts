@@ -101,20 +101,22 @@ export class CommentScoring {
       const formatScores = [];
       for (const commentId in userCommentScore.details) {
         const commentScoreDetails = userCommentScore.details[commentId];
-        const totalElementScore = commentScoreDetails.formatScoreComment;
-        const totalWordScore = commentScoreDetails.wordScoreComment;
+        const formatScoreComment = commentScoreDetails.formatScoreComment;
+        const wordScoreComment = commentScoreDetails.wordScoreComment;
 
-        wordScores.push(totalWordScore);
-        formatScores.push(totalElementScore);
+        commentScoreDetails.totalScoreComment = formatScoreComment.plus(wordScoreComment);
+
+        wordScores.push(wordScoreComment);
+        formatScores.push(formatScoreComment);
       }
       userCommentScore.wordScoreTotal = wordScores.reduce((total, score) => total.plus(score), ZERO);
       userCommentScore.formatScoreTotal = formatScores.reduce((total, score) => total.plus(score), ZERO);
-      userCommentScore.totalScore = userCommentScore.wordScoreTotal.plus(userCommentScore.formatScoreTotal);
+      userCommentScore.totalScoreTotal = userCommentScore.wordScoreTotal.plus(userCommentScore.formatScoreTotal);
     }
   }
 
   public getTotalScorePerId(userId: number): Decimal {
-    const score = this.commentScores[userId].totalScore;
+    const score = this.commentScores[userId].totalScoreTotal;
     if (!score) {
       throw new Error(`No score for id ${userId}`);
     }
@@ -228,6 +230,7 @@ export class CommentScoring {
     if (!this.commentScores[userId].details[comment.id]) {
       Runtime.getState().logger.debug("good thing we initialized, was unsure if necessary");
       this.commentScores[userId].details[comment.id] = {
+        totalScoreComment: ZERO,
         relevanceScoreComment: null,
         wordScoreComment: ZERO,
         formatScoreComment: ZERO,
