@@ -2,7 +2,7 @@ import merge from "lodash/merge";
 import { Context as ProbotContext } from "probot";
 import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
-import { Payload, BotConfig, validateBotConfig, BotConfigSchema } from "../types";
+import { Payload, BotConfig, validateBotConfig, stringDuration } from "../types";
 import { DefinedError } from "ajv";
 import { Value } from "@sinclair/typebox/value";
 
@@ -62,7 +62,7 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
     repoConfig = repositoryConfiguration as BotConfig;
   }
 
-  let merged = merge({}, orgConfig, repoConfig);
+  const merged = merge({}, orgConfig, repoConfig);
   const valid = validateBotConfig(merged);
   if (!valid) {
     const err = generateValidationError(validateBotConfig.errors as DefinedError[]);
@@ -78,7 +78,7 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
 
   // this will run transform functions
   try {
-    merged = Value.Decode(BotConfigSchema, merged);
+    transformConfig(merged);
   } catch (err) {
     console.error(JSON.stringify(err, null, 2));
     throw err;
@@ -88,23 +88,30 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
   return merged as BotConfig;
 }
 
-function generateValidationError(errors: DefinedError[]): Error | string {
+export function transformConfig(config: BotConfig) {
+  config.timers.reviewDelayTolerance = Value.Decode(stringDuration(), config.timers.reviewDelayTolerance);
+  config.timers.taskStaleTimeoutDuration = Value.Decode(stringDuration(), config.timers.taskStaleTimeoutDuration);
+  config.timers.taskFollowUpDuration = Value.Decode(stringDuration(), config.timers.taskFollowUpDuration);
+  config.timers.taskDisqualifyDuration = Value.Decode(stringDuration(), config.timers.taskDisqualifyDuration);
+}
+
+export function generateValidationError(errors: DefinedError[]): Error | string {
   const errorsWithoutStrict = errors.filter((error) => error.keyword !== "additionalProperties");
   const errorsOnlyStrict = errors.filter((error) => error.keyword === "additionalProperties");
   const isValid = errorsWithoutStrict.length === 0;
-  const message = `${isValid ? "Valid" : "Invalid"} configuration.
-${!isValid && "Errors: \n" + errorsWithoutStrict.map((error) => error.message).join("\n")}
-${
-  errorsOnlyStrict.length > 0
-    ? `Warning! Unneccesary properties: 
-      ${errorsOnlyStrict
-        .map(
-          (error) =>
-            error.keyword === "additionalProperties" && error.instancePath + "/" + error.params.additionalProperty
-        )
-        .join("\n")}`
-    : ""
-}`;
+  const errorMsg = isValid ? "" : errorsWithoutStrict.map((error) => error.message).join("\n");
+  const warningMsg =
+    errorsOnlyStrict.length > 0
+      ? "Warning! Unneccesary properties: \n" +
+        errorsOnlyStrict
+          .map(
+            (error) =>
+              error.keyword === "additionalProperties" &&
+              error.instancePath.replace("/", ".") + "." + error.params.additionalProperty
+          )
+          .join("\n")
+      : "";
+  const message = `${isValid ? "Valid" : "Invalid"} configuration. \n${errorMsg}\n${warningMsg}`;
   return isValid ? message : new Error(message);
 }
 

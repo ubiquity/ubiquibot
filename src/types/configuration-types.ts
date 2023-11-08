@@ -39,7 +39,7 @@ function StrictObject<T extends TProperties>(obj: T, options?: ObjectOptions) {
   return T.Object<T>(obj, { additionalProperties: false, default: {}, ...options });
 }
 
-function stringDuration(options?: StringOptions) {
+export function stringDuration(options?: StringOptions) {
   return T.Transform(T.String(options))
     .Decode((value) => {
       const decoded = ms(value);

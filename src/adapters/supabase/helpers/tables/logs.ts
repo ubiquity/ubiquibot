@@ -9,8 +9,8 @@ import { prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
 import { execSync } from "child_process";
 import { LogLevel } from "../../../../types/logs";
-import { Context } from "../../../../types/context";
 import Runtime from "../../../../bindings/bot-runtime";
+import { Context as ProbotContext } from "probot";
 
 type LogFunction = (message: string, metadata?: any) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
@@ -223,7 +223,13 @@ export class Logs extends Super {
     });
   }
 
-  constructor(supabase: SupabaseClient, context: Context, environment: string, retryLimit: number, logLevel: LogLevel) {
+  constructor(
+    supabase: SupabaseClient,
+    context: ProbotContext,
+    environment: string,
+    retryLimit: number,
+    logLevel: LogLevel
+  ) {
     super(supabase, context);
 
     this.environment = environment;
@@ -363,11 +369,11 @@ export class Logs extends Super {
   }
 
   private _postComment(message: string) {
-    this.context.event.octokit.issues
+    this.context.octokit.issues
       .createComment({
-        owner: this.context.event.issue().owner,
-        repo: this.context.event.issue().repo,
-        issue_number: this.context.event.issue().issue_number,
+        owner: this.context.issue().owner,
+        repo: this.context.issue().repo,
+        issue_number: this.context.issue().issue_number,
         body: message,
       })
       // .then((x) => console.trace(x))

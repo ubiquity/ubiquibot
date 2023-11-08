@@ -4,7 +4,8 @@ import { Database } from "../../types/database";
 import { GitHubNode } from "../client";
 import { Super } from "./super";
 import { UserRow } from "./user";
-import { Context } from "../../../../types";
+import { Context as ProbotContext } from "probot";
+
 type AccessRow = Database["public"]["Tables"]["access"]["Row"];
 type AccessInsert = Database["public"]["Tables"]["access"]["Insert"];
 type UserWithAccess = (UserRow & { access: AccessRow | null })[];
@@ -19,7 +20,7 @@ type _Access = {
 };
 
 export class Access extends Super {
-  constructor(supabase: SupabaseClient, context: Context) {
+  constructor(supabase: SupabaseClient, context: ProbotContext) {
     super(supabase, context);
   }
 

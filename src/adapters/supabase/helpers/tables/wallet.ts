@@ -1,7 +1,7 @@
 import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
-import { Context as ProbotContext } from "probot/lib/context";
+import { Context as ProbotContext } from "probot";
 import Runtime from "../../../../bindings/bot-runtime";
-import { Context, User } from "../../../../types";
+import { User } from "../../../../types";
 import { Database } from "../../types/database";
 import { Super } from "./super";
 import { UserRow } from "./user";
@@ -16,7 +16,7 @@ type IssueCommentPayload =
   | ProbotContext<"issue_comment.edited">["payload"];
 
 export class Wallet extends Super {
-  constructor(supabase: SupabaseClient, context: Context) {
+  constructor(supabase: SupabaseClient, context: ProbotContext) {
     super(supabase, context);
   }
 
@@ -26,7 +26,7 @@ export class Wallet extends Super {
   }
 
   public async upsertWalletAddress(address: string) {
-    const payload = this.context.event.payload as
+    const payload = this.context.payload as
       | ProbotContext<"issue_comment.created">["payload"]
       | ProbotContext<"issue_comment.edited">["payload"];
 

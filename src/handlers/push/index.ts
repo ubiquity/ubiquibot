@@ -1,8 +1,9 @@
-import { Value } from "@sinclair/typebox/value";
+import { Context as ProbotContext } from "probot";
 import Runtime from "../../bindings/bot-runtime";
 import { createCommitComment, getFileContent } from "../../helpers";
-import { CommitsPayload, PushPayload, Context, validateBotConfig, BotConfigSchema } from "../../types";
-import { parseYaml } from "../../utils/generate-configuration";
+import { CommitsPayload, PushPayload, validateBotConfig } from "../../types";
+import { generateValidationError, parseYaml, transformConfig } from "../../utils/generate-configuration";
+import { DefinedError } from "ajv";
 
 export const ZERO_SHA = "0000000000000000000000000000000000000000";
 export const BASE_RATE_FILE = ".github/ubiquibot-config.yml";
@@ -21,11 +22,11 @@ export function getCommitChanges(commits: CommitsPayload[]) {
   return changes;
 }
 
-export async function validateConfigChange(context: Context) {
+export async function validateConfigChange(context: ProbotContext) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
-  const payload = context.event.payload as PushPayload;
+  const payload = context.payload as PushPayload;
 
   if (!payload.ref.startsWith("refs/heads/")) {
     logger.debug("Skipping push events, not a branch");
@@ -61,19 +62,26 @@ export async function validateConfigChange(context: Context) {
 
     if (configFileContent) {
       const decodedConfig = Buffer.from(configFileContent, "base64").toString();
-      let config = parseYaml(decodedConfig);
-      config = Value.Decode(BotConfigSchema, config);
+      const config = parseYaml(decodedConfig);
       const result = validateBotConfig(config);
+      let errorMsg: string | undefined;
       if (!result) {
-        await createCommitComment(
-          context,
-          `@${payload.sender.login} Config validation failed! ${validateBotConfig.errors}`,
-          commitSha,
-          BASE_RATE_FILE
-        );
-        logger.info("Config validation failed!", validateBotConfig.errors);
+        const err = generateValidationError(validateBotConfig.errors as DefinedError[]);
+        errorMsg = `@${payload.sender.login} ${err.toString()}`;
+      }
+      try {
+        transformConfig(config);
+      } catch (err) {
+        errorMsg = `@${payload.sender.login} Config validation failed! ${JSON.stringify(err)}`;
+      }
+      if (errorMsg) {
+        logger.info("Config validation failed!", errorMsg);
+        await createCommitComment(context, errorMsg, commitSha, BASE_RATE_FILE);
+      } else {
+        logger.debug(`Config validation passed!`);
       }
     }
+  } else {
+    logger.debug(`Skipping push events, file change doesnt include config file: ${JSON.stringify(changes)}`);
   }
-  logger.debug("Skipping push events, file change empty 4");
 }

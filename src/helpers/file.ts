@@ -1,5 +1,6 @@
 import Runtime from "../bindings/bot-runtime";
 import { Context } from "../types";
+import { Context as ProbotContext } from "probot";
 
 // Get the previous file content
 export async function getPreviousFileContent(
@@ -68,7 +69,7 @@ export async function getPreviousFileContent(
 }
 
 export async function getFileContent(
-  context: Context,
+  context: ProbotContext,
   owner: string,
   repo: string,
   branch: string,
@@ -81,7 +82,7 @@ export async function getFileContent(
   try {
     if (!commitSha) {
       // Get the latest commit of the branch
-      const branchData = await context.event.octokit.repos.getBranch({
+      const branchData = await context.octokit.repos.getBranch({
         owner,
         repo,
         branch,
@@ -90,7 +91,7 @@ export async function getFileContent(
     }
 
     // Get the commit details
-    const commitData = await context.event.octokit.repos.getCommit({
+    const commitData = await context.octokit.repos.getCommit({
       owner,
       repo,
       ref: commitSha,
@@ -100,7 +101,7 @@ export async function getFileContent(
     const file = commitData.data.files ? commitData.data.files.find((file) => file.filename === filePath) : undefined;
     if (file) {
       // Retrieve the file tree
-      const tree = await context.event.octokit.git.getTree({
+      const tree = await context.octokit.git.getTree({
         owner,
         repo,
         tree_sha: commitData.data.commit.tree.sha,
@@ -111,7 +112,7 @@ export async function getFileContent(
       const file = tree.data.tree.find((item) => item.path === filePath);
       if (file && file.sha) {
         // Get the previous file content
-        const fileContent = await context.event.octokit.git.getBlob({
+        const fileContent = await context.octokit.git.getBlob({
           owner,
           repo,
           file_sha: file.sha,

@@ -27,6 +27,13 @@ const validatePayload = ajv.compile(PayloadSchema);
 export async function bindEvents(eventContext: ProbotContext) {
   const runtime = Runtime.getState();
 
+  const payload = eventContext.payload as Payload;
+  const eventName = payload?.action ? `${eventContext.name}.${payload?.action}` : eventContext.name; // some events wont have actions as this grows
+
+  if (eventName === GitHubEvent.PUSH_EVENT) {
+    await validateConfigChange(eventContext);
+  }
+
   const botConfig = await loadConfiguration(eventContext);
   const context: Context = {
     event: eventContext,
@@ -38,13 +45,6 @@ export async function bindEvents(eventContext: ProbotContext) {
 
   if (!context.config.keys.evmPrivateEncrypted) {
     runtime.logger.warn("No EVM private key found");
-  }
-
-  const payload = eventContext.payload as Payload;
-  const eventName = payload?.action ? `${eventContext.name}.${payload?.action}` : eventContext.name; // some events wont have actions as this grows
-
-  if (eventName === GitHubEvent.PUSH_EVENT) {
-    await validateConfigChange(context);
   }
 
   if (!runtime.logger) {
@@ -66,6 +66,7 @@ export async function bindEvents(eventContext: ProbotContext) {
     if (!valid) {
       // runtime.logger.info("Payload schema validation failed!", payload);
       if (validatePayload.errors) {
+        console.dir(payload, { depth: null, colors: true });
         return runtime.logger.error("validation errors", validatePayload.errors);
       }
       // return;

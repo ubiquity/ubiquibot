@@ -4,7 +4,7 @@ import addFormats from "ajv-formats";
 export const ajv = addFormats(
   new Ajv({
     strict: true,
-    removeAdditional: true,
+    removeAdditional: false,
     useDefaults: true,
     allErrors: true,
     coerceTypes: true,

@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { Context } from "../types";
+import { Context as ProbotContext } from "probot";
 import { Access } from "./supabase/helpers/tables/access";
 import { Label } from "./supabase/helpers/tables/label";
 import { Locations } from "./supabase/helpers/tables/locations";
@@ -14,7 +14,7 @@ import OpenAI from "openai";
 
 const supabaseClient = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_KEY, { auth: { persistSession: false } });
 
-export function createAdapters(context: Context) {
+export function createAdapters(context: ProbotContext) {
   return {
     supabase: {
       access: new Access(supabaseClient, context),
