@@ -11,15 +11,16 @@ export function assignTableComment({
   if (isTaskStale) {
     taskStaleWarning = `<tr><td>Warning!</td> <td>This task was created over ${daysElapsedSinceTaskCreation} days ago. Please confirm that this issue specification is accurate before starting.</td></tr>`;
   }
+  let deadlineWarning = ``;
+  if (taskDeadline) {
+    deadlineWarning = `<tr><td>Deadline</td><td>${taskDeadline}</td></tr>`;
+  }
 
   return `
 <code>
 <table>
 ${taskStaleWarning}
-<tr>
-<td>Deadline</td>
-<td>${taskDeadline}</td>
-</tr>
+${deadlineWarning}
 <tr>
 <td>Registered Wallet</td>
 <td>${registeredWallet}</td>
@@ -31,7 +32,7 @@ ${totalPriceOfTask ? `<tr><td>Total Price</td><td>${totalPriceOfTask}</td></tr>`
 }
 
 interface AssignTableCommentParams {
-  taskDeadline: string;
+  taskDeadline: string | null;
   registeredWallet: string;
   multiplierAmount: number | null;
   multiplierReason: string | null;

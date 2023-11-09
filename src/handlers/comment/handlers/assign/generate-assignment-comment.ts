@@ -1,21 +1,25 @@
 import Runtime from "../../../../bindings/bot-runtime";
 import { Payload } from "../../../../types";
 
-export async function generateAssignmentComment(payload: Payload, duration: number) {
+const options: Intl.DateTimeFormatOptions = {
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "numeric",
+  timeZone: "UTC",
+  timeZoneName: "short",
+};
+
+export async function generateAssignmentComment(payload: Payload, duration: number | null = null) {
   const runtime = Runtime.getState();
   const startTime = new Date().getTime();
-  const endTime = new Date(startTime + duration * 1000);
-
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    timeZone: "UTC",
-    timeZoneName: "short",
-  };
-  const deadline = endTime.toLocaleString("en-US", options);
+  let endTime: null | Date = null;
+  let deadline: null | string = null;
+  if (duration) {
+    endTime = new Date(startTime + duration * 1000);
+    deadline = endTime.toLocaleString("en-US", options);
+  }
 
   const issueCreationTime = payload.issue?.created_at;
   if (!issueCreationTime) {

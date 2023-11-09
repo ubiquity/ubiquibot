@@ -5,7 +5,7 @@ import {
   getAssignedIssues,
   getAvailableOpenedPullRequests,
 } from "../../../../helpers";
-import { IssueType, Payload, User, Context } from "../../../../types";
+import { Context, IssueType, Payload, User } from "../../../../types";
 import { isParentIssue } from "../../../pricing";
 import { assignTableComment } from "../table";
 import { checkTaskStale } from "./check-task-stale";
@@ -65,21 +65,28 @@ export async function assign(context: Context, body: string) {
     throw logger.warn("Skipping '/start' since the issue is already assigned");
   }
 
-  const timeLabelsAssigned = getTimeLabelsAssigned(payload, config);
+  // ==== preamble checks completed ==== //
+  const labels = issue.labels;
+  const priceLabel = labels.find((label) => label.name.startsWith("Price: "));
 
-  if (!timeLabelsAssigned || timeLabelsAssigned.length == 0) {
-    throw logger.warn("Skipping '/start' since no time labels are set to calculate the timeline", timeLabelsAssigned);
+  let duration = null;
+  if (priceLabel) {
+    // skip checks
+  } else {
+    // check if time label and priority labels are set
+    const timeLabelsAssigned = getTimeLabelsAssigned(payload, config) || [];
+
+    if (!timeLabelsAssigned) {
+      throw logger.warn("Skipping '/start' since no time labels are set to calculate the timeline", timeLabelsAssigned);
+    }
+    const durations = calculateDurations(timeLabelsAssigned);
+    if (durations.length == 0) {
+      throw logger.warn("Skipping '/start' since no durations found to calculate the timeline", durations);
+    } else if (durations.length > 1) {
+      logger.warn("Using the shortest duration time label");
+    }
+    duration = durations[0];
   }
-
-  const durations = calculateDurations(timeLabelsAssigned);
-
-  if (durations.length == 0) {
-    throw logger.warn("Skipping '/start' since no durations found to calculate the timeline", durations);
-  } else if (durations.length > 1) {
-    logger.warn("Using the shortest duration time label");
-  }
-
-  const duration = durations[0];
 
   const comment = await generateAssignmentComment(payload, duration);
 
