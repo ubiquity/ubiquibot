@@ -34,7 +34,7 @@ export class CommentScoring {
         [commentId: string]: {
           totalScoreComment: Decimal;
 
-          relevanceScoreComment: null | Decimal; // nullable because this is handled elsewhere in the program logic
+          relevanceScoreComment: Decimal; // nullable because this is handled elsewhere in the program logic
           // clarityScoreComment: null | Decimal; // TODO: implement
           wordScoreComment: Decimal;
           wordScoreCommentDetails: { [word: string]: Decimal };
@@ -231,7 +231,7 @@ export class CommentScoring {
       Runtime.getState().logger.debug("good thing we initialized, was unsure if necessary");
       this.commentScores[userId].details[comment.id] = {
         totalScoreComment: ZERO,
-        relevanceScoreComment: null,
+        relevanceScoreComment: ZERO,
         wordScoreComment: ZERO,
         formatScoreComment: ZERO,
         formatScoreCommentDetails: {},

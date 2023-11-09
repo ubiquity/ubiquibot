@@ -34,12 +34,17 @@ function getAdditionalProperties() {
     .map((error) => error.params.additionalProperty);
 }
 
-function formatErrors(errors: any[], additionalProperties: any[] | undefined) {
-  const errorTexts = errors.map((error: ErrorObject<string, Record<string, any>, unknown>) => ajv.errorsText([error]));
-  const additionalPropsText =
-    additionalProperties?.length > 0
-      ? `data must NOT have additional properties: ${additionalProperties.join(", ")}`
-      : "";
+function formatErrors(
+  errors: ErrorObject<string, Record<string, string>, unknown>[],
+  additionalProperties: string[] | undefined
+) {
+  const errorTexts = errors.map((error) => ajv.errorsText([error]));
+  let additionalPropsText = "";
+
+  if (additionalProperties && additionalProperties.length > 0) {
+    additionalPropsText = `data must NOT have additional properties: ${additionalProperties.join(", ")}`;
+  }
+
   return [...errorTexts, additionalPropsText].filter(Boolean);
 }
 
