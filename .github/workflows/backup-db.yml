@@ -1,15 +1,11 @@
 name: Supa-backup
 
 on:
-  push:
-    branches: [ development ]
-  pull_request:
-    branches: [ development ]
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
 
-jobs:   
+jobs:
   run_db_backup:
     runs-on: ubuntu-latest
     permissions:
@@ -18,9 +14,7 @@ jobs:
       supabase_db_url: ${{ secrets.SUPABASE_DB_URL }}
     steps:
       - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.head_ref }}
-          
+
       - uses: supabase/setup-cli@v1
         with:
           version: latest
