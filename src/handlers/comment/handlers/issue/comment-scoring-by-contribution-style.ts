@@ -14,6 +14,11 @@ export const commentScoringByContributionClass = {
     formattingMultiplier: 0,
     wordValue: 0,
   }),
+  "Issue Assignee Task": new CommentScoring({
+    contributionClass: "Issue Assignee Comment",
+    formattingMultiplier: 0,
+    wordValue: 0,
+  }),
   "Issue Collaborator Comment": new CommentScoring({
     contributionClass: "Issue Collaborator Comment",
     formattingMultiplier: 1,
