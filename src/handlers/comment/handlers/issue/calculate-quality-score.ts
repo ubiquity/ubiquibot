@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { encodingForModel } from "js-tiktoken";
 import Decimal from "decimal.js";
 import Runtime from "../../../../bindings/bot-runtime";
+import { Context } from "../../../../types";
 
 export async function calculateQualScore(issue: Issue, contributorComments: Comment[]) {
   const sumOfConversationTokens = countTokensOfConversation(issue, contributorComments);
@@ -49,13 +50,13 @@ export function countTokensOfConversation(issue: Issue, comments: Comment[]) {
 }
 
 export async function gptRelevance(
+  context: Context,
   model: string,
   ISSUE_SPECIFICATION_BODY: string,
   CONVERSATION_STRINGS: string[],
   ARRAY_LENGTH = CONVERSATION_STRINGS.length
 ) {
-  const runtime = Runtime.getState();
-  const openAi = runtime.adapters.openAi;
+  const openAi = context.openAi;
   if (!openAi) throw new Error("OpenAI adapter is not defined");
   const PROMPT = `I need to evaluate the relevance of GitHub contributors' comments to a specific issue specification. Specifically, I'm interested in how much each comment helps to further define the issue specification or contributes new information or research relevant to the issue. Please provide a float between 0 and 1 to represent the degree of relevance. A score of 1 indicates that the comment is entirely relevant and adds significant value to the issue, whereas a score of 0 indicates no relevance or added value. Each contributor's comment is on a new line.\n\nIssue Specification:\n\`\`\`\n${ISSUE_SPECIFICATION_BODY}\n\`\`\`\n\nConversation:\n\`\`\`\n${CONVERSATION_STRINGS.join(
     "\n"

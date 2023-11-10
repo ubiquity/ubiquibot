@@ -5,7 +5,6 @@ import { GitHubNode } from "../client";
 import { Super } from "./super";
 import { UserRow } from "./user";
 import { Context as ProbotContext } from "probot";
-
 type AccessRow = Database["public"]["Tables"]["access"]["Row"];
 type AccessInsert = Database["public"]["Tables"]["access"]["Insert"];
 type UserWithAccess = (UserRow & { access: AccessRow | null })[];

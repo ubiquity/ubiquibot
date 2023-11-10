@@ -32,15 +32,18 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
   if (organizationConfiguration) {
     const valid = validateBotConfig(organizationConfiguration);
     if (!valid) {
-      const err = generateValidationError(validateBotConfig.errors as DefinedError[]);
-      if (err instanceof Error) throw err;
-      if (payload.issue?.number)
-        await context.octokit.issues.createComment({
-          owner: payload.repository.owner.login,
-          repo: payload.repository.name,
-          issue_number: payload.issue?.number,
-          body: err,
-        });
+      let errMsg = getErrorMsg(validateBotConfig.errors as DefinedError[]);
+      if (errMsg) {
+        errMsg = `Invalid org configuration! \n${errMsg}`;
+        if (payload.issue?.number)
+          await context.octokit.issues.createComment({
+            owner: payload.repository.owner.login,
+            repo: payload.repository.name,
+            issue_number: payload.issue?.number,
+            body: errMsg,
+          });
+        throw new Error(errMsg);
+      }
     }
     orgConfig = organizationConfiguration as BotConfig;
   }
@@ -49,15 +52,18 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
   if (repositoryConfiguration) {
     const valid = validateBotConfig(repositoryConfiguration);
     if (!valid) {
-      const err = generateValidationError(validateBotConfig.errors as DefinedError[]);
-      if (err instanceof Error) throw err;
-      if (payload.issue?.number)
-        await context.octokit.issues.createComment({
-          owner: payload.repository.owner.login,
-          repo: payload.repository.name,
-          issue_number: payload.issue?.number,
-          body: err,
-        });
+      let errMsg = getErrorMsg(validateBotConfig.errors as DefinedError[]);
+      if (errMsg) {
+        errMsg = `Invalid repo configuration! \n${errMsg}`;
+        if (payload.issue?.number)
+          await context.octokit.issues.createComment({
+            owner: payload.repository.owner.login,
+            repo: payload.repository.name,
+            issue_number: payload.issue?.number,
+            body: errMsg,
+          });
+        throw new Error(errMsg);
+      }
     }
     repoConfig = repositoryConfiguration as BotConfig;
   }
@@ -65,22 +71,31 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
   const merged = merge({}, orgConfig, repoConfig);
   const valid = validateBotConfig(merged);
   if (!valid) {
-    const err = generateValidationError(validateBotConfig.errors as DefinedError[]);
-    if (err instanceof Error) throw err;
-    if (payload.issue?.number)
-      await context.octokit.issues.createComment({
-        owner: payload.repository.owner.login,
-        repo: payload.repository.name,
-        issue_number: payload.issue?.number,
-        body: err,
-      });
+    let errMsg = getErrorMsg(validateBotConfig.errors as DefinedError[]);
+    if (errMsg) {
+      errMsg = `Invalid merged configuration! \n${errMsg}`;
+      if (payload.issue?.number)
+        await context.octokit.issues.createComment({
+          owner: payload.repository.owner.login,
+          repo: payload.repository.name,
+          issue_number: payload.issue?.number,
+          body: errMsg,
+        });
+      throw new Error(errMsg);
+    }
   }
 
   // this will run transform functions
   try {
     transformConfig(merged);
   } catch (err) {
-    console.error(JSON.stringify(err, null, 2));
+    if (err instanceof Error && payload.issue?.number)
+      await context.octokit.issues.createComment({
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        issue_number: payload.issue?.number,
+        body: `Config error!\n${err.toString()}`,
+      });
     throw err;
   }
 
@@ -88,31 +103,47 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
   return merged as BotConfig;
 }
 
+// Tranforming the config only works with Typebox and not Ajv
+// When you use Decode() it not only transforms the values but also validates the whole config and Typebox doesn't return all errors so we can filter for correct ones
+// That's why we have transform every field manually and catch errors
 export function transformConfig(config: BotConfig) {
-  config.timers.reviewDelayTolerance = Value.Decode(stringDuration(), config.timers.reviewDelayTolerance);
-  config.timers.taskStaleTimeoutDuration = Value.Decode(stringDuration(), config.timers.taskStaleTimeoutDuration);
-  config.timers.taskFollowUpDuration = Value.Decode(stringDuration(), config.timers.taskFollowUpDuration);
-  config.timers.taskDisqualifyDuration = Value.Decode(stringDuration(), config.timers.taskDisqualifyDuration);
+  let errorMsg = "";
+  try {
+    config.timers.reviewDelayTolerance = Value.Decode(stringDuration(), config.timers.reviewDelayTolerance);
+  } catch (err: any) {
+    if (err.value) {
+      errorMsg += `Invalid reviewDelayTolerance value: ${err.value}\n`;
+    }
+  }
+  try {
+    config.timers.taskStaleTimeoutDuration = Value.Decode(stringDuration(), config.timers.taskStaleTimeoutDuration);
+  } catch (err: any) {
+    if (err.value) {
+      errorMsg += `Invalid taskStaleTimeoutDuration value: ${err.value}\n`;
+    }
+  }
+  try {
+    config.timers.taskFollowUpDuration = Value.Decode(stringDuration(), config.timers.taskFollowUpDuration);
+  } catch (err: any) {
+    if (err.value) {
+      errorMsg += `Invalid taskFollowUpDuration value: ${err.value}\n`;
+    }
+  }
+  try {
+    config.timers.taskDisqualifyDuration = Value.Decode(stringDuration(), config.timers.taskDisqualifyDuration);
+  } catch (err: any) {
+    if (err.value) {
+      errorMsg += `Invalid taskDisqualifyDuration value: ${err.value}\n`;
+    }
+  }
+  if (errorMsg) throw new Error(errorMsg);
 }
 
-export function generateValidationError(errors: DefinedError[]): Error | string {
+function getErrorMsg(errors: DefinedError[]) {
   const errorsWithoutStrict = errors.filter((error) => error.keyword !== "additionalProperties");
-  const errorsOnlyStrict = errors.filter((error) => error.keyword === "additionalProperties");
-  const isValid = errorsWithoutStrict.length === 0;
-  const errorMsg = isValid ? "" : errorsWithoutStrict.map((error) => error.message).join("\n");
-  const warningMsg =
-    errorsOnlyStrict.length > 0
-      ? "Warning! Unneccesary properties: \n" +
-        errorsOnlyStrict
-          .map(
-            (error) =>
-              error.keyword === "additionalProperties" &&
-              error.instancePath.replace("/", ".") + "." + error.params.additionalProperty
-          )
-          .join("\n")
-      : "";
-  const message = `${isValid ? "Valid" : "Invalid"} configuration. \n${errorMsg}\n${warningMsg}`;
-  return isValid ? message : new Error(message);
+  return errorsWithoutStrict.length === 0
+    ? null
+    : errorsWithoutStrict.map((error) => error.instancePath.replaceAll("/", ".") + " " + error.message).join("\n");
 }
 
 async function download({

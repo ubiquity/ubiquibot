@@ -1,8 +1,8 @@
 import { Context as ProbotContext } from "probot";
 import Runtime from "../../bindings/bot-runtime";
 import { createCommitComment, getFileContent } from "../../helpers";
-import { CommitsPayload, PushPayload, validateBotConfig } from "../../types";
-import { generateValidationError, parseYaml, transformConfig } from "../../utils/generate-configuration";
+import { BotConfig, CommitsPayload, PushPayload, validateBotConfig } from "../../types";
+import { parseYaml, transformConfig } from "../../utils/generate-configuration";
 import { DefinedError } from "ajv";
 
 export const ZERO_SHA = "0000000000000000000000000000000000000000";
@@ -63,17 +63,24 @@ export async function validateConfigChange(context: ProbotContext) {
     if (configFileContent) {
       const decodedConfig = Buffer.from(configFileContent, "base64").toString();
       const config = parseYaml(decodedConfig);
-      const result = validateBotConfig(config);
+      const valid = validateBotConfig(config);
       let errorMsg: string | undefined;
-      if (!result) {
-        const err = generateValidationError(validateBotConfig.errors as DefinedError[]);
-        errorMsg = `@${payload.sender.login} ${err.toString()}`;
+
+      if (!valid) {
+        const errMsg = generateValidationError(validateBotConfig.errors as DefinedError[]);
+        errorMsg = `@${payload.sender.login} ${errMsg}`;
       }
+
       try {
-        transformConfig(config);
+        transformConfig(config as BotConfig);
       } catch (err) {
-        errorMsg = `@${payload.sender.login} Config validation failed! ${JSON.stringify(err)}`;
+        if (errorMsg) {
+          errorMsg += `\nConfig tranformation failed:\n${err}`;
+        } else {
+          errorMsg = `@${payload.sender.login} Config tranformation failed:\n${err}`;
+        }
       }
+
       if (errorMsg) {
         logger.info("Config validation failed!", errorMsg);
         await createCommitComment(context, errorMsg, commitSha, BASE_RATE_FILE);
@@ -84,4 +91,25 @@ export async function validateConfigChange(context: ProbotContext) {
   } else {
     logger.debug(`Skipping push events, file change doesnt include config file: ${JSON.stringify(changes)}`);
   }
+}
+
+function generateValidationError(errors: DefinedError[]) {
+  const errorsWithoutStrict = errors.filter((error) => error.keyword !== "additionalProperties");
+  const errorsOnlyStrict = errors.filter((error) => error.keyword === "additionalProperties");
+  const isValid = errorsWithoutStrict.length === 0;
+  const errorMsg = isValid
+    ? ""
+    : errorsWithoutStrict.map((error) => error.instancePath.replaceAll("/", ".") + " " + error.message).join("\n");
+  const warningMsg =
+    errorsOnlyStrict.length > 0
+      ? "Warning! Unneccesary properties: \n" +
+        errorsOnlyStrict
+          .map(
+            (error) =>
+              error.keyword === "additionalProperties" &&
+              error.instancePath.replaceAll("/", ".") + "." + error.params.additionalProperty
+          )
+          .join("\n")
+      : "";
+  return `${isValid ? "Valid" : "Invalid"} configuration. \n${errorMsg}\n${warningMsg}`;
 }

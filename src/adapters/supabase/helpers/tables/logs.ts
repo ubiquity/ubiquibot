@@ -9,8 +9,8 @@ import { prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
 import { execSync } from "child_process";
 import { LogLevel } from "../../../../types/logs";
-import Runtime from "../../../../bindings/bot-runtime";
 import { Context as ProbotContext } from "probot";
+import Runtime from "../../../../bindings/bot-runtime";
 
 type LogFunction = (message: string, metadata?: any) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];

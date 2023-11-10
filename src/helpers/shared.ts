@@ -1,15 +1,16 @@
 import ms from "ms";
-import { Label, Payload, UserType, Context } from "../types";
+import { Label, Payload, UserType } from "../types";
+import { Context as ProbotContext } from "probot";
 
 const contextNamesToSkip = ["workflow_run"];
 
-export function shouldSkip(context: Context) {
-  const payload = context.event.payload as Payload;
+export function shouldSkip(context: ProbotContext) {
+  const payload = context.payload as Payload;
   const response = { stop: false, reason: null } as { stop: boolean; reason: string | null };
 
-  if (contextNamesToSkip.includes(context.event.name)) {
+  if (contextNamesToSkip.includes(context.name)) {
     response.stop = true;
-    response.reason = `excluded context name: "${context.event.name}"`;
+    response.reason = `excluded context name: "${context.name}"`;
   } else if (payload.sender.type === UserType.Bot) {
     response.stop = true;
     response.reason = "sender is a bot";

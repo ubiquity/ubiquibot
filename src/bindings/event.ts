@@ -11,6 +11,8 @@ import { ajv } from "../utils/ajv";
 import Runtime from "./bot-runtime";
 import { loadConfiguration } from "./config";
 import { Context } from "../types/context";
+import OpenAI from "openai";
+import { BotConfig } from "../types";
 
 const allowedEvents = Object.values(GitHubEvent) as string[];
 
@@ -26,30 +28,11 @@ const validatePayload = ajv.compile(PayloadSchema);
 
 export async function bindEvents(eventContext: ProbotContext) {
   const runtime = Runtime.getState();
+  runtime.adapters = createAdapters(eventContext);
+  runtime.logger = runtime.adapters.supabase.logs;
 
   const payload = eventContext.payload as Payload;
   const eventName = payload?.action ? `${eventContext.name}.${payload?.action}` : eventContext.name; // some events wont have actions as this grows
-
-  if (eventName === GitHubEvent.PUSH_EVENT) {
-    await validateConfigChange(eventContext);
-  }
-
-  const botConfig = await loadConfiguration(eventContext);
-  const context: Context = {
-    event: eventContext,
-    config: botConfig,
-  };
-
-  runtime.adapters = createAdapters(context);
-  runtime.logger = runtime.adapters.supabase.logs;
-
-  if (!context.config.keys.evmPrivateEncrypted) {
-    runtime.logger.warn("No EVM private key found");
-  }
-
-  if (!runtime.logger) {
-    throw new Error("Failed to create logger");
-  }
 
   runtime.logger.info("Event received", { id: eventContext.id, name: eventName });
 
@@ -61,22 +44,40 @@ export async function bindEvents(eventContext: ProbotContext) {
   // Skip validation for installation event and push
   if (!NO_VALIDATION.includes(eventName)) {
     // Validate payload
-    // console.trace({ payload });
     const valid = validatePayload(payload);
-    if (!valid) {
-      // runtime.logger.info("Payload schema validation failed!", payload);
-      if (validatePayload.errors) {
-        console.dir(payload, { depth: null, colors: true });
-        return runtime.logger.error("validation errors", validatePayload.errors);
-      }
-      // return;
+    if (!valid && validatePayload.errors) {
+      return runtime.logger.error("Payload schema validation failed!", validatePayload.errors);
     }
 
     // Check if we should skip the event
-    const should = shouldSkip(context);
+    const should = shouldSkip(eventContext);
     if (should.stop) {
       return runtime.logger.info("Skipping the event.", { reason: should.reason });
     }
+  }
+
+  if (eventName === GitHubEvent.PUSH_EVENT) {
+    await validateConfigChange(eventContext);
+  }
+
+  let botConfig: BotConfig;
+  try {
+    botConfig = await loadConfiguration(eventContext);
+  } catch (error) {
+    return;
+  }
+  const context: Context = {
+    event: eventContext,
+    config: botConfig,
+    openAi: botConfig.keys.openAi ? new OpenAI({ apiKey: botConfig.keys.openAi }) : null,
+  };
+
+  if (!context.config.keys.evmPrivateEncrypted) {
+    runtime.logger.warn("No EVM private key found");
+  }
+
+  if (!runtime.logger) {
+    throw new Error("Failed to create logger");
   }
 
   // Get the handlers for the action
