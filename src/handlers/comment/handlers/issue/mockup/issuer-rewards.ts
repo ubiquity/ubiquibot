@@ -1,5 +1,5 @@
 import Decimal from "decimal.js";
-import { View, Role, Contribution } from "../reward-oop/classes/view-role-contribution-enums";
+import { Contribution, Role, View } from "../reward-oop/classes/view-role-contribution-enums";
 
 export class PermitComment {
   role: Role;

@@ -129,8 +129,8 @@ export class CommentScoring {
     const dom = new JSDOM(htmlString);
     const doc = dom.window.document;
     const disabledElements = Object.entries(this._formatConfig)
-      .filter(([_, config]) => config.disabled)
-      .map(([elementName, _]) => elementName);
+      .filter(([, config]) => config.disabled)
+      .map(([elementName]) => elementName);
 
     disabledElements.forEach((elementName) => {
       const elements = doc.getElementsByTagName(elementName);
