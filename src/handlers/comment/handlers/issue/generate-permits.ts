@@ -112,7 +112,7 @@ function generateContributionsOverview(userScoreDetails: TotalsById) {
           newRow(
             "Issue",
             "Specification",
-            specification.commentScores[userId].details.length.toString() || "-",
+            Object.keys(specification.commentScores[userId].details).length.toString() || "-",
             specification.commentScores[userId].totalScoreTotal.toString() || "-"
           )
         );
@@ -122,7 +122,7 @@ function generateContributionsOverview(userScoreDetails: TotalsById) {
           newRow(
             "Issue",
             "Comment",
-            issueComments.commentScores[userId].details.toString() || "-",
+            Object.keys(issueComments.commentScores[userId].details).length.toString() || "-",
             issueComments.commentScores[userId].totalScoreTotal.toString() || "-"
           )
         );
@@ -132,7 +132,7 @@ function generateContributionsOverview(userScoreDetails: TotalsById) {
           newRow(
             "Review",
             "Comment",
-            reviewComments.commentScores[userId].details.toString() || "-",
+            Object.keys(reviewComments.commentScores[userId].details).length.toString() || "-",
             reviewComments.commentScores[userId].totalScoreTotal.toString() || "-"
           )
         );

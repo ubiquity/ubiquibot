@@ -19,6 +19,7 @@ type CommentScoringConstructor = {
   formattingMultiplier: number;
   wordValue: number;
 };
+
 export class CommentScoring {
   public contributionClass: ContributorClassesKeys; // This instance is used to calculate the score for this contribution `[view][role] "Comment"` class
   // public viewWordScore: Decimal; // TODO: implement
@@ -225,12 +226,13 @@ export class CommentScoring {
   private _initialize(comment: Comment, userId: number) {
     if (!this.commentScores[userId]) {
       Runtime.getState().logger.debug("good thing we initialized, was unsure if necessary");
-      this.commentScores[userId] = {
+      const initialCommentScoreValue = {
         totalScoreTotal: ZERO,
         wordScoreTotal: ZERO,
         formatScoreTotal: ZERO,
         details: {},
-      } as (typeof this.commentScores)[number];
+      };
+      this.commentScores[userId] = { ...initialCommentScoreValue };
     }
     if (!this.commentScores[userId].details[comment.id]) {
       Runtime.getState().logger.debug("good thing we initialized, was unsure if necessary");

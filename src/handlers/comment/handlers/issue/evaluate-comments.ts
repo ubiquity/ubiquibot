@@ -29,6 +29,7 @@ export async function commentsScoring({
   const userScoreDetails = formattingWithRelevance.reduce((acc, commentScoring) => {
     for (const userId in commentScoring.commentScores) {
       const userScore = commentScoring.commentScores[userId];
+      if (!userScore.details[userId]) continue;
 
       const userScoreDetail: UserScoreDetails = {
         score: userScore.totalScoreTotal,

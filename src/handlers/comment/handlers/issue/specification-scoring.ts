@@ -26,17 +26,12 @@ export async function specificationScoring({
 
   const formatting = await allCommentScoring({ context, issue, comments: [issueAsComment], view });
   const scoreDetails = addRelevanceAndFormatScoring(RELEVANT, formatting);
-
   for (const user in scoreDetails) {
     const userScore = scoreDetails[user];
 
-    logger.debug("userScore.commentScores", userScore.commentScores);
-    logger.debug("issue.id", issue.id.toString());
-
-    const userId = issue.user.id;
-
+    if (!userScore.commentScores[issue.user.id]) continue;
     const userScoreDetail: UserScoreDetails = {
-      score: userScore.commentScores[userId.toString()].totalScoreTotal,
+      score: userScore.commentScores[issue.user.id].totalScoreTotal,
       view: view,
       role: "Issuer",
       contribution: "Specification",
