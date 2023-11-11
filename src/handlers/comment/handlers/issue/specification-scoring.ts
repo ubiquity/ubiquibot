@@ -6,6 +6,7 @@ import { allCommentScoring } from "./allCommentScoring";
 import { UserScoreDetails } from "./issue-shared-types";
 import { addRelevanceAndFormatScoring } from "./relevance-format-scoring";
 
+import Runtime from "../../../../bindings/bot-runtime";
 import { ContributorView } from "./contribution-style-types";
 
 export type ContextIssue = { context: Context; issue: Issue };
@@ -15,6 +16,7 @@ export async function specificationScoring({
   issue,
   view,
 }: ContextIssue & { view: ContributorView }): Promise<UserScoreDetails[]> {
+  const logger = Runtime.getState().logger;
   const userScoreDetails = [] as UserScoreDetails[];
 
   const issueAsComment = castIssueAsComment(issue);
@@ -27,8 +29,14 @@ export async function specificationScoring({
 
   for (const user in scoreDetails) {
     const userScore = scoreDetails[user];
+
+    logger.debug("userScore.commentScores", userScore.commentScores);
+    logger.debug("issue.id", issue.id.toString());
+
+    const userId = issue.user.id;
+
     const userScoreDetail: UserScoreDetails = {
-      score: userScore.commentScores[issue.id].totalScoreTotal,
+      score: userScore.commentScores[userId.toString()].totalScoreTotal,
       view: view,
       role: "Issuer",
       contribution: "Specification",

@@ -225,7 +225,12 @@ export class CommentScoring {
   private _initialize(comment: Comment, userId: number) {
     if (!this.commentScores[userId]) {
       Runtime.getState().logger.debug("good thing we initialized, was unsure if necessary");
-      this.commentScores[userId] = {} as (typeof this.commentScores)[number];
+      this.commentScores[userId] = {
+        totalScoreTotal: ZERO,
+        wordScoreTotal: ZERO,
+        formatScoreTotal: ZERO,
+        details: {},
+      } as (typeof this.commentScores)[number];
     }
     if (!this.commentScores[userId].details[comment.id]) {
       Runtime.getState().logger.debug("good thing we initialized, was unsure if necessary");

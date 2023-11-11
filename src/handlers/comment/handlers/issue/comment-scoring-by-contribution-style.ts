@@ -4,6 +4,12 @@ import { ContributorClasses } from "./contribution-style-types";
 export const commentScoringByContributionClass = {
   // TODO: make this configurable
 
+  "Issue Assignee Task": new CommentScoring({
+    contributionClass: "Issue Assignee Task",
+    formattingMultiplier: 0,
+    wordValue: 0,
+  }),
+
   "Issue Issuer Comment": new CommentScoring({
     contributionClass: "Issue Issuer Comment",
     formattingMultiplier: 1,
