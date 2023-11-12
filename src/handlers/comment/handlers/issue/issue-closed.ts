@@ -89,7 +89,7 @@ function checkIfPermitsAlreadyPosted(botComments: Comment[], logger: Logs) {
 }
 
 async function calculateScores(context: Context, issue: Issue, contributorComments: Comment[]) {
-  const qualityScore = await calculateQualScore(issue, contributorComments); // the issue specification is not included in this array scoring, it is only for the other contributor comments
+  const qualityScore = await calculateQualScore(context, issue, contributorComments); // the issue specification is not included in this array scoring, it is only for the other contributor comments
   const qualityScoresWithMetaData = qualityScore.relevanceScores.map((score, index) => ({
     commentId: contributorComments[index].id,
     userId: contributorComments[index].user.id,

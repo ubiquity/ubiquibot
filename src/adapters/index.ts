@@ -1,5 +1,4 @@
 import { createClient } from "@supabase/supabase-js";
-import { Context } from "../types";
 import { Context as ProbotContext } from "probot";
 import { Access } from "./supabase/helpers/tables/access";
 import { Label } from "./supabase/helpers/tables/label";

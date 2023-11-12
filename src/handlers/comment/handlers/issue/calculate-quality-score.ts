@@ -5,10 +5,10 @@ import Decimal from "decimal.js";
 import Runtime from "../../../../bindings/bot-runtime";
 import { Context } from "../../../../types";
 
-export async function calculateQualScore(issue: Issue, contributorComments: Comment[]) {
+export async function calculateQualScore(context: Context, issue: Issue, contributorComments: Comment[]) {
   const sumOfConversationTokens = countTokensOfConversation(issue, contributorComments);
   const estimatedOptimalModel = estimateOptimalModel(sumOfConversationTokens);
-  const relevanceScores = await sampleQualityScores(contributorComments, estimatedOptimalModel, issue);
+  const relevanceScores = await sampleQualityScores(context, contributorComments, estimatedOptimalModel, issue);
   return { relevanceScores, sumOfConversationTokens, model: estimatedOptimalModel };
 }
 
@@ -85,6 +85,7 @@ export async function gptRelevance(
 }
 
 async function sampleQualityScores(
+  context: Context,
   contributorComments: Comment[],
   estimatedOptimalModel: ReturnType<typeof estimateOptimalModel>,
   issue: Issue
@@ -95,7 +96,7 @@ async function sampleQualityScores(
   const batchSamples = [] as Decimal[][];
 
   for (let attempt = 0; attempt < BATCHES; attempt++) {
-    const fetchedSamples = await fetchSamples({
+    const fetchedSamples = await fetchSamples(context, {
       contributorComments,
       estimatedOptimalModel,
       issue,
@@ -110,16 +111,14 @@ async function sampleQualityScores(
   return average;
 }
 
-async function fetchSamples({
-  contributorComments,
-  estimatedOptimalModel,
-  issue,
-  maxConcurrency,
-}: InEachRequestParams) {
+async function fetchSamples(
+  context: Context,
+  { contributorComments, estimatedOptimalModel, issue, maxConcurrency }: InEachRequestParams
+) {
   const commentsSerialized = contributorComments.map((comment) => comment.body);
   const batchPromises = [];
   for (let i = 0; i < maxConcurrency; i++) {
-    const requestPromise = gptRelevance(estimatedOptimalModel, issue.body, commentsSerialized);
+    const requestPromise = gptRelevance(context, estimatedOptimalModel, issue.body, commentsSerialized);
     batchPromises.push(requestPromise);
   }
   const batchResults = await Promise.all(batchPromises);
