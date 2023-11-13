@@ -132,7 +132,7 @@ export const BotConfigSchema = StrictObject(
       registerWalletWithVerification: T.Boolean({ default: false }),
     }),
   },
-  { default: undefined }
+  { default: undefined } // top level object can't have default!
 );
 export const validateBotConfig = ajv.compile(BotConfigSchema);
 
