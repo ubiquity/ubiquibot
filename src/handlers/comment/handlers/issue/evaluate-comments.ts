@@ -20,7 +20,7 @@ export async function commentsScoring({
   source: Comment[];
   view: ContributorView;
 }): Promise<UserScoreDetails[]> {
-  const relevance = await relevanceScoring(issue, source);
+  const relevance = await relevanceScoring(context, issue, source);
   const relevanceWithMetaData = relevance.score.map(enrichRelevanceData(source));
 
   const formatting: CommentScoring[] = await allCommentScoring({ context, issue, comments: source, view });

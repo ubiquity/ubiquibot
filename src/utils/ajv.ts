@@ -37,15 +37,7 @@ export const ajv = addFormats(
   }
 );
 
-function getAdditionalProperties() {
-  return ajv.errors
-    ?.filter((error) => error.keyword === "additionalProperties")
-    .map((error) => error.params.additionalProperty);
-}
-
 export function validateTypes(schema: Schema | ValidateFunction, data: unknown) {
-  // : { valid: true; error: undefined } | { valid: false; error: string }
-  // try {
   let valid: boolean;
   if (schema instanceof Function) {
     valid = schema(data);
@@ -54,20 +46,8 @@ export function validateTypes(schema: Schema | ValidateFunction, data: unknown) 
   }
 
   if (!valid) {
-    const additionalProperties = getAdditionalProperties();
-    return {
-      valid: false,
-      error: formatErrors(errors, additionalProperties),
-    };
-    // return { valid: false, error: ajv.errorsText() };
-    // throw new Error(ajv.errorsText());
+    throw new Error(ajv.errorsText());
   }
 
-  // return data;
-
-  // }
   return { valid: true, error: null };
-  // } catch (error) {
-  // throw console.trace(error);
-  // }
 }
