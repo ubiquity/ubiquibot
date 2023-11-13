@@ -1,5 +1,5 @@
 import Runtime from "../../../../bindings/bot-runtime";
-import { Payload, User, Context } from "../../../../types";
+import { Context, Payload, User } from "../../../../types";
 
 export async function getCollaboratorsForRepo(context: Context): Promise<User[]> {
   const runtime = Runtime.getState();

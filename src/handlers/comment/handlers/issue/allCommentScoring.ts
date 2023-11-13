@@ -18,24 +18,27 @@ export async function allCommentScoring({
   const commentsByClass = sortCommentsByClass(usersByClass, comments, view);
   const contributionClasses = Object.keys(usersByClass).map((key) => key as ContributorClassesKeys);
 
-  return contributionClasses.flatMap((contributionStyle) => {
-    const scoring = commentScoringByContributionClass[contributionStyle];
-    const selection = usersByClass[contributionStyle as keyof typeof usersByClass];
+  return contributionClasses
+    .filter((className: string) => className.endsWith("Comment"))
+    .flatMap((contributionStyle) => {
+      const scoring = commentScoringByContributionClass[contributionStyle];
 
-    if (!selection) {
-      Runtime.getState().logger.verbose(`No ${String(contributionStyle)} found`);
-      return [];
-    }
+      const selection = usersByClass[contributionStyle as keyof typeof usersByClass];
 
-    // Ensure selection is always an array
-    const users = Array.isArray(selection) ? selection : [selection];
-
-    return users.flatMap((user) => {
-      const commentsOfRole = commentsByClass[contributionStyle as keyof typeof commentsByClass];
-      if (!commentsOfRole) {
+      if (!selection) {
+        Runtime.getState().logger.verbose(`No ${String(contributionStyle)} found`);
         return [];
       }
-      return perUserCommentScoring(user, commentsOfRole, scoring);
+
+      // Ensure selection is always an array
+      const users = Array.isArray(selection) ? selection : [selection];
+
+      return users.flatMap((user) => {
+        const commentsOfRole = commentsByClass[contributionStyle as keyof typeof commentsByClass];
+        if (!commentsOfRole) {
+          return [];
+        }
+        return perUserCommentScoring(user, commentsOfRole, scoring);
+      });
     });
-  });
 }

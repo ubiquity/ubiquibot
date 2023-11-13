@@ -1,5 +1,5 @@
 import { Comment, User } from "../../../../types/payload";
-import { ContributorClasses, ContributorView, ContributorClassesKeys } from "./contribution-style-types";
+import { ContributorClasses, ContributorClassesKeys, ContributorView } from "./contribution-style-types";
 type CommentsSortedByClass = {
   [className in keyof ContributorClasses]: null | Comment[];
 };

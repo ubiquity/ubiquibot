@@ -1,5 +1,5 @@
-import { relevanceScoring, estimateOptimalModel, countTokensOfConversation, gptRelevance } from "./relevance-scoring";
 import { Comment, Issue, User, UserType } from "../../../../types/payload";
+import { countTokensOfConversation, estimateOptimalModel, gptRelevance, relevanceScoring } from "./relevance-scoring";
 
 // Do not run real API calls inside of VSCode because it keeps running the tests in the background
 if (process.env.NODE_ENV !== "test") {

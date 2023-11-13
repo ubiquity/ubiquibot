@@ -1,8 +1,8 @@
-import { Comment, Issue } from "../../../../types/payload";
-import OpenAI from "openai";
-import { encodingForModel } from "js-tiktoken";
 import Decimal from "decimal.js";
+import { encodingForModel } from "js-tiktoken";
+import OpenAI from "openai";
 import Runtime from "../../../../bindings/bot-runtime";
+import { Comment, Issue } from "../../../../types/payload";
 
 const openai = new OpenAI(); // apiKey: // defaults to process.env["OPENAI_API_KEY"]
 
