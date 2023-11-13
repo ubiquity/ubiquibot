@@ -1,10 +1,10 @@
+import { Value } from "@sinclair/typebox/value";
+import { DefinedError } from "ajv";
 import merge from "lodash/merge";
 import { Context as ProbotContext } from "probot";
 import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
-import { Payload, BotConfig, validateBotConfig, stringDuration } from "../types";
-import { DefinedError } from "ajv";
-import { Value } from "@sinclair/typebox/value";
+import { BotConfig, Payload, stringDuration, validateBotConfig } from "../types";
 
 const UBIQUIBOT_CONFIG_REPOSITORY = "ubiquibot-config";
 const UBIQUIBOT_CONFIG_FULL_PATH = ".github/ubiquibot-config.yml";
@@ -103,7 +103,7 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
   return merged as BotConfig;
 }
 
-// Tranforming the config only works with Typebox and not Ajv
+// Transforming the config only works with Typebox and not Ajv
 // When you use Decode() it not only transforms the values but also validates the whole config and Typebox doesn't return all errors so we can filter for correct ones
 // That's why we have transform every field manually and catch errors
 export function transformConfig(config: BotConfig) {
