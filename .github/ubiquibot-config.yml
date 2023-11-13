@@ -1,4 +1,4 @@
-priceMultiplier: 1.5
+basePriceMultiplier: 1.5
 newContributorGreeting:
   enabled: true
   header: "Thank you for contributing to UbiquiBot! Please be sure to set your wallet address before completing your first task so that the automatic payout upon task completion will work for you."

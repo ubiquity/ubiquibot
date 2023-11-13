@@ -20,9 +20,9 @@ export async function listAvailableCommands(context: Context, body: string) {
 
 export function generateHelpMenu(context: Context) {
   const config = context.config;
-  const startEnabled = config.command.find((command) => command.name === "start");
+  const startEnabled = config.commands.find((command) => command.name === "start");
   let helpMenu = "### Available Commands\n\n| Command | Description | Example |\n| --- | --- | --- |\n";
-  const commands = userCommands(context);
+  const commands = userCommands(config.miscellaneous.registerWalletWithVerification);
 
   commands.map(
     (command) =>

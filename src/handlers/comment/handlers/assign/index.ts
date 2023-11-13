@@ -19,9 +19,13 @@ export async function assign(context: Context, body: string) {
   const config = context.config;
   const payload = context.event.payload as Payload;
   const issue = payload.issue;
+  const {
+    miscellaneous: { maxConcurrentTasks },
+    timers: { taskStaleTimeoutDuration },
+    commands,
+  } = context.config;
 
-  const staleTask = config.assign.staleTaskTime;
-  const startEnabled = config.command.find((command) => command.name === "start");
+  const startEnabled = commands.find((command) => command.name === "start");
 
   logger.info("Received '/start' command", { sender: payload.sender.login, body });
 
@@ -47,12 +51,12 @@ export async function assign(context: Context, body: string) {
   );
 
   const assignedIssues = await getAssignedIssues(context, payload.sender.login);
-  logger.info("Max issue allowed is", config.assign.maxConcurrentTasks);
+  logger.info("Max issue allowed is", maxConcurrentTasks);
 
   // check for max and enforce max
-  if (assignedIssues.length - openedPullRequests.length >= config.assign.maxConcurrentTasks) {
+  if (assignedIssues.length - openedPullRequests.length >= maxConcurrentTasks) {
     throw logger.warn("Too many assigned issues, you have reached your max limit", {
-      maxConcurrentTasks: config.assign.maxConcurrentTasks,
+      maxConcurrentTasks,
     });
   }
 
@@ -95,7 +99,7 @@ export async function assign(context: Context, body: string) {
     await addAssignees(context, issue.number, [payload.sender.login]);
   }
 
-  const isTaskStale = checkTaskStale(staleTask, issue);
+  const isTaskStale = checkTaskStale(taskStaleTimeoutDuration, issue);
 
   // double check whether the assign message has been already posted or not
   logger.info("Creating an issue comment", { comment });

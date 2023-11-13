@@ -1,32 +1,41 @@
-import Ajv, { ErrorObject, Schema } from "ajv";
+import Ajv, { Schema, ValidateFunction } from "ajv";
 import addFormats from "ajv-formats";
 
-export const ajv = addFormats(new Ajv({ allErrors: true }), {
-  formats: [
-    "date",
-    "time",
-    "date-time",
-    "duration",
-    "uri",
-    "uri-reference",
-    "uri-template",
-    "email",
-    "hostname",
-    "ipv4",
-    "ipv6",
-    "regex",
-    "uuid",
-    "json-pointer",
-    "relative-json-pointer",
-    "byte",
-    "int32",
-    "int64",
-    "float",
-    "double",
-    "password",
-    "binary",
-  ],
-});
+export const ajv = addFormats(
+  new Ajv({
+    strict: true,
+    removeAdditional: false,
+    useDefaults: true,
+    allErrors: true,
+    coerceTypes: true,
+  }),
+  {
+    formats: [
+      "date",
+      "time",
+      "date-time",
+      "duration",
+      "uri",
+      "uri-reference",
+      "uri-template",
+      "email",
+      "hostname",
+      "ipv4",
+      "ipv6",
+      "regex",
+      "uuid",
+      "json-pointer",
+      "relative-json-pointer",
+      "byte",
+      "int32",
+      "int64",
+      "float",
+      "double",
+      "password",
+      "binary",
+    ],
+  }
+);
 
 function getAdditionalProperties() {
   return ajv.errors
@@ -34,32 +43,31 @@ function getAdditionalProperties() {
     .map((error) => error.params.additionalProperty);
 }
 
-function formatErrors(
-  errors: ErrorObject<string, Record<string, string>, unknown>[],
-  additionalProperties: string[] | undefined
-) {
-  const errorTexts = errors.map((error) => ajv.errorsText([error]));
-  let additionalPropsText = "";
-
-  if (additionalProperties && additionalProperties.length > 0) {
-    additionalPropsText = `data must NOT have additional properties: ${additionalProperties.join(", ")}`;
+export function validateTypes(schema: Schema | ValidateFunction, data: unknown) {
+  // : { valid: true; error: undefined } | { valid: false; error: string }
+  // try {
+  let valid: boolean;
+  if (schema instanceof Function) {
+    valid = schema(data);
+  } else {
+    valid = ajv.validate(schema, data);
   }
 
-  return [...errorTexts, additionalPropsText].filter(Boolean);
-}
-
-export function validate(
-  scheme: string | Schema,
-  data: unknown
-): { valid: true; error: undefined } | { valid: false; error: string[] } {
-  ajv.validate(scheme, data);
-  const errors = ajv.errors;
-  if (errors) {
+  if (!valid) {
     const additionalProperties = getAdditionalProperties();
     return {
       valid: false,
       error: formatErrors(errors, additionalProperties),
     };
+    // return { valid: false, error: ajv.errorsText() };
+    // throw new Error(ajv.errorsText());
   }
-  return { valid: true, error: undefined };
+
+  // return data;
+
+  // }
+  return { valid: true, error: null };
+  // } catch (error) {
+  // throw console.trace(error);
+  // }
 }

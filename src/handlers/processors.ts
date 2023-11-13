@@ -8,7 +8,6 @@ import { commentCreatedOrEdited } from "./comment/action";
 import { issueClosed } from "./comment/handlers/issue/issue-closed";
 import { watchLabelChange } from "./label";
 import { createDevPoolPR } from "./pull-request";
-import { validateConfigChange } from "./push";
 import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
 import { onLabelChangeSetPricing } from "./pricing/pricing-label";
 import Runtime from "../bindings/bot-runtime";
@@ -79,7 +78,7 @@ export const processors: Record<string, Handler> = {
     post: [],
   },
   [GitHubEvent.PUSH_EVENT]: {
-    pre: [validateConfigChange],
+    pre: [],
     action: [],
     post: [checkModifiedBaseRate],
   },

@@ -5,19 +5,16 @@ import { LogMessage } from "../adapters/supabase/helpers/tables/logs";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
 import { addCommentToIssue, shouldSkip } from "../helpers";
-import {
-  GitHubEvent,
-  MainActionHandler,
-  PayloadSchema,
-  PostActionHandler,
-  PreActionHandler,
-  WildCardHandler,
-} from "../types";
-import { Payload } from "../types/payload";
-import { ajv } from "../utils";
+import { MainActionHandler, PostActionHandler, PreActionHandler, WildCardHandler } from "../types/handlers";
+import { Payload, PayloadSchema, GitHubEvent } from "../types/payload";
+import { ajv } from "../utils/ajv";
 import Runtime from "./bot-runtime";
-import { loadConfig } from "./config";
-import { Context } from "../types";
+import { loadConfiguration } from "./config";
+import { Context } from "../types/context";
+import OpenAI from "openai";
+import { BotConfig } from "../types";
+
+const allowedEvents = Object.values(GitHubEvent) as string[];
 
 const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
 type PreHandlerWithType = { type: string; actions: PreActionHandler[] };
@@ -27,34 +24,17 @@ type PostHandlerWithType = { type: string; actions: PostActionHandler[] };
 type AllHandlersWithTypes = PreHandlerWithType | HandlerWithType | PostHandlerWithType;
 type AllHandlers = PreActionHandler | MainActionHandler | PostActionHandler;
 
+const validatePayload = ajv.compile(PayloadSchema);
+
 export async function bindEvents(eventContext: ProbotContext) {
   const runtime = Runtime.getState();
-
-  const botConfig = await loadConfig(eventContext);
-  const context: Context = {
-    event: eventContext,
-    config: botConfig,
-  };
-
-  runtime.adapters = createAdapters(context);
+  runtime.adapters = createAdapters(eventContext);
   runtime.logger = runtime.adapters.supabase.logs;
 
-  if (!context.config.payout.privateKey) {
-    runtime.logger.warn("No EVM private key found");
-  }
-
   const payload = eventContext.payload as Payload;
-  const allowedEvents = Object.values(GitHubEvent) as string[];
   const eventName = payload?.action ? `${eventContext.name}.${payload?.action}` : eventContext.name; // some events wont have actions as this grows
-  if (eventName === GitHubEvent.PUSH_EVENT) {
-    await validateConfigChange(context);
-  }
 
-  if (!runtime.logger) {
-    throw new Error("Failed to create logger");
-  }
-
-  runtime.logger.info("Binding events", { id: eventContext.id, name: eventName, allowedEvents });
+  runtime.logger.info("Event received", { id: eventContext.id, name: eventName });
 
   if (!allowedEvents.includes(eventName)) {
     // just check if its on the watch list
@@ -64,22 +44,40 @@ export async function bindEvents(eventContext: ProbotContext) {
   // Skip validation for installation event and push
   if (!NO_VALIDATION.includes(eventName)) {
     // Validate payload
-    // console.trace({ payload });
-    const validate = ajv.compile(PayloadSchema);
-    const valid = validate(payload);
-    if (!valid) {
-      // runtime.logger.info("Payload schema validation failed!", payload);
-      if (validate.errors) {
-        return runtime.logger.error("validation errors", validate.errors);
-      }
-      // return;
+    const valid = validatePayload(payload);
+    if (!valid && validatePayload.errors) {
+      return runtime.logger.error("Payload schema validation failed!", validatePayload.errors);
     }
 
     // Check if we should skip the event
-    const should = shouldSkip(context);
+    const should = shouldSkip(eventContext);
     if (should.stop) {
       return runtime.logger.info("Skipping the event.", { reason: should.reason });
     }
+  }
+
+  if (eventName === GitHubEvent.PUSH_EVENT) {
+    await validateConfigChange(eventContext);
+  }
+
+  let botConfig: BotConfig;
+  try {
+    botConfig = await loadConfiguration(eventContext);
+  } catch (error) {
+    return;
+  }
+  const context: Context = {
+    event: eventContext,
+    config: botConfig,
+    openAi: botConfig.keys.openAi ? new OpenAI({ apiKey: botConfig.keys.openAi }) : null,
+  };
+
+  if (!context.config.keys.evmPrivateEncrypted) {
+    runtime.logger.warn("No EVM private key found");
+  }
+
+  if (!runtime.logger) {
+    throw new Error("Failed to create logger");
   }
 
   // Get the handlers for the action

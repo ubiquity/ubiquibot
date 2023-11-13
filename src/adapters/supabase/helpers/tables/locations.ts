@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Super } from "./super";
 import { Database } from "../../types/database";
-import { Context } from "../../../../types";
+import { Context as ProbotContext } from "probot";
 
 // currently trying to save all of the location metadata of the event.
 // seems that focusing on the IssueComments will provide the most value
@@ -17,7 +17,7 @@ export class Locations extends Super {
   node_id: string | undefined;
   node_type: string | undefined;
 
-  constructor(supabase: SupabaseClient, context: Context) {
+  constructor(supabase: SupabaseClient, context: ProbotContext) {
     super(supabase, context);
   }
 
@@ -62,7 +62,7 @@ export class Locations extends Super {
       }
     `;
 
-    this.locationResponse = (await this.context.event.octokit.graphql(graphQlQuery)) as LocationResponse;
+    this.locationResponse = (await this.context.octokit.graphql(graphQlQuery)) as LocationResponse;
     console.trace(this.locationResponse);
 
     this.user_id = this.locationResponse.data.node.author.id;

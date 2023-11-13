@@ -8,7 +8,8 @@ import { Database } from "../../types";
 import { prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
 import { execSync } from "child_process";
-import { Context } from "../../../../types";
+import { LogLevel } from "../../../../types/logs";
+import { Context as ProbotContext } from "probot";
 import Runtime from "../../../../bindings/bot-runtime";
 
 type LogFunction = (message: string, metadata?: any) => void;
@@ -222,13 +223,18 @@ export class Logs extends Super {
     });
   }
 
-  constructor(supabase: SupabaseClient, context: Context) {
+  constructor(
+    supabase: SupabaseClient,
+    context: ProbotContext,
+    environment: string,
+    retryLimit: number,
+    logLevel: LogLevel
+  ) {
     super(supabase, context);
-    const logConfig = this.context.config.log;
 
-    this.environment = logConfig.logEnvironment;
-    this.retryLimit = logConfig.retryLimit;
-    this.maxLevel = this._getNumericLevel(logConfig.level ?? LogLevel.DEBUG);
+    this.environment = environment;
+    this.retryLimit = retryLimit;
+    this.maxLevel = this._getNumericLevel(logLevel);
   }
 
   private async _sendLogsToSupabase(log: LogInsert) {
@@ -363,11 +369,11 @@ export class Logs extends Super {
   }
 
   private _postComment(message: string) {
-    this.context.event.octokit.issues
+    this.context.octokit.issues
       .createComment({
-        owner: this.context.event.issue().owner,
-        repo: this.context.event.issue().repo,
-        issue_number: this.context.event.issue().issue_number,
+        owner: this.context.issue().owner,
+        repo: this.context.issue().repo,
+        issue_number: this.context.issue().issue_number,
         body: message,
       })
       // .then((x) => console.trace(x))
@@ -410,14 +416,4 @@ export class Logs extends Super {
     }
     return obj;
   }
-}
-
-export enum LogLevel {
-  ERROR = "error",
-  WARN = "warn",
-  INFO = "info",
-  HTTP = "http",
-  VERBOSE = "verbose",
-  DEBUG = "debug",
-  SILLY = "silly",
 }

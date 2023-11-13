@@ -1,8 +1,9 @@
+import { Context as ProbotContext } from "probot";
 import Runtime from "../../bindings/bot-runtime";
 import { createCommitComment, getFileContent } from "../../helpers";
-import { CommitsPayload, PushPayload, ConfigSchema, Context } from "../../types";
-import { parseYamlConfig } from "../../utils/get-config";
-import { validate } from "../../utils/ajv";
+import { BotConfig, CommitsPayload, PushPayload, validateBotConfig } from "../../types";
+import { parseYaml, transformConfig } from "../../utils/generate-configuration";
+import { DefinedError } from "ajv";
 
 export const ZERO_SHA = "0000000000000000000000000000000000000000";
 export const BASE_RATE_FILE = ".github/ubiquibot-config.yml";
@@ -21,11 +22,11 @@ export function getCommitChanges(commits: CommitsPayload[]) {
   return changes;
 }
 
-export async function validateConfigChange(context: Context) {
+export async function validateConfigChange(context: ProbotContext) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
-  const payload = context.event.payload as PushPayload;
+  const payload = context.payload as PushPayload;
 
   if (!payload.ref.startsWith("refs/heads/")) {
     logger.debug("Skipping push events, not a branch");
@@ -61,18 +62,54 @@ export async function validateConfigChange(context: Context) {
 
     if (configFileContent) {
       const decodedConfig = Buffer.from(configFileContent, "base64").toString();
-      const config = parseYamlConfig(decodedConfig);
-      const { valid, error } = validate(ConfigSchema, config);
+      const config = parseYaml(decodedConfig);
+      const valid = validateBotConfig(config);
+      let errorMsg: string | undefined;
+
       if (!valid) {
-        await createCommitComment(
-          context,
-          `@${payload.sender.login} Config validation failed! ${error}`,
-          commitSha,
-          BASE_RATE_FILE
-        );
-        logger.info("Config validation failed!", error);
+        const errMsg = generateValidationError(validateBotConfig.errors as DefinedError[]);
+        errorMsg = `@${payload.sender.login} ${errMsg}`;
+      }
+
+      try {
+        transformConfig(config as BotConfig);
+      } catch (err) {
+        if (errorMsg) {
+          errorMsg += `\nConfig tranformation failed:\n${err}`;
+        } else {
+          errorMsg = `@${payload.sender.login} Config tranformation failed:\n${err}`;
+        }
+      }
+
+      if (errorMsg) {
+        logger.info("Config validation failed!", errorMsg);
+        await createCommitComment(context, errorMsg, commitSha, BASE_RATE_FILE);
+      } else {
+        logger.debug(`Config validation passed!`);
       }
     }
+  } else {
+    logger.debug(`Skipping push events, file change doesnt include config file: ${JSON.stringify(changes)}`);
   }
-  logger.debug("Skipping push events, file change empty 4");
+}
+
+function generateValidationError(errors: DefinedError[]) {
+  const errorsWithoutStrict = errors.filter((error) => error.keyword !== "additionalProperties");
+  const errorsOnlyStrict = errors.filter((error) => error.keyword === "additionalProperties");
+  const isValid = errorsWithoutStrict.length === 0;
+  const errorMsg = isValid
+    ? ""
+    : errorsWithoutStrict.map((error) => error.instancePath.replaceAll("/", ".") + " " + error.message).join("\n");
+  const warningMsg =
+    errorsOnlyStrict.length > 0
+      ? "Warning! Unneccesary properties: \n" +
+        errorsOnlyStrict
+          .map(
+            (error) =>
+              error.keyword === "additionalProperties" &&
+              error.instancePath.replaceAll("/", ".") + "." + error.params.additionalProperty
+          )
+          .join("\n")
+      : "";
+  return `${isValid ? "Valid" : "Invalid"} configuration. \n${errorMsg}\n${warningMsg}`;
 }

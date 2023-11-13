@@ -4,6 +4,8 @@ import { BigNumber, ethers } from "ethers";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 import Runtime from "../../../../bindings/bot-runtime";
 import { Context } from "../../../../types";
+import { getPayoutConfigByNetworkId } from "../../../../helpers";
+import { decryptKeys } from "../../../../utils/private";
 
 export async function generatePermit2Signature(
   context: Context,
@@ -11,8 +13,12 @@ export async function generatePermit2Signature(
 ) {
   const runtime = Runtime.getState();
   const {
-    payout: { privateKey, paymentToken, rpc, evmNetworkId },
+    payments: { evmNetworkId },
+    keys: { evmPrivateEncrypted },
   } = context.config;
+  if (!evmPrivateEncrypted) throw runtime.logger.warn("No bot wallet private key defined");
+  const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
+  const { privateKey } = await decryptKeys(evmPrivateEncrypted);
 
   if (!rpc) throw runtime.logger.error("RPC is not defined");
   if (!privateKey) throw runtime.logger.error("Private key is not defined");

@@ -1,9 +1,15 @@
+import OpenAI from "openai";
+import { Context } from "../../../../types";
 import { Comment, Issue, User, UserType } from "../../../../types/payload";
 import { countTokensOfConversation, estimateOptimalModel, gptRelevance, relevanceScoring } from "./relevance-scoring";
 
+const context = {
+  openAi: new OpenAI(),
+} as unknown as Context;
+
 // Do not run real API calls inside of VSCode because it keeps running the tests in the background
 if (process.env.NODE_ENV !== "test") {
-  describe("*** Real OpenAI API Call *** calculateQualScore", () => {
+  describe("*** Real OpenAI API Call *** relevanceScoring", () => {
     it("should calculate quality score", async () => {
       const issue = { body: "my topic is about apples" } as Issue;
       const comments: Comment[] = [
@@ -11,7 +17,7 @@ if (process.env.NODE_ENV !== "test") {
         { body: "it is juicy", user: { type: UserType.User } as User } as Comment,
         { body: "bananas are great", user: { type: UserType.User } as User } as Comment,
       ];
-      const result = await relevanceScoring(issue, comments);
+      const result = await relevanceScoring(context, issue, comments);
       expect(result).toBeDefined();
       expect(result.score).toBeDefined();
       expect(Array.isArray(result.score)).toBe(true);
@@ -22,7 +28,7 @@ if (process.env.NODE_ENV !== "test") {
 
   describe("*** Real OpenAI API Call *** gptRelevance", () => {
     it("should calculate gpt relevance", async () => {
-      const result = await gptRelevance("gpt-3.5-turbo", "my topic is about apples", [
+      const result = await gptRelevance(context, "gpt-3.5-turbo", "my topic is about apples", [
         "the apple is red",
         "it is juicy",
         "bananas are great",
@@ -76,12 +82,12 @@ jest.mock("openai", () => {
   });
 });
 
-describe("calculateQualScore", () => {
+describe("relevanceScoring", () => {
   it("should calculate quality score", async () => {
     const issue = { body: "issue body" } as Issue;
     const comment = { body: "comment body", user: { type: "User" } } as Comment;
     const comments = [comment, comment, comment] as Comment[];
-    const result = await relevanceScoring(issue, comments);
+    const result = await relevanceScoring(context, issue, comments);
     expect(result).toBeDefined();
     expect(result.score).toBeDefined();
     expect(Array.isArray(result.score)).toBe(true);
@@ -101,7 +107,7 @@ describe("calculateQualScore", () => {
 
 describe("gptRelevance", () => {
   it("should calculate gpt relevance", async () => {
-    const result = await gptRelevance("gpt-3.5-turbo", "issue body", ["comment body"]);
+    const result = await gptRelevance(context, "gpt-3.5-turbo", "issue body", ["comment body"]);
     expect(result).toEqual([1, 1, 0]);
   });
 });
