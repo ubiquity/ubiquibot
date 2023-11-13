@@ -42,7 +42,7 @@ export async function registerWallet(context: Context, body: string) {
     return logger.info("Skipping to register a wallet address because both address/ens doesn't exist");
   }
 
-  if (config.wallet.registerWalletWithVerification) {
+  if (config.miscellaneous.registerWalletWithVerification) {
     _registerWalletWithVerification(body, address, logger);
   }
 

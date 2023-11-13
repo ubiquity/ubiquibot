@@ -2,13 +2,13 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Repository } from "../../../../types/payload";
 import { Database } from "../../types";
 import { Super } from "./super";
-import { Context } from "../../../../types";
+import { Context as ProbotContext } from "probot";
 import Runtime from "../../../../bindings/bot-runtime";
 
 type LabelRow = Database["public"]["Tables"]["labels"]["Row"];
 
 export class Label extends Super {
-  constructor(supabase: SupabaseClient, context: Context) {
+  constructor(supabase: SupabaseClient, context: ProbotContext) {
     super(supabase, context);
   }
 

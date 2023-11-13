@@ -9,7 +9,9 @@ export async function verifyFirstCommentInRepository(context: Context) {
     throw runtime.logger.error("Issue is null. Skipping", { issue: payload.issue }, true);
   }
   const {
-    newContributorGreeting: { header, footer, enabled },
+    features: {
+      newContributorGreeting: { header, footer, enabled },
+    },
   } = context.config;
   const response_issue = await context.event.octokit.rest.search.issuesAndPullRequests({
     q: `is:issue repo:${payload.repository.owner.login}/${payload.repository.name} commenter:${payload.sender.login}`,

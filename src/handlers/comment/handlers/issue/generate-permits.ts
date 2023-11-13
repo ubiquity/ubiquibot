@@ -2,6 +2,7 @@ import Decimal from "decimal.js";
 import { stringify } from "yaml";
 
 import Runtime from "../../../../bindings/bot-runtime";
+import { getPayoutConfigByNetworkId } from "../../../../helpers";
 import { getTokenSymbol } from "../../../../helpers/contracts";
 import { Context } from "../../../../types";
 import structuredMetadata from "../../../shared/structured-metadata";
@@ -21,10 +22,13 @@ export async function generatePermits(context: Context, totals: TotalsById) {
 async function generateComment(context: Context, totals: TotalsById) {
   const runtime = Runtime.getState();
   const {
-    payout: { paymentToken, rpc, privateKey },
+    keys: { evmPrivateEncrypted },
   } = context.config;
+  const { rpc, paymentToken } = getPayoutConfigByNetworkId(context.config.payments.evmNetworkId);
+
   const contributionsOverviewTable = generateContributionsOverview(totals);
   const conversationIncentivesTable = generateDetailsTable(totals);
+
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const HTMLs = [] as string[];
 
@@ -38,7 +42,7 @@ async function generateComment(context: Context, totals: TotalsById) {
     const contributorName = userTotals.user.login;
     // const contributionClassName = userTotals.details[0].contribution as ContributorClassNames;
 
-    if (!privateKey) throw runtime.logger.warn("No bot wallet private key defined");
+    if (!evmPrivateEncrypted) throw runtime.logger.warn("No bot wallet private key defined");
 
     const beneficiaryAddress = await runtime.adapters.supabase.wallet.getAddress(parseInt(userId));
 

@@ -136,21 +136,22 @@ export async function askGPT(context: Context, chatHistory: CreateChatCompletion
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   const config = context.config;
+  const { keys } = config;
 
-  if (!config.ask.apiKey) {
+  if (!keys.openAi) {
     throw logger.error(
       "You must configure the `openai-api-key` property in the bot configuration in order to use AI powered features."
     );
   }
 
   const openAI = new OpenAI({
-    apiKey: config.ask.apiKey,
+    apiKey: keys.openAi,
   });
 
   const res: OpenAI.Chat.Completions.ChatCompletion = await openAI.chat.completions.create({
     messages: chatHistory,
     model: "gpt-3.5-turbo-16k",
-    max_tokens: config.ask.tokenLimit,
+    max_tokens: config.openai.tokenLimit,
     temperature: 0,
   });
 

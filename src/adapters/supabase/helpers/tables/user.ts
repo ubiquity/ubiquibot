@@ -1,16 +1,16 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "../../types/database";
 import { Super } from "./super";
-import { Context } from "../../../../types";
+import { Context as ProbotContext } from "probot";
 
 export type UserRow = Database["public"]["Tables"]["users"]["Row"];
 export class User extends Super {
-  constructor(supabase: SupabaseClient, context: Context) {
+  constructor(supabase: SupabaseClient, context: ProbotContext) {
     super(supabase, context);
   }
 
   public async getUserId(username: string): Promise<number> {
-    const octokit = this.context.event.octokit;
+    const octokit = this.context.octokit;
     const { data } = await octokit.rest.users.getByUsername({ username });
     return data.id;
   }

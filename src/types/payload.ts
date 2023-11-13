@@ -33,7 +33,7 @@ export enum GitHubEvent {
 export enum UserType {
   User = "User",
   Bot = "Bot",
-  // Organization = "Organization",
+  Organization = "Organization",
 }
 
 export enum IssueType {

@@ -9,7 +9,7 @@ export function getTimeLabelsAssigned(payload: Payload, config: BotConfig) {
     logger.warn("Skipping '/start' since no labels are set to calculate the timeline", { labels });
     return;
   }
-  const timeLabelsDefined = config.price.timeLabels;
+  const timeLabelsDefined = config.labels.time;
   const timeLabelsAssigned: Label[] = [];
   for (const _label of labels) {
     const _labelType = typeof _label;

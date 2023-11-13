@@ -2,14 +2,13 @@ import Decimal from "decimal.js";
 import { encodingForModel } from "js-tiktoken";
 import OpenAI from "openai";
 import Runtime from "../../../../bindings/bot-runtime";
+import { Context } from "../../../../types";
 import { Comment, Issue } from "../../../../types/payload";
 
-const openai = new OpenAI(); // apiKey: // defaults to process.env["OPENAI_API_KEY"]
-
-export async function relevanceScoring(issue: Issue, contributorComments: Comment[]) {
+export async function relevanceScoring(context: Context, issue: Issue, contributorComments: Comment[]) {
   const tokens = countTokensOfConversation(issue, contributorComments);
   const estimatedOptimalModel = estimateOptimalModel(tokens);
-  const score = await sampleRelevanceScores(contributorComments, estimatedOptimalModel, issue);
+  const score = await sampleRelevanceScores(context, contributorComments, estimatedOptimalModel, issue);
   return { score, tokens, model: estimatedOptimalModel };
 }
 
@@ -51,15 +50,18 @@ export function countTokensOfConversation(issue: Issue, comments: Comment[]) {
 }
 
 export async function gptRelevance(
+  context: Context,
   model: string,
   ISSUE_SPECIFICATION_BODY: string,
   CONVERSATION_STRINGS: string[],
   ARRAY_LENGTH = CONVERSATION_STRINGS.length
 ) {
+  const openAi = context.openAi;
+  if (!openAi) throw new Error("OpenAI adapter is not defined");
   const PROMPT = `I need to evaluate the relevance of GitHub contributors' comments to a specific issue specification. Specifically, I'm interested in how much each comment helps to further define the issue specification or contributes new information or research relevant to the issue. Please provide a float between 0 and 1 to represent the degree of relevance. A score of 1 indicates that the comment is entirely relevant and adds significant value to the issue, whereas a score of 0 indicates no relevance or added value. Each contributor's comment is on a new line.\n\nIssue Specification:\n\`\`\`\n${ISSUE_SPECIFICATION_BODY}\n\`\`\`\n\nConversation:\n\`\`\`\n${CONVERSATION_STRINGS.join(
     "\n"
   )}\n\`\`\`\n\n\nTo what degree are each of the comments in the conversation relevant and valuable to further defining the issue specification? Please reply with an array of float numbers between 0 and 1, corresponding to each comment in the order they appear. Each float should represent the degree of relevance and added value of the comment to the issue. The total length of the array in your response should equal exactly ${ARRAY_LENGTH} elements.`;
-  const response: OpenAI.Chat.ChatCompletion = await openai.chat.completions.create({
+  const response: OpenAI.Chat.ChatCompletion = await openAi.chat.completions.create({
     model: model,
     messages: [
       {
@@ -83,6 +85,7 @@ export async function gptRelevance(
 }
 
 async function sampleRelevanceScores(
+  context: Context,
   contributorComments: Comment[],
   estimatedOptimalModel: ReturnType<typeof estimateOptimalModel>,
   issue: Issue
@@ -93,7 +96,7 @@ async function sampleRelevanceScores(
   const batchSamples = [] as Decimal[][];
 
   for (let attempt = 0; attempt < BATCHES; attempt++) {
-    const fetchedSamples = await fetchSamples({
+    const fetchedSamples = await fetchSamples(context, {
       contributorComments,
       estimatedOptimalModel,
       issue,
@@ -108,16 +111,14 @@ async function sampleRelevanceScores(
   return average;
 }
 
-async function fetchSamples({
-  contributorComments,
-  estimatedOptimalModel,
-  issue,
-  maxConcurrency,
-}: InEachRequestParams) {
+async function fetchSamples(
+  context: Context,
+  { contributorComments, estimatedOptimalModel, issue, maxConcurrency }: InEachRequestParams
+) {
   const commentsSerialized = contributorComments.map((comment) => comment.body);
   const batchPromises = [];
   for (let i = 0; i < maxConcurrency; i++) {
-    const requestPromise = gptRelevance(estimatedOptimalModel, issue.body, commentsSerialized);
+    const requestPromise = gptRelevance(context, estimatedOptimalModel, issue.body, commentsSerialized);
     batchPromises.push(requestPromise);
   }
   const batchResults = await Promise.all(batchPromises);
