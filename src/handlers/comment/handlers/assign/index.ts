@@ -70,26 +70,18 @@ export async function assign(context: Context, body: string) {
   }
 
   // ==== preamble checks completed ==== //
+
   const labels = issue.labels;
   const priceLabel = labels.find((label) => label.name.startsWith("Price: "));
 
   let duration = null;
-  if (priceLabel) {
-    // skip checks
+  if (!priceLabel) {
+    throw logger.warn("Skipping '/start' since no price label is set to calculate the timeline", priceLabel);
   } else {
-    // check if time label and priority labels are set
-    const timeLabelsAssigned = getTimeLabelsAssigned(payload, config) || [];
-
-    if (!timeLabelsAssigned) {
-      throw logger.warn("Skipping '/start' since no time labels are set to calculate the timeline", timeLabelsAssigned);
+    const timeLabelsAssigned = getTimeLabelsAssigned(payload, config);
+    if (timeLabelsAssigned) {
+      duration = calculateDurations(timeLabelsAssigned).shift();
     }
-    const durations = calculateDurations(timeLabelsAssigned);
-    if (durations.length == 0) {
-      throw logger.warn("Skipping '/start' since no durations found to calculate the timeline", durations);
-    } else if (durations.length > 1) {
-      logger.warn("Using the shortest duration time label");
-    }
-    duration = durations[0];
   }
 
   const comment = await generateAssignmentComment(payload, duration);
@@ -103,11 +95,6 @@ export async function assign(context: Context, body: string) {
 
   // double check whether the assign message has been already posted or not
   logger.info("Creating an issue comment", { comment });
-  // const issueComments = await getAllIssueComments(issue.number);
-  // const comments = issueComments.sort(
-  //   (a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  // );
-  // const latestComment = comments.length > 0 ? comments[0].body : undefined;
 
   const {
     multiplierAmount: multiplierAmount,
@@ -125,6 +112,4 @@ export async function assign(context: Context, body: string) {
       registeredWallet: comment.registeredWallet,
     }) + comment.tips
   );
-
-  // throw logger.warn("The assign message has been already posted");
 }
