@@ -13,7 +13,7 @@ const UBIQUIBOT_CONFIG_FULL_PATH = ".github/ubiquibot-config.yml";
 export async function generateConfiguration(context: ProbotContext): Promise<BotConfig> {
   const payload = context.payload as Payload;
 
-  const organizationConfiguration = parseYaml(
+  const orgConfig = parseYaml(
     await download({
       context,
       repository: UBIQUIBOT_CONFIG_REPOSITORY,
@@ -21,53 +21,13 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
     })
   );
 
-  const repositoryConfiguration = parseYaml(
+  const repoConfig = parseYaml(
     await download({
       context,
       repository: payload.repository.name,
       owner: payload.repository.owner.login,
     })
   );
-
-  let orgConfig: BotConfig | undefined;
-  if (organizationConfiguration) {
-    const valid = validateBotConfig(organizationConfiguration);
-    if (!valid) {
-      let errMsg = getErrorMsg(validateBotConfig.errors as DefinedError[]);
-      if (errMsg) {
-        errMsg = `Invalid org configuration! \n${errMsg}`;
-        if (payload.issue?.number)
-          await context.octokit.issues.createComment({
-            owner: payload.repository.owner.login,
-            repo: payload.repository.name,
-            issue_number: payload.issue?.number,
-            body: errMsg,
-          });
-        throw new Error(errMsg);
-      }
-    }
-    orgConfig = organizationConfiguration as BotConfig;
-  }
-
-  let repoConfig: BotConfig | undefined;
-  if (repositoryConfiguration) {
-    const valid = validateBotConfig(repositoryConfiguration);
-    if (!valid) {
-      let errMsg = getErrorMsg(validateBotConfig.errors as DefinedError[]);
-      if (errMsg) {
-        errMsg = `Invalid repo configuration! \n${errMsg}`;
-        if (payload.issue?.number)
-          await context.octokit.issues.createComment({
-            owner: payload.repository.owner.login,
-            repo: payload.repository.name,
-            issue_number: payload.issue?.number,
-            body: errMsg,
-          });
-        throw new Error(errMsg);
-      }
-    }
-    repoConfig = repositoryConfiguration as BotConfig;
-  }
 
   const merged = merge(ubiquibotConfigDefault, orgConfig, repoConfig);
   const valid = validateBotConfig(merged);
