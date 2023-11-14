@@ -12,8 +12,6 @@ import { UserScoreTotals } from "./issue-shared-types";
 type TotalsById = { [userId: string]: UserScoreTotals };
 
 export async function generatePermits(context: Context, totals: TotalsById) {
-  // const userIdToNameMap = mapIdsToNames(totals);
-
   const { html: comment, permits } = await generateComment(context, totals);
   const metadata = structuredMetadata.create("Permits", { permits, totals });
   return comment.concat("\n", metadata);

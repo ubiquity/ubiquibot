@@ -1,8 +1,8 @@
-import Runtime from "../bindings/bot-runtime";
-import { Context, Payload, StreamlinedComment, UserType } from "../types";
-import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../helpers";
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
+import Runtime from "../bindings/bot-runtime";
+import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../helpers";
+import { Context, Payload, StreamlinedComment, UserType } from "../types";
 
 export const sysMsg = `You are the UbiquiBot, designed to provide accurate technical answers. \n
 Whenever appropriate, format your response using GitHub Flavored Markdown. Utilize tables, lists, and code blocks for clear and organized answers. \n
@@ -151,7 +151,7 @@ export async function askGPT(context: Context, chatHistory: CreateChatCompletion
   const res: OpenAI.Chat.Completions.ChatCompletion = await openAI.chat.completions.create({
     messages: chatHistory,
     model: "gpt-3.5-turbo-16k",
-    max_tokens: config.openai.tokenLimit,
+    max_tokens: config.miscellaneous.openAiTokenLimit,
     temperature: 0,
   });
 

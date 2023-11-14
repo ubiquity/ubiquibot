@@ -88,9 +88,7 @@ export const BotConfigSchema = StrictObject(
         fundExternalClosedIssue: T.Boolean({ default: true }),
       }),
     }),
-    openai: StrictObject({
-      tokenLimit: T.Number({ default: 100000 }),
-    }),
+
     timers: StrictObject({
       reviewDelayTolerance: stringDuration({ default: "1 day" }),
       taskStaleTimeoutDuration: stringDuration({ default: "4 weeks" }),
@@ -130,6 +128,7 @@ export const BotConfigSchema = StrictObject(
       maxConcurrentTasks: T.Number({ default: Number.MAX_SAFE_INTEGER }),
       promotionComment: T.String({ default: promotionComment }),
       registerWalletWithVerification: T.Boolean({ default: false }),
+      openAiTokenLimit: T.Number({ default: 100000 }),
     }),
   },
   { default: undefined } // top level object can't have default!
