@@ -75,9 +75,9 @@ export async function validateConfigChange(context: ProbotContext) {
         transformConfig(config as BotConfig);
       } catch (err) {
         if (errorMsg) {
-          errorMsg += `\nConfig tranformation failed:\n${err}`;
+          errorMsg += `\nConfig transformation failed:\n${err}`;
         } else {
-          errorMsg = `@${payload.sender.login} Config tranformation failed:\n${err}`;
+          errorMsg = `@${payload.sender.login} Config transformation failed:\n${err}`;
         }
       }
 
@@ -89,7 +89,7 @@ export async function validateConfigChange(context: ProbotContext) {
       }
     }
   } else {
-    logger.debug(`Skipping push events, file change doesnt include config file: ${JSON.stringify(changes)}`);
+    logger.debug(`Skipping push events, file change doesn't include config file: ${JSON.stringify(changes)}`);
   }
 }
 
@@ -102,7 +102,7 @@ function generateValidationError(errors: DefinedError[]) {
     : errorsWithoutStrict.map((error) => error.instancePath.replaceAll("/", ".") + " " + error.message).join("\n");
   const warningMsg =
     errorsOnlyStrict.length > 0
-      ? "Warning! Unneccesary properties: \n" +
+      ? "Warning! Unnecessary properties: \n" +
         errorsOnlyStrict
           .map(
             (error) =>

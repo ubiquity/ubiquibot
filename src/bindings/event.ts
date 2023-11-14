@@ -1,3 +1,4 @@
+import OpenAI from "openai";
 import { Context as ProbotContext } from "probot";
 import { createAdapters } from "../adapters";
 import { LogReturn } from "../adapters/supabase";
@@ -5,14 +6,13 @@ import { LogMessage } from "../adapters/supabase/helpers/tables/logs";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
 import { addCommentToIssue, shouldSkip } from "../helpers";
-import { MainActionHandler, PostActionHandler, PreActionHandler, WildCardHandler } from "../types/handlers";
-import { Payload, PayloadSchema, GitHubEvent } from "../types/payload";
-import { ajv } from "../utils/ajv";
-import Runtime from "./bot-runtime";
-import { loadConfiguration } from "./config";
-import { Context } from "../types/context";
-import OpenAI from "openai";
 import { BotConfig } from "../types";
+import { Context } from "../types/context";
+import { MainActionHandler, PostActionHandler, PreActionHandler, WildCardHandler } from "../types/handlers";
+import { GitHubEvent, Payload, PayloadSchema } from "../types/payload";
+import { ajv } from "../utils/ajv";
+import { generateConfiguration } from "../utils/generate-configuration";
+import Runtime from "./bot-runtime";
 
 const allowedEvents = Object.values(GitHubEvent) as string[];
 
@@ -62,7 +62,7 @@ export async function bindEvents(eventContext: ProbotContext) {
 
   let botConfig: BotConfig;
   try {
-    botConfig = await loadConfiguration(eventContext);
+    botConfig = await generateConfiguration(eventContext);
   } catch (error) {
     return;
   }

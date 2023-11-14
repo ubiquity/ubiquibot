@@ -5,6 +5,7 @@ import { Context as ProbotContext } from "probot";
 import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
 import { BotConfig, Payload, stringDuration, validateBotConfig } from "../types";
+import ubiquibotConfigDefault from "../ubiquibot-config-default";
 
 const UBIQUIBOT_CONFIG_REPOSITORY = "ubiquibot-config";
 const UBIQUIBOT_CONFIG_FULL_PATH = ".github/ubiquibot-config.yml";
@@ -68,7 +69,7 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
     repoConfig = repositoryConfiguration as BotConfig;
   }
 
-  const merged = merge({}, orgConfig, repoConfig);
+  const merged = merge(ubiquibotConfigDefault, orgConfig, repoConfig);
   const valid = validateBotConfig(merged);
   if (!valid) {
     let errMsg = getErrorMsg(validateBotConfig.errors as DefinedError[]);
