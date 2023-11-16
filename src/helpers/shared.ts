@@ -19,16 +19,16 @@ export function shouldSkip(context: ProbotContext) {
   return response;
 }
 
-export function calculateLabelValue(label: { name: string }): number {
-  const matches = label.name.match(/\d+/);
+export function calculateLabelValue(label: string): number {
+  const matches = label.match(/\d+/);
   const number = matches && matches.length > 0 ? parseInt(matches[0]) || 0 : 0;
-  if (label.name.toLowerCase().includes("priority")) return number;
-  // throw new Error(`Label ${label.name} is not a priority label`);
-  if (label.name.toLowerCase().includes("minute")) return number * 0.002;
-  if (label.name.toLowerCase().includes("hour")) return number * 0.125;
-  if (label.name.toLowerCase().includes("day")) return 1 + (number - 1) * 0.25;
-  if (label.name.toLowerCase().includes("week")) return number + 1;
-  if (label.name.toLowerCase().includes("month")) return 5 + (number - 1) * 8;
+  if (label.toLowerCase().includes("priority")) return number;
+  // throw new Error(`Label ${label} is not a priority label`);
+  if (label.toLowerCase().includes("minute")) return number * 0.002;
+  if (label.toLowerCase().includes("hour")) return number * 0.125;
+  if (label.toLowerCase().includes("day")) return 1 + (number - 1) * 0.25;
+  if (label.toLowerCase().includes("week")) return number + 1;
+  if (label.toLowerCase().includes("month")) return 5 + (number - 1) * 8;
   return 0;
 }
 

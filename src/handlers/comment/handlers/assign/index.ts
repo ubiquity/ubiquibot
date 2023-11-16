@@ -22,10 +22,10 @@ export async function assign(context: Context, body: string) {
   const {
     miscellaneous: { maxConcurrentTasks },
     timers: { taskStaleTimeoutDuration },
-    commands,
+    disabledCommands,
   } = context.config;
 
-  const startEnabled = commands.find((command) => command.name === "start");
+  const startDisabled = disabledCommands.some((command) => command === "start");
 
   logger.info("Received '/start' command", { sender: payload.sender.login, body });
 
@@ -33,7 +33,7 @@ export async function assign(context: Context, body: string) {
     throw logger.warn(`Skipping '/start' because of no issue instance`);
   }
 
-  if (!startEnabled?.enabled) {
+  if (startDisabled) {
     throw logger.warn("The `/assign` command is disabled for this repository.");
   }
 
@@ -74,13 +74,13 @@ export async function assign(context: Context, body: string) {
   const labels = issue.labels;
   const priceLabel = labels.find((label) => label.name.startsWith("Price: "));
 
-  let duration = null;
+  let duration: number | null = null;
   if (!priceLabel) {
     throw logger.warn("Skipping '/start' since no price label is set to calculate the timeline", priceLabel);
   } else {
     const timeLabelsAssigned = getTimeLabelsAssigned(payload, config);
     if (timeLabelsAssigned) {
-      duration = calculateDurations(timeLabelsAssigned).shift();
+      duration = calculateDurations(timeLabelsAssigned).shift() || null;
     }
   }
 

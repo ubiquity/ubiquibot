@@ -1,11 +1,10 @@
 import { Value } from "@sinclair/typebox/value";
 import { DefinedError } from "ajv";
-import merge from "lodash/merge";
+import mergeWith from "lodash/merge";
 import { Context as ProbotContext } from "probot";
 import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
 import { BotConfig, Payload, stringDuration, validateBotConfig } from "../types";
-import ubiquibotConfigDefault from "../ubiquibot-config-default";
 
 const UBIQUIBOT_CONFIG_REPOSITORY = "ubiquibot-config";
 const UBIQUIBOT_CONFIG_FULL_PATH = ".github/ubiquibot-config.yml";
@@ -13,7 +12,7 @@ const UBIQUIBOT_CONFIG_FULL_PATH = ".github/ubiquibot-config.yml";
 export async function generateConfiguration(context: ProbotContext): Promise<BotConfig> {
   const payload = context.payload as Payload;
 
-  const organizationConfiguration = parseYaml(
+  const orgConfig = parseYaml(
     await download({
       context,
       repository: UBIQUIBOT_CONFIG_REPOSITORY,
@@ -21,7 +20,7 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
     })
   );
 
-  const repositoryConfiguration = parseYaml(
+  const repoConfig = parseYaml(
     await download({
       context,
       repository: payload.repository.name,
@@ -29,47 +28,17 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
     })
   );
 
-  let orgConfig: BotConfig | undefined;
-  if (organizationConfiguration) {
-    const valid = validateBotConfig(organizationConfiguration);
-    if (!valid) {
-      let errMsg = getErrorMsg(validateBotConfig.errors as DefinedError[]);
-      if (errMsg) {
-        errMsg = `Invalid org configuration! \n${errMsg}`;
-        if (payload.issue?.number)
-          await context.octokit.issues.createComment({
-            owner: payload.repository.owner.login,
-            repo: payload.repository.name,
-            issue_number: payload.issue?.number,
-            body: errMsg,
-          });
-        throw new Error(errMsg);
+  const merged = mergeWith({}, orgConfig, repoConfig, (objValue: unknown, srcValue: unknown) => {
+    if (Array.isArray(objValue) && Array.isArray(srcValue)) {
+      // if it's string array, concat and remove duplicates
+      if (objValue.every((value) => typeof value === "string")) {
+        return [...new Set(objValue.concat(srcValue))];
       }
+      // otherwise just concat
+      return objValue.concat(srcValue);
     }
-    orgConfig = organizationConfiguration as BotConfig;
-  }
+  });
 
-  let repoConfig: BotConfig | undefined;
-  if (repositoryConfiguration) {
-    const valid = validateBotConfig(repositoryConfiguration);
-    if (!valid) {
-      let errMsg = getErrorMsg(validateBotConfig.errors as DefinedError[]);
-      if (errMsg) {
-        errMsg = `Invalid repo configuration! \n${errMsg}`;
-        if (payload.issue?.number)
-          await context.octokit.issues.createComment({
-            owner: payload.repository.owner.login,
-            repo: payload.repository.name,
-            issue_number: payload.issue?.number,
-            body: errMsg,
-          });
-        throw new Error(errMsg);
-      }
-    }
-    repoConfig = repositoryConfiguration as BotConfig;
-  }
-
-  const merged = merge(ubiquibotConfigDefault, orgConfig, repoConfig);
   const valid = validateBotConfig(merged);
   if (!valid) {
     let errMsg = getErrorMsg(validateBotConfig.errors as DefinedError[]);

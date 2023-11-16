@@ -13,7 +13,6 @@ export async function syncPriceLabelsToConfig(context: Context) {
 
   const {
     features: { assistivePricing },
-    labels,
   } = config;
 
   if (!assistivePricing) {
@@ -21,8 +20,6 @@ export async function syncPriceLabelsToConfig(context: Context) {
     return;
   }
 
-  const timeLabels = labels.time.map((i) => i.name);
-  const priorityLabels = labels.priority.map((i) => i.name);
   const aiLabels: string[] = [];
   for (const timeLabel of config.labels.time) {
     for (const priorityLabel of config.labels.priority) {
@@ -37,7 +34,7 @@ export async function syncPriceLabelsToConfig(context: Context) {
     }
   }
 
-  const pricingLabels: string[] = [...timeLabels, ...priorityLabels];
+  const pricingLabels: string[] = [...config.labels.time, ...config.labels.priority];
 
   // List all the labels for a repository
   const allLabels = await listLabelsForRepo(context);

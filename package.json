@@ -63,8 +63,7 @@
     "prettier": "^2.7.1",
     "probot": "^12.2.4",
     "tsx": "^3.12.7",
-    "yaml": "^2.2.2",
-    "zod": "^3.22.4"
+    "yaml": "^2.2.2"
   },
   "devDependencies": {
     "@types/dotenv": "^8.2.0",

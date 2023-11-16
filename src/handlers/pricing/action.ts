@@ -12,7 +12,7 @@ export async function handleParentIssue(context: Context, labels: Label[]) {
 }
 
 export function sortLabelsByValue(labels: Label[]) {
-  return labels.sort((a, b) => calculateLabelValue(a) - calculateLabelValue(b));
+  return labels.sort((a, b) => calculateLabelValue(a.name) - calculateLabelValue(b.name));
 }
 
 export function isParentIssue(body: string) {
