@@ -35,7 +35,7 @@ export const parseComments = (comments: string[], itemsToExclude: string[]): Rec
     traverse(result, fragment as Node, itemsToExclude);
   }
 
-  // remove empty values
+  // Remove empty values
   if (result["#text"]) {
     result["#text"] = result["#text"].filter((str) => str.length > 0);
   }
@@ -53,7 +53,7 @@ export const generateCollapsibleTable = (data: { element: string; units: number;
   const headerRow = "| element | units | reward |\n| --- | --- | --- |";
 
   // Create the table rows from the data array
-  const tableRows = data.map((item) => `| ${item.element} | ${item.units} | ${item.reward} |`).join("\n");
+  const tableRows = data.map(({ element, units, reward }) => `| ${element} | ${units} | ${reward} |`).join("\n");
 
   // Create the complete Markdown table
   const tableMarkdown = `
@@ -74,38 +74,30 @@ export const createDetailsTable = (
   paymentURL: string,
   username: string,
   values: { title: string; subtitle: string; value: string }[],
-  debug: Record<
-    string,
-    {
-      count: number;
-      reward: Decimal;
-    }
-  >
+  debug: Record<string, { count: number; reward: Decimal }>
 ): string => {
   let collapsibleTable = null;
+
   // Generate the table rows based on the values array
   const tableRows = values
-    .map(({ title, value, subtitle }) => {
-      if (!subtitle || !value) {
-        return "";
-      }
-      return `<tr>
-          <td>${title || ""}</td>
-          <td>${subtitle}</td>
-          <td>${value}</td>
-        </tr>`;
-    })
+    .filter(({ subtitle, value }) => subtitle && value)
+    .map(({ title, subtitle, value }) => `<tr>
+        <td>${title || ""}</td>
+        <td>${subtitle}</td>
+        <td>${value}</td>
+      </tr>`)
     .join("");
 
   if (!isEmpty(debug)) {
     const data = Object.entries(debug)
-      .filter(([_, value]) => value.count > 0)
-      .map(([key, value]) => {
-        const element = key === "#text" ? "words" : key;
-        const units = value.count;
-        const reward = value.reward;
-        return { element, units, reward };
-      });
+    .filter(([/* _unusedKey */, value]) => value.count > 0)
+    .map(([key, value]) => {
+      const element = key === "#text" ? "words" : key;
+      const units = value.count;
+      const reward = value.reward;
+      return { element, units, reward };
+    });
+  
 
     collapsibleTable = generateCollapsibleTable(data);
   }
