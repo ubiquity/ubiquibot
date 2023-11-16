@@ -4,13 +4,13 @@
 // TODO: break this apart into smaller files.
 
 import { SupabaseClient } from "@supabase/supabase-js";
+import { execSync } from "child_process";
+import { Context as ProbotContext } from "probot";
+import Runtime from "../../../../bindings/bot-runtime";
+import { LogLevel } from "../../../../types/logs";
 import { Database } from "../../types";
 import { prettyLogs } from "../pretty-logs";
 import { Super } from "./super";
-import { execSync } from "child_process";
-import { LogLevel } from "../../../../types/logs";
-import { Context as ProbotContext } from "probot";
-import Runtime from "../../../../bindings/bot-runtime";
 
 type LogFunction = (message: string, metadata?: any) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
@@ -48,7 +48,9 @@ export class Logs extends Super {
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
 
-  private _log({ level, consoleLog, logMessage, metadata, postComment, type }: _LogParams) {
+  private _log({ level, consoleLog, logMessage, metadata, postComment, type }: _LogParams): LogReturn | null {
+    if (this._getNumericLevel(level) > this.maxLevel) return null; // filter out more verbose logs according to maxLevel set in config
+
     // needs to generate three versions of the information.
     // they must all first serialize the error object if it exists
     // - the comment to post on supabase (must be raw)
@@ -63,17 +65,16 @@ export class Logs extends Super {
         const commentMetaData = Logs._commentMetaData(metadata, level);
         this._postComment([colorizedCommentMessage, commentMetaData].join("\n"));
       }
-      const toSupabase = { log: logMessage, level, metadata } as LogInsert;
-      this._save(toSupabase, level);
     } else {
       consoleLog(logMessage);
       if (postComment) {
         const colorizedCommentMessage = this._diffColorCommentMessage(type, logMessage);
         this._postComment(colorizedCommentMessage);
       }
-      const toSupabase = { log: logMessage, level } as LogInsert;
-      this._save(toSupabase, level);
     }
+    const toSupabase = { log: logMessage, level, metadata } as LogInsert;
+
+    this._save(toSupabase);
 
     return new LogReturn(
       {
@@ -114,7 +115,7 @@ export class Logs extends Super {
 
     return metadata;
   }
-  public ok(log: string, metadata?: any, postComment?: boolean): LogReturn {
+  public ok(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.VERBOSE,
@@ -126,7 +127,7 @@ export class Logs extends Super {
     });
   }
 
-  public info(log: string, metadata?: any, postComment?: boolean): LogReturn {
+  public info(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.INFO,
@@ -138,7 +139,7 @@ export class Logs extends Super {
     });
   }
 
-  public warn(log: string, metadata?: any, postComment?: boolean): LogReturn {
+  public warn(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.WARN,
@@ -150,7 +151,7 @@ export class Logs extends Super {
     });
   }
 
-  public debug(log: string, metadata?: any, postComment?: boolean): LogReturn {
+  public debug(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.DEBUG,
@@ -162,7 +163,7 @@ export class Logs extends Super {
     });
   }
 
-  public error(log: string, metadata?: any, postComment?: boolean): LogReturn {
+  public error(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     if (!metadata) {
       metadata = Logs.convertErrorsIntoObjects(new Error(log));
       const stack = metadata.stack as string[];
@@ -187,7 +188,7 @@ export class Logs extends Super {
     });
   }
 
-  http(log: string, metadata?: any, postComment?: boolean): LogReturn {
+  http(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.HTTP,
@@ -199,7 +200,7 @@ export class Logs extends Super {
     });
   }
 
-  verbose(log: string, metadata?: any, postComment?: boolean): LogReturn {
+  verbose(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.VERBOSE,
@@ -211,7 +212,7 @@ export class Logs extends Super {
     });
   }
 
-  silly(log: string, metadata?: any, postComment?: boolean): LogReturn {
+  silly(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.SILLY,
@@ -300,9 +301,7 @@ export class Logs extends Super {
     }
   }
 
-  private _save(logInsert: LogInsert, logLevel: LogLevel) {
-    if (this._getNumericLevel(logLevel) > this.maxLevel) return; // filter out more verbose logs according to maxLevel set in config
-
+  private _save(logInsert: LogInsert) {
     this._addToQueue(logInsert)
       .then(() => void 0)
       .catch(() => prettyLogs.error("Error adding logs to queue"));
