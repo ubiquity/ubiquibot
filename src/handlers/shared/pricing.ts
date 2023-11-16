@@ -21,10 +21,10 @@ export function setPrice(context: Context, timeLabel: Label, priorityLabel: Labe
 
   if (!timeLabel || !priorityLabel) throw logger.warn("Time or priority label is not defined");
 
-  const recognizedTimeLabels = labels.time.find((item) => item.name === timeLabel.name);
+  const recognizedTimeLabels = labels.time.find((configLabel) => configLabel === timeLabel.name);
   if (!recognizedTimeLabels) throw logger.warn("Time label is not recognized");
 
-  const recognizedPriorityLabels = labels.priority.find((item) => item.name === priorityLabel.name);
+  const recognizedPriorityLabels = labels.priority.find((configLabel) => configLabel === priorityLabel.name);
   if (!recognizedPriorityLabels) throw logger.warn("Priority label is not recognized");
 
   const timeValue = calculateLabelValue(recognizedTimeLabels);

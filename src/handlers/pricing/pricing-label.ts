@@ -82,8 +82,9 @@ export async function onLabelChangeSetPricing(context: Context): Promise<void> {
 }
 
 function getRecognizedLabels(labels: Label[], config: BotConfig) {
-  const isRecognizedLabel = (label: Label, labelConfig: { name: string }[]) =>
-    (typeof label === "string" || typeof label === "object") && labelConfig.some((item) => item.name === label.name);
+  const isRecognizedLabel = (label: Label, configLabels: string[]) =>
+    (typeof label === "string" || typeof label === "object") &&
+    configLabels.some((configLabel) => configLabel === label.name);
 
   const recognizedTimeLabels: Label[] = labels.filter((label: Label) => isRecognizedLabel(label, config.labels.time));
 

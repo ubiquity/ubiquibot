@@ -31,9 +31,9 @@ export async function startCommandHandler(context: Context) {
   }
 
   // Filter out labels that match the time labels defined in the config
-  const timeLabelsAssigned: Label[] = labels.filter((label) =>
-    typeof label === "string" || typeof label === "object"
-      ? config.labels.time.some((item) => item.name === label.name)
+  const timeLabelsAssigned: Label[] = labels.filter((assignedLabel) =>
+    typeof assignedLabel === "string" || typeof assignedLabel === "object"
+      ? config.labels.time.some((label) => label === assignedLabel.name)
       : false
   );
 
@@ -44,8 +44,8 @@ export async function startCommandHandler(context: Context) {
   // Sort labels by weight and select the one with the smallest weight
   const sortedLabels = timeLabelsAssigned
     .sort((a, b) => {
-      const fullLabelA = labels.find((label) => label.name === a.name);
-      const fullLabelB = labels.find((label) => label.name === b.name);
+      const fullLabelA = labels.find((label) => label.name === a.name)?.name;
+      const fullLabelB = labels.find((label) => label.name === b.name)?.name;
 
       if (!fullLabelA || !fullLabelB) {
         return 0; // return a default value

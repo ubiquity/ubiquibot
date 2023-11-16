@@ -15,7 +15,7 @@ export function getTimeLabelsAssigned(payload: Payload, config: BotConfig) {
     const _labelType = typeof _label;
     const _labelName = _labelType === "string" ? _label.toString() : _labelType === "object" ? _label.name : "unknown";
 
-    const timeLabel = timeLabelsDefined.find((item) => item.name === _labelName);
+    const timeLabel = timeLabelsDefined.find((label) => label === _labelName);
     if (timeLabel) {
       timeLabelsAssigned.push(_label);
     }

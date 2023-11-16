@@ -17,22 +17,16 @@ const allHtmlElementsSetToZero = validHTMLElements.reduce((accumulator, current)
   return accumulator;
 }, {} as Record<keyof HTMLElementTagNameMap, number>);
 
-const allCommands = userCommands(false).map((cmd) => ({ name: cmd.id.replace("/", ""), enabled: false }));
+const allCommands = userCommands(false).map((cmd) => cmd.id.replace("/", ""));
 
-const defaultTimeLabels = [
-  { name: "Time: <1 Hour" },
-  { name: "Time: <2 Hours" },
-  { name: "Time: <4 Hours" },
-  { name: "Time: <1 Day" },
-  { name: "Time: <1 Week" },
-];
+const defaultTimeLabels = ["Time: <1 Hour", "Time: <2 Hours", "Time: <4 Hours", "Time: <1 Day", "Time: <1 Week"];
 
 const defaultPriorityLabels = [
-  { name: "Priority: 1 (Normal)" },
-  { name: "Priority: 2 (Medium)" },
-  { name: "Priority: 3 (High)" },
-  { name: "Priority: 4 (Urgent)" },
-  { name: "Priority: 5 (Emergency)" },
+  "Priority: 1 (Normal)",
+  "Priority: 2 (Medium)",
+  "Priority: 3 (High)",
+  "Priority: 4 (Urgent)",
+  "Priority: 5 (Emergency)",
 ];
 
 function StrictObject<T extends TProperties>(obj: T, options?: ObjectOptions) {
@@ -101,13 +95,7 @@ export const BotConfigSchema = StrictObject(
       basePriceMultiplier: T.Number({ default: 1 }),
       issueCreatorMultiplier: T.Number({ default: 1 }),
     }),
-    commands: T.Array(
-      StrictObject({
-        name: T.String(),
-        enabled: T.Boolean(),
-      }),
-      { default: allCommands }
-    ),
+    disabledCommands: T.Array(T.String(), { default: allCommands }),
     incentives: StrictObject({
       comment: StrictObject({
         elements: T.Record(T.Union(HtmlEntities), T.Number({ default: 0 }), { default: allHtmlElementsSetToZero }),
@@ -121,8 +109,8 @@ export const BotConfigSchema = StrictObject(
       }),
     }),
     labels: StrictObject({
-      time: T.Array(StrictObject({ name: T.String() }), { default: defaultTimeLabels }),
-      priority: T.Array(StrictObject({ name: T.String() }), { default: defaultPriorityLabels }),
+      time: T.Array(T.String(), { default: defaultTimeLabels }),
+      priority: T.Array(T.String(), { default: defaultPriorityLabels }),
     }),
     miscellaneous: StrictObject({
       maxConcurrentTasks: T.Number({ default: Number.MAX_SAFE_INTEGER }),
