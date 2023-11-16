@@ -18,7 +18,7 @@ export async function checkTasksToUnassign(context: Context) {
     assignedIssues.map(async (assignedIssue: Issue) => checkTaskToUnassign(context, assignedIssue))
   );
   logger.ok("Checked all the tasks to unassign", {
-    tasksToUnassign: tasksToUnassign.map((tasksToUnassign) => tasksToUnassign.metadata),
+    tasksToUnassign: tasksToUnassign.filter(Boolean).map((task) => task?.metadata),
   });
 }
 

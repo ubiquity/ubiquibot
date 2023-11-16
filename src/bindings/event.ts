@@ -8,7 +8,13 @@ import { validateConfigChange } from "../handlers/push";
 import { addCommentToIssue, shouldSkip } from "../helpers";
 import { BotConfig } from "../types";
 import { Context } from "../types/context";
-import { MainActionHandler, PostActionHandler, PreActionHandler, WildCardHandler } from "../types/handlers";
+import {
+  HandlerReturnValuesNoVoid,
+  MainActionHandler,
+  PostActionHandler,
+  PreActionHandler,
+  WildCardHandler,
+} from "../types/handlers";
 import { GitHubEvent, Payload, PayloadSchema } from "../types/payload";
 import { ajv } from "../utils/ajv";
 import { generateConfiguration } from "../utils/generate-configuration";
@@ -139,7 +145,11 @@ async function logAnyReturnFromHandlers(context: Context, handlerType: AllHandle
   }
 }
 
-async function renderMainActionOutput(context: Context, response: string | void | LogReturn, action: AllHandlers) {
+async function renderMainActionOutput(
+  context: Context,
+  response: void | HandlerReturnValuesNoVoid,
+  action: AllHandlers
+) {
   const runtime = Runtime.getState();
   const payload = context.event.payload as Payload;
   const issueNumber = payload.issue?.number;
@@ -163,9 +173,11 @@ async function renderMainActionOutput(context: Context, response: string | void 
   } else if (typeof response == "string") {
     await addCommentToIssue(context, response, issueNumber);
     // runtime.logger.debug(response, null, true);
+  } else if (response === null) {
+    runtime.logger.debug("null response", { action: action.name });
   } else {
     runtime.logger.error(
-      "No response from action. Ensure return of string or LogReturn object",
+      "No response from action. Ensure return of string, null, or LogReturn object",
       { action: action.name },
       true
     );
