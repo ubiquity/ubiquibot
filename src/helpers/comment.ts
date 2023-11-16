@@ -97,19 +97,17 @@ export const createDetailsTable = (
     })
     .join("");
 
-  if (!isEmpty(debug)) {
-    const data = Object.entries(debug)
-      .filter(([_, value]) => value.count > 0)
-      .map(([key, value]) => {
-        const element = key === "#text" ? "words" : key;
-        const units = value.count;
-        const reward = value.reward;
-        return { element, units, reward };
-      });
-
-    collapsibleTable = generateCollapsibleTable(data);
-  }
-
+    if (!isEmpty(debug)) {
+      const data = Object.entries(debug)
+        .filter(([key, value]) => value.count > 0)
+        .map(([key, value]) => {
+          const element = key === "#text" ? "words" : key;
+          const units = value.count;
+          const reward = value.reward;
+          return { element, units, reward };
+        });
+    }
+    
   // Construct the complete HTML structure
   const html = `
     <details>
