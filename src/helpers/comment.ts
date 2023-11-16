@@ -87,7 +87,7 @@ export const createDetailsTable = (
         <td>${value}</td>
       </tr>`)
     .join("");
-
+//changes
   if (!isEmpty(debug)) {
     const data = Object.entries(debug)
       .filter(([_unusedKey, value]) => value.count > 0)
