@@ -4,53 +4,62 @@ import { ContributorClasses } from "./contribution-style-types";
 export const commentScoringByContributionClass = {
   // TODO: make this configurable
 
-  "Issue Assignee Task": new CommentScoring({
-    contributionClass: "Issue Assignee Task",
-    formattingMultiplier: 0,
-    wordValue: 0,
-  }),
+  "Issue Assignee Task": () =>
+    new CommentScoring({
+      contributionClass: "Issue Assignee Task",
+      formattingMultiplier: 0,
+      wordValue: 0,
+    }),
 
-  "Issue Issuer Comment": new CommentScoring({
-    contributionClass: "Issue Issuer Comment",
-    formattingMultiplier: 1,
-    wordValue: 0.2,
-  }),
-  "Issue Assignee Comment": new CommentScoring({
-    contributionClass: "Issue Assignee Comment",
-    formattingMultiplier: 0,
-    wordValue: 0,
-  }),
+  "Issue Issuer Comment": () =>
+    new CommentScoring({
+      contributionClass: "Issue Issuer Comment",
+      formattingMultiplier: 1,
+      wordValue: 0.2,
+    }),
+  "Issue Assignee Comment": () =>
+    new CommentScoring({
+      contributionClass: "Issue Assignee Comment",
+      formattingMultiplier: 0,
+      wordValue: 0,
+    }),
 
-  "Issue Collaborator Comment": new CommentScoring({
-    contributionClass: "Issue Collaborator Comment",
-    formattingMultiplier: 1,
-    wordValue: 0.1,
-  }),
-  "Issue Contributor Comment": new CommentScoring({
-    contributionClass: "Issue Contributor Comment",
-    formattingMultiplier: 0.25,
-    wordValue: 0.1,
-  }),
-  "Review Issuer Comment": new CommentScoring({
-    contributionClass: "Review Issuer Comment",
-    formattingMultiplier: 2,
-    wordValue: 0.2,
-  }),
-  "Review Assignee Comment": new CommentScoring({
-    contributionClass: "Review Assignee Comment",
-    formattingMultiplier: 1,
-    wordValue: 0.1,
-  }),
-  "Review Collaborator Comment": new CommentScoring({
-    contributionClass: "Review Collaborator Comment",
-    formattingMultiplier: 1,
-    wordValue: 0.1,
-  }),
-  "Review Contributor Comment": new CommentScoring({
-    contributionClass: "Review Contributor Comment",
-    formattingMultiplier: 0.25,
-    wordValue: 0.1,
-  }),
+  "Issue Collaborator Comment": () =>
+    new CommentScoring({
+      contributionClass: "Issue Collaborator Comment",
+      formattingMultiplier: 1,
+      wordValue: 0.1,
+    }),
+  "Issue Contributor Comment": () =>
+    new CommentScoring({
+      contributionClass: "Issue Contributor Comment",
+      formattingMultiplier: 0.25,
+      wordValue: 0.1,
+    }),
+  "Review Issuer Comment": () =>
+    new CommentScoring({
+      contributionClass: "Review Issuer Comment",
+      formattingMultiplier: 2,
+      wordValue: 0.2,
+    }),
+  "Review Assignee Comment": () =>
+    new CommentScoring({
+      contributionClass: "Review Assignee Comment",
+      formattingMultiplier: 1,
+      wordValue: 0.1,
+    }),
+  "Review Collaborator Comment": () =>
+    new CommentScoring({
+      contributionClass: "Review Collaborator Comment",
+      formattingMultiplier: 1,
+      wordValue: 0.1,
+    }),
+  "Review Contributor Comment": () =>
+    new CommentScoring({
+      contributionClass: "Review Contributor Comment",
+      formattingMultiplier: 0.25,
+      wordValue: 0.1,
+    }),
   // end comments
   // "Issue Issuer Specification": new CommentScoring({
   //   contributionClass: "Issue Issuer Specification",
@@ -97,5 +106,5 @@ export const commentScoringByContributionClass = {
   //   wordValue: 1,
   // }),
 } as {
-  [key in keyof ContributorClasses]: CommentScoring;
+  [key in keyof ContributorClasses]: () => CommentScoring;
 };
