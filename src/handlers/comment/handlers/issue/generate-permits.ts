@@ -13,8 +13,8 @@ type TotalsById = { [userId: string]: UserScoreTotals };
 
 export async function generatePermits(context: Context, totals: TotalsById) {
   const { html: comment, permits } = await generateComment(context, totals);
-  const metadata = structuredMetadata.create("Permits", { permits, totals });
-  return comment.concat("\n", metadata);
+  // const metadata = structuredMetadata.create("Permits", { permits, totals });
+  return comment;
 }
 
 async function generateComment(context: Context, totals: TotalsById) {
@@ -24,9 +24,6 @@ async function generateComment(context: Context, totals: TotalsById) {
   } = context.config;
   const { rpc, paymentToken } = getPayoutConfigByNetworkId(context.config.payments.evmNetworkId);
 
-  const contributionsOverviewTable = generateContributionsOverview(totals);
-  const conversationIncentivesTable = generateDetailsTable(totals);
-
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
   const HTMLs = [] as string[];
 
@@ -34,6 +31,8 @@ async function generateComment(context: Context, totals: TotalsById) {
 
   for (const userId in totals) {
     const userTotals = totals[userId];
+    const contributionsOverviewTable = generateContributionsOverview({ [userId]: userTotals });
+    const conversationIncentivesTable = generateDetailsTable({ [userId]: userTotals });
 
     const tokenAmount = userTotals.total;
 

@@ -28,8 +28,8 @@ export async function specificationScoring({
   const scoreDetails = addRelevanceAndFormatScoring(RELEVANT, formatting);
   for (const user in scoreDetails) {
     const userScore = scoreDetails[user];
+    if (userScore.contributionClass !== "Issue Issuer Comment") continue;
 
-    if (!userScore.commentScores[issue.user.id]) continue;
     const userScoreDetail: UserScoreDetails = {
       score: userScore.commentScores[issue.user.id].totalScoreTotal,
       view: view,
