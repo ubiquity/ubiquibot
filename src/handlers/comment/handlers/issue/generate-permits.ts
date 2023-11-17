@@ -13,8 +13,8 @@ type TotalsById = { [userId: string]: UserScoreTotals };
 
 export async function generatePermits(context: Context, totals: TotalsById) {
   const { html: comment, permits } = await generateComment(context, totals);
-  // const metadata = structuredMetadata.create("Permits", { permits, totals });
-  return comment;
+  const metadata = structuredMetadata.create("Permits", { permits, totals });
+  return comment.concat("\n", metadata);
 }
 
 async function generateComment(context: Context, totals: TotalsById) {
