@@ -17,11 +17,11 @@ export async function allCommentScoring({
   const usersByClass = await sortUsersByClass(context, issue, comments);
   const commentsByClass = sortCommentsByClass(usersByClass, comments, view);
   const contributionClasses = Object.keys(usersByClass).map((key) => key as ContributorClassesKeys);
-
   return contributionClasses
     .filter((className: string) => className.endsWith("Comment"))
     .flatMap((contributionStyle) => {
-      const scoring = commentScoringByContributionClass[contributionStyle];
+      const commentsOfRole = commentsByClass[contributionStyle as keyof typeof commentsByClass];
+      const scoring = commentScoringByContributionClass[contributionStyle]();
 
       const selection = usersByClass[contributionStyle as keyof typeof usersByClass];
 
@@ -33,12 +33,16 @@ export async function allCommentScoring({
       // Ensure selection is always an array
       const users = Array.isArray(selection) ? selection : [selection];
 
-      return users.flatMap((user) => {
-        const commentsOfRole = commentsByClass[contributionStyle as keyof typeof commentsByClass];
+      users.forEach((user) => {
         if (!commentsOfRole) {
           return [];
         }
-        return perUserCommentScoring(user, commentsOfRole, scoring);
+        perUserCommentScoring(
+          user,
+          commentsOfRole.filter((comment) => comment.user.id === user.id),
+          scoring
+        );
       });
+      return scoring;
     });
 }
