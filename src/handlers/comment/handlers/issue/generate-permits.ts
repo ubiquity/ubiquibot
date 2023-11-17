@@ -4,7 +4,7 @@ import { stringify } from "yaml";
 import Runtime from "../../../../bindings/bot-runtime";
 import { getPayoutConfigByNetworkId } from "../../../../helpers";
 import { getTokenSymbol } from "../../../../helpers/contracts";
-import { Context } from "../../../../types";
+import { Context, Issue, Payload } from "../../../../types";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { generatePermit2Signature } from "./generate-permit-2-signature";
 import { UserScoreTotals } from "./issue-shared-types";
@@ -22,6 +22,8 @@ async function generateComment(context: Context, totals: TotalsById) {
   const {
     keys: { evmPrivateEncrypted },
   } = context.config;
+  const payload = context.event.payload as Payload;
+  const issue = payload.issue as Issue;
   const { rpc, paymentToken } = getPayoutConfigByNetworkId(context.config.payments.evmNetworkId);
 
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
@@ -31,7 +33,7 @@ async function generateComment(context: Context, totals: TotalsById) {
 
   for (const userId in totals) {
     const userTotals = totals[userId];
-    const contributionsOverviewTable = generateContributionsOverview({ [userId]: userTotals });
+    const contributionsOverviewTable = generateContributionsOverview({ [userId]: userTotals }, issue);
     const conversationIncentivesTable = generateDetailsTable({ [userId]: userTotals });
 
     const tokenAmount = userTotals.total;
@@ -91,7 +93,7 @@ function generateHtml({
   `;
 }
 
-function generateContributionsOverview(userScoreDetails: TotalsById) {
+function generateContributionsOverview(userScoreDetails: TotalsById, issue: Issue) {
   const buffer = [
     "<h6>Contributions Overview</h6>",
     "<table><thead>",
@@ -139,7 +141,14 @@ function generateContributionsOverview(userScoreDetails: TotalsById) {
         );
       }
       if (task) {
-        buffer.push(newRow("Issue", "Task", task?.toString() || "-", task?.toString() || "-"));
+        buffer.push(
+          newRow(
+            "Issue",
+            "Task",
+            issue.assignees.length === 0 ? "-" : `${(1 / issue.assignees.length).toFixed(2)}`,
+            task?.toString() || "-"
+          )
+        );
       }
     }
   }
@@ -215,6 +224,7 @@ function generateDetailsTable(totals: TotalsById) {
       }
     }
   }
+  if (tableRows === "") return "";
   return `<table><tbody><tr><td>Comment</td><td>Formatting</td><td>Relevance</td><td>Reward</td></tr>${tableRows}</tbody></table>`;
 }
 
