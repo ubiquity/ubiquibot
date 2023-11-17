@@ -13,6 +13,7 @@ import { registerWallet } from "./wallet";
 
 import { autoPay } from "./payout";
 import { query } from "./query";
+import { nlpConfig } from "./nlp-config";
 
 export * from "./ask";
 export * from "./assign";
@@ -22,6 +23,7 @@ export * from "./multiplier";
 export * from "./payout";
 export * from "./query";
 export * from "./unassign";
+export * from "./nlp-config";
 export * from "./wallet";
 
 // Parses the comment body and figure out the command name a user wants
@@ -108,6 +110,12 @@ export function userCommands(walletVerificationEnabled: boolean): UserCommands[]
       description: accountForWalletVerification.description,
       example: accountForWalletVerification.example,
       handler: registerWallet,
+    },
+    {
+      id: "/config",
+      description: "Update the bot configuration, for admins only.",
+      example: "/config I want the max payout to be 1000",
+      handler: nlpConfig,
     },
   ];
 }
