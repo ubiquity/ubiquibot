@@ -31,7 +31,7 @@ function parseStructuredMetadata(comment: string) {
   }
 
   return {
-    type: type.trim(),
+    className: type.trim(),
     caller: caller.trim(),
     revision: revision.trim(),
     metadata,
