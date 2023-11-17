@@ -368,15 +368,31 @@ export class Logs extends Super {
   }
 
   private _postComment(message: string) {
-    this.context.octokit.issues
-      .createComment({
-        owner: this.context.issue().owner,
-        repo: this.context.issue().repo,
-        issue_number: this.context.issue().issue_number,
-        body: message,
-      })
-      // .then((x) => console.trace(x))
-      .catch((x) => console.trace(x));
+    const commit = this.context.payload.commit;
+    if (commit) {
+      // post on commit
+      console.trace(commit);
+
+      this.context.octokit.repos
+        .createCommitComment({
+          owner: this.context.issue().owner,
+          repo: this.context.issue().repo,
+          commit_sha: commit.sha,
+          body: message,
+        })
+        .catch((x) => console.trace(x));
+    } else {
+      // post on issue
+      this.context.octokit.issues
+        .createComment({
+          owner: this.context.issue().owner,
+          repo: this.context.issue().repo,
+          issue_number: this.context.issue().issue_number,
+          body: message,
+        })
+        // .then((x) => console.trace(x))
+        .catch((x) => console.trace(x));
+    }
   }
 
   private _getNumericLevel(level: LogLevel) {

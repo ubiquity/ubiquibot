@@ -187,7 +187,9 @@ function createRenderCatchAll(context: Context, handlerType: AllHandlersWithType
     const runtime = Runtime.getState();
     const payload = context.event.payload as Payload;
     const issue = payload.issue;
-    if (!issue) return runtime.logger.error("Issue is null. Skipping", { issue });
+    if (!issue) {
+      return runtime.logger.error("Issue is null. Skipping", { issue });
+    }
 
     if (report instanceof LogReturn) {
       // already made it to console so it should just post the comment
