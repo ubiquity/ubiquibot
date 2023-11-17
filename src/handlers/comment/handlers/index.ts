@@ -13,7 +13,7 @@ import { registerWallet } from "./wallet";
 
 import { autoPay } from "./payout";
 import { query } from "./query";
-import { nlpConfig } from "./nlp-config";
+import { setConfigWithNLP } from "./nlp-config";
 
 export * from "./ask";
 export * from "./assign";
@@ -115,7 +115,7 @@ export function userCommands(walletVerificationEnabled: boolean): UserCommands[]
       id: "/config",
       description: "Update the bot configuration, for admins only.",
       example: "/config I want the max payout to be 1000",
-      handler: nlpConfig,
+      handler: setConfigWithNLP,
     },
   ];
 }
