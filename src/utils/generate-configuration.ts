@@ -5,6 +5,7 @@ import { Context as ProbotContext } from "probot";
 import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
 import { BotConfig, Payload, stringDuration, validateBotConfig } from "../types";
+import ubiquibotConfigDefault from "../ubiquibot-config-default";
 
 const UBIQUIBOT_CONFIG_REPOSITORY = "ubiquibot-config";
 const UBIQUIBOT_CONFIG_FULL_PATH = ".github/ubiquibot-config.yml";
@@ -28,7 +29,7 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
     })
   );
 
-  const merged = mergeWith({}, orgConfig, repoConfig, (objValue: unknown, srcValue: unknown) => {
+  const merged = mergeWith(ubiquibotConfigDefault, orgConfig, repoConfig, (objValue: unknown, srcValue: unknown) => {
     if (Array.isArray(objValue) && Array.isArray(srcValue)) {
       // if it's string array, concat and remove duplicates
       if (objValue.every((value) => typeof value === "string")) {
@@ -39,11 +40,12 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
     }
   });
 
+  const logger = Runtime.getState().logger;
+
   const valid = validateBotConfig(merged);
   if (!valid) {
     const errorMessage = getErrorMsg(validateBotConfig.errors as DefinedError[]);
     if (errorMessage) {
-      const logger = Runtime.getState().logger;
       throw logger.error("Invalid merged configuration", { errorMessage }, true);
     }
   }
@@ -52,17 +54,12 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
   try {
     transformConfig(merged);
   } catch (err) {
-    if (err instanceof Error && payload.issue?.number)
-      await context.octokit.issues.createComment({
-        owner: payload.repository.owner.login,
-        repo: payload.repository.name,
-        issue_number: payload.issue?.number,
-        body: `Config error!\n${err.toString()}`,
-      });
-    throw err;
+    if (err instanceof Error && payload.issue?.number) {
+      throw logger.error("Configuration error", { err }, true);
+    }
   }
 
-  console.dir(merged, { depth: null, colors: true });
+  // console.dir(merged, { depth: null, colors: true });
   return merged as BotConfig;
 }
 

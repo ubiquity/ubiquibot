@@ -5,6 +5,7 @@ import { LogReturn } from "../adapters/supabase";
 import { LogMessage } from "../adapters/supabase/helpers/tables/logs";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
+import structuredMetadata from "../handlers/shared/structured-metadata";
 import { addCommentToIssue, shouldSkip } from "../helpers";
 import { BotConfig } from "../types";
 import { Context } from "../types/context";
@@ -158,12 +159,12 @@ async function renderMainActionOutput(
   }
 
   if (response instanceof LogReturn) {
-    // console.trace({ response });
     let serializedComment;
     if (response.metadata) {
-      serializedComment = [response.logMessage.diff, "<!--", JSON.stringify(response.metadata, null, 2), "-->"].join(
-        "\n"
-      );
+      serializedComment = [
+        response.logMessage.diff,
+        structuredMetadata.create(response.logMessage.type, response.metadata),
+      ].join("\n");
     } else {
       serializedComment = response.logMessage.diff;
     }

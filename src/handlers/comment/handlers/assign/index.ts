@@ -7,6 +7,7 @@ import {
 } from "../../../../helpers";
 import { Context, IssueType, Payload, User } from "../../../../types";
 import { isParentIssue } from "../../../pricing";
+import structuredMetadata from "../../../shared/structured-metadata";
 import { assignTableComment } from "../table";
 import { checkTaskStale } from "./check-task-stale";
 import { generateAssignmentComment } from "./generate-assignment-comment";
@@ -76,7 +77,7 @@ export async function assign(context: Context, body: string) {
 
   let duration: number | null = null;
   if (!priceLabel) {
-    throw logger.warn("Skipping '/start' since no price label is set to calculate the timeline", priceLabel);
+    throw logger.warn("No price label is set, so this is not ready to be self assigned yet.", priceLabel);
   } else {
     const timeLabelsAssigned = getTimeLabelsAssigned(payload, config);
     if (timeLabelsAssigned) {
@@ -85,6 +86,7 @@ export async function assign(context: Context, body: string) {
   }
 
   const comment = await generateAssignmentComment(payload, duration);
+  const metadata = structuredMetadata.create("Assignment", { duration, priceLabel });
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     logger.info("Adding the assignee", { assignee: payload.sender.login });
@@ -101,7 +103,7 @@ export async function assign(context: Context, body: string) {
     multiplierReason: multiplierReason,
     totalPriceOfTask: totalPriceOfTask,
   } = await getMultiplierInfoToDisplay(context, payload.sender.id, payload.repository.id, issue);
-  return (
+  return [
     assignTableComment({
       multiplierAmount,
       multiplierReason,
@@ -110,6 +112,8 @@ export async function assign(context: Context, body: string) {
       daysElapsedSinceTaskCreation: comment.daysElapsedSinceTaskCreation,
       taskDeadline: comment.deadline,
       registeredWallet: comment.registeredWallet,
-    }) + comment.tips
-  );
+    }),
+    comment.tips,
+    metadata,
+  ].join("\n");
 }
