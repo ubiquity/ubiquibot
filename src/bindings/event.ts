@@ -169,10 +169,8 @@ async function renderMainActionOutput(
     }
 
     await addCommentToIssue(context, serializedComment, issueNumber);
-    // runtime.logger[response.logMessage.type as LogMessage["type"]](response.logMessage.raw, response.metadata, true);
   } else if (typeof response == "string") {
     await addCommentToIssue(context, response, issueNumber);
-    // runtime.logger.debug(response, null, true);
   } else if (response === null) {
     runtime.logger.debug("null response", { action: action.name });
   } else {

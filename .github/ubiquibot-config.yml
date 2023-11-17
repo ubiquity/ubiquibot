@@ -1,6 +1,8 @@
-basePriceMultiplier: 1.5
-newContributorGreeting:
-  enabled: true
-  header: "Thank you for contributing to UbiquiBot! Please be sure to set your wallet address before completing your first task so that the automatic payout upon task completion will work for you."
-  helpMenu: true
-  footer: "###### Also please star this repository and [@ubiquity/devpool-directory](https://github.com/ubiquity/devpool-directory/) to show your support. It helps a lot!"
+payments:
+  basePriceMultiplier: 1.5
+features:
+  newContributorGreeting:
+    enabled: true
+    header: "Thank you for contributing to UbiquiBot! Please be sure to set your wallet address before completing your first task so that the automatic payout upon task completion will work for you."
+    displayHelpMenu: true
+    footer: "###### Also please star this repository and [@ubiquity/devpool-directory](https://github.com/ubiquity/devpool-directory/) to show your support. It helps a lot!"

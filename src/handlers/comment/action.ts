@@ -42,6 +42,6 @@ export async function commentCreatedOrEdited(context: Context) {
     return await handler(context, body);
   } else {
     const sanitizedBody = body.replace(/<!--[\s\S]*?-->/g, "");
-    return logger.verbose("I do not understand how to respond to that command", { sanitizedBody });
+    return logger.verbose("Comment event received without a recognized user command.", { sanitizedBody });
   }
 }

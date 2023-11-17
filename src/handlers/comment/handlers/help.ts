@@ -20,19 +20,22 @@ export async function listAvailableCommands(context: Context, body: string) {
 
 export function generateHelpMenu(context: Context) {
   const config = context.config;
+  const disabledCommands = config.disabledCommands;
   const startDisabled = config.disabledCommands.some((command) => command === "start");
   let helpMenu = "### Available Commands\n\n| Command | Description | Example |\n| --- | --- | --- |\n";
   const commands = userCommands(config.miscellaneous.registerWalletWithVerification);
 
-  commands.map(
-    (command) =>
-      (helpMenu += `| \`${command.id}\` | ${breakSentences(command.description) || ""} | ${
-        (command.example && breakLongString(command.example)) || ""
-      } |\n`) // add to help menu
-  );
+  commands
+    .filter((command) => !disabledCommands.includes(command.id))
+    .map(
+      (command) =>
+        (helpMenu += `| \`${command.id}\` | ${breakSentences(command.description) || ""} | ${
+          (command.example && breakLongString(command.example)) || ""
+        } |\n`) // add to help menu
+    );
 
   if (startDisabled) {
-    helpMenu += "\n\n***_To assign yourself to an issue, please open a draft pull request that is linked to it._***";
+    helpMenu += "\n\n**To assign yourself to an issue, please open a draft pull request that is linked to it.**";
   }
   return helpMenu;
 }

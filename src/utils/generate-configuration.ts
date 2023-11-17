@@ -41,17 +41,10 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
 
   const valid = validateBotConfig(merged);
   if (!valid) {
-    let errMsg = getErrorMsg(validateBotConfig.errors as DefinedError[]);
-    if (errMsg) {
-      errMsg = `Invalid merged configuration! \n${errMsg}`;
-      if (payload.issue?.number)
-        await context.octokit.issues.createComment({
-          owner: payload.repository.owner.login,
-          repo: payload.repository.name,
-          issue_number: payload.issue?.number,
-          body: errMsg,
-        });
-      throw new Error(errMsg);
+    const errorMessage = getErrorMsg(validateBotConfig.errors as DefinedError[]);
+    if (errorMessage) {
+      const logger = Runtime.getState().logger;
+      throw logger.error("Invalid merged configuration", { errorMessage }, true);
     }
   }
 

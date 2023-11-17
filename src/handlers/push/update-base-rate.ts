@@ -22,11 +22,11 @@ export async function updateBaseRate(context: Context, filePath: string) {
   const previousConfigRaw = Buffer.from(previousFileContent, "base64").toString();
   const previousConfigParsed = parseYaml(previousConfigRaw);
 
-  if (!previousConfigParsed || !previousConfigParsed.basePriceMultiplier) {
+  if (!previousConfigParsed || !previousConfigParsed.payments.basePriceMultiplier) {
     throw logger.warn("No multiplier found in previous config");
   }
 
-  const previousBaseRate = previousConfigParsed.basePriceMultiplier;
+  const previousBaseRate = previousConfigParsed.payments.basePriceMultiplier;
 
   if (!previousBaseRate) {
     throw logger.warn("No base rate found in previous config");
