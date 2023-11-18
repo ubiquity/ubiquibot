@@ -22,8 +22,12 @@ const allHtmlElementsSetToZero = validHTMLElements.reduce<Record<keyof HTMLEleme
 export default {
   logs: {
     environment: "development",
-    level: LogLevel.SILLY,
-    retryLimit: 8,
+    level: LogLevel.DEBUG,
+    retryLimit: 0,
+  },
+  keys: {
+    evmPrivateEncrypted: "",
+    openAi: "",
   },
 
   features: {

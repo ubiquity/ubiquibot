@@ -12,7 +12,6 @@ const UBIQUIBOT_CONFIG_FULL_PATH = ".github/ubiquibot-config.yml";
 
 export async function generateConfiguration(context: ProbotContext): Promise<BotConfig> {
   const payload = context.payload as Payload;
-
   const orgConfig = parseYaml(
     await download({
       context,
