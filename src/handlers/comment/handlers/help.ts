@@ -6,13 +6,13 @@ export async function listAvailableCommands(context: Context, body: string) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   if (body != "/help") {
-    return logger.info("Skipping to list available commands.", { body });
+    return logger.info(context.event, "Skipping to list available commands.", { body });
   }
   const payload = context.event.payload as Payload;
   const issue = payload.issue;
 
   if (!issue) {
-    return logger.info("Skipping /help, reason: not issue");
+    return logger.info(context.event, "Skipping /help, reason: not issue");
   }
 
   return generateHelpMenu(context);

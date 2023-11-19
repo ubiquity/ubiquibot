@@ -29,7 +29,7 @@ export const processors: Record<string, Handler> = {
   },
   [GitHubEvent.ISSUES_REOPENED]: {
     pre: [],
-    action: [async () => runtime.logger.debug("TODO: replace ISSUES_REOPENED handler")],
+    action: [async () => runtime.logger.debug(null, "TODO: replace ISSUES_REOPENED handler")],
     post: [],
   },
   [GitHubEvent.ISSUES_LABELED]: {

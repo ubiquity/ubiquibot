@@ -10,7 +10,7 @@ export async function checkPullRequests(context: Context) {
   const pulls = await getAllPullRequests(context);
 
   if (pulls.length === 0) {
-    return logger.debug(`No pull requests found at this time`);
+    return logger.debug(context.event, `No pull requests found at this time`);
   }
 
   const payload = context.event.payload as Payload;
@@ -31,7 +31,7 @@ export async function checkPullRequests(context: Context) {
 
     // Newly created PULL (draft or direct) pull does have same `created_at` and `updated_at`.
     if (connectedPull?.created_at !== connectedPull?.updated_at) {
-      logger.debug("It's an updated Pull Request, reverting");
+      logger.debug(context.event, "It's an updated Pull Request, reverting");
       continue;
     }
 
@@ -45,19 +45,19 @@ export async function checkPullRequests(context: Context) {
 
     // if issue is already assigned, continue
     if (issue.assignees.length > 0) {
-      logger.debug(`Issue already assigned, ignoring...`);
+      logger.debug(context.event, `Issue already assigned, ignoring...`);
       continue;
     }
 
     const assignedUsernames = issue.assignees.map((assignee) => assignee.login);
     if (!assignedUsernames.includes(opener)) {
       await addAssignees(context, +linkedIssueNumber, [opener]);
-      logger.debug("Assigned pull request opener to issue", {
+      logger.debug(context.event, "Assigned pull request opener to issue", {
         pullRequest: pull.number,
         issue: linkedIssueNumber,
         opener,
       });
     }
   }
-  return logger.debug(`Checking pull requests done!`);
+  return logger.debug(context.event, `Checking pull requests done!`);
 }

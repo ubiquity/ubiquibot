@@ -8,7 +8,7 @@ export async function handleParentIssue(context: Context, labels: Label[]) {
   if (issuePrices.length) {
     await clearAllPriceLabelsOnIssue(context);
   }
-  throw runtime.logger.warn("Pricing is disabled on parent issues.");
+  throw runtime.logger.warn(context.event, "Pricing is disabled on parent issues.");
 }
 
 export function sortLabelsByValue(labels: Label[]) {

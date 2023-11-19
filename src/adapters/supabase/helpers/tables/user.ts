@@ -5,13 +5,12 @@ import { Context as ProbotContext } from "probot";
 
 export type UserRow = Database["public"]["Tables"]["users"]["Row"];
 export class User extends Super {
-  constructor(supabase: SupabaseClient, context: ProbotContext) {
-    super(supabase, context);
+  constructor(supabase: SupabaseClient) {
+    super(supabase);
   }
 
-  public async getUserId(username: string): Promise<number> {
-    const octokit = this.context.octokit;
-    const { data } = await octokit.rest.users.getByUsername({ username });
+  public async getUserId(context: ProbotContext, username: string): Promise<number> {
+    const { data } = await context.octokit.rest.users.getByUsername({ username });
     return data.id;
   }
 
@@ -39,7 +38,7 @@ export class User extends Super {
       .eq("user_id", userId)
       .order("id", { ascending: false }) // get the latest one
       .maybeSingle();
-    if (accessError) throw this.runtime.logger.error("Error getting access data", accessError);
+    if (accessError) throw this.runtime.logger.error(null, "Error getting access data", accessError);
     return accessData;
   }
 }

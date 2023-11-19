@@ -75,7 +75,7 @@ export async function clearAllPriceLabelsOnIssue(context: Context) {
     name: issuePrices[0].name,
   });
   // } catch (e: unknown) {
-  //   runtime.logger.debug("Clearing all price labels failed!", e);
+  //   runtime.logger.debug(context.event, "Clearing all price labels failed!", e);
   // }
 }
 
@@ -84,7 +84,7 @@ export async function addLabelToIssue(context: Context, labelName: string) {
 
   const payload = context.event.payload as Payload;
   if (!payload.issue) {
-    throw runtime.logger.error("Issue object is null");
+    throw runtime.logger.error(context.event, "Issue object is null");
   }
 
   try {
@@ -95,7 +95,7 @@ export async function addLabelToIssue(context: Context, labelName: string) {
       labels: [labelName],
     });
   } catch (e: unknown) {
-    runtime.logger.debug("Adding a label to issue failed!", e);
+    runtime.logger.debug(context.event, "Adding a label to issue failed!", e);
   }
 }
 
@@ -167,7 +167,7 @@ export async function addCommentToIssue(context: Context, message: HandlerReturn
       body: comment,
     });
   } catch (e: unknown) {
-    runtime.logger.error("Adding a comment failed!", e);
+    runtime.logger.error(context.event, "Adding a comment failed!", e);
   }
 }
 
@@ -180,7 +180,7 @@ export async function upsertLastCommentToIssue(context: Context, issue_number: n
     if (comments.length > 0 && comments[comments.length - 1].body !== commentBody)
       await addCommentToIssue(context, commentBody, issue_number);
   } catch (e: unknown) {
-    runtime.logger.debug("Upserting last comment failed!", e);
+    runtime.logger.debug(context.event, "Upserting last comment failed!", e);
   }
 }
 
@@ -212,7 +212,7 @@ export async function getIssueDescription(
   }
 
   if (!result) {
-    throw runtime.logger.error("Issue description is empty");
+    throw runtime.logger.error(context.event, "Issue description is empty");
   }
 
   return result;
@@ -312,7 +312,7 @@ async function checkUserPermissionForRepo(context: Context, username: string): P
 
     return res.status === 204;
   } catch (e: unknown) {
-    runtime.logger.error("Checking if user permisson for repo failed!", e);
+    runtime.logger.error(context.event, "Checking if user permisson for repo failed!", e);
     return false;
   }
 }
@@ -331,7 +331,7 @@ async function checkUserPermissionForOrg(context: Context, username: string): Pr
     // skipping status check due to type error of checkMembershipForUser function of octokit
     return true;
   } catch (e: unknown) {
-    runtime.logger.error("Checking if user permisson for org failed!", e);
+    runtime.logger.error(context.event, "Checking if user permisson for org failed!", e);
     return false;
   }
 }
@@ -365,7 +365,7 @@ export async function isUserAdminOrBillingManager(
   async function checkIfIsBillingManager() {
     const runtime = Runtime.getState();
 
-    if (!payload.organization) throw runtime.logger.error(`No organization found in payload!`);
+    if (!payload.organization) throw runtime.logger.error(context.event, `No organization found in payload!`);
     const { data: membership } = await context.event.octokit.rest.orgs.getMembershipForUser({
       org: payload.organization.login,
       username: payload.repository.owner.login,
@@ -392,7 +392,7 @@ export async function addAssignees(context: Context, issue: number, assignees: s
       assignees,
     });
   } catch (e: unknown) {
-    runtime.logger.debug("Adding assignees failed!", e);
+    runtime.logger.debug(context.event, "Adding assignees failed!", e);
   }
 }
 
@@ -413,7 +413,7 @@ export async function deleteLabel(context: Context, label: string) {
       });
     }
   } catch (e: unknown) {
-    runtime.logger.debug("Deleting label failed!", e);
+    runtime.logger.debug(context.event, "Deleting label failed!", e);
   }
 }
 
@@ -422,7 +422,7 @@ export async function removeLabel(context: Context, name: string) {
 
   const payload = context.event.payload as Payload;
   if (!payload.issue) {
-    runtime.logger.debug("Invalid issue object");
+    runtime.logger.debug(context.event, "Invalid issue object");
     return;
   }
 
@@ -434,7 +434,7 @@ export async function removeLabel(context: Context, name: string) {
       name: name,
     });
   } catch (e: unknown) {
-    runtime.logger.debug("Removing label failed!", e);
+    runtime.logger.debug(context.event, "Removing label failed!", e);
   }
 }
 
@@ -484,7 +484,7 @@ export async function closePullRequest(context: Context, pull_number: number) {
       state: "closed",
     });
   } catch (e: unknown) {
-    runtime.logger.debug("Closing pull requests failed!", e);
+    runtime.logger.debug(context.event, "Closing pull requests failed!", e);
   }
 }
 
@@ -533,7 +533,7 @@ async function getPullRequestReviews(
     });
     return reviews;
   } catch (e: unknown) {
-    runtime.logger.debug("Fetching pull request reviews failed!", e);
+    runtime.logger.debug(context.event, "Fetching pull request reviews failed!", e);
     return [];
   }
 }
@@ -549,7 +549,7 @@ export async function getReviewRequests(context: Context, pull_number: number, o
     });
     return response.data;
   } catch (e: unknown) {
-    runtime.logger.error("Could not get requested reviewers", e);
+    runtime.logger.error(context.event, "Could not get requested reviewers", e);
     return null;
   }
 }
@@ -566,7 +566,7 @@ export async function getIssueByNumber(context: Context, issueNumber: number) {
     });
     return issue;
   } catch (e: unknown) {
-    runtime.logger.debug("Fetching issue failed!", e);
+    runtime.logger.debug(context.event, "Fetching issue failed!", e);
     return;
   }
 }
@@ -665,11 +665,11 @@ export async function getAllLinkedIssuesAndPullsInBody(context: Context, issueNu
   const issue = await getIssueByNumber(context, issueNumber);
 
   if (!issue) {
-    throw logger.error("No issue found!", { issueNumber });
+    throw logger.error(context.event, "No issue found!", { issueNumber });
   }
 
   if (!issue.body) {
-    throw logger.error("No body found!", { issueNumber });
+    throw logger.error(context.event, "No body found!", { issueNumber });
   }
 
   const body = issue.body;
@@ -698,7 +698,7 @@ export async function getAllLinkedIssuesAndPullsInBody(context: Context, issueNu
         }
       });
     } else {
-      runtime.logger.info(`No linked issues or prs found`);
+      runtime.logger.info(context.event, `No linked issues or prs found`);
     }
 
     if (linkedPrs.length > 0) {
@@ -756,7 +756,7 @@ export async function getAllLinkedIssuesAndPullsInBody(context: Context, issueNu
       linkedPrs: linkedPRStreamlined,
     };
   } else {
-    runtime.logger.info(`No matches found`);
+    runtime.logger.info(context.event, `No matches found`);
     return {
       linkedIssues: [],
       linkedPrs: [],

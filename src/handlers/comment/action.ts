@@ -15,11 +15,11 @@ export async function commentCreatedOrEdited(context: Context) {
   const commentedCommand = commentParser(body);
 
   if (!comment) {
-    logger.info(`Comment is null. Skipping`);
+    logger.info(context.event, `Comment is null. Skipping`);
   }
   const issue = payload.issue;
   if (!issue) {
-    throw logger.error("Issue is null. Skipping", { issue });
+    throw logger.error(context.event, "Issue is null. Skipping", { issue });
   }
 
   if (commentedCommand) {
@@ -31,17 +31,19 @@ export async function commentCreatedOrEdited(context: Context) {
 
   if (userCommand) {
     const { id, handler } = userCommand;
-    logger.info("Running a comment handler", { id, handler: handler.name });
+    logger.info(context.event, "Running a comment handler", { id, handler: handler.name });
 
     const disabled = config.disabledCommands.some((command) => command === id.replace("/", ""));
 
     if (disabled && id !== "/help") {
-      return logger.warn("Skipping because it is disabled on this repo.", { id });
+      return logger.warn(context.event, "Skipping because it is disabled on this repo.", { id });
     }
 
     return await handler(context, body);
   } else {
     const sanitizedBody = body.replace(/<!--[\s\S]*?-->/g, "");
-    return logger.verbose("Comment event received without a recognized user command.", { sanitizedBody });
+    return logger.verbose(context.event, "Comment event received without a recognized user command.", {
+      sanitizedBody,
+    });
   }
 }

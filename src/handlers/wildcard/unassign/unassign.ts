@@ -17,7 +17,7 @@ export async function checkTasksToUnassign(context: Context) {
   const tasksToUnassign = await Promise.all(
     assignedIssues.map(async (assignedIssue: Issue) => checkTaskToUnassign(context, assignedIssue))
   );
-  logger.ok("Checked all the tasks to unassign", {
+  logger.ok(context.event, "Checked all the tasks to unassign", {
     tasksToUnassign: tasksToUnassign.filter(Boolean).map((task) => task?.metadata),
   });
 }
@@ -30,10 +30,10 @@ async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
     timers: { taskDisqualifyDuration, taskFollowUpDuration },
   } = context.config;
 
-  logger.info("Checking for neglected tasks", { issueNumber: assignedIssue.number });
+  logger.info(context.event, "Checking for neglected tasks", { issueNumber: assignedIssue.number });
 
   if (!assignedIssue.assignees) {
-    throw logger.error("No assignees found when there are supposed to be assignees.", {
+    throw logger.error(context.event, "No assignees found when there are supposed to be assignees.", {
       issueNumber: assignedIssue.number,
     });
   }
@@ -110,7 +110,10 @@ async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
     taskDisqualifyDuration,
   });
 
-  return logger.ok("Checked task to unassign", { issueNumber: assignedIssue.number, disqualifiedAssignees });
+  return logger.ok(context.event, "Checked task to unassign", {
+    issueNumber: assignedIssue.number,
+    disqualifiedAssignees,
+  });
 }
 
 async function followUpWithTheRest(
@@ -153,9 +156,9 @@ async function followUpWithTheRest(
           issue_number: number,
           body: followUpMessage,
         });
-        logger.info("Followed up with idle assignees", { followUpAssignees });
+        logger.info(context.event, "Followed up with idle assignees", { followUpAssignees });
       } catch (e: unknown) {
-        logger.error("Failed to follow up with idle assignees", e);
+        logger.error(context.event, "Failed to follow up with idle assignees", e);
       }
     }
   }
@@ -194,7 +197,7 @@ async function aggregateAssigneeActivity({ context, login, name, number, assigne
 
   // check the linked pull request and then check that pull request's commits
 
-  const linkedPullRequests = await getLinkedPullRequests({ owner: login, repository: name, issue: number });
+  const linkedPullRequests = await getLinkedPullRequests(context, { owner: login, repository: name, issue: number });
 
   const allCommits = [] as Commit[];
   for (const pullRequest of linkedPullRequests) {
@@ -239,9 +242,9 @@ async function disqualifyIdleAssignees(
         issue_number: number,
         assignees: idleAssignees,
       });
-      logger.info("Unassigned idle assignees", { idleAssignees });
+      logger.info(context.event, "Unassigned idle assignees", { idleAssignees });
     } catch (e: unknown) {
-      logger.error("Failed to unassign idle assignees", e);
+      logger.error(context.event, "Failed to unassign idle assignees", e);
     }
   }
   return idleAssignees;

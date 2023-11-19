@@ -10,11 +10,11 @@ export async function authorizeLabelChanges(context: Context) {
   const payload = context.event.payload as Payload;
   const sender = payload.sender.login;
 
-  logger.info("Running '/authorize' command handler", { sender });
+  logger.info(context.event, "Running '/authorize' command handler", { sender });
 
   const { issue, repository } = payload;
   if (!issue) {
-    return logger.info(`Skipping '/authorize' because of no issue instance`);
+    return logger.info(context.event, `Skipping '/authorize' because of no issue instance`);
   }
 
   // check if sender is admin
@@ -24,6 +24,7 @@ export async function authorizeLabelChanges(context: Context) {
   // if sender is not admin, return
   if (sufficientPrivileges) {
     throw runtime.logger.error(
+      context.event,
       "User is not an admin/billing_manager and do not have the required permissions to access this function.",
       { sender }
     );
@@ -32,7 +33,7 @@ export async function authorizeLabelChanges(context: Context) {
   const task = taskPaymentMetaData(context, issue);
 
   if (!task.priceLabel || !task.priorityLabel || !task.timeLabel) {
-    throw runtime.logger.error("Missing required labels", { issueDetailed: task });
+    throw runtime.logger.error(context.event, "Missing required labels", { issueDetailed: task });
   }
 
   // get current repository node id from payload and pass it to getLabelChanges function to get label changes
@@ -42,9 +43,9 @@ export async function authorizeLabelChanges(context: Context) {
     // Approve label changes
     labelChanges.forEach(async (labelChange) => {
       await label.approveLabelChange(labelChange.id);
-      return logger.info("Approved label change", { labelChange });
+      return logger.info(context.event, "Approved label change", { labelChange });
     });
   }
 
-  return runtime.logger.ok("Label change has been approved, permit can now be generated");
+  return runtime.logger.ok(context.event, "Label change has been approved, permit can now be generated");
 }

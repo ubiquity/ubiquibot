@@ -19,10 +19,10 @@ export async function multiplier(context: Context, body: string) {
   const sender = payload.sender.login;
   const repo = payload.repository;
   const comment = payload.comment;
-  if (!comment) return logger.info(`Skipping '/multiplier' because of no comment instance`);
+  if (!comment) return logger.info(context.event, `Skipping '/multiplier' because of no comment instance`);
   const issue = payload.issue;
-  logger.info("Running '/multiplier' command handler", { sender });
-  if (!issue) return logger.info(`Skipping '/multiplier' because of no issue instance`);
+  logger.info(context.event, "Running '/multiplier' command handler", { sender });
+  if (!issue) return logger.info(context.event, `Skipping '/multiplier' because of no issue instance`);
   const regex = /(".*?"|[^"\s]+)(?=\s*|\s*$)/g;
   const matches = body.match(regex);
   matches?.shift();
@@ -48,7 +48,7 @@ export async function multiplier(context: Context, body: string) {
 
     // if sender is not admin or billing_manager, check db for access
     if (sufficientPrivileges) {
-      logger.info("Getting multiplier access", {
+      logger.info(context.event, "Getting multiplier access", {
         repo: repo.full_name,
         user: sender,
       });
@@ -62,6 +62,7 @@ export async function multiplier(context: Context, body: string) {
 
       if (!accessible) {
         return logger.warn(
+          context.event,
           "Insufficient permissions to update the payout multiplier. User is not an 'admin' or 'billing_manager'",
           {
             repo: repo.full_name,
@@ -70,13 +71,14 @@ export async function multiplier(context: Context, body: string) {
         );
       }
     }
-    logger.info("Upserting to the wallet table", { username, taskMultiplier, reason });
+    logger.info(context.event, "Upserting to the wallet table", { username, taskMultiplier, reason });
 
     const { access } = Runtime.getState().adapters.supabase;
     await access.upsertMultiplier(payload.sender.id, taskMultiplier, reason, comment);
 
     if (taskMultiplier > 1) {
       return logger.ok(
+        context.event,
         "Successfully changed the payout multiplier. \
         This feature is designed to limit the contributor's compensation \
         for any task on the current repository \
@@ -89,7 +91,7 @@ export async function multiplier(context: Context, body: string) {
         }
       );
     } else {
-      return logger.ok("Successfully changed the payout multiplier", {
+      return logger.ok(context.event, "Successfully changed the payout multiplier", {
         username,
         taskMultiplier,
         reason,
@@ -97,6 +99,7 @@ export async function multiplier(context: Context, body: string) {
     }
   } else {
     return logger.error(
+      context.event,
       "Invalid body for taskMultiplier command. Example usage: /multiplier @user 0.5 'Multiplier reason'"
     );
   }

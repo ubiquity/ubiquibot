@@ -11,14 +11,14 @@ export async function checkModifiedBaseRate(context: Context) {
 
   // if zero sha, push is a pr change
   if (payload.before === ZERO_SHA) {
-    logger.debug("Skipping push events, not a master write");
+    logger.debug(context.event, "Skipping push events, not a master write");
   }
 
   const changes = getCommitChanges(payload.commits);
 
   // skip if empty
   if (changes && changes.length === 0) {
-    logger.debug("Skipping push events, file change empty 1");
+    logger.debug(context.event, "Skipping push events, file change empty 1");
   }
 
   // check for modified or added files and check for specified file
@@ -26,5 +26,5 @@ export async function checkModifiedBaseRate(context: Context) {
     // update base rate
     await updateBaseRate(context, BASE_RATE_FILE);
   }
-  logger.debug("Skipping push events, file change empty 2");
+  logger.debug(context.event, "Skipping push events, file change empty 2");
 }

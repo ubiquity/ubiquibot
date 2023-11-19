@@ -17,8 +17,8 @@ export class Locations extends Super {
   node_id: string | undefined;
   node_type: string | undefined;
 
-  constructor(supabase: SupabaseClient, context: ProbotContext) {
-    super(supabase, context);
+  constructor(supabase: SupabaseClient) {
+    super(supabase);
   }
 
   public async getLocationsFromRepo(repositoryId: number) {
@@ -27,11 +27,11 @@ export class Locations extends Super {
       .select("id")
       .eq("repository_id", repositoryId);
 
-    if (error) throw this.runtime.logger.error("Error getting location data", new Error(error.message));
+    if (error) throw this.runtime.logger.error(null, "Error getting location data", new Error(error.message));
     return locationData;
   }
 
-  public async getLocationsMetaData(issueCommentId: string) {
+  public async getLocationsMetaData(context: ProbotContext, issueCommentId: string) {
     const graphQlQuery = `
     query {
         node(id: "${issueCommentId}") {
@@ -62,7 +62,7 @@ export class Locations extends Super {
       }
     `;
 
-    this.locationResponse = (await this.context.octokit.graphql(graphQlQuery)) as LocationResponse;
+    this.locationResponse = (await context.octokit.graphql(graphQlQuery)) as LocationResponse;
     console.trace(this.locationResponse);
 
     this.user_id = this.locationResponse.data.node.author.id;

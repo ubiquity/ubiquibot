@@ -24,7 +24,7 @@ export async function listLabelsForRepo(context: Context): Promise<Label[]> {
     return res.data;
   }
 
-  throw runtime.logger.error("Failed to fetch lists of labels", { status: res.status });
+  throw runtime.logger.error(context.event, "Failed to fetch lists of labels", { status: res.status });
 }
 
 export async function createLabel(
@@ -84,7 +84,7 @@ export async function updateLabelsFromBaseRate(
   const labelsFiltered: string[] = labels.map((obj) => obj["name"]);
   const usedLabels = uniquePreviousLabels.filter((value: string) => labelsFiltered.includes(value));
 
-  logger.debug("Got used labels: ", { usedLabels });
+  logger.debug(context.event, "Got used labels: ", { usedLabels });
 
   for (const label of usedLabels) {
     if (label.startsWith("Price: ")) {
@@ -94,7 +94,7 @@ export async function updateLabelsFromBaseRate(
       const exist = await labelExists(context, uniqueNewLabels[index]);
       if (exist) {
         // we have to delete first
-        logger.debug("Label already exists, deleting it", { label });
+        logger.debug(context.event, "Label already exists, deleting it", { label });
         await deleteLabel(context, uniqueNewLabels[index]);
       }
 
@@ -111,7 +111,7 @@ export async function updateLabelsFromBaseRate(
         },
       });
 
-      logger.debug("Label updated", { label, to: uniqueNewLabels[index] });
+      logger.debug(context.event, "Label updated", { label, to: uniqueNewLabels[index] });
     }
   }
 }

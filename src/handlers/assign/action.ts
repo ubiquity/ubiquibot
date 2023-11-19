@@ -9,14 +9,14 @@ export async function startCommandHandler(context: Context) {
   const logger = runtime.logger;
   const payload = context.event.payload as Payload;
   if (!payload.issue) {
-    return logger.error("Issue is not defined");
+    return logger.error(context.event, "Issue is not defined");
   }
 
   const assignees = payload.issue.assignees;
 
   // If no valid assignees exist, log a debug message and return
   if (assignees.length === 0) {
-    return logger.warn("No assignees");
+    return logger.warn(context.event, "No assignees");
   }
 
   // Flatten assignees into a string
@@ -27,7 +27,7 @@ export async function startCommandHandler(context: Context) {
 
   // If no labels exist, log a debug message and return
   if (!labels) {
-    return logger.warn(`No labels to calculate timeline`);
+    return logger.warn(context.event, `No labels to calculate timeline`);
   }
 
   // Filter out labels that match the time labels defined in the config
@@ -38,7 +38,7 @@ export async function startCommandHandler(context: Context) {
   );
 
   if (timeLabelsAssigned.length == 0) {
-    return logger.debug("No labels to calculate timeline");
+    return logger.debug(context.event, "No labels to calculate timeline");
   }
 
   // Sort labels by weight and select the one with the smallest weight
@@ -68,11 +68,11 @@ export async function startCommandHandler(context: Context) {
 
   // Format the commit message
   const commitMessage = `${flattenedAssignees} the deadline is at ${endDate.toISOString()}`;
-  logger.debug("Creating an issue comment", { commitMessage });
+  logger.debug(context.event, "Creating an issue comment", { commitMessage });
 
   // Add the commit message as a comment to the issue
   // await addCommentToIssue(commitMessage, payload.issue?.number);
-  return logger.info(commitMessage);
+  return logger.info(context.event, commitMessage);
 }
 
 export async function closePullRequestForAnIssue(context: Context) {
@@ -80,25 +80,25 @@ export async function closePullRequestForAnIssue(context: Context) {
   const logger = runtime.logger;
   const payload = context.event.payload as Payload;
   if (!payload.issue?.number) {
-    throw logger.error("Issue is not defined");
+    throw logger.error(context.event, "Issue is not defined");
   }
 
-  const linkedPullRequests = await getLinkedPullRequests({
+  const linkedPullRequests = await getLinkedPullRequests(context, {
     owner: payload.repository.owner.login,
     repository: payload.repository.name,
     issue: payload.issue.number,
   });
 
   if (!linkedPullRequests.length) {
-    return logger.info(`No linked pull requests to close`);
+    return logger.info(context.event, `No linked pull requests to close`);
   }
 
-  logger.info(`Opened prs`, linkedPullRequests);
+  logger.info(context.event, `Opened prs`, linkedPullRequests);
   let comment = `These linked pull requests are closed: `;
   for (let i = 0; i < linkedPullRequests.length; i++) {
     await closePullRequest(context, linkedPullRequests[i].number);
     comment += ` <a href="${linkedPullRequests[i].href}">#${linkedPullRequests[i].number}</a> `;
   }
-  return logger.info(comment);
+  return logger.info(context.event, comment);
   // await addCommentToIssue(comment, payload.issue.number);
 }

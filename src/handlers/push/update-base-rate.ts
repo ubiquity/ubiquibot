@@ -17,26 +17,26 @@ export async function updateBaseRate(context: Context, filePath: string) {
   const previousFileContent = await getPreviousFileContent(context, owner, repo, branch, filePath);
 
   if (!previousFileContent) {
-    throw logger.error("Getting previous file content failed");
+    throw logger.error(context.event, "Getting previous file content failed");
   }
   const previousConfigRaw = Buffer.from(previousFileContent, "base64").toString();
   const previousConfigParsed = parseYaml(previousConfigRaw);
 
   if (!previousConfigParsed || !previousConfigParsed.payments.basePriceMultiplier) {
-    throw logger.warn("No multiplier found in previous config");
+    throw logger.warn(context.event, "No multiplier found in previous config");
   }
 
   const previousBaseRate = previousConfigParsed.payments.basePriceMultiplier;
 
   if (!previousBaseRate) {
-    throw logger.warn("No base rate found in previous config");
+    throw logger.warn(context.event, "No base rate found in previous config");
   }
 
   // fetch all labels
   const repoLabels = await listLabelsForRepo(context);
 
   if (repoLabels.length === 0) {
-    throw logger.warn("No labels on this repo");
+    throw logger.warn(context.event, "No labels on this repo");
   }
 
   return await updateLabelsFromBaseRate(context, owner, repo, repoLabels as Label[], previousBaseRate);

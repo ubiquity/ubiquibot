@@ -1,5 +1,5 @@
 import Runtime from "../../../../bindings/bot-runtime";
-import { Payload } from "../../../../types";
+import { Context, Payload } from "../../../../types";
 
 const options: Intl.DateTimeFormatOptions = {
   weekday: "short",
@@ -11,7 +11,7 @@ const options: Intl.DateTimeFormatOptions = {
   timeZoneName: "short",
 };
 
-export async function generateAssignmentComment(payload: Payload, duration: number | null = null) {
+export async function generateAssignmentComment(context: Context, payload: Payload, duration: number | null = null) {
   const runtime = Runtime.getState();
   const startTime = new Date().getTime();
   let endTime: null | Date = null;
@@ -24,7 +24,7 @@ export async function generateAssignmentComment(payload: Payload, duration: numb
   const issueCreationTime = payload.issue?.created_at;
   if (!issueCreationTime) {
     const logger = Runtime.getState().logger;
-    throw logger.error("Issue creation time is not defined");
+    throw logger.error(context.event, "Issue creation time is not defined");
   }
 
   return {

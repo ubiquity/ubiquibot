@@ -10,12 +10,12 @@ export async function createDevPoolPR(context: Context) {
   const devPoolRepo = "devpool-directory";
 
   if (!payload.repositories_added) {
-    return logger.info("No repositories added");
+    return logger.info(context.event, "No repositories added");
   }
 
   const repository = payload.repositories_added[0];
 
-  logger.info("New Install: ", { repository: repository.full_name });
+  logger.info(context.event, "New Install: ", { repository: repository.full_name });
 
   const [owner, repo] = repository.full_name.split("/");
 
@@ -58,7 +58,7 @@ export async function createDevPoolPR(context: Context) {
     sha: mainSha,
   });
 
-  logger.info("Branch created on DevPool Directory");
+  logger.info(context.event, "Branch created on DevPool Directory");
 
   await context.event.octokit.repos.createOrUpdateFileContents({
     owner: devPoolOwner,
@@ -79,5 +79,5 @@ export async function createDevPoolPR(context: Context) {
     base: baseRef,
   });
 
-  return logger.info("Pull request created on DevPool Directory");
+  return logger.info(context.event, "Pull request created on DevPool Directory");
 }

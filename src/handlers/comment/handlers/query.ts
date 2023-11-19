@@ -8,24 +8,24 @@ export async function query(context: Context, body: string) {
     payload = context.event.payload as Payload,
     sender = payload.sender.login;
 
-  logger.info("Running '/query' command handler", { sender });
+  logger.info(context.event, "Running '/query' command handler", { sender });
 
   const issue = payload.issue;
-  if (!issue) return logger.info(`Skipping '/query' because of no issue instance`);
+  if (!issue) return logger.info(context.event, `Skipping '/query' because of no issue instance`);
 
   const regex = /^\/query\s+@([\w-]+)\s*$/;
   const matches = body.match(regex);
   const username = matches?.[1];
 
   if (!username) {
-    throw logger.error("Invalid body for query command \n usage /query @user");
+    throw logger.error(context.event, "Invalid body for query command \n usage /query @user");
   }
 
   const database = runtime.adapters.supabase;
   const usernameResponse = await context.event.octokit.users.getByUsername({ username });
   const user = usernameResponse.data;
   if (!user) {
-    throw logger.error("User not found", { username });
+    throw logger.error(context.event, "User not found", { username });
   }
   const accessData = await database.access.getAccess(user.id);
   const walletAddress = await database.wallet.getAddress(user.id);
@@ -34,7 +34,7 @@ export async function query(context: Context, body: string) {
   messageBuffer.push(renderMarkdownTableHeader());
 
   if (!accessData && !walletAddress) {
-    return logger.warn("No access or wallet found for user", { username });
+    return logger.warn(context.event, "No access or wallet found for user", { username });
   }
   if (accessData) {
     messageBuffer.push(appendToMarkdownTableBody(accessData));

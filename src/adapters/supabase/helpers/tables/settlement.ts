@@ -3,7 +3,6 @@ import Decimal from "decimal.js";
 import { Comment, Payload } from "../../../../types/payload";
 import { Database } from "../../types/database";
 import { Super } from "./super";
-import { Context as ProbotContext } from "probot";
 
 type DebitInsert = Database["public"]["Tables"]["debits"]["Insert"];
 type CreditInsert = Database["public"]["Tables"]["credits"]["Insert"];
@@ -26,8 +25,8 @@ type AddCreditWithPermit = {
 };
 
 export class Settlement extends Super {
-  constructor(supabase: SupabaseClient, context: ProbotContext) {
-    super(supabase, context);
+  constructor(supabase: SupabaseClient) {
+    super(supabase);
   }
 
   private async _lookupTokenId(networkId: number, address: string): Promise<number> {

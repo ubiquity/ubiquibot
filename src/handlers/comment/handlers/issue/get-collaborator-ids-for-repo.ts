@@ -26,7 +26,7 @@ export async function getCollaboratorsForRepo(context: Context): Promise<User[]>
       }
     }
   } catch (e: unknown) {
-    runtime.logger.error("Fetching collaborator IDs for repo failed!", e);
+    runtime.logger.error(context.event, "Fetching collaborator IDs for repo failed!", e);
   }
 
   return collaboratorUsers;

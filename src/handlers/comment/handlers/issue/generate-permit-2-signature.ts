@@ -16,26 +16,26 @@ export async function generatePermit2Signature(
     payments: { evmNetworkId },
     keys: { evmPrivateEncrypted },
   } = context.config;
-  if (!evmPrivateEncrypted) throw runtime.logger.warn("No bot wallet private key defined");
+  if (!evmPrivateEncrypted) throw runtime.logger.warn(context.event, "No bot wallet private key defined");
   const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
   const { privateKey } = await decryptKeys(evmPrivateEncrypted);
 
-  if (!rpc) throw runtime.logger.error("RPC is not defined");
-  if (!privateKey) throw runtime.logger.error("Private key is not defined");
-  if (!paymentToken) throw runtime.logger.error("Payment token is not defined");
+  if (!rpc) throw runtime.logger.error(context.event, "RPC is not defined");
+  if (!privateKey) throw runtime.logger.error(context.event, "Private key is not defined");
+  if (!paymentToken) throw runtime.logger.error(context.event, "Payment token is not defined");
 
   let provider;
   let adminWallet;
   try {
     provider = new ethers.providers.JsonRpcProvider(rpc);
   } catch (error) {
-    throw runtime.logger.debug("Failed to instantiate provider", error);
+    throw runtime.logger.debug(context.event, "Failed to instantiate provider", error);
   }
 
   try {
     adminWallet = new ethers.Wallet(privateKey, provider);
   } catch (error) {
-    throw runtime.logger.debug("Failed to instantiate wallet", error);
+    throw runtime.logger.debug(context.event, "Failed to instantiate wallet", error);
   }
 
   const permitTransferFromData: PermitTransferFrom = {
@@ -55,7 +55,7 @@ export async function generatePermit2Signature(
   );
 
   const signature = await adminWallet._signTypedData(domain, types, values).catch((error) => {
-    throw runtime.logger.debug("Failed to sign typed data", error);
+    throw runtime.logger.debug(context.event, "Failed to sign typed data", error);
   });
 
   const transactionData: TransactionData = {
@@ -89,7 +89,7 @@ export async function generatePermit2Signature(
   url.searchParams.append("claim", base64encodedTxData);
   url.searchParams.append("network", evmNetworkId.toString());
 
-  runtime.logger.info("Generated permit2 signature", { transactionData, url: url.toString() });
+  runtime.logger.info(context.event, "Generated permit2 signature", { transactionData, url: url.toString() });
 
   return { transactionData, url };
 }

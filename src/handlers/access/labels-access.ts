@@ -28,17 +28,17 @@ export async function labelAccessPermissionsCheck(context: Context) {
   const labelType = match[0].toLowerCase();
 
   if (sufficientPrivileges) {
-    logger.info("Admin and billing managers have full control over all labels", {
+    logger.info(context.event, "Admin and billing managers have full control over all labels", {
       repo: repo.full_name,
       user: sender,
       labelType,
     });
     return true;
   } else {
-    logger.info("Checking access for labels", { repo: repo.full_name, user: sender, labelType });
+    logger.info(context.event, "Checking access for labels", { repo: repo.full_name, user: sender, labelType });
     // check permission
     const { access, user } = runtime.adapters.supabase;
-    const userId = await user.getUserId(sender);
+    const userId = await user.getUserId(context.event, sender);
     const accessible = await access.getAccess(userId);
     if (accessible) {
       return true;
@@ -58,7 +58,7 @@ export async function labelAccessPermissionsCheck(context: Context) {
       `@${sender}, You are not allowed to ${eventName} ${labelName}`,
       payload.issue.number
     );
-    logger.info("No access to edit label", { sender, label: labelName });
+    logger.info(context.event, "No access to edit label", { sender, label: labelName });
     return false;
   }
 }

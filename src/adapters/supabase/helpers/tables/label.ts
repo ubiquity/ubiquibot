@@ -2,14 +2,13 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Repository } from "../../../../types/payload";
 import { Database } from "../../types";
 import { Super } from "./super";
-import { Context as ProbotContext } from "probot";
 import Runtime from "../../../../bindings/bot-runtime";
 
 type LabelRow = Database["public"]["Tables"]["labels"]["Row"];
 
 export class Label extends Super {
-  constructor(supabase: SupabaseClient, context: ProbotContext) {
-    super(supabase, context);
+  constructor(supabase: SupabaseClient) {
+    super(supabase);
   }
 
   async saveLabelChange({
@@ -75,7 +74,7 @@ export class Label extends Super {
 
     if (locationError) throw new Error(locationError.message);
     if (!locationData) {
-      runtime.logger.warn("Repository location ID not found in database.");
+      runtime.logger.warn(null, "Repository location ID not found in database.");
       return null;
     }
 

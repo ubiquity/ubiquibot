@@ -63,7 +63,7 @@ export async function getPreviousFileContent(
     }
     return null;
   } catch (error: unknown) {
-    logger.debug("Error retrieving previous file content.", { error });
+    logger.debug(context.event, "Error retrieving previous file content.", { error });
     return null;
   }
 }
@@ -122,7 +122,7 @@ export async function getFileContent(
     }
     return null;
   } catch (error: unknown) {
-    logger.debug("Error retrieving file content.", { error });
+    logger.debug(context, "Error retrieving file content.", { error });
     return null;
   }
 }

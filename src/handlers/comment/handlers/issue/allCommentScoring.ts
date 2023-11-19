@@ -26,7 +26,7 @@ export async function allCommentScoring({
       const selection = usersByClass[contributionStyle as keyof typeof usersByClass];
 
       if (!selection) {
-        Runtime.getState().logger.verbose(`No ${String(contributionStyle)} found`);
+        Runtime.getState().logger.verbose(context.event, `No ${String(contributionStyle)} found`);
         return [];
       }
 
@@ -38,6 +38,7 @@ export async function allCommentScoring({
           return [];
         }
         perUserCommentScoring(
+          context,
           user,
           commentsOfRole.filter((comment) => comment.user.id === user.id),
           scoring

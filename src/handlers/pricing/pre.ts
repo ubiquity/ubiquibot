@@ -16,7 +16,7 @@ export async function syncPriceLabelsToConfig(context: Context) {
   } = config;
 
   if (!assistivePricing) {
-    logger.info(`Assistive pricing is disabled`);
+    logger.info(context.event, `Assistive pricing is disabled`);
     return;
   }
 
@@ -44,8 +44,8 @@ export async function syncPriceLabelsToConfig(context: Context) {
 
   // Create missing labels
   if (missingLabels.length > 0) {
-    logger.info("Missing labels found, creating them", { missingLabels });
+    logger.info(context.event, "Missing labels found, creating them", { missingLabels });
     await Promise.all(missingLabels.map((label) => createLabel(context, label)));
-    logger.info(`Creating missing labels done`);
+    logger.info(context.event, `Creating missing labels done`);
   }
 }

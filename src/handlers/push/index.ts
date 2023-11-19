@@ -29,7 +29,7 @@ export async function validateConfigChange(context: ProbotContext) {
   const payload = context.payload as PushPayload;
 
   if (!payload.ref.startsWith("refs/heads/")) {
-    logger.debug("Skipping push events, not a branch");
+    logger.debug(context, "Skipping push events, not a branch");
     return;
   }
 
@@ -37,7 +37,7 @@ export async function validateConfigChange(context: ProbotContext) {
 
   // skip if empty
   if (changes && changes.length === 0) {
-    logger.debug("Skipping push events, file change empty 3");
+    logger.debug(context, "Skipping push events, file change empty 3");
     return;
   }
 
@@ -47,7 +47,7 @@ export async function validateConfigChange(context: ProbotContext) {
       .filter((commit) => commit.modified.includes(BASE_RATE_FILE) || commit.added.includes(BASE_RATE_FILE))
       .reverse()[0]?.id;
     if (!commitSha) {
-      logger.debug("Skipping push events, commit sha not found");
+      logger.debug(context, "Skipping push events, commit sha not found");
       return;
     }
 
@@ -82,14 +82,14 @@ export async function validateConfigChange(context: ProbotContext) {
       }
 
       if (errorMsg) {
-        logger.info("Config validation failed!", errorMsg);
+        logger.info(context, "Config validation failed!", errorMsg);
         await createCommitComment(context, errorMsg, commitSha, BASE_RATE_FILE);
       } else {
-        logger.debug(`Config validation passed!`);
+        logger.debug(context, `Config validation passed!`);
       }
     }
   } else {
-    logger.debug(`Skipping push events, file change doesn't include config file: ${JSON.stringify(changes)}`);
+    logger.debug(context, `Skipping push events, file change doesn't include config file: ${JSON.stringify(changes)}`);
   }
 }
 

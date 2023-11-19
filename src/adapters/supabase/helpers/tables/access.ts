@@ -4,7 +4,6 @@ import { Database } from "../../types/database";
 import { GitHubNode } from "../client";
 import { Super } from "./super";
 import { UserRow } from "./user";
-import { Context as ProbotContext } from "probot";
 type AccessRow = Database["public"]["Tables"]["access"]["Row"];
 type AccessInsert = Database["public"]["Tables"]["access"]["Insert"];
 type UserWithAccess = (UserRow & { access: AccessRow | null })[];
@@ -19,15 +18,15 @@ type _Access = {
 };
 
 export class Access extends Super {
-  constructor(supabase: SupabaseClient, context: ProbotContext) {
-    super(supabase, context);
+  constructor(supabase: SupabaseClient) {
+    super(supabase);
   }
 
   private async _getUserWithAccess(id: number): Promise<UserWithAccess> {
     const { data, error } = await this.supabase.from("access").select("*, users(*)").filter("id", "eq", id);
 
     if (error) {
-      this.runtime.logger.error(error.message, error);
+      this.runtime.logger.error(null, error.message, error);
       throw new Error(error.message);
     }
     return data;
@@ -36,7 +35,7 @@ export class Access extends Super {
   public async getAccess(id: number): Promise<AccessRow | null> {
     const userWithAccess = await this._getUserWithAccess(id);
     if (userWithAccess[0]?.access === undefined) {
-      this.runtime.logger.debug("Access is undefined");
+      this.runtime.logger.debug(null, "Access is undefined");
       return null;
     }
     if (userWithAccess[0]?.access === null) throw new Error("Access is null");

@@ -7,6 +7,7 @@ import Runtime from "../../../../bindings/bot-runtime";
 import { Comment } from "../../../../types/payload";
 import { ContributorClassesKeys } from "./contribution-style-types";
 import { FormatScoreConfig, FormatScoreConfigParams } from "./element-score-config";
+import { Context } from "../../../../types";
 
 export type Tags = keyof HTMLElementTagNameMap;
 
@@ -188,7 +189,7 @@ export class CommentScoring {
     return wordCount;
   }
 
-  public computeElementScore(comment: Comment, userId: number) {
+  public computeElementScore(context: Context, comment: Comment, userId: number) {
     const htmlString = this._getRenderedCommentBody(comment);
     const formatStatistics = _.mapValues(_.cloneDeep(this._formatConfig), () => ({
       count: 0,
@@ -215,7 +216,7 @@ export class CommentScoring {
       }
     }
 
-    this._initialize(comment, userId);
+    this._initialize(context, comment, userId);
     // Store the element score for the comment
     this.commentScores[userId].details[comment.id].formatScoreComment = totalElementScore;
     this.commentScores[userId].details[comment.id].formatScoreCommentDetails = formatStatistics;
@@ -223,9 +224,9 @@ export class CommentScoring {
     return htmlString;
   }
 
-  private _initialize(comment: Comment, userId: number) {
+  private _initialize(context: Context, comment: Comment, userId: number) {
     if (!this.commentScores[userId]) {
-      Runtime.getState().logger.debug("good thing we initialized, was unsure if necessary");
+      Runtime.getState().logger.debug(context.event, "good thing we initialized, was unsure if necessary");
       const initialCommentScoreValue = {
         totalScoreTotal: ZERO,
         wordScoreTotal: ZERO,
@@ -235,7 +236,7 @@ export class CommentScoring {
       this.commentScores[userId] = { ...initialCommentScoreValue };
     }
     if (!this.commentScores[userId].details[comment.id]) {
-      Runtime.getState().logger.debug("good thing we initialized, was unsure if necessary");
+      Runtime.getState().logger.debug(context.event, "good thing we initialized, was unsure if necessary");
       this.commentScores[userId].details[comment.id] = {
         totalScoreComment: ZERO,
         relevanceScoreComment: ZERO,
@@ -248,11 +249,11 @@ export class CommentScoring {
     }
   }
 
-  public computeWordScore(comment: Comment, userId: number) {
+  public computeWordScore(context: Context, comment: Comment, userId: number) {
     const words = this._getWordsNotInDisabledElements(comment);
     const wordScoreDetails = this._calculateWordScores(words);
 
-    this._initialize(comment, userId);
+    this._initialize(context, comment, userId);
     this.commentScores[userId].details[comment.id].comment = comment;
     this.commentScores[userId].details[comment.id].wordScoreComment = this._calculateWordScoresTotals(wordScoreDetails);
     this.commentScores[userId].details[comment.id].wordScoreCommentDetails = wordScoreDetails;

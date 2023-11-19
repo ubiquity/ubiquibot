@@ -102,7 +102,7 @@ async function sampleRelevanceScores(
       issue,
       maxConcurrency: BATCH_SIZE,
     });
-    const filteredSamples = filterSamples(fetchedSamples, correctLength);
+    const filteredSamples = filterSamples(context, fetchedSamples, correctLength);
     const averagedSample = averageSamples(filteredSamples, 10);
     batchSamples.push(averagedSample);
   }
@@ -132,10 +132,10 @@ interface InEachRequestParams {
   maxConcurrency: number;
 }
 
-function filterSamples(batchResults: number[][], correctLength: number) {
+function filterSamples(context: Context, batchResults: number[][], correctLength: number) {
   return batchResults.filter((result) => {
     if (result.length != correctLength) {
-      Runtime.getState().logger.error("Correct length is not defined", {
+      Runtime.getState().logger.error(context.event, "Correct length is not defined", {
         batchResultsLength: batchResults.length,
         result,
       });

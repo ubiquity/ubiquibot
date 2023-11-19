@@ -49,10 +49,10 @@ async function getEssentials(context: Context) {
   const issue = payload.issue as Issue;
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  if (!issue) throw runtime.logger.error("Issue is not defined");
+  if (!issue) throw runtime.logger.error(context.event, "Issue is not defined");
   const issueComments = await getAllIssueComments(context, issue.number);
   const owner = payload?.organization?.login || payload.repository.owner.login;
-  if (!owner) throw logger.error("Owner is not defined");
+  if (!owner) throw logger.error(context.event, "Owner is not defined");
   const repository = payload?.repository?.name;
   const issueNumber = issue.number;
   return { issue, runtime, logger, issueComments, owner, repository, issueNumber };
@@ -68,25 +68,30 @@ interface PreflightChecksParams {
   context: Context;
 }
 async function preflightChecks({ issue, logger, issueComments, config, payload, context }: PreflightChecksParams) {
-  if (!issue) throw logger.error("Permit generation skipped because issue is undefined");
+  if (!issue) throw logger.error(context.event, "Permit generation skipped because issue is undefined");
   if (issue.state_reason !== StateReason.COMPLETED)
-    throw logger.info("Issue was not closed as completed. Skipping.", { issue });
+    throw logger.info(context.event, "Issue was not closed as completed. Skipping.", { issue });
   if (config.features.publicAccessControl.fundExternalClosedIssue) {
     const userHasPermission = await checkUserPermissionForRepoAndOrg(context, payload.sender.login);
     if (!userHasPermission)
-      throw logger.warn("Permit generation disabled because this issue has been closed by an external contributor.");
+      throw logger.warn(
+        context.event,
+        "Permit generation disabled because this issue has been closed by an external contributor."
+      );
   }
 
   const priceLabels = issue.labels.find((label) => label.name.startsWith("Price: "));
   if (!priceLabels) {
-    throw logger.warn("No price label has been set. Skipping permit generation.", { labels: issue.labels });
+    throw logger.warn(context.event, "No price label has been set. Skipping permit generation.", {
+      labels: issue.labels,
+    });
   }
 
   const botComments = issueComments.filter(botCommentsFilter);
-  checkIfPermitsAlreadyPosted(botComments, logger);
+  checkIfPermitsAlreadyPosted(context, botComments, logger);
 }
 
-function checkIfPermitsAlreadyPosted(botComments: Comment[], logger: Logs) {
+function checkIfPermitsAlreadyPosted(context: Context, botComments: Comment[], logger: Logs) {
   botComments.forEach((comment) => {
     const parsed = structuredMetadata.parse(comment.body);
     if (parsed) {
@@ -94,7 +99,7 @@ function checkIfPermitsAlreadyPosted(botComments: Comment[], logger: Logs) {
       if (parsed.caller === "generatePermits") {
         // in the comment metadata we store what function rendered the comment
         console.trace({ parsed });
-        throw logger.warn("Permit already posted");
+        throw logger.warn(context.event, "Permit already posted");
       }
     }
   });

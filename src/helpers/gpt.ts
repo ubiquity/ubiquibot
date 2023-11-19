@@ -77,7 +77,7 @@ export async function decideContextGPT(
   const commentsRaw = await getAllIssueComments(context, issue.number, "raw");
 
   if (!comments) {
-    logger.info(`Error getting issue comments`);
+    logger.info(context.event, `Error getting issue comments`);
     return `Error getting issue comments`;
   }
 
@@ -101,7 +101,7 @@ export async function decideContextGPT(
   const links = await getAllLinkedIssuesAndPullsInBody(context, issue.number);
 
   if (typeof links === "string") {
-    return logger.info("Error getting linked issues or prs: ", { links });
+    return logger.info(context.event, "Error getting linked issues or prs: ", { links });
   }
 
   linkedIssueStreamlined = links.linkedIssues;
@@ -140,6 +140,7 @@ export async function askGPT(context: Context, chatHistory: CreateChatCompletion
 
   if (!keys.openAi) {
     throw logger.error(
+      context.event,
       "You must configure the `openai-api-key` property in the bot configuration in order to use AI powered features."
     );
   }
@@ -164,7 +165,7 @@ export async function askGPT(context: Context, chatHistory: CreateChatCompletion
   };
 
   if (!res) {
-    throw logger.error("Error getting GPT response", { res });
+    throw logger.error(context.event, "Error getting GPT response", { res });
   }
 
   return { answer, tokenUsage };

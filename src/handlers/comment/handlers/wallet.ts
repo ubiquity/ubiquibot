@@ -30,38 +30,39 @@ export async function registerWallet(context: Context, body: string) {
   const ensName = extractEnsName(body.replace("/wallet", "").trim());
 
   if (!address && ensName) {
-    logger.info("Trying to resolve address from ENS name", { ensName });
+    logger.info(context.event, "Trying to resolve address from ENS name", { ensName });
     address = await resolveAddress(ensName);
     if (!address) {
-      throw logger.error("Resolving address from ENS name failed", { ensName });
+      throw logger.error(context.event, "Resolving address from ENS name failed", { ensName });
     }
-    logger.ok("Resolved address from ENS name", { ensName, address });
+    logger.ok(context.event, "Resolved address from ENS name", { ensName, address });
   }
 
   if (!address) {
-    return logger.info("Skipping to register a wallet address because both address/ens doesn't exist");
+    return logger.info(context.event, "Skipping to register a wallet address because both address/ens doesn't exist");
   }
 
   if (config.miscellaneous.registerWalletWithVerification) {
-    _registerWalletWithVerification(body, address, logger);
+    _registerWalletWithVerification(context, body, address, logger);
   }
 
   if (address == constants.AddressZero) {
     return logger.warn(
+      context.event,
       "Skipping to register a wallet address because user is trying to set their address to null address"
     );
   }
 
   if (payload.comment) {
     const { wallet } = runtime.adapters.supabase;
-    await wallet.upsertWalletAddress(address);
-    return logger.ok("Successfully registered wallet address", { sender, address });
+    await wallet.upsertWalletAddress(context.event, address);
+    return logger.ok(context.event, "Successfully registered wallet address", { sender, address });
   } else {
     throw new Error("Payload comment is undefined");
   }
 }
 
-function _registerWalletWithVerification(body: string, address: string, logger: Logs) {
+function _registerWalletWithVerification(context: Context, body: string, address: string, logger: Logs) {
   const regexForSigHash = /(0x[a-fA-F0-9]{130})/g;
   const sigHashMatches = body.match(regexForSigHash);
   const sigHash = sigHashMatches ? sigHashMatches[0] : null;
@@ -72,10 +73,10 @@ function _registerWalletWithVerification(body: string, address: string, logger: 
     const isSigHashValid =
       sigHash && ethers.utils.verifyMessage(messageToSign, sigHash) == ethers.utils.getAddress(address);
     if (!isSigHashValid) {
-      throw logger.error(failedSigLogMsg);
+      throw logger.error(context.event, failedSigLogMsg);
     }
   } catch (e) {
-    logger.error("Exception thrown by verifyMessage for /wallet: ", e);
-    throw logger.error(failedSigLogMsg);
+    logger.error(context.event, "Exception thrown by verifyMessage for /wallet: ", e);
+    throw logger.error(context.event, failedSigLogMsg);
   }
 }
