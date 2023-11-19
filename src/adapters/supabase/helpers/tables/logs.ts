@@ -58,7 +58,7 @@ export class Logs extends Super {
     // - the comment to post on github (must include diff syntax)
     // - the comment to post on the console (must be colorized)
 
-    consoleLog(logMessage, metadata || null);
+    consoleLog(logMessage, metadata || undefined);
 
     if (context && postComment) {
       const colorizedCommentMessage = this._diffColorCommentMessage(type, logMessage);
