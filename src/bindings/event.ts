@@ -33,11 +33,11 @@ type AllHandlers = PreActionHandler | MainActionHandler | PostActionHandler;
 
 const validatePayload = ajv.compile(PayloadSchema);
 
-export async function bindEvents(eventContext: ProbotContext) {
-  const runtime = Runtime.getState();
-  runtime.adapters = createAdapters();
-  runtime.logger = runtime.adapters.supabase.logs;
+const runtime = Runtime.getState();
+runtime.adapters = createAdapters();
+runtime.logger = runtime.adapters.supabase.logs;
 
+export async function bindEvents(eventContext: ProbotContext) {
   const payload = eventContext.payload as Payload;
   const eventName = payload?.action ? `${eventContext.name}.${payload?.action}` : eventContext.name; // some events wont have actions as this grows
 

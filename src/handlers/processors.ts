@@ -19,8 +19,6 @@ import Runtime from "../bindings/bot-runtime";
  * TODO: all MUST receive `Context` as the only parameter
  */
 
-const runtime = Runtime.getState();
-
 export const processors: Record<string, Handler> = {
   [GitHubEvent.ISSUES_OPENED]: {
     pre: [],
@@ -29,7 +27,7 @@ export const processors: Record<string, Handler> = {
   },
   [GitHubEvent.ISSUES_REOPENED]: {
     pre: [],
-    action: [async () => runtime.logger.debug(null, "TODO: replace ISSUES_REOPENED handler")],
+    action: [async () => Runtime.getState().logger.debug(null, "TODO: replace ISSUES_REOPENED handler")],
     post: [],
   },
   [GitHubEvent.ISSUES_LABELED]: {
