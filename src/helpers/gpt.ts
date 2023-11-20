@@ -1,6 +1,5 @@
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
-import Runtime from "../bindings/bot-runtime";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../helpers";
 import { Context, Payload, StreamlinedComment, UserType } from "../types";
 
@@ -61,8 +60,7 @@ export async function decideContextGPT(
   linkedPRStreamlined: StreamlinedComment[],
   linkedIssueStreamlined: StreamlinedComment[]
 ) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const payload = context.event.payload as Payload;
   const issue = payload.issue;
@@ -77,7 +75,7 @@ export async function decideContextGPT(
   const commentsRaw = await getAllIssueComments(context, issue.number, "raw");
 
   if (!comments) {
-    logger.info(context.event, `Error getting issue comments`);
+    logger.info(`Error getting issue comments`);
     return `Error getting issue comments`;
   }
 
@@ -101,7 +99,7 @@ export async function decideContextGPT(
   const links = await getAllLinkedIssuesAndPullsInBody(context, issue.number);
 
   if (typeof links === "string") {
-    return logger.info(context.event, "Error getting linked issues or prs: ", { links });
+    return logger.info("Error getting linked issues or prs: ", { links });
   }
 
   linkedIssueStreamlined = links.linkedIssues;
@@ -133,14 +131,12 @@ export async function decideContextGPT(
 
 export async function askGPT(context: Context, chatHistory: CreateChatCompletionRequestMessage[]) {
   // base askGPT function
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const config = context.config;
   const { keys } = config;
 
   if (!keys.openAi) {
     throw logger.error(
-      context.event,
       "You must configure the `openai-api-key` property in the bot configuration in order to use AI powered features."
     );
   }
@@ -165,7 +161,7 @@ export async function askGPT(context: Context, chatHistory: CreateChatCompletion
   };
 
   if (!res) {
-    throw logger.error(context.event, "Error getting GPT response", { res });
+    throw context.logger.error("Error getting GPT response", { res });
   }
 
   return { answer, tokenUsage };

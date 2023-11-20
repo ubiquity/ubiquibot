@@ -27,7 +27,7 @@ export class Locations extends Super {
       .select("id")
       .eq("repository_id", repositoryId);
 
-    if (error) throw this.runtime.logger.error(null, "Error getting location data", new Error(error.message));
+    if (error) throw this.runtime.logger.error("Error getting location data", new Error(error.message));
     return locationData;
   }
 

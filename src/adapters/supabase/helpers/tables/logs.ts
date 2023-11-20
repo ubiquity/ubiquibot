@@ -10,12 +10,10 @@ import Runtime from "../../../../bindings/bot-runtime";
 import { LogLevel } from "../../../../types/logs";
 import { Database } from "../../types";
 import { prettyLogs } from "../pretty-logs";
-import { Super } from "./super";
 
 type LogFunction = (message: string, metadata?: any) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
 type _LogParams = {
-  context: ProbotContext | null;
   level: LogLevel;
   consoleLog: LogFunction;
   logMessage: string;
@@ -40,7 +38,10 @@ type PublicMethods<T> = Exclude<FunctionPropertyNames<T>, "constructor" | keyof 
 
 export type LogMessage = { raw: string; diff: string; level: LogLevel; type: PublicMethods<Logs> };
 
-export class Logs extends Super {
+export class Logs {
+  private supabase: SupabaseClient;
+  private context: ProbotContext | null = null;
+
   private maxLevel = -1;
   private environment = "development";
   private queue: LogInsert[] = []; // Your log queue
@@ -49,7 +50,7 @@ export class Logs extends Super {
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
 
-  private _log({ context, level, consoleLog, logMessage, metadata, postComment, type }: _LogParams): LogReturn | null {
+  private _log({ level, consoleLog, logMessage, metadata, postComment, type }: _LogParams): LogReturn | null {
     if (this._getNumericLevel(level) > this.maxLevel) return null; // filter out more verbose logs according to maxLevel set in config
 
     // needs to generate three versions of the information.
@@ -60,13 +61,10 @@ export class Logs extends Super {
 
     consoleLog(logMessage, metadata || undefined);
 
-    if (context && postComment) {
+    if (this.context && postComment) {
       const colorizedCommentMessage = this._diffColorCommentMessage(type, logMessage);
       const commentMetaData = metadata ? Logs._commentMetaData(metadata, level) : null;
-      this._postComment(
-        context,
-        metadata ? [colorizedCommentMessage, commentMetaData].join("\n") : colorizedCommentMessage
-      );
+      this._postComment(metadata ? [colorizedCommentMessage, commentMetaData].join("\n") : colorizedCommentMessage);
     }
 
     const toSupabase = { log: logMessage, level, metadata } as LogInsert;
@@ -112,10 +110,10 @@ export class Logs extends Super {
 
     return metadata;
   }
-  public ok(context: ProbotContext | null, log: string, metadata?: any, postComment?: boolean): LogReturn | null {
+
+  public ok(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
-      context,
       level: LogLevel.VERBOSE,
       consoleLog: prettyLogs.ok,
       logMessage: log,
@@ -125,10 +123,9 @@ export class Logs extends Super {
     });
   }
 
-  public info(context: ProbotContext | null, log: string, metadata?: any, postComment?: boolean): LogReturn | null {
+  public info(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
-      context,
       level: LogLevel.INFO,
       consoleLog: prettyLogs.info,
       logMessage: log,
@@ -138,10 +135,9 @@ export class Logs extends Super {
     });
   }
 
-  public warn(context: ProbotContext | null, log: string, metadata?: any, postComment?: boolean): LogReturn | null {
+  public warn(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
-      context,
       level: LogLevel.WARN,
       consoleLog: prettyLogs.warn,
       logMessage: log,
@@ -151,10 +147,9 @@ export class Logs extends Super {
     });
   }
 
-  public debug(context: ProbotContext | null, log: string, metadata?: any, postComment?: boolean): LogReturn | null {
+  public debug(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
-      context,
       level: LogLevel.DEBUG,
       consoleLog: prettyLogs.debug,
       logMessage: log,
@@ -164,7 +159,7 @@ export class Logs extends Super {
     });
   }
 
-  public error(context: ProbotContext | null, log: string, metadata?: any, postComment?: boolean): LogReturn | null {
+  public error(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     if (!metadata) {
       metadata = Logs.convertErrorsIntoObjects(new Error(log));
       const stack = metadata.stack as string[];
@@ -180,7 +175,6 @@ export class Logs extends Super {
 
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
-      context,
       level: LogLevel.ERROR,
       consoleLog: prettyLogs.error,
       logMessage: log,
@@ -190,10 +184,9 @@ export class Logs extends Super {
     });
   }
 
-  http(context: ProbotContext | null, log: string, metadata?: any, postComment?: boolean): LogReturn | null {
+  http(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
-      context,
       level: LogLevel.HTTP,
       consoleLog: prettyLogs.http,
       logMessage: log,
@@ -203,10 +196,9 @@ export class Logs extends Super {
     });
   }
 
-  verbose(context: ProbotContext | null, log: string, metadata?: any, postComment?: boolean): LogReturn | null {
+  verbose(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
-      context,
       level: LogLevel.VERBOSE,
       consoleLog: prettyLogs.verbose,
       logMessage: log,
@@ -216,10 +208,9 @@ export class Logs extends Super {
     });
   }
 
-  silly(context: ProbotContext | null, log: string, metadata?: any, postComment?: boolean): LogReturn | null {
+  silly(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
-      context,
       level: LogLevel.SILLY,
       consoleLog: prettyLogs.silly,
       logMessage: log,
@@ -229,9 +220,15 @@ export class Logs extends Super {
     });
   }
 
-  constructor(supabase: SupabaseClient, environment: string, retryLimit: number, logLevel: LogLevel) {
-    super(supabase);
-
+  constructor(
+    supabase: SupabaseClient,
+    context: ProbotContext | null,
+    environment: string,
+    retryLimit: number,
+    logLevel: LogLevel
+  ) {
+    this.supabase = supabase;
+    this.context = context;
     this.environment = environment;
     this.retryLimit = retryLimit;
     this.maxLevel = this._getNumericLevel(logLevel);
@@ -311,7 +308,7 @@ export class Logs extends Super {
   }
 
   static _commentMetaData(metadata: any, level: LogLevel) {
-    Runtime.getState().logger.debug(null, "the main place that metadata is being serialized as an html comment");
+    Runtime.getState().logger.debug("the main place that metadata is being serialized as an html comment");
     const prettySerialized = JSON.stringify(metadata, null, 2);
     // first check if metadata is an error, then post it as a json comment
     // otherwise post it as an html comment
@@ -366,13 +363,14 @@ export class Logs extends Super {
     return [diffHeader, message, diffFooter].join("\n");
   }
 
-  private _postComment(context: ProbotContext, message: string) {
+  private _postComment(message: string) {
     // post on issue
-    context.octokit.issues
+    if (!this.context) return;
+    this.context.octokit.issues
       .createComment({
-        owner: context.issue().owner,
-        repo: context.issue().repo,
-        issue_number: context.issue().issue_number,
+        owner: this.context.issue().owner,
+        repo: this.context.issue().repo,
+        issue_number: this.context.issue().issue_number,
         body: message,
       })
       // .then((x) => console.trace(x))

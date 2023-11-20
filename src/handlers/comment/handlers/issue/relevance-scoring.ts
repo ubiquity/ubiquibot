@@ -1,7 +1,6 @@
 import Decimal from "decimal.js";
 import { encodingForModel } from "js-tiktoken";
 import OpenAI from "openai";
-import Runtime from "../../../../bindings/bot-runtime";
 import { Context } from "../../../../types";
 import { Comment, Issue } from "../../../../types/payload";
 
@@ -135,7 +134,7 @@ interface InEachRequestParams {
 function filterSamples(context: Context, batchResults: number[][], correctLength: number) {
   return batchResults.filter((result) => {
     if (result.length != correctLength) {
-      Runtime.getState().logger.error(context.event, "Correct length is not defined", {
+      context.logger.error("Correct length is not defined", {
         batchResultsLength: batchResults.length,
         result,
       });

@@ -1,4 +1,3 @@
-import Runtime from "../bindings/bot-runtime";
 import { labelExists } from "../handlers/pricing/pricing-label";
 import { calculateTaskPrice } from "../handlers/shared/pricing";
 import { calculateLabelValue } from "../helpers";
@@ -10,7 +9,6 @@ const COLORS = { default: "ededed", price: "1f883d" };
 // cspell:enable
 
 export async function listLabelsForRepo(context: Context): Promise<Label[]> {
-  const runtime = Runtime.getState();
   const payload = context.event.payload as Payload;
 
   const res = await context.event.octokit.rest.issues.listLabelsForRepo({
@@ -24,7 +22,7 @@ export async function listLabelsForRepo(context: Context): Promise<Label[]> {
     return res.data;
   }
 
-  throw runtime.logger.error(context.event, "Failed to fetch lists of labels", { status: res.status });
+  throw context.logger.error("Failed to fetch lists of labels", { status: res.status });
 }
 
 export async function createLabel(
@@ -49,8 +47,7 @@ export async function updateLabelsFromBaseRate(
   labels: Label[],
   previousBaseRate: number
 ) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const config = context.config;
 
   const newLabels: string[] = [];
@@ -84,7 +81,7 @@ export async function updateLabelsFromBaseRate(
   const labelsFiltered: string[] = labels.map((obj) => obj["name"]);
   const usedLabels = uniquePreviousLabels.filter((value: string) => labelsFiltered.includes(value));
 
-  logger.debug(context.event, "Got used labels: ", { usedLabels });
+  logger.debug("Got used labels: ", { usedLabels });
 
   for (const label of usedLabels) {
     if (label.startsWith("Price: ")) {
@@ -94,7 +91,7 @@ export async function updateLabelsFromBaseRate(
       const exist = await labelExists(context, uniqueNewLabels[index]);
       if (exist) {
         // we have to delete first
-        logger.debug(context.event, "Label already exists, deleting it", { label });
+        logger.debug("Label already exists, deleting it", { label });
         await deleteLabel(context, uniqueNewLabels[index]);
       }
 
@@ -111,7 +108,7 @@ export async function updateLabelsFromBaseRate(
         },
       });
 
-      logger.debug(context.event, "Label updated", { label, to: uniqueNewLabels[index] });
+      logger.debug("Label updated", { label, to: uniqueNewLabels[index] });
     }
   }
 }

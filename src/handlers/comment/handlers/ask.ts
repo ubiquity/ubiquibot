@@ -1,4 +1,3 @@
-import Runtime from "../../../bindings/bot-runtime";
 import { Context, Payload, StreamlinedComment, UserType } from "../../../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
@@ -6,8 +5,7 @@ import { askGPT, decideContextGPT, sysMsg } from "../../../helpers/gpt";
 
 export async function ask(context: Context, body: string) {
   // The question to ask
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const payload = context.event.payload as Payload;
   const sender = payload.sender.login;
@@ -38,7 +36,7 @@ export async function ask(context: Context, body: string) {
     const commentsRaw = await getAllIssueComments(context, issue.number, "raw");
 
     if (!comments) {
-      throw logger.error(context.event, `Error getting issue comments`);
+      throw logger.error(`Error getting issue comments`);
     }
 
     // add the first comment of the issue/pull request
@@ -61,7 +59,7 @@ export async function ask(context: Context, body: string) {
     const links = await getAllLinkedIssuesAndPullsInBody(context, issue.number);
 
     if (typeof links === "string") {
-      logger.info(context.event, "Error getting linked issues or prs: ", links);
+      logger.info("Error getting linked issues or prs: ", links);
     } else {
       linkedIssueStreamlined = links.linkedIssues;
       linkedPRStreamlined = links.linkedPrs;
@@ -117,9 +115,9 @@ export async function ask(context: Context, body: string) {
     } else if (gptResponse.answer) {
       return gptResponse.answer;
     } else {
-      throw logger.error(context.event, "Error getting response from OpenAI");
+      throw logger.error("Error getting response from OpenAI");
     }
   } else {
-    return logger.warn(context.event, "Invalid syntax for ask. usage: '/ask What is pi?'");
+    return logger.warn("Invalid syntax for ask. usage: '/ask What is pi?'");
   }
 }

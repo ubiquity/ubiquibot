@@ -1,4 +1,3 @@
-import Runtime from "../../bindings/bot-runtime";
 import { calculateLabelValue, createLabel, listLabelsForRepo } from "../../helpers";
 import { Context } from "../../types";
 import { calculateTaskPrice } from "../shared/pricing";
@@ -7,16 +6,15 @@ import { calculateTaskPrice } from "../shared/pricing";
 // If there's something missing, they will be added
 
 export async function syncPriceLabelsToConfig(context: Context) {
-  const runtime = Runtime.getState();
   const config = context.config;
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const {
     features: { assistivePricing },
   } = config;
 
   if (!assistivePricing) {
-    logger.info(context.event, `Assistive pricing is disabled`);
+    logger.info(`Assistive pricing is disabled`);
     return;
   }
 
@@ -44,8 +42,8 @@ export async function syncPriceLabelsToConfig(context: Context) {
 
   // Create missing labels
   if (missingLabels.length > 0) {
-    logger.info(context.event, "Missing labels found, creating them", { missingLabels });
+    logger.info("Missing labels found, creating them", { missingLabels });
     await Promise.all(missingLabels.map((label) => createLabel(context, label)));
-    logger.info(context.event, `Creating missing labels done`);
+    logger.info(`Creating missing labels done`);
   }
 }

@@ -74,7 +74,7 @@ export class Label extends Super {
 
     if (locationError) throw new Error(locationError.message);
     if (!locationData) {
-      runtime.logger.warn(null, "Repository location ID not found in database.");
+      runtime.logger.warn("Repository location ID not found in database.");
       return null;
     }
 

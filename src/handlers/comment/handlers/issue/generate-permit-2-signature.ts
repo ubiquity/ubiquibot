@@ -2,7 +2,6 @@ import { MaxUint256, PERMIT2_ADDRESS, PermitTransferFrom, SignatureTransfer } fr
 import Decimal from "decimal.js";
 import { BigNumber, ethers } from "ethers";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
-import Runtime from "../../../../bindings/bot-runtime";
 import { Context } from "../../../../types";
 import { getPayoutConfigByNetworkId } from "../../../../helpers";
 import { decryptKeys } from "../../../../utils/private";
@@ -11,31 +10,32 @@ export async function generatePermit2Signature(
   context: Context,
   { beneficiary, amount, userId }: GeneratePermit2SignatureParams
 ) {
-  const runtime = Runtime.getState();
+  const logger = context.logger;
   const {
     payments: { evmNetworkId },
     keys: { evmPrivateEncrypted },
   } = context.config;
-  if (!evmPrivateEncrypted) throw runtime.logger.warn(context.event, "No bot wallet private key defined");
+
+  if (!evmPrivateEncrypted) throw logger.warn("No bot wallet private key defined");
   const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
   const { privateKey } = await decryptKeys(evmPrivateEncrypted);
 
-  if (!rpc) throw runtime.logger.error(context.event, "RPC is not defined");
-  if (!privateKey) throw runtime.logger.error(context.event, "Private key is not defined");
-  if (!paymentToken) throw runtime.logger.error(context.event, "Payment token is not defined");
+  if (!rpc) throw logger.error("RPC is not defined");
+  if (!privateKey) throw logger.error("Private key is not defined");
+  if (!paymentToken) throw logger.error("Payment token is not defined");
 
   let provider;
   let adminWallet;
   try {
     provider = new ethers.providers.JsonRpcProvider(rpc);
   } catch (error) {
-    throw runtime.logger.debug(context.event, "Failed to instantiate provider", error);
+    throw logger.debug("Failed to instantiate provider", error);
   }
 
   try {
     adminWallet = new ethers.Wallet(privateKey, provider);
   } catch (error) {
-    throw runtime.logger.debug(context.event, "Failed to instantiate wallet", error);
+    throw logger.debug("Failed to instantiate wallet", error);
   }
 
   const permitTransferFromData: PermitTransferFrom = {
@@ -55,7 +55,7 @@ export async function generatePermit2Signature(
   );
 
   const signature = await adminWallet._signTypedData(domain, types, values).catch((error) => {
-    throw runtime.logger.debug(context.event, "Failed to sign typed data", error);
+    throw logger.debug("Failed to sign typed data", error);
   });
 
   const transactionData: TransactionData = {
@@ -89,7 +89,7 @@ export async function generatePermit2Signature(
   url.searchParams.append("claim", base64encodedTxData);
   url.searchParams.append("network", evmNetworkId.toString());
 
-  runtime.logger.info(context.event, "Generated permit2 signature", { transactionData, url: url.toString() });
+  logger.info("Generated permit2 signature", { transactionData, url: url.toString() });
 
   return { transactionData, url };
 }

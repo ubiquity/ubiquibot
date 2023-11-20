@@ -1,21 +1,19 @@
-import Runtime from "../../bindings/bot-runtime";
 import { Context, GithubContent, Payload } from "../../types";
 
 export async function createDevPoolPR(context: Context) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const payload = context.event.payload as Payload;
   const devPoolOwner = "ubiquity";
   const devPoolRepo = "devpool-directory";
 
   if (!payload.repositories_added) {
-    return logger.info(context.event, "No repositories added");
+    return logger.info("No repositories added");
   }
 
   const repository = payload.repositories_added[0];
 
-  logger.info(context.event, "New Install: ", { repository: repository.full_name });
+  logger.info("New Install: ", { repository: repository.full_name });
 
   const [owner, repo] = repository.full_name.split("/");
 
@@ -58,7 +56,7 @@ export async function createDevPoolPR(context: Context) {
     sha: mainSha,
   });
 
-  logger.info(context.event, "Branch created on DevPool Directory");
+  logger.info("Branch created on DevPool Directory");
 
   await context.event.octokit.repos.createOrUpdateFileContents({
     owner: devPoolOwner,
@@ -79,5 +77,5 @@ export async function createDevPoolPR(context: Context) {
     base: baseRef,
   });
 
-  return logger.info(context.event, "Pull request created on DevPool Directory");
+  return logger.info("Pull request created on DevPool Directory");
 }

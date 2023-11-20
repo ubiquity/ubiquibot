@@ -10,7 +10,9 @@ import { Wallet } from "./supabase/helpers/tables/wallet";
 import { Database } from "./supabase/types";
 import { env } from "../bindings/env";
 
-const supabaseClient = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_KEY, { auth: { persistSession: false } });
+export const supabaseClient = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_KEY, {
+  auth: { persistSession: false },
+});
 
 export function createAdapters() {
   return {
@@ -21,7 +23,7 @@ export function createAdapters() {
       debit: new Settlement(supabaseClient),
       settlement: new Settlement(supabaseClient),
       label: new Label(supabaseClient),
-      logs: new Logs(supabaseClient, env.LOG_ENVIRONMENT, env.LOG_RETRY_LIMIT, env.LOG_LEVEL),
+      logs: new Logs(supabaseClient, null, env.LOG_ENVIRONMENT, env.LOG_RETRY_LIMIT, env.LOG_LEVEL),
       locations: new Locations(supabaseClient),
       super: new Super(supabaseClient),
     },

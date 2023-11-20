@@ -3,19 +3,15 @@ import { isUserAdminOrBillingManager } from "../../../helpers";
 import { Context, Payload } from "../../../types";
 
 export async function setLabels(context: Context, body: string) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const payload = context.event.payload as Payload;
   const sender = payload.sender.login;
 
   const sufficientPrivileges = await isUserAdminOrBillingManager(context, sender);
   if (!sufficientPrivileges)
-    return logger.info(
-      context.event,
-      `You are not an admin and do not have the required permissions to access this function.`
-    ); // if sender is not admin, return
+    return logger.info(`You are not an admin and do not have the required permissions to access this function.`); // if sender is not admin, return
 
-  if (!payload.issue) return logger.info(context.event, `Skipping '/labels' because of no issue instance`);
+  if (!payload.issue) return context.logger.info(`Skipping '/labels' because of no issue instance`);
 
   if (body.startsWith("/labels")) {
     const { username, labels } = parseComment(body);
@@ -32,12 +28,11 @@ export async function setLabels(context: Context, body: string) {
     const userId = await user.getUserId(context.event, username);
     await access.setAccess(labels, nodeInfo, userId);
     if (!labels.length) {
-      return logger.ok(context.event, "Successfully cleared access", { username });
+      return context.logger.ok("Successfully cleared access", { username });
     }
-    return logger.ok(context.event, "Successfully set access", { username, labels });
+    return context.logger.ok("Successfully set access", { username, labels });
   } else {
     throw logger.error(
-      context.event,
       `Invalid syntax for allow \n usage: '/labels set-(access type) @user true|false' \n  ex-1 /labels set-multiplier @user false`
     );
   }

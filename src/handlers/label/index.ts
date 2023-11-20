@@ -3,21 +3,20 @@ import { hasLabelEditPermission } from "../../helpers";
 import { Context, Payload } from "../../types";
 
 export async function watchLabelChange(context: Context) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const payload = context.event.payload as Payload;
   const { label, changes, sender } = payload;
 
   const previousLabel = changes?.name?.from;
   if (!previousLabel) {
-    throw logger.error(context.event, "previous label name is undefined");
+    throw logger.error("previous label name is undefined");
   }
   const currentLabel = label?.name;
   const triggerUser = sender.login;
 
   if (!previousLabel || !currentLabel) {
-    return logger.debug(context.event, "No label name change.. skipping");
+    return logger.debug("No label name change.. skipping");
   }
 
   // check if user is authorized to make the change
@@ -31,5 +30,5 @@ export async function watchLabelChange(context: Context) {
     authorized: hasAccess,
     repository: payload.repository,
   });
-  return logger.debug(context.event, "label name change saved to db");
+  return logger.debug("label name change saved to db");
 }

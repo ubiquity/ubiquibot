@@ -8,7 +8,6 @@ import {
   UserType,
 } from "../types";
 import { checkRateLimitGit } from "../utils";
-import Runtime from "../bindings/bot-runtime";
 import { LogReturn } from "../adapters/supabase";
 import { Payload, Context } from "../types";
 
@@ -75,16 +74,14 @@ export async function clearAllPriceLabelsOnIssue(context: Context) {
     name: issuePrices[0].name,
   });
   // } catch (e: unknown) {
-  //   runtime.logger.debug(context.event, "Clearing all price labels failed!", e);
+  //   context.logger.debug("Clearing all price labels failed!", e);
   // }
 }
 
 export async function addLabelToIssue(context: Context, labelName: string) {
-  const runtime = Runtime.getState();
-
   const payload = context.event.payload as Payload;
   if (!payload.issue) {
-    throw runtime.logger.error(context.event, "Issue object is null");
+    throw context.logger.error("Issue object is null");
   }
 
   try {
@@ -95,7 +92,7 @@ export async function addLabelToIssue(context: Context, labelName: string) {
       labels: [labelName],
     });
   } catch (e: unknown) {
-    runtime.logger.debug(context.event, "Adding a label to issue failed!", e);
+    context.logger.debug("Adding a label to issue failed!", e);
   }
 }
 
@@ -147,7 +144,6 @@ export async function listAllIssuesAndPullsForRepo(context: Context, state: "ope
 
 export async function addCommentToIssue(context: Context, message: HandlerReturnValuesNoVoid, issueNumber: number) {
   let comment = message as string;
-  const runtime = Runtime.getState();
   if (message instanceof LogReturn) {
     comment = message.logMessage.diff;
     console.trace(
@@ -167,20 +163,18 @@ export async function addCommentToIssue(context: Context, message: HandlerReturn
       body: comment,
     });
   } catch (e: unknown) {
-    runtime.logger.error(context.event, "Adding a comment failed!", e);
+    context.logger.error("Adding a comment failed!", e);
   }
 }
 
 export async function upsertLastCommentToIssue(context: Context, issue_number: number, commentBody: string) {
-  const runtime = Runtime.getState();
-
   try {
     const comments = await getAllIssueComments(context, issue_number);
 
     if (comments.length > 0 && comments[comments.length - 1].body !== commentBody)
       await addCommentToIssue(context, commentBody, issue_number);
   } catch (e: unknown) {
-    runtime.logger.debug(context.event, "Upserting last comment failed!", e);
+    context.logger.debug("Upserting last comment failed!", e);
   }
 }
 
@@ -189,8 +183,6 @@ export async function getIssueDescription(
   issueNumber: number,
   format: "raw" | "html" | "text" = "raw"
 ): Promise<string> {
-  const runtime = Runtime.getState();
-
   const payload = context.event.payload as Payload;
   const response = await context.event.octokit.rest.issues.get({
     owner: payload.repository.owner.login,
@@ -212,7 +204,7 @@ export async function getIssueDescription(
   }
 
   if (!result) {
-    throw runtime.logger.error(context.event, "Issue description is empty");
+    throw context.logger.error("Issue description is empty");
   }
 
   return result;
@@ -300,8 +292,6 @@ export async function checkUserPermissionForRepoAndOrg(context: Context, usernam
 }
 
 async function checkUserPermissionForRepo(context: Context, username: string): Promise<boolean> {
-  const runtime = Runtime.getState();
-
   const payload = context.event.payload as Payload;
   try {
     const res = await context.event.octokit.rest.repos.checkCollaborator({
@@ -312,14 +302,12 @@ async function checkUserPermissionForRepo(context: Context, username: string): P
 
     return res.status === 204;
   } catch (e: unknown) {
-    runtime.logger.error(context.event, "Checking if user permisson for repo failed!", e);
+    context.logger.error("Checking if user permisson for repo failed!", e);
     return false;
   }
 }
 
 async function checkUserPermissionForOrg(context: Context, username: string): Promise<boolean> {
-  const runtime = Runtime.getState();
-
   const payload = context.event.payload as Payload;
   if (!payload.organization) return false;
 
@@ -331,7 +319,7 @@ async function checkUserPermissionForOrg(context: Context, username: string): Pr
     // skipping status check due to type error of checkMembershipForUser function of octokit
     return true;
   } catch (e: unknown) {
-    runtime.logger.error(context.event, "Checking if user permisson for org failed!", e);
+    context.logger.error("Checking if user permisson for org failed!", e);
     return false;
   }
 }
@@ -363,9 +351,7 @@ export async function isUserAdminOrBillingManager(
   }
 
   async function checkIfIsBillingManager() {
-    const runtime = Runtime.getState();
-
-    if (!payload.organization) throw runtime.logger.error(context.event, `No organization found in payload!`);
+    if (!payload.organization) throw context.logger.error(`No organization found in payload!`);
     const { data: membership } = await context.event.octokit.rest.orgs.getMembershipForUser({
       org: payload.organization.login,
       username: payload.repository.owner.login,
@@ -381,8 +367,6 @@ export async function isUserAdminOrBillingManager(
 }
 
 export async function addAssignees(context: Context, issue: number, assignees: string[]) {
-  const runtime = Runtime.getState();
-
   const payload = context.event.payload as Payload;
   try {
     await context.event.octokit.rest.issues.addAssignees({
@@ -392,13 +376,11 @@ export async function addAssignees(context: Context, issue: number, assignees: s
       assignees,
     });
   } catch (e: unknown) {
-    runtime.logger.debug(context.event, "Adding assignees failed!", e);
+    context.logger.debug("Adding assignees failed!", e);
   }
 }
 
 export async function deleteLabel(context: Context, label: string) {
-  const runtime = Runtime.getState();
-
   const payload = context.event.payload as Payload;
   try {
     const response = await context.event.octokit.rest.search.issuesAndPullRequests({
@@ -413,16 +395,14 @@ export async function deleteLabel(context: Context, label: string) {
       });
     }
   } catch (e: unknown) {
-    runtime.logger.debug(context.event, "Deleting label failed!", e);
+    context.logger.debug("Deleting label failed!", e);
   }
 }
 
 export async function removeLabel(context: Context, name: string) {
-  const runtime = Runtime.getState();
-
   const payload = context.event.payload as Payload;
   if (!payload.issue) {
-    runtime.logger.debug(context.event, "Invalid issue object");
+    context.logger.debug("Invalid issue object");
     return;
   }
 
@@ -434,7 +414,7 @@ export async function removeLabel(context: Context, name: string) {
       name: name,
     });
   } catch (e: unknown) {
-    runtime.logger.debug(context.event, "Removing label failed!", e);
+    context.logger.debug("Removing label failed!", e);
   }
 }
 
@@ -474,7 +454,6 @@ async function getPullRequests(
 }
 
 export async function closePullRequest(context: Context, pull_number: number) {
-  const runtime = Runtime.getState();
   const payload = context.event.payload as Payload;
   try {
     await context.event.octokit.rest.pulls.update({
@@ -484,7 +463,7 @@ export async function closePullRequest(context: Context, pull_number: number) {
       state: "closed",
     });
   } catch (e: unknown) {
-    runtime.logger.debug(context.event, "Closing pull requests failed!", e);
+    context.logger.debug("Closing pull requests failed!", e);
   }
 }
 
@@ -517,8 +496,6 @@ async function getPullRequestReviews(
   page: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ) {
-  const runtime = Runtime.getState();
-
   const payload = context.event.payload as Payload;
   try {
     const { data: reviews } = await context.event.octokit.rest.pulls.listReviews({
@@ -533,14 +510,12 @@ async function getPullRequestReviews(
     });
     return reviews;
   } catch (e: unknown) {
-    runtime.logger.debug(context.event, "Fetching pull request reviews failed!", e);
+    context.logger.debug("Fetching pull request reviews failed!", e);
     return [];
   }
 }
 
 export async function getReviewRequests(context: Context, pull_number: number, owner: string, repo: string) {
-  const runtime = Runtime.getState();
-
   try {
     const response = await context.event.octokit.pulls.listRequestedReviewers({
       owner: owner,
@@ -549,14 +524,12 @@ export async function getReviewRequests(context: Context, pull_number: number, o
     });
     return response.data;
   } catch (e: unknown) {
-    runtime.logger.error(context.event, "Could not get requested reviewers", e);
+    context.logger.error("Could not get requested reviewers", e);
     return null;
   }
 }
 // Get issues by issue number
 export async function getIssueByNumber(context: Context, issueNumber: number) {
-  const runtime = Runtime.getState();
-
   const payload = context.event.payload as Payload;
   try {
     const { data: issue } = await context.event.octokit.rest.issues.get({
@@ -566,7 +539,7 @@ export async function getIssueByNumber(context: Context, issueNumber: number) {
     });
     return issue;
   } catch (e: unknown) {
-    runtime.logger.debug(context.event, "Fetching issue failed!", e);
+    context.logger.debug("Fetching issue failed!", e);
     return;
   }
 }
@@ -659,17 +632,16 @@ export async function getAvailableOpenedPullRequests(context: Context, username:
 
 // Strips out all links from the body of an issue or pull request and fetches the conversational context from each linked issue or pull request
 export async function getAllLinkedIssuesAndPullsInBody(context: Context, issueNumber: number) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const issue = await getIssueByNumber(context, issueNumber);
 
   if (!issue) {
-    throw logger.error(context.event, "No issue found!", { issueNumber });
+    throw logger.error("No issue found!", { issueNumber });
   }
 
   if (!issue.body) {
-    throw logger.error(context.event, "No body found!", { issueNumber });
+    throw logger.error("No body found!", { issueNumber });
   }
 
   const body = issue.body;
@@ -698,7 +670,7 @@ export async function getAllLinkedIssuesAndPullsInBody(context: Context, issueNu
         }
       });
     } else {
-      runtime.logger.info(context.event, `No linked issues or prs found`);
+      logger.info(`No linked issues or prs found`);
     }
 
     if (linkedPrs.length > 0) {
@@ -756,7 +728,7 @@ export async function getAllLinkedIssuesAndPullsInBody(context: Context, issueNu
       linkedPrs: linkedPRStreamlined,
     };
   } else {
-    runtime.logger.info(context.event, `No matches found`);
+    logger.info(`No matches found`);
     return {
       linkedIssues: [],
       linkedPrs: [],

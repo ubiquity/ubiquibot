@@ -1,4 +1,3 @@
-import Runtime from "../../../../bindings/bot-runtime";
 import {
   addAssignees,
   calculateDurations,
@@ -15,8 +14,7 @@ import { getMultiplierInfoToDisplay } from "./get-multiplier-info-to-display";
 import { getTimeLabelsAssigned } from "./get-time-labels-assigned";
 
 export async function assign(context: Context, body: string) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const config = context.config;
   const payload = context.event.payload as Payload;
   const issue = payload.issue;
@@ -28,48 +26,46 @@ export async function assign(context: Context, body: string) {
 
   const startDisabled = disabledCommands.some((command) => command === "start");
 
-  logger.info(context.event, "Received '/start' command", { sender: payload.sender.login, body });
+  logger.info("Received '/start' command", { sender: payload.sender.login, body });
 
   if (!issue) {
-    throw logger.warn(context.event, `Skipping '/start' because of no issue instance`);
+    throw logger.warn(`Skipping '/start' because of no issue instance`);
   }
 
   if (startDisabled) {
-    throw logger.warn(context.event, "The `/assign` command is disabled for this repository.");
+    throw logger.warn("The `/assign` command is disabled for this repository.");
   }
 
   if (issue.body && isParentIssue(issue.body)) {
     throw logger.warn(
-      context.event,
       "Please select a child issue from the specification checklist to work on. The '/start' command is disabled on parent issues."
     );
   }
 
   const openedPullRequests = await getAvailableOpenedPullRequests(context, payload.sender.login);
   logger.info(
-    context.event,
     `Opened Pull Requests with approved reviews or with no reviews but over 24 hours have passed: ${JSON.stringify(
       openedPullRequests
     )}`
   );
 
   const assignedIssues = await getAssignedIssues(context, payload.sender.login);
-  logger.info(context.event, "Max issue allowed is", maxConcurrentTasks);
+  logger.info("Max issue allowed is", maxConcurrentTasks);
 
   // check for max and enforce max
   if (assignedIssues.length - openedPullRequests.length >= maxConcurrentTasks) {
-    throw logger.warn(context.event, "Too many assigned issues, you have reached your max limit", {
+    throw logger.warn("Too many assigned issues, you have reached your max limit", {
       maxConcurrentTasks,
     });
   }
 
   if (issue.state == IssueType.CLOSED) {
-    throw logger.warn(context.event, "Skipping '/start' since the issue is closed");
+    throw logger.warn("Skipping '/start' since the issue is closed");
   }
   const assignees: User[] = (payload.issue?.assignees ?? []).filter(Boolean) as User[];
 
   if (assignees.length !== 0) {
-    throw logger.warn(context.event, "Skipping '/start' since the issue is already assigned");
+    throw logger.warn("Skipping '/start' since the issue is already assigned");
   }
 
   // ==== preamble checks completed ==== //
@@ -79,11 +75,7 @@ export async function assign(context: Context, body: string) {
 
   let duration: number | null = null;
   if (!priceLabel) {
-    throw logger.warn(
-      context.event,
-      "No price label is set, so this is not ready to be self assigned yet.",
-      priceLabel
-    );
+    throw logger.warn("No price label is set, so this is not ready to be self assigned yet.", priceLabel);
   } else {
     const timeLabelsAssigned = getTimeLabelsAssigned(context, payload, config);
     if (timeLabelsAssigned) {
@@ -95,14 +87,14 @@ export async function assign(context: Context, body: string) {
   const metadata = structuredMetadata.create("Assignment", { duration, priceLabel });
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
-    logger.info(context.event, "Adding the assignee", { assignee: payload.sender.login });
+    logger.info("Adding the assignee", { assignee: payload.sender.login });
     await addAssignees(context, issue.number, [payload.sender.login]);
   }
 
   const isTaskStale = checkTaskStale(taskStaleTimeoutDuration, issue);
 
   // double check whether the assign message has been already posted or not
-  logger.info(context.event, "Creating an issue comment", { comment });
+  logger.info("Creating an issue comment", { comment });
 
   const {
     multiplierAmount: multiplierAmount,

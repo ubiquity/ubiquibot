@@ -1,18 +1,15 @@
 import { userCommands } from ".";
-import Runtime from "../../../bindings/bot-runtime";
-import { Context, Payload } from "../../../types";
+import { Context } from "../../../types";
 
 export async function listAvailableCommands(context: Context, body: string) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   if (body != "/help") {
-    return logger.info(context.event, "Skipping to list available commands.", { body });
+    return logger.info("Skipping to list available commands.", { body });
   }
-  const payload = context.event.payload as Payload;
-  const issue = payload.issue;
+  const issue = context.payload.issue;
 
   if (!issue) {
-    return logger.info(context.event, "Skipping /help, reason: not issue");
+    return context.logger.info("Skipping /help, reason: not issue");
   }
 
   return generateHelpMenu(context);

@@ -23,8 +23,7 @@ export async function generateAssignmentComment(context: Context, payload: Paylo
 
   const issueCreationTime = payload.issue?.created_at;
   if (!issueCreationTime) {
-    const logger = Runtime.getState().logger;
-    throw logger.error(context.event, "Issue creation time is not defined");
+    throw context.logger.error("Issue creation time is not defined");
   }
 
   return {

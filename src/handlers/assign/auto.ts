@@ -1,19 +1,16 @@
-import Runtime from "../../bindings/bot-runtime";
 import { addAssignees, getAllPullRequests, getIssueByNumber, getPullByNumber } from "../../helpers";
 import { getLinkedIssues } from "../../helpers/parser";
-import { Context, Payload } from "../../types";
+import { Context } from "../../types";
 
 // Check for pull requests linked to their respective issues but not assigned to them
 export async function checkPullRequests(context: Context) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const { logger, payload } = context;
   const pulls = await getAllPullRequests(context);
 
   if (pulls.length === 0) {
-    return logger.debug(context.event, `No pull requests found at this time`);
+    return logger.debug(`No pull requests found at this time`);
   }
 
-  const payload = context.event.payload as Payload;
   // Loop through the pull requests and assign them to their respective issues if needed
   for (const pull of pulls) {
     const linkedIssue = await getLinkedIssues({
@@ -31,7 +28,7 @@ export async function checkPullRequests(context: Context) {
 
     // Newly created PULL (draft or direct) pull does have same `created_at` and `updated_at`.
     if (connectedPull?.created_at !== connectedPull?.updated_at) {
-      logger.debug(context.event, "It's an updated Pull Request, reverting");
+      logger.debug("It's an updated Pull Request, reverting");
       continue;
     }
 
@@ -45,19 +42,19 @@ export async function checkPullRequests(context: Context) {
 
     // if issue is already assigned, continue
     if (issue.assignees.length > 0) {
-      logger.debug(context.event, `Issue already assigned, ignoring...`);
+      logger.debug(`Issue already assigned, ignoring...`);
       continue;
     }
 
     const assignedUsernames = issue.assignees.map((assignee) => assignee.login);
     if (!assignedUsernames.includes(opener)) {
       await addAssignees(context, +linkedIssueNumber, [opener]);
-      logger.debug(context.event, "Assigned pull request opener to issue", {
+      logger.debug("Assigned pull request opener to issue", {
         pullRequest: pull.number,
         issue: linkedIssueNumber,
         opener,
       });
     }
   }
-  return logger.debug(context.event, `Checking pull requests done!`);
+  return logger.debug(`Checking pull requests done!`);
 }

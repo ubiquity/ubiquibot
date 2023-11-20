@@ -1,7 +1,6 @@
 import axios from "axios";
 import { HTMLElement, parse } from "node-html-parser";
 import { getPullByNumber } from "./issue";
-import Runtime from "../bindings/bot-runtime";
 import { Context } from "../types";
 
 interface GetLinkedParams {
@@ -36,14 +35,14 @@ export async function getLinkedPullRequests(
   context: Context,
   { owner, repository, issue }: GetLinkedParams
 ): Promise<GetLinkedResults[]> {
-  const logger = Runtime.getState().logger;
+  const logger = context.logger;
   const collection = [] as GetLinkedResults[];
   const { data } = await axios.get(`https://github.com/${owner}/${repository}/issues/${issue}`);
   const dom = parse(data);
   const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
   const linkedList = devForm.querySelectorAll(".my-1");
   if (linkedList.length === 0) {
-    logger.info(context.event, `No linked pull requests found`);
+    context.logger.info(`No linked pull requests found`);
     return [];
   }
 
@@ -62,7 +61,7 @@ export async function getLinkedPullRequests(
     const href = `https://github.com${relativeHref}`;
 
     if (`${organization}/${repository}` !== `${owner}/${repository}`) {
-      logger.info(context.event, "Skipping linked pull request from another repository", href);
+      logger.info("Skipping linked pull request from another repository", href);
       continue;
     }
 

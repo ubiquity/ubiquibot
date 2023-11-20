@@ -1,12 +1,9 @@
-import Runtime from "../../bindings/bot-runtime";
-
 import { getPreviousFileContent, listLabelsForRepo, updateLabelsFromBaseRate } from "../../helpers";
 import { Label, PushPayload, Context } from "../../types";
 import { parseYaml } from "../../utils/generate-configuration";
 
 export async function updateBaseRate(context: Context, filePath: string) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   // Get default branch from ref
   const payload = context.event.payload as PushPayload;
   const branch = payload.ref?.split("refs/heads/")[1];
@@ -17,26 +14,26 @@ export async function updateBaseRate(context: Context, filePath: string) {
   const previousFileContent = await getPreviousFileContent(context, owner, repo, branch, filePath);
 
   if (!previousFileContent) {
-    throw logger.error(context.event, "Getting previous file content failed");
+    throw logger.error("Getting previous file content failed");
   }
   const previousConfigRaw = Buffer.from(previousFileContent, "base64").toString();
   const previousConfigParsed = parseYaml(previousConfigRaw);
 
   if (!previousConfigParsed || !previousConfigParsed.payments.basePriceMultiplier) {
-    throw logger.warn(context.event, "No multiplier found in previous config");
+    throw logger.warn("No multiplier found in previous config");
   }
 
   const previousBaseRate = previousConfigParsed.payments.basePriceMultiplier;
 
   if (!previousBaseRate) {
-    throw logger.warn(context.event, "No base rate found in previous config");
+    throw logger.warn("No base rate found in previous config");
   }
 
   // fetch all labels
   const repoLabels = await listLabelsForRepo(context);
 
   if (repoLabels.length === 0) {
-    throw logger.warn(context.event, "No labels on this repo");
+    throw logger.warn("No labels on this repo");
   }
 
   return await updateLabelsFromBaseRate(context, owner, repo, repoLabels as Label[], previousBaseRate);

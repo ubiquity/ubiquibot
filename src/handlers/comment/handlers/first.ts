@@ -1,12 +1,10 @@
-import Runtime from "../../../bindings/bot-runtime";
 import { Context, Payload } from "../../../types";
 import { generateHelpMenu } from "./help";
 
 export async function verifyFirstCommentInRepository(context: Context) {
-  const runtime = Runtime.getState();
   const payload = context.event.payload as Payload;
   if (!payload.issue) {
-    throw runtime.logger.error(context.event, "Issue is null. Skipping", { issue: payload.issue }, true);
+    throw context.logger.error("Issue is null. Skipping", { issue: payload.issue }, true);
   }
   const {
     features: {
@@ -36,5 +34,5 @@ export async function verifyFirstCommentInRepository(context: Context) {
       // await upsertCommentToIssue(payload.issue.number, msg, payload.action, payload.comment);
     }
   }
-  return runtime.logger.info(context.event, `Skipping first comment`);
+  return context.logger.info(`Skipping first comment`);
 }

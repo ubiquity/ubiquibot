@@ -46,7 +46,7 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
   if (!valid) {
     const errorMessage = getErrorMsg(validateBotConfig.errors as DefinedError[]);
     if (errorMessage) {
-      throw logger.error(context, "Invalid merged configuration", { errorMessage }, true);
+      throw logger.error("Invalid merged configuration", { errorMessage }, true);
     }
   }
 
@@ -55,7 +55,7 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
     transformConfig(merged);
   } catch (err) {
     if (err instanceof Error && payload.issue?.number) {
-      throw logger.error(context, "Configuration error", { err }, true);
+      throw logger.error("Configuration error", { err }, true);
     }
   }
 
@@ -137,7 +137,7 @@ export function parseYaml(data: null | string) {
     }
   } catch (error) {
     const logger = Runtime.getState().logger;
-    logger.error(null, "Failed to parse YAML", { error });
+    logger.error("Failed to parse YAML", { error });
   }
   return null;
 }

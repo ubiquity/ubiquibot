@@ -26,7 +26,7 @@ export class Access extends Super {
     const { data, error } = await this.supabase.from("access").select("*, users(*)").filter("id", "eq", id);
 
     if (error) {
-      this.runtime.logger.error(null, error.message, error);
+      this.runtime.logger.error(error.message, error);
       throw new Error(error.message);
     }
     return data;
@@ -35,7 +35,7 @@ export class Access extends Super {
   public async getAccess(id: number): Promise<AccessRow | null> {
     const userWithAccess = await this._getUserWithAccess(id);
     if (userWithAccess[0]?.access === undefined) {
-      this.runtime.logger.debug(null, "Access is undefined");
+      this.runtime.logger.debug("Access is undefined");
       return null;
     }
     if (userWithAccess[0]?.access === null) throw new Error("Access is null");

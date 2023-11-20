@@ -3,7 +3,6 @@ import { JSDOM } from "jsdom";
 import Decimal from "decimal.js";
 import _ from "lodash";
 import MarkdownIt from "markdown-it";
-import Runtime from "../../../../bindings/bot-runtime";
 import { Comment } from "../../../../types/payload";
 import { ContributorClassesKeys } from "./contribution-style-types";
 import { FormatScoreConfig, FormatScoreConfigParams } from "./element-score-config";
@@ -226,7 +225,7 @@ export class CommentScoring {
 
   private _initialize(context: Context, comment: Comment, userId: number) {
     if (!this.commentScores[userId]) {
-      Runtime.getState().logger.debug(context.event, "good thing we initialized, was unsure if necessary");
+      context.logger.debug("good thing we initialized, was unsure if necessary");
       const initialCommentScoreValue = {
         totalScoreTotal: ZERO,
         wordScoreTotal: ZERO,
@@ -236,7 +235,7 @@ export class CommentScoring {
       this.commentScores[userId] = { ...initialCommentScoreValue };
     }
     if (!this.commentScores[userId].details[comment.id]) {
-      Runtime.getState().logger.debug(context.event, "good thing we initialized, was unsure if necessary");
+      context.logger.debug("good thing we initialized, was unsure if necessary");
       this.commentScores[userId].details[comment.id] = {
         totalScoreComment: ZERO,
         relevanceScoreComment: ZERO,
