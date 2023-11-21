@@ -1,12 +1,9 @@
-import Runtime from "../../bindings/bot-runtime";
-
 import { getPreviousFileContent, listLabelsForRepo, updateLabelsFromBaseRate } from "../../helpers";
 import { Label, PushPayload, Context } from "../../types";
 import { parseYaml } from "../../utils/generate-configuration";
 
 export async function updateBaseRate(context: Context, filePath: string) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   // Get default branch from ref
   const payload = context.event.payload as PushPayload;
   const branch = payload.ref?.split("refs/heads/")[1];

@@ -1,4 +1,3 @@
-import Runtime from "../../bindings/bot-runtime";
 import { calculateLabelValue, createLabel, listLabelsForRepo } from "../../helpers";
 import { Context } from "../../types";
 import { calculateTaskPrice } from "../shared/pricing";
@@ -7,9 +6,8 @@ import { calculateTaskPrice } from "../shared/pricing";
 // If there's something missing, they will be added
 
 export async function syncPriceLabelsToConfig(context: Context) {
-  const runtime = Runtime.getState();
   const config = context.config;
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const {
     features: { assistivePricing },

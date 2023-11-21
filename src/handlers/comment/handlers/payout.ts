@@ -1,11 +1,9 @@
-import Runtime from "../../../bindings/bot-runtime";
 import { Context, Payload } from "../../../types";
 import { isUserAdminOrBillingManager } from "../../../helpers/issue";
 
 export async function autoPay(context: Context, body: string) {
-  const runtime = Runtime.getState();
   const payload = context.event.payload as Payload;
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   logger.info("Running '/autopay' command handler", { sender: payload.sender.login });
 
@@ -19,7 +17,7 @@ export async function autoPay(context: Context, body: string) {
         "You must be an 'admin' or 'billing_manager' to toggle automatic payments for completed issues."
       );
     }
-    return logger.ok("Automatic payment for this issue state:", { autopayCommand });
+    return context.logger.ok("Automatic payment for this issue state:", { autopayCommand });
   }
   return logger.warn(
     `Invalid command. Please use the following format: \`/autopay true\` or \`/autopay false\` to toggle automatic payments for completed issues.`

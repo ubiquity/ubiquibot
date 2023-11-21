@@ -1,4 +1,3 @@
-import Runtime from "../../bindings/bot-runtime";
 import { calculateLabelValue } from "../../helpers";
 import { Label, Context } from "../../types";
 
@@ -15,8 +14,7 @@ export function calculateTaskPrice(
 }
 
 export function setPrice(context: Context, timeLabel: Label, priorityLabel: Label) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const { labels } = context.config;
 
   if (!timeLabel || !priorityLabel) throw logger.warn("Time or priority label is not defined");

@@ -1,21 +1,24 @@
 import Decimal from "decimal.js";
-import Runtime from "../../../../bindings/bot-runtime";
 import { Issue, User } from "../../../../types/payload";
 import { ContributorView } from "./contribution-style-types";
 import { UserScoreDetails } from "./issue-shared-types";
+import { Context } from "../../../../types";
 
-export async function assigneeScoring({
-  issue,
-  source,
-  view,
-}: {
-  issue: Issue;
-  source: User[];
-  view: ContributorView;
-}): Promise<UserScoreDetails[]> {
+export async function assigneeScoring(
+  context: Context,
+  {
+    issue,
+    source,
+    view,
+  }: {
+    issue: Issue;
+    source: User[];
+    view: ContributorView;
+  }
+): Promise<UserScoreDetails[]> {
   // get the price label
   const priceLabels = issue.labels.filter((label) => label.name.startsWith("Price: "));
-  if (!priceLabels) throw Runtime.getState().logger.warn("Price label is undefined");
+  if (!priceLabels) throw context.logger.warn("Price label is undefined");
 
   // get the smallest price label
   const priceLabel = priceLabels
@@ -28,7 +31,7 @@ export async function assigneeScoring({
     ?.shift();
 
   if (!priceLabel) {
-    throw Runtime.getState().logger.warn("Price label is undefined");
+    throw context.logger.warn("Price label is undefined");
   }
 
   // get the price

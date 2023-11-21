@@ -1,4 +1,3 @@
-import Runtime from "../../../bindings/bot-runtime";
 import { Context, Payload, StreamlinedComment, UserType } from "../../../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
@@ -6,8 +5,7 @@ import { askGPT, decideContextGPT, sysMsg } from "../../../helpers/gpt";
 
 export async function ask(context: Context, body: string) {
   // The question to ask
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const payload = context.event.payload as Payload;
   const sender = payload.sender.login;

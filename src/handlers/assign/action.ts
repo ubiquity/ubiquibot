@@ -1,12 +1,10 @@
-import Runtime from "../../bindings/bot-runtime";
 import { calculateDurations, calculateLabelValue, closePullRequest } from "../../helpers";
 import { getLinkedPullRequests } from "../../helpers/parser";
 import { Context, Label, Payload } from "../../types";
 
 export async function startCommandHandler(context: Context) {
-  const runtime = Runtime.getState();
   const config = context.config;
-  const logger = runtime.logger;
+  const logger = context.logger;
   const payload = context.event.payload as Payload;
   if (!payload.issue) {
     return logger.error("Issue is not defined");
@@ -76,14 +74,13 @@ export async function startCommandHandler(context: Context) {
 }
 
 export async function closePullRequestForAnIssue(context: Context) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const payload = context.event.payload as Payload;
   if (!payload.issue?.number) {
     throw logger.error("Issue is not defined");
   }
 
-  const linkedPullRequests = await getLinkedPullRequests({
+  const linkedPullRequests = await getLinkedPullRequests(context, {
     owner: payload.repository.owner.login,
     repository: payload.repository.name,
     issue: payload.issue.number,

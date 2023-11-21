@@ -1,12 +1,10 @@
-import Runtime from "../../bindings/bot-runtime";
 import { Comment, Payload, Context } from "../../types";
 import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCommentInRepository } from "./handlers/first";
 
 export async function commentCreatedOrEdited(context: Context) {
-  const runtime = Runtime.getState(),
-    config = context.config,
-    logger = runtime.logger,
+  const config = context.config,
+    logger = context.logger,
     payload = context.event.payload as Payload;
 
   const comment = payload.comment as Comment;
@@ -42,6 +40,8 @@ export async function commentCreatedOrEdited(context: Context) {
     return await handler(context, body);
   } else {
     const sanitizedBody = body.replace(/<!--[\s\S]*?-->/g, "");
-    return logger.verbose("Comment event received without a recognized user command.", { sanitizedBody });
+    return logger.verbose("Comment event received without a recognized user command.", {
+      sanitizedBody,
+    });
   }
 }

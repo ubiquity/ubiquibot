@@ -1,8 +1,6 @@
-import Runtime from "../../../../bindings/bot-runtime";
 import { Context, Payload, User } from "../../../../types";
 
 export async function getCollaboratorsForRepo(context: Context): Promise<User[]> {
-  const runtime = Runtime.getState();
   const payload = context.event.payload as Payload;
   const collaboratorUsers: User[] = [];
 
@@ -26,7 +24,7 @@ export async function getCollaboratorsForRepo(context: Context): Promise<User[]>
       }
     }
   } catch (e: unknown) {
-    runtime.logger.error("Fetching collaborator IDs for repo failed!", e);
+    context.logger.error("Fetching collaborator IDs for repo failed!", e);
   }
 
   return collaboratorUsers;

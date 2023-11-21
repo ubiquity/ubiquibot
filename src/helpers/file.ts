@@ -10,8 +10,7 @@ export async function getPreviousFileContent(
   branch: string,
   filePath: string
 ) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   try {
     // Get the latest commit of the branch

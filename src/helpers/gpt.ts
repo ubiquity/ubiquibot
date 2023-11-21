@@ -1,6 +1,5 @@
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
-import Runtime from "../bindings/bot-runtime";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../helpers";
 import { Context, Payload, StreamlinedComment, UserType } from "../types";
 
@@ -61,8 +60,7 @@ export async function decideContextGPT(
   linkedPRStreamlined: StreamlinedComment[],
   linkedIssueStreamlined: StreamlinedComment[]
 ) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const payload = context.event.payload as Payload;
   const issue = payload.issue;
@@ -133,8 +131,7 @@ export async function decideContextGPT(
 
 export async function askGPT(context: Context, chatHistory: CreateChatCompletionRequestMessage[]) {
   // base askGPT function
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const config = context.config;
   const { keys } = config;
 
@@ -164,7 +161,7 @@ export async function askGPT(context: Context, chatHistory: CreateChatCompletion
   };
 
   if (!res) {
-    throw logger.error("Error getting GPT response", { res });
+    throw context.logger.error("Error getting GPT response", { res });
   }
 
   return { answer, tokenUsage };
