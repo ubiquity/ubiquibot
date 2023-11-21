@@ -5,7 +5,6 @@ import { Context as ProbotContext } from "probot";
 import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
 import { BotConfig, Payload, stringDuration, validateBotConfig } from "../types";
-import ubiquibotConfigDefault from "../ubiquibot-config-default";
 
 const UBIQUIBOT_CONFIG_REPOSITORY = "ubiquibot-config";
 const UBIQUIBOT_CONFIG_FULL_PATH = ".github/ubiquibot-config.yml";
@@ -29,7 +28,7 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
     })
   );
 
-  const merged = mergeWith(ubiquibotConfigDefault, orgConfig, repoConfig, (objValue: unknown, srcValue: unknown) => {
+  const merged = mergeWith({}, orgConfig, repoConfig, (objValue: unknown, srcValue: unknown) => {
     if (Array.isArray(objValue) && Array.isArray(srcValue)) {
       // if it's string array, concat and remove duplicates
       if (objValue.every((value) => typeof value === "string")) {
