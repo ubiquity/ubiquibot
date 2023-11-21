@@ -222,10 +222,10 @@ export class Logs {
 
   constructor(
     supabase: SupabaseClient,
-    context: ProbotContext | null,
     environment: string,
     retryLimit: number,
-    logLevel: LogLevel
+    logLevel: LogLevel,
+    context: ProbotContext | null
   ) {
     this.supabase = supabase;
     this.context = context;
