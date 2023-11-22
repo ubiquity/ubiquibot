@@ -28,6 +28,8 @@ export enum GitHubEvent {
 
   // label
   LABEL_EDITED = "label.edited",
+
+  REPOSITORY_DISPATCH = "repository_dispatch",
 }
 
 export enum UserType {

@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { Context as ProbotContext } from "probot";
+import zlib from "zlib";
 import { createAdapters } from "../adapters";
 import { LogReturn } from "../adapters/supabase";
 import { LogMessage } from "../adapters/supabase/helpers/tables/logs";
@@ -43,7 +44,7 @@ export async function bindEvents(eventContext: ProbotContext) {
 
   runtime.logger.info("Event received", { id: eventContext.id, name: eventName });
 
-  if (!allowedEvents.includes(eventName)) {
+  if (!allowedEvents.includes(eventName) && eventContext.name !== "repository_dispatch") {
     // just check if its on the watch list
     return runtime.logger.info(`Skipping the event. reason: not configured`);
   }
@@ -85,6 +86,22 @@ export async function bindEvents(eventContext: ProbotContext) {
 
   if (!runtime.logger) {
     throw new Error("Failed to create logger");
+  }
+
+  if (eventContext.name === GitHubEvent.REPOSITORY_DISPATCH) {
+    const dispatchPayload = payload as any;
+    if (payload.action === "issueClosed") {
+      //This is response for issueClosed request
+      const response = dispatchPayload.client_payload.result;
+      if (response.comment) {
+        const uncompressedComment = zlib.gunzipSync(Buffer.from(response.comment));
+        addCommentToIssue(
+          context,
+          uncompressedComment.toString(),
+          parseInt(dispatchPayload.client_payload.issueNumber)
+        );
+      }
+    }
   }
 
   // Get the handlers for the action

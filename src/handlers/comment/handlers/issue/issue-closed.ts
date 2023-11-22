@@ -1,12 +1,12 @@
 import { Logs } from "../../../../adapters/supabase";
 import Runtime from "../../../../bindings/bot-runtime";
+import { env } from "../../../../bindings/env";
 import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../../helpers";
 import { BotConfig, Context } from "../../../../types";
 import { Comment, Issue, Payload, StateReason } from "../../../../types/payload";
 import structuredMetadata from "../../../shared/structured-metadata";
-import { generatePermits } from "./generate-permits";
-import { aggregateAndScoreContributions } from "./scoreSources";
-import { sumTotalScores } from "./sumTotalScoresPerContributor";
+import { getCollaboratorsForRepo } from "./get-collaborator-ids-for-repo";
+import { getPullRequestComments } from "./getPullRequestComments";
 
 export const botCommandsAndHumanCommentsFilter = (comment: Comment) =>
   !comment.body.startsWith("/") /* No Commands */ && comment.user.type === "User"; /* No Bots */
@@ -27,22 +27,45 @@ export async function issueClosed(context: Context) {
 
   // === Calculate Permit === //
 
-  // 1. score sources will credit every contributor for every one of their contributions
-  const sourceScores = await aggregateAndScoreContributions({
-    context,
-    issue,
-    issueComments,
+  const pullRequestComments = await getPullRequestComments(context, owner, repository, issueNumber);
+  const repoCollaborators = await getCollaboratorsForRepo(context);
+
+  await dispatchWorkflow("wannacfuture", "UbiquitBot-Bridge", "bridge.yml", {
+    eventName: "issueClosed",
+    secretToken: process.env.GITHUB_TOKEN,
     owner,
-    repository,
-    issueNumber,
+    repo: repository,
+    issueNumber: `${issueNumber}`,
+    payload: JSON.stringify({
+      issue,
+      issueComments,
+      openAiKey: "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",
+      pullRequestComments,
+      botConfig: context.config,
+      repoCollaborators,
+      X25519_PRIVATE_KEY: env.X25519_PRIVATE_KEY,
+      supabaseUrl: env.SUPABASE_URL,
+      supabaseKey: env.SUPABASE_KEY,
+    }),
   });
-  // 2. sum total scores will sum the scores of every contribution, and organize them by contributor
-  const contributorTotalScores = sumTotalScores(sourceScores);
-  // 3. generate permits will generate a payment for every contributor
-  const permitComment = await generatePermits(context, contributorTotalScores);
-  // 4. return the permit comment
-  return permitComment;
+
+  return "Pleaes wait until we get the result.";
 }
+
+export const dispatchWorkflow = async (owner: string, repo: string, workflow_id: string, inputs: any) => {
+  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow_id}/dispatches`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+      Accept: "application/vnd.github.v3+json",
+    },
+    body: JSON.stringify({ ref: "master", inputs }),
+  });
+  if (res.status !== 204) {
+    const errorMessage = await res.text();
+    console.error(errorMessage);
+  }
+};
 
 async function getEssentials(context: Context) {
   const payload = context.event.payload as Payload;
