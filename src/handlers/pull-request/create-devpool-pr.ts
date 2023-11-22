@@ -1,9 +1,7 @@
-import Runtime from "../../bindings/bot-runtime";
 import { Context, GithubContent, Payload } from "../../types";
 
 export async function createDevPoolPR(context: Context) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const payload = context.event.payload as Payload;
   const devPoolOwner = "ubiquity";

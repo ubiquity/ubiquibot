@@ -17,7 +17,7 @@ export async function aggregateAndScoreContributions({
 }: ScoreParams): Promise<UserScoreDetails[]> {
   const issueIssuerSpecification = await issuerSpecificationScoring({ context, issue, view: "Issue" });
 
-  const issueAssigneeTask = await assigneeTaskScoring({
+  const issueAssigneeTask = await assigneeTaskScoring(context, {
     issue,
     source: issue.assignees.filter((assignee): assignee is User => Boolean(assignee)),
     view: "Issue",

@@ -1,8 +1,7 @@
-import { Logs } from "../../../../adapters/supabase";
 import Runtime from "../../../../bindings/bot-runtime";
 import { env } from "../../../../bindings/env";
 import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../../helpers";
-import { BotConfig, Context } from "../../../../types";
+import { Context } from "../../../../types";
 import { Comment, Issue, Payload, StateReason } from "../../../../types/payload";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { getCollaboratorsForRepo } from "./get-collaborator-ids-for-repo";
@@ -16,14 +15,11 @@ const botCommentsFilter = (comment: Comment) => comment.user.type === "Bot"; /* 
 export async function issueClosed(context: Context) {
   // TODO: delegate permit calculation to GitHub Action
 
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
   const payload = context.event.payload as Payload;
   const issue = payload.issue as Issue;
-  const config = context.config;
 
   const { issueComments, owner, repository, issueNumber } = await getEssentials(context);
-  await preflightChecks({ issue, logger, issueComments, config, payload, context });
+  await preflightChecks({ issue, issueComments, context });
 
   // === Calculate Permit === //
 
@@ -72,10 +68,10 @@ async function getEssentials(context: Context) {
   const issue = payload.issue as Issue;
   const runtime = Runtime.getState();
   const logger = runtime.logger;
-  if (!issue) throw runtime.logger.error("Issue is not defined");
+  if (!issue) throw context.logger.error("Issue is not defined");
   const issueComments = await getAllIssueComments(context, issue.number);
   const owner = payload?.organization?.login || payload.repository.owner.login;
-  if (!owner) throw logger.error("Owner is not defined");
+  if (!owner) throw context.logger.error("Owner is not defined");
   const repository = payload?.repository?.name;
   const issueNumber = issue.number;
   return { issue, runtime, logger, issueComments, owner, repository, issueNumber };
@@ -84,32 +80,35 @@ async function getEssentials(context: Context) {
 
 interface PreflightChecksParams {
   issue: Issue;
-  logger: Logs;
   issueComments: Comment[];
-  config: BotConfig;
-  payload: Payload;
   context: Context;
 }
-async function preflightChecks({ issue, logger, issueComments, config, payload, context }: PreflightChecksParams) {
-  if (!issue) throw logger.error("Permit generation skipped because issue is undefined");
+
+async function preflightChecks({ issue, issueComments, context }: PreflightChecksParams) {
+  const { payload, config } = context;
+  if (!issue) throw context.logger.error("Permit generation skipped because issue is undefined");
   if (issue.state_reason !== StateReason.COMPLETED)
-    throw logger.info("Issue was not closed as completed. Skipping.", { issue });
+    throw context.logger.info("Issue was not closed as completed. Skipping.", { issue });
   if (config.features.publicAccessControl.fundExternalClosedIssue) {
     const userHasPermission = await checkUserPermissionForRepoAndOrg(context, payload.sender.login);
     if (!userHasPermission)
-      throw logger.warn("Permit generation disabled because this issue has been closed by an external contributor.");
+      throw context.logger.warn(
+        "Permit generation disabled because this issue has been closed by an external contributor."
+      );
   }
 
   const priceLabels = issue.labels.find((label) => label.name.startsWith("Price: "));
   if (!priceLabels) {
-    throw logger.warn("No price label has been set. Skipping permit generation.", { labels: issue.labels });
+    throw context.logger.warn("No price label has been set. Skipping permit generation.", {
+      labels: issue.labels,
+    });
   }
 
   const botComments = issueComments.filter(botCommentsFilter);
-  checkIfPermitsAlreadyPosted(botComments, logger);
+  checkIfPermitsAlreadyPosted(context, botComments);
 }
 
-function checkIfPermitsAlreadyPosted(botComments: Comment[], logger: Logs) {
+function checkIfPermitsAlreadyPosted(context: Context, botComments: Comment[]) {
   botComments.forEach((comment) => {
     const parsed = structuredMetadata.parse(comment.body);
     if (parsed) {
@@ -117,7 +116,7 @@ function checkIfPermitsAlreadyPosted(botComments: Comment[], logger: Logs) {
       if (parsed.caller === "generatePermits") {
         // in the comment metadata we store what function rendered the comment
         console.trace({ parsed });
-        throw logger.warn("Permit already posted");
+        throw context.logger.warn("Permit already posted");
       }
     }
   });

@@ -1,4 +1,3 @@
-import Runtime from "../../../../bindings/bot-runtime";
 import { Comment } from "../../../../types/payload";
 import { commentScoringByContributionClass } from "./comment-scoring-by-contribution-style";
 import { CommentScoring } from "./comment-scoring-rubric";
@@ -26,7 +25,7 @@ export async function allCommentScoring({
       const selection = usersByClass[contributionStyle as keyof typeof usersByClass];
 
       if (!selection) {
-        Runtime.getState().logger.verbose(`No ${String(contributionStyle)} found`);
+        context.logger.verbose(`No ${String(contributionStyle)} found`);
         return [];
       }
 
@@ -38,6 +37,7 @@ export async function allCommentScoring({
           return [];
         }
         perUserCommentScoring(
+          context,
           user,
           commentsOfRole.filter((comment) => comment.user.id === user.id),
           scoring

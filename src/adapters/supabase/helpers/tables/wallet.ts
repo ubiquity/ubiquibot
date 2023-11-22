@@ -16,8 +16,8 @@ type IssueCommentPayload =
   | ProbotContext<"issue_comment.edited">["payload"];
 
 export class Wallet extends Super {
-  constructor(supabase: SupabaseClient, context: ProbotContext) {
-    super(supabase, context);
+  constructor(supabase: SupabaseClient) {
+    super(supabase);
   }
 
   public async getAddress(id: number): Promise<string> {
@@ -25,8 +25,8 @@ export class Wallet extends Super {
     return this._validateAndGetWalletAddress(userWithWallet);
   }
 
-  public async upsertWalletAddress(address: string) {
-    const payload = this.context.payload as
+  public async upsertWalletAddress(context: ProbotContext, address: string) {
+    const payload = context.payload as
       | ProbotContext<"issue_comment.created">["payload"]
       | ProbotContext<"issue_comment.edited">["payload"];
 

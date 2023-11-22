@@ -1,4 +1,3 @@
-import Runtime from "../bindings/bot-runtime";
 import { labelExists } from "../handlers/pricing/pricing-label";
 import { calculateTaskPrice } from "../handlers/shared/pricing";
 import { calculateLabelValue } from "../helpers";
@@ -10,7 +9,6 @@ const COLORS = { default: "ededed", price: "1f883d" };
 // cspell:enable
 
 export async function listLabelsForRepo(context: Context): Promise<Label[]> {
-  const runtime = Runtime.getState();
   const payload = context.event.payload as Payload;
 
   const res = await context.event.octokit.rest.issues.listLabelsForRepo({
@@ -24,7 +22,7 @@ export async function listLabelsForRepo(context: Context): Promise<Label[]> {
     return res.data;
   }
 
-  throw runtime.logger.error("Failed to fetch lists of labels", { status: res.status });
+  throw context.logger.error("Failed to fetch lists of labels", { status: res.status });
 }
 
 export async function createLabel(
@@ -49,8 +47,7 @@ export async function updateLabelsFromBaseRate(
   labels: Label[],
   previousBaseRate: number
 ) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const config = context.config;
 
   const newLabels: string[] = [];

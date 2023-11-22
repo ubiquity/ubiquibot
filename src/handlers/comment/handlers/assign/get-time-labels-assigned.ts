@@ -1,9 +1,7 @@
-import Runtime from "../../../../bindings/bot-runtime";
-import { BotConfig, Label, Payload } from "../../../../types";
+import { BotConfig, Context, Label, Payload } from "../../../../types";
 
-export function getTimeLabelsAssigned(payload: Payload, config: BotConfig) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+export function getTimeLabelsAssigned(context: Context, payload: Payload, config: BotConfig) {
+  const logger = context.logger;
   const labels = payload.issue?.labels;
   if (!labels?.length) {
     logger.warn("Skipping '/start' since no labels are set to calculate the timeline", { labels });

@@ -3,8 +3,7 @@ import { hasLabelEditPermission } from "../../helpers";
 import { Context, Payload } from "../../types";
 
 export async function watchLabelChange(context: Context) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const payload = context.event.payload as Payload;
   const { label, changes, sender } = payload;

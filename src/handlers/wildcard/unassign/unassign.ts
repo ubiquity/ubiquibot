@@ -1,6 +1,4 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
-import { Logs } from "../../../adapters/supabase";
-import Runtime from "../../../bindings/bot-runtime";
 import { listAllIssuesAndPullsForRepo } from "../../../helpers";
 import { getLinkedPullRequests } from "../../../helpers/parser";
 import { Commit, Context, Issue, IssueType, Payload, User } from "../../../types";
@@ -9,8 +7,7 @@ type IssuesListEventsResponseData = RestEndpointMethodTypes["issues"]["listEvent
 // type Commit[] = Commit[]; // RestEndpointMethodTypes["pulls"]["listCommits"]["response"]["data"];
 
 export async function checkTasksToUnassign(context: Context) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const issuesAndPullsOpened = await listAllIssuesAndPullsForRepo(context, IssueType.OPEN);
   const assignedIssues = issuesAndPullsOpened.filter((issue) => issue.assignee);
 
@@ -23,8 +20,7 @@ export async function checkTasksToUnassign(context: Context) {
 }
 
 async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const payload = context.event.payload as Payload;
   const {
     timers: { taskDisqualifyDuration, taskFollowUpDuration },
@@ -95,7 +91,6 @@ async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
     login,
     name,
     number,
-    logger,
   });
 
   // DONE: follow up with those who are in `assignees` and not inside of `disqualifiedAssignees` or `activeAssigneesInFollowUpDuration`
@@ -106,11 +101,13 @@ async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
     login,
     name,
     number,
-    logger,
     taskDisqualifyDuration,
   });
 
-  return logger.ok("Checked task to unassign", { issueNumber: assignedIssue.number, disqualifiedAssignees });
+  return logger.ok("Checked task to unassign", {
+    issueNumber: assignedIssue.number,
+    disqualifiedAssignees,
+  });
 }
 
 async function followUpWithTheRest(
@@ -122,7 +119,6 @@ async function followUpWithTheRest(
     login,
     name,
     number,
-    logger,
     taskDisqualifyDuration,
   }: FollowUpWithTheRest
 ) {
@@ -153,9 +149,9 @@ async function followUpWithTheRest(
           issue_number: number,
           body: followUpMessage,
         });
-        logger.info("Followed up with idle assignees", { followUpAssignees });
+        context.logger.info("Followed up with idle assignees", { followUpAssignees });
       } catch (e: unknown) {
-        logger.error("Failed to follow up with idle assignees", e);
+        context.logger.error("Failed to follow up with idle assignees", e);
       }
     }
   }
@@ -194,7 +190,7 @@ async function aggregateAssigneeActivity({ context, login, name, number, assigne
 
   // check the linked pull request and then check that pull request's commits
 
-  const linkedPullRequests = await getLinkedPullRequests({ owner: login, repository: name, issue: number });
+  const linkedPullRequests = await getLinkedPullRequests(context, { owner: login, repository: name, issue: number });
 
   const allCommits = [] as Commit[];
   for (const pullRequest of linkedPullRequests) {
@@ -227,7 +223,7 @@ async function aggregateAssigneeActivity({ context, login, name, number, assigne
 
 async function disqualifyIdleAssignees(
   context: Context,
-  { assignees, activeAssigneesInDisqualifyDuration, login, name, number, logger }: DisqualifyIdleAssignees
+  { assignees, activeAssigneesInDisqualifyDuration, login, name, number }: DisqualifyIdleAssignees
 ) {
   const idleAssignees = assignees.filter((assignee) => !activeAssigneesInDisqualifyDuration.includes(assignee));
 
@@ -239,9 +235,9 @@ async function disqualifyIdleAssignees(
         issue_number: number,
         assignees: idleAssignees,
       });
-      logger.info("Unassigned idle assignees", { idleAssignees });
+      context.logger.info("Unassigned idle assignees", { idleAssignees });
     } catch (e: unknown) {
-      logger.error("Failed to unassign idle assignees", e);
+      context.logger.error("Failed to unassign idle assignees", e);
     }
   }
   return idleAssignees;
@@ -372,7 +368,6 @@ interface DisqualifyIdleAssignees {
   login: string;
   name: string;
   number: number;
-  logger: Logs;
 }
 
 interface FollowUpWithTheRest {
@@ -382,7 +377,6 @@ interface FollowUpWithTheRest {
   login: string;
   name: string;
   number: number;
-  logger: Logs;
   taskDisqualifyDuration: number;
 }
 

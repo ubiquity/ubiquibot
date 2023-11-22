@@ -1,19 +1,16 @@
-import Runtime from "../../bindings/bot-runtime";
 import { addAssignees, getAllPullRequests, getIssueByNumber, getPullByNumber } from "../../helpers";
 import { getLinkedIssues } from "../../helpers/parser";
-import { Context, Payload } from "../../types";
+import { Context } from "../../types";
 
 // Check for pull requests linked to their respective issues but not assigned to them
 export async function checkPullRequests(context: Context) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const { logger, payload } = context;
   const pulls = await getAllPullRequests(context);
 
   if (pulls.length === 0) {
     return logger.debug(`No pull requests found at this time`);
   }
 
-  const payload = context.event.payload as Payload;
   // Loop through the pull requests and assign them to their respective issues if needed
   for (const pull of pulls) {
     const linkedIssue = await getLinkedIssues({

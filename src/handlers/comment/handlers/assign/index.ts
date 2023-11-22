@@ -1,4 +1,3 @@
-import Runtime from "../../../../bindings/bot-runtime";
 import {
   addAssignees,
   calculateDurations,
@@ -15,8 +14,7 @@ import { getMultiplierInfoToDisplay } from "./get-multiplier-info-to-display";
 import { getTimeLabelsAssigned } from "./get-time-labels-assigned";
 
 export async function assign(context: Context, body: string) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const config = context.config;
   const payload = context.event.payload as Payload;
   const issue = payload.issue;
@@ -79,13 +77,13 @@ export async function assign(context: Context, body: string) {
   if (!priceLabel) {
     throw logger.warn("No price label is set, so this is not ready to be self assigned yet.", priceLabel);
   } else {
-    const timeLabelsAssigned = getTimeLabelsAssigned(payload, config);
+    const timeLabelsAssigned = getTimeLabelsAssigned(context, payload, config);
     if (timeLabelsAssigned) {
       duration = calculateDurations(timeLabelsAssigned).shift() || null;
     }
   }
 
-  const comment = await generateAssignmentComment(payload, duration);
+  const comment = await generateAssignmentComment(context, payload, duration);
   const metadata = structuredMetadata.create("Assignment", { duration, priceLabel });
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {

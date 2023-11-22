@@ -40,8 +40,7 @@ export function getPayoutConfigByNetworkId(evmNetworkId: number) {
 }
 
 export async function hasLabelEditPermission(context: Context, label: string, caller: string) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const sufficientPrivileges = await isUserAdminOrBillingManager(context, caller);
 
   // get text before :
@@ -51,7 +50,7 @@ export async function hasLabelEditPermission(context: Context, label: string, ca
   if (sufficientPrivileges) {
     // check permission
     const { access, user } = Runtime.getState().adapters.supabase;
-    const userId = await user.getUserId(caller);
+    const userId = await user.getUserId(context.event, caller);
     const accessible = await access.getAccess(userId);
     if (accessible) return true;
     logger.info("No access to edit label", { caller, label });

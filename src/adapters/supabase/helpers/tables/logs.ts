@@ -10,7 +10,6 @@ import Runtime from "../../../../bindings/bot-runtime";
 import { LogLevel } from "../../../../types/logs";
 import { Database } from "../../types";
 import { prettyLogs } from "../pretty-logs";
-import { Super } from "./super";
 
 type LogFunction = (message: string, metadata?: any) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
@@ -39,7 +38,10 @@ type PublicMethods<T> = Exclude<FunctionPropertyNames<T>, "constructor" | keyof 
 
 export type LogMessage = { raw: string; diff: string; level: LogLevel; type: PublicMethods<Logs> };
 
-export class Logs extends Super {
+export class Logs {
+  private supabase: SupabaseClient;
+  private context: ProbotContext | null = null;
+
   private maxLevel = -1;
   private environment = "development";
   private queue: LogInsert[] = []; // Your log queue
@@ -57,21 +59,14 @@ export class Logs extends Super {
     // - the comment to post on github (must include diff syntax)
     // - the comment to post on the console (must be colorized)
 
-    if (metadata) {
-      // metadata = Logs.convertErrorsIntoObjects(metadata);
-      consoleLog(logMessage, metadata);
-      if (postComment) {
-        const colorizedCommentMessage = this._diffColorCommentMessage(type, logMessage);
-        const commentMetaData = Logs._commentMetaData(metadata, level);
-        this._postComment([colorizedCommentMessage, commentMetaData].join("\n"));
-      }
-    } else {
-      consoleLog(logMessage);
-      if (postComment) {
-        const colorizedCommentMessage = this._diffColorCommentMessage(type, logMessage);
-        this._postComment(colorizedCommentMessage);
-      }
+    consoleLog(logMessage, metadata || undefined);
+
+    if (this.context && postComment) {
+      const colorizedCommentMessage = this._diffColorCommentMessage(type, logMessage);
+      const commentMetaData = metadata ? Logs._commentMetaData(metadata, level) : null;
+      this._postComment(metadata ? [colorizedCommentMessage, commentMetaData].join("\n") : colorizedCommentMessage);
     }
+
     const toSupabase = { log: logMessage, level, metadata } as LogInsert;
 
     this._save(toSupabase);
@@ -115,6 +110,7 @@ export class Logs extends Super {
 
     return metadata;
   }
+
   public ok(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
@@ -226,13 +222,13 @@ export class Logs extends Super {
 
   constructor(
     supabase: SupabaseClient,
-    context: ProbotContext,
     environment: string,
     retryLimit: number,
-    logLevel: LogLevel
+    logLevel: LogLevel,
+    context: ProbotContext | null
   ) {
-    super(supabase, context);
-
+    this.supabase = supabase;
+    this.context = context;
     this.environment = environment;
     this.retryLimit = retryLimit;
     this.maxLevel = this._getNumericLevel(logLevel);
@@ -369,6 +365,7 @@ export class Logs extends Super {
 
   private _postComment(message: string) {
     // post on issue
+    if (!this.context) return;
     this.context.octokit.issues
       .createComment({
         owner: this.context.issue().owner,

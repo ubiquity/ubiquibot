@@ -1,4 +1,3 @@
-import Runtime from "../../bindings/bot-runtime";
 import { addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getAllLabeledEvents } from "../../helpers";
 import { BotConfig, Context, Label, Payload, UserType } from "../../types";
 import { labelAccessPermissionsCheck } from "../access";
@@ -6,11 +5,10 @@ import { setPrice } from "../shared/pricing";
 import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./action";
 
 export async function onLabelChangeSetPricing(context: Context): Promise<void> {
-  const runtime = Runtime.getState();
   const config = context.config;
-  const logger = runtime.logger;
+  const logger = context.logger;
   const payload = context.event.payload as Payload;
-  if (!payload.issue) throw logger.error("Issue is not defined");
+  if (!payload.issue) throw context.logger.error("Issue is not defined");
 
   const labels = payload.issue.labels;
   const labelNames = labels.map((i) => i.name);
@@ -118,7 +116,7 @@ async function handleTargetPriceLabel(
 }
 
 async function handleExistingPriceLabel(context: Context, targetPriceLabel: string, assistivePricing: boolean) {
-  const logger = Runtime.getState().logger;
+  const logger = context.logger;
   let labeledEvents = await getAllLabeledEvents(context);
   if (!labeledEvents) return logger.warn("No labeled events found");
 
@@ -133,12 +131,11 @@ async function handleExistingPriceLabel(context: Context, targetPriceLabel: stri
 }
 
 async function addPriceLabelToIssue(context: Context, targetPriceLabel: string, assistivePricing: boolean) {
-  const logger = Runtime.getState().logger;
   await clearAllPriceLabelsOnIssue(context);
 
   const exists = await labelExists(context, targetPriceLabel);
   if (assistivePricing && !exists) {
-    logger.info("Assistive pricing is enabled, creating label...", { targetPriceLabel });
+    context.logger.info("Assistive pricing is enabled, creating label...", { targetPriceLabel });
     await createLabel(context, targetPriceLabel, "price");
   }
 
