@@ -35,7 +35,7 @@ export async function issueClosed(context: Context) {
     payload: JSON.stringify({
       issue,
       issueComments,
-      openAiKey: "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",
+      openAiKey: context.config.keys.openAi,
       pullRequestComments,
       botConfig: context.config,
       repoCollaborators,
