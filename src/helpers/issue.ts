@@ -7,46 +7,18 @@ import {
   StreamlinedComment,
   UserType,
 } from "../types";
-import { checkRateLimitGit } from "../utils";
 import { LogReturn } from "../adapters/supabase";
 import { Payload, Context } from "../types";
 
 type PromiseType<T> = T extends Promise<infer U> ? U : never;
 
 async function getAllIssueEvents(context: Context) {
-  type Event = PromiseType<ReturnType<typeof context.event.octokit.issues.listEvents>>["data"][0];
+  if (!context.payload.issue) return;
 
-  const payload = context.event.payload as Payload;
-  if (!payload.issue) return;
-
-  let shouldFetch = true;
-  let page = 1;
-
-  const events = [] as Event[];
-
-  while (shouldFetch) {
-    // Fetch issue events
-
-    const repo = payload.repository.name;
-    const owner = payload.repository.owner.login;
-
-    const response = await context.event.octokit.issues.listEvents({
-      owner: owner,
-      repo: repo,
-      issue_number: payload.issue.number,
-      per_page: 100,
-      page: page,
-    });
-
-    await checkRateLimitGit(response?.headers);
-
-    if (response.data.length > 0) {
-      events.push(...(response.data as Event[]));
-      page++;
-    } else {
-      shouldFetch = false;
-    }
-  }
+  const events = await context.octokit.paginate(context.octokit.issues.listEvents, {
+    ...context.event.issue(),
+    per_page: 100,
+  });
 
   return events;
 }
@@ -58,7 +30,7 @@ export async function getAllLabeledEvents(context: Context) {
 }
 
 export async function clearAllPriceLabelsOnIssue(context: Context) {
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   if (!payload.issue) return;
 
   const labels = payload.issue.labels;
@@ -68,9 +40,7 @@ export async function clearAllPriceLabelsOnIssue(context: Context) {
 
   // try {
   await context.event.octokit.issues.removeLabel({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    issue_number: payload.issue.number,
+    ...context.event.issue(),
     name: issuePrices[0].name,
   });
   // } catch (e: unknown) {
@@ -79,16 +49,14 @@ export async function clearAllPriceLabelsOnIssue(context: Context) {
 }
 
 export async function addLabelToIssue(context: Context, labelName: string) {
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   if (!payload.issue) {
     throw context.logger.error("Issue object is null");
   }
 
   try {
-    await context.event.octokit.issues.addLabels({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: payload.issue.number,
+    await context.octokit.issues.addLabels({
+      ...context.event.issue(),
       labels: [labelName],
     });
   } catch (e: unknown) {
@@ -104,8 +72,8 @@ async function listIssuesAndPullsForRepo(
   sort: "created" | "updated" | "comments" = "created",
   direction: "desc" | "asc" = "desc"
 ) {
-  const payload = context.event.payload as Payload;
-  const response = await context.event.octokit.issues.listForRepo({
+  const payload = context.payload;
+  const response = await context.octokit.issues.listForRepo({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     state,
@@ -115,8 +83,6 @@ async function listIssuesAndPullsForRepo(
     direction,
   });
 
-  await checkRateLimitGit(response.headers);
-
   if (response.status === 200) {
     return response.data;
   } else {
@@ -124,22 +90,22 @@ async function listIssuesAndPullsForRepo(
   }
 }
 
-export async function listAllIssuesAndPullsForRepo(context: Context, state: "open" | "closed" | "all") {
-  const issuesArr = [] as Issue[];
-  const perPage = 100;
-  let fetchDone = false;
-  let curPage = 1;
-  while (!fetchDone) {
-    const issues = (await listIssuesAndPullsForRepo(context, state, perPage, curPage)) as Issue[];
-
-    // push the objects to array
-    issuesArr.push(...issues);
-
-    if (issues.length < perPage) fetchDone = true;
-    else curPage++;
-  }
-
-  return issuesArr;
+export async function listAllIssuesAndPullsForRepo(
+  context: Context,
+  state: "open" | "closed" | "all",
+  sort: "created" | "updated" | "comments" = "created",
+  direction: "desc" | "asc" = "desc"
+) {
+  const payload = context.payload;
+  const issues = (await context.octokit.paginate(context.octokit.issues.listForRepo, {
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    state,
+    sort,
+    direction,
+    per_page: 100,
+  })) as Issue[];
+  return issues;
 }
 
 export async function addCommentToIssue(context: Context, message: HandlerReturnValuesNoVoid, issueNumber: number) {
@@ -154,9 +120,9 @@ export async function addCommentToIssue(context: Context, message: HandlerReturn
     comment = comment.concat(metadataSerializedAsComment);
   }
 
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   try {
-    await context.event.octokit.issues.createComment({
+    await context.octokit.issues.createComment({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: issueNumber,
@@ -183,8 +149,8 @@ export async function getIssueDescription(
   issueNumber: number,
   format: "raw" | "html" | "text" = "raw"
 ): Promise<string> {
-  const payload = context.event.payload as Payload;
-  const response = await context.event.octokit.rest.issues.get({
+  const payload = context.payload;
+  const response = await context.octokit.rest.issues.get({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     issue_number: issueNumber,
@@ -192,8 +158,6 @@ export async function getIssueDescription(
       format,
     },
   });
-
-  await checkRateLimitGit(response?.headers);
 
   let result = response.data.body;
 
@@ -215,72 +179,36 @@ export async function getAllIssueComments(
   issueNumber: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ): Promise<Comment[]> {
-  const payload = context.event.payload as Payload;
-  const result: Comment[] = [];
-  let shouldFetch = true;
-  let page_number = 1;
-  try {
-    while (shouldFetch) {
-      const response = await context.event.octokit.rest.issues.listComments({
-        owner: payload.repository.owner.login,
-        repo: payload.repository.name,
-        issue_number: issueNumber,
-        per_page: 100,
-        page: page_number,
-        mediaType: {
-          format,
-        },
-      });
+  const payload = context.payload;
 
-      await checkRateLimitGit(response?.headers);
+  const comments = (await context.octokit.paginate(context.octokit.rest.issues.listComments, {
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    issue_number: issueNumber,
+    per_page: 100,
+    mediaType: {
+      format,
+    },
+  })) as Comment[];
 
-      // Fixing infinite loop here, it keeps looping even when its an empty array
-      if (response?.data?.length > 0) {
-        response.data.forEach((item) => {
-          result.push(item as Comment);
-        });
-        page_number++;
-      } else {
-        shouldFetch = false;
-      }
-    }
-  } catch (e: unknown) {
-    shouldFetch = false;
-  }
-
-  return result;
+  return comments;
 }
 
 export async function getAllIssueAssignEvents(context: Context, issueNumber: number): Promise<AssignEvent[]> {
-  const payload = context.event.payload as Payload;
-  const result: AssignEvent[] = [];
-  let shouldFetch = true;
-  let page_number = 1;
-  try {
-    while (shouldFetch) {
-      const response = await context.event.octokit.rest.issues.listEvents({
-        owner: payload.repository.owner.login,
-        repo: payload.repository.name,
-        issue_number: issueNumber,
-        per_page: 100,
-        page: page_number,
-      });
+  const payload = context.payload;
 
-      await checkRateLimitGit(response?.headers);
+  const events = (await context.octokit.paginate(
+    context.octokit.issues.listEvents,
+    {
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: issueNumber,
+      per_page: 100,
+    },
+    (response) => response.data.filter((item) => item.event === "assigned")
+  )) as AssignEvent[];
 
-      // Fixing infinite loop here, it keeps looping even when its an empty array
-      if (response?.data?.length > 0) {
-        response.data.filter((item) => item.event === "assigned").forEach((item) => result?.push(item as AssignEvent));
-        page_number++;
-      } else {
-        shouldFetch = false;
-      }
-    }
-  } catch (e: unknown) {
-    shouldFetch = false;
-  }
-
-  return result.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
+  return events.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
 }
 
 export async function checkUserPermissionForRepoAndOrg(context: Context, username: string): Promise<boolean> {
@@ -292,9 +220,9 @@ export async function checkUserPermissionForRepoAndOrg(context: Context, usernam
 }
 
 async function checkUserPermissionForRepo(context: Context, username: string): Promise<boolean> {
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   try {
-    const res = await context.event.octokit.rest.repos.checkCollaborator({
+    const res = await context.octokit.rest.repos.checkCollaborator({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       username,
@@ -308,7 +236,7 @@ async function checkUserPermissionForRepo(context: Context, username: string): P
 }
 
 async function checkUserPermissionForOrg(context: Context, username: string): Promise<boolean> {
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   if (!payload.organization) return false;
 
   try {
@@ -328,7 +256,7 @@ export async function isUserAdminOrBillingManager(
   context: Context,
   username: string
 ): Promise<"admin" | "billing_manager" | false> {
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   const isAdmin = await checkIfIsAdmin();
   if (isAdmin) return "admin";
 
@@ -338,7 +266,7 @@ export async function isUserAdminOrBillingManager(
   return false;
 
   async function checkIfIsAdmin() {
-    const response = await context.event.octokit.rest.repos.getCollaboratorPermissionLevel({
+    const response = await context.octokit.rest.repos.getCollaboratorPermissionLevel({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       username,
@@ -352,7 +280,7 @@ export async function isUserAdminOrBillingManager(
 
   async function checkIfIsBillingManager() {
     if (!payload.organization) throw context.logger.error(`No organization found in payload!`);
-    const { data: membership } = await context.event.octokit.rest.orgs.getMembershipForUser({
+    const { data: membership } = await context.octokit.rest.orgs.getMembershipForUser({
       org: payload.organization.login,
       username: payload.repository.owner.login,
     });
@@ -367,9 +295,9 @@ export async function isUserAdminOrBillingManager(
 }
 
 export async function addAssignees(context: Context, issue: number, assignees: string[]) {
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   try {
-    await context.event.octokit.rest.issues.addAssignees({
+    await context.octokit.rest.issues.addAssignees({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: issue,
@@ -381,14 +309,14 @@ export async function addAssignees(context: Context, issue: number, assignees: s
 }
 
 export async function deleteLabel(context: Context, label: string) {
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   try {
-    const response = await context.event.octokit.rest.search.issuesAndPullRequests({
+    const response = await context.octokit.rest.search.issuesAndPullRequests({
       q: `repo:${payload.repository.owner.login}/${payload.repository.name} label:"${label}" state:open`,
     });
     if (response.data.items.length === 0) {
       //remove label
-      await context.event.octokit.rest.issues.deleteLabel({
+      await context.octokit.rest.issues.deleteLabel({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
         name: label,
@@ -400,14 +328,14 @@ export async function deleteLabel(context: Context, label: string) {
 }
 
 export async function removeLabel(context: Context, name: string) {
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   if (!payload.issue) {
     context.logger.debug("Invalid issue object");
     return;
   }
 
   try {
-    await context.event.octokit.issues.removeLabel({
+    await context.octokit.issues.removeLabel({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: payload.issue.number,
@@ -419,31 +347,26 @@ export async function removeLabel(context: Context, name: string) {
 }
 
 export async function getAllPullRequests(context: Context, state: "open" | "closed" | "all" = "open") {
-  type Pulls = PromiseType<ReturnType<typeof context.event.octokit.rest.pulls.list>>["data"][0];
-  const prArr = [] as Pulls[];
-  let fetchDone = false;
-  const perPage = 100;
-  let curPage = 1;
-  while (!fetchDone) {
-    const prs = await getPullRequests(context, state, perPage, curPage);
+  const payload = context.payload;
 
-    // push the objects to array
-    prArr.push(...prs);
+  const pulls = await context.octokit.paginate(context.octokit.rest.pulls.list, {
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    state,
+    per_page: 100,
+  });
 
-    if (prs.length < perPage) fetchDone = true;
-    else curPage++;
-  }
-  return prArr;
+  return pulls;
 }
-// Use `context.octokit.rest` to get the pull requests for the repository
+
 async function getPullRequests(
   context: Context,
   state: "open" | "closed" | "all" = "open",
   per_page: number,
   page: number
 ) {
-  const payload = context.event.payload as Payload;
-  const { data: pulls } = await context.event.octokit.rest.pulls.list({
+  const payload = context.payload;
+  const { data: pulls } = await context.octokit.rest.pulls.list({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     state,
@@ -454,9 +377,9 @@ async function getPullRequests(
 }
 
 export async function closePullRequest(context: Context, pull_number: number) {
-  const payload = context.event.payload as Payload;
+  const payload = context.payload as Payload;
   try {
-    await context.event.octokit.rest.pulls.update({
+    await context.octokit.rest.pulls.update({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       pull_number,
@@ -472,21 +395,18 @@ export async function getAllPullRequestReviews(
   pull_number: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ) {
-  type Reviews = PromiseType<ReturnType<typeof context.event.octokit.rest.pulls.listReviews>>["data"][0];
-  const prArr = [] as Reviews[];
-  let fetchDone = false;
-  const perPage = 100;
-  let curPage = 1;
-  while (!fetchDone) {
-    const prs = await getPullRequestReviews(context, pull_number, perPage, curPage, format);
+  const payload = context.payload;
+  const reviews = await context.octokit.paginate(context.octokit.rest.pulls.listReviews, {
+    owner: payload.repository.owner.login,
+    repo: payload.repository.name,
+    pull_number,
+    per_page: 100,
+    mediaType: {
+      format,
+    },
+  });
 
-    // push the objects to array
-    prArr.push(...prs);
-
-    if (prs.length < perPage) fetchDone = true;
-    else curPage++;
-  }
-  return prArr;
+  return reviews;
 }
 
 async function getPullRequestReviews(
@@ -496,9 +416,9 @@ async function getPullRequestReviews(
   page: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ) {
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   try {
-    const { data: reviews } = await context.event.octokit.rest.pulls.listReviews({
+    const { data: reviews } = await context.octokit.rest.pulls.listReviews({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       pull_number,
@@ -517,7 +437,7 @@ async function getPullRequestReviews(
 
 export async function getReviewRequests(context: Context, pull_number: number, owner: string, repo: string) {
   try {
-    const response = await context.event.octokit.pulls.listRequestedReviewers({
+    const response = await context.octokit.pulls.listRequestedReviewers({
       owner: owner,
       repo: repo,
       pull_number: pull_number,
@@ -528,11 +448,12 @@ export async function getReviewRequests(context: Context, pull_number: number, o
     return null;
   }
 }
+
 // Get issues by issue number
 export async function getIssueByNumber(context: Context, issueNumber: number) {
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   try {
-    const { data: issue } = await context.event.octokit.rest.issues.get({
+    const { data: issue } = await context.octokit.rest.issues.get({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: issueNumber,
@@ -545,10 +466,8 @@ export async function getIssueByNumber(context: Context, issueNumber: number) {
 }
 
 export async function getPullByNumber(context: Context, pull: number) {
-  // const runtime = Runtime.getState();
-
-  const payload = context.event.payload as Payload;
-  const response = await context.event.octokit.rest.pulls.get({
+  const payload = context.payload;
+  const response = await context.octokit.rest.pulls.get({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     pull_number: pull,
@@ -558,27 +477,20 @@ export async function getPullByNumber(context: Context, pull: number) {
 
 // Get issues assigned to a username
 export async function getAssignedIssues(context: Context, username: string) {
-  type Issues = PromiseType<ReturnType<typeof context.event.octokit.issues.listForRepo>>["data"][0];
-  const issuesArr = [] as Issues[];
-  let fetchDone = false;
-  const perPage = 100;
-  let curPage = 1;
-  while (!fetchDone) {
-    const issues = await listIssuesAndPullsForRepo(context, IssueType.OPEN, perPage, curPage);
+  const payload = context.payload;
+  const issues = (await context.octokit.paginate(
+    context.octokit.issues.listForRepo,
+    {
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      state: IssueType.OPEN,
+      per_page: 1000,
+    },
+    ({ data: issues }) =>
+      issues.filter((issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username)
+  )) as Issue[];
 
-    // push the objects to array
-    issuesArr.push(...issues);
-
-    if (issues.length < perPage) fetchDone = true;
-    else curPage++;
-  }
-
-  // get only issues assigned to username
-  const assigned_issues = issuesArr.filter(
-    (issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username
-  );
-
-  return assigned_issues;
+  return issues;
 }
 
 export async function getOpenedPullRequestsForAnIssue(context: Context, issueNumber: number, userName: string) {
