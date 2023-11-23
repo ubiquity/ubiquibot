@@ -45,7 +45,7 @@ export async function issueClosed(context: Context) {
     }),
   });
 
-  return "Pleaes wait until we get the result.";
+  return "Please wait until we get the result.";
 }
 
 export const dispatchWorkflow = async (owner: string, repo: string, workflow_id: string, inputs: any) => {
