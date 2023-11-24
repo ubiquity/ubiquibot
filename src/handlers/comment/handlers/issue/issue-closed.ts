@@ -26,7 +26,7 @@ export async function issueClosed(context: Context) {
   const pullRequestComments = await getPullRequestComments(context, owner, repository, issueNumber);
   const repoCollaborators = await getCollaboratorsForRepo(context);
 
-  await dispatchWorkflow(owner, "ubiquibot-config", "bridge.yml", {
+  await dispatchWorkflow(owner, "ubiquibot-config", "compute.yml", {
     eventName: "issueClosed",
     secretToken: process.env.GITHUB_TOKEN,
     owner,
