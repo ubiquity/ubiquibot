@@ -31,9 +31,9 @@ export async function commentCreatedOrEdited(context: Context) {
     const { id, handler } = userCommand;
     logger.info("Running a comment handler", { id, handler: handler.name });
 
-    const disabled = config.disabledCommands.some((command) => command === id.replace("/", ""));
+    const isDisabled = config.disabledCommands.some((command) => command === id.replace("/", ""));
 
-    if (disabled && id !== "/help") {
+    if (isDisabled && id !== "/help") {
       return logger.warn("Skipping because it is disabled on this repo.", { id });
     }
 

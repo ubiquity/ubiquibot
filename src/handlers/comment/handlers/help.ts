@@ -18,7 +18,7 @@ export async function listAvailableCommands(context: Context, body: string) {
 export function generateHelpMenu(context: Context) {
   const config = context.config;
   const disabledCommands = config.disabledCommands;
-  const startDisabled = config.disabledCommands.some((command) => command === "start");
+  const isStartDisabled = config.disabledCommands.some((command) => command === "start");
   let helpMenu = "### Available Commands\n\n| Command | Description | Example |\n| --- | --- | --- |\n";
   const commands = userCommands(config.miscellaneous.registerWalletWithVerification);
 
@@ -31,7 +31,7 @@ export function generateHelpMenu(context: Context) {
         } |\n`) // add to help menu
     );
 
-  if (startDisabled) {
+  if (isStartDisabled) {
     helpMenu += "\n\n**To assign yourself to an issue, please open a draft pull request that is linked to it.**";
   }
   return helpMenu;

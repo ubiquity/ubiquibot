@@ -17,7 +17,7 @@ export class User extends Super {
   public async getMultiplier(userId: number, repositoryId: number) {
     const locationData = await this.runtime.adapters.supabase.locations.getLocationsFromRepo(repositoryId);
     if (locationData && locationData.length > 0) {
-      const accessData = await this.getAccessData(locationData, userId);
+      const accessData = await this._getAccessData(locationData, userId);
       if (accessData) {
         return {
           value: accessData.multiplier || null,
@@ -28,7 +28,7 @@ export class User extends Super {
     return null;
   }
 
-  private async getAccessData(locationData: { id: number }[], userId: number) {
+  private async _getAccessData(locationData: { id: number }[], userId: number) {
     const locationIdsInCurrentRepository = locationData.map((location) => location.id);
 
     const { data: accessData, error: accessError } = await this.supabase

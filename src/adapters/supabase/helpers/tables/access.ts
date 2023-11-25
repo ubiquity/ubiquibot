@@ -8,7 +8,7 @@ type AccessRow = Database["public"]["Tables"]["access"]["Row"];
 type AccessInsert = Database["public"]["Tables"]["access"]["Insert"];
 type UserWithAccess = (UserRow & { access: AccessRow | null })[];
 
-type _Access = {
+type AccessData = {
   user_id: number;
   multiplier: number;
   multiplier_reason: string;
@@ -54,7 +54,7 @@ export class Access extends Super {
 
   async upsertMultiplier(userId: number, multiplier: number, reason: string, comment: Comment) {
     try {
-      const accessData: _Access = {
+      const accessData: AccessData = {
         user_id: userId,
         multiplier: multiplier,
         multiplier_reason: reason,

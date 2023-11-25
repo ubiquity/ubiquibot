@@ -28,7 +28,7 @@ async function filterUsers(context: Context, issue: Issue, contributorComments: 
     .map((comment) => comment.user);
 
   const contributors = humanUsersWhoCommented.filter(
-    (user: User) => !allRoleUsers.some((_user) => _user?.id === user.id)
+    (user: User) => !allRoleUsers.some((roleUser) => roleUser?.id === user.id)
   );
   const uniqueContributors = Array.from(new Map(contributors.map((user) => [user.id, user])).values());
   return {

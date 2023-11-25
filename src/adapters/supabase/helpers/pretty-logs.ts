@@ -1,6 +1,167 @@
 import util from "util";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+type PrettyLogsWithOk = "ok" | LogLevel;
+export class PrettyLogs {
+  public error(message: string, metadata?: any) {
+    this._logWithStack(LogLevel.ERROR, message, metadata);
+  }
+
+  public warn(message: string, metadata?: any) {
+    this._logWithStack(LogLevel.WARN, message, metadata);
+  }
+
+  public ok(message: string, metadata?: any) {
+    this._logWithStack("ok", message, metadata);
+  }
+
+  public info(message: string, metadata?: any) {
+    this._logWithStack(LogLevel.INFO, message, metadata);
+  }
+
+  public debug(message: string, metadata?: any) {
+    this._logWithStack(LogLevel.DEBUG, message, metadata);
+  }
+
+  public http(message: string, metadata?: any) {
+    this._logWithStack(LogLevel.HTTP, message, metadata);
+  }
+
+  public verbose(message: string, metadata?: any) {
+    this._logWithStack(LogLevel.VERBOSE, message, metadata);
+  }
+
+  public silly(message: string, metadata?: any) {
+    this._logWithStack(LogLevel.SILLY, message, metadata);
+  }
+
+  private _logWithStack(type: "ok" | LogLevel, message: string, metadata?: Metadata | string) {
+    // FIXME: for errors this renders the stack error location correctly on GitHub comments but not in the logs.
+
+    this._log(type, message);
+    if (typeof metadata === "string") {
+      this._log(type, metadata);
+      return;
+    }
+    if (metadata) {
+      let stack = metadata?.error?.stack || metadata?.stack;
+      if (!stack) {
+        // generate and remove the top four lines of the stack trace
+        const stackTrace = new Error().stack?.split("\n");
+        if (stackTrace) {
+          stackTrace.splice(0, 4);
+          stack = stackTrace.filter((line) => line.includes(".ts:")).join("\n");
+        }
+      }
+      const newMetadata = { ...metadata };
+      delete newMetadata.message;
+      delete newMetadata.name;
+      delete newMetadata.stack;
+
+      if (!this._isEmpty(newMetadata)) {
+        // console.trace(util.inspect(newMetadata, { showHidden: true, depth: null }));
+        this._log(type, newMetadata);
+      }
+
+      if (typeof stack == "string") {
+        const prettyStack = this._formatStackTrace(stack, 1);
+        const colorizedStack = this._colorizeText(prettyStack, Colors.dim);
+        this._log(type, colorizedStack);
+      } else if (stack) {
+        // console.trace({ type: typeof stack, stack });
+        const prettyStack = this._formatStackTrace((stack as unknown as string[]).join("\n"), 1);
+        const colorizedStack = this._colorizeText(prettyStack, Colors.dim);
+        this._log(type, colorizedStack);
+      } else {
+        throw new Error("Stack is null");
+      }
+    }
+  }
+
+  private _colorizeText(text: string, color: Colors): string {
+    if (!color) {
+      throw new Error(`Invalid color: ${color}`);
+    }
+    return color.concat(text).concat(Colors.reset);
+  }
+
+  private _formatStackTrace(stack: string, linesToRemove = 0, prefix = ""): string {
+    const lines = stack.split("\n");
+    for (let i = 0; i < linesToRemove; i++) {
+      lines.shift(); // Remove the top line
+    }
+    return lines
+      .map((line) => `${prefix}${line.replace(/\s*at\s*/, "  ↳  ")}`) // Replace 'at' and prefix every line
+      .join("\n");
+  }
+
+  private _isEmpty(obj: Record<string, any>) {
+    return !Reflect.ownKeys(obj).some((key) => typeof obj[String(key)] !== "function");
+  }
+
+  private _log(type: PrettyLogsWithOk, message: any) {
+    const defaultSymbols: Record<PrettyLogsWithOk, string> = {
+      error: "×",
+      ok: "✓",
+      warn: "⚠",
+      info: "›",
+      debug: "››",
+      http: "🛜",
+      verbose: "💬",
+      silly: "🤪",
+    };
+
+    const symbol = defaultSymbols[type];
+
+    // console.trace({ type, symbol, message });
+
+    // Formatting the message
+    const messageFormatted =
+      typeof message === "string"
+        ? message
+        : util.inspect(message, { showHidden: true, depth: null, breakLength: Infinity });
+    // const messageFormatted =
+    //   typeof message === "string" ? message : JSON.stringify(Logs.convertErrorsIntoObjects(message));
+
+    // Constructing the full log string with the prefix symbol
+    const lines = messageFormatted.split("\n");
+    const logString = lines
+      .map((line, index) => {
+        // Add the symbol only to the first line and keep the indentation for the rest
+        const prefix = index === 0 ? `\t${symbol}` : `\t${" ".repeat(symbol.length)}`;
+        return `${prefix} ${line}`;
+      })
+      .join("\n");
+
+    const fullLogString = logString;
+
+    const colorMap: Record<PrettyLogsWithOk, [keyof typeof console, Colors]> = {
+      error: ["error", Colors.fgRed],
+      ok: ["log", Colors.fgGreen],
+      warn: ["warn", Colors.fgYellow],
+      info: ["info", Colors.dim],
+      debug: ["debug", Colors.fgMagenta],
+      http: ["debug", Colors.dim],
+      verbose: ["debug", Colors.dim],
+      silly: ["debug", Colors.dim],
+    };
+
+    const _console = console[colorMap[type][0] as keyof typeof console] as (...args: string[]) => void;
+    if (typeof _console === "function") {
+      _console(this._colorizeText(fullLogString, colorMap[type][1]));
+    } else {
+      throw new Error(fullLogString);
+    }
+  }
+}
+interface Metadata {
+  error?: { stack?: string };
+  stack?: string;
+  message?: string;
+  name?: string;
+  [key: string]: any;
+}
+
 export enum Colors {
   reset = "\x1b[0m",
   bright = "\x1b[1m",
@@ -28,161 +189,12 @@ export enum Colors {
   bgCyan = "\x1b[46m",
   bgWhite = "\x1b[47m",
 }
-
-export const prettyLogs = {
-  error: function logError(message: string, metadata?: any) {
-    logWithStack("error", message, metadata);
-  },
-
-  warn: function logWarn(message: string, metadata?: any) {
-    logWithStack("warn", message, metadata);
-  },
-
-  ok: function logOk(message: string, metadata?: any) {
-    logWithStack("ok", message, metadata);
-  },
-
-  info: function logInfo(message: string, metadata?: any) {
-    logWithStack("info", message, metadata);
-  },
-
-  debug: function logDebug(message: string, metadata?: any) {
-    logWithStack("debug", message, metadata);
-  },
-
-  http: function logHttp(message: string, metadata?: any) {
-    logWithStack("http", message, metadata);
-  },
-
-  verbose: function logVerbose(message: string, metadata?: any) {
-    logWithStack("verbose", message, metadata);
-  },
-
-  silly: function logSilly(message: string, metadata?: any) {
-    logWithStack("silly", message, metadata);
-  },
-};
-interface Metadata {
-  error?: { stack?: string };
-  stack?: string;
-  message?: string;
-  name?: string;
-  [key: string]: any;
-}
-function logWithStack(type: keyof typeof prettyLogs, message: string, metadata?: Metadata | string) {
-  // FIXME: for errors this renders the stack error location correctly on GitHub comments but not in the logs.
-
-  _log(type, message);
-  if (typeof metadata === "string") {
-    _log(type, metadata);
-    return;
-  }
-  if (metadata) {
-    let stack = metadata?.error?.stack || metadata?.stack;
-    if (!stack) {
-      // generate and remove the top four lines of the stack trace
-      const stackTrace = new Error().stack?.split("\n");
-      if (stackTrace) {
-        stackTrace.splice(0, 4);
-        stack = stackTrace.filter((line) => line.includes(".ts:")).join("\n");
-      }
-    }
-    const newMetadata = { ...metadata };
-    delete newMetadata.message;
-    delete newMetadata.name;
-    delete newMetadata.stack;
-
-    if (!isEmpty(newMetadata)) {
-      // console.trace(util.inspect(newMetadata, { showHidden: true, depth: null }));
-      _log(type, newMetadata);
-    }
-
-    if (typeof stack == "string") {
-      const prettyStack = formatStackTrace(stack, 1);
-      const colorizedStack = colorizeText(prettyStack, Colors.dim);
-      _log(type, colorizedStack);
-    } else if (stack) {
-      // console.trace({ type: typeof stack, stack });
-      const prettyStack = formatStackTrace((stack as unknown as string[]).join("\n"), 1);
-      const colorizedStack = colorizeText(prettyStack, Colors.dim);
-      _log(type, colorizedStack);
-    } else {
-      throw new Error("Stack is null");
-    }
-  }
-}
-
-function _log(type: keyof typeof prettyLogs, message: any) {
-  const defaultSymbols: Record<keyof typeof prettyLogs, string> = {
-    error: "×",
-    ok: "✓",
-    warn: "⚠",
-    info: "›",
-    debug: "››",
-    http: "🛜",
-    verbose: "💬",
-    silly: "🤪",
-  };
-
-  const symbol = defaultSymbols[type];
-
-  // console.trace({ type, symbol, message });
-
-  // Formatting the message
-  const messageFormatted =
-    typeof message === "string"
-      ? message
-      : util.inspect(message, { showHidden: true, depth: null, breakLength: Infinity });
-  // const messageFormatted =
-  //   typeof message === "string" ? message : JSON.stringify(Logs.convertErrorsIntoObjects(message));
-
-  // Constructing the full log string with the prefix symbol
-  const lines = messageFormatted.split("\n");
-  const logString = lines
-    .map((line, index) => {
-      // Add the symbol only to the first line and keep the indentation for the rest
-      const prefix = index === 0 ? `\t${symbol}` : `\t${" ".repeat(symbol.length)}`;
-      return `${prefix} ${line}`;
-    })
-    .join("\n");
-
-  const fullLogString = logString;
-
-  const colorMap: Record<keyof typeof prettyLogs, [keyof typeof console, Colors]> = {
-    error: ["error", Colors.fgRed],
-    ok: ["log", Colors.fgGreen],
-    warn: ["warn", Colors.fgYellow],
-    info: ["info", Colors.dim],
-    debug: ["debug", Colors.fgMagenta],
-    http: ["debug", Colors.dim],
-    verbose: ["debug", Colors.dim],
-    silly: ["debug", Colors.dim],
-  };
-
-  const _console = console[colorMap[type][0] as keyof typeof console] as (...args: string[]) => void;
-  if (typeof _console === "function") {
-    _console(colorizeText(fullLogString, colorMap[type][1]));
-  } else {
-    throw new Error(fullLogString);
-  }
-}
-
-export function colorizeText(text: string, color: Colors): string {
-  if (!color) {
-    throw new Error(`Invalid color: ${color}`);
-  }
-  return color.concat(text).concat(Colors.reset);
-}
-
-function formatStackTrace(stack: string, linesToRemove = 0, prefix = ""): string {
-  const lines = stack.split("\n");
-  for (let i = 0; i < linesToRemove; i++) {
-    lines.shift(); // Remove the top line
-  }
-  return lines
-    .map((line) => `${prefix}${line.replace(/\s*at\s*/, "  ↳  ")}`) // Replace 'at' and prefix every line
-    .join("\n");
-}
-function isEmpty(obj: Record<string, any>) {
-  return !Reflect.ownKeys(obj).some((key) => typeof obj[String(key)] !== "function");
+export enum LogLevel {
+  ERROR = "error",
+  WARN = "warn",
+  INFO = "info",
+  HTTP = "http",
+  VERBOSE = "verbose",
+  DEBUG = "debug",
+  SILLY = "silly",
 }

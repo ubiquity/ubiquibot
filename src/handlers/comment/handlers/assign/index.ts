@@ -24,7 +24,7 @@ export async function assign(context: Context, body: string) {
     disabledCommands,
   } = context.config;
 
-  const startDisabled = disabledCommands.some((command) => command === "start");
+  const isStartDisabled = disabledCommands.some((command) => command === "start");
 
   logger.info("Received '/start' command", { sender: payload.sender.login, body });
 
@@ -32,7 +32,7 @@ export async function assign(context: Context, body: string) {
     throw logger.warn(`Skipping '/start' because of no issue instance`);
   }
 
-  if (startDisabled) {
+  if (isStartDisabled) {
     throw logger.warn("The `/assign` command is disabled for this repository.");
   }
 

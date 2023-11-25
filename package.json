@@ -20,7 +20,7 @@
     "lint": "yarn lint:prettier:check && yarn lint:eslint",
     "lint:prettier:check": "prettier -c src/**/*.ts",
     "lint:prettier": "prettier --write src",
-    "lint:eslint": "eslint --ext .ts ./src",
+    "lint:eslint": "eslint --fix --ext .ts ./src",
     "start:serverless": "tsx src/adapters/github/github-actions.ts",
     "start:watch": "nodemon --exec 'yarn start'",
     "utils:cspell": "cspell --config .cspell.json 'src/**/*.{js,ts,json,md,yml}'",
@@ -90,7 +90,7 @@
   },
   "lint-staged": {
     "*.{ts,json}": [
-      "prettier --write"
+      "format"
     ],
     "src/**.{ts,json}": [
       "cspell"

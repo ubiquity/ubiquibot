@@ -7,11 +7,6 @@ import { generatePermits } from "./generate-permits";
 import { aggregateAndScoreContributions } from "./scoreSources";
 import { sumTotalScores } from "./sumTotalScoresPerContributor";
 
-export const botCommandsAndHumanCommentsFilter = (comment: Comment) =>
-  !comment.body.startsWith("/") /* No Commands */ && comment.user.type === "User"; /* No Bots */
-
-const botCommentsFilter = (comment: Comment) => comment.user.type === "Bot"; /* No Humans */
-
 export async function issueClosed(context: Context) {
   // TODO: delegate permit calculation to GitHub Action
 
@@ -67,8 +62,8 @@ async function preflightChecks({ issue, issueComments, context }: PreflightCheck
   if (issue.state_reason !== StateReason.COMPLETED)
     throw context.logger.info("Issue was not closed as completed. Skipping.", { issue });
   if (config.features.publicAccessControl.fundExternalClosedIssue) {
-    const userHasPermission = await checkUserPermissionForRepoAndOrg(context, payload.sender.login);
-    if (!userHasPermission)
+    const hasPermission = await checkUserPermissionForRepoAndOrg(context, payload.sender.login);
+    if (!hasPermission)
       throw context.logger.warn(
         "Permit generation disabled because this issue has been closed by an external contributor."
       );
@@ -81,7 +76,7 @@ async function preflightChecks({ issue, issueComments, context }: PreflightCheck
     });
   }
 
-  const botComments = issueComments.filter(botCommentsFilter);
+  const botComments = issueComments.filter((comment: Comment) => comment.user.type === "Bot" /* No Humans */);
   checkIfPermitsAlreadyPosted(context, botComments);
 }
 

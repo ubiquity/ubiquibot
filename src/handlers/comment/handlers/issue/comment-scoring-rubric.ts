@@ -80,7 +80,7 @@ export class CommentScoring {
     // ol: new ElementScoreConfig({ element: "ol", value: ONE }),
   };
 
-  private renderCache: { [commentId: number]: string } = {};
+  private _renderCache: { [commentId: number]: string } = {};
 
   constructor({ contributionClass, formattingMultiplier = 1, wordValue = 0 }: CommentScoringConstructor) {
     this.contributionClass = contributionClass;
@@ -89,10 +89,10 @@ export class CommentScoring {
   }
 
   private _getRenderedCommentBody(comment: Comment): string {
-    if (!this.renderCache[comment.id]) {
-      this.renderCache[comment.id] = md.render(comment.body);
+    if (!this._renderCache[comment.id]) {
+      this._renderCache[comment.id] = md.render(comment.body);
     }
-    return this.renderCache[comment.id];
+    return this._renderCache[comment.id];
   }
 
   public compileTotalUserScores(): void {

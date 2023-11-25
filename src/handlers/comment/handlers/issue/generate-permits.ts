@@ -27,7 +27,7 @@ async function generateComment(context: Context, totals: TotalsById) {
   const { rpc, paymentToken } = getPayoutConfigByNetworkId(context.config.payments.evmNetworkId);
 
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
-  const HTMLs = [] as string[];
+  const HTML = [] as string[];
 
   const permits = [];
 
@@ -61,9 +61,9 @@ async function generateComment(context: Context, totals: TotalsById) {
       contributionsOverviewTable,
       detailsTable: conversationIncentivesTable,
     });
-    HTMLs.push(html);
+    HTML.push(html);
   }
-  return { html: HTMLs.join("\n"), permits };
+  return { html: HTML.join("\n"), permits };
 }
 function generateHtml({
   permit,
@@ -101,8 +101,9 @@ function generateContributionsOverview(userScoreDetails: TotalsById, issue: Issu
     "</thead><tbody>",
   ];
 
-  const newRow = (view: string, contribution: string, count: string, reward: string) =>
-    `<tr><td>${view}</td><td>${contribution}</td><td>${count}</td><td>${reward}</td></tr>`;
+  function newRow(view: string, contribution: string, count: string, reward: string) {
+    return `<tr><td>${view}</td><td>${contribution}</td><td>${count}</td><td>${reward}</td></tr>`;
+  }
 
   for (const entries of Object.entries(userScoreDetails)) {
     const userId = Number(entries[0]);

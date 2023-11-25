@@ -4,7 +4,7 @@ dotenv.config();
 
 export const env = { ...process.env } as unknown as EnvConfig;
 
-const valid = validateEnvConfig(env);
-if (!valid) {
+const isValid = validateEnvConfig(env);
+if (!isValid) {
   throw new Error("Invalid env configuration: " + JSON.stringify(validateEnvConfig.errors, null, 2));
 }

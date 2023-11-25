@@ -53,8 +53,8 @@ export async function bindEvents(eventContext: ProbotContext) {
   // Skip validation for installation event and push
   if (!NO_VALIDATION.includes(eventName)) {
     // Validate payload
-    const valid = validatePayload(payload);
-    if (!valid && validatePayload.errors) {
+    const isValid = validatePayload(payload);
+    if (!isValid && validatePayload.errors) {
       return logger.error("Payload schema validation failed!", validatePayload.errors);
     }
 
