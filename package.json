@@ -89,8 +89,8 @@
     "node": ">=18"
   },
   "lint-staged": {
-    "*.{ts,json}": [
-      "format"
+    "*.{ts}": [
+      "yarn format"
     ],
     "src/**.{ts,json}": [
       "cspell"
