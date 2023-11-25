@@ -1,12 +1,10 @@
 import OpenAI from "openai";
 import { Context as ProbotContext } from "probot";
-import { createAdapters, supabaseClient } from "../adapters";
-import { LogReturn } from "../adapters/supabase";
-import { LogMessage, Logs } from "../adapters/supabase/helpers/tables/logs";
+import { createAdapters, supabaseClient } from "../adapters/adapters";
+import { LogMessage, LogReturn, Logs } from "../adapters/supabase/helpers/tables/logs";
 import { processors, wildcardProcessors } from "../handlers/processors";
-import { validateConfigChange } from "../handlers/push";
+import { validateConfigChange } from "../handlers/push/push";
 import structuredMetadata from "../handlers/shared/structured-metadata";
-import { addCommentToIssue, shouldSkip } from "../helpers";
 import { BotConfig } from "../types/configuration-types";
 
 import { Context } from "../types/context";
@@ -22,6 +20,8 @@ import { ajv } from "../utils/ajv";
 import { generateConfiguration } from "../utils/generate-configuration";
 import Runtime from "./bot-runtime";
 import { env } from "./env";
+import { shouldSkip } from "../helpers/shared";
+import { addCommentToIssue } from "../helpers/issue";
 
 const allowedEvents = Object.values(GitHubEvent) as string[];
 

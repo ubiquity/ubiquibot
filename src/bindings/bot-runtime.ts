@@ -1,5 +1,5 @@
-import { createAdapters } from "../adapters";
-import { Logs } from "../adapters/supabase";
+import { createAdapters } from "../adapters/adapters";
+import { Logs } from "../adapters/supabase/helpers/tables/logs";
 
 class Runtime {
   private static _instance: Runtime;

@@ -1,11 +1,10 @@
-import { LogReturn } from "../adapters/supabase";
-
+import { LogReturn } from "../adapters/supabase/helpers/tables/logs";
 import { Context } from "../types/context";
 import { HandlerReturnValuesNoVoid } from "../types/handlers";
 import { StreamlinedComment } from "../types/openai";
 import { AssignEvent, Issue, IssueType, Payload, UserType } from "../types/payload";
-import { checkRateLimitGit } from "../utils";
 import { Comment } from "../types/payload";
+import { checkRateLimitGit } from "../utils/check-github-rate-limit";
 
 type PromiseType<T> = T extends Promise<infer U> ? U : never;
 

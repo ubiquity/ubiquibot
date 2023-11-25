@@ -1,5 +1,6 @@
+import { createLabel, listLabelsForRepo } from "../../helpers/label";
+import { calculateLabelValue } from "../../helpers/shared";
 import { Context } from "../../types/context";
-import { calculateLabelValue, createLabel, listLabelsForRepo } from "../../helpers";
 
 import { calculateTaskPrice } from "../shared/pricing";
 

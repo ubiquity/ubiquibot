@@ -1,5 +1,5 @@
-import { userCommands } from ".";
 import { Context } from "../../../types/context";
+import { userCommands } from "./comment-handler-main";
 
 export async function listAvailableCommands(context: Context, body: string) {
   const logger = context.logger;

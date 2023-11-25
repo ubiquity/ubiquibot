@@ -1,4 +1,4 @@
-import { calculateLabelValue } from "../../helpers";
+import { calculateLabelValue } from "../../helpers/shared";
 import { Context } from "../../types/context";
 import { Issue } from "../../types/payload";
 

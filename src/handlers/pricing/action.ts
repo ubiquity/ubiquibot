@@ -1,5 +1,6 @@
+import { clearAllPriceLabelsOnIssue } from "../../helpers/issue";
+import { calculateLabelValue } from "../../helpers/shared";
 import { Context } from "../../types/context";
-import { calculateLabelValue, clearAllPriceLabelsOnIssue } from "../../helpers";
 import { Label } from "../../types/label";
 
 export async function handleParentIssue(context: Context, labels: Label[]) {

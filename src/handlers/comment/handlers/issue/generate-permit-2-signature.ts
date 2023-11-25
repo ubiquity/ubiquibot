@@ -2,10 +2,10 @@ import { MaxUint256, PERMIT2_ADDRESS, PermitTransferFrom, SignatureTransfer } fr
 import Decimal from "decimal.js";
 import { BigNumber, ethers } from "ethers";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
+import { getPayoutConfigByNetworkId } from "../../../../helpers/payout";
 
-import { getPayoutConfigByNetworkId } from "../../../../helpers";
-import { decryptKeys } from "../../../../utils/private";
 import { Context } from "../../../../types/context";
+import { decryptKeys } from "../../../../utils/private";
 
 export async function generatePermit2Signature(
   context: Context,

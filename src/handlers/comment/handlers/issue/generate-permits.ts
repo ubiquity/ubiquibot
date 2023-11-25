@@ -2,8 +2,8 @@ import Decimal from "decimal.js";
 import { stringify } from "yaml";
 
 import Runtime from "../../../../bindings/bot-runtime";
-import { getPayoutConfigByNetworkId } from "../../../../helpers";
 import { getTokenSymbol } from "../../../../helpers/contracts";
+import { getPayoutConfigByNetworkId } from "../../../../helpers/payout";
 import { Context } from "../../../../types/context";
 import { Issue, Payload } from "../../../../types/payload";
 

@@ -1,6 +1,6 @@
 import { Context } from "../../types/context";
 import { PushPayload } from "../../types/payload";
-import { BASE_RATE_FILE, getCommitChanges, ZERO_SHA } from "./index";
+import { BASE_RATE_FILE, getCommitChanges, ZERO_SHA } from "./push";
 import { updateBaseRate } from "./update-base-rate";
 
 export async function checkModifiedBaseRate(context: Context) {

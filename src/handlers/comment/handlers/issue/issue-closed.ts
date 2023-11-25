@@ -1,5 +1,5 @@
 import Runtime from "../../../../bindings/bot-runtime";
-import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../../helpers";
+import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../../helpers/issue";
 import { Context } from "../../../../types/context";
 
 import { Comment, Issue, Payload, StateReason } from "../../../../types/payload";

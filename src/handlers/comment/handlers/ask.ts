@@ -1,6 +1,6 @@
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
-import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers";
 import { askGPT, decideContextGPT, sysMsg } from "../../../helpers/gpt";
+import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers/issue";
 import { Context } from "../../../types/context";
 import { StreamlinedComment } from "../../../types/openai";
 import { Payload, UserType } from "../../../types/payload";

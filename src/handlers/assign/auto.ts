@@ -1,4 +1,4 @@
-import { addAssignees, getAllPullRequests, getIssueByNumber, getPullByNumber } from "../../helpers";
+import { getAllPullRequests, getPullByNumber, getIssueByNumber, addAssignees } from "../../helpers/issue";
 import { getLinkedIssues } from "../../helpers/parser";
 import { Context } from "../../types/context";
 

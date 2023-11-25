@@ -1,5 +1,5 @@
 import Runtime from "../../../bindings/bot-runtime";
-import { isUserAdminOrBillingManager } from "../../../helpers";
+import { isUserAdminOrBillingManager } from "../../../helpers/issue";
 import { Context } from "../../../types/context";
 import { Payload } from "../../../types/payload";
 

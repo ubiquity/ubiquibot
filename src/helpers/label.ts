@@ -1,11 +1,11 @@
 import { labelExists } from "../handlers/pricing/pricing-label";
 import { calculateTaskPrice } from "../handlers/shared/pricing";
-import { calculateLabelValue } from "../helpers";
 import { Context } from "../types/context";
 import { Label } from "../types/label";
 import { Payload } from "../types/payload";
 
 import { deleteLabel } from "./issue";
+import { calculateLabelValue } from "./shared";
 
 // cspell:disable
 const COLORS = { default: "ededed", price: "1f883d" };

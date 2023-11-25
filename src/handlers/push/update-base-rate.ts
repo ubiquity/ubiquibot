@@ -1,4 +1,5 @@
-import { getPreviousFileContent, listLabelsForRepo, updateLabelsFromBaseRate } from "../../helpers";
+import { getPreviousFileContent } from "../../helpers/file";
+import { listLabelsForRepo, updateLabelsFromBaseRate } from "../../helpers/label";
 import { Context } from "../../types/context";
 import { Label } from "../../types/label";
 import { PushPayload } from "../../types/payload";

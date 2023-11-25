@@ -1,6 +1,6 @@
 import { constants, ethers } from "ethers";
 import Runtime from "../../../bindings/bot-runtime";
-import { resolveAddress } from "../../../helpers";
+import { resolveAddress } from "../../../helpers/ens";
 import { Context } from "../../../types/context";
 import { Payload } from "../../../types/payload";
 
