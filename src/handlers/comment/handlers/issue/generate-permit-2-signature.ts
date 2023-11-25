@@ -58,7 +58,7 @@ export async function generatePermit2Signature(
     throw logger.debug("Failed to sign typed data", error);
   });
 
-  const transactionData: TransactionData = {
+  const transactionData: PermitTransactionData = {
     permit: {
       permitted: {
         token: permitTransferFromData.permitted.token,
@@ -100,7 +100,7 @@ interface GeneratePermit2SignatureParams {
   userId: string;
 }
 
-interface TransactionData {
+export interface PermitTransactionData {
   permit: {
     permitted: {
       token: string;

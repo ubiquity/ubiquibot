@@ -1,4 +1,4 @@
-export const MarkdownItem = {
+export const markdownItem = {
   Paragraph: "paragraph",
   List: "list",
   Link: "link",
@@ -7,4 +7,4 @@ export const MarkdownItem = {
   Image: "image",
   BlockQuote: "blockquote",
 } as const;
-export type MarkdownItem = (typeof MarkdownItem)[keyof typeof MarkdownItem];
+export type MarkdownItem = (typeof markdownItem)[keyof typeof markdownItem];

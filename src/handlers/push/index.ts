@@ -63,10 +63,10 @@ export async function validateConfigChange(context: ProbotContext) {
     if (configFileContent) {
       const decodedConfig = Buffer.from(configFileContent, "base64").toString();
       const config = parseYaml(decodedConfig);
-      const valid = validateBotConfig(config);
+      const isValid = validateBotConfig(config);
       let errorMsg: string | undefined;
 
-      if (!valid) {
+      if (!isValid) {
         const errMsg = generateValidationError(validateBotConfig.errors as DefinedError[]);
         errorMsg = `@${payload.sender.login} ${errMsg}`;
       }

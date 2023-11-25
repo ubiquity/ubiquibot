@@ -30,9 +30,9 @@ export async function decryptKeys(
   return { privateKey: _private, publicKey: _public };
 }
 
-async function getScalarKey(X25519_PRIVATE_KEY: string) {
+async function getScalarKey(x25519PrivateKey: string) {
   await sodium.ready;
-  const binPriv = sodium.from_base64(X25519_PRIVATE_KEY, sodium.base64_variants.URLSAFE_NO_PADDING);
+  const binPriv = sodium.from_base64(x25519PrivateKey, sodium.base64_variants.URLSAFE_NO_PADDING);
   const scalerPub = sodium.crypto_scalarmult_base(binPriv, "base64");
   return scalerPub;
 }

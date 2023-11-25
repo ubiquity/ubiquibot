@@ -9,7 +9,7 @@ type Node = {
   childNodes?: Node[];
 };
 
-const traverse = (result: Record<string, string[]>, node: Node, itemsToExclude: string[]): Record<string, string[]> => {
+function traverse(result: Record<string, string[]>, node: Node, itemsToExclude: string[]): Record<string, string[]> {
   if (itemsToExclude.includes(node.nodeName)) {
     return result;
   }
@@ -28,9 +28,9 @@ const traverse = (result: Record<string, string[]>, node: Node, itemsToExclude: 
   }
 
   return result;
-};
+}
 
-export const parseComments = (comments: string[], itemsToExclude: string[]): Record<string, string[]> => {
+export function parseComments(comments: string[], itemsToExclude: string[]): Record<string, string[]> {
   const result: Record<string, string[]> = {};
 
   for (const comment of comments) {
@@ -44,7 +44,7 @@ export const parseComments = (comments: string[], itemsToExclude: string[]): Rec
   }
 
   return result;
-};
+}
 
 function generateCollapsibleTable(data: { element: string; units: number; reward: Decimal }[]) {
   // Check if the data array is empty

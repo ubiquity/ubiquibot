@@ -62,6 +62,6 @@
     "sourceMap": true
   },
   "include": ["src/"],
-  "exclude": ["src/tests/", "src/coverage/", "src/handlers/comment/handlers/issue/reward-oop"],
+  "exclude": ["src/coverage/"],
   "compileOnSave": false
 }

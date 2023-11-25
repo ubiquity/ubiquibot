@@ -16,7 +16,7 @@ import {
   PreActionHandler,
   WildCardHandler,
 } from "../types/handlers";
-import { GitHubEvent, Payload, PayloadSchema } from "../types/payload";
+import { GitHubEvent, Payload, payloadSchema } from "../types/payload";
 import { ajv } from "../utils/ajv";
 import { generateConfiguration } from "../utils/generate-configuration";
 import Runtime from "./bot-runtime";
@@ -32,7 +32,7 @@ type PostHandlerWithType = { type: string; actions: PostActionHandler[] };
 type AllHandlersWithTypes = PreHandlerWithType | HandlerWithType | PostHandlerWithType;
 type AllHandlers = PreActionHandler | MainActionHandler | PostActionHandler;
 
-const validatePayload = ajv.compile(PayloadSchema);
+const validatePayload = ajv.compile(payloadSchema);
 
 const runtime = Runtime.getState();
 runtime.adapters = createAdapters();

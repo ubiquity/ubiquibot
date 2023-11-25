@@ -49,15 +49,15 @@ export function countTokensOfConversation(issue: Issue, comments: Comment[]) {
 export async function gptRelevance(
   context: Context,
   model: string,
-  ISSUE_SPECIFICATION_BODY: string,
-  CONVERSATION_STRINGS: string[],
-  ARRAY_LENGTH = CONVERSATION_STRINGS.length
+  issueSpecificationBody: string,
+  conversation: string[],
+  conversationLength = conversation.length
 ) {
   const openAi = context.openAi;
   if (!openAi) throw new Error("OpenAI adapter is not defined");
-  const PROMPT = `I need to evaluate the relevance of GitHub contributors' comments to a specific issue specification. Specifically, I'm interested in how much each comment helps to further define the issue specification or contributes new information or research relevant to the issue. Please provide a float between 0 and 1 to represent the degree of relevance. A score of 1 indicates that the comment is entirely relevant and adds significant value to the issue, whereas a score of 0 indicates no relevance or added value. Each contributor's comment is on a new line.\n\nIssue Specification:\n\`\`\`\n${ISSUE_SPECIFICATION_BODY}\n\`\`\`\n\nConversation:\n\`\`\`\n${CONVERSATION_STRINGS.join(
+  const PROMPT = `I need to evaluate the relevance of GitHub contributors' comments to a specific issue specification. Specifically, I'm interested in how much each comment helps to further define the issue specification or contributes new information or research relevant to the issue. Please provide a float between 0 and 1 to represent the degree of relevance. A score of 1 indicates that the comment is entirely relevant and adds significant value to the issue, whereas a score of 0 indicates no relevance or added value. Each contributor's comment is on a new line.\n\nIssue Specification:\n\`\`\`\n${issueSpecificationBody}\n\`\`\`\n\nConversation:\n\`\`\`\n${conversation.join(
     "\n"
-  )}\n\`\`\`\n\n\nTo what degree are each of the comments in the conversation relevant and valuable to further defining the issue specification? Please reply with an array of float numbers between 0 and 1, corresponding to each comment in the order they appear. Each float should represent the degree of relevance and added value of the comment to the issue. The total length of the array in your response should equal exactly ${ARRAY_LENGTH} elements.`;
+  )}\n\`\`\`\n\n\nTo what degree are each of the comments in the conversation relevant and valuable to further defining the issue specification? Please reply with an array of float numbers between 0 and 1, corresponding to each comment in the order they appear. Each float should represent the degree of relevance and added value of the comment to the issue. The total length of the array in your response should equal exactly ${conversationLength} elements.`;
   const response: OpenAI.Chat.ChatCompletion = await openAi.chat.completions.create({
     model: model,
     messages: [
@@ -145,7 +145,7 @@ function filterSamples(context: Context, batchResults: number[][], correctLength
 
 function averageSamples(batchResults: (number | Decimal)[][], precision: number) {
   const averageScores = batchResults[0]
-    .map((_, columnIndex) => {
+    .map((x, columnIndex) => {
       let sum = new Decimal(0);
       batchResults.forEach((row) => {
         sum = sum.plus(row[columnIndex]);

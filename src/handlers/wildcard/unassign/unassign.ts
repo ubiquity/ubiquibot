@@ -356,7 +356,7 @@ async function getAllCommitsFromPullRequest({ context, owner, repo, pullNumber }
   return allCommits;
 }
 
-function isCorrectType(event: any): event is IssuesListEventsResponseData {
+function isCorrectType(event: IssuesListEventsResponseData): event is IssuesListEventsResponseData {
   return event && typeof event.id === "number";
 }
 

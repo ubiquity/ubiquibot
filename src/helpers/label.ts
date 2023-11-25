@@ -1,7 +1,7 @@
 import { labelExists } from "../handlers/pricing/pricing-label";
 import { calculateTaskPrice } from "../handlers/shared/pricing";
 import { calculateLabelValue } from "../helpers";
-import { Label, Payload, Context } from "../types";
+import { Context, Label, Payload } from "../types";
 import { deleteLabel } from "./issue";
 
 // cspell:disable
@@ -88,8 +88,8 @@ export async function updateLabelsFromBaseRate(
       const labelData = labels.find((obj) => obj["name"] === label) as Label;
       const index = uniquePreviousLabels.findIndex((obj) => obj === label);
 
-      const exist = await labelExists(context, uniqueNewLabels[index]);
-      if (exist) {
+      const doesExist = await labelExists(context, uniqueNewLabels[index]);
+      if (doesExist) {
         // we have to delete first
         logger.debug("Label already exists, deleting it", { label });
         await deleteLabel(context, uniqueNewLabels[index]);

@@ -1,7 +1,7 @@
 // https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads
 
 import { Static, Type } from "@sinclair/typebox";
-import { LabelSchema } from "./label";
+import { labelSchema } from "./label";
 
 export enum GitHubEvent {
   // issues events
@@ -48,7 +48,7 @@ export enum StateReason {
   REOPENED = "reopened",
 }
 
-const UserSchema = Type.Object({
+const userSchema = Type.Object({
   login: Type.String(),
   id: Type.Number(),
   node_id: Type.String(),
@@ -89,9 +89,9 @@ const UserSchema = Type.Object({
 //   }),
 // ]);
 
-export type User = Static<typeof UserSchema>;
+export type User = Static<typeof userSchema>;
 // type UserProfile= Static<typeof UserProfileSchema>;
-export enum _AuthorAssociation {
+export enum AuthorAssociation {
   OWNER = "OWNER",
   COLLABORATOR = "COLLABORATOR",
   MEMBER = "MEMBER",
@@ -102,10 +102,10 @@ export enum _AuthorAssociation {
 }
 // const AuthorAssociation = Type.Enum(_AuthorAssociation);
 
-const IssueSchema = Type.Object({
-  assignee: Type.Union([Type.Null(), UserSchema]),
-  assignees: Type.Array(Type.Union([Type.Null(), UserSchema])),
-  author_association: Type.Enum(_AuthorAssociation),
+const issueSchema = Type.Object({
+  assignee: Type.Union([Type.Null(), userSchema]),
+  assignees: Type.Array(Type.Union([Type.Null(), userSchema])),
+  author_association: Type.Enum(AuthorAssociation),
   body: Type.String(),
   closed_at: Type.Union([Type.String({ format: "date-time" }), Type.Null()]),
   comments_url: Type.String(),
@@ -115,7 +115,7 @@ const IssueSchema = Type.Object({
   html_url: Type.String(),
   id: Type.Number(),
   labels_url: Type.String(),
-  labels: Type.Array(LabelSchema),
+  labels: Type.Array(labelSchema),
   locked: Type.Boolean(),
   node_id: Type.String(),
   number: Type.Number(),
@@ -125,7 +125,7 @@ const IssueSchema = Type.Object({
   title: Type.String(),
   updated_at: Type.String({ format: "date-time" }),
   url: Type.String(),
-  user: UserSchema,
+  user: userSchema,
   // OWNER: The author is an owner of the repository.
   // COLLABORATOR: The author is a collaborator on the repository.
   // MEMBER: The author is a member of the organization that owns the repository.
@@ -135,15 +135,15 @@ const IssueSchema = Type.Object({
   // NONE: The author does not have any specific association with the repository.
 });
 
-export type Issue = Static<typeof IssueSchema>;
+export type Issue = Static<typeof issueSchema>;
 
-const RepositorySchema = Type.Object({
+const repositorySchema = Type.Object({
   id: Type.Number(),
   node_id: Type.String(),
   name: Type.String(),
   full_name: Type.String(),
   private: Type.Boolean(),
-  owner: UserSchema,
+  owner: userSchema,
   html_url: Type.String(),
   description: Type.Union([Type.String(), Type.Null()]),
   fork: Type.Boolean(),
@@ -216,9 +216,9 @@ const RepositorySchema = Type.Object({
   default_branch: Type.String(),
 });
 
-export type Repository = Static<typeof RepositorySchema>;
+export type Repository = Static<typeof repositorySchema>;
 
-const OrganizationSchema = Type.Object({
+const organizationSchema = Type.Object({
   login: Type.String(),
   id: Type.Number(),
   node_id: Type.String(),
@@ -233,7 +233,7 @@ const OrganizationSchema = Type.Object({
   description: Type.Union([Type.String(), Type.Null()]),
 });
 
-const CommitsSchema = Type.Object({
+const commitsSchema = Type.Object({
   id: Type.String(),
   distinct: Type.Boolean(),
   added: Type.Array(Type.String()),
@@ -241,14 +241,14 @@ const CommitsSchema = Type.Object({
   modified: Type.Array(Type.String()),
 });
 
-export type CommitsPayload = Static<typeof CommitsSchema>;
+export type CommitsPayload = Static<typeof commitsSchema>;
 
-const InstallationSchema = Type.Object({
+const installationSchema = Type.Object({
   id: Type.Number(),
   node_id: Type.String(),
 });
 
-const CommentSchema = Type.Object({
+const commentSchema = Type.Object({
   author_association: Type.String(),
   body_html: Type.Optional(Type.String()),
   body_text: Type.Optional(Type.String()),
@@ -260,7 +260,7 @@ const CommentSchema = Type.Object({
   node_id: Type.String(),
   updated_at: Type.String({ format: "date-time" }),
   url: Type.String(),
-  user: UserSchema,
+  user: userSchema,
   reactions: Type.Object({
     url: Type.String(),
     total_count: Type.Number(),
@@ -276,9 +276,9 @@ const CommentSchema = Type.Object({
   // performed_via_github_app: Type.Optional(Type.Boolean()),
 });
 
-export type Comment = Static<typeof CommentSchema>;
+export type Comment = Static<typeof commentSchema>;
 
-const AssignEventSchema = Type.Object({
+const assignEventSchema = Type.Object({
   url: Type.String(),
   id: Type.Number(),
   node_id: Type.String(),
@@ -286,14 +286,14 @@ const AssignEventSchema = Type.Object({
   commit_id: Type.String(),
   commit_url: Type.String(),
   created_at: Type.String({ format: "date-time" }),
-  actor: UserSchema,
-  assignee: UserSchema,
-  assigner: UserSchema,
+  actor: userSchema,
+  assignee: userSchema,
+  assigner: userSchema,
 });
 
-export type AssignEvent = Static<typeof AssignEventSchema>;
+export type AssignEvent = Static<typeof assignEventSchema>;
 
-const ChangesSchema = Type.Object({
+const changesSchema = Type.Object({
   body: Type.Optional(
     Type.Object({
       from: Type.String(),
@@ -306,39 +306,39 @@ const ChangesSchema = Type.Object({
   ),
 });
 
-export const PayloadSchema = Type.Object({
+export const payloadSchema = Type.Object({
   action: Type.String(),
-  issue: Type.Optional(IssueSchema),
-  label: Type.Optional(LabelSchema),
-  comment: Type.Optional(CommentSchema),
-  sender: UserSchema,
-  repository: RepositorySchema,
-  organization: Type.Optional(OrganizationSchema),
-  installation: Type.Optional(InstallationSchema),
-  repositories_added: Type.Optional(Type.Array(RepositorySchema)),
-  changes: Type.Optional(ChangesSchema),
+  issue: Type.Optional(issueSchema),
+  label: Type.Optional(labelSchema),
+  comment: Type.Optional(commentSchema),
+  sender: userSchema,
+  repository: repositorySchema,
+  organization: Type.Optional(organizationSchema),
+  installation: Type.Optional(installationSchema),
+  repositories_added: Type.Optional(Type.Array(repositorySchema)),
+  changes: Type.Optional(changesSchema),
 });
 
-export type Payload = Static<typeof PayloadSchema>;
+export type Payload = Static<typeof payloadSchema>;
 
-const PushSchema = Type.Object({
+const pushSchema = Type.Object({
   ref: Type.String(),
   action: Type.String(),
   before: Type.String(),
   after: Type.String(),
-  repository: RepositorySchema,
-  sender: UserSchema,
+  repository: repositorySchema,
+  sender: userSchema,
   created: Type.Boolean(),
   deleted: Type.Boolean(),
   forced: Type.Boolean(),
-  commits: Type.Array(CommitsSchema),
-  head_commit: CommitsSchema,
-  installation: Type.Optional(InstallationSchema),
+  commits: Type.Array(commitsSchema),
+  head_commit: commitsSchema,
+  installation: Type.Optional(installationSchema),
 });
 
-export type PushPayload = Static<typeof PushSchema>;
+export type PushPayload = Static<typeof pushSchema>;
 
-const GithubContentSchema = Type.Object({
+const githubContentSchema = Type.Object({
   type: Type.String(),
   encoding: Type.String(),
   size: Type.Number(),
@@ -360,7 +360,7 @@ const GithubContentSchema = Type.Object({
   ]),
 });
 
-export type GithubContent = Static<typeof GithubContentSchema>;
+export type GithubContent = Static<typeof githubContentSchema>;
 export type Organization = {
   login: string;
   id: number;

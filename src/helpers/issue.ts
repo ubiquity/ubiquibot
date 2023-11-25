@@ -99,7 +99,7 @@ export async function addLabelToIssue(context: Context, labelName: string) {
 async function listIssuesAndPullsForRepo(
   context: Context,
   state: "open" | "closed" | "all" = "open",
-  per_page = 100,
+  perPage = 100,
   page = 1,
   sort: "created" | "updated" | "comments" = "created",
   direction: "desc" | "asc" = "desc"
@@ -109,7 +109,7 @@ async function listIssuesAndPullsForRepo(
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     state,
-    per_page,
+    per_page: perPage,
     page,
     sort,
     direction,
@@ -127,15 +127,15 @@ async function listIssuesAndPullsForRepo(
 export async function listAllIssuesAndPullsForRepo(context: Context, state: "open" | "closed" | "all") {
   const issuesArr = [] as Issue[];
   const perPage = 100;
-  let fetchDone = false;
+  let isFetchDone = false;
   let curPage = 1;
-  while (!fetchDone) {
+  while (!isFetchDone) {
     const issues = (await listIssuesAndPullsForRepo(context, state, perPage, curPage)) as Issue[];
 
     // push the objects to array
     issuesArr.push(...issues);
 
-    if (issues.length < perPage) fetchDone = true;
+    if (issues.length < perPage) isFetchDone = true;
     else curPage++;
   }
 
@@ -167,12 +167,12 @@ export async function addCommentToIssue(context: Context, message: HandlerReturn
   }
 }
 
-export async function upsertLastCommentToIssue(context: Context, issue_number: number, commentBody: string) {
+export async function upsertLastCommentToIssue(context: Context, issueNumber: number, commentBody: string) {
   try {
-    const comments = await getAllIssueComments(context, issue_number);
+    const comments = await getAllIssueComments(context, issueNumber);
 
     if (comments.length > 0 && comments[comments.length - 1].body !== commentBody)
-      await addCommentToIssue(context, commentBody, issue_number);
+      await addCommentToIssue(context, commentBody, issueNumber);
   } catch (e: unknown) {
     context.logger.debug("Upserting last comment failed!", e);
   }
@@ -218,7 +218,7 @@ export async function getAllIssueComments(
   const payload = context.event.payload as Payload;
   const result: Comment[] = [];
   let shouldFetch = true;
-  let page_number = 1;
+  let pageNumber = 1;
   try {
     while (shouldFetch) {
       const response = await context.event.octokit.rest.issues.listComments({
@@ -226,7 +226,7 @@ export async function getAllIssueComments(
         repo: payload.repository.name,
         issue_number: issueNumber,
         per_page: 100,
-        page: page_number,
+        page: pageNumber,
         mediaType: {
           format,
         },
@@ -239,7 +239,7 @@ export async function getAllIssueComments(
         response.data.forEach((item) => {
           result.push(item as Comment);
         });
-        page_number++;
+        pageNumber++;
       } else {
         shouldFetch = false;
       }
@@ -255,7 +255,7 @@ export async function getAllIssueAssignEvents(context: Context, issueNumber: num
   const payload = context.event.payload as Payload;
   const result: AssignEvent[] = [];
   let shouldFetch = true;
-  let page_number = 1;
+  let pageNumber = 1;
   try {
     while (shouldFetch) {
       const response = await context.event.octokit.rest.issues.listEvents({
@@ -263,7 +263,7 @@ export async function getAllIssueAssignEvents(context: Context, issueNumber: num
         repo: payload.repository.name,
         issue_number: issueNumber,
         per_page: 100,
-        page: page_number,
+        page: pageNumber,
       });
 
       await checkRateLimitGit(response?.headers);
@@ -271,7 +271,7 @@ export async function getAllIssueAssignEvents(context: Context, issueNumber: num
       // Fixing infinite loop here, it keeps looping even when its an empty array
       if (response?.data?.length > 0) {
         response.data.filter((item) => item.event === "assigned").forEach((item) => result?.push(item as AssignEvent));
-        page_number++;
+        pageNumber++;
       } else {
         shouldFetch = false;
       }
@@ -284,11 +284,11 @@ export async function getAllIssueAssignEvents(context: Context, issueNumber: num
 }
 
 export async function checkUserPermissionForRepoAndOrg(context: Context, username: string): Promise<boolean> {
-  const permissionForRepo = await checkUserPermissionForRepo(context, username);
-  const permissionForOrg = await checkUserPermissionForOrg(context, username);
+  const hasPermissionForRepo = await checkUserPermissionForRepo(context, username);
+  const hasPermissionForOrg = await checkUserPermissionForOrg(context, username);
   const userPermission = await isUserAdminOrBillingManager(context, username);
 
-  return permissionForOrg || permissionForRepo || userPermission === "admin";
+  return hasPermissionForOrg || hasPermissionForRepo || userPermission === "admin";
 }
 
 async function checkUserPermissionForRepo(context: Context, username: string): Promise<boolean> {
@@ -421,16 +421,16 @@ export async function removeLabel(context: Context, name: string) {
 export async function getAllPullRequests(context: Context, state: "open" | "closed" | "all" = "open") {
   type Pulls = PromiseType<ReturnType<typeof context.event.octokit.rest.pulls.list>>["data"][0];
   const prArr = [] as Pulls[];
-  let fetchDone = false;
+  let isFetchDone = false;
   const perPage = 100;
   let curPage = 1;
-  while (!fetchDone) {
+  while (!isFetchDone) {
     const prs = await getPullRequests(context, state, perPage, curPage);
 
     // push the objects to array
     prArr.push(...prs);
 
-    if (prs.length < perPage) fetchDone = true;
+    if (prs.length < perPage) isFetchDone = true;
     else curPage++;
   }
   return prArr;
@@ -439,7 +439,7 @@ export async function getAllPullRequests(context: Context, state: "open" | "clos
 async function getPullRequests(
   context: Context,
   state: "open" | "closed" | "all" = "open",
-  per_page: number,
+  perPage: number,
   page: number
 ) {
   const payload = context.event.payload as Payload;
@@ -447,19 +447,19 @@ async function getPullRequests(
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     state,
-    per_page,
+    per_page: perPage,
     page,
   });
   return pulls;
 }
 
-export async function closePullRequest(context: Context, pull_number: number) {
+export async function closePullRequest(context: Context, pullNumber: number) {
   const payload = context.event.payload as Payload;
   try {
     await context.event.octokit.rest.pulls.update({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      pull_number,
+      pull_number: pullNumber,
       state: "closed",
     });
   } catch (e: unknown) {
@@ -469,21 +469,21 @@ export async function closePullRequest(context: Context, pull_number: number) {
 
 export async function getAllPullRequestReviews(
   context: Context,
-  pull_number: number,
+  pullNumber: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ) {
   type Reviews = PromiseType<ReturnType<typeof context.event.octokit.rest.pulls.listReviews>>["data"][0];
   const prArr = [] as Reviews[];
-  let fetchDone = false;
+  let isFetchDone = false;
   const perPage = 100;
   let curPage = 1;
-  while (!fetchDone) {
-    const prs = await getPullRequestReviews(context, pull_number, perPage, curPage, format);
+  while (!isFetchDone) {
+    const prs = await getPullRequestReviews(context, pullNumber, perPage, curPage, format);
 
     // push the objects to array
     prArr.push(...prs);
 
-    if (prs.length < perPage) fetchDone = true;
+    if (prs.length < perPage) isFetchDone = true;
     else curPage++;
   }
   return prArr;
@@ -491,8 +491,8 @@ export async function getAllPullRequestReviews(
 
 async function getPullRequestReviews(
   context: Context,
-  pull_number: number,
-  per_page: number,
+  pullNumber: number,
+  perPage: number,
   page: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ) {
@@ -501,8 +501,8 @@ async function getPullRequestReviews(
     const { data: reviews } = await context.event.octokit.rest.pulls.listReviews({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      pull_number,
-      per_page,
+      pull_number: pullNumber,
+      per_page: perPage,
       page,
       mediaType: {
         format,
@@ -515,12 +515,12 @@ async function getPullRequestReviews(
   }
 }
 
-export async function getReviewRequests(context: Context, pull_number: number, owner: string, repo: string) {
+export async function getReviewRequests(context: Context, pullNumber: number, owner: string, repo: string) {
   try {
     const response = await context.event.octokit.pulls.listRequestedReviewers({
       owner: owner,
       repo: repo,
-      pull_number: pull_number,
+      pull_number: pullNumber,
     });
     return response.data;
   } catch (e: unknown) {
@@ -560,25 +560,25 @@ export async function getPullByNumber(context: Context, pull: number) {
 export async function getAssignedIssues(context: Context, username: string) {
   type Issues = PromiseType<ReturnType<typeof context.event.octokit.issues.listForRepo>>["data"][0];
   const issuesArr = [] as Issues[];
-  let fetchDone = false;
+  let isFetchDone = false;
   const perPage = 100;
   let curPage = 1;
-  while (!fetchDone) {
+  while (!isFetchDone) {
     const issues = await listIssuesAndPullsForRepo(context, IssueType.OPEN, perPage, curPage);
 
     // push the objects to array
     issuesArr.push(...issues);
 
-    if (issues.length < perPage) fetchDone = true;
+    if (issues.length < perPage) isFetchDone = true;
     else curPage++;
   }
 
   // get only issues assigned to username
-  const assigned_issues = issuesArr.filter(
+  const assignedIssues = issuesArr.filter(
     (issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username
   );
 
-  return assigned_issues;
+  return assignedIssues;
 }
 
 export async function getOpenedPullRequestsForAnIssue(context: Context, issueNumber: number, userName: string) {

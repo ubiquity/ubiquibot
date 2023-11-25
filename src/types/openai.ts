@@ -1,13 +1,13 @@
 import { Type as T, Static } from "@sinclair/typebox";
 
-export const StreamlinedCommentSchema = T.Object({
+export const streamlinedCommentSchema = T.Object({
   login: T.Optional(T.String()),
   body: T.Optional(T.String()),
 });
 
-export type StreamlinedComment = Static<typeof StreamlinedCommentSchema>;
+export type StreamlinedComment = Static<typeof streamlinedCommentSchema>;
 
-export const GPTResponseSchema = T.Object({
+export const openAiResponseSchema = T.Object({
   answer: T.Optional(T.String()),
   tokenUsage: T.Object({
     output: T.Optional(T.Number()),
@@ -16,4 +16,4 @@ export const GPTResponseSchema = T.Object({
   }),
 });
 
-export type GPTResponse = Static<typeof GPTResponseSchema>;
+export type GPTResponse = Static<typeof openAiResponseSchema>;

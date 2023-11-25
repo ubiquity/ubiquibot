@@ -42,7 +42,7 @@ export async function registerWallet(context: Context, body: string) {
   }
 
   if (config.miscellaneous.registerWalletWithVerification) {
-    _registerWalletWithVerification(context, body, address);
+    registerWalletWithVerification(context, body, address);
   }
 
   if (address == constants.AddressZero) {
@@ -60,7 +60,7 @@ export async function registerWallet(context: Context, body: string) {
   }
 }
 
-function _registerWalletWithVerification(context: Context, body: string, address: string) {
+function registerWalletWithVerification(context: Context, body: string, address: string) {
   const regexForSigHash = /(0x[a-fA-F0-9]{130})/g;
   const sigHashMatches = body.match(regexForSigHash);
   const sigHash = sigHashMatches ? sigHashMatches[0] : null;

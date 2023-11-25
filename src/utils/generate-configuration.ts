@@ -41,8 +41,8 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
 
   const logger = Runtime.getState().logger;
 
-  const valid = validateBotConfig(merged);
-  if (!valid) {
+  const isValid = validateBotConfig(merged);
+  if (!isValid) {
     const errorMessage = getErrorMsg(validateBotConfig.errors as DefinedError[]);
     if (errorMessage) {
       throw logger.error("Invalid merged configuration", { errorMessage }, true);
@@ -69,30 +69,34 @@ export function transformConfig(config: BotConfig) {
   let errorMsg = "";
   try {
     config.timers.reviewDelayTolerance = Value.Decode(stringDuration(), config.timers.reviewDelayTolerance);
-  } catch (err: any) {
-    if (err.value) {
-      errorMsg += `Invalid reviewDelayTolerance value: ${err.value}\n`;
+  } catch (err: unknown) {
+    const decodeError = err as DecodeError;
+    if (decodeError.value) {
+      errorMsg += `Invalid reviewDelayTolerance value: ${decodeError.value}\n`;
     }
   }
   try {
     config.timers.taskStaleTimeoutDuration = Value.Decode(stringDuration(), config.timers.taskStaleTimeoutDuration);
-  } catch (err: any) {
-    if (err.value) {
-      errorMsg += `Invalid taskStaleTimeoutDuration value: ${err.value}\n`;
+  } catch (err: unknown) {
+    const decodeError = err as DecodeError;
+    if (decodeError.value) {
+      errorMsg += `Invalid taskStaleTimeoutDuration value: ${decodeError.value}\n`;
     }
   }
   try {
     config.timers.taskFollowUpDuration = Value.Decode(stringDuration(), config.timers.taskFollowUpDuration);
-  } catch (err: any) {
-    if (err.value) {
-      errorMsg += `Invalid taskFollowUpDuration value: ${err.value}\n`;
+  } catch (err: unknown) {
+    const decodeError = err as DecodeError;
+    if (decodeError.value) {
+      errorMsg += `Invalid taskFollowUpDuration value: ${decodeError.value}\n`;
     }
   }
   try {
     config.timers.taskDisqualifyDuration = Value.Decode(stringDuration(), config.timers.taskDisqualifyDuration);
-  } catch (err: any) {
-    if (err.value) {
-      errorMsg += `Invalid taskDisqualifyDuration value: ${err.value}\n`;
+  } catch (err: unknown) {
+    const decodeError = err as DecodeError;
+    if (decodeError.value) {
+      errorMsg += `Invalid taskDisqualifyDuration value: ${decodeError.value}\n`;
     }
   }
   if (errorMsg) throw new Error(errorMsg);
@@ -139,4 +143,8 @@ export function parseYaml(data: null | string) {
     logger.error("Failed to parse YAML", { error });
   }
   return null;
+}
+
+interface DecodeError extends Error {
+  value?: string;
 }

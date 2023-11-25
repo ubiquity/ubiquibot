@@ -10,10 +10,10 @@ export async function syncPriceLabelsToConfig(context: Context) {
   const logger = context.logger;
 
   const {
-    features: { assistivePricing },
+    features: { assistivePricing: hasAssistivePricing },
   } = config;
 
-  if (!assistivePricing) {
+  if (!hasAssistivePricing) {
     logger.info(`Assistive pricing is disabled`);
     return;
   }

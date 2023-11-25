@@ -38,14 +38,14 @@ export const ajv = addFormats(
 );
 
 export function validateTypes(schema: Schema | ValidateFunction, data: unknown) {
-  let valid: boolean;
+  let isValid: boolean;
   if (schema instanceof Function) {
-    valid = schema(data);
+    isValid = schema(data);
   } else {
-    valid = ajv.validate(schema, data);
+    isValid = ajv.validate(schema, data);
   }
 
-  if (!valid) {
+  if (!isValid) {
     throw new Error(ajv.errorsText());
   }
 
