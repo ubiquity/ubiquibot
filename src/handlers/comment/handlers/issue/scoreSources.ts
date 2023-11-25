@@ -6,8 +6,6 @@ import { getPullRequestComments } from "./getPullRequestComments";
 import { UserScoreDetails } from "./issue-shared-types";
 import { specificationScoring as issuerSpecificationScoring } from "./specification-scoring";
 
-
-
 export async function aggregateAndScoreContributions({
   context,
   issue,

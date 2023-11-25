@@ -42,9 +42,7 @@ export function stringDuration(options?: StringOptions) {
       }
       return ms(value);
     })
-    .Encode((value) => {
-      return ms(value);
-    });
+    .Encode((value) => ms(value));
 }
 
 export const EnvConfigSchema = T.Object({

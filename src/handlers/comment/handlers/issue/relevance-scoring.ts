@@ -33,12 +33,10 @@ export function countTokensOfConversation(issue: Issue, comments: Comment[]) {
   }
 
   const gpt3TurboEncoder = encodingForModel("gpt-3.5-turbo");
-  const contributorCommentsWithTokens = comments.map((comment) => {
-    return {
-      tokens: gpt3TurboEncoder.encode(comment.body),
-      comment,
-    };
-  });
+  const contributorCommentsWithTokens = comments.map((comment) => ({
+    tokens: gpt3TurboEncoder.encode(comment.body),
+    comment,
+  }));
 
   const sumOfContributorTokens = contributorCommentsWithTokens.reduce((acc, { tokens }) => acc + tokens.length, 0);
   const specificationTokens = gpt3TurboEncoder.encode(specificationComment);

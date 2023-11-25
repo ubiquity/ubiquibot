@@ -60,27 +60,25 @@ describe("estimateOptimalModel", () => {
   });
 });
 
-jest.mock("openai", () => {
+jest.mock("openai", () =>
   // mock OPEN AI API
   // the purpose of this is to test without real API calls in order to isolate issues
-  return jest.fn().mockImplementation(() => {
-    return {
-      chat: {
-        completions: {
-          create: jest.fn().mockResolvedValue({
-            choices: [
-              {
-                message: {
-                  content: "[1, 1, 0]",
-                },
+  jest.fn().mockImplementation(() => ({
+    chat: {
+      completions: {
+        create: jest.fn().mockResolvedValue({
+          choices: [
+            {
+              message: {
+                content: "[1, 1, 0]",
               },
-            ],
-          }),
-        },
+            },
+          ],
+        }),
       },
-    };
-  });
-});
+    },
+  }))
+);
 
 describe("relevanceScoring", () => {
   it("should calculate quality score", async () => {

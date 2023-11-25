@@ -79,9 +79,7 @@ async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
   const latestAssignEventTime = new Date(latestAssignEvent.created_at).getTime();
   const now = Date.now();
 
-  const assigneesWithinGracePeriod = assignees.filter(() => {
-    return now - latestAssignEventTime < taskDisqualifyDuration;
-  });
+  const assigneesWithinGracePeriod = assignees.filter(() => now - latestAssignEventTime < taskDisqualifyDuration);
 
   const assigneesOutsideGracePeriod = assignees.filter((assignee) => !assigneesWithinGracePeriod.includes(assignee));
 
@@ -122,9 +120,9 @@ async function followUpWithTheRest(
     taskDisqualifyDuration,
   }: FollowUpWithTheRest
 ) {
-  const followUpAssignees = assignees.filter((assignee) => {
-    return !disqualifiedAssignees.includes(assignee) && !activeAssigneesInFollowUpDuration.includes(assignee);
-  });
+  const followUpAssignees = assignees.filter(
+    (assignee) => !disqualifiedAssignees.includes(assignee) && !activeAssigneesInFollowUpDuration.includes(assignee)
+  );
 
   if (followUpAssignees.length > 0) {
     const followUpMessage = `@${followUpAssignees.join(
