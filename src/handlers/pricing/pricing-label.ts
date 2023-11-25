@@ -1,8 +1,12 @@
+import { Context } from "../../types/context";
 import { addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getAllLabeledEvents } from "../../helpers";
-import { BotConfig, Context, Label, Payload, UserType } from "../../types";
+
 import { labelAccessPermissionsCheck } from "../access";
 import { setPrice } from "../shared/pricing";
 import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./action";
+import { Payload, UserType } from "../../types/payload";
+import { Label } from "../../types/label";
+import { BotConfig } from "../../types/configuration-types";
 
 export async function onLabelChangeSetPricing(context: Context): Promise<void> {
   const config = context.config;

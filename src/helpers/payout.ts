@@ -12,7 +12,8 @@
  */
 
 import Runtime from "../bindings/bot-runtime";
-import { Context } from "../types";
+import { Context } from "../types/context";
+
 import { isUserAdminOrBillingManager } from "./issue";
 
 // available tokens for payouts

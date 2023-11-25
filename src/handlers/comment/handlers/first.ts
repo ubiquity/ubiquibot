@@ -1,4 +1,5 @@
-import { Context, Payload } from "../../../types";
+import { Context } from "../../../types/context";
+import { Payload } from "../../../types/payload";
 import { generateHelpMenu } from "./help";
 
 export async function verifyFirstCommentInRepository(context: Context) {

@@ -1,6 +1,8 @@
 import ms from "ms";
-import { Label, Payload, UserType } from "../types";
+
 import { Context as ProbotContext } from "probot";
+import { Label } from "../types/label";
+import { Payload, UserType } from "../types/payload";
 
 const contextNamesToSkip = ["workflow_run"];
 

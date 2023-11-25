@@ -8,7 +8,6 @@ import {
   getAdminUsername,
   getCollaboratorUser,
   getCollaboratorUsername,
-  orgConfig,
   owner,
   repo,
   setAdminUser,
@@ -17,7 +16,6 @@ import {
   setCollaboratorUsername,
   setServer,
 } from "./commands-test";
-import { repoConfig } from "./test-repo-config";
 import { updateConfig, waitForNWebhooks, webhookEventEmitter } from "./utils";
 
 export function beforeAllHandler(): jest.ProvidesHookCallback {
@@ -95,7 +93,7 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
     await updateConfig({
       octokit: getAdminUser(),
       owner,
-      repo,
+      repo: "ubiquibot-config",
       path: ".github/ubiquibot-config.yml",
       config: repoConfig,
     });

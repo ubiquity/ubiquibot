@@ -7,7 +7,8 @@ import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push";
 import structuredMetadata from "../handlers/shared/structured-metadata";
 import { addCommentToIssue, shouldSkip } from "../helpers";
-import { BotConfig } from "../types";
+import { BotConfig } from "../types/configuration-types";
+
 import { Context } from "../types/context";
 import {
   HandlerReturnValuesNoVoid,

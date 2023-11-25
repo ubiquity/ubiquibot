@@ -1,6 +1,8 @@
-import { Comment, Payload, Context } from "../../types";
+import { Context } from "../../types/context";
 import { commentParser, userCommands } from "./handlers";
 import { verifyFirstCommentInRepository } from "./handlers/first";
+import { Payload } from "../../types/payload";
+import { Comment } from "../../types/payload";
 
 export async function commentCreatedOrEdited(context: Context) {
   const config = context.config,

@@ -1,8 +1,9 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Repository } from "../../../../types/payload";
-import { Database } from "../../types";
-import { Super } from "./super";
+
 import Runtime from "../../../../bindings/bot-runtime";
+import { Super } from "./super";
+import { Database } from "../../types/database";
 
 type LabelRow = Database["public"]["Tables"]["labels"]["Row"];
 

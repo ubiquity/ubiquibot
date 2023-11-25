@@ -1,9 +1,11 @@
 import { Context as ProbotContext } from "probot";
 import Runtime from "../../bindings/bot-runtime";
 import { createCommitComment, getFileContent } from "../../helpers";
-import { BotConfig, CommitsPayload, PushPayload, validateBotConfig } from "../../types";
-import { parseYaml, transformConfig } from "../../utils/generate-configuration";
+
 import { DefinedError } from "ajv";
+import { parseYaml, transformConfig } from "../../utils/generate-configuration";
+import { validateBotConfig, BotConfig } from "../../types/configuration-types";
+import { CommitsPayload, PushPayload } from "../../types/payload";
 
 export const ZERO_SHA = "0000000000000000000000000000000000000000";
 export const BASE_RATE_FILE = ".github/ubiquibot-config.yml";

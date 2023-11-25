@@ -1,7 +1,8 @@
 import Decimal from "decimal.js";
 import { encodingForModel } from "js-tiktoken";
 import OpenAI from "openai";
-import { Context } from "../../../../types";
+import { Context } from "../../../../types/context";
+
 import { Comment, Issue } from "../../../../types/payload";
 
 export async function relevanceScoring(context: Context, issue: Issue, contributorComments: Comment[]) {
@@ -145,7 +146,7 @@ function filterSamples(context: Context, batchResults: number[][], correctLength
 
 function averageSamples(batchResults: (number | Decimal)[][], precision: number) {
   const averageScores = batchResults[0]
-    .map((x, columnIndex) => {
+    .map((_, columnIndex) => {
       let sum = new Decimal(0);
       batchResults.forEach((row) => {
         sum = sum.plus(row[columnIndex]);

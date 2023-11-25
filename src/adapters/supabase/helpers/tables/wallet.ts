@@ -1,7 +1,8 @@
 import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { Context as ProbotContext } from "probot";
 import Runtime from "../../../../bindings/bot-runtime";
-import { User } from "../../../../types";
+import { User } from "../../../../types/payload";
+
 import { Database } from "../../types/database";
 import { Super } from "./super";
 import { UserRow } from "./user";

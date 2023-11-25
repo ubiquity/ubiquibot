@@ -1,5 +1,6 @@
+import { Context } from "../../types/context";
 import { calculateLabelValue, createLabel, listLabelsForRepo } from "../../helpers";
-import { Context } from "../../types";
+
 import { calculateTaskPrice } from "../shared/pricing";
 
 // This just checks all the labels in the config have been set in gh issue

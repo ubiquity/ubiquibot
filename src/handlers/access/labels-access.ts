@@ -1,6 +1,7 @@
 import Runtime from "../../bindings/bot-runtime";
-import { addCommentToIssue, isUserAdminOrBillingManager, removeLabel, addLabelToIssue } from "../../helpers";
-import { Context, UserType } from "../../types";
+import { addCommentToIssue, addLabelToIssue, isUserAdminOrBillingManager, removeLabel } from "../../helpers";
+import { Context } from "../../types/context";
+import { UserType } from "../../types/payload";
 
 export async function labelAccessPermissionsCheck(context: Context) {
   const runtime = Runtime.getState();

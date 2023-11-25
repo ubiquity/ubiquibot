@@ -1,4 +1,5 @@
-import { Context, GithubContent, Payload } from "../../types";
+import { Context } from "../../types/context";
+import { Payload, GithubContent } from "../../types/payload";
 
 export async function createDevPoolPR(context: Context) {
   const logger = context.logger;

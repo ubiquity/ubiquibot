@@ -1,5 +1,6 @@
 import Runtime from "../../../../bindings/bot-runtime";
-import { Context, Payload } from "../../../../types";
+import { Context } from "../../../../types/context";
+import { Payload } from "../../../../types/payload";
 
 const options: Intl.DateTimeFormatOptions = {
   weekday: "short",

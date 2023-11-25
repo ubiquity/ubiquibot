@@ -7,8 +7,9 @@ import { Settlement } from "./supabase/helpers/tables/settlement";
 import { Super } from "./supabase/helpers/tables/super";
 import { User } from "./supabase/helpers/tables/user";
 import { Wallet } from "./supabase/helpers/tables/wallet";
-import { Database } from "./supabase/types";
+
 import { env } from "../bindings/env";
+import { Database } from "./supabase/types/database";
 
 export const supabaseClient = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_KEY, {
   auth: { persistSession: false },

@@ -1,15 +1,11 @@
-import {
-  AssignEvent,
-  Comment,
-  HandlerReturnValuesNoVoid,
-  Issue,
-  IssueType,
-  StreamlinedComment,
-  UserType,
-} from "../types";
-import { checkRateLimitGit } from "../utils";
 import { LogReturn } from "../adapters/supabase";
-import { Payload, Context } from "../types";
+
+import { Context } from "../types/context";
+import { HandlerReturnValuesNoVoid } from "../types/handlers";
+import { StreamlinedComment } from "../types/openai";
+import { AssignEvent, Issue, IssueType, Payload, UserType } from "../types/payload";
+import { checkRateLimitGit } from "../utils";
+import { Comment } from "../types/payload";
 
 type PromiseType<T> = T extends Promise<infer U> ? U : never;
 

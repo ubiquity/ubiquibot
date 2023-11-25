@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { createAdapters } from "../../..";
-import { User } from "../../../../types";
+import { User } from "../../../../types/payload";
 const SUPABASE_URL = process.env.SUPABASE_URL;
 if (!SUPABASE_URL) throw new Error("SUPABASE_URL is not defined");
 const SUPABASE_KEY = process.env.SUPABASE_KEY;

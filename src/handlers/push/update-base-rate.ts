@@ -1,5 +1,8 @@
 import { getPreviousFileContent, listLabelsForRepo, updateLabelsFromBaseRate } from "../../helpers";
-import { Label, PushPayload, Context } from "../../types";
+import { Context } from "../../types/context";
+import { Label } from "../../types/label";
+import { PushPayload } from "../../types/payload";
+
 import { parseYaml } from "../../utils/generate-configuration";
 
 export async function updateBaseRate(context: Context, filePath: string) {

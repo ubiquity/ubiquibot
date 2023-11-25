@@ -4,7 +4,8 @@ import mergeWith from "lodash/merge";
 import { Context as ProbotContext } from "probot";
 import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
-import { BotConfig, Payload, stringDuration, validateBotConfig } from "../types";
+import { BotConfig, validateBotConfig, stringDuration } from "../types/configuration-types";
+import { Payload } from "../types/payload";
 
 const UBIQUIBOT_CONFIG_REPOSITORY = "ubiquibot-config";
 const UBIQUIBOT_CONFIG_FULL_PATH = ".github/ubiquibot-config.yml";

@@ -1,7 +1,10 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import { listAllIssuesAndPullsForRepo } from "../../../helpers";
 import { getLinkedPullRequests } from "../../../helpers/parser";
-import { Commit, Context, Issue, IssueType, Payload, User } from "../../../types";
+import { Commit } from "../../../types/commit";
+import { Context } from "../../../types/context";
+import { Issue, IssueType, Payload, User } from "../../../types/payload";
+// import { Commit, Context, Issue, IssueType, Payload, User } from "../../../types";
 
 type IssuesListEventsResponseData = RestEndpointMethodTypes["issues"]["listEvents"]["response"]["data"];
 // type Commit[] = Commit[]; // RestEndpointMethodTypes["pulls"]["listCommits"]["response"]["data"];
@@ -356,8 +359,8 @@ async function getAllCommitsFromPullRequest({ context, owner, repo, pullNumber }
   return allCommits;
 }
 
-function isCorrectType(event: IssuesListEventsResponseData): event is IssuesListEventsResponseData {
-  return event && typeof event.id === "number";
+function isCorrectType(event: any): event is AssignedEventExample {
+  return event && typeof event.id === "number" && event.event === "assigned";
 }
 
 interface DisqualifyIdleAssignees {

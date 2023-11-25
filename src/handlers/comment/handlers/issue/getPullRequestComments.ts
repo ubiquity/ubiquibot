@@ -1,6 +1,7 @@
 import { getAllIssueComments } from "../../../../helpers";
 import { getLinkedPullRequests } from "../../../../helpers/parser";
-import { Context } from "../../../../types";
+import { Context } from "../../../../types/context";
+
 import { Comment } from "../../../../types/payload";
 
 export async function getPullRequestComments(context: Context, owner: string, repository: string, issueNumber: number) {

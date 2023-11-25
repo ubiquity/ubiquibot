@@ -1,4 +1,5 @@
-import { Context, Payload, User } from "../../../../types";
+import { Context } from "../../../../types/context";
+import { Payload, User } from "../../../../types/payload";
 
 export async function getCollaboratorsForRepo(context: Context): Promise<User[]> {
   const payload = context.event.payload as Payload;

@@ -1,7 +1,10 @@
 import { labelExists } from "../handlers/pricing/pricing-label";
 import { calculateTaskPrice } from "../handlers/shared/pricing";
 import { calculateLabelValue } from "../helpers";
-import { Context, Label, Payload } from "../types";
+import { Context } from "../types/context";
+import { Label } from "../types/label";
+import { Payload } from "../types/payload";
+
 import { deleteLabel } from "./issue";
 
 // cspell:disable

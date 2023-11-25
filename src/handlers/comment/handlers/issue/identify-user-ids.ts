@@ -1,4 +1,4 @@
-import { Context } from "../../../../types";
+import { Context } from "../../../../types/context";
 import { Comment, Issue, User } from "../../../../types/payload";
 import { ContributorClasses } from "./contribution-style-types";
 import { getCollaboratorsForRepo } from "./get-collaborator-ids-for-repo";

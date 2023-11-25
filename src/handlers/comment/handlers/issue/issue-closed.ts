@@ -1,6 +1,7 @@
 import Runtime from "../../../../bindings/bot-runtime";
 import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../../helpers";
-import { Context } from "../../../../types";
+import { Context } from "../../../../types/context";
+
 import { Comment, Issue, Payload, StateReason } from "../../../../types/payload";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { generatePermits } from "./generate-permits";

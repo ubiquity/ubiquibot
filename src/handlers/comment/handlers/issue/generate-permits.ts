@@ -4,7 +4,9 @@ import { stringify } from "yaml";
 import Runtime from "../../../../bindings/bot-runtime";
 import { getPayoutConfigByNetworkId } from "../../../../helpers";
 import { getTokenSymbol } from "../../../../helpers/contracts";
-import { Context, Issue, Payload } from "../../../../types";
+import { Context } from "../../../../types/context";
+import { Issue, Payload } from "../../../../types/payload";
+
 import structuredMetadata from "../../../shared/structured-metadata";
 import { generatePermit2Signature } from "./generate-permit-2-signature";
 import { UserScoreTotals } from "./issue-shared-types";

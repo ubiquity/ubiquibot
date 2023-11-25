@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { Context } from "../../../../types";
+import { Context } from "../../../../types/context";
 import { Comment, Issue, User, UserType } from "../../../../types/payload";
 import { countTokensOfConversation, estimateOptimalModel, gptRelevance, relevanceScoring } from "./relevance-scoring";
 

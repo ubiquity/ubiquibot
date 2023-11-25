@@ -1,6 +1,8 @@
 import { calculateDurations, calculateLabelValue, closePullRequest } from "../../helpers";
 import { getLinkedPullRequests } from "../../helpers/parser";
-import { Context, Label, Payload } from "../../types";
+import { Context } from "../../types/context";
+import { Label } from "../../types/label";
+import { Payload } from "../../types/payload";
 
 export async function startCommandHandler(context: Context) {
   const config = context.config;

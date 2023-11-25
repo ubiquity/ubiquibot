@@ -1,6 +1,6 @@
 import { addAssignees, getAllPullRequests, getIssueByNumber, getPullByNumber } from "../../helpers";
 import { getLinkedIssues } from "../../helpers/parser";
-import { Context } from "../../types";
+import { Context } from "../../types/context";
 
 // Check for pull requests linked to their respective issues but not assigned to them
 export async function checkPullRequests(context: Context) {

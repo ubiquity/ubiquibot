@@ -4,7 +4,9 @@ import {
   getAssignedIssues,
   getAvailableOpenedPullRequests,
 } from "../../../../helpers";
-import { Context, IssueType, Payload, User } from "../../../../types";
+import { Context } from "../../../../types/context";
+import { User, IssueType, Payload } from "../../../../types/payload";
+
 import { isParentIssue } from "../../../pricing";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { assignTableComment } from "../table";
@@ -24,7 +26,7 @@ export async function assign(context: Context, body: string) {
     disabledCommands,
   } = context.config;
 
-  const isStartDisabled = disabledCommands.some((command) => command === "start");
+  const isStartDisabled = disabledCommands.some((command: string) => command === "start");
 
   logger.info("Received '/start' command", { sender: payload.sender.login, body });
 

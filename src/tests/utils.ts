@@ -3,7 +3,7 @@ import { RequestError } from "@octokit/request-error";
 import EventEmitter from "events";
 import { Octokit } from "octokit";
 import YAML from "yaml";
-import { Config } from "../types";
+import { BotConfig } from "../types/configuration-types";
 
 export const webhookEventEmitter = new EventEmitter();
 
@@ -169,7 +169,7 @@ interface CreateLabel extends LabelParams {
 
 interface UpdateConfig extends OctokitParams {
   path: string;
-  config: Config;
+  config: BotConfig;
 }
 
 interface CreateComment extends IssueParams {

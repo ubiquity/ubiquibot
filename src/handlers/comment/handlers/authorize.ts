@@ -1,6 +1,8 @@
 import Runtime from "../../../bindings/bot-runtime";
 import { isUserAdminOrBillingManager } from "../../../helpers";
-import { Context, Payload } from "../../../types";
+import { Context } from "../../../types/context";
+import { Payload } from "../../../types/payload";
+
 import { taskPaymentMetaData } from "../../wildcard";
 
 export async function authorizeLabelChanges(context: Context) {

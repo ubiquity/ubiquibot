@@ -3,7 +3,7 @@ sourceMapSupport.install();
 
 import { Probot } from "probot";
 import { bindEvents } from "./bindings";
-import { GitHubEvent } from "./types";
+import { GitHubEvent } from "./types/payload";
 
 export default function main(app: Probot) {
   const allowedEvents = Object.values(GitHubEvent);

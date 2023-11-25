@@ -1,7 +1,7 @@
 import axios from "axios";
 import { HTMLElement, parse } from "node-html-parser";
+import { Context } from "../types/context";
 import { getPullByNumber } from "./issue";
-import { Context } from "../types";
 
 interface GetLinkedParams {
   owner: string;

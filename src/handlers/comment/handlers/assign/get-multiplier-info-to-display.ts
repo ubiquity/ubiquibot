@@ -1,4 +1,5 @@
-import { Issue, Context } from "../../../../types";
+import { Context } from "../../../../types/context";
+import { Issue } from "../../../../types/payload";
 import { taskPaymentMetaData } from "../../../wildcard";
 import { getUserMultiplier } from "./get-user-multiplier";
 

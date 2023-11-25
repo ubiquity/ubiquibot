@@ -1,6 +1,8 @@
 import Runtime from "../../../bindings/bot-runtime";
-import { Context, Payload } from "../../../types";
+
 import _ from "lodash";
+import { Context } from "../../../types/context";
+import { Payload } from "../../../types/payload";
 
 export async function query(context: Context, body: string) {
   const runtime = Runtime.getState(),

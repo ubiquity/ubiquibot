@@ -34,7 +34,23 @@
       { "selector": "interface", "format": ["PascalCase"], "custom": { "regex": "^I[A-Z]", "match": false } },
       { "selector": ["function", "variable"], "format": ["camelCase"] },
       { "selector": "variable", "modifiers": ["destructured"], "format": null },
-      { "selector": "variable", "format": ["camelCase"], "leadingUnderscore": "allow", "trailingUnderscore": "allow" }
+      { "selector": "variable", "format": ["camelCase"], "leadingUnderscore": "allow", "trailingUnderscore": "allow" },
+
+      {
+        "selector": "parameter",
+        "format": ["camelCase"],
+        "leadingUnderscore": "allow", // This allows the use of a leading underscore
+        "trailingUnderscore": "allow" // This allows the use of a trailing underscore
+      },
+      {
+        "selector": "parameter",
+        "format": null,
+        "filter": {
+          // This allows parameters to be named as just an underscore
+          "regex": "^_$",
+          "match": true
+        }
+      }
     ]
   }
 }

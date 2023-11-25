@@ -6,7 +6,7 @@ import MarkdownIt from "markdown-it";
 import { Comment } from "../../../../types/payload";
 import { ContributorClassesKeys } from "./contribution-style-types";
 import { FormatScoreConfig, FormatScoreConfigParams } from "./element-score-config";
-import { Context } from "../../../../types";
+import { Context } from "../../../../types/context";
 
 export type Tags = keyof HTMLElementTagNameMap;
 

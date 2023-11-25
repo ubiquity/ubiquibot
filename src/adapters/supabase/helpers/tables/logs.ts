@@ -7,7 +7,8 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { execSync } from "child_process";
 import { Context as ProbotContext } from "probot";
 import Runtime from "../../../../bindings/bot-runtime";
-import { Database } from "../../types";
+import { Database } from "../../types/database";
+
 import { LogLevel, PrettyLogs } from "../pretty-logs";
 
 type LogFunction = (message: string, metadata?: any) => void;

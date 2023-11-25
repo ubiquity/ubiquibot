@@ -1,7 +1,9 @@
 import { constants, ethers } from "ethers";
 import Runtime from "../../../bindings/bot-runtime";
 import { resolveAddress } from "../../../helpers";
-import { Context, Payload } from "../../../types";
+import { Context } from "../../../types/context";
+import { Payload } from "../../../types/payload";
+
 // Extracts ensname from raw text.
 function extractEnsName(text: string) {
   // Define a regular expression to match ENS names
