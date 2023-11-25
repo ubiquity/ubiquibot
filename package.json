@@ -89,7 +89,7 @@
     "node": ">=18"
   },
   "lint-staged": {
-    "*.{ts}": [
+    "*.ts": [
       "yarn format"
     ],
     "src/**.{ts,json}": [

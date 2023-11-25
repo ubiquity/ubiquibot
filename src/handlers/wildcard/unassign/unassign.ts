@@ -68,7 +68,7 @@ async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
   const assignEventsOfAssignee = assigneeEvents.filter((event) => {
     // check if the event is an assign event and if the assignee is the same as the assignee we're checking
     if (event.event == "assigned") {
-      const assignedEvent = event as AssignedEventExample;
+      const assignedEvent = event as AssignedEvent;
       return assignedEvent.assignee.login === login;
     }
   });
@@ -359,7 +359,7 @@ async function getAllCommitsFromPullRequest({ context, owner, repo, pullNumber }
   return allCommits;
 }
 
-function isCorrectType(event: any): event is AssignedEventExample {
+function isCorrectType(event: any): event is AssignedEvent {
   return event && typeof event.id === "number" && event.event === "assigned";
 }
 
@@ -400,16 +400,16 @@ interface GetAllCommits {
   repo: string;
   pullNumber: number;
 }
-interface AssignedEventExample {
-  id: 10841266730;
-  node_id: "AE_lADOJE8L5s51pPgazwAAAAKGMJoq";
-  url: "https://api.github.com/repos/pavlovcik/ubiquibot/issues/events/10841266730";
+type AssignedEvent = {
+  id: number;
+  node_id: string;
+  url: string;
   actor: User;
   event: "assigned";
   commit_id: null;
   commit_url: null;
-  created_at: "2023-11-02T09:13:58Z";
+  created_at: string;
   assignee: User;
   assigner: User;
   performed_via_github_app: null;
-}
+};

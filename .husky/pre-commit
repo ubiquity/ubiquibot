@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
 . "$(dirname "$0")/_/husky.sh"
 
+# Run lint-staged first
 yarn lint-staged --verbose
