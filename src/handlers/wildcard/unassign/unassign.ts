@@ -310,55 +310,40 @@ function getActiveAssigneesInDisqualifyDuration(
 }
 
 async function getAllEvents({ context, owner, repo, issueNumber }: GetAllEvents) {
-  let allEvents: IssuesListEventsResponseData = [];
-  let page = 1;
-  let events = await context.event.octokit.issues.listEvents({
-    owner,
-    repo,
-    issue_number: issueNumber,
-    per_page: 100,
-    page: page,
-  });
-
-  while (events.data.length > 0) {
-    allEvents = allEvents.concat(events.data.filter(isCorrectType) as IssuesListEventsResponseData);
-
-    events = await context.event.octokit.issues.listEvents({
-      owner,
-      repo,
-      issue_number: issueNumber,
-      per_page: 100,
-      page: ++page,
-    });
+  try {
+    const events = (await context.octokit.paginate(
+      context.octokit.rest.issues.listEvents,
+      {
+        owner,
+        repo,
+        issue_number: issueNumber,
+        per_page: 100,
+      },
+      (response) => response.data.filter((event) => isCorrectType(event as IssuesListEventsResponseData[0]))
+    )) as IssuesListEventsResponseData;
+    return events;
+  } catch (err: unknown) {
+    context.logger.error("Failed to fetch lists of events", err);
+    return [];
   }
-  return allEvents;
 }
 
 async function getAllCommitsFromPullRequest({ context, owner, repo, pullNumber }: GetAllCommits) {
-  let allCommits = [] as Commit[];
-  let commitPage = 1;
-  let hasMoreCommits = true;
-
-  while (hasMoreCommits) {
-    const commits = await context.event.octokit.pulls.listCommits({
+  try {
+    const commits = (await context.octokit.paginate(context.octokit.pulls.listCommits, {
       owner,
       repo,
       pull_number: pullNumber,
       per_page: 100,
-      page: commitPage,
-    });
-
-    if (commits.data.length === 0) {
-      hasMoreCommits = false;
-    } else {
-      allCommits = allCommits.concat(commits.data as Commit[]);
-      commitPage++;
-    }
+    })) as Commit[];
+    return commits;
+  } catch (err: unknown) {
+    context.logger.error("Failed to fetch lists of commits", err);
+    return [];
   }
-  return allCommits;
 }
 
-function isCorrectType(event: any): event is IssuesListEventsResponseData {
+function isCorrectType(event: IssuesListEventsResponseData[0]) {
   return event && typeof event.id === "number";
 }
 
