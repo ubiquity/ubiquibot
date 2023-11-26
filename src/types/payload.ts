@@ -33,7 +33,7 @@ export enum GitHubEvent {
 export enum UserType {
   User = "User",
   Bot = "Bot",
-  Organization = "Organization",
+  // Organization = "Organization",
 }
 
 export enum IssueType {
@@ -44,8 +44,8 @@ export enum IssueType {
 
 export enum StateReason {
   COMPLETED = "completed",
-  NOT_PLANNED = "not_planned",
-  REOPENED = "reopened",
+  // NOT_PLANNED = "not_planned",
+  // REOPENED = "reopened",
 }
 
 const userSchema = Type.Object({
@@ -91,7 +91,7 @@ const userSchema = Type.Object({
 
 export type User = Static<typeof userSchema>;
 // type UserProfile= Static<typeof UserProfileSchema>;
-export enum AuthorAssociation {
+enum AuthorAssociation {
   OWNER = "OWNER",
   COLLABORATOR = "COLLABORATOR",
   MEMBER = "MEMBER",
@@ -361,7 +361,7 @@ const githubContentSchema = Type.Object({
 });
 
 export type GithubContent = Static<typeof githubContentSchema>;
-export type Organization = {
+type Organization = {
   login: string;
   id: number;
   node_id: string;
@@ -376,53 +376,53 @@ export type Organization = {
   description: string;
 };
 
-export type OrganizationPayload = {
-  action: string;
-  membership?: {
-    url: string;
-    state: string;
-    role: string;
-    organization_url: string;
-    user: {
-      login: string;
-      id: number;
-      node_id: string;
-      avatar_url: string;
-      gravatar_id: string;
-      url: string;
-      html_url: string;
-      followers_url: string;
-      following_url: string;
-      gists_url: string;
-      starred_url: string;
-      subscriptions_url: string;
-      organizations_url: string;
-      repos_url: string;
-      events_url: string;
-      received_events_url: string;
-      type: string;
-      site_admin: boolean;
-    };
-  };
-  organization: Organization;
-  sender: {
-    login: string;
-    id: number;
-    node_id: string;
-    avatar_url: string;
-    gravatar_id: string;
-    url: string;
-    html_url: string;
-    followers_url: string;
-    following_url: string;
-    gists_url: string;
-    starred_url: string;
-    subscriptions_url: string;
-    organizations_url: string;
-    repos_url: string;
-    events_url: string;
-    received_events_url: string;
-    type: string;
-    site_admin: boolean;
-  };
-};
+// type OrganizationPayload = {
+//   action: string;
+//   membership?: {
+//     url: string;
+//     state: string;
+//     role: string;
+//     organization_url: string;
+//     user: {
+//       login: string;
+//       id: number;
+//       node_id: string;
+//       avatar_url: string;
+//       gravatar_id: string;
+//       url: string;
+//       html_url: string;
+//       followers_url: string;
+//       following_url: string;
+//       gists_url: string;
+//       starred_url: string;
+//       subscriptions_url: string;
+//       organizations_url: string;
+//       repos_url: string;
+//       events_url: string;
+//       received_events_url: string;
+//       type: string;
+//       site_admin: boolean;
+//     };
+//   };
+//   organization: Organization;
+//   sender: {
+//     login: string;
+//     id: number;
+//     node_id: string;
+//     avatar_url: string;
+//     gravatar_id: string;
+//     url: string;
+//     html_url: string;
+//     followers_url: string;
+//     following_url: string;
+//     gists_url: string;
+//     starred_url: string;
+//     subscriptions_url: string;
+//     organizations_url: string;
+//     repos_url: string;
+//     events_url: string;
+//     received_events_url: string;
+//     type: string;
+//     site_admin: boolean;
+//   };
+// };

@@ -162,49 +162,6 @@ export async function addCommentToIssue(context: Context, message: HandlerReturn
   }
 }
 
-export async function upsertLastCommentToIssue(context: Context, issueNumber: number, commentBody: string) {
-  try {
-    const comments = await getAllIssueComments(context, issueNumber);
-
-    if (comments.length > 0 && comments[comments.length - 1].body !== commentBody)
-      await addCommentToIssue(context, commentBody, issueNumber);
-  } catch (e: unknown) {
-    context.logger.debug("Upserting last comment failed!", e);
-  }
-}
-
-export async function getIssueDescription(
-  context: Context,
-  issueNumber: number,
-  format: "raw" | "html" | "text" = "raw"
-): Promise<string> {
-  const payload = context.event.payload as Payload;
-  const response = await context.event.octokit.rest.issues.get({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    issue_number: issueNumber,
-    mediaType: {
-      format,
-    },
-  });
-
-  await checkRateLimitGit(response?.headers);
-
-  let result = response.data.body;
-
-  if (format === "html") {
-    result = response.data.body_html;
-  } else if (format === "text") {
-    result = response.data.body_text;
-  }
-
-  if (!result) {
-    throw context.logger.error("Issue description is empty");
-  }
-
-  return result;
-}
-
 export async function getAllIssueComments(
   context: Context,
   issueNumber: number,
@@ -244,38 +201,6 @@ export async function getAllIssueComments(
   }
 
   return result;
-}
-
-export async function getAllIssueAssignEvents(context: Context, issueNumber: number): Promise<AssignEvent[]> {
-  const payload = context.event.payload as Payload;
-  const result: AssignEvent[] = [];
-  let shouldFetch = true;
-  let pageNumber = 1;
-  try {
-    while (shouldFetch) {
-      const response = await context.event.octokit.rest.issues.listEvents({
-        owner: payload.repository.owner.login,
-        repo: payload.repository.name,
-        issue_number: issueNumber,
-        per_page: 100,
-        page: pageNumber,
-      });
-
-      await checkRateLimitGit(response?.headers);
-
-      // Fixing infinite loop here, it keeps looping even when its an empty array
-      if (response?.data?.length > 0) {
-        response.data.filter((item) => item.event === "assigned").forEach((item) => result?.push(item as AssignEvent));
-        pageNumber++;
-      } else {
-        shouldFetch = false;
-      }
-    }
-  } catch (e: unknown) {
-    shouldFetch = false;
-  }
-
-  return result.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
 }
 
 export async function checkUserPermissionForRepoAndOrg(context: Context, username: string): Promise<boolean> {
@@ -462,7 +387,7 @@ export async function closePullRequest(context: Context, pullNumber: number) {
   }
 }
 
-export async function getAllPullRequestReviews(
+async function getAllPullRequestReviews(
   context: Context,
   pullNumber: number,
   format: "raw" | "html" | "text" | "full" = "raw"
@@ -510,19 +435,6 @@ async function getPullRequestReviews(
   }
 }
 
-export async function getReviewRequests(context: Context, pullNumber: number, owner: string, repo: string) {
-  try {
-    const response = await context.event.octokit.pulls.listRequestedReviewers({
-      owner: owner,
-      repo: repo,
-      pull_number: pullNumber,
-    });
-    return response.data;
-  } catch (e: unknown) {
-    context.logger.error("Could not get requested reviewers", e);
-    return null;
-  }
-}
 // Get issues by issue number
 export async function getIssueByNumber(context: Context, issueNumber: number) {
   const payload = context.event.payload as Payload;
@@ -574,21 +486,6 @@ export async function getAssignedIssues(context: Context, username: string) {
   );
 
   return assignedIssues;
-}
-
-export async function getOpenedPullRequestsForAnIssue(context: Context, issueNumber: number, userName: string) {
-  const pulls = await getOpenedPullRequests(context, userName);
-
-  return pulls.filter((pull) => {
-    if (!pull.body) return false;
-    const issues = pull.body.match(/#(\d+)/gi);
-
-    if (!issues) return false;
-
-    const linkedIssueNumbers = Array.from(new Set(issues.map((issue) => issue.replace("#", ""))));
-    if (linkedIssueNumbers.indexOf(`${issueNumber}`) !== -1) return true;
-    return false;
-  });
 }
 
 async function getOpenedPullRequests(context: Context, username: string) {

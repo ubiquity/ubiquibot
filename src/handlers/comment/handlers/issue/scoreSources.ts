@@ -118,6 +118,6 @@ interface ScoreParams {
  *
  */
 
-export function botCommandsAndHumanCommentsFilter(comment: Comment) {
+function botCommandsAndHumanCommentsFilter(comment: Comment) {
   return !comment.body.startsWith("/") /* No Commands */ && comment.user.type === "User";
 } /* No Bots */

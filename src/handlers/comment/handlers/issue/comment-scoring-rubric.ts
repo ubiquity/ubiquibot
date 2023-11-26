@@ -8,7 +8,7 @@ import { ContributorClassesKeys } from "./contribution-style-types";
 import { FormatScoreConfig, FormatScoreConfigParams } from "./element-score-config";
 import { Context } from "../../../../types/context";
 
-export type Tags = keyof HTMLElementTagNameMap;
+type Tags = keyof HTMLElementTagNameMap;
 
 const md = new MarkdownIt();
 const ZERO = new Decimal(0);

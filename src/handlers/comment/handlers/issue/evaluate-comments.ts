@@ -61,7 +61,7 @@ export interface EnrichedRelevance {
   score: Decimal;
 }
 
-export function enrichRelevanceData(
+function enrichRelevanceData(
   contributorComments: Comment[]
 ): (value: Decimal, index: number, array: Decimal[]) => EnrichedRelevance {
   return (score, index) => ({

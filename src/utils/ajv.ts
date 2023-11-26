@@ -36,18 +36,3 @@ export const ajv = addFormats(
     ],
   }
 );
-
-export function validateTypes(schema: Schema | ValidateFunction, data: unknown) {
-  let isValid: boolean;
-  if (schema instanceof Function) {
-    isValid = schema(data);
-  } else {
-    isValid = ajv.validate(schema, data);
-  }
-
-  if (!isValid) {
-    throw new Error(ajv.errorsText());
-  }
-
-  return { valid: true, error: null };
-}

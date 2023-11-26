@@ -45,7 +45,7 @@ export function stringDuration(options?: StringOptions) {
     .Encode((value) => ms(value));
 }
 
-export const envConfigSchema = T.Object({
+const envConfigSchema = T.Object({
   WEBHOOK_PROXY_URL: T.String({ format: "uri" }),
   LOG_ENVIRONMENT: T.String({ default: "production" }),
   LOG_LEVEL: T.Enum(LogLevel, { default: LogLevel.SILLY }),
@@ -60,7 +60,7 @@ export const envConfigSchema = T.Object({
 export const validateEnvConfig = ajv.compile(envConfigSchema);
 export type EnvConfig = Static<typeof envConfigSchema>;
 
-export const botConfigSchema = strictObject(
+const botConfigSchema = strictObject(
   {
     keys: strictObject({
       evmPrivateEncrypted: T.Optional(T.String()),

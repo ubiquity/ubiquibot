@@ -187,17 +187,17 @@ export class Logs {
     });
   }
 
-  http(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
-    metadata = this._addDiagnosticInformation(metadata);
-    return this._log({
-      level: LogLevel.HTTP,
-      consoleLog: this.console.http,
-      logMessage: log,
-      metadata,
-      postComment,
-      type: "http",
-    });
-  }
+  // http(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
+  //   metadata = this._addDiagnosticInformation(metadata);
+  //   return this._log({
+  //     level: LogLevel.HTTP,
+  //     consoleLog: this.console.http,
+  //     logMessage: log,
+  //     metadata,
+  //     postComment,
+  //     type: "http",
+  //   });
+  // }
 
   verbose(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
@@ -211,17 +211,17 @@ export class Logs {
     });
   }
 
-  silly(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
-    metadata = this._addDiagnosticInformation(metadata);
-    return this._log({
-      level: LogLevel.SILLY,
-      consoleLog: this.console.silly,
-      logMessage: log,
-      metadata,
-      postComment,
-      type: "silly",
-    });
-  }
+  // silly(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
+  //   metadata = this._addDiagnosticInformation(metadata);
+  //   return this._log({
+  //     level: LogLevel.SILLY,
+  //     consoleLog: this.console.silly,
+  //     logMessage: log,
+  //     metadata,
+  //     postComment,
+  //     type: "silly",
+  //   });
+  // }
 
   constructor(
     supabase: SupabaseClient,

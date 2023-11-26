@@ -162,7 +162,7 @@ interface Metadata {
   [key: string]: any;
 }
 
-export enum Colors {
+enum Colors {
   reset = "\x1b[0m",
   bright = "\x1b[1m",
   dim = "\x1b[2m",

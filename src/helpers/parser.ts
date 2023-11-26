@@ -71,26 +71,6 @@ export async function getLinkedPullRequests(
   return collection;
 }
 
-export async function getLatestMergedPullRequest(context: Context, pulls: GetLinkedResults[]) {
-  let latestMergedPullRequest;
-
-  for (const pullRequest of pulls) {
-    if (Number.isNaN(pullRequest.number)) return null;
-
-    const currentPullRequest = await getPullByNumber(context, pullRequest.number);
-    if (!currentPullRequest || !currentPullRequest.merged) continue;
-
-    if (
-      !latestMergedPullRequest ||
-      isNewerPullRequest(currentPullRequest.merged_at, latestMergedPullRequest.merged_at)
-    ) {
-      latestMergedPullRequest = currentPullRequest;
-    }
-  }
-
-  return latestMergedPullRequest;
-}
-
 function isNewerPullRequest(currentMergedAt: string | null, latestMergedAt: string | null) {
   return latestMergedAt && currentMergedAt && new Date(latestMergedAt).getTime() < new Date(currentMergedAt).getTime();
 }
