@@ -43,7 +43,7 @@ export async function issueClosed(context: Context) {
   return "Please wait until we get the result.";
 }
 
-export async function dispatchWorkflow(owner: string, repo: string, workflowId: string, inputs: any) {
+async function dispatchWorkflow(owner: string, repo: string, workflowId: string, inputs: any) {
   const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`, {
     method: "POST",
     headers: {
