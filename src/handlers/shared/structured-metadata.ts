@@ -1,11 +1,11 @@
 import { execSync } from "child_process";
 
-function createStructuredMetadata(type: string, metadata: unknown) {
+function createStructuredMetadata(className: string, metadata: unknown) {
   const jsonString = JSON.stringify(metadata, null, 2);
   const stackLine = new Error().stack?.split("\n")[2] ?? "";
   const caller = stackLine.match(/at (\S+)/)?.[1] ?? "";
   const revision = execSync("git rev-parse --short HEAD").toString().trim();
-  return [`<!-- Ubiquity - ${type} - ${caller} - ${revision}`, jsonString, "-->"].join("\n");
+  return [`<!-- Ubiquity - ${className} - ${caller} - ${revision}`, jsonString, "-->"].join("\n");
 }
 
 function parseStructuredMetadata(comment: string) {
@@ -31,7 +31,7 @@ function parseStructuredMetadata(comment: string) {
   }
 
   return {
-    type: type.trim(),
+    className: type.trim(),
     caller: caller.trim(),
     revision: revision.trim(),
     metadata,

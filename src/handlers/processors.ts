@@ -1,17 +1,16 @@
-import { GitHubEvent, Handler, WildCardHandler } from "../types";
-import { closePullRequestForAnIssue, startCommandHandler } from "./assign";
-import { syncPriceLabelsToConfig } from "./pricing";
-import { checkTasksToUnassign } from "./wildcard";
-
+import Runtime from "../bindings/bot-runtime";
+import { Handler, WildCardHandler } from "../types/handlers";
+import { GitHubEvent } from "../types/payload";
+import { closePullRequestForAnIssue, startCommandHandler } from "./assign/action";
 import { checkPullRequests } from "./assign/auto";
 import { commentCreatedOrEdited } from "./comment/action";
 import { issueClosed } from "./comment/handlers/issue/issue-closed";
-import { watchLabelChange } from "./label";
-import { createDevPoolPR } from "./pull-request";
-import { validateConfigChange } from "./push";
-import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
+import { watchLabelChange } from "./label/label";
+import { syncPriceLabelsToConfig } from "./pricing/pre";
 import { onLabelChangeSetPricing } from "./pricing/pricing-label";
-import Runtime from "../bindings/bot-runtime";
+import { createDevPoolPR } from "./pull-request/create-devpool-pr";
+import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
+import { checkTasksToUnassign } from "./wildcard/unassign/unassign";
 
 /**
  * @dev
@@ -19,8 +18,6 @@ import Runtime from "../bindings/bot-runtime";
  * main action MUST return a message to comment on the issue. its return type MUST BE either `string` for plaintext or `LogReturn` for color to signal success, warning, or failure status
  * TODO: all MUST receive `Context` as the only parameter
  */
-
-const runtime = Runtime.getState();
 
 export const processors: Record<string, Handler> = {
   [GitHubEvent.ISSUES_OPENED]: {
@@ -30,7 +27,7 @@ export const processors: Record<string, Handler> = {
   },
   [GitHubEvent.ISSUES_REOPENED]: {
     pre: [],
-    action: [async () => runtime.logger.debug("TODO: replace ISSUES_REOPENED handler")],
+    action: [async () => Runtime.getState().logger.debug("TODO: replace ISSUES_REOPENED handler")],
     post: [],
   },
   [GitHubEvent.ISSUES_LABELED]: {
@@ -79,7 +76,7 @@ export const processors: Record<string, Handler> = {
     post: [],
   },
   [GitHubEvent.PUSH_EVENT]: {
-    pre: [validateConfigChange],
+    pre: [],
     action: [],
     post: [checkModifiedBaseRate],
   },

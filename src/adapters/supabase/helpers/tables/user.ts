@@ -1,24 +1,23 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "../../types/database";
 import { Super } from "./super";
-import { Context } from "../../../../types";
+import { Context as ProbotContext } from "probot";
 
 export type UserRow = Database["public"]["Tables"]["users"]["Row"];
 export class User extends Super {
-  constructor(supabase: SupabaseClient, context: Context) {
-    super(supabase, context);
+  constructor(supabase: SupabaseClient) {
+    super(supabase);
   }
 
-  public async getUserId(username: string): Promise<number> {
-    const octokit = this.context.event.octokit;
-    const { data } = await octokit.rest.users.getByUsername({ username });
+  public async getUserId(context: ProbotContext, username: string): Promise<number> {
+    const { data } = await context.octokit.rest.users.getByUsername({ username });
     return data.id;
   }
 
   public async getMultiplier(userId: number, repositoryId: number) {
     const locationData = await this.runtime.adapters.supabase.locations.getLocationsFromRepo(repositoryId);
     if (locationData && locationData.length > 0) {
-      const accessData = await this.getAccessData(locationData, userId);
+      const accessData = await this._getAccessData(locationData, userId);
       if (accessData) {
         return {
           value: accessData.multiplier || null,
@@ -29,7 +28,7 @@ export class User extends Super {
     return null;
   }
 
-  private async getAccessData(locationData: { id: number }[], userId: number) {
+  private async _getAccessData(locationData: { id: number }[], userId: number) {
     const locationIdsInCurrentRepository = locationData.map((location) => location.id);
 
     const { data: accessData, error: accessError } = await this.supabase

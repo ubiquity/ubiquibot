@@ -1,10 +1,9 @@
-import Runtime from "../../../bindings/bot-runtime";
-import { Context, Payload } from "../../../types";
-import { closePullRequestForAnIssue } from "../../assign/index";
+import { Context } from "../../../types/context";
+import { Payload } from "../../../types/payload";
+import { closePullRequestForAnIssue } from "../../assign/action";
 
 export async function unassign(context: Context, body: string) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   if (!body.startsWith("/stop")) {
     return logger.error("Skipping to unassign", { body });
   }
@@ -39,7 +38,10 @@ export async function unassign(context: Context, body: string) {
       issue_number: issueNumber,
       assignees: [payload.sender.login],
     });
-    return logger.ok("You have been unassigned from the task", { issueNumber, user: payload.sender.login });
+    return logger.ok("You have been unassigned from the task", {
+      issueNumber,
+      user: payload.sender.login,
+    });
   }
   return logger.warn("You are not assigned to this task", { issueNumber, user: payload.sender.login });
 }

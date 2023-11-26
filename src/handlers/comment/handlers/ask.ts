@@ -1,13 +1,13 @@
-import Runtime from "../../../bindings/bot-runtime";
-import { Context, Payload, StreamlinedComment, UserType } from "../../../types";
-import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { askGPT, decideContextGPT, sysMsg } from "../../../helpers/gpt";
+import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers/issue";
+import { Context } from "../../../types/context";
+import { StreamlinedComment } from "../../../types/openai";
+import { Payload, UserType } from "../../../types/payload";
 
 export async function ask(context: Context, body: string) {
   // The question to ask
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const payload = context.event.payload as Payload;
   const sender = payload.sender.login;

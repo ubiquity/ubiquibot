@@ -1,23 +1,30 @@
+import OpenAI from "openai";
 import { Context as ProbotContext } from "probot";
-import { createAdapters } from "../adapters";
-import { LogReturn } from "../adapters/supabase";
-import { LogMessage } from "../adapters/supabase/helpers/tables/logs";
+import zlib from "zlib";
+import { createAdapters, supabaseClient } from "../adapters/adapters";
+import { LogMessage, LogReturn, Logs } from "../adapters/supabase/helpers/tables/logs";
 import { processors, wildcardProcessors } from "../handlers/processors";
-import { validateConfigChange } from "../handlers/push";
-import { addCommentToIssue, shouldSkip } from "../helpers";
+import { validateConfigChange } from "../handlers/push/push";
+import structuredMetadata from "../handlers/shared/structured-metadata";
+import { BotConfig } from "../types/configuration-types";
+
+import { addCommentToIssue } from "../helpers/issue";
+import { shouldSkip } from "../helpers/shared";
+import { Context } from "../types/context";
 import {
-  GitHubEvent,
+  HandlerReturnValuesNoVoid,
   MainActionHandler,
-  PayloadSchema,
   PostActionHandler,
   PreActionHandler,
   WildCardHandler,
-} from "../types";
-import { Payload } from "../types/payload";
-import { ajv } from "../utils";
+} from "../types/handlers";
+import { GitHubEvent, Payload, payloadSchema } from "../types/payload";
+import { ajv } from "../utils/ajv";
+import { generateConfiguration } from "../utils/generate-configuration";
 import Runtime from "./bot-runtime";
-import { loadConfig } from "./config";
-import { Context } from "../types";
+import { env } from "./env";
+
+const allowedEvents = Object.values(GitHubEvent) as string[];
 
 const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
 type PreHandlerWithType = { type: string; actions: PreActionHandler[] };
@@ -27,58 +34,79 @@ type PostHandlerWithType = { type: string; actions: PostActionHandler[] };
 type AllHandlersWithTypes = PreHandlerWithType | HandlerWithType | PostHandlerWithType;
 type AllHandlers = PreActionHandler | MainActionHandler | PostActionHandler;
 
+const validatePayload = ajv.compile(payloadSchema);
+
+const runtime = Runtime.getState();
+runtime.adapters = createAdapters();
+runtime.logger = runtime.adapters.supabase.logs;
+
 export async function bindEvents(eventContext: ProbotContext) {
-  const runtime = Runtime.getState();
-
-  const botConfig = await loadConfig(eventContext);
-  const context: Context = {
-    event: eventContext,
-    config: botConfig,
-  };
-
-  runtime.adapters = createAdapters(context);
-  runtime.logger = runtime.adapters.supabase.logs;
-
-  if (!context.config.payout.privateKey) {
-    runtime.logger.warn("No EVM private key found");
-  }
-
   const payload = eventContext.payload as Payload;
-  const allowedEvents = Object.values(GitHubEvent) as string[];
   const eventName = payload?.action ? `${eventContext.name}.${payload?.action}` : eventContext.name; // some events wont have actions as this grows
-  if (eventName === GitHubEvent.PUSH_EVENT) {
-    await validateConfigChange(context);
-  }
+  const logger = new Logs(supabaseClient, env.LOG_ENVIRONMENT, env.LOG_RETRY_LIMIT, env.LOG_LEVEL, eventContext);
 
-  if (!runtime.logger) {
-    throw new Error("Failed to create logger");
-  }
+  logger.info("Event received", { id: eventContext.id, name: eventName });
 
-  runtime.logger.info("Binding events", { id: eventContext.id, name: eventName, allowedEvents });
-
-  if (!allowedEvents.includes(eventName)) {
+  if (!allowedEvents.includes(eventName) && eventContext.name !== "repository_dispatch") {
     // just check if its on the watch list
-    return runtime.logger.info(`Skipping the event. reason: not configured`);
+    return logger.info(`Skipping the event. reason: not configured`);
   }
 
   // Skip validation for installation event and push
   if (!NO_VALIDATION.includes(eventName)) {
     // Validate payload
-    // console.trace({ payload });
-    const validate = ajv.compile(PayloadSchema);
-    const valid = validate(payload);
-    if (!valid) {
-      // runtime.logger.info("Payload schema validation failed!", payload);
-      if (validate.errors) {
-        return runtime.logger.error("validation errors", validate.errors);
-      }
-      // return;
+    const isValid = validatePayload(payload);
+    if (!isValid && validatePayload.errors) {
+      return logger.error("Payload schema validation failed!", validatePayload.errors);
     }
 
     // Check if we should skip the event
-    const should = shouldSkip(context);
+    const should = shouldSkip(eventContext);
     if (should.stop) {
-      return runtime.logger.info("Skipping the event.", { reason: should.reason });
+      return logger.info("Skipping the event.", { reason: should.reason });
+    }
+  }
+
+  if (eventName === GitHubEvent.PUSH_EVENT) {
+    await validateConfigChange(eventContext);
+  }
+
+  let botConfig: BotConfig;
+  try {
+    botConfig = await generateConfiguration(eventContext);
+  } catch (error) {
+    return;
+  }
+  const context: Context = {
+    event: eventContext,
+    config: botConfig,
+    openAi: botConfig.keys.openAi ? new OpenAI({ apiKey: botConfig.keys.openAi }) : null,
+    logger: logger,
+    payload: payload,
+    octokit: eventContext.octokit,
+  };
+
+  if (!context.config.keys.evmPrivateEncrypted) {
+    context.logger.warn("No EVM private key found");
+  }
+
+  if (!context.logger) {
+    throw new Error("Failed to create logger");
+  }
+
+  if (eventContext.name === GitHubEvent.REPOSITORY_DISPATCH) {
+    const dispatchPayload = payload as any;
+    if (payload.action === "issueClosed") {
+      //This is response for issueClosed request
+      const response = dispatchPayload.client_payload.result;
+      if (response.comment as Comment) {
+        const uncompressedComment = zlib.gunzipSync(Buffer.from(response.comment));
+        await addCommentToIssue(
+          context,
+          uncompressedComment.toString(),
+          parseInt(dispatchPayload.client_payload.issueNumber)
+        );
+      }
     }
   }
 
@@ -86,7 +114,7 @@ export async function bindEvents(eventContext: ProbotContext) {
   const handlers = processors[eventName];
 
   if (!handlers) {
-    return runtime.logger.warn("No handler configured for event:", { eventName });
+    return context.logger.warn("No handler configured for event:", { eventName });
   }
   const { pre, action, post } = handlers;
 
@@ -100,7 +128,7 @@ export async function bindEvents(eventContext: ProbotContext) {
     // List all the function names of handlerType.actions
     const functionNames = handlerWithType.actions.map((action) => action?.name);
 
-    runtime.logger.info(
+    context.logger.info(
       `Running "${handlerWithType.type}" \
       for event: "${eventName}". \
       handlers: "${functionNames.join(", ")}"`
@@ -111,11 +139,11 @@ export async function bindEvents(eventContext: ProbotContext) {
 
   // Skip wildcard handlers for installation event and push event
   if (eventName == GitHubEvent.INSTALLATION_ADDED_EVENT || eventName == GitHubEvent.PUSH_EVENT) {
-    return runtime.logger.info("Skipping wildcard handlers for event:", eventName);
+    return context.logger.info("Skipping wildcard handlers for event:", eventName);
   } else {
     // Run wildcard handlers
     const functionNames = wildcardProcessors.map((action) => action?.name);
-    runtime.logger.info(`Running wildcard handlers: "${functionNames.join(", ")}"`);
+    context.logger.info(`Running wildcard handlers: "${functionNames.join(", ")}"`);
     const wildCardHandlerType: WildCardHandlerWithType = { type: "wildcard", actions: wildcardProcessors };
     await logAnyReturnFromHandlers(context, wildCardHandlerType);
   }
@@ -132,8 +160,7 @@ async function logAnyReturnFromHandlers(context: Context, handlerType: AllHandle
         // only log main handler results
         await renderMainActionOutput(context, response, action);
       } else {
-        const runtime = Runtime.getState();
-        runtime.logger.ok("Completed", { action: action.name, type: handlerType.type });
+        context.logger.ok("Completed", { action: action.name, type: handlerType.type });
       }
     } catch (report: unknown) {
       await renderCatchAllWithContext(report);
@@ -141,33 +168,36 @@ async function logAnyReturnFromHandlers(context: Context, handlerType: AllHandle
   }
 }
 
-async function renderMainActionOutput(context: Context, response: string | void | LogReturn, action: AllHandlers) {
-  const runtime = Runtime.getState();
-  const payload = context.event.payload as Payload;
+async function renderMainActionOutput(
+  context: Context,
+  response: void | HandlerReturnValuesNoVoid,
+  action: AllHandlers
+) {
+  const { payload, logger } = context;
   const issueNumber = payload.issue?.number;
   if (!issueNumber) {
     throw new Error("No issue number found");
   }
 
   if (response instanceof LogReturn) {
-    // console.trace({ response });
     let serializedComment;
     if (response.metadata) {
-      serializedComment = [response.logMessage.diff, "<!--", JSON.stringify(response.metadata, null, 2), "-->"].join(
-        "\n"
-      );
+      serializedComment = [
+        response.logMessage.diff,
+        structuredMetadata.create(response.logMessage.type, response.metadata),
+      ].join("\n");
     } else {
       serializedComment = response.logMessage.diff;
     }
 
     await addCommentToIssue(context, serializedComment, issueNumber);
-    // runtime.logger[response.logMessage.type as LogMessage["type"]](response.logMessage.raw, response.metadata, true);
   } else if (typeof response == "string") {
     await addCommentToIssue(context, response, issueNumber);
-    // runtime.logger.debug(response, null, true);
+  } else if (response === null) {
+    logger.debug("null response", { action: action.name });
   } else {
-    runtime.logger.error(
-      "No response from action. Ensure return of string or LogReturn object",
+    logger.error(
+      "No response from action. Ensure return of string, null, or LogReturn object",
       { action: action.name },
       true
     );
@@ -176,17 +206,18 @@ async function renderMainActionOutput(context: Context, response: string | void 
 
 function createRenderCatchAll(context: Context, handlerType: AllHandlersWithTypes, activeHandler: AllHandlers) {
   return async function renderCatchAll(report: LogReturn | Error | unknown) {
-    const runtime = Runtime.getState();
     const payload = context.event.payload as Payload;
     const issue = payload.issue;
-    if (!issue) return runtime.logger.error("Issue is null. Skipping", { issue });
+    if (!issue) {
+      return context.logger.error("Issue is null. Skipping", { issue });
+    }
 
     if (report instanceof LogReturn) {
       // already made it to console so it should just post the comment
       const { logMessage } = report;
 
       if (report.metadata) {
-        runtime.logger.debug("this is the second place that metadata is being serialized as an html comment");
+        context.logger.debug("this is the second place that metadata is being serialized as an html comment");
         let metadataSerialized;
         const prettySerialized = JSON.stringify(report.metadata, null, 2);
         // first check if metadata is an error, then post it as a json comment
@@ -209,7 +240,7 @@ function createRenderCatchAll(context: Context, handlerType: AllHandlersWithType
         stack: report.stack,
       };
 
-      return runtime.logger.error(
+      return context.logger.error(
         "action has an uncaught error",
         { logReturn: report, handlerType, activeHandler: activeHandler.name, error },
         true
@@ -225,7 +256,7 @@ function createRenderCatchAll(context: Context, handlerType: AllHandlersWithType
 
       // report as SupabaseError
 
-      return runtime.logger.error(
+      return context.logger.error(
         "action returned an unexpected value",
         { logReturn: report, handlerType, activeHandler: activeHandler.name },
         true

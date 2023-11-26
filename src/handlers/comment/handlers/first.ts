@@ -1,27 +1,28 @@
-import Runtime from "../../../bindings/bot-runtime";
-import { Context, Payload } from "../../../types";
+import { Context } from "../../../types/context";
+import { Payload } from "../../../types/payload";
 import { generateHelpMenu } from "./help";
 
 export async function verifyFirstCommentInRepository(context: Context) {
-  const runtime = Runtime.getState();
   const payload = context.event.payload as Payload;
   if (!payload.issue) {
-    throw runtime.logger.error("Issue is null. Skipping", { issue: payload.issue }, true);
+    throw context.logger.error("Issue is null. Skipping", { issue: payload.issue }, true);
   }
   const {
-    newContributorGreeting: { header, footer, enabled },
+    features: {
+      newContributorGreeting: { header, footer, enabled: isEnabled },
+    },
   } = context.config;
-  const response_issue = await context.event.octokit.rest.search.issuesAndPullRequests({
+  const responseIssue = await context.event.octokit.rest.search.issuesAndPullRequests({
     q: `is:issue repo:${payload.repository.owner.login}/${payload.repository.name} commenter:${payload.sender.login}`,
     per_page: 2,
   });
-  const response_pr = await context.event.octokit.rest.search.issuesAndPullRequests({
+  const responsePr = await context.event.octokit.rest.search.issuesAndPullRequests({
     q: `is:pull-request repo:${payload.repository.owner.login}/${payload.repository.name} commenter:${payload.sender.login}`,
     per_page: 2,
   });
-  if (response_issue.data.total_count + response_pr.data.total_count === 1) {
+  if (responseIssue.data.total_count + responsePr.data.total_count === 1) {
     //continue_first_search
-    const data = response_issue.data.total_count > 0 ? response_issue.data : response_pr.data;
+    const data = responseIssue.data.total_count > 0 ? responseIssue.data : responsePr.data;
     const resp = await context.event.octokit.rest.issues.listComments({
       issue_number: data.items[0].number,
       owner: payload.repository.owner.login,
@@ -29,10 +30,10 @@ export async function verifyFirstCommentInRepository(context: Context) {
       per_page: 100,
     });
     const isFirstComment = resp.data.filter((item) => item.user?.login === payload.sender.login).length === 1;
-    if (isFirstComment && enabled) {
+    if (isFirstComment && isEnabled) {
       return [header, generateHelpMenu(context), `@${payload.sender.login}`, footer].join("\n");
       // await upsertCommentToIssue(payload.issue.number, msg, payload.action, payload.comment);
     }
   }
-  return runtime.logger.info(`Skipping first comment`);
+  return context.logger.info(`Skipping first comment`);
 }

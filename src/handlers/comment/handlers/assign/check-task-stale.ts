@@ -1,4 +1,4 @@
-import { Issue } from "../../../../types";
+import { Issue } from "../../../../types/payload";
 
 export function checkTaskStale(staleTask: number, issue: Issue) {
   let days: number | undefined;

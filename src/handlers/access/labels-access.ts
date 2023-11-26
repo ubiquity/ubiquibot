@@ -1,14 +1,16 @@
 import Runtime from "../../bindings/bot-runtime";
-import { addCommentToIssue, isUserAdminOrBillingManager, removeLabel, addLabelToIssue } from "../../helpers";
-import { Context, Payload, UserType } from "../../types";
+import { isUserAdminOrBillingManager, removeLabel, addLabelToIssue, addCommentToIssue } from "../../helpers/issue";
+import { Context } from "../../types/context";
+import { UserType } from "../../types/payload";
 
 export async function labelAccessPermissionsCheck(context: Context) {
   const runtime = Runtime.getState();
-  const logger = runtime.logger;
-  const { publicAccessControl } = context.config;
+  const { logger, payload } = context;
+  const {
+    features: { publicAccessControl },
+  } = context.config;
   if (!publicAccessControl.setLabel) return true;
 
-  const payload = context.event.payload as Payload;
   if (!payload.issue) return;
   if (!payload.label?.name) return;
   if (payload.sender.type === UserType.Bot) return true;
@@ -36,7 +38,7 @@ export async function labelAccessPermissionsCheck(context: Context) {
     logger.info("Checking access for labels", { repo: repo.full_name, user: sender, labelType });
     // check permission
     const { access, user } = runtime.adapters.supabase;
-    const userId = await user.getUserId(sender);
+    const userId = await user.getUserId(context.event, sender);
     const accessible = await access.getAccess(userId);
     if (accessible) {
       return true;

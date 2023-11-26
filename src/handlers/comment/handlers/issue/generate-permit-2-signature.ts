@@ -2,34 +2,41 @@ import { MaxUint256, PERMIT2_ADDRESS, PermitTransferFrom, SignatureTransfer } fr
 import Decimal from "decimal.js";
 import { BigNumber, ethers } from "ethers";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
-import Runtime from "../../../../bindings/bot-runtime";
-import { Context } from "../../../../types";
+import { getPayoutConfigByNetworkId } from "../../../../helpers/payout";
+
+import { Context } from "../../../../types/context";
+import { decryptKeys } from "../../../../utils/private";
 
 export async function generatePermit2Signature(
   context: Context,
-  { beneficiary, amount, identifier, userId }: GeneratePermit2SignatureParams
+  { beneficiary, amount, userId }: GeneratePermit2SignatureParams
 ) {
-  const runtime = Runtime.getState();
+  const logger = context.logger;
   const {
-    payout: { privateKey, paymentToken, rpc, evmNetworkId },
+    payments: { evmNetworkId },
+    keys: { evmPrivateEncrypted },
   } = context.config;
 
-  if (!rpc) throw runtime.logger.error("RPC is not defined");
-  if (!privateKey) throw runtime.logger.error("Private key is not defined");
-  if (!paymentToken) throw runtime.logger.error("Payment token is not defined");
+  if (!evmPrivateEncrypted) throw logger.warn("No bot wallet private key defined");
+  const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
+  const { privateKey } = await decryptKeys(evmPrivateEncrypted);
+
+  if (!rpc) throw logger.error("RPC is not defined");
+  if (!privateKey) throw logger.error("Private key is not defined");
+  if (!paymentToken) throw logger.error("Payment token is not defined");
 
   let provider;
   let adminWallet;
   try {
     provider = new ethers.providers.JsonRpcProvider(rpc);
   } catch (error) {
-    throw runtime.logger.debug("Failed to instantiate provider", error);
+    throw logger.debug("Failed to instantiate provider", error);
   }
 
   try {
     adminWallet = new ethers.Wallet(privateKey, provider);
   } catch (error) {
-    throw runtime.logger.debug("Failed to instantiate wallet", error);
+    throw logger.debug("Failed to instantiate wallet", error);
   }
 
   const permitTransferFromData: PermitTransferFrom = {
@@ -38,7 +45,7 @@ export async function generatePermit2Signature(
       amount: ethers.utils.parseUnits(amount.toString(), 18),
     },
     spender: beneficiary,
-    nonce: BigNumber.from(keccak256(toUtf8Bytes(identifier + userId))),
+    nonce: BigNumber.from(keccak256(toUtf8Bytes(userId))),
     deadline: MaxUint256,
   };
 
@@ -49,10 +56,10 @@ export async function generatePermit2Signature(
   );
 
   const signature = await adminWallet._signTypedData(domain, types, values).catch((error) => {
-    throw runtime.logger.debug("Failed to sign typed data", error);
+    throw logger.debug("Failed to sign typed data", error);
   });
 
-  const transactionData: TransactionData = {
+  const transactionData: PermitTransactionData = {
     permit: {
       permitted: {
         token: permitTransferFromData.permitted.token,
@@ -83,18 +90,18 @@ export async function generatePermit2Signature(
   url.searchParams.append("claim", base64encodedTxData);
   url.searchParams.append("network", evmNetworkId.toString());
 
-  runtime.logger.info("Generated permit2 signature", { transactionData, url: url.toString() });
+  logger.info("Generated permit2 signature", { transactionData, url: url.toString() });
 
   return { transactionData, url };
 }
 interface GeneratePermit2SignatureParams {
   beneficiary: string;
   amount: Decimal;
-  identifier: string;
+
   userId: string;
 }
 
-interface TransactionData {
+export interface PermitTransactionData {
   permit: {
     permitted: {
       token: string;

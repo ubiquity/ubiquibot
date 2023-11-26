@@ -1,8 +1,9 @@
-import Runtime from "../bindings/bot-runtime";
-import { Context, Payload, StreamlinedComment, UserType } from "../types";
-import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../helpers";
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
+import { Context } from "../types/context";
+import { StreamlinedComment } from "../types/openai";
+import { Payload, UserType } from "../types/payload";
+import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "./issue";
 
 export const sysMsg = `You are the UbiquiBot, designed to provide accurate technical answers. \n
 Whenever appropriate, format your response using GitHub Flavored Markdown. Utilize tables, lists, and code blocks for clear and organized answers. \n
@@ -61,8 +62,7 @@ export async function decideContextGPT(
   linkedPRStreamlined: StreamlinedComment[],
   linkedIssueStreamlined: StreamlinedComment[]
 ) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const payload = context.event.payload as Payload;
   const issue = payload.issue;
@@ -133,24 +133,24 @@ export async function decideContextGPT(
 
 export async function askGPT(context: Context, chatHistory: CreateChatCompletionRequestMessage[]) {
   // base askGPT function
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const config = context.config;
+  const { keys } = config;
 
-  if (!config.ask.apiKey) {
+  if (!keys.openAi) {
     throw logger.error(
       "You must configure the `openai-api-key` property in the bot configuration in order to use AI powered features."
     );
   }
 
   const openAI = new OpenAI({
-    apiKey: config.ask.apiKey,
+    apiKey: keys.openAi,
   });
 
   const res: OpenAI.Chat.Completions.ChatCompletion = await openAI.chat.completions.create({
     messages: chatHistory,
     model: "gpt-3.5-turbo-16k",
-    max_tokens: config.ask.tokenLimit,
+    max_tokens: config.miscellaneous.openAiTokenLimit,
     temperature: 0,
   });
 
@@ -163,7 +163,7 @@ export async function askGPT(context: Context, chatHistory: CreateChatCompletion
   };
 
   if (!res) {
-    throw logger.error("Error getting GPT response", { res });
+    throw context.logger.error("Error getting GPT response", { res });
   }
 
   return { answer, tokenUsage };

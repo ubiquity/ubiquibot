@@ -1,14 +1,15 @@
-import {
-  calculateQualScore,
-  estimateOptimalModel,
-  countTokensOfConversation,
-  gptRelevance,
-} from "./calculate-quality-score";
+import OpenAI from "openai";
+import { Context } from "../../../../types/context";
 import { Comment, Issue, User, UserType } from "../../../../types/payload";
+import { countTokensOfConversation, estimateOptimalModel, gptRelevance, relevanceScoring } from "./relevance-scoring";
+
+const context = {
+  openAi: new OpenAI(),
+} as unknown as Context;
 
 // Do not run real API calls inside of VSCode because it keeps running the tests in the background
 if (process.env.NODE_ENV !== "test") {
-  describe("*** Real OpenAI API Call *** calculateQualScore", () => {
+  describe("*** Real OpenAI API Call *** relevanceScoring", () => {
     it("should calculate quality score", async () => {
       const issue = { body: "my topic is about apples" } as Issue;
       const comments: Comment[] = [
@@ -16,18 +17,18 @@ if (process.env.NODE_ENV !== "test") {
         { body: "it is juicy", user: { type: UserType.User } as User } as Comment,
         { body: "bananas are great", user: { type: UserType.User } as User } as Comment,
       ];
-      const result = await calculateQualScore(issue, comments);
+      const result = await relevanceScoring(context, issue, comments);
       expect(result).toBeDefined();
-      expect(result.relevanceScores).toBeDefined();
-      expect(Array.isArray(result.relevanceScores)).toBe(true);
-      expect(typeof result.sumOfConversationTokens).toBe("number");
+      expect(result.score).toBeDefined();
+      expect(Array.isArray(result.score)).toBe(true);
+      expect(typeof result.tokens).toBe("number");
       expect(typeof result.model).toBe("string");
     });
   });
 
   describe("*** Real OpenAI API Call *** gptRelevance", () => {
     it("should calculate gpt relevance", async () => {
-      const result = await gptRelevance("gpt-3.5-turbo", "my topic is about apples", [
+      const result = await gptRelevance(context, "gpt-3.5-turbo", "my topic is about apples", [
         "the apple is red",
         "it is juicy",
         "bananas are great",
@@ -59,38 +60,36 @@ describe("estimateOptimalModel", () => {
   });
 });
 
-jest.mock("openai", () => {
+jest.mock("openai", () =>
   // mock OPEN AI API
   // the purpose of this is to test without real API calls in order to isolate issues
-  return jest.fn().mockImplementation(() => {
-    return {
-      chat: {
-        completions: {
-          create: jest.fn().mockResolvedValue({
-            choices: [
-              {
-                message: {
-                  content: "[1, 1, 0]",
-                },
+  jest.fn().mockImplementation(() => ({
+    chat: {
+      completions: {
+        create: jest.fn().mockResolvedValue({
+          choices: [
+            {
+              message: {
+                content: "[1, 1, 0]",
               },
-            ],
-          }),
-        },
+            },
+          ],
+        }),
       },
-    };
-  });
-});
+    },
+  }))
+);
 
-describe("calculateQualScore", () => {
+describe("relevanceScoring", () => {
   it("should calculate quality score", async () => {
     const issue = { body: "issue body" } as Issue;
     const comment = { body: "comment body", user: { type: "User" } } as Comment;
     const comments = [comment, comment, comment] as Comment[];
-    const result = await calculateQualScore(issue, comments);
+    const result = await relevanceScoring(context, issue, comments);
     expect(result).toBeDefined();
-    expect(result.relevanceScores).toBeDefined();
-    expect(Array.isArray(result.relevanceScores)).toBe(true);
-    expect(typeof result.sumOfConversationTokens).toBe("number");
+    expect(result.score).toBeDefined();
+    expect(Array.isArray(result.score)).toBe(true);
+    expect(typeof result.tokens).toBe("number");
     expect(typeof result.model).toBe("string");
   });
 });
@@ -106,7 +105,7 @@ describe("calculateQualScore", () => {
 
 describe("gptRelevance", () => {
   it("should calculate gpt relevance", async () => {
-    const result = await gptRelevance("gpt-3.5-turbo", "issue body", ["comment body"]);
+    const result = await gptRelevance(context, "gpt-3.5-turbo", "issue body", ["comment body"]);
     expect(result).toEqual([1, 1, 0]);
   });
 });

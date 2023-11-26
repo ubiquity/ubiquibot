@@ -1,40 +1,40 @@
-import Runtime from "../../bindings/bot-runtime";
-import { calculateLabelValue, createLabel, listLabelsForRepo } from "../../helpers";
-import { Context } from "../../types";
+import { createLabel, listLabelsForRepo } from "../../helpers/label";
+import { calculateLabelValue } from "../../helpers/shared";
+import { Context } from "../../types/context";
+
 import { calculateTaskPrice } from "../shared/pricing";
 
 // This just checks all the labels in the config have been set in gh issue
 // If there's something missing, they will be added
 
 export async function syncPriceLabelsToConfig(context: Context) {
-  const runtime = Runtime.getState();
   const config = context.config;
-  const logger = runtime.logger;
+  const logger = context.logger;
 
-  const { assistivePricing } = config.mode;
+  const {
+    features: { assistivePricing: hasAssistivePricing },
+  } = config;
 
-  if (!assistivePricing) {
+  if (!hasAssistivePricing) {
     logger.info(`Assistive pricing is disabled`);
     return;
   }
 
-  const timeLabels = config.price.timeLabels.map((i) => i.name);
-  const priorityLabels = config.price.priorityLabels.map((i) => i.name);
   const aiLabels: string[] = [];
-  for (const timeLabel of config.price.timeLabels) {
-    for (const priorityLabel of config.price.priorityLabels) {
+  for (const timeLabel of config.labels.time) {
+    for (const priorityLabel of config.labels.priority) {
       const targetPrice = calculateTaskPrice(
         context,
         calculateLabelValue(timeLabel),
         calculateLabelValue(priorityLabel),
-        config.price.priceMultiplier
+        config.payments.basePriceMultiplier
       );
       const targetPriceLabel = `Price: ${targetPrice} USD`;
       aiLabels.push(targetPriceLabel);
     }
   }
 
-  const pricingLabels: string[] = [...timeLabels, ...priorityLabels];
+  const pricingLabels: string[] = [...config.labels.time, ...config.labels.priority];
 
   // List all the labels for a repository
   const allLabels = await listLabelsForRepo(context);

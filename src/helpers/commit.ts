@@ -1,14 +1,15 @@
-import { Context, Payload } from "../types";
+import { Context as ProbotContext } from "probot";
+import { Payload } from "../types/payload";
 
 export async function createCommitComment(
-  context: Context,
+  context: ProbotContext,
   body: string,
   commitSha: string,
   path?: string,
   owner?: string,
   repo?: string
 ) {
-  const payload = context.event.payload as Payload;
+  const payload = context.payload as Payload;
   if (!owner) {
     owner = payload.repository.owner.login;
   }
@@ -16,7 +17,7 @@ export async function createCommitComment(
     repo = payload.repository.name;
   }
 
-  await context.event.octokit.rest.repos.createCommitComment({
+  await context.octokit.rest.repos.createCommitComment({
     owner: owner,
     repo: repo,
     commit_sha: commitSha,

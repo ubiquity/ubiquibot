@@ -1,10 +1,12 @@
 import Runtime from "../../../bindings/bot-runtime";
-import { Context, Payload } from "../../../types";
+
 import _ from "lodash";
+import { Context } from "../../../types/context";
+import { Payload } from "../../../types/payload";
 
 export async function query(context: Context, body: string) {
   const runtime = Runtime.getState(),
-    logger = runtime.logger,
+    logger = context.logger,
     payload = context.event.payload as Payload,
     sender = payload.sender.login;
 
@@ -45,14 +47,16 @@ export async function query(context: Context, body: string) {
 
   return messageBuffer.join("");
 
-  function appendToMarkdownTableBody(data: Record<string, any>, parentKey = ""): string {
+  function appendToMarkdownTableBody(data: Record<string, unknown>, parentKey = ""): string {
     const tableStringBuffer = [] as string[];
 
     for (const key in data) {
       const deCamelKey = _.startCase(_.toLower(key));
       const value = data[key];
       if (typeof value === "object" && value !== null) {
-        tableStringBuffer.push(appendToMarkdownTableBody(value as Record<string, any>, `${parentKey}${deCamelKey} - `));
+        tableStringBuffer.push(
+          appendToMarkdownTableBody(value as Record<string, unknown>, `${parentKey}${deCamelKey} - `)
+        );
       } else {
         tableStringBuffer.push(`| ${parentKey}${deCamelKey} | ${value} |\n`); // Table row
       }

@@ -1,8 +1,7 @@
 import axios from "axios";
 import { HTMLElement, parse } from "node-html-parser";
+import { Context } from "../types/context";
 import { getPullByNumber } from "./issue";
-import Runtime from "../bindings/bot-runtime";
-import { Context } from "../types";
 
 interface GetLinkedParams {
   owner: string;
@@ -32,19 +31,18 @@ export async function getLinkedIssues({ owner, repository, pull }: GetLinkedPara
   return issueUrl;
 }
 
-export async function getLinkedPullRequests({
-  owner,
-  repository,
-  issue,
-}: GetLinkedParams): Promise<GetLinkedResults[]> {
-  const logger = Runtime.getState().logger;
+export async function getLinkedPullRequests(
+  context: Context,
+  { owner, repository, issue }: GetLinkedParams
+): Promise<GetLinkedResults[]> {
+  const logger = context.logger;
   const collection = [] as GetLinkedResults[];
   const { data } = await axios.get(`https://github.com/${owner}/${repository}/issues/${issue}`);
   const dom = parse(data);
   const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
   const linkedList = devForm.querySelectorAll(".my-1");
   if (linkedList.length === 0) {
-    logger.info(`No linked pull requests found`);
+    context.logger.info(`No linked pull requests found`);
     return [];
   }
 
@@ -71,26 +69,6 @@ export async function getLinkedPullRequests({
   }
 
   return collection;
-}
-
-export async function getLatestMergedPullRequest(context: Context, pulls: GetLinkedResults[]) {
-  let latestMergedPullRequest;
-
-  for (const pullRequest of pulls) {
-    if (Number.isNaN(pullRequest.number)) return null;
-
-    const currentPullRequest = await getPullByNumber(context, pullRequest.number);
-    if (!currentPullRequest || !currentPullRequest.merged) continue;
-
-    if (
-      !latestMergedPullRequest ||
-      isNewerPullRequest(currentPullRequest.merged_at, latestMergedPullRequest.merged_at)
-    ) {
-      latestMergedPullRequest = currentPullRequest;
-    }
-  }
-
-  return latestMergedPullRequest;
 }
 
 function isNewerPullRequest(currentMergedAt: string | null, latestMergedAt: string | null) {

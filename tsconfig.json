@@ -62,6 +62,6 @@
     "sourceMap": true
   },
   "include": ["src/"],
-  "exclude": ["src/tests/"],
+  "exclude": ["src/coverage/"],
   "compileOnSave": false
 }

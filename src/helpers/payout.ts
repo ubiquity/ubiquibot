@@ -12,11 +12,12 @@
  */
 
 import Runtime from "../bindings/bot-runtime";
-import { Context } from "../types";
+import { Context } from "../types/context";
+
 import { isUserAdminOrBillingManager } from "./issue";
 
 // available tokens for payouts
-export const PAYMENT_TOKEN_PER_NETWORK: Record<string, { rpc: string; token: string }> = {
+const PAYMENT_TOKEN_PER_NETWORK: Record<string, { rpc: string; token: string }> = {
   "1": {
     rpc: "https://rpc-bot.ubq.fi/v1/mainnet",
     token: "0x6B175474E89094C44Da98b954EedeAC495271d0F", // DAI
@@ -40,8 +41,7 @@ export function getPayoutConfigByNetworkId(evmNetworkId: number) {
 }
 
 export async function hasLabelEditPermission(context: Context, label: string, caller: string) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const sufficientPrivileges = await isUserAdminOrBillingManager(context, caller);
 
   // get text before :
@@ -51,7 +51,7 @@ export async function hasLabelEditPermission(context: Context, label: string, ca
   if (sufficientPrivileges) {
     // check permission
     const { access, user } = Runtime.getState().adapters.supabase;
-    const userId = await user.getUserId(caller);
+    const userId = await user.getUserId(context.event, caller);
     const accessible = await access.getAccess(userId);
     if (accessible) return true;
     logger.info("No access to edit label", { caller, label });

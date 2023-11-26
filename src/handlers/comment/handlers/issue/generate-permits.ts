@@ -1,51 +1,55 @@
 import Decimal from "decimal.js";
 import { stringify } from "yaml";
+
 import Runtime from "../../../../bindings/bot-runtime";
 import { getTokenSymbol } from "../../../../helpers/contracts";
-import { Comment, Context } from "../../../../types";
+import { getPayoutConfigByNetworkId } from "../../../../helpers/payout";
+import { Context } from "../../../../types/context";
+import { Issue, Payload } from "../../../../types/payload";
+
 import structuredMetadata from "../../../shared/structured-metadata";
 import { generatePermit2Signature } from "./generate-permit-2-signature";
-import { FinalScores } from "./issue-closed";
-import { IssueRole } from "./_calculate-all-comment-scores";
+import { UserScoreTotals } from "./issue-shared-types";
 
-export async function generatePermits(context: Context, totals: FinalScores, contributorComments: Comment[]) {
-  const userIdToNameMap = mapIdsToNames(contributorComments);
-  const { html: comment, permits } = await generateComment(context, totals, userIdToNameMap, contributorComments);
+type TotalsById = { [userId: string]: UserScoreTotals };
+
+export async function generatePermits(context: Context, totals: TotalsById) {
+  const { html: comment, permits } = await generateComment(context, totals);
   const metadata = structuredMetadata.create("Permits", { permits, totals });
   return comment.concat("\n", metadata);
 }
 
-async function generateComment(
-  context: Context,
-  totals: FinalScores,
-  userIdToNameMap: { [userId: number]: string },
-  contributorComments: Comment[]
-) {
+async function generateComment(context: Context, totals: TotalsById) {
   const runtime = Runtime.getState();
   const {
-    payout: { paymentToken, rpc, privateKey },
+    keys: { evmPrivateEncrypted },
   } = context.config;
-  const detailsTable = generateDetailsTable(totals, contributorComments);
+  const payload = context.event.payload as Payload;
+  const issue = payload.issue as Issue;
+  const { rpc, paymentToken } = getPayoutConfigByNetworkId(context.config.payments.evmNetworkId);
+
   const tokenSymbol = await getTokenSymbol(paymentToken, rpc);
-  const HTMLs = [] as string[];
+  const HTML = [] as string[];
 
   const permits = [];
 
   for (const userId in totals) {
     const userTotals = totals[userId];
+    const contributionsOverviewTable = generateContributionsOverview({ [userId]: userTotals }, issue);
+    const conversationIncentivesTable = generateDetailsTable({ [userId]: userTotals });
 
     const tokenAmount = userTotals.total;
-    const contributorName = userIdToNameMap[userId];
-    const issueRole = userTotals.role;
 
-    if (!privateKey) throw runtime.logger.warn("No bot wallet private key defined");
+    const contributorName = userTotals.user.login;
+    // const contributionClassName = userTotals.details[0].contribution as ContributorClassNames;
+
+    if (!evmPrivateEncrypted) throw context.logger.warn("No bot wallet private key defined");
 
     const beneficiaryAddress = await runtime.adapters.supabase.wallet.getAddress(parseInt(userId));
 
     const permit = await generatePermit2Signature(context, {
       beneficiary: beneficiaryAddress,
       amount: tokenAmount,
-      identifier: issueRole,
       userId: userId,
     });
 
@@ -56,20 +60,20 @@ async function generateComment(
       tokenAmount,
       tokenSymbol,
       contributorName,
-      detailsTable,
-      issueRole,
+      contributionsOverviewTable,
+      detailsTable: conversationIncentivesTable,
     });
-    HTMLs.push(html);
+    HTML.push(html);
   }
-  return { html: HTMLs.join("\n"), permits };
+  return { html: HTML.join("\n"), permits };
 }
 function generateHtml({
   permit,
   tokenAmount,
   tokenSymbol,
   contributorName,
+  contributionsOverviewTable,
   detailsTable,
-  issueRole,
 }: GenerateHtmlParams) {
   return `
   <details>
@@ -82,54 +86,148 @@ function generateHtml({
             [ ${tokenAmount} ${tokenSymbol} ]</a
           >
         </h3>
-        <h6>&nbsp;${issueRole}&nbsp;Comments&nbsp;@${contributorName}</h6></b
+        <h6>@${contributorName}</h6></b
       >
     </summary>
+    ${contributionsOverviewTable}
     ${detailsTable}
   </details>
   `;
 }
 
-function generateDetailsTable(totals: FinalScores, contributorComments: Comment[]) {
-  let tableRows = "";
-  for (const userId in totals) {
-    const userTotals = totals[userId];
-    for (const commentScore of userTotals.comments) {
-      const comment = contributorComments.find((comment) => comment.id === commentScore.commentId) as Comment;
-      const commentUrl = comment.html_url;
-      const truncatedBody = comment ? comment.body.substring(0, 64).concat("...") : "";
+function generateContributionsOverview(userScoreDetails: TotalsById, issue: Issue) {
+  const buffer = [
+    "<h6>Contributions Overview</h6>",
+    "<table><thead>",
+    "<tr><th>View</th><th>Contribution</th><th>Count</th><th>Reward</th>",
+    "</thead><tbody>",
+  ];
 
-      const elementScoreDetails = commentScore.elementScoreDetails;
+  function newRow(view: string, contribution: string, count: string, reward: string) {
+    return `<tr><td>${view}</td><td>${contribution}</td><td>${count}</td><td>${reward}</td></tr>`;
+  }
 
-      const newElementScoreDetails = {} as { [elementId: string]: { count: number; score: number; words: number } };
-      for (const key in elementScoreDetails) {
-        newElementScoreDetails[key] = {
-          ...elementScoreDetails[key],
-          score: Number(elementScoreDetails[key].score),
-        };
+  for (const entries of Object.entries(userScoreDetails)) {
+    const userId = Number(entries[0]);
+    const userScore = entries[1];
+    for (const detail of userScore.details) {
+      const { specification, issueComments, reviewComments, task } = detail.scoring;
+
+      if (specification) {
+        buffer.push(
+          newRow(
+            "Issue",
+            "Specification",
+            Object.keys(specification.commentScores[userId].details).length.toString() || "-",
+            specification.commentScores[userId].totalScoreTotal.toString() || "-"
+          )
+        );
       }
-
-      let elementScoreDetailsStr = "";
-      if (newElementScoreDetails && Object.keys(newElementScoreDetails).length > 0) {
-        const ymlElementScores = stringify(newElementScoreDetails);
-        elementScoreDetailsStr = ["", `<pre>${ymlElementScores}</pre>`, ""].join("\n"); // weird rendering quirk with pre that needs breaks
-      } else {
-        elementScoreDetailsStr = "-";
+      if (issueComments) {
+        buffer.push(
+          newRow(
+            "Issue",
+            "Comment",
+            Object.keys(issueComments.commentScores[userId].details).length.toString() || "-",
+            issueComments.commentScores[userId].totalScoreTotal.toString() || "-"
+          )
+        );
       }
-      const quantScore = zeroToHyphen(commentScore.wordAndElementScoreTotal);
-      const qualScore = zeroToHyphen(commentScore.qualityScore);
-      const credit = zeroToHyphen(commentScore.finalScore);
-
-      let quantScoreCell;
-      if (elementScoreDetailsStr != "-") {
-        quantScoreCell = `<details><summary>${quantScore}</summary>${elementScoreDetailsStr}</details>`;
-      } else {
-        quantScoreCell = quantScore;
+      if (reviewComments) {
+        buffer.push(
+          newRow(
+            "Review",
+            "Comment",
+            Object.keys(reviewComments.commentScores[userId].details).length.toString() || "-",
+            reviewComments.commentScores[userId].totalScoreTotal.toString() || "-"
+          )
+        );
       }
-
-      tableRows += `<tr><td><h6><a href="${commentUrl}">${truncatedBody}</a></h6></td><td>${quantScoreCell}</td><td>${qualScore}</td><td>${credit}</td></tr>`;
+      if (task) {
+        buffer.push(
+          newRow(
+            "Issue",
+            "Task",
+            issue.assignees.length === 0 ? "-" : `${(1 / issue.assignees.length).toFixed(2)}`,
+            task?.toString() || "-"
+          )
+        );
+      }
     }
   }
+  /**
+   * Example
+   *
+   * Contributions Overview
+   * | View | Contribution | Count | Reward |
+   * | --- | --- | --- | --- |
+   * | Issue | Specification | 1 | 1 |
+   * | Issue | Comment | 6 | 1 |
+   * | Review | Comment | 4 | 1 |
+   * | Review | Approval | 1 | 1 |
+   * | Review | Rejection | 3 | 1 |
+   */
+  buffer.push("</tbody></table>");
+  return buffer.join("\n");
+}
+
+function generateDetailsTable(totals: TotalsById) {
+  let tableRows = "";
+
+  for (const user of Object.values(totals)) {
+    for (const detail of user.details) {
+      const userId = detail.source.user.id;
+
+      const commentSources = [];
+      const specificationComments = detail.scoring.specification?.commentScores[userId].details;
+      const issueComments = detail.scoring.issueComments?.commentScores[userId].details;
+      const reviewComments = detail.scoring.reviewComments?.commentScores[userId].details;
+      if (specificationComments) commentSources.push(...Object.values(specificationComments));
+      if (issueComments) commentSources.push(...Object.values(issueComments));
+      if (reviewComments) commentSources.push(...Object.values(reviewComments));
+
+      const commentScores = [];
+      const specificationCommentScores = detail.scoring.specification?.commentScores[userId].details;
+      const issueCommentScores = detail.scoring.issueComments?.commentScores[userId].details;
+      const reviewCommentScores = detail.scoring.reviewComments?.commentScores[userId].details;
+      if (specificationCommentScores) commentScores.push(...Object.values(specificationCommentScores));
+      if (issueCommentScores) commentScores.push(...Object.values(issueCommentScores));
+      if (reviewCommentScores) commentScores.push(...Object.values(reviewCommentScores));
+
+      if (!commentSources) continue;
+      if (!commentScores) continue;
+
+      for (const index in commentSources) {
+        //
+        const commentSource = commentSources[index];
+        const commentScore = commentScores[index];
+
+        const commentUrl = commentSource.comment.html_url;
+        const truncatedBody = commentSource ? commentSource.comment.body.substring(0, 64).concat("...") : "";
+        const formatScoreDetails = commentScore.formatScoreCommentDetails;
+
+        let formatDetailsStr = "";
+        if (formatScoreDetails && Object.keys(formatScoreDetails).length > 0) {
+          const ymlElementScores = stringify(formatScoreDetails);
+          formatDetailsStr = ["", `<pre>${ymlElementScores}</pre>`, ""].join("\n"); // weird rendering quirk with pre that needs breaks
+        } else {
+          formatDetailsStr = "-";
+        }
+
+        const formatScore = zeroToHyphen(commentScore.wordScoreComment.plus(commentScore.formatScoreComment));
+        const relevanceScore = zeroToHyphen(commentScore.relevanceScoreComment);
+        const totalScore = zeroToHyphen(commentScore.totalScoreComment);
+        let formatScoreCell;
+        if (formatDetailsStr != "-") {
+          formatScoreCell = `<details><summary>${formatScore}</summary>${formatDetailsStr}</details>`;
+        } else {
+          formatScoreCell = formatScore;
+        }
+        tableRows += `<tr><td><h6><a href="${commentUrl}">${truncatedBody}</a></h6></td><td>${formatScoreCell}</td><td>${relevanceScore}</td><td>${totalScore}</td></tr>`;
+      }
+    }
+  }
+  if (tableRows === "") return "";
   return `<table><tbody><tr><td>Comment</td><td>Formatting</td><td>Relevance</td><td>Reward</td></tr>${tableRows}</tbody></table>`;
 }
 
@@ -141,18 +239,11 @@ function zeroToHyphen(value: number | Decimal) {
   }
 }
 
-function mapIdsToNames(contributorComments: Comment[]) {
-  return contributorComments.reduce((accumulator, comment: Comment) => {
-    const userId = comment.user.id;
-    accumulator[userId] = comment.user.login;
-    return accumulator;
-  }, {} as { [userId: number]: string });
-}
 interface GenerateHtmlParams {
   permit: URL;
   tokenAmount: Decimal;
   tokenSymbol: string;
   contributorName: string;
+  contributionsOverviewTable: string;
   detailsTable: string;
-  issueRole: IssueRole;
 }

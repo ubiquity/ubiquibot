@@ -1,5 +1,6 @@
-import { calculateLabelValue } from "../../helpers";
-import { Issue, Context } from "../../types";
+import { calculateLabelValue } from "../../helpers/shared";
+import { Context } from "../../types/context";
+import { Issue } from "../../types/payload";
 
 //  Checks the issue whether it's an open task for public self assignment
 export function taskPaymentMetaData(
@@ -11,25 +12,24 @@ export function taskPaymentMetaData(
   priorityLabel: string | null;
   priceLabel: string | null;
 } {
-  const { price } = context.config;
-  const labels = issue.labels;
+  const { labels } = context.config;
 
-  const timeLabels = price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
-  const priorityLabels = price.priorityLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
+  const timeLabels = labels.time.filter((configLabel) => issue.labels.map((i) => i.name).includes(configLabel));
+  const priorityLabels = labels.priority.filter((configLabel) => issue.labels.map((i) => i.name).includes(configLabel));
 
   const isTask = timeLabels.length > 0 && priorityLabels.length > 0;
 
   const minTimeLabel =
     timeLabels.length > 0
-      ? timeLabels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b)).name
+      ? timeLabels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b))
       : null;
 
   const minPriorityLabel =
     priorityLabels.length > 0
-      ? priorityLabels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b)).name
+      ? priorityLabels.reduce((a, b) => (calculateLabelValue(a) < calculateLabelValue(b) ? a : b))
       : null;
 
-  const priceLabel = labels.find((label) => label.name.includes("Price"))?.name || null;
+  const priceLabel = issue.labels.find((label) => label.name.includes("Price"))?.name || null;
 
   return {
     eligibleForPayment: isTask,

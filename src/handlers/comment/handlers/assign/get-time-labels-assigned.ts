@@ -1,21 +1,22 @@
-import Runtime from "../../../../bindings/bot-runtime";
-import { BotConfig, Label, Payload } from "../../../../types";
+import { BotConfig } from "../../../../types/configuration-types";
+import { Context } from "../../../../types/context";
+import { Label } from "../../../../types/label";
+import { Payload } from "../../../../types/payload";
 
-export function getTimeLabelsAssigned(payload: Payload, config: BotConfig) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+export function getTimeLabelsAssigned(context: Context, payload: Payload, config: BotConfig) {
+  const logger = context.logger;
   const labels = payload.issue?.labels;
   if (!labels?.length) {
     logger.warn("Skipping '/start' since no labels are set to calculate the timeline", { labels });
     return;
   }
-  const timeLabelsDefined = config.price.timeLabels;
+  const timeLabelsDefined = config.labels.time;
   const timeLabelsAssigned: Label[] = [];
   for (const _label of labels) {
     const _labelType = typeof _label;
     const _labelName = _labelType === "string" ? _label.toString() : _labelType === "object" ? _label.name : "unknown";
 
-    const timeLabel = timeLabelsDefined.find((item) => item.name === _labelName);
+    const timeLabel = timeLabelsDefined.find((label) => label === _labelName);
     if (timeLabel) {
       timeLabelsAssigned.push(_label);
     }

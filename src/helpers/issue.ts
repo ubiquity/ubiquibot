@@ -1,55 +1,22 @@
-import {
-  AssignEvent,
-  Comment,
-  HandlerReturnValuesNoVoid,
-  Issue,
-  IssueType,
-  StreamlinedComment,
-  UserType,
-} from "../types";
-import { checkRateLimitGit } from "../utils";
-import Runtime from "../bindings/bot-runtime";
-import { LogReturn } from "../adapters/supabase";
-import { Payload, Context } from "../types";
-
-type PromiseType<T> = T extends Promise<infer U> ? U : never;
+import { LogReturn } from "../adapters/supabase/helpers/tables/logs";
+import { Context } from "../types/context";
+import { HandlerReturnValuesNoVoid } from "../types/handlers";
+import { StreamlinedComment } from "../types/openai";
+import { AssignEvent, Comment, Issue, IssueType, Payload, UserType } from "../types/payload";
 
 async function getAllIssueEvents(context: Context) {
-  type Event = PromiseType<ReturnType<typeof context.event.octokit.issues.listEvents>>["data"][0];
+  if (!context.payload.issue) return;
 
-  const payload = context.event.payload as Payload;
-  if (!payload.issue) return;
-
-  let shouldFetch = true;
-  let page = 1;
-
-  const events = [] as Event[];
-
-  while (shouldFetch) {
-    // Fetch issue events
-
-    const repo = payload.repository.name;
-    const owner = payload.repository.owner.login;
-
-    const response = await context.event.octokit.issues.listEvents({
-      owner: owner,
-      repo: repo,
-      issue_number: payload.issue.number,
+  try {
+    const events = await context.octokit.paginate(context.octokit.issues.listEvents, {
+      ...context.event.issue(),
       per_page: 100,
-      page: page,
     });
-
-    await checkRateLimitGit(response?.headers);
-
-    if (response.data.length > 0) {
-      events.push(...(response.data as Event[]));
-      page++;
-    } else {
-      shouldFetch = false;
-    }
+    return events;
+  } catch (err: unknown) {
+    context.logger.error("Failed to fetch lists of events", err);
+    return [];
   }
-
-  return events;
 }
 
 export async function getAllLabeledEvents(context: Context) {
@@ -59,7 +26,7 @@ export async function getAllLabeledEvents(context: Context) {
 }
 
 export async function clearAllPriceLabelsOnIssue(context: Context) {
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   if (!payload.issue) return;
 
   const labels = payload.issue.labels;
@@ -67,87 +34,84 @@ export async function clearAllPriceLabelsOnIssue(context: Context) {
 
   if (!issuePrices.length) return;
 
-  // try {
-  await context.event.octokit.issues.removeLabel({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    issue_number: payload.issue.number,
-    name: issuePrices[0].name,
-  });
-  // } catch (e: unknown) {
-  //   runtime.logger.debug("Clearing all price labels failed!", e);
-  // }
+  try {
+    await context.event.octokit.issues.removeLabel({
+      ...context.event.issue(),
+      name: issuePrices[0].name,
+    });
+  } catch (e: unknown) {
+    context.logger.error("Clearing all price labels failed!", e);
+  }
 }
 
 export async function addLabelToIssue(context: Context, labelName: string) {
-  const runtime = Runtime.getState();
-
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   if (!payload.issue) {
-    throw runtime.logger.error("Issue object is null");
+    throw context.logger.error("Issue object is null");
   }
 
   try {
-    await context.event.octokit.issues.addLabels({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: payload.issue.number,
+    await context.octokit.issues.addLabels({
+      ...context.event.issue(),
       labels: [labelName],
     });
   } catch (e: unknown) {
-    runtime.logger.debug("Adding a label to issue failed!", e);
+    context.logger.error("Adding a label to issue failed!", e);
   }
 }
 
 async function listIssuesAndPullsForRepo(
   context: Context,
   state: "open" | "closed" | "all" = "open",
-  per_page = 100,
+  perPage = 100,
   page = 1,
   sort: "created" | "updated" | "comments" = "created",
   direction: "desc" | "asc" = "desc"
 ) {
-  const payload = context.event.payload as Payload;
-  const response = await context.event.octokit.issues.listForRepo({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    state,
-    per_page,
-    page,
-    sort,
-    direction,
-  });
+  const payload = context.payload;
 
-  await checkRateLimitGit(response.headers);
-
-  if (response.status === 200) {
+  try {
+    const response = await context.octokit.issues.listForRepo({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      state,
+      per_page: perPage,
+      page,
+      sort,
+      direction,
+    });
     return response.data;
-  } else {
+  } catch (err: unknown) {
+    context.logger.error("Failed to fetch lists of issues", err);
     return [];
   }
 }
 
-export async function listAllIssuesAndPullsForRepo(context: Context, state: "open" | "closed" | "all") {
-  const issuesArr = [] as Issue[];
-  const perPage = 100;
-  let fetchDone = false;
-  let curPage = 1;
-  while (!fetchDone) {
-    const issues = (await listIssuesAndPullsForRepo(context, state, perPage, curPage)) as Issue[];
-
-    // push the objects to array
-    issuesArr.push(...issues);
-
-    if (issues.length < perPage) fetchDone = true;
-    else curPage++;
+export async function listAllIssuesAndPullsForRepo(
+  context: Context,
+  state: "open" | "closed" | "all" = "open",
+  sort: "created" | "updated" | "comments" = "created",
+  direction: "desc" | "asc" = "desc"
+) {
+  const payload = context.payload;
+  try {
+    const issues = (await context.octokit.paginate(context.octokit.issues.listForRepo, {
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      state,
+      sort,
+      direction,
+      per_page: 100,
+    })) as Issue[];
+    return issues;
+  } catch (err: unknown) {
+    context.logger.error("Listing all issues and pulls failed!", err);
+    return [];
   }
-
-  return issuesArr;
 }
 
 export async function addCommentToIssue(context: Context, message: HandlerReturnValuesNoVoid, issueNumber: number) {
   let comment = message as string;
-  const runtime = Runtime.getState();
   if (message instanceof LogReturn) {
     comment = message.logMessage.diff;
     console.trace(
@@ -158,29 +122,27 @@ export async function addCommentToIssue(context: Context, message: HandlerReturn
     comment = comment.concat(metadataSerializedAsComment);
   }
 
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   try {
-    await context.event.octokit.issues.createComment({
+    await context.octokit.issues.createComment({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: issueNumber,
       body: comment,
     });
   } catch (e: unknown) {
-    runtime.logger.error("Adding a comment failed!", e);
+    context.logger.error("Adding a comment failed!", e);
   }
 }
 
-export async function upsertLastCommentToIssue(context: Context, issue_number: number, commentBody: string) {
-  const runtime = Runtime.getState();
-
+export async function upsertLastCommentToIssue(context: Context, issueNumber: number, commentBody: string) {
   try {
-    const comments = await getAllIssueComments(context, issue_number);
+    const comments = await getAllIssueComments(context, issueNumber);
 
     if (comments.length > 0 && comments[comments.length - 1].body !== commentBody)
-      await addCommentToIssue(context, commentBody, issue_number);
+      await addCommentToIssue(context, commentBody, issueNumber);
   } catch (e: unknown) {
-    runtime.logger.debug("Upserting last comment failed!", e);
+    context.logger.error("Upserting last comment failed!", e);
   }
 }
 
@@ -189,33 +151,30 @@ export async function getIssueDescription(
   issueNumber: number,
   format: "raw" | "html" | "text" = "raw"
 ): Promise<string> {
-  const runtime = Runtime.getState();
+  const payload = context.payload;
 
-  const payload = context.event.payload as Payload;
-  const response = await context.event.octokit.rest.issues.get({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    issue_number: issueNumber,
-    mediaType: {
-      format,
-    },
-  });
+  try {
+    const response = await context.octokit.rest.issues.get({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: issueNumber,
+      mediaType: {
+        format,
+      },
+    });
 
-  await checkRateLimitGit(response?.headers);
+    let result = response.data.body;
 
-  let result = response.data.body;
+    if (format === "html") {
+      result = response.data.body_html;
+    } else if (format === "text") {
+      result = response.data.body_text;
+    }
 
-  if (format === "html") {
-    result = response.data.body_html;
-  } else if (format === "text") {
-    result = response.data.body_text;
+    return result as string;
+  } catch (e: unknown) {
+    throw context.logger.error("Fetching issue description failed!", e);
   }
-
-  if (!result) {
-    throw runtime.logger.error("Issue description is empty");
-  }
-
-  return result;
 }
 
 export async function getAllIssueComments(
@@ -223,88 +182,59 @@ export async function getAllIssueComments(
   issueNumber: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ): Promise<Comment[]> {
-  const payload = context.event.payload as Payload;
-  const result: Comment[] = [];
-  let shouldFetch = true;
-  let page_number = 1;
+  const payload = context.payload;
+
   try {
-    while (shouldFetch) {
-      const response = await context.event.octokit.rest.issues.listComments({
-        owner: payload.repository.owner.login,
-        repo: payload.repository.name,
-        issue_number: issueNumber,
-        per_page: 100,
-        page: page_number,
-        mediaType: {
-          format,
-        },
-      });
-
-      await checkRateLimitGit(response?.headers);
-
-      // Fixing infinite loop here, it keeps looping even when its an empty array
-      if (response?.data?.length > 0) {
-        response.data.forEach((item) => {
-          result.push(item as Comment);
-        });
-        page_number++;
-      } else {
-        shouldFetch = false;
-      }
-    }
+    const comments = (await context.octokit.paginate(context.octokit.rest.issues.listComments, {
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: issueNumber,
+      per_page: 100,
+      mediaType: {
+        format,
+      },
+    })) as Comment[];
+    return comments;
   } catch (e: unknown) {
-    shouldFetch = false;
+    context.logger.error("Fetching all issue comments failed!", e);
+    return [];
   }
-
-  return result;
 }
 
 export async function getAllIssueAssignEvents(context: Context, issueNumber: number): Promise<AssignEvent[]> {
-  const payload = context.event.payload as Payload;
-  const result: AssignEvent[] = [];
-  let shouldFetch = true;
-  let page_number = 1;
+  const payload = context.payload;
+
   try {
-    while (shouldFetch) {
-      const response = await context.event.octokit.rest.issues.listEvents({
+    const events = (await context.octokit.paginate(
+      context.octokit.issues.listEvents,
+      {
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
         issue_number: issueNumber,
         per_page: 100,
-        page: page_number,
-      });
+      },
+      (response) => response.data.filter((item) => item.event === "assigned")
+    )) as AssignEvent[];
 
-      await checkRateLimitGit(response?.headers);
-
-      // Fixing infinite loop here, it keeps looping even when its an empty array
-      if (response?.data?.length > 0) {
-        response.data.filter((item) => item.event === "assigned").forEach((item) => result?.push(item as AssignEvent));
-        page_number++;
-      } else {
-        shouldFetch = false;
-      }
-    }
-  } catch (e: unknown) {
-    shouldFetch = false;
+    return events.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
+  } catch (err: unknown) {
+    context.logger.error("Fetching all issue assign events failed!", err);
+    return [];
   }
-
-  return result.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
 }
 
 export async function checkUserPermissionForRepoAndOrg(context: Context, username: string): Promise<boolean> {
-  const permissionForRepo = await checkUserPermissionForRepo(context, username);
-  const permissionForOrg = await checkUserPermissionForOrg(context, username);
+  const hasPermissionForRepo = await checkUserPermissionForRepo(context, username);
+  const hasPermissionForOrg = await checkUserPermissionForOrg(context, username);
   const userPermission = await isUserAdminOrBillingManager(context, username);
 
-  return permissionForOrg || permissionForRepo || userPermission === "admin";
+  return hasPermissionForOrg || hasPermissionForRepo || userPermission === "admin";
 }
 
 async function checkUserPermissionForRepo(context: Context, username: string): Promise<boolean> {
-  const runtime = Runtime.getState();
-
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   try {
-    const res = await context.event.octokit.rest.repos.checkCollaborator({
+    const res = await context.octokit.rest.repos.checkCollaborator({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       username,
@@ -312,15 +242,13 @@ async function checkUserPermissionForRepo(context: Context, username: string): P
 
     return res.status === 204;
   } catch (e: unknown) {
-    runtime.logger.error("Checking if user permisson for repo failed!", e);
+    context.logger.error("Checking if user permisson for repo failed!", e);
     return false;
   }
 }
 
 async function checkUserPermissionForOrg(context: Context, username: string): Promise<boolean> {
-  const runtime = Runtime.getState();
-
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   if (!payload.organization) return false;
 
   try {
@@ -331,7 +259,7 @@ async function checkUserPermissionForOrg(context: Context, username: string): Pr
     // skipping status check due to type error of checkMembershipForUser function of octokit
     return true;
   } catch (e: unknown) {
-    runtime.logger.error("Checking if user permisson for org failed!", e);
+    context.logger.error("Checking if user permisson for org failed!", e);
     return false;
   }
 }
@@ -340,7 +268,7 @@ export async function isUserAdminOrBillingManager(
   context: Context,
   username: string
 ): Promise<"admin" | "billing_manager" | false> {
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   const isAdmin = await checkIfIsAdmin();
   if (isAdmin) return "admin";
 
@@ -350,7 +278,7 @@ export async function isUserAdminOrBillingManager(
   return false;
 
   async function checkIfIsAdmin() {
-    const response = await context.event.octokit.rest.repos.getCollaboratorPermissionLevel({
+    const response = await context.octokit.rest.repos.getCollaboratorPermissionLevel({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       username,
@@ -363,10 +291,8 @@ export async function isUserAdminOrBillingManager(
   }
 
   async function checkIfIsBillingManager() {
-    const runtime = Runtime.getState();
-
-    if (!payload.organization) throw runtime.logger.error(`No organization found in payload!`);
-    const { data: membership } = await context.event.octokit.rest.orgs.getMembershipForUser({
+    if (!payload.organization) throw context.logger.error(`No organization found in payload!`);
+    const { data: membership } = await context.octokit.rest.orgs.getMembershipForUser({
       org: payload.organization.login,
       username: payload.repository.owner.login,
     });
@@ -381,231 +307,228 @@ export async function isUserAdminOrBillingManager(
 }
 
 export async function addAssignees(context: Context, issue: number, assignees: string[]) {
-  const runtime = Runtime.getState();
-
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   try {
-    await context.event.octokit.rest.issues.addAssignees({
+    await context.octokit.rest.issues.addAssignees({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: issue,
       assignees,
     });
   } catch (e: unknown) {
-    runtime.logger.debug("Adding assignees failed!", e);
+    context.logger.error("Adding assignees failed!", e);
   }
 }
 
 export async function deleteLabel(context: Context, label: string) {
-  const runtime = Runtime.getState();
-
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   try {
-    const response = await context.event.octokit.rest.search.issuesAndPullRequests({
+    const response = await context.octokit.rest.search.issuesAndPullRequests({
       q: `repo:${payload.repository.owner.login}/${payload.repository.name} label:"${label}" state:open`,
     });
     if (response.data.items.length === 0) {
       //remove label
-      await context.event.octokit.rest.issues.deleteLabel({
+      await context.octokit.rest.issues.deleteLabel({
         owner: payload.repository.owner.login,
         repo: payload.repository.name,
         name: label,
       });
     }
   } catch (e: unknown) {
-    runtime.logger.debug("Deleting label failed!", e);
+    context.logger.error("Deleting label failed!", e);
   }
 }
 
 export async function removeLabel(context: Context, name: string) {
-  const runtime = Runtime.getState();
-
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   if (!payload.issue) {
-    runtime.logger.debug("Invalid issue object");
+    context.logger.debug("Invalid issue object");
     return;
   }
 
   try {
-    await context.event.octokit.issues.removeLabel({
+    await context.octokit.issues.removeLabel({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: payload.issue.number,
       name: name,
     });
   } catch (e: unknown) {
-    runtime.logger.debug("Removing label failed!", e);
+    context.logger.error("Removing label failed!", e);
   }
 }
 
 export async function getAllPullRequests(context: Context, state: "open" | "closed" | "all" = "open") {
-  type Pulls = PromiseType<ReturnType<typeof context.event.octokit.rest.pulls.list>>["data"][0];
-  const prArr = [] as Pulls[];
-  let fetchDone = false;
-  const perPage = 100;
-  let curPage = 1;
-  while (!fetchDone) {
-    const prs = await getPullRequests(context, state, perPage, curPage);
+  const payload = context.payload;
 
-    // push the objects to array
-    prArr.push(...prs);
-
-    if (prs.length < perPage) fetchDone = true;
-    else curPage++;
+  try {
+    const pulls = await context.octokit.paginate(context.octokit.rest.pulls.list, {
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      state,
+      per_page: 100,
+    });
+    return pulls;
+  } catch (err: unknown) {
+    context.logger.error("Fetching all pull requests failed!", err);
+    return [];
   }
-  return prArr;
 }
-// Use `context.octokit.rest` to get the pull requests for the repository
+
 async function getPullRequests(
   context: Context,
   state: "open" | "closed" | "all" = "open",
-  per_page: number,
+  perPage: number,
   page: number
 ) {
-  const payload = context.event.payload as Payload;
-  const { data: pulls } = await context.event.octokit.rest.pulls.list({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    state,
-    per_page,
-    page,
-  });
-  return pulls;
-}
+  const payload = context.payload;
 
-export async function closePullRequest(context: Context, pull_number: number) {
-  const runtime = Runtime.getState();
-  const payload = context.event.payload as Payload;
   try {
-    await context.event.octokit.rest.pulls.update({
+    const { data: pulls } = await context.octokit.rest.pulls.list({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      pull_number,
+      state,
+      per_page: perPage,
+      page,
+    });
+    return pulls;
+  } catch (err: unknown) {
+    context.logger.error("Fetching pull requests failed!", err);
+    return [];
+  }
+}
+
+export async function closePullRequest(context: Context, pullNumber: number) {
+  const payload = context.payload as Payload;
+  try {
+    await context.octokit.rest.pulls.update({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number: pullNumber,
       state: "closed",
     });
-  } catch (e: unknown) {
-    runtime.logger.debug("Closing pull requests failed!", e);
+  } catch (err: unknown) {
+    context.logger.error("Closing pull requests failed!", err);
   }
 }
 
 export async function getAllPullRequestReviews(
   context: Context,
-  pull_number: number,
+  pullNumber: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ) {
-  type Reviews = PromiseType<ReturnType<typeof context.event.octokit.rest.pulls.listReviews>>["data"][0];
-  const prArr = [] as Reviews[];
-  let fetchDone = false;
-  const perPage = 100;
-  let curPage = 1;
-  while (!fetchDone) {
-    const prs = await getPullRequestReviews(context, pull_number, perPage, curPage, format);
+  const payload = context.payload;
 
-    // push the objects to array
-    prArr.push(...prs);
-
-    if (prs.length < perPage) fetchDone = true;
-    else curPage++;
+  try {
+    const reviews = await context.octokit.paginate(context.octokit.rest.pulls.listReviews, {
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number: pullNumber,
+      per_page: 100,
+      mediaType: {
+        format,
+      },
+    });
+    return reviews;
+  } catch (err: unknown) {
+    context.logger.error("Fetching all pull request reviews failed!", err);
+    return [];
   }
-  return prArr;
 }
 
 async function getPullRequestReviews(
   context: Context,
-  pull_number: number,
-  per_page: number,
+  pullNumber: number,
+  perPage: number,
   page: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ) {
-  const runtime = Runtime.getState();
-
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   try {
-    const { data: reviews } = await context.event.octokit.rest.pulls.listReviews({
+    const { data: reviews } = await context.octokit.rest.pulls.listReviews({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      pull_number,
-      per_page,
+      pull_number: pullNumber,
+      per_page: perPage,
       page,
       mediaType: {
         format,
       },
     });
     return reviews;
-  } catch (e: unknown) {
-    runtime.logger.debug("Fetching pull request reviews failed!", e);
+  } catch (err: unknown) {
+    context.logger.error("Fetching pull request reviews failed!", err);
     return [];
   }
 }
 
-export async function getReviewRequests(context: Context, pull_number: number, owner: string, repo: string) {
-  const runtime = Runtime.getState();
-
+export async function getReviewRequests(context: Context, pullNumber: number, owner: string, repo: string) {
   try {
-    const response = await context.event.octokit.pulls.listRequestedReviewers({
+    const response = await context.octokit.pulls.listRequestedReviewers({
       owner: owner,
       repo: repo,
-      pull_number: pull_number,
+      pull_number: pullNumber,
     });
     return response.data;
-  } catch (e: unknown) {
-    runtime.logger.error("Could not get requested reviewers", e);
+  } catch (err: unknown) {
+    context.logger.error("Could not get requested reviewers", err);
     return null;
   }
 }
+
 // Get issues by issue number
 export async function getIssueByNumber(context: Context, issueNumber: number) {
-  const runtime = Runtime.getState();
-
-  const payload = context.event.payload as Payload;
+  const payload = context.payload;
   try {
-    const { data: issue } = await context.event.octokit.rest.issues.get({
+    const { data: issue } = await context.octokit.rest.issues.get({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: issueNumber,
     });
     return issue;
   } catch (e: unknown) {
-    runtime.logger.debug("Fetching issue failed!", e);
+    context.logger.error("Fetching issue failed!", e);
     return;
   }
 }
 
 export async function getPullByNumber(context: Context, pull: number) {
-  // const runtime = Runtime.getState();
+  const payload = context.payload;
 
-  const payload = context.event.payload as Payload;
-  const response = await context.event.octokit.rest.pulls.get({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    pull_number: pull,
-  });
-  return response.data;
+  try {
+    const response = await context.octokit.rest.pulls.get({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number: pull,
+    });
+    return response.data;
+  } catch (err: unknown) {
+    context.logger.error("Fetching pull request failed!", err);
+    return;
+  }
 }
 
 // Get issues assigned to a username
-export async function getAssignedIssues(context: Context, username: string) {
-  type Issues = PromiseType<ReturnType<typeof context.event.octokit.issues.listForRepo>>["data"][0];
-  const issuesArr = [] as Issues[];
-  let fetchDone = false;
-  const perPage = 100;
-  let curPage = 1;
-  while (!fetchDone) {
-    const issues = await listIssuesAndPullsForRepo(context, IssueType.OPEN, perPage, curPage);
+export async function getAssignedIssues(context: Context, username: string): Promise<Issue[]> {
+  const payload = context.payload;
 
-    // push the objects to array
-    issuesArr.push(...issues);
-
-    if (issues.length < perPage) fetchDone = true;
-    else curPage++;
+  try {
+    const issues = (await context.octokit.paginate(
+      context.octokit.issues.listForRepo,
+      {
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        state: IssueType.OPEN,
+        per_page: 1000,
+      },
+      ({ data: issues }) =>
+        issues.filter((issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username)
+    )) as Issue[];
+    return issues;
+  } catch (err: unknown) {
+    context.logger.error("Fetching assigned issues failed!", err);
+    return [];
   }
-
-  // get only issues assigned to username
-  const assigned_issues = issuesArr.filter(
-    (issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username
-  );
-
-  return assigned_issues;
 }
 
 export async function getOpenedPullRequestsForAnIssue(context: Context, issueNumber: number, userName: string) {
@@ -628,25 +551,8 @@ async function getOpenedPullRequests(context: Context, username: string) {
   return prs.filter((pr) => !pr.draft && (pr.user?.login === username || !username));
 }
 
-export async function getCommitsOnPullRequest(context: Context, pullNumber: number) {
-  const runtime = Runtime.getState();
-  const payload = context.event.payload as Payload;
-  try {
-    const { data: commits } = await context.event.octokit.rest.pulls.listCommits({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      pull_number: pullNumber,
-    });
-    return commits;
-  } catch (e: unknown) {
-    runtime.logger.debug("Fetching pull request commits failed!", e);
-    return [];
-  }
-}
-
 export async function getAvailableOpenedPullRequests(context: Context, username: string) {
-  const unassignConfig = context.config.unassign;
-  const { reviewDelayTolerance } = unassignConfig;
+  const { reviewDelayTolerance } = context.config.timers;
   if (!reviewDelayTolerance) return [];
 
   const openedPullRequests = await getOpenedPullRequests(context, username);
@@ -676,8 +582,7 @@ export async function getAvailableOpenedPullRequests(context: Context, username:
 
 // Strips out all links from the body of an issue or pull request and fetches the conversational context from each linked issue or pull request
 export async function getAllLinkedIssuesAndPullsInBody(context: Context, issueNumber: number) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const issue = await getIssueByNumber(context, issueNumber);
 
@@ -715,7 +620,7 @@ export async function getAllLinkedIssuesAndPullsInBody(context: Context, issueNu
         }
       });
     } else {
-      runtime.logger.info(`No linked issues or prs found`);
+      logger.info(`No linked issues or prs found`);
     }
 
     if (linkedPrs.length > 0) {
@@ -773,7 +678,7 @@ export async function getAllLinkedIssuesAndPullsInBody(context: Context, issueNu
       linkedPrs: linkedPRStreamlined,
     };
   } else {
-    runtime.logger.info(`No matches found`);
+    logger.info(`No matches found`);
     return {
       linkedIssues: [],
       linkedPrs: [],

@@ -1,16 +1,19 @@
-import Runtime from "../../bindings/bot-runtime";
-import { addLabelToIssue, clearAllPriceLabelsOnIssue, createLabel, getAllLabeledEvents } from "../../helpers";
-import { BotConfig, Context, Label, LabelFromConfig, Payload, UserType } from "../../types";
-import { labelAccessPermissionsCheck } from "../access";
+import { Context } from "../../types/context";
+
 import { setPrice } from "../shared/pricing";
 import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./action";
+import { Payload, UserType } from "../../types/payload";
+import { Label } from "../../types/label";
+import { BotConfig } from "../../types/configuration-types";
+import { clearAllPriceLabelsOnIssue, getAllLabeledEvents, addLabelToIssue } from "../../helpers/issue";
+import { labelAccessPermissionsCheck } from "../access/labels-access";
+import { createLabel } from "../../helpers/label";
 
-export async function onLabelChangeSetPricing(context: Context) {
-  const runtime = Runtime.getState();
+export async function onLabelChangeSetPricing(context: Context): Promise<void> {
   const config = context.config;
-  const logger = runtime.logger;
+  const logger = context.logger;
   const payload = context.event.payload as Payload;
-  if (!payload.issue) throw logger.error("Issue is not defined");
+  if (!payload.issue) throw context.logger.error("Issue is not defined");
 
   const labels = payload.issue.labels;
   const labelNames = labels.map((i) => i.name);
@@ -19,17 +22,42 @@ export async function onLabelChangeSetPricing(context: Context) {
     await handleParentIssue(context, labels);
     return;
   }
-  const permission = await labelAccessPermissionsCheck(context);
-  if (!permission) {
-    if (config.publicAccessControl.setLabel === false) {
+  const hasPermission = await labelAccessPermissionsCheck(context);
+  if (!hasPermission) {
+    if (config.features.publicAccessControl.setLabel === false) {
       throw logger.warn("No public access control to set labels");
     }
     throw logger.warn("No permission to set labels");
   }
 
-  const { assistivePricing } = config.mode;
+  const { assistivePricing: hasAssistivePricing } = config.features;
 
   if (!labels) throw logger.warn(`No labels to calculate price`);
+
+  // here we should make an exception if it was a price label that was just set to just skip this action
+  const isPayloadToSetPrice = payload.label?.name.includes("Price: ");
+  if (isPayloadToSetPrice) {
+    logger.info("This is setting the price label directly so skipping the rest of the action.");
+
+    // make sure to clear all other price labels except for the smallest price label.
+
+    const priceLabels = labels.filter((label) => label.name.includes("Price: "));
+    const sortedPriceLabels = sortLabelsByValue(priceLabels);
+    const smallestPriceLabel = sortedPriceLabels.shift();
+    const smallestPriceLabelName = smallestPriceLabel?.name;
+    if (smallestPriceLabelName) {
+      for (const label of sortedPriceLabels) {
+        await context.event.octokit.issues.removeLabel({
+          owner: payload.repository.owner.login,
+          repo: payload.repository.name,
+          issue_number: payload.issue.number,
+          name: label.name,
+        });
+      }
+    }
+
+    return;
+  }
 
   const recognizedLabels = getRecognizedLabels(labels, config);
 
@@ -49,7 +77,7 @@ export async function onLabelChangeSetPricing(context: Context) {
   const targetPriceLabel = setPrice(context, minLabels.time, minLabels.priority);
 
   if (targetPriceLabel) {
-    await handleTargetPriceLabel(context, targetPriceLabel, labelNames, assistivePricing);
+    await handleTargetPriceLabel(context, targetPriceLabel, labelNames, hasAssistivePricing);
   } else {
     await clearAllPriceLabelsOnIssue(context);
     logger.info(`Skipping action...`);
@@ -57,15 +85,17 @@ export async function onLabelChangeSetPricing(context: Context) {
 }
 
 function getRecognizedLabels(labels: Label[], config: BotConfig) {
-  const isRecognizedLabel = (label: Label, labelConfig: LabelFromConfig[]) =>
-    (typeof label === "string" || typeof label === "object") && labelConfig.some((item) => item.name === label.name);
+  function isRecognizedLabel(label: Label, configLabels: string[]) {
+    return (
+      (typeof label === "string" || typeof label === "object") &&
+      configLabels.some((configLabel) => configLabel === label.name)
+    );
+  }
 
-  const recognizedTimeLabels: Label[] = labels.filter((label: Label) =>
-    isRecognizedLabel(label, config.price.timeLabels)
-  );
+  const recognizedTimeLabels: Label[] = labels.filter((label: Label) => isRecognizedLabel(label, config.labels.time));
 
   const recognizedPriorityLabels: Label[] = labels.filter((label: Label) =>
-    isRecognizedLabel(label, config.price.priorityLabels)
+    isRecognizedLabel(label, config.labels.priority)
   );
 
   return { time: recognizedTimeLabels, priority: recognizedPriorityLabels };
@@ -94,7 +124,7 @@ async function handleTargetPriceLabel(
 }
 
 async function handleExistingPriceLabel(context: Context, targetPriceLabel: string, assistivePricing: boolean) {
-  const logger = Runtime.getState().logger;
+  const logger = context.logger;
   let labeledEvents = await getAllLabeledEvents(context);
   if (!labeledEvents) return logger.warn("No labeled events found");
 
@@ -109,12 +139,11 @@ async function handleExistingPriceLabel(context: Context, targetPriceLabel: stri
 }
 
 async function addPriceLabelToIssue(context: Context, targetPriceLabel: string, assistivePricing: boolean) {
-  const logger = Runtime.getState().logger;
   await clearAllPriceLabelsOnIssue(context);
 
-  const exists = await labelExists(context, targetPriceLabel);
-  if (assistivePricing && !exists) {
-    logger.info("Assistive pricing is enabled, creating label...", { targetPriceLabel });
+  const isPresent = await labelExists(context, targetPriceLabel);
+  if (assistivePricing && !isPresent) {
+    context.logger.info("Assistive pricing is enabled, creating label...", { targetPriceLabel });
     await createLabel(context, targetPriceLabel, "price");
   }
 

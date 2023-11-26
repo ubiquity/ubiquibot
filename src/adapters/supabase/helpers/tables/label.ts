@@ -1,15 +1,15 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Repository } from "../../../../types/payload";
-import { Database } from "../../types";
-import { Super } from "./super";
-import { Context } from "../../../../types";
+
 import Runtime from "../../../../bindings/bot-runtime";
+import { Super } from "./super";
+import { Database } from "../../types/database";
 
 type LabelRow = Database["public"]["Tables"]["labels"]["Row"];
 
 export class Label extends Super {
-  constructor(supabase: SupabaseClient, context: Context) {
-    super(supabase, context);
+  constructor(supabase: SupabaseClient) {
+    super(supabase);
   }
 
   async saveLabelChange({

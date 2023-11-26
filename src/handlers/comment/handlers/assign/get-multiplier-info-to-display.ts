@@ -1,6 +1,7 @@
-import { Issue, Context } from "../../../../types";
-import { taskPaymentMetaData } from "../../../wildcard";
+import { Context } from "../../../../types/context";
+import { Issue } from "../../../../types/payload";
 import { getUserMultiplier } from "./get-user-multiplier";
+import { taskPaymentMetaData } from "../../../wildcard/analytics";
 
 export async function getMultiplierInfoToDisplay(context: Context, senderId: number, repoId: number, issue: Issue) {
   const userMultiplier = await getUserMultiplier(senderId, repoId);

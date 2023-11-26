@@ -1,16 +1,17 @@
-import Runtime from "../bindings/bot-runtime";
 import { labelExists } from "../handlers/pricing/pricing-label";
 import { calculateTaskPrice } from "../handlers/shared/pricing";
-import { calculateLabelValue } from "../helpers";
-import { Label, Payload, Context } from "../types";
+import { Context } from "../types/context";
+import { Label } from "../types/label";
+import { Payload } from "../types/payload";
+
 import { deleteLabel } from "./issue";
+import { calculateLabelValue } from "./shared";
 
 // cspell:disable
 const COLORS = { default: "ededed", price: "1f883d" };
 // cspell:enable
 
 export async function listLabelsForRepo(context: Context): Promise<Label[]> {
-  const runtime = Runtime.getState();
   const payload = context.event.payload as Payload;
 
   const res = await context.event.octokit.rest.issues.listLabelsForRepo({
@@ -24,7 +25,7 @@ export async function listLabelsForRepo(context: Context): Promise<Label[]> {
     return res.data;
   }
 
-  throw runtime.logger.error("Failed to fetch lists of labels", { status: res.status });
+  throw context.logger.error("Failed to fetch lists of labels", { status: res.status });
 }
 
 export async function createLabel(
@@ -49,20 +50,19 @@ export async function updateLabelsFromBaseRate(
   labels: Label[],
   previousBaseRate: number
 ) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const config = context.config;
 
   const newLabels: string[] = [];
   const previousLabels: string[] = [];
 
-  for (const timeLabel of config.price.timeLabels) {
-    for (const priorityLabel of config.price.priorityLabels) {
+  for (const timeLabel of config.labels.time) {
+    for (const priorityLabel of config.labels.priority) {
       const targetPrice = calculateTaskPrice(
         context,
         calculateLabelValue(timeLabel),
         calculateLabelValue(priorityLabel),
-        config.price.priceMultiplier
+        config.payments.basePriceMultiplier
       );
       const targetPriceLabel = `Price: ${targetPrice} USD`;
       newLabels.push(targetPriceLabel);
@@ -91,8 +91,8 @@ export async function updateLabelsFromBaseRate(
       const labelData = labels.find((obj) => obj["name"] === label) as Label;
       const index = uniquePreviousLabels.findIndex((obj) => obj === label);
 
-      const exist = await labelExists(context, uniqueNewLabels[index]);
-      if (exist) {
+      const doesExist = await labelExists(context, uniqueNewLabels[index]);
+      if (doesExist) {
         // we have to delete first
         logger.debug("Label already exists, deleting it", { label });
         await deleteLabel(context, uniqueNewLabels[index]);

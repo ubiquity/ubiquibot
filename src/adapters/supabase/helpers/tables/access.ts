@@ -4,12 +4,11 @@ import { Database } from "../../types/database";
 import { GitHubNode } from "../client";
 import { Super } from "./super";
 import { UserRow } from "./user";
-import { Context } from "../../../../types";
 type AccessRow = Database["public"]["Tables"]["access"]["Row"];
 type AccessInsert = Database["public"]["Tables"]["access"]["Insert"];
 type UserWithAccess = (UserRow & { access: AccessRow | null })[];
 
-type _Access = {
+type AccessData = {
   user_id: number;
   multiplier: number;
   multiplier_reason: string;
@@ -19,8 +18,8 @@ type _Access = {
 };
 
 export class Access extends Super {
-  constructor(supabase: SupabaseClient, context: Context) {
-    super(supabase, context);
+  constructor(supabase: SupabaseClient) {
+    super(supabase);
   }
 
   private async _getUserWithAccess(id: number): Promise<UserWithAccess> {
@@ -55,7 +54,7 @@ export class Access extends Super {
 
   async upsertMultiplier(userId: number, multiplier: number, reason: string, comment: Comment) {
     try {
-      const accessData: _Access = {
+      const accessData: AccessData = {
         user_id: userId,
         multiplier: multiplier,
         multiplier_reason: reason,

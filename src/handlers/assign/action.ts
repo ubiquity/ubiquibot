@@ -1,12 +1,13 @@
-import Runtime from "../../bindings/bot-runtime";
-import { calculateDurations, calculateLabelValue, closePullRequest } from "../../helpers";
+import { closePullRequest } from "../../helpers/issue";
 import { getLinkedPullRequests } from "../../helpers/parser";
-import { Context, Label, Payload } from "../../types";
+import { calculateLabelValue, calculateDurations } from "../../helpers/shared";
+import { Context } from "../../types/context";
+import { Label } from "../../types/label";
+import { Payload } from "../../types/payload";
 
 export async function startCommandHandler(context: Context) {
-  const runtime = Runtime.getState();
   const config = context.config;
-  const logger = runtime.logger;
+  const logger = context.logger;
   const payload = context.event.payload as Payload;
   if (!payload.issue) {
     return logger.error("Issue is not defined");
@@ -31,9 +32,9 @@ export async function startCommandHandler(context: Context) {
   }
 
   // Filter out labels that match the time labels defined in the config
-  const timeLabelsAssigned: Label[] = labels.filter((label) =>
-    typeof label === "string" || typeof label === "object"
-      ? config.price.timeLabels.some((item) => item.name === label.name)
+  const timeLabelsAssigned: Label[] = labels.filter((assignedLabel) =>
+    typeof assignedLabel === "string" || typeof assignedLabel === "object"
+      ? config.labels.time.some((label) => label === assignedLabel.name)
       : false
   );
 
@@ -44,8 +45,8 @@ export async function startCommandHandler(context: Context) {
   // Sort labels by weight and select the one with the smallest weight
   const sortedLabels = timeLabelsAssigned
     .sort((a, b) => {
-      const fullLabelA = labels.find((label) => label.name === a.name);
-      const fullLabelB = labels.find((label) => label.name === b.name);
+      const fullLabelA = labels.find((label) => label.name === a.name)?.name;
+      const fullLabelB = labels.find((label) => label.name === b.name)?.name;
 
       if (!fullLabelA || !fullLabelB) {
         return 0; // return a default value
@@ -76,14 +77,13 @@ export async function startCommandHandler(context: Context) {
 }
 
 export async function closePullRequestForAnIssue(context: Context) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const payload = context.event.payload as Payload;
   if (!payload.issue?.number) {
     throw logger.error("Issue is not defined");
   }
 
-  const linkedPullRequests = await getLinkedPullRequests({
+  const linkedPullRequests = await getLinkedPullRequests(context, {
     owner: payload.repository.owner.login,
     repository: payload.repository.name,
     issue: payload.issue.number,

@@ -1,12 +1,10 @@
-import Runtime from "../../../../bindings/bot-runtime";
-import {
-  addAssignees,
-  calculateDurations,
-  getAssignedIssues,
-  getAvailableOpenedPullRequests,
-} from "../../../../helpers";
-import { IssueType, Payload, User, Context } from "../../../../types";
-import { isParentIssue } from "../../../pricing";
+import { getAvailableOpenedPullRequests, getAssignedIssues, addAssignees } from "../../../../helpers/issue";
+import { calculateDurations } from "../../../../helpers/shared";
+import { Context } from "../../../../types/context";
+import { User, IssueType, Payload } from "../../../../types/payload";
+import { isParentIssue } from "../../../pricing/action";
+
+import structuredMetadata from "../../../shared/structured-metadata";
 import { assignTableComment } from "../table";
 import { checkTaskStale } from "./check-task-stale";
 import { generateAssignmentComment } from "./generate-assignment-comment";
@@ -14,14 +12,17 @@ import { getMultiplierInfoToDisplay } from "./get-multiplier-info-to-display";
 import { getTimeLabelsAssigned } from "./get-time-labels-assigned";
 
 export async function assign(context: Context, body: string) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const config = context.config;
   const payload = context.event.payload as Payload;
   const issue = payload.issue;
+  const {
+    miscellaneous: { maxConcurrentTasks },
+    timers: { taskStaleTimeoutDuration },
+    disabledCommands,
+  } = context.config;
 
-  const staleTask = config.assign.staleTaskTime;
-  const startEnabled = config.command.find((command) => command.name === "start");
+  const isStartDisabled = disabledCommands.some((command: string) => command === "start");
 
   logger.info("Received '/start' command", { sender: payload.sender.login, body });
 
@@ -29,7 +30,7 @@ export async function assign(context: Context, body: string) {
     throw logger.warn(`Skipping '/start' because of no issue instance`);
   }
 
-  if (!startEnabled?.enabled) {
+  if (isStartDisabled) {
     throw logger.warn("The `/assign` command is disabled for this repository.");
   }
 
@@ -47,12 +48,12 @@ export async function assign(context: Context, body: string) {
   );
 
   const assignedIssues = await getAssignedIssues(context, payload.sender.login);
-  logger.info("Max issue allowed is", config.assign.maxConcurrentTasks);
+  logger.info("Max issue allowed is", maxConcurrentTasks);
 
   // check for max and enforce max
-  if (assignedIssues.length - openedPullRequests.length >= config.assign.maxConcurrentTasks) {
+  if (assignedIssues.length - openedPullRequests.length >= maxConcurrentTasks) {
     throw logger.warn("Too many assigned issues, you have reached your max limit", {
-      maxConcurrentTasks: config.assign.maxConcurrentTasks,
+      maxConcurrentTasks,
     });
   }
 
@@ -65,45 +66,40 @@ export async function assign(context: Context, body: string) {
     throw logger.warn("Skipping '/start' since the issue is already assigned");
   }
 
-  const timeLabelsAssigned = getTimeLabelsAssigned(payload, config);
+  // ==== preamble checks completed ==== //
 
-  if (!timeLabelsAssigned || timeLabelsAssigned.length == 0) {
-    throw logger.warn("Skipping '/start' since no time labels are set to calculate the timeline", timeLabelsAssigned);
+  const labels = issue.labels;
+  const priceLabel = labels.find((label) => label.name.startsWith("Price: "));
+
+  let duration: number | null = null;
+  if (!priceLabel) {
+    throw logger.warn("No price label is set, so this is not ready to be self assigned yet.", priceLabel);
+  } else {
+    const timeLabelsAssigned = getTimeLabelsAssigned(context, payload, config);
+    if (timeLabelsAssigned) {
+      duration = calculateDurations(timeLabelsAssigned).shift() || null;
+    }
   }
 
-  const durations = calculateDurations(timeLabelsAssigned);
-
-  if (durations.length == 0) {
-    throw logger.warn("Skipping '/start' since no durations found to calculate the timeline", durations);
-  } else if (durations.length > 1) {
-    logger.warn("Using the shortest duration time label");
-  }
-
-  const duration = durations[0];
-
-  const comment = await generateAssignmentComment(payload, duration);
+  const comment = await generateAssignmentComment(context, payload, duration);
+  const metadata = structuredMetadata.create("Assignment", { duration, priceLabel });
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     logger.info("Adding the assignee", { assignee: payload.sender.login });
     await addAssignees(context, issue.number, [payload.sender.login]);
   }
 
-  const isTaskStale = checkTaskStale(staleTask, issue);
+  const isTaskStale = checkTaskStale(taskStaleTimeoutDuration, issue);
 
   // double check whether the assign message has been already posted or not
   logger.info("Creating an issue comment", { comment });
-  // const issueComments = await getAllIssueComments(issue.number);
-  // const comments = issueComments.sort(
-  //   (a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  // );
-  // const latestComment = comments.length > 0 ? comments[0].body : undefined;
 
   const {
     multiplierAmount: multiplierAmount,
     multiplierReason: multiplierReason,
     totalPriceOfTask: totalPriceOfTask,
   } = await getMultiplierInfoToDisplay(context, payload.sender.id, payload.repository.id, issue);
-  return (
+  return [
     assignTableComment({
       multiplierAmount,
       multiplierReason,
@@ -112,8 +108,8 @@ export async function assign(context: Context, body: string) {
       daysElapsedSinceTaskCreation: comment.daysElapsedSinceTaskCreation,
       taskDeadline: comment.deadline,
       registeredWallet: comment.registeredWallet,
-    }) + comment.tips
-  );
-
-  // throw logger.warn("The assign message has been already posted");
+    }),
+    comment.tips,
+    metadata,
+  ].join("\n");
 }

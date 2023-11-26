@@ -1,11 +1,10 @@
-import Runtime from "../../bindings/bot-runtime";
-import { PushPayload, Context } from "../../types";
+import { Context } from "../../types/context";
+import { PushPayload } from "../../types/payload";
+import { BASE_RATE_FILE, getCommitChanges, ZERO_SHA } from "./push";
 import { updateBaseRate } from "./update-base-rate";
-import { ZERO_SHA, getCommitChanges, BASE_RATE_FILE } from "./index";
 
 export async function checkModifiedBaseRate(context: Context) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
 
   const payload = context.event.payload as PushPayload;
 

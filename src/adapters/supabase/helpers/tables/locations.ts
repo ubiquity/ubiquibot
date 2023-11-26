@@ -1,12 +1,11 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Super } from "./super";
-import { Database } from "../../types/database";
-import { Context } from "../../../../types";
+// import { Database } from "../../types/database";
 
 // currently trying to save all of the location metadata of the event.
 // seems that focusing on the IssueComments will provide the most value
 
-export type LocationsRow = Database["public"]["Tables"]["logs"]["Row"];
+// type LocationsRow = Database["public"]["Tables"]["logs"]["Row"];
 export class Locations extends Super {
   locationResponse: LocationResponse | undefined;
 
@@ -17,8 +16,8 @@ export class Locations extends Super {
   node_id: string | undefined;
   node_type: string | undefined;
 
-  constructor(supabase: SupabaseClient, context: Context) {
-    super(supabase, context);
+  constructor(supabase: SupabaseClient) {
+    super(supabase);
   }
 
   public async getLocationsFromRepo(repositoryId: number) {
@@ -29,50 +28,6 @@ export class Locations extends Super {
 
     if (error) throw this.runtime.logger.error("Error getting location data", new Error(error.message));
     return locationData;
-  }
-
-  public async getLocationsMetaData(issueCommentId: string) {
-    const graphQlQuery = `
-    query {
-        node(id: "${issueCommentId}") {
-          ... on IssueComment {
-            id
-            author {
-              login
-              ... on User {
-                id
-              }
-            }
-            issue {
-              id
-              number
-              repository {
-                id
-                name
-                owner {
-                  ... on Organization {
-                    id
-                    login
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    `;
-
-    this.locationResponse = (await this.context.event.octokit.graphql(graphQlQuery)) as LocationResponse;
-    console.trace(this.locationResponse);
-
-    this.user_id = this.locationResponse.data.node.author.id;
-    this.comment_id = this.locationResponse.data.node.id;
-    this.issue_id = this.locationResponse.data.node.issue.id;
-    this.repository_id = this.locationResponse.data.node.issue.repository.id;
-    this.node_id = this.locationResponse.data.node.issue.repository.id;
-    this.node_type = "IssueComment";
-
-    return this.locationResponse;
   }
 }
 

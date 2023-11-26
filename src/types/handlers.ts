@@ -1,7 +1,7 @@
 import { LogReturn } from "../adapters/supabase/helpers/tables/logs";
 import { Context } from "./context";
 
-export type HandlerReturnValuesNoVoid = string | LogReturn;
+export type HandlerReturnValuesNoVoid = null | string | LogReturn;
 
 export type MainActionHandler = (context: Context) => Promise<HandlerReturnValuesNoVoid>;
 type CommandsHandler = (context: Context, body: string) => Promise<HandlerReturnValuesNoVoid>;

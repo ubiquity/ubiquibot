@@ -1,12 +1,13 @@
 import Runtime from "../../../bindings/bot-runtime";
-import { isUserAdminOrBillingManager } from "../../../helpers";
-import { Context, Payload } from "../../../types";
-import { taskPaymentMetaData } from "../../wildcard";
+import { isUserAdminOrBillingManager } from "../../../helpers/issue";
+import { Context } from "../../../types/context";
+import { Payload } from "../../../types/payload";
+import { taskPaymentMetaData } from "../../wildcard/analytics";
 
 export async function authorizeLabelChanges(context: Context) {
   const runtime = Runtime.getState();
   const { label } = runtime.adapters.supabase;
-  const logger = runtime.logger;
+  const logger = context.logger;
   const payload = context.event.payload as Payload;
   const sender = payload.sender.login;
 
@@ -23,7 +24,7 @@ export async function authorizeLabelChanges(context: Context) {
 
   // if sender is not admin, return
   if (sufficientPrivileges) {
-    throw runtime.logger.error(
+    throw logger.error(
       "User is not an admin/billing_manager and do not have the required permissions to access this function.",
       { sender }
     );
@@ -32,7 +33,7 @@ export async function authorizeLabelChanges(context: Context) {
   const task = taskPaymentMetaData(context, issue);
 
   if (!task.priceLabel || !task.priorityLabel || !task.timeLabel) {
-    throw runtime.logger.error("Missing required labels", { issueDetailed: task });
+    throw logger.error("Missing required labels", { issueDetailed: task });
   }
 
   // get current repository node id from payload and pass it to getLabelChanges function to get label changes
@@ -46,5 +47,5 @@ export async function authorizeLabelChanges(context: Context) {
     });
   }
 
-  return runtime.logger.ok("Label change has been approved, permit can now be generated");
+  return logger.ok("Label change has been approved, permit can now be generated");
 }

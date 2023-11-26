@@ -1,6 +1,6 @@
-import Runtime from "../../bindings/bot-runtime";
-import { calculateLabelValue } from "../../helpers";
-import { Label, Context } from "../../types";
+import { calculateLabelValue } from "../../helpers/shared";
+import { Context } from "../../types/context";
+import { Label } from "../../types/label";
 
 export function calculateTaskPrice(
   context: Context,
@@ -8,23 +8,22 @@ export function calculateTaskPrice(
   priorityValue: number,
   baseValue?: number
 ): number {
-  const base = baseValue ?? context.config.price.priceMultiplier;
+  const base = baseValue ?? context.config.payments.basePriceMultiplier;
   const priority = priorityValue / 10; // floats cause bad math
   const price = 1000 * base * timeValue * priority;
   return price;
 }
 
 export function setPrice(context: Context, timeLabel: Label, priorityLabel: Label) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
-  const { price } = context.config;
+  const logger = context.logger;
+  const { labels } = context.config;
 
   if (!timeLabel || !priorityLabel) throw logger.warn("Time or priority label is not defined");
 
-  const recognizedTimeLabels = price.timeLabels.find((item) => item.name === timeLabel.name);
+  const recognizedTimeLabels = labels.time.find((configLabel) => configLabel === timeLabel.name);
   if (!recognizedTimeLabels) throw logger.warn("Time label is not recognized");
 
-  const recognizedPriorityLabels = price.priorityLabels.find((item) => item.name === priorityLabel.name);
+  const recognizedPriorityLabels = labels.priority.find((configLabel) => configLabel === priorityLabel.name);
   if (!recognizedPriorityLabels) throw logger.warn("Priority label is not recognized");
 
   const timeValue = calculateLabelValue(recognizedTimeLabels);

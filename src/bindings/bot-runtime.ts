@@ -1,8 +1,8 @@
-import { createAdapters } from "../adapters";
-import { Logs } from "../adapters/supabase";
+import { createAdapters } from "../adapters/adapters";
+import { Logs } from "../adapters/supabase/helpers/tables/logs";
 
 class Runtime {
-  private static instance: Runtime;
+  private static _instance: Runtime;
   private _adapters: ReturnType<typeof createAdapters>;
   private _logger: Logs;
 
@@ -12,10 +12,10 @@ class Runtime {
   }
 
   public static getState(): Runtime {
-    if (!Runtime.instance) {
-      Runtime.instance = new Runtime();
+    if (!Runtime._instance) {
+      Runtime._instance = new Runtime();
     }
-    return Runtime.instance;
+    return Runtime._instance;
   }
 
   public get adapters(): ReturnType<typeof createAdapters> {

@@ -1,12 +1,13 @@
-import Runtime from "../../bindings/bot-runtime";
+import { getPreviousFileContent } from "../../helpers/file";
+import { listLabelsForRepo, updateLabelsFromBaseRate } from "../../helpers/label";
+import { Context } from "../../types/context";
+import { Label } from "../../types/label";
+import { PushPayload } from "../../types/payload";
 
-import { getPreviousFileContent, listLabelsForRepo, updateLabelsFromBaseRate } from "../../helpers";
-import { Label, PushPayload, Context } from "../../types";
-import { parseYamlConfig } from "../../utils/get-config";
+import { parseYaml } from "../../utils/generate-configuration";
 
 export async function updateBaseRate(context: Context, filePath: string) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   // Get default branch from ref
   const payload = context.event.payload as PushPayload;
   const branch = payload.ref?.split("refs/heads/")[1];
@@ -20,13 +21,13 @@ export async function updateBaseRate(context: Context, filePath: string) {
     throw logger.error("Getting previous file content failed");
   }
   const previousConfigRaw = Buffer.from(previousFileContent, "base64").toString();
-  const previousConfigParsed = parseYamlConfig(previousConfigRaw);
+  const previousConfigParsed = parseYaml(previousConfigRaw);
 
-  if (!previousConfigParsed || !previousConfigParsed.priceMultiplier) {
+  if (!previousConfigParsed || !previousConfigParsed.payments.basePriceMultiplier) {
     throw logger.warn("No multiplier found in previous config");
   }
 
-  const previousBaseRate = previousConfigParsed.priceMultiplier;
+  const previousBaseRate = previousConfigParsed.payments.basePriceMultiplier;
 
   if (!previousBaseRate) {
     throw logger.warn("No base rate found in previous config");

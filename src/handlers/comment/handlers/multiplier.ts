@@ -1,6 +1,8 @@
 import Runtime from "../../../bindings/bot-runtime";
-import { isUserAdminOrBillingManager } from "../../../helpers";
-import { Context, Payload } from "../../../types";
+import { isUserAdminOrBillingManager } from "../../../helpers/issue";
+import { Context } from "../../../types/context";
+import { Payload } from "../../../types/payload";
+
 /**
  * You can use this command to set a multiplier for a user.
  * It will accept arguments in any order.
@@ -13,16 +15,15 @@ import { Context, Payload } from "../../../types";
  * /multiplier @user "Multiplier reason" 0.5
  **/
 export async function multiplier(context: Context, body: string) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   const payload = context.event.payload as Payload;
   const sender = payload.sender.login;
   const repo = payload.repository;
   const comment = payload.comment;
-  if (!comment) return logger.info(`Skipping '/multiplier' because of no comment instance`);
+  if (!comment) return context.logger.info(`Skipping '/multiplier' because of no comment instance`);
   const issue = payload.issue;
-  logger.info("Running '/multiplier' command handler", { sender });
-  if (!issue) return logger.info(`Skipping '/multiplier' because of no issue instance`);
+  context.logger.info("Running '/multiplier' command handler", { sender });
+  if (!issue) return context.logger.info(`Skipping '/multiplier' because of no issue instance`);
   const regex = /(".*?"|[^"\s]+)(?=\s*|\s*$)/g;
   const matches = body.match(regex);
   matches?.shift();
@@ -48,7 +49,7 @@ export async function multiplier(context: Context, body: string) {
 
     // if sender is not admin or billing_manager, check db for access
     if (sufficientPrivileges) {
-      logger.info("Getting multiplier access", {
+      context.logger.info("Getting multiplier access", {
         repo: repo.full_name,
         user: sender,
       });
@@ -70,7 +71,7 @@ export async function multiplier(context: Context, body: string) {
         );
       }
     }
-    logger.info("Upserting to the wallet table", { username, taskMultiplier, reason });
+    context.logger.info("Upserting to the wallet table", { username, taskMultiplier, reason });
 
     const { access } = Runtime.getState().adapters.supabase;
     await access.upsertMultiplier(payload.sender.id, taskMultiplier, reason, comment);
@@ -89,7 +90,7 @@ export async function multiplier(context: Context, body: string) {
         }
       );
     } else {
-      return logger.ok("Successfully changed the payout multiplier", {
+      return context.logger.ok("Successfully changed the payout multiplier", {
         username,
         taskMultiplier,
         reason,

@@ -4,16 +4,16 @@
 // TODO: break this apart into smaller files.
 
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Database } from "../../types";
-import { prettyLogs } from "../pretty-logs";
-import { Super } from "./super";
 import { execSync } from "child_process";
-import { Context } from "../../../../types";
+import { Context as ProbotContext } from "probot";
 import Runtime from "../../../../bindings/bot-runtime";
+import { Database } from "../../types/database";
+
+import { LogLevel, PrettyLogs } from "../pretty-logs";
 
 type LogFunction = (message: string, metadata?: any) => void;
 type LogInsert = Database["public"]["Tables"]["logs"]["Insert"];
-type _LogParams = {
+type LogParams = {
   level: LogLevel;
   consoleLog: LogFunction;
   logMessage: string;
@@ -24,6 +24,7 @@ type _LogParams = {
 export class LogReturn {
   logMessage: LogMessage;
   metadata?: any;
+
   constructor(logMessage: LogMessage, metadata?: any) {
     this.logMessage = logMessage;
     this.metadata = metadata;
@@ -38,41 +39,40 @@ type PublicMethods<T> = Exclude<FunctionPropertyNames<T>, "constructor" | keyof 
 
 export type LogMessage = { raw: string; diff: string; level: LogLevel; type: PublicMethods<Logs> };
 
-export class Logs extends Super {
-  private maxLevel = -1;
-  private environment = "development";
-  private queue: LogInsert[] = []; // Your log queue
-  private concurrency = 6; // Maximum concurrent requests
-  private retryDelay = 1000; // Delay between retries in milliseconds
-  private throttleCount = 0;
-  private retryLimit = 0; // Retries disabled by default
+export class Logs {
+  private _supabase: SupabaseClient;
+  private _context: ProbotContext | null = null;
 
-  private _log({ level, consoleLog, logMessage, metadata, postComment, type }: _LogParams) {
+  private _maxLevel = -1;
+  private _environment = "development";
+  private _queue: LogInsert[] = []; // Your log queue
+  private _concurrency = 6; // Maximum concurrent requests
+  private _retryDelay = 1000; // Delay between retries in milliseconds
+  private _throttleCount = 0;
+  private _retryLimit = 0; // Retries disabled by default
+
+  console = new PrettyLogs();
+
+  private _log({ level, consoleLog, logMessage, metadata, postComment, type }: LogParams): LogReturn | null {
+    if (this._getNumericLevel(level) > this._maxLevel) return null; // filter out more verbose logs according to maxLevel set in config
+
     // needs to generate three versions of the information.
     // they must all first serialize the error object if it exists
     // - the comment to post on supabase (must be raw)
     // - the comment to post on github (must include diff syntax)
     // - the comment to post on the console (must be colorized)
 
-    if (metadata) {
-      // metadata = Logs.convertErrorsIntoObjects(metadata);
-      consoleLog(logMessage, metadata);
-      if (postComment) {
-        const colorizedCommentMessage = this._diffColorCommentMessage(type, logMessage);
-        const commentMetaData = Logs._commentMetaData(metadata, level);
-        this._postComment([colorizedCommentMessage, commentMetaData].join("\n"));
-      }
-      const toSupabase = { log: logMessage, level, metadata } as LogInsert;
-      this._save(toSupabase, level);
-    } else {
-      consoleLog(logMessage);
-      if (postComment) {
-        const colorizedCommentMessage = this._diffColorCommentMessage(type, logMessage);
-        this._postComment(colorizedCommentMessage);
-      }
-      const toSupabase = { log: logMessage, level } as LogInsert;
-      this._save(toSupabase, level);
+    consoleLog(logMessage, metadata || undefined);
+
+    if (this._context && postComment) {
+      const colorizedCommentMessage = this._diffColorCommentMessage(type, logMessage);
+      const commentMetaData = metadata ? Logs._commentMetaData(metadata, level) : null;
+      this._postComment(metadata ? [colorizedCommentMessage, commentMetaData].join("\n") : colorizedCommentMessage);
     }
+
+    const toSupabase = { log: logMessage, level, metadata } as LogInsert;
+
+    this._save(toSupabase);
 
     return new LogReturn(
       {
@@ -113,11 +113,12 @@ export class Logs extends Super {
 
     return metadata;
   }
-  public ok(log: string, metadata?: any, postComment?: boolean): LogReturn {
+
+  public ok(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.VERBOSE,
-      consoleLog: prettyLogs.ok,
+      consoleLog: this.console.ok,
       logMessage: log,
       metadata,
       postComment,
@@ -125,11 +126,11 @@ export class Logs extends Super {
     });
   }
 
-  public info(log: string, metadata?: any, postComment?: boolean): LogReturn {
+  public info(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.INFO,
-      consoleLog: prettyLogs.info,
+      consoleLog: this.console.info,
       logMessage: log,
       metadata,
       postComment,
@@ -137,11 +138,11 @@ export class Logs extends Super {
     });
   }
 
-  public warn(log: string, metadata?: any, postComment?: boolean): LogReturn {
+  public warn(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.WARN,
-      consoleLog: prettyLogs.warn,
+      consoleLog: this.console.warn,
       logMessage: log,
       metadata,
       postComment,
@@ -149,11 +150,11 @@ export class Logs extends Super {
     });
   }
 
-  public debug(log: string, metadata?: any, postComment?: boolean): LogReturn {
+  public debug(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.DEBUG,
-      consoleLog: prettyLogs.debug,
+      consoleLog: this.console.debug,
       logMessage: log,
       metadata,
       postComment,
@@ -161,7 +162,7 @@ export class Logs extends Super {
     });
   }
 
-  public error(log: string, metadata?: any, postComment?: boolean): LogReturn {
+  public error(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     if (!metadata) {
       metadata = Logs.convertErrorsIntoObjects(new Error(log));
       const stack = metadata.stack as string[];
@@ -178,7 +179,7 @@ export class Logs extends Super {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.ERROR,
-      consoleLog: prettyLogs.error,
+      consoleLog: this.console.error,
       logMessage: log,
       metadata,
       postComment,
@@ -186,23 +187,23 @@ export class Logs extends Super {
     });
   }
 
-  http(log: string, metadata?: any, postComment?: boolean): LogReturn {
-    metadata = this._addDiagnosticInformation(metadata);
-    return this._log({
-      level: LogLevel.HTTP,
-      consoleLog: prettyLogs.http,
-      logMessage: log,
-      metadata,
-      postComment,
-      type: "http",
-    });
-  }
+  // http(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
+  //   metadata = this._addDiagnosticInformation(metadata);
+  //   return this._log({
+  //     level: LogLevel.HTTP,
+  //     consoleLog: this.console.http,
+  //     logMessage: log,
+  //     metadata,
+  //     postComment,
+  //     type: "http",
+  //   });
+  // }
 
-  verbose(log: string, metadata?: any, postComment?: boolean): LogReturn {
+  verbose(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.VERBOSE,
-      consoleLog: prettyLogs.verbose,
+      consoleLog: this.console.verbose,
       logMessage: log,
       metadata,
       postComment,
@@ -210,60 +211,65 @@ export class Logs extends Super {
     });
   }
 
-  silly(log: string, metadata?: any, postComment?: boolean): LogReturn {
-    metadata = this._addDiagnosticInformation(metadata);
-    return this._log({
-      level: LogLevel.SILLY,
-      consoleLog: prettyLogs.silly,
-      logMessage: log,
-      metadata,
-      postComment,
-      type: "silly",
-    });
-  }
+  // silly(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
+  //   metadata = this._addDiagnosticInformation(metadata);
+  //   return this._log({
+  //     level: LogLevel.SILLY,
+  //     consoleLog: this.console.silly,
+  //     logMessage: log,
+  //     metadata,
+  //     postComment,
+  //     type: "silly",
+  //   });
+  // }
 
-  constructor(supabase: SupabaseClient, context: Context) {
-    super(supabase, context);
-    const logConfig = this.context.config.log;
-
-    this.environment = logConfig.logEnvironment;
-    this.retryLimit = logConfig.retryLimit;
-    this.maxLevel = this._getNumericLevel(logConfig.level ?? LogLevel.DEBUG);
+  constructor(
+    supabase: SupabaseClient,
+    environment: string,
+    retryLimit: number,
+    logLevel: LogLevel,
+    context: ProbotContext | null
+  ) {
+    this._supabase = supabase;
+    this._context = context;
+    this._environment = environment;
+    this._retryLimit = retryLimit;
+    this._maxLevel = this._getNumericLevel(logLevel);
   }
 
   private async _sendLogsToSupabase(log: LogInsert) {
-    const { error } = await this.supabase.from("logs").insert(log);
-    if (error) throw prettyLogs.error("Error logging to Supabase:", error);
+    const { error } = await this._supabase.from("logs").insert(log);
+    if (error) throw this.console.error("Error logging to Supabase:", error);
   }
 
   private async _processLogs(log: LogInsert) {
     try {
       await this._sendLogsToSupabase(log);
     } catch (error) {
-      prettyLogs.error("Error sending log, retrying:", error);
-      return this.retryLimit > 0 ? await this._retryLog(log) : null;
+      this.console.error("Error sending log, retrying:", error);
+      return this._retryLimit > 0 ? await this._retryLog(log) : null;
     }
   }
 
   private async _retryLog(log: LogInsert, retryCount = 0) {
-    if (retryCount >= this.retryLimit) {
-      prettyLogs.error("Max retry limit reached for log:", log);
+    if (retryCount >= this._retryLimit) {
+      this.console.error("Max retry limit reached for log:", log);
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, this.retryDelay));
+    await new Promise((resolve) => setTimeout(resolve, this._retryDelay));
 
     try {
       await this._sendLogsToSupabase(log);
     } catch (error) {
-      prettyLogs.error("Error sending log (after retry):", error);
+      this.console.error("Error sending log (after retry):", error);
       await this._retryLog(log, retryCount + 1);
     }
   }
 
   private async _processLogQueue() {
-    while (this.queue.length > 0) {
-      const log = this.queue.shift();
+    while (this._queue.length > 0) {
+      const log = this._queue.shift();
       if (!log) {
         continue;
       }
@@ -272,37 +278,35 @@ export class Logs extends Super {
   }
 
   private async _throttle() {
-    if (this.throttleCount >= this.concurrency) {
+    if (this._throttleCount >= this._concurrency) {
       return;
     }
 
-    this.throttleCount++;
+    this._throttleCount++;
     try {
       await this._processLogQueue();
     } finally {
-      this.throttleCount--;
-      if (this.queue.length > 0) {
+      this._throttleCount--;
+      if (this._queue.length > 0) {
         await this._throttle();
       }
     }
   }
 
   private async _addToQueue(log: LogInsert) {
-    this.queue.push(log);
-    if (this.throttleCount < this.concurrency) {
+    this._queue.push(log);
+    if (this._throttleCount < this._concurrency) {
       await this._throttle();
     }
   }
 
-  private _save(logInsert: LogInsert, logLevel: LogLevel) {
-    if (this._getNumericLevel(logLevel) > this.maxLevel) return; // filter out more verbose logs according to maxLevel set in config
-
+  private _save(logInsert: LogInsert) {
     this._addToQueue(logInsert)
       .then(() => void 0)
-      .catch(() => prettyLogs.error("Error adding logs to queue"));
+      .catch(() => this.console.error("Error adding logs to queue"));
 
-    if (this.environment === "development") {
-      prettyLogs.ok(logInsert.log, logInsert);
+    if (this._environment === "development") {
+      this.console.ok(logInsert.log, logInsert);
     }
   }
 
@@ -363,11 +367,13 @@ export class Logs extends Super {
   }
 
   private _postComment(message: string) {
-    this.context.event.octokit.issues
+    // post on issue
+    if (!this._context) return;
+    this._context.octokit.issues
       .createComment({
-        owner: this.context.event.issue().owner,
-        repo: this.context.event.issue().repo,
-        issue_number: this.context.event.issue().issue_number,
+        owner: this._context.issue().owner,
+        repo: this._context.issue().repo,
+        issue_number: this._context.issue().issue_number,
         body: message,
       })
       // .then((x) => console.trace(x))
@@ -410,14 +416,4 @@ export class Logs extends Super {
     }
     return obj;
   }
-}
-
-export enum LogLevel {
-  ERROR = "error",
-  WARN = "warn",
-  INFO = "info",
-  HTTP = "http",
-  VERBOSE = "verbose",
-  DEBUG = "debug",
-  SILLY = "silly",
 }

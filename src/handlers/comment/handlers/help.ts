@@ -1,18 +1,15 @@
-import { userCommands } from ".";
-import Runtime from "../../../bindings/bot-runtime";
-import { Context, Payload } from "../../../types";
+import { Context } from "../../../types/context";
+import { userCommands } from "./comment-handler-main";
 
 export async function listAvailableCommands(context: Context, body: string) {
-  const runtime = Runtime.getState();
-  const logger = runtime.logger;
+  const logger = context.logger;
   if (body != "/help") {
     return logger.info("Skipping to list available commands.", { body });
   }
-  const payload = context.event.payload as Payload;
-  const issue = payload.issue;
+  const issue = context.payload.issue;
 
   if (!issue) {
-    return logger.info("Skipping /help, reason: not issue");
+    return context.logger.info("Skipping /help, reason: not issue");
   }
 
   return generateHelpMenu(context);
@@ -20,19 +17,22 @@ export async function listAvailableCommands(context: Context, body: string) {
 
 export function generateHelpMenu(context: Context) {
   const config = context.config;
-  const startEnabled = config.command.find((command) => command.name === "start");
+  const disabledCommands = config.disabledCommands;
+  const isStartDisabled = config.disabledCommands.some((command) => command === "start");
   let helpMenu = "### Available Commands\n\n| Command | Description | Example |\n| --- | --- | --- |\n";
-  const commands = userCommands(context);
+  const commands = userCommands(config.miscellaneous.registerWalletWithVerification);
 
-  commands.map(
-    (command) =>
-      (helpMenu += `| \`${command.id}\` | ${breakSentences(command.description) || ""} | ${
-        (command.example && breakLongString(command.example)) || ""
-      } |\n`) // add to help menu
-  );
+  commands
+    .filter((command) => !disabledCommands.includes(command.id))
+    .map(
+      (command) =>
+        (helpMenu += `| \`${command.id}\` | ${breakSentences(command.description) || ""} | ${
+          (command.example && breakLongString(command.example)) || ""
+        } |\n`) // add to help menu
+    );
 
-  if (!startEnabled) {
-    helpMenu += "\n\n***_To assign yourself to an issue, please open a draft pull request that is linked to it._***";
+  if (isStartDisabled) {
+    helpMenu += "\n\n**To assign yourself to an issue, please open a draft pull request that is linked to it.**";
   }
   return helpMenu;
 }
