@@ -1,13 +1,13 @@
 import Decimal from "decimal.js";
 
 import { Comment, Issue } from "../../../../types/payload";
-import { allCommentScoring } from "./allCommentScoring";
+import { allCommentScoring } from "./all-comment-scoring";
 import { UserScoreDetails } from "./issue-shared-types";
 import { addRelevanceAndFormatScoring } from "./relevance-format-scoring";
 
 // import Runtime from "../../../../bindings/bot-runtime";
-import { ContributorView } from "./contribution-style-types";
 import { Context } from "../../../../types/context";
+import { ContributorView } from "./contribution-style-types";
 
 export type ContextIssue = { context: Context; issue: Issue };
 
