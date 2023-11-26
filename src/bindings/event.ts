@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { Context as ProbotContext } from "probot";
+import zlib from "zlib";
 import { createAdapters, supabaseClient } from "../adapters/adapters";
 import { LogMessage, LogReturn, Logs } from "../adapters/supabase/helpers/tables/logs";
 import { processors, wildcardProcessors } from "../handlers/processors";
@@ -7,6 +8,8 @@ import { validateConfigChange } from "../handlers/push/push";
 import structuredMetadata from "../handlers/shared/structured-metadata";
 import { BotConfig } from "../types/configuration-types";
 
+import { addCommentToIssue } from "../helpers/issue";
+import { shouldSkip } from "../helpers/shared";
 import { Context } from "../types/context";
 import {
   HandlerReturnValuesNoVoid,
@@ -20,8 +23,6 @@ import { ajv } from "../utils/ajv";
 import { generateConfiguration } from "../utils/generate-configuration";
 import Runtime from "./bot-runtime";
 import { env } from "./env";
-import { shouldSkip } from "../helpers/shared";
-import { addCommentToIssue } from "../helpers/issue";
 
 const allowedEvents = Object.values(GitHubEvent) as string[];
 
@@ -46,7 +47,7 @@ export async function bindEvents(eventContext: ProbotContext) {
 
   logger.info("Event received", { id: eventContext.id, name: eventName });
 
-  if (!allowedEvents.includes(eventName)) {
+  if (!allowedEvents.includes(eventName) && eventContext.name !== "repository_dispatch") {
     // just check if its on the watch list
     return logger.info(`Skipping the event. reason: not configured`);
   }
@@ -91,6 +92,22 @@ export async function bindEvents(eventContext: ProbotContext) {
 
   if (!context.logger) {
     throw new Error("Failed to create logger");
+  }
+
+  if (eventContext.name === GitHubEvent.REPOSITORY_DISPATCH) {
+    const dispatchPayload = payload as any;
+    if (payload.action === "issueClosed") {
+      //This is response for issueClosed request
+      const response = dispatchPayload.client_payload.result;
+      if (response.comment as Comment) {
+        const uncompressedComment = zlib.gunzipSync(Buffer.from(response.comment));
+        await addCommentToIssue(
+          context,
+          uncompressedComment.toString(),
+          parseInt(dispatchPayload.client_payload.issueNumber)
+        );
+      }
+    }
   }
 
   // Get the handlers for the action
