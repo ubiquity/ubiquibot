@@ -27,7 +27,8 @@ cd ubiquibot
 yarn
 yarn build (to compile your changes)
 
-yarn build --watch (to locally auto compile your changes)
+yarn build --watch (to locally auto compile your changes) 
+
 yarn start:watch
 
 ## It's recommended to split terminals in your IDE while running above input
