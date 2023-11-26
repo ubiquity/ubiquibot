@@ -1,5 +1,6 @@
-import { Context, Payload } from "../../../types";
 import { isUserAdminOrBillingManager } from "../../../helpers/issue";
+import { Context } from "../../../types/context";
+import { Payload } from "../../../types/payload";
 
 export async function autoPay(context: Context, body: string) {
   const payload = context.event.payload as Payload;

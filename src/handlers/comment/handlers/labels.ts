@@ -1,6 +1,7 @@
 import Runtime from "../../../bindings/bot-runtime";
-import { isUserAdminOrBillingManager } from "../../../helpers";
-import { Context, Payload } from "../../../types";
+import { isUserAdminOrBillingManager } from "../../../helpers/issue";
+import { Context } from "../../../types/context";
+import { Payload } from "../../../types/payload";
 
 export async function setLabels(context: Context, body: string) {
   const logger = context.logger;

@@ -1,7 +1,9 @@
 import { constants, ethers } from "ethers";
 import Runtime from "../../../bindings/bot-runtime";
-import { resolveAddress } from "../../../helpers";
-import { Context, Payload } from "../../../types";
+import { resolveAddress } from "../../../helpers/ens";
+import { Context } from "../../../types/context";
+import { Payload } from "../../../types/payload";
+
 // Extracts ensname from raw text.
 function extractEnsName(text: string) {
   // Define a regular expression to match ENS names
@@ -42,7 +44,7 @@ export async function registerWallet(context: Context, body: string) {
   }
 
   if (config.miscellaneous.registerWalletWithVerification) {
-    _registerWalletWithVerification(context, body, address);
+    registerWalletWithVerification(context, body, address);
   }
 
   if (address == constants.AddressZero) {
@@ -60,7 +62,7 @@ export async function registerWallet(context: Context, body: string) {
   }
 }
 
-function _registerWalletWithVerification(context: Context, body: string, address: string) {
+function registerWalletWithVerification(context: Context, body: string, address: string) {
   const regexForSigHash = /(0x[a-fA-F0-9]{130})/g;
   const sigHashMatches = body.match(regexForSigHash);
   const sigHash = sigHashMatches ? sigHashMatches[0] : null;

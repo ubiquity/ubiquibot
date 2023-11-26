@@ -36,44 +36,44 @@
 - list item one
 - list item two
 - list ...</a></h6></td><td><details><summary>7.8</summary>
-<pre>h1:
-  count: 1
-  score: 1
-  words: 4
-li:
-  count: 4
-  score: 4
-  words: 10
-</pre>
-</details></td><td>0.56</td><td>4.368</td></tr><tr><td><h6><a href="https://github.com/pavlovcik/ubiquibot/issues/30#issuecomment-1777472769"># apples
+  <pre>h1:
+    count: 1
+    score: 1
+    words: 4
+  li:
+    count: 4
+    score: 4
+    words: 10
+  </pre>
+  </details></td><td>0.56</td><td>4.368</td></tr><tr><td><h6><a href="https://github.com/pavlovcik/ubiquibot/issues/30#issuecomment-1777472769"># apples
 
 - apples are red
 - apples are green
 - apples are t...</a></h6></td><td><details><summary>6.6</summary>
-<pre>h1:
-  count: 1
-  score: 1
-  words: 1
-li:
-  count: 3
-  score: 3
-  words: 9
-</pre>
-</details></td><td>0.63</td><td>4.158</td></tr><tr><td><h6><a href="https://github.com/pavlovcik/ubiquibot/pull/31#issuecomment-1781303038"># this is a comment about apples
+  <pre>h1:
+    count: 1
+    score: 1
+    words: 1
+  li:
+    count: 3
+    score: 3
+    words: 9
+  </pre>
+  </details></td><td>0.63</td><td>4.158</td></tr><tr><td><h6><a href="https://github.com/pavlovcik/ubiquibot/pull/31#issuecomment-1781303038"># this is a comment about apples
 
 - here is a test apple 🍎
--...</a></h6></td><td><details><summary>5.8</summary>
-<pre>h1:
-  count: 1
-  score: 1
-  words: 6
-li:
-  count: 2
-  score: 2
-  words: 8
-</pre>
-</details></td><td>0.83</td><td>4.814</td></tr></tbody></table>
-  </details>
+  -...</a></h6></td><td><details><summary>5.8</summary>
+  <pre>h1:
+    count: 1
+    score: 1
+    words: 6
+  li:
+    count: 2
+    score: 2
+    words: 8
+  </pre>
+  </details></td><td>0.83</td><td>4.814</td></tr></tbody></table>
+    </details>
 
 <!-- Ubiquity - Permits - generatePermits - 93809eb2
 {

@@ -1,16 +1,16 @@
-import { GitHubEvent, Handler, WildCardHandler } from "../types";
-import { closePullRequestForAnIssue, startCommandHandler } from "./assign";
-import { syncPriceLabelsToConfig } from "./pricing";
-import { checkTasksToUnassign } from "./wildcard";
-
+import Runtime from "../bindings/bot-runtime";
+import { Handler, WildCardHandler } from "../types/handlers";
+import { GitHubEvent } from "../types/payload";
+import { closePullRequestForAnIssue, startCommandHandler } from "./assign/action";
 import { checkPullRequests } from "./assign/auto";
 import { commentCreatedOrEdited } from "./comment/action";
 import { issueClosed } from "./comment/handlers/issue/issue-closed";
-import { watchLabelChange } from "./label";
-import { createDevPoolPR } from "./pull-request";
-import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
+import { watchLabelChange } from "./label/label";
+import { syncPriceLabelsToConfig } from "./pricing/pre";
 import { onLabelChangeSetPricing } from "./pricing/pricing-label";
-import Runtime from "../bindings/bot-runtime";
+import { createDevPoolPR } from "./pull-request/create-devpool-pr";
+import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
+import { checkTasksToUnassign } from "./wildcard/unassign/unassign";
 
 /**
  * @dev

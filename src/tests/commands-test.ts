@@ -3,7 +3,6 @@ import { execSync } from "child_process";
 import "dotenv/config";
 import { Octokit } from "octokit";
 import { Server } from "probot";
-import { Config } from "../types/config";
 import { afterAllHandler } from "./after-all-handler";
 import { beforeAllHandler } from "./before-all-handler";
 import { testSuite } from "./test-suite";
@@ -57,12 +56,7 @@ export function setServer(value: Server) {
   server = value;
 }
 
-export const orgConfig: Config = {
-  privateEncrypted:
-    "YU-tFJFczN3JPVoJu0pQKSbWoeiCFPjKiTXMoFnJxDDxUNX-BBXc6ZHkcQcHVjdOd6ZcEnU1o2jU3F-i05mGJPmhF2rhQYXkNlxu5U5fZMMcgxJ9INhAmktzRBUxWncg4L1HOalZIoQ7gm3nk1a84g",
-};
-
-export const CustomOctokit = Octokit.defaults({
+export const customOctokit = Octokit.defaults({
   throttle: {
     onRateLimit: () => true,
     onSecondaryRateLimit: () => true,

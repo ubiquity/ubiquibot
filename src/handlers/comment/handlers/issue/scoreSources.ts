@@ -3,7 +3,6 @@ import { Comment, Issue, User } from "../../../../types/payload";
 import { assigneeScoring as assigneeTaskScoring } from "./assignee-scoring";
 import { commentsScoring } from "./evaluate-comments";
 import { getPullRequestComments } from "./getPullRequestComments";
-import { botCommandsAndHumanCommentsFilter } from "./issue-closed";
 import { UserScoreDetails } from "./issue-shared-types";
 import { specificationScoring as issuerSpecificationScoring } from "./specification-scoring";
 
@@ -118,3 +117,7 @@ interface ScoreParams {
  * -  - ???
  *
  */
+
+function botCommandsAndHumanCommentsFilter(comment: Comment) {
+  return !comment.body.startsWith("/") /* No Commands */ && comment.user.type === "User";
+} /* No Bots */

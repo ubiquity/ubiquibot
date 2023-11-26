@@ -1,5 +1,6 @@
-import { Comment, Payload, Context } from "../../types";
-import { commentParser, userCommands } from "./handlers";
+import { Context } from "../../types/context";
+import { Comment, Payload } from "../../types/payload";
+import { commentParser, userCommands } from "./handlers/comment-handler-main";
 import { verifyFirstCommentInRepository } from "./handlers/first";
 
 export async function commentCreatedOrEdited(context: Context) {
@@ -31,9 +32,9 @@ export async function commentCreatedOrEdited(context: Context) {
     const { id, handler } = userCommand;
     logger.info("Running a comment handler", { id, handler: handler.name });
 
-    const disabled = config.disabledCommands.some((command) => command === id.replace("/", ""));
+    const isDisabled = config.disabledCommands.some((command) => command === id.replace("/", ""));
 
-    if (disabled && id !== "/help") {
+    if (isDisabled && id !== "/help") {
       return logger.warn("Skipping because it is disabled on this repo.", { id });
     }
 

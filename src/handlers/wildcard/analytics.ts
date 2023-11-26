@@ -1,5 +1,6 @@
-import { calculateLabelValue } from "../../helpers";
-import { Issue, Context } from "../../types";
+import { calculateLabelValue } from "../../helpers/shared";
+import { Context } from "../../types/context";
+import { Issue } from "../../types/payload";
 
 //  Checks the issue whether it's an open task for public self assignment
 export function taskPaymentMetaData(

@@ -1,5 +1,7 @@
-import { calculateLabelValue, clearAllPriceLabelsOnIssue } from "../../helpers";
-import { Label, Context } from "../../types";
+import { clearAllPriceLabelsOnIssue } from "../../helpers/issue";
+import { calculateLabelValue } from "../../helpers/shared";
+import { Context } from "../../types/context";
+import { Label } from "../../types/label";
 
 export async function handleParentIssue(context: Context, labels: Label[]) {
   const issuePrices = labels.filter((label) => label.name.toString().startsWith("Price:"));

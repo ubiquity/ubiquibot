@@ -1,7 +1,10 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
-import { listAllIssuesAndPullsForRepo } from "../../../helpers";
+import { listAllIssuesAndPullsForRepo } from "../../../helpers/issue";
 import { getLinkedPullRequests } from "../../../helpers/parser";
-import { Commit, Context, Issue, IssueType, Payload, User } from "../../../types";
+import { Commit } from "../../../types/commit";
+import { Context } from "../../../types/context";
+import { Issue, IssueType, Payload, User } from "../../../types/payload";
+// import { Commit, Context, Issue, IssueType, Payload, User } from "../../../types";
 
 type IssuesListEventsResponseData = RestEndpointMethodTypes["issues"]["listEvents"]["response"]["data"];
 // type Commit[] = Commit[]; // RestEndpointMethodTypes["pulls"]["listCommits"]["response"]["data"];
@@ -65,7 +68,7 @@ async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
   const assignEventsOfAssignee = assigneeEvents.filter((event) => {
     // check if the event is an assign event and if the assignee is the same as the assignee we're checking
     if (event.event == "assigned") {
-      const assignedEvent = event as AssignedEventExample;
+      const assignedEvent = event as AssignedEvent;
       return assignedEvent.assignee.login === login;
     }
   });
@@ -79,9 +82,7 @@ async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
   const latestAssignEventTime = new Date(latestAssignEvent.created_at).getTime();
   const now = Date.now();
 
-  const assigneesWithinGracePeriod = assignees.filter(() => {
-    return now - latestAssignEventTime < taskDisqualifyDuration;
-  });
+  const assigneesWithinGracePeriod = assignees.filter(() => now - latestAssignEventTime < taskDisqualifyDuration);
 
   const assigneesOutsideGracePeriod = assignees.filter((assignee) => !assigneesWithinGracePeriod.includes(assignee));
 
@@ -122,9 +123,9 @@ async function followUpWithTheRest(
     taskDisqualifyDuration,
   }: FollowUpWithTheRest
 ) {
-  const followUpAssignees = assignees.filter((assignee) => {
-    return !disqualifiedAssignees.includes(assignee) && !activeAssigneesInFollowUpDuration.includes(assignee);
-  });
+  const followUpAssignees = assignees.filter(
+    (assignee) => !disqualifiedAssignees.includes(assignee) && !activeAssigneesInFollowUpDuration.includes(assignee)
+  );
 
   if (followUpAssignees.length > 0) {
     const followUpMessage = `@${followUpAssignees.join(
@@ -384,16 +385,16 @@ interface GetAllCommits {
   repo: string;
   pullNumber: number;
 }
-interface AssignedEventExample {
-  id: 10841266730;
-  node_id: "AE_lADOJE8L5s51pPgazwAAAAKGMJoq";
-  url: "https://api.github.com/repos/pavlovcik/ubiquibot/issues/events/10841266730";
+type AssignedEvent = {
+  id: number;
+  node_id: string;
+  url: string;
   actor: User;
   event: "assigned";
   commit_id: null;
   commit_url: null;
-  created_at: "2023-11-02T09:13:58Z";
+  created_at: string;
   assignee: User;
   assigner: User;
   performed_via_github_app: null;
-}
+};

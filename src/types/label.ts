@@ -1,6 +1,6 @@
 import { Static, Type } from "@sinclair/typebox";
 
-export const LabelSchema = Type.Object({
+export const labelSchema = Type.Object({
   id: Type.Number(),
   node_id: Type.String(),
   url: Type.String(),
@@ -10,4 +10,4 @@ export const LabelSchema = Type.Object({
   description: Type.Any(),
 });
 
-export type Label = Static<typeof LabelSchema>;
+export type Label = Static<typeof labelSchema>;

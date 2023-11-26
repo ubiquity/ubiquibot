@@ -1,5 +1,5 @@
-import { Payload } from "../types";
 import { Context as ProbotContext } from "probot";
+import { Payload } from "../types/payload";
 
 export async function createCommitComment(
   context: ProbotContext,

@@ -2,8 +2,9 @@ import { MaxUint256, PERMIT2_ADDRESS, PermitTransferFrom, SignatureTransfer } fr
 import Decimal from "decimal.js";
 import { BigNumber, ethers } from "ethers";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
-import { Context } from "../../../../types";
-import { getPayoutConfigByNetworkId } from "../../../../helpers";
+import { getPayoutConfigByNetworkId } from "../../../../helpers/payout";
+
+import { Context } from "../../../../types/context";
 import { decryptKeys } from "../../../../utils/private";
 
 export async function generatePermit2Signature(
@@ -58,7 +59,7 @@ export async function generatePermit2Signature(
     throw logger.debug("Failed to sign typed data", error);
   });
 
-  const transactionData: TransactionData = {
+  const transactionData: PermitTransactionData = {
     permit: {
       permitted: {
         token: permitTransferFromData.permitted.token,
@@ -100,7 +101,7 @@ interface GeneratePermit2SignatureParams {
   userId: string;
 }
 
-interface TransactionData {
+export interface PermitTransactionData {
   permit: {
     permitted: {
       token: string;

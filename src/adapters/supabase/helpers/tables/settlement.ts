@@ -3,6 +3,7 @@ import Decimal from "decimal.js";
 import { Comment, Payload } from "../../../../types/payload";
 import { Database } from "../../types/database";
 import { Super } from "./super";
+import { PermitTransactionData } from "../../../../handlers/comment/handlers/issue/generate-permit-2-signature";
 
 type DebitInsert = Database["public"]["Tables"]["debits"]["Insert"];
 type CreditInsert = Database["public"]["Tables"]["credits"]["Insert"];
@@ -19,7 +20,7 @@ type AddCreditWithPermit = {
   userId: number;
   amount: Decimal;
   comment: Comment;
-  transactionData?: any;
+  transactionData?: PermitTransactionData;
   networkId?: number;
   organization?: Payload["organization"];
 };

@@ -1,5 +1,7 @@
-import { calculateLabelValue, createLabel, listLabelsForRepo } from "../../helpers";
-import { Context } from "../../types";
+import { createLabel, listLabelsForRepo } from "../../helpers/label";
+import { calculateLabelValue } from "../../helpers/shared";
+import { Context } from "../../types/context";
+
 import { calculateTaskPrice } from "../shared/pricing";
 
 // This just checks all the labels in the config have been set in gh issue
@@ -10,10 +12,10 @@ export async function syncPriceLabelsToConfig(context: Context) {
   const logger = context.logger;
 
   const {
-    features: { assistivePricing },
+    features: { assistivePricing: hasAssistivePricing },
   } = config;
 
-  if (!assistivePricing) {
+  if (!hasAssistivePricing) {
     logger.info(`Assistive pricing is disabled`);
     return;
   }

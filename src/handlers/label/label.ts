@@ -1,6 +1,7 @@
+import { Context } from "../../types/context";
 import Runtime from "../../bindings/bot-runtime";
-import { hasLabelEditPermission } from "../../helpers";
-import { Context, Payload } from "../../types";
+import { Payload } from "../../types/payload";
+import { hasLabelEditPermission } from "../../helpers/payout";
 
 export async function watchLabelChange(context: Context) {
   const logger = context.logger;

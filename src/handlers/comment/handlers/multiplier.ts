@@ -1,6 +1,8 @@
 import Runtime from "../../../bindings/bot-runtime";
-import { isUserAdminOrBillingManager } from "../../../helpers";
-import { Context, Payload } from "../../../types";
+import { isUserAdminOrBillingManager } from "../../../helpers/issue";
+import { Context } from "../../../types/context";
+import { Payload } from "../../../types/payload";
+
 /**
  * You can use this command to set a multiplier for a user.
  * It will accept arguments in any order.

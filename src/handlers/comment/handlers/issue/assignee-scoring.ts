@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import { Issue, User } from "../../../../types/payload";
 import { ContributorView } from "./contribution-style-types";
 import { UserScoreDetails } from "./issue-shared-types";
-import { Context } from "../../../../types";
+import { Context } from "../../../../types/context";
 
 export async function assigneeScoring(
   context: Context,

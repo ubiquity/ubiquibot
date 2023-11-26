@@ -1,11 +1,9 @@
-import {
-  addAssignees,
-  calculateDurations,
-  getAssignedIssues,
-  getAvailableOpenedPullRequests,
-} from "../../../../helpers";
-import { Context, IssueType, Payload, User } from "../../../../types";
-import { isParentIssue } from "../../../pricing";
+import { getAvailableOpenedPullRequests, getAssignedIssues, addAssignees } from "../../../../helpers/issue";
+import { calculateDurations } from "../../../../helpers/shared";
+import { Context } from "../../../../types/context";
+import { User, IssueType, Payload } from "../../../../types/payload";
+import { isParentIssue } from "../../../pricing/action";
+
 import structuredMetadata from "../../../shared/structured-metadata";
 import { assignTableComment } from "../table";
 import { checkTaskStale } from "./check-task-stale";
@@ -24,7 +22,7 @@ export async function assign(context: Context, body: string) {
     disabledCommands,
   } = context.config;
 
-  const startDisabled = disabledCommands.some((command) => command === "start");
+  const isStartDisabled = disabledCommands.some((command: string) => command === "start");
 
   logger.info("Received '/start' command", { sender: payload.sender.login, body });
 
@@ -32,7 +30,7 @@ export async function assign(context: Context, body: string) {
     throw logger.warn(`Skipping '/start' because of no issue instance`);
   }
 
-  if (startDisabled) {
+  if (isStartDisabled) {
     throw logger.warn("The `/assign` command is disabled for this repository.");
   }
 

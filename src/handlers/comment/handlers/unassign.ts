@@ -1,5 +1,6 @@
-import { Context, Payload } from "../../../types";
-import { closePullRequestForAnIssue } from "../../assign/index";
+import { Context } from "../../../types/context";
+import { Payload } from "../../../types/payload";
+import { closePullRequestForAnIssue } from "../../assign/action";
 
 export async function unassign(context: Context, body: string) {
   const logger = context.logger;

@@ -1,5 +1,6 @@
-import { calculateLabelValue } from "../../helpers";
-import { Label, Context } from "../../types";
+import { calculateLabelValue } from "../../helpers/shared";
+import { Context } from "../../types/context";
+import { Label } from "../../types/label";
 
 export function calculateTaskPrice(
   context: Context,

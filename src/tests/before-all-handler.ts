@@ -1,24 +1,22 @@
 import { Probot, run } from "probot";
 
-import { repoConfig } from "./test-repo-config";
-import { updateConfig, waitForNWebhooks, webhookEventEmitter } from "./utils";
-import { GitHubEvent } from "../types/payload";
 import { bindEvents } from "../bindings/event";
+import { GitHubEvent } from "../types/payload";
 import {
-  setAdminUser,
-  CustomOctokit,
+  customOctokit,
   getAdminUser,
-  setAdminUsername,
-  repo,
-  owner,
   getAdminUsername,
-  setCollaboratorUser,
   getCollaboratorUser,
-  setCollaboratorUsername,
   getCollaboratorUsername,
+  owner,
+  repo,
+  setAdminUser,
+  setAdminUsername,
+  setCollaboratorUser,
+  setCollaboratorUsername,
   setServer,
-  orgConfig,
 } from "./commands-test";
+import { updateConfig, waitForNWebhooks, webhookEventEmitter } from "./utils";
 
 export function beforeAllHandler(): jest.ProvidesHookCallback {
   return async () => {
@@ -27,7 +25,7 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
       throw new Error("missing TEST_ADMIN_PAT");
     }
 
-    setAdminUser(new CustomOctokit({ auth: adminPAT }));
+    setAdminUser(new customOctokit({ auth: adminPAT }));
 
     const { data } = await getAdminUser().rest.users.getAuthenticated();
     setAdminUsername(data.login);
@@ -52,7 +50,7 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
       throw new Error("missing TEST_OUTSIDE_COLLABORATOR_PAT");
     }
 
-    setCollaboratorUser(new CustomOctokit({ auth: outsideCollaboratorPAT }));
+    setCollaboratorUser(new customOctokit({ auth: outsideCollaboratorPAT }));
 
     const { data: data2 } = await getCollaboratorUser().rest.users.getAuthenticated();
     setCollaboratorUsername(data2.login);
@@ -74,7 +72,7 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
       throw new Error("TEST_OUTSIDE_COLLABORATOR_PAT does not have read access");
     }
 
-    const server = await run(function main(app: Probot) {
+    const server = await run((app: Probot) => {
       const allowedEvents = Object.values(GitHubEvent);
       app.on(allowedEvents, async (context) => {
         await bindEvents(context);
@@ -95,7 +93,7 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
     await updateConfig({
       octokit: getAdminUser(),
       owner,
-      repo,
+      repo: "ubiquibot-config",
       path: ".github/ubiquibot-config.yml",
       config: repoConfig,
     });

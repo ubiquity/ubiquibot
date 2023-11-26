@@ -1,9 +1,12 @@
 import { Context as ProbotContext } from "probot";
 import Runtime from "../../bindings/bot-runtime";
-import { createCommitComment, getFileContent } from "../../helpers";
-import { BotConfig, CommitsPayload, PushPayload, validateBotConfig } from "../../types";
-import { parseYaml, transformConfig } from "../../utils/generate-configuration";
+
 import { DefinedError } from "ajv";
+import { BotConfig, validateBotConfig } from "../../types/configuration-types";
+import { CommitsPayload, PushPayload } from "../../types/payload";
+import { parseYaml, transformConfig } from "../../utils/generate-configuration";
+import { createCommitComment } from "../../helpers/commit";
+import { getFileContent } from "../../helpers/file";
 
 export const ZERO_SHA = "0000000000000000000000000000000000000000";
 export const BASE_RATE_FILE = ".github/ubiquibot-config.yml";
@@ -63,10 +66,10 @@ export async function validateConfigChange(context: ProbotContext) {
     if (configFileContent) {
       const decodedConfig = Buffer.from(configFileContent, "base64").toString();
       const config = parseYaml(decodedConfig);
-      const valid = validateBotConfig(config);
+      const isValid = validateBotConfig(config);
       let errorMsg: string | undefined;
 
-      if (!valid) {
+      if (!isValid) {
         const errMsg = generateValidationError(validateBotConfig.errors as DefinedError[]);
         errorMsg = `@${payload.sender.login} ${errMsg}`;
       }

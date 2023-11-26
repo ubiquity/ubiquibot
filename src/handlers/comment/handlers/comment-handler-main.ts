@@ -1,5 +1,4 @@
-import { UserCommands } from "../../../types";
-import { assign } from "./assign";
+import { assign } from "./assign/assign";
 import { listAvailableCommands } from "./help";
 // Commented out until Gnosis Safe is integrated (https://github.com/ubiquity/ubiquibot/issues/353)
 // import { payout } from "./payout";
@@ -13,9 +12,10 @@ import { registerWallet } from "./wallet";
 
 import { autoPay } from "./payout";
 import { query } from "./query";
+import { UserCommands } from "../../../types/handlers";
 
 export * from "./ask";
-export * from "./assign";
+export * from "./assign/assign";
 export * from "./authorize";
 export * from "./help";
 export * from "./multiplier";

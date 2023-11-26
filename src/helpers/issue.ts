@@ -1,16 +1,8 @@
-import {
-  AssignEvent,
-  Comment,
-  HandlerReturnValuesNoVoid,
-  Issue,
-  IssueType,
-  StreamlinedComment,
-  UserType,
-} from "../types";
-import { LogReturn } from "../adapters/supabase";
-import { Payload, Context } from "../types";
-
-type PromiseType<T> = T extends Promise<infer U> ? U : never;
+import { LogReturn } from "../adapters/supabase/helpers/tables/logs";
+import { Context } from "../types/context";
+import { HandlerReturnValuesNoVoid } from "../types/handlers";
+import { StreamlinedComment } from "../types/openai";
+import { AssignEvent, Comment, Issue, IssueType, Payload, UserType } from "../types/payload";
 
 async function getAllIssueEvents(context: Context) {
   if (!context.payload.issue) return;
@@ -71,7 +63,7 @@ export async function addLabelToIssue(context: Context, labelName: string) {
 async function listIssuesAndPullsForRepo(
   context: Context,
   state: "open" | "closed" | "all" = "open",
-  per_page = 100,
+  perPage = 100,
   page = 1,
   sort: "created" | "updated" | "comments" = "created",
   direction: "desc" | "asc" = "desc"
@@ -83,7 +75,7 @@ async function listIssuesAndPullsForRepo(
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       state,
-      per_page,
+      per_page: perPage,
       page,
       sort,
       direction,
@@ -97,7 +89,7 @@ async function listIssuesAndPullsForRepo(
 
 export async function listAllIssuesAndPullsForRepo(
   context: Context,
-  state: "open" | "closed" | "all",
+  state: "open" | "closed" | "all" = "open",
   sort: "created" | "updated" | "comments" = "created",
   direction: "desc" | "asc" = "desc"
 ) {
@@ -143,12 +135,12 @@ export async function addCommentToIssue(context: Context, message: HandlerReturn
   }
 }
 
-export async function upsertLastCommentToIssue(context: Context, issue_number: number, commentBody: string) {
+export async function upsertLastCommentToIssue(context: Context, issueNumber: number, commentBody: string) {
   try {
-    const comments = await getAllIssueComments(context, issue_number);
+    const comments = await getAllIssueComments(context, issueNumber);
 
     if (comments.length > 0 && comments[comments.length - 1].body !== commentBody)
-      await addCommentToIssue(context, commentBody, issue_number);
+      await addCommentToIssue(context, commentBody, issueNumber);
   } catch (e: unknown) {
     context.logger.error("Upserting last comment failed!", e);
   }
@@ -232,11 +224,11 @@ export async function getAllIssueAssignEvents(context: Context, issueNumber: num
 }
 
 export async function checkUserPermissionForRepoAndOrg(context: Context, username: string): Promise<boolean> {
-  const permissionForRepo = await checkUserPermissionForRepo(context, username);
-  const permissionForOrg = await checkUserPermissionForOrg(context, username);
+  const hasPermissionForRepo = await checkUserPermissionForRepo(context, username);
+  const hasPermissionForOrg = await checkUserPermissionForOrg(context, username);
   const userPermission = await isUserAdminOrBillingManager(context, username);
 
-  return permissionForOrg || permissionForRepo || userPermission === "admin";
+  return hasPermissionForOrg || hasPermissionForRepo || userPermission === "admin";
 }
 
 async function checkUserPermissionForRepo(context: Context, username: string): Promise<boolean> {
@@ -386,7 +378,7 @@ export async function getAllPullRequests(context: Context, state: "open" | "clos
 async function getPullRequests(
   context: Context,
   state: "open" | "closed" | "all" = "open",
-  per_page: number,
+  perPage: number,
   page: number
 ) {
   const payload = context.payload;
@@ -396,7 +388,7 @@ async function getPullRequests(
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       state,
-      per_page,
+      per_page: perPage,
       page,
     });
     return pulls;
@@ -406,13 +398,13 @@ async function getPullRequests(
   }
 }
 
-export async function closePullRequest(context: Context, pull_number: number) {
+export async function closePullRequest(context: Context, pullNumber: number) {
   const payload = context.payload as Payload;
   try {
     await context.octokit.rest.pulls.update({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      pull_number,
+      pull_number: pullNumber,
       state: "closed",
     });
   } catch (err: unknown) {
@@ -422,7 +414,7 @@ export async function closePullRequest(context: Context, pull_number: number) {
 
 export async function getAllPullRequestReviews(
   context: Context,
-  pull_number: number,
+  pullNumber: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ) {
   const payload = context.payload;
@@ -431,7 +423,7 @@ export async function getAllPullRequestReviews(
     const reviews = await context.octokit.paginate(context.octokit.rest.pulls.listReviews, {
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      pull_number,
+      pull_number: pullNumber,
       per_page: 100,
       mediaType: {
         format,
@@ -446,8 +438,8 @@ export async function getAllPullRequestReviews(
 
 async function getPullRequestReviews(
   context: Context,
-  pull_number: number,
-  per_page: number,
+  pullNumber: number,
+  perPage: number,
   page: number,
   format: "raw" | "html" | "text" | "full" = "raw"
 ) {
@@ -456,8 +448,8 @@ async function getPullRequestReviews(
     const { data: reviews } = await context.octokit.rest.pulls.listReviews({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
-      pull_number,
-      per_page,
+      pull_number: pullNumber,
+      per_page: perPage,
       page,
       mediaType: {
         format,
@@ -470,12 +462,12 @@ async function getPullRequestReviews(
   }
 }
 
-export async function getReviewRequests(context: Context, pull_number: number, owner: string, repo: string) {
+export async function getReviewRequests(context: Context, pullNumber: number, owner: string, repo: string) {
   try {
     const response = await context.octokit.pulls.listRequestedReviewers({
       owner: owner,
       repo: repo,
-      pull_number: pull_number,
+      pull_number: pullNumber,
     });
     return response.data;
   } catch (err: unknown) {
@@ -517,7 +509,7 @@ export async function getPullByNumber(context: Context, pull: number) {
 }
 
 // Get issues assigned to a username
-export async function getAssignedIssues(context: Context, username: string) {
+export async function getAssignedIssues(context: Context, username: string): Promise<Issue[]> {
   const payload = context.payload;
 
   try {

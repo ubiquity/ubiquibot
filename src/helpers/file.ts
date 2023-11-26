@@ -1,6 +1,7 @@
 import Runtime from "../bindings/bot-runtime";
-import { Context } from "../types";
+
 import { Context as ProbotContext } from "probot";
+import { Context } from "../types/context";
 
 // Get the previous file content
 export async function getPreviousFileContent(

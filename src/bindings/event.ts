@@ -1,13 +1,15 @@
 import OpenAI from "openai";
 import { Context as ProbotContext } from "probot";
-import { createAdapters, supabaseClient } from "../adapters";
-import { LogReturn } from "../adapters/supabase";
-import { LogMessage, Logs } from "../adapters/supabase/helpers/tables/logs";
+import zlib from "zlib";
+import { createAdapters, supabaseClient } from "../adapters/adapters";
+import { LogMessage, LogReturn, Logs } from "../adapters/supabase/helpers/tables/logs";
 import { processors, wildcardProcessors } from "../handlers/processors";
-import { validateConfigChange } from "../handlers/push";
+import { validateConfigChange } from "../handlers/push/push";
 import structuredMetadata from "../handlers/shared/structured-metadata";
-import { addCommentToIssue, shouldSkip } from "../helpers";
-import { BotConfig } from "../types";
+import { BotConfig } from "../types/configuration-types";
+
+import { addCommentToIssue } from "../helpers/issue";
+import { shouldSkip } from "../helpers/shared";
 import { Context } from "../types/context";
 import {
   HandlerReturnValuesNoVoid,
@@ -16,7 +18,7 @@ import {
   PreActionHandler,
   WildCardHandler,
 } from "../types/handlers";
-import { GitHubEvent, Payload, PayloadSchema } from "../types/payload";
+import { GitHubEvent, Payload, payloadSchema } from "../types/payload";
 import { ajv } from "../utils/ajv";
 import { generateConfiguration } from "../utils/generate-configuration";
 import Runtime from "./bot-runtime";
@@ -32,7 +34,7 @@ type PostHandlerWithType = { type: string; actions: PostActionHandler[] };
 type AllHandlersWithTypes = PreHandlerWithType | HandlerWithType | PostHandlerWithType;
 type AllHandlers = PreActionHandler | MainActionHandler | PostActionHandler;
 
-const validatePayload = ajv.compile(PayloadSchema);
+const validatePayload = ajv.compile(payloadSchema);
 
 const runtime = Runtime.getState();
 runtime.adapters = createAdapters();
@@ -45,7 +47,7 @@ export async function bindEvents(eventContext: ProbotContext) {
 
   logger.info("Event received", { id: eventContext.id, name: eventName });
 
-  if (!allowedEvents.includes(eventName)) {
+  if (!allowedEvents.includes(eventName) && eventContext.name !== "repository_dispatch") {
     // just check if its on the watch list
     return logger.info(`Skipping the event. reason: not configured`);
   }
@@ -53,8 +55,8 @@ export async function bindEvents(eventContext: ProbotContext) {
   // Skip validation for installation event and push
   if (!NO_VALIDATION.includes(eventName)) {
     // Validate payload
-    const valid = validatePayload(payload);
-    if (!valid && validatePayload.errors) {
+    const isValid = validatePayload(payload);
+    if (!isValid && validatePayload.errors) {
       return logger.error("Payload schema validation failed!", validatePayload.errors);
     }
 
@@ -90,6 +92,22 @@ export async function bindEvents(eventContext: ProbotContext) {
 
   if (!context.logger) {
     throw new Error("Failed to create logger");
+  }
+
+  if (eventContext.name === GitHubEvent.REPOSITORY_DISPATCH) {
+    const dispatchPayload = payload as any;
+    if (payload.action === "issueClosed") {
+      //This is response for issueClosed request
+      const response = dispatchPayload.client_payload.result;
+      if (response.comment as Comment) {
+        const uncompressedComment = zlib.gunzipSync(Buffer.from(response.comment));
+        await addCommentToIssue(
+          context,
+          uncompressedComment.toString(),
+          parseInt(dispatchPayload.client_payload.issueNumber)
+        );
+      }
+    }
   }
 
   // Get the handlers for the action

@@ -1,4 +1,7 @@
-import { BotConfig, Context, Label, Payload } from "../../../../types";
+import { BotConfig } from "../../../../types/configuration-types";
+import { Context } from "../../../../types/context";
+import { Label } from "../../../../types/label";
+import { Payload } from "../../../../types/payload";
 
 export function getTimeLabelsAssigned(context: Context, payload: Payload, config: BotConfig) {
   const logger = context.logger;

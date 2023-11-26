@@ -1,4 +1,4 @@
-import { Context } from "../../../../types";
+import { Context } from "../../../../types/context";
 import { Comment, User } from "../../../../types/payload";
 import { CommentScoring } from "./comment-scoring-rubric";
 
