@@ -60,7 +60,7 @@ export class Wallet extends Super {
 
   private _validateAndGetWalletAddress(userWithWallet: UserWithWallet): string {
     // const payload = Runtime.getState().latestEventContext.payload;
-    // console.trace({ payload, userWithWallet });
+
     if (userWithWallet[0]?.wallets?.address === undefined) throw new Error("Wallet address is undefined");
     if (userWithWallet[0]?.wallets?.address === null) throw new Error("Wallet address is null");
     return userWithWallet[0]?.wallets?.address;

@@ -4,7 +4,7 @@ import { CommentScoring } from "./comment-scoring-rubric";
 import { ContributorClassesKeys, ContributorView } from "./contribution-style-types";
 import { sortCommentsByClass } from "./filter-comments-by-contribution-type";
 import { sortUsersByClass } from "./identify-user-ids";
-import { perUserCommentScoring } from "./perUserCommentScoring";
+import { perUserCommentScoring } from "./per-user-comment-scoring";
 
 import { ContextIssue } from "./specification-scoring";
 export async function allCommentScoring({

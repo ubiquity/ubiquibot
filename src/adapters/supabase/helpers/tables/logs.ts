@@ -51,7 +51,7 @@ export class Logs {
   private _throttleCount = 0;
   private _retryLimit = 0; // Retries disabled by default
 
-  console = new PrettyLogs();
+  static console: PrettyLogs;
 
   private _log({ level, consoleLog, logMessage, metadata, postComment, type }: LogParams): LogReturn | null {
     if (this._getNumericLevel(level) > this._maxLevel) return null; // filter out more verbose logs according to maxLevel set in config
@@ -89,8 +89,6 @@ export class Logs {
     // I have mixed feelings on this because it manipulates metadata later possibly without the developer understanding why and where,
     // but seems useful for the metadata parser to understand where the comment originated from
 
-    // console.trace({ metadata });
-
     if (!metadata) {
       metadata = {};
     }
@@ -118,7 +116,7 @@ export class Logs {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.VERBOSE,
-      consoleLog: this.console.ok,
+      consoleLog: Logs.console.ok,
       logMessage: log,
       metadata,
       postComment,
@@ -130,7 +128,7 @@ export class Logs {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.INFO,
-      consoleLog: this.console.info,
+      consoleLog: Logs.console.info,
       logMessage: log,
       metadata,
       postComment,
@@ -142,7 +140,7 @@ export class Logs {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.WARN,
-      consoleLog: this.console.warn,
+      consoleLog: Logs.console.warn,
       logMessage: log,
       metadata,
       postComment,
@@ -154,7 +152,7 @@ export class Logs {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.DEBUG,
-      consoleLog: this.console.debug,
+      consoleLog: Logs.console.debug,
       logMessage: log,
       metadata,
       postComment,
@@ -179,7 +177,7 @@ export class Logs {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.ERROR,
-      consoleLog: this.console.error,
+      consoleLog: Logs.console.error,
       logMessage: log,
       metadata,
       postComment,
@@ -191,7 +189,7 @@ export class Logs {
   //   metadata = this._addDiagnosticInformation(metadata);
   //   return this._log({
   //     level: LogLevel.HTTP,
-  //     consoleLog: this.console.http,
+  //     consoleLog: Logs.console.http,
   //     logMessage: log,
   //     metadata,
   //     postComment,
@@ -203,7 +201,7 @@ export class Logs {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
       level: LogLevel.VERBOSE,
-      consoleLog: this.console.verbose,
+      consoleLog: Logs.console.verbose,
       logMessage: log,
       metadata,
       postComment,
@@ -215,7 +213,7 @@ export class Logs {
   //   metadata = this._addDiagnosticInformation(metadata);
   //   return this._log({
   //     level: LogLevel.SILLY,
-  //     consoleLog: this.console.silly,
+  //     consoleLog: Logs.console.silly,
   //     logMessage: log,
   //     metadata,
   //     postComment,
@@ -235,25 +233,26 @@ export class Logs {
     this._environment = environment;
     this._retryLimit = retryLimit;
     this._maxLevel = this._getNumericLevel(logLevel);
+    Logs.console = new PrettyLogs();
   }
 
   private async _sendLogsToSupabase(log: LogInsert) {
     const { error } = await this._supabase.from("logs").insert(log);
-    if (error) throw this.console.error("Error logging to Supabase:", error);
+    if (error) throw Logs.console.error("Error logging to Supabase:", error);
   }
 
   private async _processLogs(log: LogInsert) {
     try {
       await this._sendLogsToSupabase(log);
     } catch (error) {
-      this.console.error("Error sending log, retrying:", error);
+      Logs.console.error("Error sending log, retrying:", error);
       return this._retryLimit > 0 ? await this._retryLog(log) : null;
     }
   }
 
   private async _retryLog(log: LogInsert, retryCount = 0) {
     if (retryCount >= this._retryLimit) {
-      this.console.error("Max retry limit reached for log:", log);
+      Logs.console.error("Max retry limit reached for log:", log);
       return;
     }
 
@@ -262,7 +261,7 @@ export class Logs {
     try {
       await this._sendLogsToSupabase(log);
     } catch (error) {
-      this.console.error("Error sending log (after retry):", error);
+      Logs.console.error("Error sending log (after retry):", error);
       await this._retryLog(log, retryCount + 1);
     }
   }
@@ -303,10 +302,10 @@ export class Logs {
   private _save(logInsert: LogInsert) {
     this._addToQueue(logInsert)
       .then(() => void 0)
-      .catch(() => this.console.error("Error adding logs to queue"));
+      .catch(() => Logs.console.error("Error adding logs to queue"));
 
     if (this._environment === "development") {
-      this.console.ok(logInsert.log, logInsert);
+      Logs.console.ok(logInsert.log, logInsert);
     }
   }
 
@@ -352,7 +351,6 @@ export class Logs {
         .map((line) => `@@ ${line} @@`)
         .join("\n"); // debug: "@@@@",
     } else {
-      // console.trace("unknown log type", type);
       // default to gray
       message = message
         .split("\n")

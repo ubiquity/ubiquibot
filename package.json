@@ -11,6 +11,7 @@
     "probot-app"
   ],
   "scripts": {
+    "inspect": "node --inspect-brk ./dist/index.js",
     "build:ci": "ncc build src/adapters/github/github-actions.ts -o ./",
     "build:serverless": "ncc build src/index.ts -o ./",
     "build": "tsc",
@@ -60,6 +61,7 @@
     "openai": "^4.2.0",
     "prettier": "^2.7.1",
     "probot": "^12.2.4",
+    "smee-client": "^2.0.0",
     "tsx": "^3.12.7",
     "yaml": "^2.2.2",
     "zlib": "^1.0.5"
@@ -77,6 +79,7 @@
     "eslint": "^8.43.0",
     "jest": "^29.6.2",
     "knip": "^2.33.4",
+    "octokit": "^3.1.2",
     "rimraf": "3.0.2",
     "source-map-support": "^0.5.21",
     "ts-jest": "^29.1.1",

@@ -155,6 +155,5 @@ function averageSamples(batchResults: (number | Decimal)[][], precision: number)
     })
     .map((score) => score.toDecimalPlaces(precision));
 
-  // console.trace(`${JSON.stringify(batchResults)} -> ${JSON.stringify(averageScores)}`);
   return averageScores;
 }

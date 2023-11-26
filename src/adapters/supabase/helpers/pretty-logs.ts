@@ -3,6 +3,16 @@ import util from "util";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type PrettyLogsWithOk = "ok" | LogLevel;
 export class PrettyLogs {
+  constructor() {
+    this.ok = this.ok.bind(this);
+    this.info = this.info.bind(this);
+    this.warn = this.warn.bind(this);
+    this.error = this.error.bind(this);
+    this.debug = this.debug.bind(this);
+    this.http = this.http.bind(this);
+    this.verbose = this.verbose.bind(this);
+    this.silly = this.silly.bind(this);
+  }
   public error(message: string, metadata?: any) {
     this._logWithStack(LogLevel.ERROR, message, metadata);
   }
@@ -59,7 +69,6 @@ export class PrettyLogs {
       delete newMetadata.stack;
 
       if (!this._isEmpty(newMetadata)) {
-        // console.trace(util.inspect(newMetadata, { showHidden: true, depth: null }));
         this._log(type, newMetadata);
       }
 
@@ -68,7 +77,6 @@ export class PrettyLogs {
         const colorizedStack = this._colorizeText(prettyStack, Colors.dim);
         this._log(type, colorizedStack);
       } else if (stack) {
-        // console.trace({ type: typeof stack, stack });
         const prettyStack = this._formatStackTrace((stack as unknown as string[]).join("\n"), 1);
         const colorizedStack = this._colorizeText(prettyStack, Colors.dim);
         this._log(type, colorizedStack);
@@ -112,8 +120,6 @@ export class PrettyLogs {
     };
 
     const symbol = defaultSymbols[type];
-
-    // console.trace({ type, symbol, message });
 
     // Formatting the message
     const messageFormatted =

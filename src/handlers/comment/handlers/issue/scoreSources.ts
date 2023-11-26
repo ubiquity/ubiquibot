@@ -2,7 +2,7 @@ import { Context } from "../../../../types/context";
 import { Comment, Issue, User } from "../../../../types/payload";
 import { assigneeScoring as assigneeTaskScoring } from "./assignee-scoring";
 import { commentsScoring } from "./evaluate-comments";
-import { getPullRequestComments } from "./getPullRequestComments";
+import { getPullRequestComments } from "./get-pull-request-comments";
 import { UserScoreDetails } from "./issue-shared-types";
 import { specificationScoring as issuerSpecificationScoring } from "./specification-scoring";
 

@@ -5,7 +5,7 @@ import { Context } from "../../../../types/context";
 import { Comment, Issue, Payload, StateReason } from "../../../../types/payload";
 import structuredMetadata from "../../../shared/structured-metadata";
 import { getCollaboratorsForRepo } from "./get-collaborator-ids-for-repo";
-import { getPullRequestComments } from "./getPullRequestComments";
+import { getPullRequestComments } from "./get-pull-request-comments";
 
 export async function issueClosed(context: Context) {
   // TODO: delegate permit calculation to GitHub Action
@@ -71,7 +71,6 @@ async function getEssentials(context: Context) {
   const issueNumber = issue.number;
   return { issue, runtime, logger, issueComments, owner, repository, issueNumber };
 }
-// console.trace({ totals: util.inspect({ totals }, { showHidden: true, depth: null }) });
 
 interface PreflightChecksParams {
   issue: Issue;
