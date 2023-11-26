@@ -1,8 +1,23 @@
-# The UbiquiBot
+# UbiquiBot
 
-Ubiquity DAO's GitHub Bot to automate DevPool management.
+Ubiquity DAO's GitHub Bot for Automating DevPool Management.
 
-## Quick Start
+## Table of Contents
+1. [Quickstart](#quickstart)
+2. [Environment Variables](#environment-variables)
+3. [Overview](#overview)
+4. [How to Use](#how-to-use)
+5. [Configuration](#configuration)
+6. [How to Run Locally](#how-to-run-locally)
+7. [Supabase Database](#supabase-database)
+8. [Logs](#logs)
+9. [Payments Permits in a Local Instance](#payments-permits-in-a-local-instance)
+10. [How to QA Additions to the Bot](#how-to-qa-additions-to-the-bot)
+11. [How to Create a New Release](#how-to-create-a-new-release)
+12. [Architecture Overview](#architecture-overview)
+13. [Default Config Notes (`ubiquibot-config-default.ts`)](#default-config-notes-ubiquibot-config-defaultts)
+
+## Quickstart
 
 ```sh
 #!/bin/bash
@@ -10,14 +25,18 @@ Ubiquity DAO's GitHub Bot to automate DevPool management.
 git clone https://github.com/ubiquity/ubiquibot.git
 cd ubiquibot
 yarn
-yarn build
+yarn build (to compile your changes)
+
+yarn build --watch (to locally auto compile your changes)
 yarn start:watch
+
+## It's recommended to split terminals in your IDE while running above input
 ```
 
-## Environment Setup
+## Environment Variables
 
-- Copy `.env.example` to `.env`
-- Update `.env` with the following fields:
+- Copy `.env.example` to `.env` (do not rename .env.example, just make a copy)
+- Update the following fields on `.env`:
 - `SUPABASE_URL`: Add your Supabase project URL.
 - `SUPABASE_KEY`: Add your Supabase project API key.
 - `FOLLOWUP_TIME`: (optional) Set a custom follow-up time (default: 4 days).
@@ -31,18 +50,109 @@ yarn start:watch
 - `SIMILARITY_THRESHOLD`: (optional) Set similarity threshold (default: 80).
 - `MEASURE_SIMILARITY_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for measuring similarity (default: 0).
 - `IMPORTANT_WORDS_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for finding important words (default: 0).
+- `WEBHOOK_PROXY_URL`: (required) should be automatically filled when you install Ubiquibot
+- `WEBHOOK_SECRET`: (required) should be automatically filled when the app is installed
 
-`APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for internal developers to use.
+`APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for core team developers to use.
+
 If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically generated when you install the app on your repository.
+
+## How to run locally
+
+### Register a new Github App
+
+**Should output:**
+![setup](https://github.com/ubiquity/ubiquibot/assets/41552663/febf0e61-0402-4b25-838a-a64c1c385984)
+
+**You may proceed to go to http://localhost:3000 and you should see**
+
+![setup1](https://github.com/ubiquity/ubiquibot/assets/41552663/4b9d7565-8bd4-4e2a-864d-a086fedfe24d)
+
+**Click on Register a Github App**
+
+![setup3](https://github.com/ubiquity/ubiquibot/assets/41552663/0052feba-e823-419b-acde-d997d68ac553)
+
+**Provide the bot a name**
+
+![setup3](https://github.com/ubiquity/ubiquibot/assets/41552663/0052feba-e823-419b-acde-d997d68ac553)
+
+![setup4](https://github.com/ubiquity/ubiquibot/assets/41552663/f65e166b-c3fb-4e22-9f49-d622e3922eb7)
+
+**Select a handle where to install the bot**
+
+**Select in which repo the bot shall be available**
+
+![setup6](https://github.com/ubiquity/ubiquibot/assets/41552663/dce6b338-abd8-4b54-b990-2cc6cf686d30)
+
+**After following the steps you should see**
+
+![setup7](https://github.com/ubiquity/ubiquibot/assets/41552663/bbcf0e40-456c-4dd4-93e4-75de87d4d340)
+
+**Restart the server for the installation to take effect**
+
+![setup10](https://github.com/ubiquity/ubiquibot/assets/41552663/916cc5c3-dfdc-45c7-8d10-65afdce25e29)
+
+**After aforemention steps then installation shall be complete**
+
+![setup11](https://github.com/ubiquity/ubiquibot/assets/41552663/0e88fec0-fa8b-4d34-8cc8-024c99b5b640)
+
+## Seeing this page below after hitting http://localhost:3000 again?
+
+![trylocal](https://github.com/ubiquity/ubiquibot/assets/41552663/e958e7e4-6d42-44d1-a5cf-a090911f062c)
+
+### Congratulations! you successfully installed Ubiquibot (new or to an existing app)
+
+
+## Update an Existing Github App (bot)
+
+**After you hit http://localhost:3000 you have the option to edit an existing app (if you think you have already registered a bot and when to reuse that same app)**
+![existing](https://github.com/ubiquity/ubiquibot/assets/41552663/f696f3c1-1941-4bf4-b7a8-95d88f63e030)
+
+**on your Github settings hit to:**
+
+![repoaccess](https://github.com/ubiquity/ubiquibot/assets/41552663/bb389559-aaec-4bec-8ac0-97cefea63b16)
+
+**hen at the same time hit to "APP SETTINGS"**
+
+
+**Update the WebHook URL by the one auto-provided by the bot's installation page (this is a must) and edit the webhook secret that you'll use at .env**
+
+![secret](https://github.com/ubiquity/ubiquibot/assets/41552663/41e9d872-f628-491e-8156-31bec8870ae7)
+
+**Update APP_ID at .env accordingly**
+
+![ubiqui](https://github.com/ubiquity/ubiquibot/assets/41552663/a760b497-84f2-4574-aa49-757be3dc3e71)
+
+**In the same page it is super important that you re-generated and save a private key that you'll be using at .env you open the file and paste it**
+
+![logo](https://github.com/ubiquity/ubiquibot/assets/41552663/716639d4-4646-4f14-bc3f-a39cfaf0fada)
+
+
+## The Good News it's after you install the bot by using an existing app you'll get
+
+![success](https://github.com/ubiquity/ubiquibot/assets/41552663/87e85b37-c077-41f1-a7dc-41047d8a3b20)
+
+
+**Important things with private keys (.pem) at .env**
+
+1. The private key gets automatically filled after the app is installed to a github handle but not as an existing app
+2. The private key cannot be separated in spaces
+3. The private key is a string into its env var rather than a just opened info without "" otherwise it will not be recognized and you'll get unauthorized access
+
 
 **Note:** When setting up the project, please do not rename the `.env.example` file to `.env` as it will delete the environment example from the repository.
 Instead, it is recommended to make a copy of the `.env.example` file and replace the values with the appropriate ones.
+
+## Overview
+
+- This bot is available as a GitHub Action.
+- The code must be compiled using `@vercel/ncc` because all the dependencies (e.g. `node_modules`) must be included and committed on the repository for the GitHub Actions runner to use.
 
 ## How to use
 
 1. Go to the [UbiquiBot App Marketplace](https://github.com/marketplace/ubiquibot)
 2. Choose a plan and install UbiquiBot on your repository
-3. Congratulations! You can now use UbiquiBot to manage your tasks.
+3. Congratulations! You can now use the UbiquiBot to manage your bounties.
 
 To test the bot, you can:
 
@@ -53,35 +163,35 @@ To test the bot, you can:
 
 ## Configuration
 
-`evm-network-id` is ID of the EVM-compatible network that will be used for payouts.
+`evmNetworkId` is ID of the EVM-compatible network that will be used for payouts.
 
-`price-multiplier` is a base number that will be used to calculate task price based on the following formula: `price = price-multiplier * time-label-weight * priority-label-weight * 100`
+`priceMultiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = priceMultiplier * timeLabelWeight * priority-label-weight * 100`
 
-`time-labels` are labels for marking the time limit of the task:
-
-- `name` is a human-readable name
-- `value` is number of seconds that corresponds to the time limit of the task
-
-`priority-labels` are labels for marking the priority of the task:
+`timeLabels` are labels for marking the time limit of the bounty:
 
 - `name` is a human-readable name
+- `value` is number of seconds that corresponds to the time limit of the bounty
 
-`command-settings` are setting to enable or disable a command
+`priorityLabels` are labels for marking the priority of the bounty:
+
+- `name` is a human-readable name
+
+`commandSettings` are setting to enable or disable a command
 
 - `name` is the name of the command
 - `enabled` is a `true` or `false` value to enable or disable a command
 
-`default-labels` are labels that are applied when an issue is created without any time or priority labels.
+`defaultLabels` are labels that are applied when an issue is created without any time or priority labels.
 
-`assistive-pricing` to create a new pricing label if it doesn't exist. Can be `true` or `false`.
+`assistivePricing` to create a new pricing label if it doesn't exist. Can be `true` or `false`.
 
-`disable-analytics` can be `true` or `false` that disables or enables weekly analytics collection by Ubiquity.
+`disableAnalytics` can be `true` or `false` that disables or enables weekly analytics collection by Ubiquity.
 
-`payment-permit-max-price` sets the max amount for automatic payout of tasks when the issue is closed.
+`paymentPermitMaxPrice` sets the max amount for automatic payout of bounties when the issue is closed.
 
-`comment-incentives` can be `true` or `false` that enable or disable comment incentives. These are payments generated for comments in the issue by contributors, excluding the assignee.
+`commentIncentives` can be `true` or `false` that enable or disable comment incentives. These are payments generated for comments in the issue by contributors, excluding the assignee.
 
-`issue-creator-multiplier` is a number that defines a base multiplier for calculating incentive for the creator of the issue.
+`issueCreatorMultiplier` is a number that defines a base multiplier for calculating incentive for the creator of the issue.
 
 `comment-element-pricing` defines how much is a part of the comment worth. For example `text: 0.1` means that any text in the comment will add 0.1
 
@@ -92,13 +202,15 @@ To test the bot, you can:
   - `totals`:
     - `word` defines reward for each word in the comment
 
-`max-concurrent-assigns` is the maximum number of tasks that can be assigned to an assignee at once. This excludes tasks with delayed or approved pull request reviews.
+`maxConcurrentAssigns` is the maximum number of bounties that can be assigned to a bounty hunter at once. This excludes bounties with delayed or approved pull request reviews.
 
-`register-wallet-with-verification` can be `true` or `false`. If enabled, it requires a signed message to set wallet address. This prevents users from setting wallet address from centralized exchanges, which would make payments impossible to claim.
+`registerWalletWithVerification` can be `true` or `false`. If enabled, it requires a signed message to set wallet address. This prevents users from setting wallet address from centralized exchanges, which would make payments impossible to claim.
 
-`promotion-comment` is a message that is appended to the payment permit comment.
+`promotionComment` is a message that is appended to the payment permit comment.
 
-## How to run locally
+### Supase Database
+
+### Option 1
 
 1. Create a new project at [Supabase](https://supabase.com/). Add `Project URL` and `API Key` to the `.env` file:
 
@@ -106,6 +218,29 @@ To test the bot, you can:
 
 SUPABASE_URL="XXX"
 SUPABASE_KEY="XXX"
+
+```
+
+### Option 2
+
+Supabase comes with a [readme](https://github.com/ubiquity/ubiquibot/blob/development/supabase/README.md) which is helpful for managing and setup
+### This options will require you to have a local Docker installation (under the hood it is required by Supabase) refer to [Supabase Docs](https://supabase.com/docs)
+
+```
+yarn supabase start
+```
+
+## Check Supabase Status (locally)
+```
+yarn supabase status
+```
+
+![supabase](https://github.com/ubiquity/ubiquibot/assets/41552663/e8709b8f-e7c3-49e0-876c-c15dde22c6d2)
+
+## Supabase Studio
+
+You can then access to Supabase Studio by going to http://localhost:54323
+
 
 2. Add `FOLLOW_UP_TIME` and `DISQUALIFY_TIME` to the `.env` file if you don't want to use default ones.
 
@@ -116,27 +251,29 @@ DISQUALIFY_TIME="7 days" // 7 days
 
 ```
 
-3. `yarn install`
+3. `Make sure you have Node => 20 && yarn`
 4. Open 2 terminal instances:
    - in one instance run `yarn build --watch` (compiles the Typescript code)
    - in another instance run `yarn start:watch` (runs the bot locally)
-5. Open `localhost:3000` and follow instructions to add the bot to one of your repositories.
+5. Open `http://localhost:3000` and follow instructions to add the bot to one of your repositories.
 
 At this point the `.env` files auto-fill the empty fields (`PRIVATE_KEY` and `APP_ID`) if it is not previously filled.
-Now you can make changes to the repository on GitHub (e.g. add a task) and the bot should react.
+Now you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react.
+
+6. After adding the bot (as a installed app) to your github you will need to restart the aforemention yarn start:watch so CTRL-C to stop the node daemon and `yarn start:watch` again
 
 You can, for example:
 
 1. Create a new issue
 2. Add a time label, ex: `Time: <1 Day`
 3. Add a priority label, ex: `Priority: 1 (Normal)`
-4. At this point the bot should add a price label, you should see event logs in one of your opened terminals
+4. the bot should add a price label, you should see event logs in your opened bot terminals
 
 ## How it works
 
-UbiquiBot is built using the [probot](https://probot.github.io/) framework so initially the bot is a github app. But thanks to the [probot/adapter-github-actions](https://github.com/probot/adapter-github-actions) you can also use the bot as a github action.
+Ubiquibot is built using the [probot](https://probot.github.io/) framework so in fact the bot is a github app. But thanks to the [probot/adapter-github-actions](https://github.com/probot/adapter-github-actions) you can also use the bot as a github action.
 
-You can use UbiquiBot as a [github app](https://github.com/marketplace/ubiquibot).
+[Ubiquibot](https://github.com/marketplace/ubiquibot) it's also available ready to install on the Githut Marketplace.
 
 When using as a github app the flow is the following:
 
@@ -164,7 +301,7 @@ For payment to work in your local instance, ubiquibot must be set up in a Github
 
 ## How to QA any additions to the bot
 
-Make sure you have your local instance of ubiquibot running.
+Make sure you have your local instance of [ubiquibot running](#quickstart).
 
 1. Fork the ubiquibot repo and add your local instance of ubiquibot to the forked repository.
 2. Enable Github action running on the forked repo and allow `issues` on the settings tab.
@@ -181,7 +318,7 @@ Make sure you have your local instance of ubiquibot running.
 
 ## Architecture Overview
 
-UbiquiBot is built using the [probot](https://probot.github.io/) framework so initially the bot is a github app
+Ubiquibot is built using the [probot](https://probot.github.io/) framework, the bot is a github app
 
 <pre>
 &lt;root&gt;
@@ -195,7 +332,7 @@ UbiquiBot is built using the [probot](https://probot.github.io/) framework so in
 
 <pre>
 &lt;src&gt;
-├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/adapters">adapters</a>: A set of interaces to interact with 3rd party libraries such as <a href="https://www.npmjs.com/package/@supabase/supabase-js">supabase-js</a>.<br> It consists of a set of small functions built on top of a specific library.<br> Every adapter needs to be for calling a specific method of the library.
+├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/adapters">adapters</a>: A set of interaces to interact with 3rd party libraries such as <a href="https://www.npmjs.com/package/telegraf">Telegraf</a>, <a href="https://www.npmjs.com/package/@supabase/supabase-js">supabase-js</a>.<br> It consists of a set of small functions bulit on top of a specific library.<br> Every adapter needs to be for calling a specific method of the library.
 |
 ├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/bindings">bindings</a>: A set of listeners to bind/process requests emitted by GitHub.<br> It also has a function to load a project configuration.
 |
@@ -205,17 +342,36 @@ UbiquiBot is built using the [probot](https://probot.github.io/) framework so in
 |
 ├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/types">types</a> A set of schema and type definitions.<br> Why do we need schema? because we want to validate the unknown input and throw the error before the main execution.
 |
+
+├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/helpers">helpers</a> A set of schema and type definitions.<br> Why do we need schema? because we want to validate the unknown input and throw the error before the main execution.
+
 ├── <a href="https://github.com/ubiquity/ubiquibot/tree/development/src/utils">utils</a> A set of utility functions
 </pre>
 
+## Default Config Notes (`ubiquibot-config-default.ts`)
+
+We can't use a `jsonc` file due to limitations with Netlify. Here is a snippet of some values with notes next to them.
+
+```jsonc
+{
+  "payment-permit-max-price": 9007199254740991, // Number.MAX_SAFE_INTEGER
+  "max-concurrent-assigns": 9007199254740991, // Number.MAX_SAFE_INTEGER
+  "comment-element-pricing": {
+    /* https://github.com/syntax-tree/mdast#nodes */
+    "strong": 0 // Also includes italics, unfortunately https://github.com/syntax-tree/mdast#strong
+    /* https://github.com/syntax-tree/mdast#gfm */
+  }
+}
+```
+
 ## Supabase Cron Job (`logs-cleaner`)
 
-### Dashboard > Project > Database > Extensions
+##### Dashboard > Project > Database > Extensions
 
 > Search `PG_CRON` and Enable it.
 
 
-### Dashboard > Project > SQL Editor
+##### Dashboard > Project > SQL Editor
 
 ```sql
 -- Runs everyday at 03:00 AM to cleanup logs that are older than a week
@@ -231,12 +387,3 @@ select
 -- Cancel the cron job
 select cron.unschedule('logs-cleaner');
 ```
-
-
-## Tests
-
-- Make a new GitHub App for your bot instance
-- Make sure its "public" so you can install on a test org.
-   - hidden away under "Advanced Options" when creating the app: https://github.com/settings/apps/YOUR_APP/advanced
-- Make sure it has access to BOTH the test repo and the ubiquibot-config repo
-   - make sure you make the ubiquibot-config repo first
