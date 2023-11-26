@@ -14,7 +14,7 @@ async function getAllIssueEvents(context: Context) {
     });
     return events;
   } catch (err: unknown) {
-    context.logger.error("Failed to fetch lists of events", err);
+    context.logger.fatal("Failed to fetch lists of events", err);
     return [];
   }
 }
@@ -40,14 +40,14 @@ export async function clearAllPriceLabelsOnIssue(context: Context) {
       name: issuePrices[0].name,
     });
   } catch (e: unknown) {
-    context.logger.error("Clearing all price labels failed!", e);
+    context.logger.fatal("Clearing all price labels failed!", e);
   }
 }
 
 export async function addLabelToIssue(context: Context, labelName: string) {
   const payload = context.payload;
   if (!payload.issue) {
-    throw context.logger.error("Issue object is null");
+    throw context.logger.fatal("Issue object is null");
   }
 
   try {
@@ -56,7 +56,7 @@ export async function addLabelToIssue(context: Context, labelName: string) {
       labels: [labelName],
     });
   } catch (e: unknown) {
-    context.logger.error("Adding a label to issue failed!", e);
+    context.logger.fatal("Adding a label to issue failed!", e);
   }
 }
 
@@ -82,7 +82,7 @@ async function listIssuesAndPullsForRepo(
     });
     return response.data;
   } catch (err: unknown) {
-    context.logger.error("Failed to fetch lists of issues", err);
+    context.logger.fatal("Failed to fetch lists of issues", err);
     return [];
   }
 }
@@ -105,7 +105,7 @@ export async function listAllIssuesAndPullsForRepo(
     })) as Issue[];
     return issues;
   } catch (err: unknown) {
-    context.logger.error("Listing all issues and pulls failed!", err);
+    context.logger.fatal("Listing all issues and pulls failed!", err);
     return [];
   }
 }
@@ -131,7 +131,7 @@ export async function addCommentToIssue(context: Context, message: HandlerReturn
       body: comment,
     });
   } catch (e: unknown) {
-    context.logger.error("Adding a comment failed!", e);
+    context.logger.fatal("Adding a comment failed!", e);
   }
 }
 
@@ -142,7 +142,7 @@ export async function upsertLastCommentToIssue(context: Context, issueNumber: nu
     if (comments.length > 0 && comments[comments.length - 1].body !== commentBody)
       await addCommentToIssue(context, commentBody, issueNumber);
   } catch (e: unknown) {
-    context.logger.error("Upserting last comment failed!", e);
+    context.logger.fatal("Upserting last comment failed!", e);
   }
 }
 
@@ -173,7 +173,7 @@ export async function getIssueDescription(
 
     return result as string;
   } catch (e: unknown) {
-    throw context.logger.error("Fetching issue description failed!", e);
+    throw context.logger.fatal("Fetching issue description failed!", e);
   }
 }
 
@@ -196,7 +196,7 @@ export async function getAllIssueComments(
     })) as Comment[];
     return comments;
   } catch (e: unknown) {
-    context.logger.error("Fetching all issue comments failed!", e);
+    context.logger.fatal("Fetching all issue comments failed!", e);
     return [];
   }
 }
@@ -218,7 +218,7 @@ export async function getAllIssueAssignEvents(context: Context, issueNumber: num
 
     return events.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
   } catch (err: unknown) {
-    context.logger.error("Fetching all issue assign events failed!", err);
+    context.logger.fatal("Fetching all issue assign events failed!", err);
     return [];
   }
 }
@@ -242,7 +242,7 @@ async function checkUserPermissionForRepo(context: Context, username: string): P
 
     return res.status === 204;
   } catch (e: unknown) {
-    context.logger.error("Checking if user permisson for repo failed!", e);
+    context.logger.fatal("Checking if user permisson for repo failed!", e);
     return false;
   }
 }
@@ -259,7 +259,7 @@ async function checkUserPermissionForOrg(context: Context, username: string): Pr
     // skipping status check due to type error of checkMembershipForUser function of octokit
     return true;
   } catch (e: unknown) {
-    context.logger.error("Checking if user permisson for org failed!", e);
+    context.logger.fatal("Checking if user permisson for org failed!", e);
     return false;
   }
 }
@@ -291,7 +291,7 @@ export async function isUserAdminOrBillingManager(
   }
 
   async function checkIfIsBillingManager() {
-    if (!payload.organization) throw context.logger.error(`No organization found in payload!`);
+    if (!payload.organization) throw context.logger.fatal(`No organization found in payload!`);
     const { data: membership } = await context.octokit.rest.orgs.getMembershipForUser({
       org: payload.organization.login,
       username: payload.repository.owner.login,
@@ -316,7 +316,7 @@ export async function addAssignees(context: Context, issue: number, assignees: s
       assignees,
     });
   } catch (e: unknown) {
-    context.logger.error("Adding assignees failed!", e);
+    context.logger.fatal("Adding assignees failed!", e);
   }
 }
 
@@ -335,7 +335,7 @@ export async function deleteLabel(context: Context, label: string) {
       });
     }
   } catch (e: unknown) {
-    context.logger.error("Deleting label failed!", e);
+    context.logger.fatal("Deleting label failed!", e);
   }
 }
 
@@ -354,7 +354,7 @@ export async function removeLabel(context: Context, name: string) {
       name: name,
     });
   } catch (e: unknown) {
-    context.logger.error("Removing label failed!", e);
+    context.logger.fatal("Removing label failed!", e);
   }
 }
 
@@ -370,7 +370,7 @@ export async function getAllPullRequests(context: Context, state: "open" | "clos
     });
     return pulls;
   } catch (err: unknown) {
-    context.logger.error("Fetching all pull requests failed!", err);
+    context.logger.fatal("Fetching all pull requests failed!", err);
     return [];
   }
 }
@@ -393,7 +393,7 @@ async function getPullRequests(
     });
     return pulls;
   } catch (err: unknown) {
-    context.logger.error("Fetching pull requests failed!", err);
+    context.logger.fatal("Fetching pull requests failed!", err);
     return [];
   }
 }
@@ -408,7 +408,7 @@ export async function closePullRequest(context: Context, pullNumber: number) {
       state: "closed",
     });
   } catch (err: unknown) {
-    context.logger.error("Closing pull requests failed!", err);
+    context.logger.fatal("Closing pull requests failed!", err);
   }
 }
 
@@ -431,7 +431,7 @@ export async function getAllPullRequestReviews(
     });
     return reviews;
   } catch (err: unknown) {
-    context.logger.error("Fetching all pull request reviews failed!", err);
+    context.logger.fatal("Fetching all pull request reviews failed!", err);
     return [];
   }
 }
@@ -457,7 +457,7 @@ async function getPullRequestReviews(
     });
     return reviews;
   } catch (err: unknown) {
-    context.logger.error("Fetching pull request reviews failed!", err);
+    context.logger.fatal("Fetching pull request reviews failed!", err);
     return [];
   }
 }
@@ -471,7 +471,7 @@ export async function getReviewRequests(context: Context, pullNumber: number, ow
     });
     return response.data;
   } catch (err: unknown) {
-    context.logger.error("Could not get requested reviewers", err);
+    context.logger.fatal("Could not get requested reviewers", err);
     return null;
   }
 }
@@ -487,7 +487,7 @@ export async function getIssueByNumber(context: Context, issueNumber: number) {
     });
     return issue;
   } catch (e: unknown) {
-    context.logger.error("Fetching issue failed!", e);
+    context.logger.fatal("Fetching issue failed!", e);
     return;
   }
 }
@@ -503,7 +503,7 @@ export async function getPullByNumber(context: Context, pull: number) {
     });
     return response.data;
   } catch (err: unknown) {
-    context.logger.error("Fetching pull request failed!", err);
+    context.logger.fatal("Fetching pull request failed!", err);
     return;
   }
 }
@@ -526,7 +526,7 @@ export async function getAssignedIssues(context: Context, username: string): Pro
     )) as Issue[];
     return issues;
   } catch (err: unknown) {
-    context.logger.error("Fetching assigned issues failed!", err);
+    context.logger.fatal("Fetching assigned issues failed!", err);
     return [];
   }
 }
@@ -587,11 +587,11 @@ export async function getAllLinkedIssuesAndPullsInBody(context: Context, issueNu
   const issue = await getIssueByNumber(context, issueNumber);
 
   if (!issue) {
-    throw logger.error("No issue found!", { issueNumber });
+    throw logger.fatal("No issue found!", { issueNumber });
   }
 
   if (!issue.body) {
-    throw logger.error("No body found!", { issueNumber });
+    throw logger.fatal("No body found!", { issueNumber });
   }
 
   const body = issue.body;

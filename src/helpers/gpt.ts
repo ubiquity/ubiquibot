@@ -138,7 +138,7 @@ export async function askGPT(context: Context, chatHistory: CreateChatCompletion
   const { keys } = config;
 
   if (!keys.openAi) {
-    throw logger.error(
+    throw logger.fatal(
       "You must configure the `openai-api-key` property in the bot configuration in order to use AI powered features."
     );
   }
@@ -163,7 +163,7 @@ export async function askGPT(context: Context, chatHistory: CreateChatCompletion
   };
 
   if (!res) {
-    throw context.logger.error("Error getting GPT response", { res });
+    throw context.logger.fatal("Error getting GPT response", { res });
   }
 
   return { answer, tokenUsage };

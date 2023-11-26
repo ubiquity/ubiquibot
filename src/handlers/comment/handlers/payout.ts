@@ -14,13 +14,13 @@ export async function autoPay(context: Context, body: string) {
   if (autopayCommand) {
     const hasSufficientPrivileges = await isUserAdminOrBillingManager(context, payload.sender.login);
     if (!hasSufficientPrivileges) {
-      return logger.warn(
+      return logger.error(
         "You must be an 'admin' or 'billing_manager' to toggle automatic payments for completed issues."
       );
     }
     return context.logger.ok("Automatic payment for this issue state:", { autopayCommand });
   }
-  return logger.warn(
+  return logger.error(
     `Invalid command. Please use the following format: \`/autopay true\` or \`/autopay false\` to toggle automatic payments for completed issues.`
   );
 }

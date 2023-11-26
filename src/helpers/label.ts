@@ -25,7 +25,7 @@ export async function listLabelsForRepo(context: Context): Promise<Label[]> {
     return res.data;
   }
 
-  throw context.logger.error("Failed to fetch lists of labels", { status: res.status });
+  throw context.logger.fatal("Failed to fetch lists of labels", { status: res.status });
 }
 
 export async function createLabel(

@@ -5,7 +5,7 @@ import { closePullRequestForAnIssue } from "../../assign/action";
 export async function unassign(context: Context, body: string) {
   const logger = context.logger;
   if (!body.startsWith("/stop")) {
-    return logger.error("Skipping to unassign", { body });
+    return logger.fatal("Skipping to unassign", { body });
   }
 
   const payload = context.event.payload as Payload;
@@ -19,7 +19,7 @@ export async function unassign(context: Context, body: string) {
   const assignees = payload.issue?.assignees ?? [];
 
   if (assignees.length == 0) {
-    return logger.warn("No assignees found for issue", { issueNumber });
+    return logger.error("No assignees found for issue", { issueNumber });
   }
   const shouldUnassign = assignees[0]?.login.toLowerCase() == payload.sender.login.toLowerCase();
   logger.debug("Unassigning sender", {
@@ -43,5 +43,5 @@ export async function unassign(context: Context, body: string) {
       user: payload.sender.login,
     });
   }
-  return logger.warn("You are not assigned to this task", { issueNumber, user: payload.sender.login });
+  return logger.error("You are not assigned to this task", { issueNumber, user: payload.sender.login });
 }

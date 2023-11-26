@@ -62,7 +62,7 @@ export async function multiplier(context: Context, body: string) {
       );
 
       if (!accessible) {
-        return logger.warn(
+        return logger.error(
           "Insufficient permissions to update the payout multiplier. User is not an 'admin' or 'billing_manager'",
           {
             repo: repo.full_name,
@@ -97,7 +97,7 @@ export async function multiplier(context: Context, body: string) {
       });
     }
   } else {
-    return logger.error(
+    return logger.fatal(
       "Invalid body for taskMultiplier command. Example usage: /multiplier @user 0.5 'Multiplier reason'"
     );
   }

@@ -10,7 +10,7 @@ export async function checkModifiedBaseRate(context: Context) {
 
   // if zero sha, push is a pr change
   if (payload.before === ZERO_SHA) {
-    logger.debug("Skipping push events, not a master write");
+    logger.debug("Skipping push events, a new branch was created");
   }
 
   const changes = getCommitChanges(payload.commits);

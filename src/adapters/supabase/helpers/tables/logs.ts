@@ -136,15 +136,15 @@ export class Logs {
     });
   }
 
-  public warn(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
+  public error(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
-      level: LogLevel.WARN,
-      consoleLog: Logs.console.warn,
+      level: LogLevel.ERROR,
+      consoleLog: Logs.console.error,
       logMessage: log,
       metadata,
       postComment,
-      type: "warn",
+      type: "error",
     });
   }
 
@@ -160,7 +160,7 @@ export class Logs {
     });
   }
 
-  public error(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
+  public fatal(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     if (!metadata) {
       metadata = Logs.convertErrorsIntoObjects(new Error(log));
       const stack = metadata.stack as string[];
@@ -176,12 +176,12 @@ export class Logs {
 
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
-      level: LogLevel.ERROR,
-      consoleLog: Logs.console.error,
+      level: LogLevel.FATAL,
+      consoleLog: Logs.console.fatal,
       logMessage: log,
       metadata,
       postComment,
-      type: "error",
+      type: "fatal",
     });
   }
 
@@ -238,21 +238,21 @@ export class Logs {
 
   private async _sendLogsToSupabase(log: LogInsert) {
     const { error } = await this._supabase.from("logs").insert(log);
-    if (error) throw Logs.console.error("Error logging to Supabase:", error);
+    if (error) throw Logs.console.fatal("Error logging to Supabase:", error);
   }
 
   private async _processLogs(log: LogInsert) {
     try {
       await this._sendLogsToSupabase(log);
     } catch (error) {
-      Logs.console.error("Error sending log, retrying:", error);
+      Logs.console.fatal("Error sending log, retrying:", error);
       return this._retryLimit > 0 ? await this._retryLog(log) : null;
     }
   }
 
   private async _retryLog(log: LogInsert, retryCount = 0) {
     if (retryCount >= this._retryLimit) {
-      Logs.console.error("Max retry limit reached for log:", log);
+      Logs.console.fatal("Max retry limit reached for log:", log);
       return;
     }
 
@@ -261,7 +261,7 @@ export class Logs {
     try {
       await this._sendLogsToSupabase(log);
     } catch (error) {
-      Logs.console.error("Error sending log (after retry):", error);
+      Logs.console.fatal("Error sending log (after retry):", error);
       await this._retryLog(log, retryCount + 1);
     }
   }
@@ -302,7 +302,7 @@ export class Logs {
   private _save(logInsert: LogInsert) {
     this._addToQueue(logInsert)
       .then(() => void 0)
-      .catch(() => Logs.console.error("Error adding logs to queue"));
+      .catch(() => Logs.console.fatal("Error adding logs to queue"));
 
     if (this._environment === "development") {
       Logs.console.ok(logInsert.log, logInsert);
@@ -314,7 +314,7 @@ export class Logs {
     const prettySerialized = JSON.stringify(metadata, null, 2);
     // first check if metadata is an error, then post it as a json comment
     // otherwise post it as an html comment
-    if (level === LogLevel.ERROR) {
+    if (level === LogLevel.FATAL) {
       return ["```json", prettySerialized, "```"].join("\n");
     } else {
       return ["<!--", prettySerialized, "-->"].join("\n");
@@ -380,9 +380,9 @@ export class Logs {
 
   private _getNumericLevel(level: LogLevel) {
     switch (level) {
-      case LogLevel.ERROR:
+      case LogLevel.FATAL:
         return 0;
-      case LogLevel.WARN:
+      case LogLevel.ERROR:
         return 1;
       case LogLevel.INFO:
         return 2;

@@ -1,19 +1,19 @@
 import { Context } from "../../types/context";
 
+import { addLabelToIssue, clearAllPriceLabelsOnIssue, getAllLabeledEvents } from "../../helpers/issue";
+import { createLabel } from "../../helpers/label";
+import { BotConfig } from "../../types/configuration-types";
+import { Label } from "../../types/label";
+import { Payload, UserType } from "../../types/payload";
+import { labelAccessPermissionsCheck } from "../access/labels-access";
 import { setPrice } from "../shared/pricing";
 import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./action";
-import { Payload, UserType } from "../../types/payload";
-import { Label } from "../../types/label";
-import { BotConfig } from "../../types/configuration-types";
-import { clearAllPriceLabelsOnIssue, getAllLabeledEvents, addLabelToIssue } from "../../helpers/issue";
-import { labelAccessPermissionsCheck } from "../access/labels-access";
-import { createLabel } from "../../helpers/label";
 
 export async function onLabelChangeSetPricing(context: Context): Promise<void> {
   const config = context.config;
   const logger = context.logger;
   const payload = context.event.payload as Payload;
-  if (!payload.issue) throw context.logger.error("Issue is not defined");
+  if (!payload.issue) throw context.logger.fatal("Issue is not defined");
 
   const labels = payload.issue.labels;
   const labelNames = labels.map((i) => i.name);
@@ -25,14 +25,14 @@ export async function onLabelChangeSetPricing(context: Context): Promise<void> {
   const hasPermission = await labelAccessPermissionsCheck(context);
   if (!hasPermission) {
     if (config.features.publicAccessControl.setLabel === false) {
-      throw logger.warn("No public access control to set labels");
+      throw logger.error("No public access control to set labels");
     }
-    throw logger.warn("No permission to set labels");
+    throw logger.error("No permission to set labels");
   }
 
   const { assistivePricing: hasAssistivePricing } = config.features;
 
-  if (!labels) throw logger.warn(`No labels to calculate price`);
+  if (!labels) throw logger.error(`No labels to calculate price`);
 
   // here we should make an exception if it was a price label that was just set to just skip this action
   const isPayloadToSetPrice = payload.label?.name.includes("Price: ");
@@ -62,7 +62,7 @@ export async function onLabelChangeSetPricing(context: Context): Promise<void> {
   const recognizedLabels = getRecognizedLabels(labels, config);
 
   if (!recognizedLabels.time.length || !recognizedLabels.priority.length) {
-    logger.warn("No recognized labels to calculate price");
+    logger.error("No recognized labels to calculate price");
     await clearAllPriceLabelsOnIssue(context);
     return;
   }
@@ -70,7 +70,7 @@ export async function onLabelChangeSetPricing(context: Context): Promise<void> {
   const minLabels = getMinLabels(recognizedLabels);
 
   if (!minLabels.time || !minLabels.priority) {
-    logger.warn("No label to calculate price");
+    logger.error("No label to calculate price");
     return;
   }
 
@@ -126,10 +126,10 @@ async function handleTargetPriceLabel(
 async function handleExistingPriceLabel(context: Context, targetPriceLabel: string, assistivePricing: boolean) {
   const logger = context.logger;
   let labeledEvents = await getAllLabeledEvents(context);
-  if (!labeledEvents) return logger.warn("No labeled events found");
+  if (!labeledEvents) return logger.error("No labeled events found");
 
   labeledEvents = labeledEvents.filter((event) => event.label?.name.includes("Price"));
-  if (!labeledEvents.length) return logger.warn("No price labeled events found");
+  if (!labeledEvents.length) return logger.error("No price labeled events found");
 
   if (labeledEvents[labeledEvents.length - 1].actor?.type == UserType.User) {
     logger.info(`Skipping... already exists`);

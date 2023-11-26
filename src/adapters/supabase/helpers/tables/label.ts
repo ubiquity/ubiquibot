@@ -2,8 +2,8 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Repository } from "../../../../types/payload";
 
 import Runtime from "../../../../bindings/bot-runtime";
-import { Super } from "./super";
 import { Database } from "../../types/database";
+import { Super } from "./super";
 
 type LabelRow = Database["public"]["Tables"]["labels"]["Row"];
 
@@ -75,7 +75,7 @@ export class Label extends Super {
 
     if (locationError) throw new Error(locationError.message);
     if (!locationData) {
-      runtime.logger.warn("Repository location ID not found in database.");
+      runtime.logger.error("Repository location ID not found in database.");
       return null;
     }
 

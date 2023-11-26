@@ -20,14 +20,14 @@ export async function query(context: Context, body: string) {
   const username = matches?.[1];
 
   if (!username) {
-    throw logger.error("Invalid body for query command \n usage /query @user");
+    throw logger.fatal("Invalid body for query command \n usage /query @user");
   }
 
   const database = runtime.adapters.supabase;
   const usernameResponse = await context.event.octokit.users.getByUsername({ username });
   const user = usernameResponse.data;
   if (!user) {
-    throw logger.error("User not found", { username });
+    throw logger.fatal("User not found", { username });
   }
   const accessData = await database.access.getAccess(user.id);
   const walletAddress = await database.wallet.getAddress(user.id);
@@ -36,7 +36,7 @@ export async function query(context: Context, body: string) {
   messageBuffer.push(renderMarkdownTableHeader());
 
   if (!accessData && !walletAddress) {
-    return logger.warn("No access or wallet found for user", { username });
+    return logger.error("No access or wallet found for user", { username });
   }
   if (accessData) {
     messageBuffer.push(appendToMarkdownTableBody(accessData));

@@ -38,7 +38,7 @@ export async function ask(context: Context, body: string) {
     const commentsRaw = await getAllIssueComments(context, issue.number, "raw");
 
     if (!comments) {
-      throw logger.error(`Error getting issue comments`);
+      throw logger.fatal(`Error getting issue comments`);
     }
 
     // add the first comment of the issue/pull request
@@ -117,9 +117,9 @@ export async function ask(context: Context, body: string) {
     } else if (gptResponse.answer) {
       return gptResponse.answer;
     } else {
-      throw logger.error("Error getting response from OpenAI");
+      throw logger.fatal("Error getting response from OpenAI");
     }
   } else {
-    return logger.warn("Invalid syntax for ask. usage: '/ask What is pi?'");
+    return logger.error("Invalid syntax for ask. usage: '/ask What is pi?'");
   }
 }

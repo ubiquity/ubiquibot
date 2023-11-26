@@ -17,13 +17,13 @@ export async function generatePermit2Signature(
     keys: { evmPrivateEncrypted },
   } = context.config;
 
-  if (!evmPrivateEncrypted) throw logger.warn("No bot wallet private key defined");
+  if (!evmPrivateEncrypted) throw logger.error("No bot wallet private key defined");
   const { rpc, paymentToken } = getPayoutConfigByNetworkId(evmNetworkId);
   const { privateKey } = await decryptKeys(evmPrivateEncrypted);
 
-  if (!rpc) throw logger.error("RPC is not defined");
-  if (!privateKey) throw logger.error("Private key is not defined");
-  if (!paymentToken) throw logger.error("Payment token is not defined");
+  if (!rpc) throw logger.fatal("RPC is not defined");
+  if (!privateKey) throw logger.fatal("Private key is not defined");
+  if (!paymentToken) throw logger.fatal("Payment token is not defined");
 
   let provider;
   let adminWallet;

@@ -1,6 +1,6 @@
 import { closePullRequest } from "../../helpers/issue";
 import { getLinkedPullRequests } from "../../helpers/parser";
-import { calculateLabelValue, calculateDurations } from "../../helpers/shared";
+import { calculateDurations, calculateLabelValue } from "../../helpers/shared";
 import { Context } from "../../types/context";
 import { Label } from "../../types/label";
 import { Payload } from "../../types/payload";
@@ -10,14 +10,14 @@ export async function startCommandHandler(context: Context) {
   const logger = context.logger;
   const payload = context.event.payload as Payload;
   if (!payload.issue) {
-    return logger.error("Issue is not defined");
+    return logger.fatal("Issue is not defined");
   }
 
   const assignees = payload.issue.assignees;
 
   // If no valid assignees exist, log a debug message and return
   if (assignees.length === 0) {
-    return logger.warn("No assignees");
+    return logger.error("No assignees");
   }
 
   // Flatten assignees into a string
@@ -28,7 +28,7 @@ export async function startCommandHandler(context: Context) {
 
   // If no labels exist, log a debug message and return
   if (!labels) {
-    return logger.warn(`No labels to calculate timeline`);
+    return logger.error(`No labels to calculate timeline`);
   }
 
   // Filter out labels that match the time labels defined in the config
@@ -80,7 +80,7 @@ export async function closePullRequestForAnIssue(context: Context) {
   const logger = context.logger;
   const payload = context.event.payload as Payload;
   if (!payload.issue?.number) {
-    throw logger.error("Issue is not defined");
+    throw logger.fatal("Issue is not defined");
   }
 
   const linkedPullRequests = await getLinkedPullRequests(context, {
