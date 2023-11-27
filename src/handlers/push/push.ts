@@ -2,11 +2,11 @@ import { Context as ProbotContext } from "probot";
 import Runtime from "../../bindings/bot-runtime";
 
 import { DefinedError } from "ajv";
+import { createCommitComment } from "../../helpers/commit";
+import { getFileContent } from "../../helpers/file";
 import { BotConfig, validateBotConfig } from "../../types/configuration-types";
 import { CommitsPayload, PushPayload } from "../../types/payload";
 import { parseYaml, transformConfig } from "../../utils/generate-configuration";
-import { createCommitComment } from "../../helpers/commit";
-import { getFileContent } from "../../helpers/file";
 
 export const ZERO_SHA = "0000000000000000000000000000000000000000";
 export const BASE_RATE_FILE = ".github/ubiquibot-config.yml";
@@ -32,7 +32,7 @@ export async function validateConfigChange(context: ProbotContext) {
   const payload = context.payload as PushPayload;
 
   if (!payload.ref.startsWith("refs/heads/")) {
-    logger.debug("Skipping push events, not a branch");
+    logger.info("Skipping push events, not a branch");
     return;
   }
 
@@ -40,7 +40,7 @@ export async function validateConfigChange(context: ProbotContext) {
 
   // skip if empty
   if (changes && changes.length === 0) {
-    logger.debug("Skipping push events, file change empty 3");
+    logger.info("Skipping push events as there are no file changes in the latest commit.");
     return;
   }
 
@@ -50,7 +50,7 @@ export async function validateConfigChange(context: ProbotContext) {
       .filter((commit) => commit.modified.includes(BASE_RATE_FILE) || commit.added.includes(BASE_RATE_FILE))
       .reverse()[0]?.id;
     if (!commitSha) {
-      logger.debug("Skipping push events, commit sha not found");
+      logger.info("Skipping push events, commit SHA not found");
       return;
     }
 
@@ -88,11 +88,11 @@ export async function validateConfigChange(context: ProbotContext) {
         logger.info("Config validation failed!", errorMsg);
         await createCommitComment(context, errorMsg, commitSha, BASE_RATE_FILE);
       } else {
-        logger.debug(`Config validation passed!`);
+        logger.info(`Config validation passed!`);
       }
     }
   } else {
-    logger.debug(`Skipping push events, file change doesn't include config file: ${JSON.stringify(changes)}`);
+    logger.info(`Skipping push events, file change doesn't include config file.`, changes);
   }
 }
 
