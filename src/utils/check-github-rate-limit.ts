@@ -7,7 +7,7 @@ export async function checkRateLimitGit(headers: { "x-ratelimit-remaining"?: str
     const now = new Date();
     const timeToWait = resetTime.getTime() - now.getTime();
     const logger = Runtime.getState().logger;
-    logger.warn("No remaining requests.", { resetTime, now, timeToWait });
+    logger.error("No remaining requests.", { resetTime, now, timeToWait });
     await wait(timeToWait);
   }
   return remainingRequests;

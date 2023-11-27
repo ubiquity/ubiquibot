@@ -1,8 +1,8 @@
 import Decimal from "decimal.js";
+import { Context } from "../../../../types/context";
 import { Issue, User } from "../../../../types/payload";
 import { ContributorView } from "./contribution-style-types";
 import { UserScoreDetails } from "./issue-shared-types";
-import { Context } from "../../../../types/context";
 
 export async function assigneeScoring(
   context: Context,
@@ -18,7 +18,7 @@ export async function assigneeScoring(
 ): Promise<UserScoreDetails[]> {
   // get the price label
   const priceLabels = issue.labels.filter((label) => label.name.startsWith("Price: "));
-  if (!priceLabels) throw context.logger.warn("Price label is undefined");
+  if (!priceLabels) throw context.logger.error("Price label is undefined");
 
   // get the smallest price label
   const priceLabel = priceLabels
@@ -31,7 +31,7 @@ export async function assigneeScoring(
     ?.shift();
 
   if (!priceLabel) {
-    throw context.logger.warn("Price label is undefined");
+    throw context.logger.error("Price label is undefined");
   }
 
   // get the price

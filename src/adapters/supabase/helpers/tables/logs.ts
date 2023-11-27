@@ -323,9 +323,9 @@ export class Logs {
 
   private _diffColorCommentMessage(type: string, message: string) {
     const diffPrefix = {
-      error: "-", // - text in red
+      fatal: "-", // - text in red
       ok: "+", // + text in green
-      warn: "!", // ! text in orange
+      error: "!", // ! text in orange
       // info: "#", // # text in gray
       // debug: "@@@@",// @@ text in purple (and bold)@@
       // error: null,

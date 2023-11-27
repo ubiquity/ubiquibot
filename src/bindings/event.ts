@@ -87,7 +87,7 @@ export async function bindEvents(eventContext: ProbotContext) {
   };
 
   if (!context.config.keys.evmPrivateEncrypted) {
-    context.logger.warn("No EVM private key found");
+    context.logger.error("No EVM private key found");
   }
 
   if (!context.logger) {
@@ -95,7 +95,7 @@ export async function bindEvents(eventContext: ProbotContext) {
   }
 
   if (eventContext.name === GitHubEvent.REPOSITORY_DISPATCH) {
-    const dispatchPayload = payload as any;
+    const dispatchPayload = payload;
     if (payload.action === "issueClosed") {
       //This is response for issueClosed request
       const response = dispatchPayload.client_payload.result;
@@ -114,7 +114,7 @@ export async function bindEvents(eventContext: ProbotContext) {
   const handlers = processors[eventName];
 
   if (!handlers) {
-    return context.logger.warn("No handler configured for event:", { eventName });
+    return context.logger.error("No handler configured for event:", { eventName });
   }
   const { pre, action, post } = handlers;
 
@@ -222,7 +222,7 @@ function createRenderCatchAll(context: Context, handlerType: AllHandlersWithType
         const prettySerialized = JSON.stringify(report.metadata, null, 2);
         // first check if metadata is an error, then post it as a json comment
         // otherwise post it as an html comment
-        if (report.logMessage.type === ("error" as LogMessage["type"])) {
+        if (report.logMessage.type === ("fatal" as LogMessage["type"])) {
           metadataSerialized = ["```json", prettySerialized, "```"].join("\n");
         } else {
           metadataSerialized = ["<!--", prettySerialized, "-->"].join("\n");

@@ -43,7 +43,7 @@ async function generateComment(context: Context, totals: TotalsById) {
     const contributorName = userTotals.user.login;
     // const contributionClassName = userTotals.details[0].contribution as ContributorClassNames;
 
-    if (!evmPrivateEncrypted) throw context.logger.warn("No bot wallet private key defined");
+    if (!evmPrivateEncrypted) throw context.logger.error("No bot wallet private key defined");
 
     const beneficiaryAddress = await runtime.adapters.supabase.wallet.getAddress(parseInt(userId));
 

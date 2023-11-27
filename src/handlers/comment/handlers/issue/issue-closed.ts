@@ -86,14 +86,14 @@ async function preflightChecks({ issue, issueComments, context }: PreflightCheck
   if (config.features.publicAccessControl.fundExternalClosedIssue) {
     const hasPermission = await checkUserPermissionForRepoAndOrg(context, payload.sender.login);
     if (!hasPermission)
-      throw context.logger.warn(
+      throw context.logger.error(
         "Permit generation disabled because this issue has been closed by an external contributor."
       );
   }
 
   const priceLabels = issue.labels.find((label) => label.name.startsWith("Price: "));
   if (!priceLabels) {
-    throw context.logger.warn("No price label has been set. Skipping permit generation.", {
+    throw context.logger.error("No price label has been set. Skipping permit generation.", {
       labels: issue.labels,
     });
   }
@@ -110,7 +110,7 @@ function checkIfPermitsAlreadyPosted(context: Context, botComments: Comment[]) {
       if (parsed.caller === "generatePermits") {
         // in the comment metadata we store what function rendered the comment
         console.trace({ parsed });
-        throw context.logger.warn("Permit already posted");
+        throw context.logger.error("Permit already posted");
       }
     }
   });

@@ -140,9 +140,9 @@ export class PrettyLogs {
     const fullLogString = logString;
 
     const colorMap: Record<PrettyLogsWithOk, [keyof typeof console, Colors]> = {
-      error: ["error", Colors.fgRed],
+      fatal: ["error", Colors.fgRed],
       ok: ["log", Colors.fgGreen],
-      warn: ["warn", Colors.fgYellow],
+      error: ["warn", Colors.fgYellow],
       info: ["info", Colors.dim],
       debug: ["debug", Colors.fgMagenta],
       http: ["debug", Colors.dim],
@@ -194,8 +194,8 @@ enum Colors {
   bgWhite = "\x1b[47m",
 }
 export enum LogLevel {
-  FATAL = "error",
-  ERROR = "warn",
+  FATAL = "fatal",
+  ERROR = "error",
   INFO = "info",
   HTTP = "http",
   VERBOSE = "verbose",
