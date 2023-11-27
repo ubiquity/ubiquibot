@@ -21,7 +21,7 @@ export async function issueClosed(context: Context) {
   const pullRequestComments = await getPullRequestComments(context, owner, repository, issueNumber);
   const repoCollaborators = await getCollaboratorsForRepo(context);
 
-  await dispatchWorkflow(owner, "ubiquibot-config", "compute.yml", {
+  await dispatchWorkflow(context, owner, "ubiquibot-config", "compute.yml", {
     eventName: "issueClosed",
     secretToken: process.env.GITHUB_TOKEN,
     owner,
@@ -39,18 +39,20 @@ export async function issueClosed(context: Context) {
       supabaseKey: env.SUPABASE_KEY,
     }),
   });
-
-  return "Please wait until we get the result.";
+  const logger = Runtime.getState().logger;
+  return logger.info("Delegating compute. Please wait for results.");
 }
 
-async function dispatchWorkflow(owner: string, repo: string, workflowId: string, inputs: any) {
+async function dispatchWorkflow(context: Context, owner: string, repo: string, workflowId: string, inputs: any) {
+  const response = await context.octokit.repos.get({ owner, repo });
+  const defaultBranch = response.data.default_branch;
   const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
       Accept: "application/vnd.github.v3+json",
     },
-    body: JSON.stringify({ ref: "master", inputs }),
+    body: JSON.stringify({ ref: defaultBranch, inputs }),
   });
   if (res.status !== 204) {
     const errorMessage = await res.text();
@@ -104,14 +106,14 @@ async function preflightChecks({ issue, issueComments, context }: PreflightCheck
 
 function checkIfPermitsAlreadyPosted(context: Context, botComments: Comment[]) {
   botComments.forEach((comment) => {
-    const parsed = structuredMetadata.parse(comment.body);
-    if (parsed) {
-      console.trace({ parsed });
-      if (parsed.caller === "generatePermits") {
-        // in the comment metadata we store what function rendered the comment
-        console.trace({ parsed });
-        throw context.logger.error("Permit already posted");
-      }
+    const botComment = structuredMetadata.parse(comment.body);
+    // if (botComment) {
+    // console.trace({ parsed: botComment });
+    if (botComment?.className === "Permits") {
+      // in the comment metadata we store what function rendered the comment
+      console.trace({ parsed: botComment });
+      throw context.logger.error("Permit already posted");
     }
+    // }
   });
 }
