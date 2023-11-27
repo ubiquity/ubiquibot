@@ -26,7 +26,7 @@ export async function issueClosed(context: Context) {
     secretToken: process.env.GITHUB_TOKEN,
     owner,
     repo: repository,
-    issueNumber: `${issueNumber}`,
+    issueNumber,
     payload: JSON.stringify({
       issue,
       issueComments,
