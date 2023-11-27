@@ -95,7 +95,7 @@ export async function bindEvents(eventContext: ProbotContext) {
   }
 
   if (eventContext.name === GitHubEvent.REPOSITORY_DISPATCH) {
-    const dispatchPayload = payload;
+    const dispatchPayload = payload as any;
     if (payload.action === "issueClosed") {
       //This is response for issueClosed request
       const response = dispatchPayload.client_payload.result;
