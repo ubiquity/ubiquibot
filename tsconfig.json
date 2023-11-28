@@ -62,6 +62,6 @@
     "sourceMap": true
   },
   "include": ["src/"],
-  "exclude": ["src/coverage/"],
+  "exclude": ["src/coverage/", "knip.ts"],
   "compileOnSave": false
 }
