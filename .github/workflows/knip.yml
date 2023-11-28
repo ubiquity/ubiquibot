@@ -1,0 +1,28 @@
+name: Knip
+
+on:
+  pull_request:
+
+permissions: write-all
+
+jobs:
+  run-knip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.14.1"
+
+      - name: Install toolchain
+        run: yarn install
+
+      - name: Report knip results to pull request
+        uses: gitcoindev/knip-reporter@v1.2.9
+        with:
+          verbose: true
+          comment_id: ${{ github.workflow }}-reporter
+          command_script_name: knip-ci
