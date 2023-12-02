@@ -99,8 +99,8 @@ export async function bindEvents(eventContext: ProbotContext) {
     if (payload.action === "issueClosed") {
       //This is response for issueClosed request
       const response = dispatchPayload.client_payload.result;
-      if (response.comment as Comment) {
-        const uncompressedComment = zlib.gunzipSync(Buffer.from(response.comment));
+      if (response) {
+        const uncompressedComment = zlib.gunzipSync(Buffer.from(response));
         await addCommentToIssue(
           context,
           uncompressedComment.toString(),
