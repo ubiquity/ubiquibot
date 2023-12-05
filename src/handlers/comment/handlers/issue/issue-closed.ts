@@ -23,7 +23,6 @@ export async function issueClosed(context: Context) {
 
   await dispatchWorkflow(owner, "ubiquibot-config", "compute.yml", {
     eventName: "issueClosed",
-    secretToken: process.env.GITHUB_TOKEN,
     owner,
     repo: repository,
     issueNumber: `${issueNumber}`,
