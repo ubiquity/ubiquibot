@@ -21,8 +21,6 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
     })
   );
 
-  console.log("****************", orgConfig);
-
   const repoConfig = parseYaml(
     await download({
       context,
@@ -30,7 +28,6 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
       owner: payload.repository.owner.login,
     })
   );
-  console.log("****************", repoConfig);
 
   const merged = mergeWith({}, orgConfig, repoConfig, (objValue: unknown, srcValue: unknown) => {
     if (Array.isArray(objValue) && Array.isArray(srcValue)) {
@@ -123,6 +120,7 @@ async function download({
   owner: string;
 }): Promise<string | null> {
   if (!repository || !owner) throw new Error("Repo or owner is not defined");
+  console.log("************", repository, owner);
   try {
     const { data } = await context.octokit.rest.repos.getContent({
       owner,
