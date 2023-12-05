@@ -120,7 +120,6 @@ async function download({
   owner: string;
 }): Promise<string | null> {
   if (!repository || !owner) throw new Error("Repo or owner is not defined");
-  console.log("************", repository, owner);
   try {
     const { data } = await context.octokit.rest.repos.getContent({
       owner,

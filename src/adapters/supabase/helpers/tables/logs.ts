@@ -236,8 +236,8 @@ export class Logs {
   }
 
   private async _sendLogsToSupabase(log: LogInsert) {
-    // const { error } = await this._supabase.from("logs").insert(log);
-    // if (error) throw Logs.console.error("Error logging to Supabase:", error);
+    const { error } = await this._supabase.from("logs").insert(log);
+    if (error) throw Logs.console.error("Error logging to Supabase:", error);
   }
 
   private async _processLogs(log: LogInsert) {
