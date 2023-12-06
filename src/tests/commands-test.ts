@@ -3,6 +3,7 @@ import { execSync } from "child_process";
 import "dotenv/config";
 import { Octokit } from "octokit";
 import { Server } from "probot";
+import { env } from "../bindings/env";
 import { afterAllHandler } from "./after-all-handler";
 import { beforeAllHandler } from "./before-all-handler";
 import { testSuite } from "./test-suite";
@@ -13,7 +14,7 @@ export const TEST_PRIORITY_LABEL = "Priority: 1 (Normal)";
 export const SIX_HOURS = 6 * 60 * 60 * 1000; // 6 hours
 
 // return the current 7 character git commit hash using git rev-parse
-export const GIT_COMMIT_HASH = process.env.COMMIT_REF || execSync("git rev-parse --short HEAD").toString().trim();
+export const GIT_COMMIT_HASH = env.COMMIT_REF || execSync("git rev-parse --short HEAD").toString().trim();
 
 export const owner = process.env.TEST_ORGANIZATION_NAME || "ubiquibot";
 export const repo = process.env.TEST_REPOSITORY_NAME || "staging";

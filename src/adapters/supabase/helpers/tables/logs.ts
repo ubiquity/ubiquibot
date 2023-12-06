@@ -7,6 +7,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { execSync } from "child_process";
 import { Context as ProbotContext } from "probot";
 import Runtime from "../../../../bindings/bot-runtime";
+import { env } from "../../../../bindings/env";
 import { Database } from "../../types/database";
 
 import { LogLevel, PrettyLogs } from "../pretty-logs";
@@ -106,7 +107,7 @@ export class Logs {
       }
     }
 
-    const gitCommit = process.env.COMMIT_REF || execSync("git rev-parse --short HEAD").toString().trim();
+    const gitCommit = env.COMMIT_REF || execSync("git rev-parse --short HEAD").toString().trim();
     metadata.revision = gitCommit;
 
     return metadata;
