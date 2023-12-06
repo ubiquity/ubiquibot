@@ -2,7 +2,7 @@ function createStructuredMetadata(className: string, metadata: unknown) {
   const jsonString = JSON.stringify(metadata, null, 2);
   const stackLine = new Error().stack?.split("\n")[2] ?? "";
   const caller = stackLine.match(/at (\S+)/)?.[1] ?? "";
-  const revision = "";
+  const revision = "0000000";
   return [`<!-- Ubiquity - ${className} - ${caller} - ${revision}`, jsonString, "-->"].join("\n");
 }
 

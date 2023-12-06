@@ -105,7 +105,7 @@ export class Logs {
       }
     }
 
-    const gitCommit = "";
+    const gitCommit = "0000000";
     metadata.revision = gitCommit;
 
     return metadata;
