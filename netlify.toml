@@ -2,4 +2,4 @@
 ID = "d2668848-c2a6-411f-b884-004faee1942f"
 [build]
   functions = "./.netlify/functions"
-  command = "echo 'export const COMMIT_HASH = \"${COMMIT_REF}\";' > src/commit-hash.ts && yarn tsc"
+  command = "echo \"export const COMMIT_HASH = '${COMMIT_REF}';\" > src/commit-hash.ts && yarn tsc"
