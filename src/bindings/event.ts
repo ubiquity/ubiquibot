@@ -46,6 +46,7 @@ export async function bindEvents(eventContext: ProbotContext) {
   const logger = new Logs(supabaseClient, env.LOG_ENVIRONMENT, env.LOG_RETRY_LIMIT, env.LOG_LEVEL, eventContext);
 
   logger.info("Event received", { id: eventContext.id, name: eventName });
+  console.log(eventName);
 
   if (!allowedEvents.includes(eventName) && eventContext.name !== "repository_dispatch") {
     // just check if its on the watch list
@@ -85,6 +86,8 @@ export async function bindEvents(eventContext: ProbotContext) {
     payload: payload,
     octokit: eventContext.octokit,
   };
+
+  console.log("--------------------", context.config);
 
   if (!context.config.keys.evmPrivateEncrypted) {
     context.logger.warn("No EVM private key found");

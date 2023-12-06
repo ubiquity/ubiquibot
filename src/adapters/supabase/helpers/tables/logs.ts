@@ -4,6 +4,7 @@
 // TODO: break this apart into smaller files.
 
 import { SupabaseClient } from "@supabase/supabase-js";
+import { execSync } from "child_process";
 import { Context as ProbotContext } from "probot";
 import Runtime from "../../../../bindings/bot-runtime";
 import { Database } from "../../types/database";
@@ -105,7 +106,7 @@ export class Logs {
       }
     }
 
-    const gitCommit = "0000000";
+    const gitCommit = execSync("git rev-parse --short HEAD").toString().trim();
     metadata.revision = gitCommit;
 
     return metadata;
