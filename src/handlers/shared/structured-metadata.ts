@@ -1,11 +1,10 @@
-import { execSync } from "child_process";
-import { env } from "../../bindings/env";
+import { COMMIT_HASH } from "../../commit-hash";
 
 function createStructuredMetadata(className: string, metadata: unknown) {
   const jsonString = JSON.stringify(metadata, null, 2);
   const stackLine = new Error().stack?.split("\n")[2] ?? "";
   const caller = stackLine.match(/at (\S+)/)?.[1] ?? "";
-  const revision = env.COMMIT_REF || execSync("git rev-parse --short HEAD").toString().trim();
+  const revision = COMMIT_HASH?.substring(0, 7) ?? null;
   return [`<!-- Ubiquity - ${className} - ${caller} - ${revision}`, jsonString, "-->"].join("\n");
 }
 

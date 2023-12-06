@@ -55,7 +55,6 @@ const envConfigSchema = T.Object({
   X25519_PRIVATE_KEY: T.String(),
   PRIVATE_KEY: T.String(),
   APP_ID: T.Number(),
-  COMMIT_REF: T.Optional(T.String()), // automatically set in netlify
 });
 
 export const validateEnvConfig = ajv.compile(envConfigSchema);

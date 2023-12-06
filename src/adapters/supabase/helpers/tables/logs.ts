@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // This is disabled because logs should be able to log any type of data
 // Normally this is forbidden
-// TODO: break this apart into smaller files.
 
 import { SupabaseClient } from "@supabase/supabase-js";
-import { execSync } from "child_process";
 import { Context as ProbotContext } from "probot";
 import Runtime from "../../../../bindings/bot-runtime";
-import { env } from "../../../../bindings/env";
+import { COMMIT_HASH } from "../../../../commit-hash";
 import { Database } from "../../types/database";
 
 import { LogLevel, PrettyLogs } from "../pretty-logs";
@@ -107,7 +105,7 @@ export class Logs {
       }
     }
 
-    const gitCommit = env.COMMIT_REF || execSync("git rev-parse --short HEAD").toString().trim();
+    const gitCommit = COMMIT_HASH?.substring(0, 7) ?? null;
     metadata.revision = gitCommit;
 
     return metadata;
