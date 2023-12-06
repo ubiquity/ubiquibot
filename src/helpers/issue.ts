@@ -60,33 +60,6 @@ export async function addLabelToIssue(context: Context, labelName: string) {
   }
 }
 
-async function listIssuesAndPullsForRepo(
-  context: Context,
-  state: "open" | "closed" | "all" = "open",
-  perPage = 100,
-  page = 1,
-  sort: "created" | "updated" | "comments" = "created",
-  direction: "desc" | "asc" = "desc"
-) {
-  const payload = context.payload;
-
-  try {
-    const response = await context.octokit.issues.listForRepo({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      state,
-      per_page: perPage,
-      page,
-      sort,
-      direction,
-    });
-    return response.data;
-  } catch (err: unknown) {
-    context.logger.error("Failed to fetch lists of issues", err);
-    return [];
-  }
-}
-
 export async function listAllIssuesAndPullsForRepo(
   context: Context,
   state: "open" | "closed" | "all" = "open",
@@ -375,29 +348,6 @@ export async function getAllPullRequests(context: Context, state: "open" | "clos
   }
 }
 
-async function getPullRequests(
-  context: Context,
-  state: "open" | "closed" | "all" = "open",
-  perPage: number,
-  page: number
-) {
-  const payload = context.payload;
-
-  try {
-    const { data: pulls } = await context.octokit.rest.pulls.list({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      state,
-      per_page: perPage,
-      page,
-    });
-    return pulls;
-  } catch (err: unknown) {
-    context.logger.error("Fetching pull requests failed!", err);
-    return [];
-  }
-}
-
 export async function closePullRequest(context: Context, pullNumber: number) {
   const payload = context.payload as Payload;
   try {
@@ -432,32 +382,6 @@ export async function getAllPullRequestReviews(
     return reviews;
   } catch (err: unknown) {
     context.logger.error("Fetching all pull request reviews failed!", err);
-    return [];
-  }
-}
-
-async function getPullRequestReviews(
-  context: Context,
-  pullNumber: number,
-  perPage: number,
-  page: number,
-  format: "raw" | "html" | "text" | "full" = "raw"
-) {
-  const payload = context.payload;
-  try {
-    const { data: reviews } = await context.octokit.rest.pulls.listReviews({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      pull_number: pullNumber,
-      per_page: perPage,
-      page,
-      mediaType: {
-        format,
-      },
-    });
-    return reviews;
-  } catch (err: unknown) {
-    context.logger.error("Fetching pull request reviews failed!", err);
     return [];
   }
 }

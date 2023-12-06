@@ -1,7 +1,6 @@
 import axios from "axios";
 import { HTMLElement, parse } from "node-html-parser";
 import { Context } from "../types/context";
-import { getPullByNumber } from "./issue";
 
 interface GetLinkedParams {
   owner: string;
@@ -69,8 +68,4 @@ export async function getLinkedPullRequests(
   }
 
   return collection;
-}
-
-function isNewerPullRequest(currentMergedAt: string | null, latestMergedAt: string | null) {
-  return latestMergedAt && currentMergedAt && new Date(latestMergedAt).getTime() < new Date(currentMergedAt).getTime();
 }

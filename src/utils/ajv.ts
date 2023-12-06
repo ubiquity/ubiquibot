@@ -1,4 +1,4 @@
-import Ajv, { Schema, ValidateFunction } from "ajv";
+import Ajv from "ajv";
 import addFormats from "ajv-formats";
 
 export const ajv = addFormats(
