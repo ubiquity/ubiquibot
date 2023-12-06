@@ -106,7 +106,7 @@ export class Logs {
       }
     }
 
-    const gitCommit = execSync("git rev-parse --short HEAD").toString().trim();
+    const gitCommit = process.env.COMMIT_REF || execSync("git rev-parse --short HEAD").toString().trim();
     metadata.revision = gitCommit;
 
     return metadata;
