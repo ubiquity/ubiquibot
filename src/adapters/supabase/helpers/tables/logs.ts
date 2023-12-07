@@ -114,7 +114,7 @@ export class Logs {
   public ok(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
-      level: LogLevel.VERBOSE,
+      level: LogLevel.INFO,
       consoleLog: Logs.console.ok,
       logMessage: log,
       metadata,
