@@ -20,7 +20,7 @@ export async function issueClosed(context: Context) {
   const pullRequestComments = await getPullRequestComments(context, owner, repository, issueNumber);
   const repoCollaborators = await getCollaboratorsForRepo(context);
   const workflow = "compute.yml";
-  const computeRepository = "ubiquibot-compute";
+  const computeRepository = "ubiquibot-config";
   await dispatchWorkflow(context, owner, computeRepository, workflow, {
     eventName: "issueClosed",
     owner,
