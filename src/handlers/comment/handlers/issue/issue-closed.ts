@@ -34,7 +34,7 @@ export async function issueClosed(context: Context) {
     }),
   });
   const logger = Runtime.getState().logger;
-  return logger.info("Delegating compute. Please wait for results.");
+  return logger.ok("Delegating compute. Please wait for results.");
 }
 
 async function dispatchWorkflow(context: Context, owner: string, repo: string, workflowId: string, inputs: any) {
