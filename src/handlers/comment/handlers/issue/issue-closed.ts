@@ -19,8 +19,9 @@ export async function issueClosed(context: Context) {
 
   const pullRequestComments = await getPullRequestComments(context, owner, repository, issueNumber);
   const repoCollaborators = await getCollaboratorsForRepo(context);
-
-  await dispatchWorkflow(context, owner, "ubiquibot-config", "compute.yml", {
+  const workflow = "compute.yml";
+  const computeRepository = "ubiquibot-compute";
+  await dispatchWorkflow(context, owner, computeRepository, workflow, {
     eventName: "issueClosed",
     owner,
     repo: repository,
@@ -34,13 +35,16 @@ export async function issueClosed(context: Context) {
     }),
   });
   const logger = Runtime.getState().logger;
-  return logger.ok("Delegating compute. Please wait for results.");
+  return logger.ok("Evaluating results. Please wait...", {
+    endpoint: `https://api.github.com/repos/${owner}/${computeRepository}/actions/workflows/${workflow}/dispatches`,
+    view: `https://github.com/${owner}/${computeRepository}/actions/workflows/${workflow}`,
+  });
 }
 
-async function dispatchWorkflow(context: Context, owner: string, repo: string, workflowId: string, inputs: any) {
+async function dispatchWorkflow(context: Context, owner: string, repo: string, workflow: string, inputs: any) {
   const response = await context.octokit.repos.get({ owner, repo });
   const defaultBranch = response.data.default_branch;
-  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`, {
+  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow}/dispatches`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
