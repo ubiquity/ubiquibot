@@ -18,19 +18,19 @@ export function setPrice(context: Context, timeLabel: Label, priorityLabel: Labe
   const logger = context.logger;
   const { labels } = context.config;
 
-  if (!timeLabel || !priorityLabel) throw logger.warn("Time or priority label is not defined");
+  if (!timeLabel || !priorityLabel) throw logger.error("Time or priority label is not defined");
 
   const recognizedTimeLabels = labels.time.find((configLabel) => configLabel === timeLabel.name);
-  if (!recognizedTimeLabels) throw logger.warn("Time label is not recognized");
+  if (!recognizedTimeLabels) throw logger.error("Time label is not recognized");
 
   const recognizedPriorityLabels = labels.priority.find((configLabel) => configLabel === priorityLabel.name);
-  if (!recognizedPriorityLabels) throw logger.warn("Priority label is not recognized");
+  if (!recognizedPriorityLabels) throw logger.error("Priority label is not recognized");
 
   const timeValue = calculateLabelValue(recognizedTimeLabels);
-  if (!timeValue) throw logger.warn("Time value is not defined");
+  if (!timeValue) throw logger.error("Time value is not defined");
 
   const priorityValue = calculateLabelValue(recognizedPriorityLabels);
-  if (!priorityValue) throw logger.warn("Priority value is not defined");
+  if (!priorityValue) throw logger.error("Priority value is not defined");
 
   const taskPrice = calculateTaskPrice(context, timeValue, priorityValue);
   return `Price: ${taskPrice} USD`;

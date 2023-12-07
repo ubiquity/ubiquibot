@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import { Context as ProbotContext } from "probot";
 import { Database } from "../../types/database";
 import { Super } from "./super";
-import { Context as ProbotContext } from "probot";
 
 export type UserRow = Database["public"]["Tables"]["users"]["Row"];
 export class User extends Super {
@@ -38,7 +38,7 @@ export class User extends Super {
       .eq("user_id", userId)
       .order("id", { ascending: false }) // get the latest one
       .maybeSingle();
-    if (accessError) throw this.runtime.logger.error("Error getting access data", accessError);
+    if (accessError) throw this.runtime.logger.fatal("Error getting access data", accessError);
     return accessData;
   }
 }

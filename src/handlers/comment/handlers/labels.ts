@@ -33,7 +33,7 @@ export async function setLabels(context: Context, body: string) {
     }
     return context.logger.ok("Successfully set access", { username, labels });
   } else {
-    throw logger.error(
+    throw logger.fatal(
       `Invalid syntax for allow \n usage: '/labels set-(access type) @user true|false' \n  ex-1 /labels set-multiplier @user false`
     );
   }

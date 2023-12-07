@@ -35,7 +35,7 @@ export async function commentCreatedOrEdited(context: Context) {
     const isDisabled = config.disabledCommands.some((command) => command === id.replace("/", ""));
 
     if (isDisabled && id !== "/help") {
-      return logger.warn("Skipping because it is disabled on this repo.", { id });
+      return logger.error("Skipping because it is disabled on this repo.", { id });
     }
 
     return await handler(context, body);

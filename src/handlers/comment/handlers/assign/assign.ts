@@ -1,7 +1,7 @@
-import { getAvailableOpenedPullRequests, getAssignedIssues, addAssignees } from "../../../../helpers/issue";
+import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests } from "../../../../helpers/issue";
 import { calculateDurations } from "../../../../helpers/shared";
 import { Context } from "../../../../types/context";
-import { User, IssueType, Payload } from "../../../../types/payload";
+import { IssueType, Payload, User } from "../../../../types/payload";
 import { isParentIssue } from "../../../pricing/action";
 
 import structuredMetadata from "../../../shared/structured-metadata";
@@ -27,15 +27,15 @@ export async function assign(context: Context, body: string) {
   logger.info("Received '/start' command", { sender: payload.sender.login, body });
 
   if (!issue) {
-    throw logger.warn(`Skipping '/start' because of no issue instance`);
+    throw logger.error(`Skipping '/start' because of no issue instance`);
   }
 
   if (isStartDisabled) {
-    throw logger.warn("The `/assign` command is disabled for this repository.");
+    throw logger.error("The `/assign` command is disabled for this repository.");
   }
 
   if (issue.body && isParentIssue(issue.body)) {
-    throw logger.warn(
+    throw logger.error(
       "Please select a child issue from the specification checklist to work on. The '/start' command is disabled on parent issues."
     );
   }
@@ -52,18 +52,18 @@ export async function assign(context: Context, body: string) {
 
   // check for max and enforce max
   if (assignedIssues.length - openedPullRequests.length >= maxConcurrentTasks) {
-    throw logger.warn("Too many assigned issues, you have reached your max limit", {
+    throw logger.error("Too many assigned issues, you have reached your max limit", {
       maxConcurrentTasks,
     });
   }
 
   if (issue.state == IssueType.CLOSED) {
-    throw logger.warn("Skipping '/start' since the issue is closed");
+    throw logger.error("Skipping '/start' since the issue is closed");
   }
   const assignees: User[] = (payload.issue?.assignees ?? []).filter(Boolean) as User[];
 
   if (assignees.length !== 0) {
-    throw logger.warn("Skipping '/start' since the issue is already assigned");
+    throw logger.error("Skipping '/start' since the issue is already assigned");
   }
 
   // ==== preamble checks completed ==== //
@@ -73,7 +73,7 @@ export async function assign(context: Context, body: string) {
 
   let duration: number | null = null;
   if (!priceLabel) {
-    throw logger.warn("No price label is set, so this is not ready to be self assigned yet.", priceLabel);
+    throw logger.error("No price label is set, so this is not ready to be self assigned yet.", priceLabel);
   } else {
     const timeLabelsAssigned = getTimeLabelsAssigned(context, payload, config);
     if (timeLabelsAssigned) {

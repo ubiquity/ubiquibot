@@ -24,7 +24,7 @@ export async function authorizeLabelChanges(context: Context) {
 
   // if sender is not admin, return
   if (sufficientPrivileges) {
-    throw logger.error(
+    throw logger.fatal(
       "User is not an admin/billing_manager and do not have the required permissions to access this function.",
       { sender }
     );
@@ -33,7 +33,7 @@ export async function authorizeLabelChanges(context: Context) {
   const task = taskPaymentMetaData(context, issue);
 
   if (!task.priceLabel || !task.priorityLabel || !task.timeLabel) {
-    throw logger.error("Missing required labels", { issueDetailed: task });
+    throw logger.fatal("Missing required labels", { issueDetailed: task });
   }
 
   // get current repository node id from payload and pass it to getLabelChanges function to get label changes

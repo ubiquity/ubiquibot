@@ -6,19 +6,19 @@ export class PrettyLogs {
   constructor() {
     this.ok = this.ok.bind(this);
     this.info = this.info.bind(this);
-    this.warn = this.warn.bind(this);
     this.error = this.error.bind(this);
+    this.fatal = this.fatal.bind(this);
     this.debug = this.debug.bind(this);
     this.http = this.http.bind(this);
     this.verbose = this.verbose.bind(this);
     this.silly = this.silly.bind(this);
   }
-  public error(message: string, metadata?: any) {
-    this._logWithStack(LogLevel.ERROR, message, metadata);
+  public fatal(message: string, metadata?: any) {
+    this._logWithStack(LogLevel.FATAL, message, metadata);
   }
 
-  public warn(message: string, metadata?: any) {
-    this._logWithStack(LogLevel.WARN, message, metadata);
+  public error(message: string, metadata?: any) {
+    this._logWithStack(LogLevel.ERROR, message, metadata);
   }
 
   public ok(message: string, metadata?: any) {
@@ -46,8 +46,6 @@ export class PrettyLogs {
   }
 
   private _logWithStack(type: "ok" | LogLevel, message: string, metadata?: Metadata | string) {
-    // FIXME: for errors this renders the stack error location correctly on GitHub comments but not in the logs.
-
     this._log(type, message);
     if (typeof metadata === "string") {
       this._log(type, metadata);
@@ -109,9 +107,9 @@ export class PrettyLogs {
 
   private _log(type: PrettyLogsWithOk, message: any) {
     const defaultSymbols: Record<PrettyLogsWithOk, string> = {
-      error: "×",
+      fatal: "×",
       ok: "✓",
-      warn: "⚠",
+      error: "⚠",
       info: "›",
       debug: "››",
       http: "🛜",
@@ -142,9 +140,9 @@ export class PrettyLogs {
     const fullLogString = logString;
 
     const colorMap: Record<PrettyLogsWithOk, [keyof typeof console, Colors]> = {
-      error: ["error", Colors.fgRed],
+      fatal: ["error", Colors.fgRed],
       ok: ["log", Colors.fgGreen],
-      warn: ["warn", Colors.fgYellow],
+      error: ["warn", Colors.fgYellow],
       info: ["info", Colors.dim],
       debug: ["debug", Colors.fgMagenta],
       http: ["debug", Colors.dim],
@@ -196,8 +194,8 @@ enum Colors {
   bgWhite = "\x1b[47m",
 }
 export enum LogLevel {
+  FATAL = "fatal",
   ERROR = "error",
-  WARN = "warn",
   INFO = "info",
   HTTP = "http",
   VERBOSE = "verbose",

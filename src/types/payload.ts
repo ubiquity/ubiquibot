@@ -46,8 +46,8 @@ export enum IssueType {
 
 export enum StateReason {
   COMPLETED = "completed",
-  // NOT_PLANNED = "not_planned",
-  // REOPENED = "reopened",
+  NOT_PLANNED = "not_planned", // these are all used at runtime, not necessarily in the code.
+  REOPENED = "reopened",
 }
 
 const userSchema = Type.Object({

@@ -4,7 +4,7 @@ import mergeWith from "lodash/merge";
 import { Context as ProbotContext } from "probot";
 import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
-import { BotConfig, validateBotConfig, stringDuration } from "../types/configuration-types";
+import { BotConfig, stringDuration, validateBotConfig } from "../types/configuration-types";
 import { Payload } from "../types/payload";
 
 const UBIQUIBOT_CONFIG_REPOSITORY = "ubiquibot-config";
@@ -46,7 +46,7 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
   if (!isValid) {
     const errorMessage = getErrorMsg(validateBotConfig.errors as DefinedError[]);
     if (errorMessage) {
-      throw logger.error("Invalid merged configuration", { errorMessage }, true);
+      throw logger.fatal("Invalid merged configuration", { errorMessage }, true);
     }
   }
 
@@ -55,7 +55,7 @@ export async function generateConfiguration(context: ProbotContext): Promise<Bot
     transformConfig(merged);
   } catch (err) {
     if (err instanceof Error && payload.issue?.number) {
-      throw logger.error("Configuration error", { err }, true);
+      throw logger.fatal("Configuration error", { err }, true);
     }
   }
 
@@ -141,7 +141,7 @@ export function parseYaml(data: null | string) {
     }
   } catch (error) {
     const logger = Runtime.getState().logger;
-    logger.error("Failed to parse YAML", { error });
+    logger.fatal("Failed to parse YAML", { error });
   }
   return null;
 }

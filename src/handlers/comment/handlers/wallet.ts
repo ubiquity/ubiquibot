@@ -34,7 +34,7 @@ export async function registerWallet(context: Context, body: string) {
     context.logger.info("Trying to resolve address from ENS name", { ensName });
     address = await resolveAddress(ensName);
     if (!address) {
-      throw context.logger.error("Resolving address from ENS name failed", { ensName });
+      throw context.logger.fatal("Resolving address from ENS name failed", { ensName });
     }
     context.logger.ok("Resolved address from ENS name", { ensName, address });
   }
@@ -48,7 +48,7 @@ export async function registerWallet(context: Context, body: string) {
   }
 
   if (address == constants.AddressZero) {
-    return logger.warn(
+    return logger.error(
       "Skipping to register a wallet address because user is trying to set their address to null address"
     );
   }
@@ -73,10 +73,10 @@ function registerWalletWithVerification(context: Context, body: string, address:
     const isSigHashValid =
       sigHash && ethers.utils.verifyMessage(messageToSign, sigHash) == ethers.utils.getAddress(address);
     if (!isSigHashValid) {
-      throw context.logger.error(failedSigLogMsg);
+      throw context.logger.fatal(failedSigLogMsg);
     }
   } catch (e) {
-    context.logger.error("Exception thrown by verifyMessage for /wallet: ", e);
-    throw context.logger.error(failedSigLogMsg);
+    context.logger.fatal("Exception thrown by verifyMessage for /wallet: ", e);
+    throw context.logger.fatal(failedSigLogMsg);
   }
 }

@@ -7,7 +7,7 @@ export function getTimeLabelsAssigned(context: Context, payload: Payload, config
   const logger = context.logger;
   const labels = payload.issue?.labels;
   if (!labels?.length) {
-    logger.warn("Skipping '/start' since no labels are set to calculate the timeline", { labels });
+    logger.error("Skipping '/start' since no labels are set to calculate the timeline", { labels });
     return;
   }
   const timeLabelsDefined = config.labels.time;
