@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { Context as ProbotContext } from "probot";
 import zlib from "zlib";
 import { createAdapters, supabaseClient } from "../adapters/adapters";
-import { LogMessage, LogReturn, Logs } from "../adapters/supabase/helpers/tables/logs";
+import { LogMessage, LogReturn, Logs } from "ubiquibot-logger";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push/push";
 import structuredMetadata from "../handlers/shared/structured-metadata";

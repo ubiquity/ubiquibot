@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Access } from "./supabase/helpers/tables/access";
 import { Label } from "./supabase/helpers/tables/label";
 import { Locations } from "./supabase/helpers/tables/locations";
-import { Logs } from "./supabase/helpers/tables/logs";
+import { Logs } from "ubiquibot-logger";
 import { Settlement } from "./supabase/helpers/tables/settlement";
 import { Super } from "./supabase/helpers/tables/super";
 import { User } from "./supabase/helpers/tables/user";

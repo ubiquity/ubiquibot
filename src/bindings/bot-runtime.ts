@@ -1,5 +1,5 @@
 import { createAdapters } from "../adapters/adapters";
-import { Logs } from "../adapters/supabase/helpers/tables/logs";
+import { Logs } from "ubiquibot-logger";
 
 class Runtime {
   private static _instance: Runtime;
