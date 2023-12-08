@@ -94,11 +94,12 @@ export async function assign(context: Context, body: string) {
   // double check whether the assign message has been already posted or not
   logger.info("Creating an issue comment", { comment });
 
-  const {
-    multiplierAmount: multiplierAmount,
-    multiplierReason: multiplierReason,
-    totalPriceOfTask: totalPriceOfTask,
-  } = await getMultiplierInfoToDisplay(context, payload.sender.id, payload.repository.id, issue);
+  const { multiplierAmount, multiplierReason, totalPriceOfTask } = await getMultiplierInfoToDisplay(
+    context,
+    payload.sender.id,
+    payload.repository.id,
+    issue
+  );
   return [
     assignTableComment({
       multiplierAmount,
