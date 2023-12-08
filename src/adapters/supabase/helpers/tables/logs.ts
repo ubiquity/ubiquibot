@@ -43,7 +43,6 @@ export class Logs {
   private _context: ProbotContext | null = null;
 
   private _maxLevel = -1;
-  private _environment = "development";
   private _queue: LogInsert[] = []; // Your log queue
   private _concurrency = 6; // Maximum concurrent requests
   private _retryDelay = 1000; // Delay between retries in milliseconds
@@ -220,16 +219,9 @@ export class Logs {
   //   });
   // }
 
-  constructor(
-    supabase: SupabaseClient,
-    environment: string,
-    retryLimit: number,
-    logLevel: LogLevel,
-    context: ProbotContext | null
-  ) {
+  constructor(supabase: SupabaseClient, retryLimit: number, logLevel: LogLevel, context: ProbotContext | null) {
     this._supabase = supabase;
     this._context = context;
-    this._environment = environment;
     this._retryLimit = retryLimit;
     this._maxLevel = this._getNumericLevel(logLevel);
     Logs.console = new PrettyLogs();
@@ -303,9 +295,7 @@ export class Logs {
       .then(() => void 0)
       .catch(() => Logs.console.fatal("Error adding logs to queue"));
 
-    if (this._environment === "development") {
-      Logs.console.ok(logInsert.log, logInsert);
-    }
+    Logs.console.ok(logInsert.log, logInsert);
   }
 
   static _commentMetaData(metadata: any, level: LogLevel) {

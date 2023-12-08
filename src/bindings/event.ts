@@ -43,7 +43,7 @@ runtime.logger = runtime.adapters.supabase.logs;
 export async function bindEvents(eventContext: ProbotContext) {
   const payload = eventContext.payload as Payload;
   const eventName = payload?.action ? `${eventContext.name}.${payload?.action}` : eventContext.name; // some events wont have actions as this grows
-  const logger = new Logs(supabaseClient, env.LOG_ENVIRONMENT, env.LOG_RETRY_LIMIT, env.LOG_LEVEL, eventContext);
+  const logger = new Logs(supabaseClient, env.LOG_RETRY_LIMIT, env.LOG_LEVEL, eventContext);
 
   logger.info("Event received", { id: eventContext.id, name: eventName });
 

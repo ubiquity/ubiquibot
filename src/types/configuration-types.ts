@@ -47,7 +47,6 @@ export function stringDuration(options?: StringOptions) {
 
 const envConfigSchema = T.Object({
   WEBHOOK_PROXY_URL: T.String({ format: "uri" }),
-  LOG_ENVIRONMENT: T.String({ default: "production" }),
   LOG_LEVEL: T.Enum(LogLevel, { default: LogLevel.SILLY }),
   LOG_RETRY_LIMIT: T.Number({ default: 8 }),
   SUPABASE_URL: T.String({ format: "uri" }),

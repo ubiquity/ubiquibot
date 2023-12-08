@@ -24,7 +24,7 @@ export function createAdapters() {
       debit: new Settlement(supabaseClient),
       settlement: new Settlement(supabaseClient),
       label: new Label(supabaseClient),
-      logs: new Logs(supabaseClient, env.LOG_ENVIRONMENT, env.LOG_RETRY_LIMIT, env.LOG_LEVEL, null),
+      logs: new Logs(supabaseClient, env.LOG_RETRY_LIMIT, env.LOG_LEVEL, null),
       locations: new Locations(supabaseClient),
       super: new Super(supabaseClient),
     },
