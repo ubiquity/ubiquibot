@@ -183,18 +183,6 @@ export class Logs {
     });
   }
 
-  // http(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
-  //   metadata = this._addDiagnosticInformation(metadata);
-  //   return this._log({
-  //     level: LogLevel.HTTP,
-  //     consoleLog: Logs.console.http,
-  //     logMessage: log,
-  //     metadata,
-  //     postComment,
-  //     type: "http",
-  //   });
-  // }
-
   verbose(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
     metadata = this._addDiagnosticInformation(metadata);
     return this._log({
@@ -206,18 +194,6 @@ export class Logs {
       type: "verbose",
     });
   }
-
-  // silly(log: string, metadata?: any, postComment?: boolean): LogReturn | null {
-  //   metadata = this._addDiagnosticInformation(metadata);
-  //   return this._log({
-  //     level: LogLevel.SILLY,
-  //     consoleLog: Logs.console.silly,
-  //     logMessage: log,
-  //     metadata,
-  //     postComment,
-  //     type: "silly",
-  //   });
-  // }
 
   constructor(supabase: SupabaseClient, retryLimit: number, logLevel: LogLevel, context: ProbotContext | null) {
     this._supabase = supabase;
@@ -320,10 +296,8 @@ export class Logs {
       // error: null,
       // warn: null,
       // info: null,
-      // http: "#",
       // verbose: "#",
       // debug: "#",
-      // silly: "#",
     };
     const selected = diffPrefix[type as keyof typeof diffPrefix];
 
@@ -375,14 +349,10 @@ export class Logs {
         return 1;
       case LogLevel.INFO:
         return 2;
-      case LogLevel.HTTP:
-        return 3;
       case LogLevel.VERBOSE:
         return 4;
       case LogLevel.DEBUG:
         return 5;
-      case LogLevel.SILLY:
-        return 6;
       default:
         return -1; // Invalid level
     }

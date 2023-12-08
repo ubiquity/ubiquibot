@@ -9,9 +9,7 @@ export class PrettyLogs {
     this.error = this.error.bind(this);
     this.fatal = this.fatal.bind(this);
     this.debug = this.debug.bind(this);
-    this.http = this.http.bind(this);
     this.verbose = this.verbose.bind(this);
-    this.silly = this.silly.bind(this);
   }
   public fatal(message: string, metadata?: any) {
     this._logWithStack(LogLevel.FATAL, message, metadata);
@@ -33,16 +31,8 @@ export class PrettyLogs {
     this._logWithStack(LogLevel.DEBUG, message, metadata);
   }
 
-  public http(message: string, metadata?: any) {
-    this._logWithStack(LogLevel.HTTP, message, metadata);
-  }
-
   public verbose(message: string, metadata?: any) {
     this._logWithStack(LogLevel.VERBOSE, message, metadata);
-  }
-
-  public silly(message: string, metadata?: any) {
-    this._logWithStack(LogLevel.SILLY, message, metadata);
   }
 
   private _logWithStack(type: "ok" | LogLevel, message: string, metadata?: Metadata | string) {
@@ -112,9 +102,7 @@ export class PrettyLogs {
       error: "⚠",
       info: "›",
       debug: "››",
-      http: "🛜",
       verbose: "💬",
-      silly: "🤪",
     };
 
     const symbol = defaultSymbols[type];
@@ -145,9 +133,7 @@ export class PrettyLogs {
       error: ["warn", Colors.fgYellow],
       info: ["info", Colors.dim],
       debug: ["debug", Colors.fgMagenta],
-      http: ["debug", Colors.dim],
       verbose: ["debug", Colors.dim],
-      silly: ["debug", Colors.dim],
     };
 
     const _console = console[colorMap[type][0] as keyof typeof console] as (...args: string[]) => void;
@@ -197,8 +183,6 @@ export enum LogLevel {
   FATAL = "fatal",
   ERROR = "error",
   INFO = "info",
-  HTTP = "http",
   VERBOSE = "verbose",
   DEBUG = "debug",
-  SILLY = "silly",
 }
