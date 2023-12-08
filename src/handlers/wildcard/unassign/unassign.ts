@@ -72,12 +72,21 @@ async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
       return assignedEvent.assignee.login === login;
     }
   });
-  // get latest assign event by checking created_at
-  const latestAssignEvent = assignEventsOfAssignee.reduce((latestEvent, currentEvent) => {
-    const latestEventTime = new Date(latestEvent.created_at).getTime();
-    const currentEventTime = new Date(currentEvent.created_at).getTime();
-    return currentEventTime > latestEventTime ? currentEvent : latestEvent;
-  }, assignEventsOfAssignee[0]);
+  let latestAssignEvent;
+
+  if (assignEventsOfAssignee.length > 0) {
+    latestAssignEvent = assignEventsOfAssignee.reduce((latestEvent, currentEvent) => {
+      const latestEventTime = new Date(latestEvent.created_at).getTime();
+      const currentEventTime = new Date(currentEvent.created_at).getTime();
+      return currentEventTime > latestEventTime ? currentEvent : latestEvent;
+    }, assignEventsOfAssignee[0]);
+  } else {
+    // Handle the case where there are no assign events
+    // This could be setting latestAssignEvent to a default value or throwing an error
+    throw logger.debug("No assign events found when there are supposed to be assign events.", {
+      issueNumber: assignedIssue.number,
+    });
+  }
 
   const latestAssignEventTime = new Date(latestAssignEvent.created_at).getTime();
   const now = Date.now();
