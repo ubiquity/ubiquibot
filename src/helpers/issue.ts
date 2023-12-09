@@ -1,4 +1,4 @@
-import { LogReturn } from "../adapters/supabase/helpers/tables/logs";
+import { LogReturn } from "ubiquibot-logger";
 import { Context } from "../types/context";
 import { HandlerReturnValuesNoVoid } from "../types/handlers";
 import { StreamlinedComment } from "../types/openai";

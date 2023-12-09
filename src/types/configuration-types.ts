@@ -1,6 +1,6 @@
 import { ObjectOptions, Static, StaticDecode, StringOptions, TProperties, Type as T } from "@sinclair/typebox";
 import ms from "ms";
-import { LogLevel } from "../adapters/supabase/helpers/pretty-logs";
+import { LogLevel } from "ubiquibot-logger/pretty-logs";
 import { userCommands } from "../handlers/comment/handlers/comment-handler-main";
 import { validHTMLElements } from "../handlers/comment/handlers/issue/valid-html-elements";
 import { ajv } from "../utils/ajv";
