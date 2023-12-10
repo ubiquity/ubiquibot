@@ -3,7 +3,23 @@ import Decimal from "decimal.js";
 import { Comment, Payload } from "../../../../types/payload";
 import { Database } from "../../types/database";
 import { Super } from "./super";
-import { PermitTransactionData } from "../../../../handlers/comment/handlers/issue/generate-permit-2-signature";
+
+interface PermitTransactionData {
+  permit: {
+    permitted: {
+      token: string;
+      amount: string;
+    };
+    nonce: string;
+    deadline: string;
+  };
+  transferDetails: {
+    to: string;
+    requestedAmount: string;
+  };
+  owner: string;
+  signature: string;
+}
 
 type DebitInsert = Database["public"]["Tables"]["debits"]["Insert"];
 type CreditInsert = Database["public"]["Tables"]["credits"]["Insert"];

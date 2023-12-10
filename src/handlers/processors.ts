@@ -4,7 +4,7 @@ import { GitHubEvent } from "../types/payload";
 import { closePullRequestForAnIssue, startCommandHandler } from "./assign/action";
 import { checkPullRequests } from "./assign/auto";
 import { commentCreatedOrEdited } from "./comment/action";
-import { issueClosed } from "./comment/handlers/issue/issue-closed";
+import { issueClosed } from "./comment/handlers/issue-closed";
 import { watchLabelChange } from "./label/label";
 import { syncPriceLabelsToConfig } from "./pricing/pre";
 import { onLabelChangeSetPricing } from "./pricing/pricing-label";

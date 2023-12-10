@@ -2,8 +2,9 @@ import { ObjectOptions, Static, StaticDecode, StringOptions, TProperties, Type a
 import ms from "ms";
 import { LogLevel } from "../adapters/supabase/helpers/pretty-logs";
 import { userCommands } from "../handlers/comment/handlers/comment-handler-main";
-import { validHTMLElements } from "../handlers/comment/handlers/issue/valid-html-elements";
+
 import { ajv } from "../utils/ajv";
+import { validHTMLElements } from "./valid-html-elements";
 
 const promotionComment =
   "###### If you enjoy the DevPool experience, please follow [Ubiquity on GitHub](https://github.com/ubiquity) and star [this repo](https://github.com/ubiquity/devpool-directory) to show your support. It helps a lot!";

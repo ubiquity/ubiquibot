@@ -1,14 +1,12 @@
-import Runtime from "../../../../bindings/bot-runtime";
-import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../../helpers/issue";
-import { Context } from "../../../../types/context";
-import { Comment, Issue, Payload, StateReason } from "../../../../types/payload";
-import structuredMetadata from "../../../shared/structured-metadata";
-import { getCollaboratorsForRepo } from "./get-collaborator-ids-for-repo";
-import { getPullRequestComments } from "./get-pull-request-comments";
+import Runtime from "../../../bindings/bot-runtime";
+import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../helpers/issue";
+import { Context } from "../../../types/context";
+import { Comment, Issue, Payload, StateReason } from "../../../types/payload";
+import structuredMetadata from "../../shared/structured-metadata";
+import { getCollaboratorsForRepo } from "./issue/get-collaborator-ids-for-repo";
+import { getPullRequestComments } from "./issue/get-pull-request-comments";
 
 export async function issueClosed(context: Context) {
-  // TODO: delegate permit calculation to GitHub Action
-
   const payload = context.event.payload as Payload;
   const issue = payload.issue as Issue;
 
@@ -18,6 +16,7 @@ export async function issueClosed(context: Context) {
   // === Calculate Permit === //
 
   const pullRequestComments = await getPullRequestComments(context, owner, repository, issueNumber);
+
   const repoCollaborators = await getCollaboratorsForRepo(context);
   const workflow = "compute.yml";
   const computeRepository = "ubiquibot-config";

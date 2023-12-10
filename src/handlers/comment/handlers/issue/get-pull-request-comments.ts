@@ -1,5 +1,5 @@
+import { getLinkedPullRequests } from "../../../../helpers/get-linked-issues-and-pull-requests";
 import { getAllIssueComments } from "../../../../helpers/issue";
-import { getLinkedPullRequests } from "../../../../helpers/parser";
 import { Context } from "../../../../types/context";
 
 import { Comment } from "../../../../types/payload";

@@ -1,6 +1,6 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
+import { getLinkedPullRequests } from "../../../helpers/get-linked-issues-and-pull-requests";
 import { listAllIssuesAndPullsForRepo } from "../../../helpers/issue";
-import { getLinkedPullRequests } from "../../../helpers/parser";
 import { Commit } from "../../../types/commit";
 import { Context } from "../../../types/context";
 import { Issue, IssueType, Payload, User } from "../../../types/payload";

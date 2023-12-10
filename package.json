@@ -11,7 +11,7 @@
     "probot-app"
   ],
   "scripts": {
-    "inspect": "node --inspect-brk ./dist/index.js",
+    "inspect": "node --inspect-brk ./dist/main.js",
     "build:ci": "ncc build src/adapters/github/github-actions.ts -o ./",
     "build:serverless": "ncc build src/index.ts -o ./",
     "build": "tsc",
@@ -25,7 +25,7 @@
     "start:serverless": "tsx src/adapters/github/github-actions.ts",
     "start:watch": "nodemon --exec 'yarn start'",
     "utils:cspell": "cspell --config .cspell.json 'src/**/*.{js,ts,json,md,yml}'",
-    "start": "probot run ./dist/index.js",
+    "start": "probot run ./dist/main.js",
     "prepare": "husky install",
     "test": "jest"
   },

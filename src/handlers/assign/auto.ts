@@ -1,5 +1,5 @@
-import { getAllPullRequests, getPullByNumber, getIssueByNumber, addAssignees } from "../../helpers/issue";
-import { getLinkedIssues } from "../../helpers/parser";
+import { getLinkedIssues } from "../../helpers/get-linked-issues-and-pull-requests";
+import { addAssignees, getAllPullRequests, getIssueByNumber, getPullByNumber } from "../../helpers/issue";
 import { Context } from "../../types/context";
 
 // Check for pull requests linked to their respective issues but not assigned to them
