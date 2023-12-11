@@ -1,5 +1,5 @@
 import { Context as ProbotContext } from "probot";
-import { Payload } from "../types/payload";
+import { GitHubPayload } from "../types/payload";
 
 export async function createCommitComment(
   context: ProbotContext,
@@ -9,7 +9,7 @@ export async function createCommitComment(
   owner?: string,
   repo?: string
 ) {
-  const payload = context.payload as Payload;
+  const payload = context.payload as GitHubPayload;
   if (!owner) {
     owner = payload.repository.owner.login;
   }

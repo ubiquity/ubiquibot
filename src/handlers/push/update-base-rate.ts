@@ -2,14 +2,14 @@ import { getPreviousFileContent } from "../../helpers/file";
 import { listLabelsForRepo, updateLabelsFromBaseRate } from "../../helpers/label";
 import { Context } from "../../types/context";
 import { Label } from "../../types/label";
-import { PushPayload } from "../../types/payload";
+import { GitHubPushPayload } from "../../types/payload";
 
 import { parseYaml } from "../../utils/generate-configuration";
 
 export async function updateBaseRate(context: Context, filePath: string) {
   const logger = context.logger;
   // Get default branch from ref
-  const payload = context.event.payload as PushPayload;
+  const payload = context.event.payload as GitHubPushPayload;
   const branch = payload.ref?.split("refs/heads/")[1];
   const owner = payload.repository.owner.login;
   const repo = payload.repository.name;

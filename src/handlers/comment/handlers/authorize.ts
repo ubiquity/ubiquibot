@@ -1,14 +1,14 @@
 import Runtime from "../../../bindings/bot-runtime";
 import { isUserAdminOrBillingManager } from "../../../helpers/issue";
 import { Context } from "../../../types/context";
-import { Payload } from "../../../types/payload";
+import { GitHubPayload } from "../../../types/payload";
 import { taskPaymentMetaData } from "../../wildcard/analytics";
 
 export async function authorizeLabelChanges(context: Context) {
   const runtime = Runtime.getState();
   const { label } = runtime.adapters.supabase;
   const logger = context.logger;
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   const sender = payload.sender.login;
 
   logger.info("Running '/authorize' command handler", { sender });

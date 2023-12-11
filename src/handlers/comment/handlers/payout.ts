@@ -1,9 +1,9 @@
 import { isUserAdminOrBillingManager } from "../../../helpers/issue";
 import { Context } from "../../../types/context";
-import { Payload } from "../../../types/payload";
+import { GitHubPayload } from "../../../types/payload";
 
 export async function autoPay(context: Context, body: string) {
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   const logger = context.logger;
 
   logger.info("Running '/autopay' command handler", { sender: payload.sender.login });

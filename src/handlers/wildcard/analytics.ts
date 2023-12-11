@@ -1,11 +1,11 @@
 import { calculateLabelValue } from "../../helpers/shared";
 import { Context } from "../../types/context";
-import { Issue } from "../../types/payload";
+import { GitHubIssue } from "../../types/payload";
 
 //  Checks the issue whether it's an open task for public self assignment
 export function taskPaymentMetaData(
   context: Context,
-  issue: Issue
+  issue: GitHubIssue
 ): {
   eligibleForPayment: boolean;
   timeLabel: string | null;

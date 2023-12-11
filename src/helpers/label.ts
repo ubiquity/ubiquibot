@@ -2,7 +2,7 @@ import { labelExists } from "../handlers/pricing/pricing-label";
 import { calculateTaskPrice } from "../handlers/shared/pricing";
 import { Context } from "../types/context";
 import { Label } from "../types/label";
-import { Payload } from "../types/payload";
+import { GitHubPayload } from "../types/payload";
 
 import { deleteLabel } from "./issue";
 import { calculateLabelValue } from "./shared";
@@ -12,7 +12,7 @@ const COLORS = { default: "ededed", price: "1f883d" };
 // cspell:enable
 
 export async function listLabelsForRepo(context: Context): Promise<Label[]> {
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
 
   const res = await context.event.octokit.rest.issues.listLabelsForRepo({
     owner: payload.repository.owner.login,
@@ -33,7 +33,7 @@ export async function createLabel(
   name: string,
   labelType = "default" as keyof typeof COLORS
 ): Promise<void> {
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   await context.event.octokit.rest.issues.createLabel({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,

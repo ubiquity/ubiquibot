@@ -1,6 +1,6 @@
-import { Issue } from "../../../../types/payload";
+import { GitHubIssue } from "../../../../types/payload";
 
-export function checkTaskStale(staleTask: number, issue: Issue) {
+export function checkTaskStale(staleTask: number, issue: GitHubIssue) {
   let days: number | undefined;
   let staleToDays: number | undefined;
   let isTaskStale = false;

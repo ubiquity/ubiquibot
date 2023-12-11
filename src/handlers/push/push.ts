@@ -5,13 +5,13 @@ import { DefinedError } from "ajv";
 import { createCommitComment } from "../../helpers/commit";
 import { getFileContent } from "../../helpers/file";
 import { BotConfig, validateBotConfig } from "../../types/configuration-types";
-import { CommitsPayload, PushPayload } from "../../types/payload";
+import { GitHubCommitsPayload, GitHubPushPayload } from "../../types/payload";
 import { parseYaml, transformConfig } from "../../utils/generate-configuration";
 
 export const ZERO_SHA = "0000000000000000000000000000000000000000";
 export const BASE_RATE_FILE = ".github/ubiquibot-config.yml";
 
-export function getCommitChanges(commits: CommitsPayload[]) {
+export function getCommitChanges(commits: GitHubCommitsPayload[]) {
   const changes = [] as string[];
 
   for (const commit of commits) {
@@ -29,7 +29,7 @@ export async function validateConfigChange(context: ProbotContext) {
   const runtime = Runtime.getState();
   const logger = runtime.logger;
 
-  const payload = context.payload as PushPayload;
+  const payload = context.payload as GitHubPushPayload;
 
   if (!payload.ref.startsWith("refs/heads/")) {
     logger.info("Skipping push events, not a branch");

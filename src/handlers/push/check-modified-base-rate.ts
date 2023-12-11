@@ -1,12 +1,12 @@
 import { Context } from "../../types/context";
-import { PushPayload } from "../../types/payload";
+import { GitHubPushPayload } from "../../types/payload";
 import { BASE_RATE_FILE, getCommitChanges, ZERO_SHA } from "./push";
 import { updateBaseRate } from "./update-base-rate";
 
 export async function checkModifiedBaseRate(context: Context) {
   const logger = context.logger;
 
-  const payload = context.event.payload as PushPayload;
+  const payload = context.event.payload as GitHubPushPayload;
 
   // if zero sha, push is a pr change
   if (payload.before === ZERO_SHA) {

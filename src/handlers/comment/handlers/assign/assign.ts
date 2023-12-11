@@ -1,7 +1,7 @@
 import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests } from "../../../../helpers/issue";
 import { calculateDurations } from "../../../../helpers/shared";
 import { Context } from "../../../../types/context";
-import { IssueType, Payload, User } from "../../../../types/payload";
+import { GitHubPayload, GitHubUser, IssueType } from "../../../../types/payload";
 import { isParentIssue } from "../../../pricing/action";
 
 import structuredMetadata from "../../../shared/structured-metadata";
@@ -14,7 +14,7 @@ import { getTimeLabelsAssigned } from "./get-time-labels-assigned";
 export async function assign(context: Context, body: string) {
   const logger = context.logger;
   const config = context.config;
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   const issue = payload.issue;
   const {
     miscellaneous: { maxConcurrentTasks },
@@ -60,7 +60,7 @@ export async function assign(context: Context, body: string) {
   if (issue.state == IssueType.CLOSED) {
     throw logger.error("Skipping '/start' since the issue is closed");
   }
-  const assignees: User[] = (payload.issue?.assignees ?? []).filter(Boolean) as User[];
+  const assignees: GitHubUser[] = (payload.issue?.assignees ?? []).filter(Boolean) as GitHubUser[];
 
   if (assignees.length !== 0) {
     throw logger.error("Skipping '/start' since the issue is already assigned");

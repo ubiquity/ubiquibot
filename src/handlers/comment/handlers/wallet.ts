@@ -2,7 +2,7 @@ import { constants, ethers } from "ethers";
 import Runtime from "../../../bindings/bot-runtime";
 import { resolveAddress } from "../../../helpers/ens";
 import { Context } from "../../../types/context";
-import { Payload } from "../../../types/payload";
+import { GitHubPayload } from "../../../types/payload";
 
 // Extracts ensname from raw text.
 function extractEnsName(text: string) {
@@ -20,7 +20,7 @@ function extractEnsName(text: string) {
 
 export async function registerWallet(context: Context, body: string) {
   const runtime = Runtime.getState();
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   const config = context.config;
   const logger = context.logger;
   const sender = payload.sender.login;

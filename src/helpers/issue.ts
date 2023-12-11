@@ -2,7 +2,7 @@ import { LogReturn } from "../adapters/supabase/helpers/tables/logs";
 import { Context } from "../types/context";
 import { HandlerReturnValuesNoVoid } from "../types/handlers";
 import { StreamlinedComment } from "../types/openai";
-import { AssignEvent, Comment, Issue, IssueType, Payload, UserType } from "../types/payload";
+import { GitHubAssignEvent, GitHubComment, GitHubIssue, GitHubPayload, IssueType, UserType } from "../types/payload";
 
 async function getAllIssueEvents(context: Context) {
   if (!context.payload.issue) return;
@@ -75,7 +75,7 @@ export async function listAllIssuesAndPullsForRepo(
       sort,
       direction,
       per_page: 100,
-    })) as Issue[];
+    })) as GitHubIssue[];
     return issues;
   } catch (err: unknown) {
     context.logger.fatal("Listing all issues and pulls failed!", err);
@@ -154,7 +154,7 @@ export async function getAllIssueComments(
   context: Context,
   issueNumber: number,
   format: "raw" | "html" | "text" | "full" = "raw"
-): Promise<Comment[]> {
+): Promise<GitHubComment[]> {
   const payload = context.payload;
 
   try {
@@ -166,7 +166,7 @@ export async function getAllIssueComments(
       mediaType: {
         format,
       },
-    })) as Comment[];
+    })) as GitHubComment[];
     return comments;
   } catch (e: unknown) {
     context.logger.fatal("Fetching all issue comments failed!", e);
@@ -174,7 +174,7 @@ export async function getAllIssueComments(
   }
 }
 
-export async function getAllIssueAssignEvents(context: Context, issueNumber: number): Promise<AssignEvent[]> {
+export async function getAllIssueAssignEvents(context: Context, issueNumber: number): Promise<GitHubAssignEvent[]> {
   const payload = context.payload;
 
   try {
@@ -187,7 +187,7 @@ export async function getAllIssueAssignEvents(context: Context, issueNumber: num
         per_page: 100,
       },
       (response) => response.data.filter((item) => item.event === "assigned")
-    )) as AssignEvent[];
+    )) as GitHubAssignEvent[];
 
     return events.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
   } catch (err: unknown) {
@@ -349,7 +349,7 @@ export async function getAllPullRequests(context: Context, state: "open" | "clos
 }
 
 export async function closePullRequest(context: Context, pullNumber: number) {
-  const payload = context.payload as Payload;
+  const payload = context.payload as GitHubPayload;
   try {
     await context.octokit.rest.pulls.update({
       owner: payload.repository.owner.login,
@@ -433,7 +433,7 @@ export async function getPullByNumber(context: Context, pull: number) {
 }
 
 // Get issues assigned to a username
-export async function getAssignedIssues(context: Context, username: string): Promise<Issue[]> {
+export async function getAssignedIssues(context: Context, username: string): Promise<GitHubIssue[]> {
   const payload = context.payload;
 
   try {
@@ -447,7 +447,7 @@ export async function getAssignedIssues(context: Context, username: string): Pro
       },
       ({ data: issues }) =>
         issues.filter((issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username)
-    )) as Issue[];
+    )) as GitHubIssue[];
     return issues;
   } catch (err: unknown) {
     context.logger.fatal("Fetching assigned issues failed!", err);

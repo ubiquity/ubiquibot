@@ -1,14 +1,14 @@
 import { Context } from "../../types/context";
-import { Comment, Payload } from "../../types/payload";
+import { GitHubComment, GitHubPayload } from "../../types/payload";
 import { commentParser, userCommands } from "./handlers/comment-handler-main";
 import { verifyFirstCommentInRepository } from "./handlers/first";
 
 export async function commentCreatedOrEdited(context: Context) {
   const config = context.config,
     logger = context.logger,
-    payload = context.event.payload as Payload;
+    payload = context.event.payload as GitHubPayload;
 
-  const comment = payload.comment as Comment;
+  const comment = payload.comment as GitHubComment;
 
   const body = comment.body;
   const commentedCommand = commentParser(body);

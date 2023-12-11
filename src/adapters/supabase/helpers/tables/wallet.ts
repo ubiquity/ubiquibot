@@ -1,7 +1,7 @@
 import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { Context as ProbotContext } from "probot";
 import Runtime from "../../../../bindings/bot-runtime";
-import { User } from "../../../../types/payload";
+import { GitHubUser } from "../../../../types/payload";
 
 import { Database } from "../../types/database";
 import { Super } from "./super";
@@ -76,13 +76,13 @@ export class Wallet extends Super {
     const user = await this._checkIfUserExists(payload.sender.id);
     let userData = user;
     if (!userData) {
-      const user = payload.sender as User;
+      const user = payload.sender as GitHubUser;
       userData = await this._registerNewUser(user, this._getLocationMetaData(payload));
     }
     return userData;
   }
 
-  private async _registerNewUser(user: User, locationMetaData: LocationMetaData): Promise<UserRow> {
+  private async _registerNewUser(user: GitHubUser, locationMetaData: LocationMetaData): Promise<UserRow> {
     // Insert the location metadata into the locations table
     const { data: locationData, error: locationError } = (await this.supabase
       .from("locations")

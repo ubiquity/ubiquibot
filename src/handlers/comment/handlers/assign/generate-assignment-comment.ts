@@ -1,6 +1,6 @@
 import Runtime from "../../../../bindings/bot-runtime";
 import { Context } from "../../../../types/context";
-import { Payload } from "../../../../types/payload";
+import { GitHubPayload } from "../../../../types/payload";
 
 const options: Intl.DateTimeFormatOptions = {
   weekday: "short",
@@ -12,7 +12,11 @@ const options: Intl.DateTimeFormatOptions = {
   timeZoneName: "short",
 };
 
-export async function generateAssignmentComment(context: Context, payload: Payload, duration: number | null = null) {
+export async function generateAssignmentComment(
+  context: Context,
+  payload: GitHubPayload,
+  duration: number | null = null
+) {
   const runtime = Runtime.getState();
   const startTime = new Date().getTime();
   let endTime: null | Date = null;

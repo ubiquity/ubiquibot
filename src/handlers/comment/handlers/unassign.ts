@@ -1,5 +1,5 @@
 import { Context } from "../../../types/context";
-import { Payload } from "../../../types/payload";
+import { GitHubPayload } from "../../../types/payload";
 import { closePullRequestForAnIssue } from "../../assign/action";
 
 export async function unassign(context: Context, body: string) {
@@ -8,7 +8,7 @@ export async function unassign(context: Context, body: string) {
     return logger.fatal("Skipping to unassign", { body });
   }
 
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   logger.info("Running '/stop' command handler", { sender: payload.sender.login });
   const issue = payload.issue;
   if (!issue) {

@@ -1,11 +1,11 @@
 import Runtime from "../../../bindings/bot-runtime";
 import { isUserAdminOrBillingManager } from "../../../helpers/issue";
 import { Context } from "../../../types/context";
-import { Payload } from "../../../types/payload";
+import { GitHubPayload } from "../../../types/payload";
 
 export async function setLabels(context: Context, body: string) {
   const logger = context.logger;
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   const sender = payload.sender.login;
 
   const sufficientPrivileges = await isUserAdminOrBillingManager(context, sender);

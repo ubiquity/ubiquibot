@@ -1,14 +1,14 @@
 import Runtime from "../../../bindings/bot-runtime";
 import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../helpers/issue";
 import { Context } from "../../../types/context";
-import { Comment, Issue, Payload, StateReason } from "../../../types/payload";
+import { GitHubComment, GitHubIssue, GitHubPayload, StateReason } from "../../../types/payload";
 import structuredMetadata from "../../shared/structured-metadata";
 import { getCollaboratorsForRepo } from "./issue/get-collaborator-ids-for-repo";
 import { getPullRequestComments } from "./issue/get-pull-request-comments";
 
 export async function issueClosed(context: Context) {
-  const payload = context.event.payload as Payload;
-  const issue = payload.issue as Issue;
+  const payload = context.event.payload as GitHubPayload;
+  const issue = payload.issue as GitHubIssue;
 
   const { issueComments, owner, repository, issueNumber } = await getEssentials(context);
   await preflightChecks({ issue, issueComments, context });
@@ -58,8 +58,8 @@ async function dispatchWorkflow(context: Context, owner: string, repo: string, w
 }
 
 async function getEssentials(context: Context) {
-  const payload = context.event.payload as Payload;
-  const issue = payload.issue as Issue;
+  const payload = context.event.payload as GitHubPayload;
+  const issue = payload.issue as GitHubIssue;
   const runtime = Runtime.getState();
   const logger = runtime.logger;
   if (!issue) throw context.logger.error("Issue is not defined");
@@ -72,8 +72,8 @@ async function getEssentials(context: Context) {
 }
 
 interface PreflightChecksParams {
-  issue: Issue;
-  issueComments: Comment[];
+  issue: GitHubIssue;
+  issueComments: GitHubComment[];
   context: Context;
 }
 
@@ -97,11 +97,11 @@ async function preflightChecks({ issue, issueComments, context }: PreflightCheck
     });
   }
 
-  const botComments = issueComments.filter((comment: Comment) => comment.user.type === "Bot" /* No Humans */);
+  const botComments = issueComments.filter((comment: GitHubComment) => comment.user.type === "Bot" /* No Humans */);
   checkIfPermitsAlreadyPosted(context, botComments);
 }
 
-function checkIfPermitsAlreadyPosted(context: Context, botComments: Comment[]) {
+function checkIfPermitsAlreadyPosted(context: Context, botComments: GitHubComment[]) {
   botComments.forEach((comment) => {
     const botComment = structuredMetadata.parse(comment.body);
     // if (botComment) {

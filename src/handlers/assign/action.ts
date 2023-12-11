@@ -3,12 +3,12 @@ import { closePullRequest } from "../../helpers/issue";
 import { calculateDurations, calculateLabelValue } from "../../helpers/shared";
 import { Context } from "../../types/context";
 import { Label } from "../../types/label";
-import { Payload } from "../../types/payload";
+import { GitHubPayload } from "../../types/payload";
 
 export async function startCommandHandler(context: Context) {
   const config = context.config;
   const logger = context.logger;
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   if (!payload.issue) {
     return logger.fatal("Issue is not defined");
   }
@@ -78,7 +78,7 @@ export async function startCommandHandler(context: Context) {
 
 export async function closePullRequestForAnIssue(context: Context) {
   const logger = context.logger;
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   if (!payload.issue?.number) {
     throw logger.fatal("Issue is not defined");
   }

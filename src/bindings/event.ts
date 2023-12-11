@@ -18,7 +18,7 @@ import {
   PreActionHandler,
   WildCardHandler,
 } from "../types/handlers";
-import { GitHubEvent, Payload, payloadSchema } from "../types/payload";
+import { GitHubEvent, GitHubPayload, payloadSchema } from "../types/payload";
 import { ajv } from "../utils/ajv";
 import { generateConfiguration } from "../utils/generate-configuration";
 import Runtime from "./bot-runtime";
@@ -41,7 +41,7 @@ runtime.adapters = createAdapters();
 runtime.logger = runtime.adapters.supabase.logs;
 
 export async function bindEvents(eventContext: ProbotContext) {
-  const payload = eventContext.payload as Payload;
+  const payload = eventContext.payload as GitHubPayload;
   const eventName = payload?.action ? `${eventContext.name}.${payload?.action}` : eventContext.name; // some events wont have actions as this grows
   const logger = new Logs(supabaseClient, env.LOG_RETRY_LIMIT, env.LOG_LEVEL, eventContext);
 
@@ -206,7 +206,7 @@ async function renderMainActionOutput(
 
 function createRenderCatchAll(context: Context, handlerType: AllHandlersWithTypes, activeHandler: AllHandlers) {
   return async function renderCatchAll(report: LogReturn | Error | unknown) {
-    const payload = context.event.payload as Payload;
+    const payload = context.event.payload as GitHubPayload;
     const issue = payload.issue;
     if (!issue) {
       return context.logger.error("Issue is null. Skipping", { issue });

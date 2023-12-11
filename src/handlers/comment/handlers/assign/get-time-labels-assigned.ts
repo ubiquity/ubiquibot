@@ -1,9 +1,9 @@
 import { BotConfig } from "../../../../types/configuration-types";
 import { Context } from "../../../../types/context";
 import { Label } from "../../../../types/label";
-import { Payload } from "../../../../types/payload";
+import { GitHubPayload } from "../../../../types/payload";
 
-export function getTimeLabelsAssigned(context: Context, payload: Payload, config: BotConfig) {
+export function getTimeLabelsAssigned(context: Context, payload: GitHubPayload, config: BotConfig) {
   const logger = context.logger;
   const labels = payload.issue?.labels;
   if (!labels?.length) {

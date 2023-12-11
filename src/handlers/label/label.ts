@@ -1,12 +1,12 @@
-import { Context } from "../../types/context";
 import Runtime from "../../bindings/bot-runtime";
-import { Payload } from "../../types/payload";
 import { hasLabelEditPermission } from "../../helpers/payout";
+import { Context } from "../../types/context";
+import { GitHubPayload } from "../../types/payload";
 
 export async function watchLabelChange(context: Context) {
   const logger = context.logger;
 
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   const { label, changes, sender } = payload;
 
   const previousLabel = changes?.name?.from;

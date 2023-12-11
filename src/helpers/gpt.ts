@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { Context } from "../types/context";
 import { StreamlinedComment } from "../types/openai";
-import { Payload, UserType } from "../types/payload";
+import { GitHubPayload, UserType } from "../types/payload";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "./issue";
 
 export const sysMsg = `You are the UbiquiBot, designed to provide accurate technical answers. \n
@@ -64,7 +64,7 @@ export async function decideContextGPT(
 ) {
   const logger = context.logger;
 
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   const issue = payload.issue;
 
   if (!issue) {

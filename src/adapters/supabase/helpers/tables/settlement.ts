@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import Decimal from "decimal.js";
-import { Comment, Payload } from "../../../../types/payload";
+import { GitHubComment, GitHubPayload } from "../../../../types/payload";
 import { Database } from "../../types/database";
 import { Super } from "./super";
 
@@ -35,10 +35,10 @@ type AddDebit = {
 type AddCreditWithPermit = {
   userId: number;
   amount: Decimal;
-  comment: Comment;
+  comment: GitHubComment;
   transactionData?: PermitTransactionData;
   networkId?: number;
-  organization?: Payload["organization"];
+  organization?: GitHubPayload["organization"];
 };
 
 export class Settlement extends Super {

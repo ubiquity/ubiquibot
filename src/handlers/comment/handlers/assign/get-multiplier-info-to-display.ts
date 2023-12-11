@@ -1,9 +1,14 @@
 import { Context } from "../../../../types/context";
-import { Issue } from "../../../../types/payload";
-import { getUserMultiplier } from "./get-user-multiplier";
+import { GitHubIssue } from "../../../../types/payload";
 import { taskPaymentMetaData } from "../../../wildcard/analytics";
+import { getUserMultiplier } from "./get-user-multiplier";
 
-export async function getMultiplierInfoToDisplay(context: Context, senderId: number, repoId: number, issue: Issue) {
+export async function getMultiplierInfoToDisplay(
+  context: Context,
+  senderId: number,
+  repoId: number,
+  issue: GitHubIssue
+) {
   const userMultiplier = await getUserMultiplier(senderId, repoId);
   const value = userMultiplier?.value || null;
   const reason = userMultiplier?.reason || null;

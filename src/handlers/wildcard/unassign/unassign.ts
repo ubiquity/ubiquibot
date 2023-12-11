@@ -3,7 +3,7 @@ import { getLinkedPullRequests } from "../../../helpers/get-linked-issues-and-pu
 import { listAllIssuesAndPullsForRepo } from "../../../helpers/issue";
 import { Commit } from "../../../types/commit";
 import { Context } from "../../../types/context";
-import { Issue, IssueType, Payload, User } from "../../../types/payload";
+import { GitHubIssue, GitHubPayload, GitHubUser, IssueType } from "../../../types/payload";
 // import { Commit, Context, Issue, IssueType, Payload, User } from "../../../types";
 
 type IssuesListEventsResponseData = RestEndpointMethodTypes["issues"]["listEvents"]["response"]["data"];
@@ -15,16 +15,16 @@ export async function checkTasksToUnassign(context: Context) {
   const assignedIssues = issuesAndPullsOpened.filter((issue) => issue.assignee);
 
   const tasksToUnassign = await Promise.all(
-    assignedIssues.map(async (assignedIssue: Issue) => checkTaskToUnassign(context, assignedIssue))
+    assignedIssues.map(async (assignedIssue: GitHubIssue) => checkTaskToUnassign(context, assignedIssue))
   );
   logger.ok("Checked all the tasks to unassign", {
     tasksToUnassign: tasksToUnassign.filter(Boolean).map((task) => task?.metadata),
   });
 }
 
-async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
+async function checkTaskToUnassign(context: Context, assignedIssue: GitHubIssue) {
   const logger = context.logger;
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   const {
     timers: { taskDisqualifyDuration, taskFollowUpDuration },
   } = context.config;
@@ -36,7 +36,7 @@ async function checkTaskToUnassign(context: Context, assignedIssue: Issue) {
       issueNumber: assignedIssue.number,
     });
   }
-  const assignees = assignedIssue.assignees.filter((item): item is User => item !== null);
+  const assignees = assignedIssue.assignees.filter((item): item is GitHubUser => item !== null);
 
   const assigneeLoginsOnly = assignees.map((assignee) => assignee.login);
 
@@ -389,12 +389,12 @@ type AssignedEvent = {
   id: number;
   node_id: string;
   url: string;
-  actor: User;
+  actor: GitHubUser;
   event: "assigned";
   commit_id: null;
   commit_url: null;
   created_at: string;
-  assignee: User;
-  assigner: User;
+  assignee: GitHubUser;
+  assigner: GitHubUser;
   performed_via_github_app: null;
 };

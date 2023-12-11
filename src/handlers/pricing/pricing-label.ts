@@ -4,7 +4,7 @@ import { addLabelToIssue, clearAllPriceLabelsOnIssue, getAllLabeledEvents } from
 import { createLabel } from "../../helpers/label";
 import { BotConfig } from "../../types/configuration-types";
 import { Label } from "../../types/label";
-import { Payload, UserType } from "../../types/payload";
+import { GitHubPayload, UserType } from "../../types/payload";
 import { labelAccessPermissionsCheck } from "../access/labels-access";
 import { setPrice } from "../shared/pricing";
 import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./action";
@@ -12,7 +12,7 @@ import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./action";
 export async function onLabelChangeSetPricing(context: Context): Promise<void> {
   const config = context.config;
   const logger = context.logger;
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   if (!payload.issue) throw context.logger.fatal("Issue is not defined");
 
   const labels = payload.issue.labels;
@@ -151,7 +151,7 @@ async function addPriceLabelToIssue(context: Context, targetPriceLabel: string, 
 }
 
 export async function labelExists(context: Context, name: string): Promise<boolean> {
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   const res = await context.event.octokit.rest.issues.getLabel({
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
