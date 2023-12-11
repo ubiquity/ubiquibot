@@ -20,17 +20,9 @@ export async function issueClosed(context: Context) {
 
   // const repoCollaborators = await getCollaboratorsForRepo(context);
 
-  const endpoint = await delegateCompute(context, {
-    eventName: GitHubEvent.ISSUES_CLOSED,
-    issueOwner,
-    issueRepository,
-    issueNumber,
-  });
-
-  return Runtime.getState().logger.ok("Evaluating results. Please wait...", {
-    endpoint,
-    view: transformEndpointToView(endpoint),
-  });
+  const computeParams = { eventName: GitHubEvent.ISSUES_CLOSED, issueOwner, issueRepository, issueNumber };
+  await delegateCompute(context, computeParams);
+  return Runtime.getState().logger.ok("Evaluating results. Please wait...", computeParams);
 }
 
 async function getEssentials(context: Context) {
@@ -89,7 +81,4 @@ function checkIfPermitsAlreadyPosted(context: Context, botComments: GitHubCommen
     }
     // }
   });
-}
-function transformEndpointToView(endpoint: string): string {
-  return endpoint.replace("api.", "").replace("/repos", "").replace("/dispatches", "");
 }

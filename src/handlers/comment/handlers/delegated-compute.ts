@@ -15,32 +15,24 @@ export const computeLocation = {
 };
 
 export async function delegateCompute(context: Context, inputs: DelegatedComputeInputs) {
-  const endpoint = `https://api.github.com/repos/${computeLocation.owner}/${computeLocation.repository}/actions/workflows/${computeLocation.workflow}/dispatches`;
+  const owner = computeLocation.owner;
+  const repo = computeLocation.repository;
+  const workflowId = computeLocation.workflow;
+  const ref = await getDefaultBranch(context);
 
-  const response = await fetch(endpoint, await constructFetchOptions(context, inputs));
+  // You must authenticate using an access token with the repo scope to use this endpoint. GitHub Apps must have the actions:write permission to use this endpoint.
+  // For more information, see "Creating a personal access token for the command line."
+  // https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+  const response = await context.octokit.actions.createWorkflowDispatch({
+    owner,
+    repo,
+    workflow_id: workflowId,
+    ref,
+    inputs: inputs as unknown as { [key: string]: string },
+  });
   if (response.status !== 204) {
-    const errorMessage = await response.text();
-    throw errorMessage;
-  } else {
-    return endpoint;
+    throw new Error(`Failed to dispatch workflow. Status: ${response.status}`);
   }
-}
-
-async function constructFetchOptions(context: Context, inputs: DelegatedComputeInputs) {
-  return {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-      Accept: "application/vnd.github.v3+json",
-    } as {
-      Accept: string;
-      Authorization?: string;
-    },
-    body: JSON.stringify({
-      ref: await getDefaultBranch(context),
-      inputs,
-    }),
-  };
 }
 
 async function getDefaultBranch(context: Context) {
