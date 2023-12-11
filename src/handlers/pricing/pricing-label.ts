@@ -152,10 +152,14 @@ async function addPriceLabelToIssue(context: Context, targetPriceLabel: string, 
 
 export async function labelExists(context: Context, name: string): Promise<boolean> {
   const payload = context.event.payload as Payload;
-  const res = await context.event.octokit.rest.issues.getLabel({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    name,
-  });
-  return res.status === 200;
+  try {
+    await context.event.octokit.rest.issues.getLabel({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      name,
+    });
+    return true;
+  } catch (error) {
+    return false;
+  }
 }
