@@ -21,7 +21,7 @@ jobs:
         run: yarn install
 
       - name: Report knip results to pull request
-        uses: codex-/knip-reporter@v2
+        uses: Codex-/knip-reporter@v2
         with:
           verbose: true
           comment_id: ${{ github.workflow }}-reporter
