@@ -92,7 +92,6 @@ export class Wallet extends Super {
     if (locationError) {
       throw new Error(locationError.message);
     }
-    console.log(locationData);
     // Get the ID of the inserted location
     const locationId = locationData.id;
 
