@@ -15,13 +15,13 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: 20.x
+          node-version: 20.10
 
       - name: Install toolchain
         run: yarn install
 
       - name: Report knip results to pull request
-        uses: gitcoindev/knip-reporter@v2.1.2
+        uses: codex-/knip-reporter@v2.1.0
         with:
           verbose: true
           comment_id: ${{ github.workflow }}-reporter
