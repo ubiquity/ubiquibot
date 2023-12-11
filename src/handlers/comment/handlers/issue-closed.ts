@@ -1,60 +1,36 @@
 import Runtime from "../../../bindings/bot-runtime";
 import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../helpers/issue";
 import { Context } from "../../../types/context";
-import { GitHubComment, GitHubIssue, GitHubPayload, StateReason } from "../../../types/payload";
+import { GitHubComment, GitHubEvent, GitHubIssue, GitHubPayload, StateReason } from "../../../types/payload";
 import structuredMetadata from "../../shared/structured-metadata";
-import { getCollaboratorsForRepo } from "./issue/get-collaborator-ids-for-repo";
-import { getPullRequestComments } from "./issue/get-pull-request-comments";
+import { delegateCompute } from "./delegated-compute";
+// import { getCollaboratorsForRepo } from "./issue/get-collaborator-ids-for-repo";
+// import { getPullRequestComments } from "./issue/get-pull-request-comments";
 
 export async function issueClosed(context: Context) {
   const payload = context.event.payload as GitHubPayload;
   const issue = payload.issue as GitHubIssue;
 
-  const { issueComments, owner, repository, issueNumber } = await getEssentials(context);
+  const { issueComments, issueOwner, issueRepository, issueNumber } = await getEssentials(context);
   await preflightChecks({ issue, issueComments, context });
 
   // === Calculate Permit === //
 
-  const pullRequestComments = await getPullRequestComments(context, owner, repository, issueNumber);
+  // const pullRequestComments = await getPullRequestComments(context, owner, repository, issueNumber);
 
-  const repoCollaborators = await getCollaboratorsForRepo(context);
-  const workflow = "compute.yml";
-  const computeRepository = "ubiquibot-config";
-  await dispatchWorkflow(context, owner, computeRepository, workflow, {
-    eventName: "issueClosed",
-    owner,
-    repo: repository,
-    issueNumber: issue.number.toString(),
-    payload: JSON.stringify({
-      issue,
-      issueComments,
-      pullRequestComments,
-      botConfig: context.config,
-      repoCollaborators,
-    }),
-  });
-  const logger = Runtime.getState().logger;
-  return logger.ok("Evaluating results. Please wait...", {
-    endpoint: `https://api.github.com/repos/${owner}/${computeRepository}/actions/workflows/${workflow}/dispatches`,
-    view: `https://github.com/${owner}/${computeRepository}/actions/workflows/${workflow}`,
-  });
-}
+  // const repoCollaborators = await getCollaboratorsForRepo(context);
 
-async function dispatchWorkflow(context: Context, owner: string, repo: string, workflow: string, inputs: any) {
-  const response = await context.octokit.repos.get({ owner, repo });
-  const defaultBranch = response.data.default_branch;
-  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow}/dispatches`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-      Accept: "application/vnd.github.v3+json",
-    },
-    body: JSON.stringify({ ref: defaultBranch, inputs }),
+  const endpoint = await delegateCompute(context, {
+    eventName: GitHubEvent.ISSUES_CLOSED,
+    issueOwner,
+    issueRepository,
+    issueNumber,
   });
-  if (res.status !== 204) {
-    const errorMessage = await res.text();
-    console.error(errorMessage);
-  }
+
+  return Runtime.getState().logger.ok("Evaluating results. Please wait...", {
+    endpoint,
+    view: transformEndpointToView(endpoint),
+  });
 }
 
 async function getEssentials(context: Context) {
@@ -64,11 +40,11 @@ async function getEssentials(context: Context) {
   const logger = runtime.logger;
   if (!issue) throw context.logger.error("Issue is not defined");
   const issueComments = await getAllIssueComments(context, issue.number);
-  const owner = payload?.organization?.login || payload.repository.owner.login;
-  if (!owner) throw context.logger.error("Owner is not defined");
-  const repository = payload?.repository?.name;
+  const issueOwner = payload?.organization?.login || payload.repository.owner.login;
+  if (!issueOwner) throw context.logger.error("Owner is not defined");
+  const issueRepository = payload?.repository?.name;
   const issueNumber = issue.number;
-  return { issue, runtime, logger, issueComments, owner, repository, issueNumber };
+  return { issue, runtime, logger, issueComments, issueOwner, issueRepository, issueNumber };
 }
 
 interface PreflightChecksParams {
@@ -113,4 +89,7 @@ function checkIfPermitsAlreadyPosted(context: Context, botComments: GitHubCommen
     }
     // }
   });
+}
+function transformEndpointToView(endpoint: string): string {
+  return endpoint.replace("api.", "").replace("/repos", "").replace("/dispatches", "");
 }
