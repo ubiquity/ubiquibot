@@ -64,6 +64,7 @@ async function checkTaskToUnassign(context: Context, assignedIssue: GitHubIssue)
 
   // Check if the assignee did any "event activity" or commit within the timeout window
   const { activeAssigneesInDisqualifyDuration, activeAssigneesInFollowUpDuration } = getActiveAssignees(
+    context,
     assigneeLoginsOnly,
     assigneeEvents,
     taskDisqualifyDuration,
@@ -87,11 +88,16 @@ async function checkTaskToUnassign(context: Context, assignedIssue: GitHubIssue)
     return currentEventTime > latestEventTime ? currentEvent : latestEvent;
   }, assignEventsOfAssignee[0]);
 
+  logger.debug("Latest assign event", { latestAssignEvent });
+
   if (!latestAssignEvent) {
     logger.debug("No latest assign event found.", { assignEventsOfAssignee });
   }
 
   const latestAssignEventTime = new Date(latestAssignEvent.created_at).getTime();
+
+  logger.debug("Latest assign event time", { latestAssignEventTime });
+
   const now = Date.now();
 
   const assigneesWithinGracePeriod = assignees.filter(() => now - latestAssignEventTime < taskDisqualifyDuration);
@@ -188,12 +194,19 @@ async function checkIfFollowUpAlreadyPosted(
   const now = new Date().getTime();
 
   // Check if a similar comment has already been posted within the disqualification period
-  const hasRecentFollowUp = comments.data.some(
-    (comment) =>
+  let hasRecentFollowUp = false;
+  for (const comment of comments.data) {
+    context.logger.debug("Checking comment for follow-up", { comment });
+    if (
+      comment &&
       comment.body === followUpMessage &&
-      comment?.user?.type === "Bot" &&
+      comment.user?.type === "Bot" &&
       now - new Date(comment.created_at).getTime() <= disqualificationPeriod
-  );
+    ) {
+      hasRecentFollowUp = true;
+      break;
+    }
+  }
   return hasRecentFollowUp;
 }
 
@@ -257,6 +270,7 @@ async function disqualifyIdleAssignees(
 }
 
 function getActiveAssignees(
+  context: Context,
   assignees: string[],
   assigneeEvents: IssuesListEventsResponseData,
   taskDisqualifyDuration: number,
@@ -264,6 +278,7 @@ function getActiveAssignees(
   taskFollowUpDuration: number
 ) {
   const activeAssigneesInDisqualifyDuration = getActiveAssigneesInDisqualifyDuration(
+    context,
     assignees,
     assigneeEvents,
     taskDisqualifyDuration,
@@ -271,6 +286,7 @@ function getActiveAssignees(
   );
 
   const activeAssigneesInFollowUpDuration = getActiveAssigneesInFollowUpDuration(
+    context,
     assignees,
     assigneeEvents,
     taskFollowUpDuration,
@@ -285,6 +301,7 @@ function getActiveAssignees(
 }
 
 function getActiveAssigneesInFollowUpDuration(
+  context: Context,
   assignees: string[],
   assigneeEvents: IssuesListEventsResponseData,
   taskFollowUpDuration: number,
@@ -292,9 +309,15 @@ function getActiveAssigneesInFollowUpDuration(
   taskDisqualifyDuration: number
 ) {
   return assignees.filter(() => {
-    const assigneeEventsWithinDuration = assigneeEvents.filter(
-      (event) => new Date().getTime() - new Date(event.created_at).getTime() <= taskFollowUpDuration
-    );
+    const currentTime = new Date().getTime();
+    const assigneeEventsWithinDuration = assigneeEvents.filter((event) => {
+      if (!event.created_at) {
+        context.logger.debug("Event does not have a created_at property", { event });
+        return false;
+      }
+      const eventTime = new Date(event.created_at).getTime();
+      return currentTime - eventTime <= taskFollowUpDuration;
+    });
     const assigneeCommitsWithinDuration = assigneeCommits.filter((commit) => {
       const date = commit.commit.author?.date || commit.commit.committer?.date || "";
       return date && new Date().getTime() - new Date(date).getTime() <= taskDisqualifyDuration;
@@ -304,15 +327,22 @@ function getActiveAssigneesInFollowUpDuration(
 }
 
 function getActiveAssigneesInDisqualifyDuration(
+  context: Context,
   assignees: string[],
   assigneeEvents: IssuesListEventsResponseData,
   taskDisqualifyDuration: number,
   assigneeCommits: Commit[]
 ) {
   return assignees.filter(() => {
-    const assigneeEventsWithinDuration = assigneeEvents.filter(
-      (event) => new Date().getTime() - new Date(event.created_at).getTime() <= taskDisqualifyDuration
-    );
+    const currentTime = new Date().getTime();
+    const assigneeEventsWithinDuration = assigneeEvents.filter((event) => {
+      if (!event.created_at) {
+        context.logger.debug("Event does not have a created_at property", { event });
+        return false;
+      }
+      const eventTime = new Date(event.created_at).getTime();
+      return currentTime - eventTime <= taskDisqualifyDuration;
+    });
 
     const assigneeCommitsWithinDuration = assigneeCommits.filter((commit) => {
       const date = commit.commit.author?.date || commit.commit.committer?.date || "";
