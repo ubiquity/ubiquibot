@@ -11,12 +11,20 @@ type IssuesListEventsResponseData = RestEndpointMethodTypes["issues"]["listEvent
 
 export async function checkTasksToUnassign(context: Context) {
   const logger = context.logger;
+  logger.debug("Checking tasks to unassign");
+
   const issuesAndPullsOpened = await listAllIssuesAndPullsForRepo(context, IssueType.OPEN);
+
+  logger.debug("Fetched all issues and pulls opened", { issuesAndPullsOpened });
+
   const assignedIssues = issuesAndPullsOpened.filter((issue) => issue.assignee);
 
   const tasksToUnassign = await Promise.all(
-    assignedIssues.map(async (assignedIssue: GitHubIssue) => checkTaskToUnassign(context, assignedIssue))
+    assignedIssues.map((assignedIssue: GitHubIssue) => checkTaskToUnassign(context, assignedIssue))
   );
+
+  logger.debug("Checked tasks to unassign", { tasksToUnassign });
+
   logger.ok("Checked all the tasks to unassign", {
     tasksToUnassign: tasksToUnassign.filter(Boolean).map((task) => task?.metadata),
   });
