@@ -15,7 +15,7 @@ export async function checkTasksToUnassign(context: Context) {
 
   const issuesAndPullsOpened = await listAllIssuesAndPullsForRepo(context, IssueType.OPEN);
 
-  logger.debug("Fetched all issues and pulls opened", { issuesAndPullsOpened });
+  // logger.debug("Fetched all issues and pulls opened", { issuesAndPullsOpened });
 
   const assignedIssues = issuesAndPullsOpened.filter((issue) => issue.assignee);
 
