@@ -98,6 +98,8 @@ async function checkTaskToUnassign(context: Context, assignedIssue: GitHubIssue)
 
   logger.debug("Latest assign event", { latestAssignEvent });
 
+  let disqualifiedAssignees: null | string[] = null;
+
   if (!latestAssignEvent) {
     throw logger.debug("No latest assign event found.", { assignEventsOfAssignee });
   } else {
@@ -111,7 +113,7 @@ async function checkTaskToUnassign(context: Context, assignedIssue: GitHubIssue)
 
     const assigneesOutsideGracePeriod = assignees.filter((assignee) => !assigneesWithinGracePeriod.includes(assignee));
 
-    const disqualifiedAssignees = await disqualifyIdleAssignees(context, {
+    disqualifiedAssignees = await disqualifyIdleAssignees(context, {
       assignees: assigneesOutsideGracePeriod.map((assignee) => assignee.login),
       activeAssigneesInDisqualifyDuration,
       login,
@@ -129,12 +131,11 @@ async function checkTaskToUnassign(context: Context, assignedIssue: GitHubIssue)
       number,
       taskDisqualifyDuration,
     });
-
-    return logger.ok("Checked task to unassign", {
-      issueNumber: assignedIssue.number,
-      disqualifiedAssignees,
-    });
   }
+  return logger.ok("Checked task to unassign", {
+    issueNumber: assignedIssue.number,
+    disqualifiedAssignees,
+  });
 }
 
 async function followUpWithTheRest(
