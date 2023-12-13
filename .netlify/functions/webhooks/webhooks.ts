@@ -3,7 +3,7 @@ import { Context, createProbot } from "probot";
 import app from "../../../src/main";
 const probot = createProbot();
 const loadingApp = probot.load(app);
-export async function handler(event, context: Context) {
+export async function handler(event, _context: Context) {
   try {
     await loadingApp;
     await probot.webhooks.verifyAndReceive({
@@ -12,9 +12,9 @@ export async function handler(event, context: Context) {
       signature: event.headers["X-Hub-Signature-256"] || event.headers["x-hub-signature-256"] || "",
       payload: JSON.parse(event.body),
     });
-    return { statusCode: 200, body: '{"ok":true}' };
+    return { statusCode: 200 }; // Success response
   } catch (error) {
     console.error(error);
-    return { statusCode: error.status || 500, error: "ooops" };
+    return { statusCode: error.status || 500 }; // Error response
   }
 }
