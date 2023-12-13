@@ -1,3 +1,6 @@
+import sourceMapSupport from "source-map-support";
+sourceMapSupport.install();
+
 import { EmitterWebhookEventName } from "@octokit/webhooks";
 import { Context, createProbot } from "probot";
 import app from "../../../src/main";
