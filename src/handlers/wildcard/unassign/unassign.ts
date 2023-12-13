@@ -80,12 +80,16 @@ async function checkTaskToUnassign(context: Context, assignedIssue: GitHubIssue)
       return assignedEvent.assignee.login === login;
     }
   });
-  // get latest assign event by checking created_at
   const latestAssignEvent = assignEventsOfAssignee.reduce((latestEvent, currentEvent) => {
+    if (!latestEvent) return currentEvent;
     const latestEventTime = new Date(latestEvent.created_at).getTime();
     const currentEventTime = new Date(currentEvent.created_at).getTime();
     return currentEventTime > latestEventTime ? currentEvent : latestEvent;
   }, assignEventsOfAssignee[0]);
+
+  if (!latestAssignEvent) {
+    logger.debug("No latest assign event found.", { assignEventsOfAssignee });
+  }
 
   const latestAssignEventTime = new Date(latestAssignEvent.created_at).getTime();
   const now = Date.now();
