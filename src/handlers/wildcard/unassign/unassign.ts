@@ -81,52 +81,60 @@ async function checkTaskToUnassign(context: Context, assignedIssue: GitHubIssue)
       return assignedEvent.assignee.login === login;
     }
   });
-  const latestAssignEvent = assignEventsOfAssignee.reduce((latestEvent, currentEvent) => {
-    if (!latestEvent) return currentEvent;
-    const latestEventTime = new Date(latestEvent?.created_at).getTime();
-    const currentEventTime = new Date(currentEvent?.created_at).getTime();
-    return currentEventTime > latestEventTime ? currentEvent : latestEvent;
-  }, assignEventsOfAssignee[0]);
+
+  let latestAssignEvent;
+
+  if (assignEventsOfAssignee.length > 0) {
+    latestAssignEvent = assignEventsOfAssignee.reduce((latestEvent, currentEvent) => {
+      if (!latestEvent) return currentEvent;
+      const latestEventTime = new Date(latestEvent.created_at).getTime();
+      const currentEventTime = new Date(currentEvent.created_at).getTime();
+      return currentEventTime > latestEventTime ? currentEvent : latestEvent;
+    });
+  } else {
+    // Handle the case where there are no assign events
+    logger.info("No assign events found.");
+  }
 
   logger.debug("Latest assign event", { latestAssignEvent });
 
   if (!latestAssignEvent) {
-    logger.debug("No latest assign event found.", { assignEventsOfAssignee });
+    throw logger.debug("No latest assign event found.", { assignEventsOfAssignee });
+  } else {
+    const latestAssignEventTime = new Date(latestAssignEvent.created_at).getTime();
+
+    logger.debug("Latest assign event time", { latestAssignEventTime });
+
+    const now = Date.now();
+
+    const assigneesWithinGracePeriod = assignees.filter(() => now - latestAssignEventTime < taskDisqualifyDuration);
+
+    const assigneesOutsideGracePeriod = assignees.filter((assignee) => !assigneesWithinGracePeriod.includes(assignee));
+
+    const disqualifiedAssignees = await disqualifyIdleAssignees(context, {
+      assignees: assigneesOutsideGracePeriod.map((assignee) => assignee.login),
+      activeAssigneesInDisqualifyDuration,
+      login,
+      name,
+      number,
+    });
+
+    // DONE: follow up with those who are in `assignees` and not inside of `disqualifiedAssignees` or `activeAssigneesInFollowUpDuration`
+    await followUpWithTheRest(context, {
+      assignees: assigneesOutsideGracePeriod.map((assignee) => assignee.login),
+      disqualifiedAssignees,
+      activeAssigneesInFollowUpDuration,
+      login,
+      name,
+      number,
+      taskDisqualifyDuration,
+    });
+
+    return logger.ok("Checked task to unassign", {
+      issueNumber: assignedIssue.number,
+      disqualifiedAssignees,
+    });
   }
-
-  const latestAssignEventTime = new Date(latestAssignEvent?.created_at).getTime();
-
-  logger.debug("Latest assign event time", { latestAssignEventTime });
-
-  const now = Date.now();
-
-  const assigneesWithinGracePeriod = assignees.filter(() => now - latestAssignEventTime < taskDisqualifyDuration);
-
-  const assigneesOutsideGracePeriod = assignees.filter((assignee) => !assigneesWithinGracePeriod.includes(assignee));
-
-  const disqualifiedAssignees = await disqualifyIdleAssignees(context, {
-    assignees: assigneesOutsideGracePeriod.map((assignee) => assignee.login),
-    activeAssigneesInDisqualifyDuration,
-    login,
-    name,
-    number,
-  });
-
-  // DONE: follow up with those who are in `assignees` and not inside of `disqualifiedAssignees` or `activeAssigneesInFollowUpDuration`
-  await followUpWithTheRest(context, {
-    assignees: assigneesOutsideGracePeriod.map((assignee) => assignee.login),
-    disqualifiedAssignees,
-    activeAssigneesInFollowUpDuration,
-    login,
-    name,
-    number,
-    taskDisqualifyDuration,
-  });
-
-  return logger.ok("Checked task to unassign", {
-    issueNumber: assignedIssue.number,
-    disqualifiedAssignees,
-  });
 }
 
 async function followUpWithTheRest(
