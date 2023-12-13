@@ -1,27 +1,27 @@
-import { assign } from "./assign/assign";
 import { listAvailableCommands } from "./help";
+import { start } from "./start/start";
 // Commented out until Gnosis Safe is integrated (https://github.com/ubiquity/ubiquibot/issues/353)
 // import { payout } from "./payout";
 import { ask } from "./ask";
 import { authorizeLabelChanges } from "./authorize";
 import { setLabels } from "./labels";
 import { multiplier } from "./multiplier";
-import { unassign } from "./unassign";
+import { stop } from "./stop";
 import { registerWallet } from "./wallet";
 // import { addPenalty } from "../../../adapters/supabase";
 
+import { UserCommands } from "../../../types/handlers";
 import { autoPay } from "./payout";
 import { query } from "./query";
-import { UserCommands } from "../../../types/handlers";
 
 export * from "./ask";
-export * from "./assign/assign";
 export * from "./authorize";
 export * from "./help";
 export * from "./multiplier";
 export * from "./payout";
 export * from "./query";
-export * from "./unassign";
+export * from "./start/start";
+export * from "./stop";
 export * from "./wallet";
 
 // Parses the comment body and figure out the command name a user wants
@@ -47,13 +47,13 @@ export function userCommands(walletVerificationEnabled: boolean): UserCommands[]
       id: "/start",
       description: "Assign yourself to the issue.",
       example: "/start",
-      handler: assign,
+      handler: start,
     },
     {
       id: "/stop",
       description: "Unassign yourself from the issue.",
       example: "/stop",
-      handler: unassign,
+      handler: stop,
     },
     {
       id: "/help",

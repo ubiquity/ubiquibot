@@ -2,7 +2,7 @@ import { Context } from "../../../types/context";
 import { GitHubPayload } from "../../../types/payload";
 import { closePullRequestForAnIssue } from "../../assign/action";
 
-export async function unassign(context: Context, body: string) {
+export async function stop(context: Context, body: string) {
   const logger = context.logger;
   if (!body.startsWith("/stop")) {
     return logger.fatal("Skipping to unassign", { body });

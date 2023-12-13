@@ -11,7 +11,7 @@ import { generateAssignmentComment } from "./generate-assignment-comment";
 import { getMultiplierInfoToDisplay } from "./get-multiplier-info-to-display";
 import { getTimeLabelsAssigned } from "./get-time-labels-assigned";
 
-export async function assign(context: Context, body: string) {
+export async function start(context: Context, body: string) {
   const logger = context.logger;
   const config = context.config;
   const payload = context.event.payload as GitHubPayload;
