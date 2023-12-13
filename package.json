@@ -16,9 +16,9 @@
     "build:serverless": "ncc build src/index.ts -o ./",
     "build": "tsc",
     "clean": "rimraf ./dist ./node_modules",
-    "preformat": "yarn lint:prettier",
-    "format": "yarn lint:eslint",
-    "lint": "yarn lint:prettier:check && yarn lint:eslint",
+    "preformat": "lint:prettier",
+    "format": "lint:eslint",
+    "lint": "lint:prettier:check && lint:eslint",
     "lint:prettier:check": "prettier -c src/**/*.ts",
     "lint:prettier": "prettier --write src",
     "lint:eslint": "eslint --fix --ext .ts ./src",
@@ -27,7 +27,8 @@
     "utils:cspell": "cspell --config .cspell.json 'src/**/*.{js,ts,json,md,yml}'",
     "start": "probot run ./dist/main.js",
     "prepare": "husky install",
-    "test": "jest"
+    "test": "jest",
+    "netlify:logs": "yarn netlify logs:function webhooks"
   },
   "dependencies": {
     "@commitlint/cli": "^17.4.3",
