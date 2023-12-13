@@ -83,8 +83,8 @@ async function checkTaskToUnassign(context: Context, assignedIssue: GitHubIssue)
   });
   const latestAssignEvent = assignEventsOfAssignee.reduce((latestEvent, currentEvent) => {
     if (!latestEvent) return currentEvent;
-    const latestEventTime = new Date(latestEvent.created_at).getTime();
-    const currentEventTime = new Date(currentEvent.created_at).getTime();
+    const latestEventTime = new Date(latestEvent?.created_at).getTime();
+    const currentEventTime = new Date(currentEvent?.created_at).getTime();
     return currentEventTime > latestEventTime ? currentEvent : latestEvent;
   }, assignEventsOfAssignee[0]);
 
@@ -94,7 +94,7 @@ async function checkTaskToUnassign(context: Context, assignedIssue: GitHubIssue)
     logger.debug("No latest assign event found.", { assignEventsOfAssignee });
   }
 
-  const latestAssignEventTime = new Date(latestAssignEvent.created_at).getTime();
+  const latestAssignEventTime = new Date(latestAssignEvent?.created_at).getTime();
 
   logger.debug("Latest assign event time", { latestAssignEventTime });
 
@@ -201,7 +201,7 @@ async function checkIfFollowUpAlreadyPosted(
       comment &&
       comment.body === followUpMessage &&
       comment.user?.type === "Bot" &&
-      now - new Date(comment.created_at).getTime() <= disqualificationPeriod
+      now - new Date(comment?.created_at).getTime() <= disqualificationPeriod
     ) {
       hasRecentFollowUp = true;
       break;
@@ -311,11 +311,11 @@ function getActiveAssigneesInFollowUpDuration(
   return assignees.filter(() => {
     const currentTime = new Date().getTime();
     const assigneeEventsWithinDuration = assigneeEvents.filter((event) => {
-      if (!event.created_at) {
+      if (!event?.created_at) {
         context.logger.debug("Event does not have a created_at property", { event });
         return false;
       }
-      const eventTime = new Date(event.created_at).getTime();
+      const eventTime = new Date(event?.created_at).getTime();
       return currentTime - eventTime <= taskFollowUpDuration;
     });
     const assigneeCommitsWithinDuration = assigneeCommits.filter((commit) => {
@@ -336,11 +336,11 @@ function getActiveAssigneesInDisqualifyDuration(
   return assignees.filter(() => {
     const currentTime = new Date().getTime();
     const assigneeEventsWithinDuration = assigneeEvents.filter((event) => {
-      if (!event.created_at) {
+      if (!event?.created_at) {
         context.logger.debug("Event does not have a created_at property", { event });
         return false;
       }
-      const eventTime = new Date(event.created_at).getTime();
+      const eventTime = new Date(event?.created_at).getTime();
       return currentTime - eventTime <= taskDisqualifyDuration;
     });
 
