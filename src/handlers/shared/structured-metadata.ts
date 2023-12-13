@@ -1,7 +1,7 @@
-import { COMMIT_HASH } from "../../commit-hash";
 import { LogLevel } from "../../adapters/supabase/helpers/pretty-logs";
+import { COMMIT_HASH } from "../../commit-hash";
 
-function createStructuredMetadata(className: string, metadata: unknown) {
+function createStructuredMetadata(className: string, metadata: any) {
   const jsonPretty = JSON.stringify(metadata, null, 2);
   const stackLine = new Error().stack?.split("\n")[2] ?? "";
   const caller = stackLine.match(/at (\S+)/)?.[1] ?? "";
