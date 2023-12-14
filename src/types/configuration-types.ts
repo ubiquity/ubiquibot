@@ -47,13 +47,13 @@ export function stringDuration(options?: StringOptions) {
 }
 
 const envConfigSchema = T.Object({
-  WEBHOOK_PROXY_URL: T.String({ format: "uri" }),
+  WEBHOOK_PROXY_URL: T.Optional(T.String({ format: "uri" })), // optional for production
   LOG_LEVEL: T.Enum(LogLevel, { default: LogLevel.DEBUG }),
   LOG_RETRY_LIMIT: T.Number({ default: 8 }),
   SUPABASE_URL: T.String({ format: "uri" }),
   SUPABASE_KEY: T.String(),
   X25519_PRIVATE_KEY: T.String(),
-  PRIVATE_KEY: T.String(),
+  APP_PRIVATE_KEY: T.String(),
   APP_ID: T.Number(),
 });
 

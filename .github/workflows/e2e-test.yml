@@ -37,10 +37,9 @@ jobs:
           # MEASURE_SIMILARITY_AI_TEMPERATURE:
           # OPENAI_API_HOST:
           # OPENAI_API_KEY:
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
           # SIMILARITY_THRESHOLD:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          # SUPABASE_PROJECT_ID:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           TEST_ADMIN_PAT: ${{ secrets.TEST_ADMIN_PAT }}
           TEST_ORGANIZATION_NAME: ${{ secrets.TEST_ORGANIZATION_NAME }}
