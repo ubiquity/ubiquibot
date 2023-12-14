@@ -26,3 +26,5 @@ jobs:
           verbose: true
           comment_id: ${{ github.workflow }}-reporter
           command_script_name: knip-ci
+          annotations: true
+          ignore_results: false
