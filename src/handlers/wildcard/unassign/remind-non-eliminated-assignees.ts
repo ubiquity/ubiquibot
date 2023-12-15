@@ -1,7 +1,7 @@
 import { Context } from "../../../types/context";
 import { checkIfFollowUpAlreadyPosted } from "./check-if-follow-up-already-posted";
 
-export async function followUpWithTheRest(
+export async function remindNonEliminatedAssignees(
   context: Context,
   {
     assignees,

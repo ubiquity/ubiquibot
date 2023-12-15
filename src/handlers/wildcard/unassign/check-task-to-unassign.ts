@@ -19,7 +19,6 @@ export async function checkTaskToUnassign(context: Context, assignedIssue: GitHu
     });
   }
   const assignees = assignedIssue.assignees.filter((item): item is GitHubUser => item !== null);
-
   const assigneeLoginsOnly = assignees.map((assignee) => assignee.login);
 
   const login = payload.repository.owner.login;
@@ -66,10 +65,10 @@ export async function checkTaskToUnassign(context: Context, assignedIssue: GitHu
 
   logger.debug("Latest assign event", { latestAssignEvent });
 
-  let disqualifiedAssignees: null | GitHubUser[] = null;
+  let disqualifiedAssignees: null | string[] = null;
 
   if (!latestAssignEvent) {
-    throw logger.debug("No latest assign event found.", { assignEventsOfAssignee });
+    return logger.debug("No latest assign event found.", { assignEventsOfAssignee });
   } else {
     disqualifiedAssignees = await assignEventFound({
       latestAssignEvent,

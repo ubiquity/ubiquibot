@@ -2,44 +2,26 @@ import { Logs } from "../../../adapters/supabase/helpers/tables/logs";
 import { Context } from "../../../types/context";
 import { GitHubAssignEvent, GitHubUser } from "../../../types/payload";
 import { disqualifyIdleAssignees } from "./disqualify-idle-assignees";
-import { followUpWithTheRest } from "./follow-up-with-the-rest";
+import { remindNonEliminatedAssignees } from "./remind-non-eliminated-assignees";
 
-interface Params {
-  latestAssignEvent: GitHubAssignEvent;
-  logger: Logs;
-  assignees: GitHubUser[];
-  taskDisqualifyDuration: number;
-  disqualifiedAssignees: null | string[];
-  context: Context;
-  activeAssigneesInDisqualifyDuration: string[];
-  login: string;
-  name: string;
-  number: number;
-  activeAssigneesInFollowUpDuration: string[];
-}
 export async function assignEventFound({
   latestAssignEvent,
   logger,
   assignees,
-  taskDisqualifyDuration,
   disqualifiedAssignees,
   context,
-  activeAssigneesInDisqualifyDuration,
   login,
   name,
   number,
+  taskDisqualifyDuration,
+  activeAssigneesInDisqualifyDuration,
   activeAssigneesInFollowUpDuration,
-}: Params) {
+}: AssignEventFoundParams) {
   const latestAssignEventTime = new Date(latestAssignEvent.created_at).getTime();
-
   logger.debug("Latest assign event time", { latestAssignEventTime });
-
   const now = Date.now();
-
   const assigneesWithinGracePeriod = assignees.filter(() => now - latestAssignEventTime < taskDisqualifyDuration);
-
   const assigneesOutsideGracePeriod = assignees.filter((assignee) => !assigneesWithinGracePeriod.includes(assignee));
-
   disqualifiedAssignees = await disqualifyIdleAssignees(context, {
     assignees: assigneesOutsideGracePeriod.map((assignee) => assignee.login),
     activeAssigneesInDisqualifyDuration,
@@ -49,7 +31,7 @@ export async function assignEventFound({
   });
 
   // DONE: follow up with those who are in `assignees` and not inside of `disqualifiedAssignees` or `activeAssigneesInFollowUpDuration`
-  await followUpWithTheRest(context, {
+  await remindNonEliminatedAssignees(context, {
     assignees: assigneesOutsideGracePeriod.map((assignee) => assignee.login),
     disqualifiedAssignees,
     activeAssigneesInFollowUpDuration,
@@ -59,4 +41,17 @@ export async function assignEventFound({
     taskDisqualifyDuration,
   });
   return disqualifiedAssignees;
+}
+interface AssignEventFoundParams {
+  latestAssignEvent: GitHubAssignEvent;
+  logger: Logs;
+  assignees: GitHubUser[];
+  context: Context;
+  login: string;
+  name: string;
+  number: number;
+  disqualifiedAssignees: null | string[];
+  taskDisqualifyDuration: number;
+  activeAssigneesInDisqualifyDuration: string[];
+  activeAssigneesInFollowUpDuration: string[];
 }
