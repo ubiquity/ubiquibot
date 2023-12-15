@@ -1,6 +1,6 @@
 import axios from "axios";
 import { HTMLElement, parse } from "node-html-parser";
-import { addAssignees, getAllPullRequests, getIssueByNumber, getPullByNumber } from "../../helpers/issue";
+import { getAllPullRequests, addAssignees } from "../../helpers/issue";
 import { Context } from "../../types/context";
 
 // Check for pull requests linked to their respective issues but not assigned to them
@@ -73,12 +73,7 @@ export async function getLinkedIssues({ owner, repository, pull }: GetLinkedPara
   const issueUrl = linkedIssues[0].querySelector("a")?.attrs?.href || null;
   return issueUrl;
 }
-export interface GetLinkedParams {
-  owner: string;
-  repository: string;
-  issue?: number;
-  pull?: number;
-}
+
 async function getPullByNumber(context: Context, pull: number) {
   const payload = context.payload;
 
@@ -108,4 +103,10 @@ export async function getIssueByNumber(context: Context, issueNumber: number) {
     context.logger.fatal("Fetching issue failed!", e);
     return;
   }
+}
+export interface GetLinkedParams {
+  owner: string;
+  repository: string;
+  issue?: number;
+  pull?: number;
 }

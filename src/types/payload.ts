@@ -18,7 +18,34 @@ export enum GitHubEvent {
   ISSUE_COMMENT_EDITED = "issue_comment.edited",
 
   // pull_request
+  PULL_REQUEST_ASSIGNED = "pull_request.assigned",
+  PULL_REQUEST_UNASSIGNED = "pull_request.unassigned",
+  PULL_REQUEST_LABELED = "pull_request.labeled",
+  PULL_REQUEST_UNLABELED = "pull_request.unlabeled",
   PULL_REQUEST_OPENED = "pull_request.opened",
+  PULL_REQUEST_EDITED = "pull_request.edited",
+  PULL_REQUEST_CLOSED = "pull_request.closed",
+  PULL_REQUEST_REOPENED = "pull_request.reopened",
+  PULL_REQUEST_SYNCHRONIZE = "pull_request.synchronize",
+  PULL_REQUEST_CONVERTED_TO_DRAFT = "pull_request.converted_to_draft",
+  PULL_REQUEST_READY_FOR_REVIEW = "pull_request.ready_for_review",
+  PULL_REQUEST_LOCKED = "pull_request.locked",
+  PULL_REQUEST_UNLOCKED = "pull_request.unlocked",
+  PULL_REQUEST_MILESTONED = "pull_request.milestoned",
+  PULL_REQUEST_DEMILESTONED = "pull_request.demilestoned",
+  PULL_REQUEST_REVIEW_REQUESTED = "pull_request.review_requested",
+  PULL_REQUEST_REVIEW_REQUEST_REMOVED = "pull_request.review_request_removed",
+  PULL_REQUEST_AUTO_MERGE_ENABLED = "pull_request.auto_merge_enabled",
+  PULL_REQUEST_AUTO_MERGE_DISABLED = "pull_request.auto_merge_disabled",
+
+  // review
+  PULL_REQUEST_REVIEW_SUBMITTED = "pull_request_review.submitted",
+  PULL_REQUEST_REVIEW_EDITED = "pull_request_review.edited",
+  PULL_REQUEST_REVIEW_DISMISSED = "pull_request_review.dismissed",
+  // review comment
+  PULL_REQUEST_REVIEW_COMMENT_CREATED = "pull_request_review.created",
+  PULL_REQUEST_REVIEW_COMMENT_EDITED = "pull_request_review.edited",
+  PULL_REQUEST_REVIEW_COMMENT_DELETED = "pull_request_review.deleted",
 
   // installation event
   INSTALLATION_ADDED_EVENT = "installation_repositories.added",

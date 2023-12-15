@@ -2,7 +2,6 @@ import { Context } from "../../types/context";
 import { Label } from "../../types/label";
 import { GitHubPushPayload } from "../../types/payload";
 
-import { deleteLabel } from "../../helpers/issue";
 import { listLabelsForRepo } from "../../helpers/label";
 import { calculateLabelValue } from "../../helpers/shared";
 import { parseYaml } from "../../utils/generate-configuration";
