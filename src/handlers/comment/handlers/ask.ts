@@ -1,9 +1,9 @@
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
-import { askGPT, decideContextGPT, sysMsg } from "../../../helpers/gpt";
-import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers/issue";
+import { getAllIssueComments } from "../../../helpers/issue";
 import { Context } from "../../../types/context";
 import { StreamlinedComment } from "../../../types/openai";
 import { GitHubPayload, UserType } from "../../../types/payload";
+import { askGPT, decideContextGPT, getAllLinkedIssuesAndPullsInBody, sysMsg } from "./ask/ask-gpt";
 
 export async function ask(context: Context, body: string) {
   // The question to ask

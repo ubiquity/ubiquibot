@@ -1,5 +1,5 @@
 import { Context } from "../../../types/context";
-import { GitHubIssue, GitHubPayload, GitHubUser } from "../../../types/payload";
+import { GitHubAssignEvent, GitHubIssue, GitHubPayload, GitHubUser } from "../../../types/payload";
 import { aggregateAssigneeActivity } from "./aggregate-assignee-activity";
 import { assignEventFound } from "./assign-event-found";
 import { getActiveAssignees } from "./get-active-assignees";
@@ -49,19 +49,8 @@ export async function checkTaskToUnassign(context: Context, assignedIssue: GitHu
     (event): event is AssignedEvent => event.event === "assigned" && "assignee" in event && "assigner" in event
   );
 
-  let latestAssignEvent: AssignedEvent | null = null;
-
-  if (assignEventsOfAssignee.length > 0) {
-    latestAssignEvent = assignEventsOfAssignee.reduce((latestEvent, currentEvent) => {
-      if (!latestEvent) return currentEvent;
-      const latestEventTime = new Date(latestEvent.created_at).getTime();
-      const currentEventTime = new Date(currentEvent.created_at).getTime();
-      return currentEventTime > latestEventTime ? currentEvent : latestEvent;
-    });
-  } else {
-    // Handle the case where there are no assign events
-    logger.info("No assign events found.");
-  }
+  const issueAssignEvents = await getAllIssueAssignEvents(context, assignedIssue.number);
+  const latestAssignEvent = issueAssignEvents[0];
 
   logger.debug("Latest assign event", { latestAssignEvent });
 
@@ -103,3 +92,25 @@ type AssignedEvent = {
   assigner: GitHubUser;
   performed_via_github_app: null;
 };
+
+async function getAllIssueAssignEvents(context: Context, issueNumber: number): Promise<GitHubAssignEvent[]> {
+  const payload = context.payload;
+
+  try {
+    const events = (await context.octokit.paginate(
+      context.octokit.issues.listEvents,
+      {
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        issue_number: issueNumber,
+        per_page: 100,
+      },
+      (response) => response.data.filter((item) => item.event === "assigned")
+    )) as GitHubAssignEvent[];
+
+    return events.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
+  } catch (err: unknown) {
+    context.logger.fatal("Fetching all issue assign events failed!", err);
+    return [];
+  }
+}

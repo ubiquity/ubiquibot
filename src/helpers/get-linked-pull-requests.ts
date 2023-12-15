@@ -1,35 +1,13 @@
 import axios from "axios";
 import { HTMLElement, parse } from "node-html-parser";
+import { GetLinkedParams } from "../handlers/assign/check-pull-requests";
 import { Context } from "../types/context";
-
-interface GetLinkedParams {
-  owner: string;
-  repository: string;
-  issue?: number;
-  pull?: number;
-}
-
 interface GetLinkedResults {
   organization: string;
   repository: string;
   number: number;
   href: string;
 }
-
-export async function getLinkedIssues({ owner, repository, pull }: GetLinkedParams) {
-  const { data } = await axios.get(`https://github.com/${owner}/${repository}/pull/${pull}`);
-  const dom = parse(data);
-  const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
-  const linkedIssues = devForm.querySelectorAll(".my-1");
-
-  if (linkedIssues.length === 0) {
-    return null;
-  }
-
-  const issueUrl = linkedIssues[0].querySelector("a")?.attrs?.href || null;
-  return issueUrl;
-}
-
 export async function getLinkedPullRequests(
   context: Context,
   { owner, repository, issue }: GetLinkedParams

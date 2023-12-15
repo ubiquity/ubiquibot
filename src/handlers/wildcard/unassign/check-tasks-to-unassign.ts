@@ -23,3 +23,25 @@ export async function checkTasksToUnassign(context: Context) {
     tasksToUnassign: tasksToUnassign.filter(Boolean).map((task) => task?.metadata),
   });
 }
+async function listAllIssuesAndPullsForRepo(
+  context: Context,
+  state: "open" | "closed" | "all" = "open",
+  sort: "created" | "updated" | "comments" = "created",
+  direction: "desc" | "asc" = "desc"
+) {
+  const payload = context.payload;
+  try {
+    const issues = (await context.octokit.paginate(context.octokit.issues.listForRepo, {
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      state,
+      sort,
+      direction,
+      per_page: 100,
+    })) as GitHubIssue[];
+    return issues;
+  } catch (err: unknown) {
+    context.logger.fatal("Listing all issues and pulls failed!", err);
+    return [];
+  }
+}

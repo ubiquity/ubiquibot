@@ -1,6 +1,5 @@
 import { constants, ethers } from "ethers";
 import Runtime from "../../../bindings/bot-runtime";
-import { resolveAddress } from "../../../helpers/ens";
 import { Context } from "../../../types/context";
 import { GitHubPayload } from "../../../types/payload";
 
@@ -79,4 +78,16 @@ function registerWalletWithVerification(context: Context, body: string, address:
     context.logger.fatal("Exception thrown by verifyMessage for /wallet: ", e);
     throw context.logger.fatal(failedSigLogMsg);
   }
+}
+
+export async function resolveAddress(ensName: string): Promise<string | null> {
+  // Gets the Ethereum address associated with an ENS (Ethereum Name Service) name
+  // Explicitly set provider to Ethereum mainnet
+  const provider = new ethers.providers.JsonRpcProvider(`https://rpc-bot.ubq.fi/v1/mainnet`); // mainnet required for ENS
+  const address = await provider.resolveName(ensName).catch((err) => {
+    console.trace({ err });
+    return null;
+  });
+
+  return address;
 }

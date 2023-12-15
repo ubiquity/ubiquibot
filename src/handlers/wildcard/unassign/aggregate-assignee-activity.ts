@@ -1,4 +1,4 @@
-import { getLinkedPullRequests } from "../../../helpers/get-linked-issues-and-pull-requests";
+import { getLinkedPullRequests } from "../../../helpers/get-linked-pull-requests";
 import { Commit } from "../../../types/commit";
 import { Context } from "../../../types/context";
 import { getAllCommitsFromPullRequest } from "./get-all-commits-from-pull-request";

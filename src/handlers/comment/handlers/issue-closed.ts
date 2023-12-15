@@ -1,5 +1,9 @@
 import Runtime from "../../../bindings/bot-runtime";
-import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../helpers/issue";
+import {
+  checkUserPermissionForRepoAndOrg,
+  getAllIssueComments,
+  isUserAdminOrBillingManager,
+} from "../../../helpers/issue";
 import { Context } from "../../../types/context";
 import { GitHubComment, GitHubEvent, GitHubIssue, GitHubPayload, StateReason } from "../../../types/payload";
 import structuredMetadata from "../../shared/structured-metadata";
@@ -81,4 +85,43 @@ function checkIfPermitsAlreadyPosted(context: Context, botComments: GitHubCommen
     }
     // }
   });
+}
+async function checkUserPermissionForRepoAndOrg(context: Context, username: string): Promise<boolean> {
+  const hasPermissionForRepo = await checkUserPermissionForRepo(context, username);
+  const hasPermissionForOrg = await checkUserPermissionForOrg(context, username);
+  const userPermission = await isUserAdminOrBillingManager(context, username);
+
+  return hasPermissionForOrg || hasPermissionForRepo || userPermission === "admin";
+}
+async function checkUserPermissionForRepo(context: Context, username: string): Promise<boolean> {
+  const payload = context.payload;
+  try {
+    const res = await context.octokit.rest.repos.checkCollaborator({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      username,
+    });
+
+    return res.status === 204;
+  } catch (e: unknown) {
+    context.logger.fatal("Checking if user permisson for repo failed!", e);
+    return false;
+  }
+}
+
+async function checkUserPermissionForOrg(context: Context, username: string): Promise<boolean> {
+  const payload = context.payload;
+  if (!payload.organization) return false;
+
+  try {
+    await context.event.octokit.rest.orgs.checkMembershipForUser({
+      org: payload.organization.login,
+      username,
+    });
+    // skipping status check due to type error of checkMembershipForUser function of octokit
+    return true;
+  } catch (e: unknown) {
+    context.logger.fatal("Checking if user permisson for org failed!", e);
+    return false;
+  }
 }

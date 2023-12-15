@@ -62,3 +62,21 @@ export async function labelAccessPermissionsCheck(context: Context) {
     return false;
   }
 }
+async function removeLabel(context: Context, name: string) {
+  const payload = context.payload;
+  if (!payload.issue) {
+    context.logger.debug("Invalid issue object");
+    return;
+  }
+
+  try {
+    await context.octokit.issues.removeLabel({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: payload.issue.number,
+      name: name,
+    });
+  } catch (e: unknown) {
+    context.logger.fatal("Removing label failed!", e);
+  }
+}

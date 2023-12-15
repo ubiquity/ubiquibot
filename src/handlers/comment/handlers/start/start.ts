@@ -1,7 +1,12 @@
-import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests } from "../../../../helpers/issue";
+import {
+  addAssignees,
+  getAllPullRequests,
+  getAssignedIssues,
+  getAvailableOpenedPullRequests,
+} from "../../../../helpers/issue";
 import { calculateDurations } from "../../../../helpers/shared";
 import { Context } from "../../../../types/context";
-import { GitHubPayload, GitHubUser, IssueType } from "../../../../types/payload";
+import { GitHubIssue, GitHubPayload, GitHubUser, IssueType } from "../../../../types/payload";
 import { isParentIssue } from "../../../pricing/handle-parent-issue";
 
 import structuredMetadata from "../../../shared/structured-metadata";
@@ -113,4 +118,81 @@ export async function start(context: Context, body: string) {
     comment.tips,
     metadata,
   ].join("\n");
+}
+async function getAvailableOpenedPullRequests(context: Context, username: string) {
+  const { reviewDelayTolerance } = context.config.timers;
+  if (!reviewDelayTolerance) return [];
+
+  const openedPullRequests = await getOpenedPullRequests(context, username);
+  const result = [] as typeof openedPullRequests;
+
+  for (let i = 0; i < openedPullRequests.length; i++) {
+    const openedPullRequest = openedPullRequests[i];
+    const reviews = await getAllPullRequestReviews(context, openedPullRequest.number);
+
+    if (reviews.length > 0) {
+      const approvedReviews = reviews.find((review) => review.state === "APPROVED");
+      if (approvedReviews) {
+        result.push(openedPullRequest);
+      }
+    }
+
+    if (
+      reviews.length === 0 &&
+      (new Date().getTime() - new Date(openedPullRequest.created_at).getTime()) / (1000 * 60 * 60) >=
+        reviewDelayTolerance
+    ) {
+      result.push(openedPullRequest);
+    }
+  }
+  return result;
+}
+
+async function getOpenedPullRequests(context: Context, username: string) {
+  const prs = await getAllPullRequests(context, "open");
+  return prs.filter((pr) => !pr.draft && (pr.user?.login === username || !username));
+}
+async function getAllPullRequestReviews(
+  context: Context,
+  pullNumber: number,
+  format: "raw" | "html" | "text" | "full" = "raw"
+) {
+  const payload = context.payload;
+
+  try {
+    const reviews = await context.octokit.paginate(context.octokit.rest.pulls.listReviews, {
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number: pullNumber,
+      per_page: 100,
+      mediaType: {
+        format,
+      },
+    });
+    return reviews;
+  } catch (err: unknown) {
+    context.logger.fatal("Fetching all pull request reviews failed!", err);
+    return [];
+  }
+}
+async function getAssignedIssues(context: Context, username: string): Promise<GitHubIssue[]> {
+  const payload = context.payload;
+
+  try {
+    const issues = (await context.octokit.paginate(
+      context.octokit.issues.listForRepo,
+      {
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        state: IssueType.OPEN,
+        per_page: 1000,
+      },
+      ({ data: issues }) =>
+        issues.filter((issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username)
+    )) as GitHubIssue[];
+    return issues;
+  } catch (err: unknown) {
+    context.logger.fatal("Fetching assigned issues failed!", err);
+    return [];
+  }
 }

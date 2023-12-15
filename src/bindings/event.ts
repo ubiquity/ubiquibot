@@ -18,7 +18,7 @@ import {
   PreActionHandler,
   WildCardHandler,
 } from "../types/handlers";
-import { GitHubEvent, GitHubPayload, payloadSchema } from "../types/payload";
+import { GitHubEvent, GitHubPayload, payloadSchema, UserType } from "../types/payload";
 import { ajv } from "../utils/ajv";
 import { generateConfiguration } from "../utils/generate-configuration";
 import Runtime from "./bot-runtime";
@@ -266,4 +266,20 @@ function createRenderCatchAll(context: Context, handlerType: AllHandlersWithType
       );
     }
   };
+}
+const contextNamesToSkip = ["workflow_run"];
+
+export function shouldSkip(context: ProbotContext) {
+  const payload = context.payload as GitHubPayload;
+  const response = { stop: false, reason: null } as { stop: boolean; reason: string | null };
+
+  if (contextNamesToSkip.includes(context.name)) {
+    response.stop = true;
+    response.reason = `excluded context name: "${context.name}"`;
+  } else if (payload.sender.type === UserType.Bot) {
+    response.stop = true;
+    response.reason = "sender is a bot";
+  }
+
+  return response;
 }

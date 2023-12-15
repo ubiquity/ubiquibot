@@ -159,3 +159,23 @@ export async function labelExists(context: Context, name: string): Promise<boole
   });
   return res.status === 200;
 }
+
+async function getAllLabeledEvents(context: Context) {
+  const events = await getAllIssueEvents(context);
+  if (!events) return null;
+  return events.filter((event) => event.event === "labeled");
+}
+async function getAllIssueEvents(context: Context) {
+  if (!context.payload.issue) return;
+
+  try {
+    const events = await context.octokit.paginate(context.octokit.issues.listEvents, {
+      ...context.event.issue(),
+      per_page: 100,
+    });
+    return events;
+  } catch (err: unknown) {
+    context.logger.fatal("Failed to fetch lists of events", err);
+    return [];
+  }
+}

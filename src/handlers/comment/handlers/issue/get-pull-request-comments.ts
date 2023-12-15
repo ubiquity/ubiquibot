@@ -1,4 +1,4 @@
-import { getLinkedPullRequests } from "../../../../helpers/get-linked-issues-and-pull-requests";
+import { getLinkedPullRequests } from "../../../../helpers/get-linked-pull-requests";
 import { getAllIssueComments } from "../../../../helpers/issue";
 import { Context } from "../../../../types/context";
 

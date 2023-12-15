@@ -1,4 +1,4 @@
-import { getLinkedPullRequests } from "../../helpers/get-linked-issues-and-pull-requests";
+import { getLinkedPullRequests } from "../../helpers/get-linked-pull-requests";
 import { closePullRequest } from "../../helpers/issue";
 import { calculateDurations, calculateLabelValue } from "../../helpers/shared";
 import { Context } from "../../types/context";
@@ -101,4 +101,18 @@ export async function closePullRequestForAnIssue(context: Context) {
   }
   return logger.info(comment);
   // await addCommentToIssue(comment, payload.issue.number);
+}
+
+async function closePullRequest(context: Context, pullNumber: number) {
+  const payload = context.payload as GitHubPayload;
+  try {
+    await context.octokit.rest.pulls.update({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number: pullNumber,
+      state: "closed",
+    });
+  } catch (err: unknown) {
+    context.logger.fatal("Closing pull requests failed!", err);
+  }
 }
