@@ -1,9 +1,4 @@
-import {
-  addAssignees,
-  getAllPullRequests,
-  getAssignedIssues,
-  getAvailableOpenedPullRequests,
-} from "../../../../helpers/issue";
+import { addAssignees, getAllPullRequests } from "../../../../helpers/issue";
 import { calculateDurations } from "../../../../helpers/shared";
 import { Context } from "../../../../types/context";
 import { GitHubIssue, GitHubPayload, GitHubUser, IssueType } from "../../../../types/payload";
@@ -15,6 +10,7 @@ import { checkTaskStale } from "./check-task-stale";
 import { generateAssignmentComment } from "./generate-assignment-comment";
 import { getMultiplierInfoToDisplay } from "./get-multiplier-info-to-display";
 import { getTimeLabelsAssigned } from "./get-time-labels-assigned";
+import Runtime from "../../../../bindings/bot-runtime";
 
 export async function start(context: Context, body: string) {
   const logger = context.logger;
@@ -36,7 +32,7 @@ export async function start(context: Context, body: string) {
   }
 
   if (isStartDisabled) {
-    throw logger.error("The `/assign` command is disabled for this repository.");
+    throw logger.error("The `/start` command is disabled for this repository.");
   }
 
   if (issue.body && isParentIssue(issue.body)) {
@@ -63,12 +59,20 @@ export async function start(context: Context, body: string) {
   }
 
   if (issue.state == IssueType.CLOSED) {
-    throw logger.error("Skipping '/start' since the issue is closed");
+    throw logger.error("Skipping '/start' because the issue is closed.");
   }
   const assignees: GitHubUser[] = (payload.issue?.assignees ?? []).filter(Boolean) as GitHubUser[];
 
   if (assignees.length !== 0) {
-    throw logger.error("Skipping '/start' since the issue is already assigned");
+    throw logger.error("Skipping '/start' because the issue is already assigned.");
+  }
+
+  // check if wallet is set, if not then throw an error
+  const sender = payload.sender;
+  const database = Runtime.getState().adapters.supabase;
+  const address = database.wallet.getAddress(sender.id);
+  if (!address) {
+    throw logger.error("Skipping '/start' because the wallet is not set. Please set your wallet first. /wallet 0x0000");
   }
 
   // ==== preamble checks completed ==== //

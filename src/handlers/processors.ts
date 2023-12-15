@@ -55,11 +55,11 @@ export const processors: Record<string, Handler> = {
     action: [commentCreated],
     post: [],
   },
-  // [GitHubEvent.ISSUE_COMMENT_EDITED]: {
-  //   pre: [],
-  //   action: [],
-  //   post: [],
-  // },
+  [GitHubEvent.ISSUE_COMMENT_EDITED]: {
+    pre: [],
+    action: [],
+    post: [],
+  },
   [GitHubEvent.ISSUES_CLOSED]: {
     pre: [],
     action: [issueClosed],

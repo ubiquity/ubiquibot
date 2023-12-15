@@ -67,12 +67,12 @@ export function userCommands(walletVerificationEnabled: boolean): UserCommands[]
     description: "Disable automatic payment for the issue.",
     handler: payout,
   },*/
-    {
-      id: "/autopay",
-      description: "Toggle automatic payment for the completion of the current issue.",
-      example: "/autopay true",
-      handler: autoPay,
-    },
+    // {
+    //   id: "/autopay",
+    //   description: "Toggle automatic payment for the completion of the current issue.",
+    //   example: "/autopay true",
+    //   handler: autoPay,
+    // },
     {
       id: "/query",
       description: "Returns the user's wallet, access, and multiplier information.",

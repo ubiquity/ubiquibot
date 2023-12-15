@@ -3,7 +3,7 @@ import { GitHubPushPayload } from "../../types/payload";
 import { BASE_RATE_FILE, getCommitChanges, ZERO_SHA } from "./push";
 import { updateBaseRate } from "./update-base-rate";
 
-export async function checkModifiedBaseRate(context: Context) {
+export async function checkModifiedBaseRate(context: Context): Promise<void> {
   const logger = context.logger;
 
   const payload = context.event.payload as GitHubPushPayload;

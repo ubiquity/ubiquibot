@@ -1,9 +1,5 @@
 import Runtime from "../../../bindings/bot-runtime";
-import {
-  checkUserPermissionForRepoAndOrg,
-  getAllIssueComments,
-  isUserAdminOrBillingManager,
-} from "../../../helpers/issue";
+import { getAllIssueComments, isUserAdminOrBillingManager } from "../../../helpers/issue";
 import { Context } from "../../../types/context";
 import { GitHubComment, GitHubEvent, GitHubIssue, GitHubPayload, StateReason } from "../../../types/payload";
 import structuredMetadata from "../../shared/structured-metadata";
