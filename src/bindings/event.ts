@@ -25,7 +25,7 @@ import { env } from "./env";
 
 const allowedEvents = Object.values(GitHubEvent) as string[];
 
-const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
+const NO_VALIDATION = [GitHubEvent.INSTALLATION_CREATED, GitHubEvent.PUSH] as string[];
 type PreHandlerWithType = { type: string; actions: PreActionHandler[] };
 type HandlerWithType = { type: string; actions: MainActionHandler[] };
 type WildCardHandlerWithType = { type: string; actions: WildCardHandler[] };
@@ -66,7 +66,7 @@ export async function bindEvents(eventContext: ProbotContext) {
     }
   }
 
-  if (eventName === GitHubEvent.PUSH_EVENT) {
+  if (eventName === GitHubEvent.PUSH) {
     await validateConfigChange(eventContext);
   }
 
@@ -137,7 +137,7 @@ export async function bindEvents(eventContext: ProbotContext) {
   }
 
   // Skip wildcard handlers for installation event and push event
-  if (eventName == GitHubEvent.INSTALLATION_ADDED_EVENT || eventName == GitHubEvent.PUSH_EVENT) {
+  if (eventName == GitHubEvent.INSTALLATION_CREATED || eventName == GitHubEvent.PUSH) {
     return context.logger.info("Skipping wildcard handlers for event:", eventName);
   } else {
     // Run wildcard handlers

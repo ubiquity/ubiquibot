@@ -70,12 +70,12 @@ export const processors: Record<string, Handler> = {
     action: [checkPullRequests],
     post: [],
   },
-  [GitHubEvent.INSTALLATION_ADDED_EVENT]: {
+  [GitHubEvent.INSTALLATION_CREATED]: {
     pre: [],
     action: [createDevPoolPR],
     post: [],
   },
-  [GitHubEvent.PUSH_EVENT]: {
+  [GitHubEvent.PUSH]: {
     pre: [],
     action: [],
     post: [checkModifiedBaseRate],

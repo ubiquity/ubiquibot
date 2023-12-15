@@ -1,4 +1,3 @@
-import { listAllIssuesAndPullsForRepo } from "../../../helpers/issue";
 import { Context } from "../../../types/context";
 import { GitHubIssue, IssueType } from "../../../types/payload";
 import { checkTaskToUnassign } from "./check-task-to-unassign";

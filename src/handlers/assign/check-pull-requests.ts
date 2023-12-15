@@ -74,7 +74,7 @@ export async function getLinkedIssues({ owner, repository, pull }: GetLinkedPara
   return issueUrl;
 }
 
-async function getPullByNumber(context: Context, pull: number) {
+export async function getPullByNumber(context: Context, pull: number) {
   const payload = context.payload;
 
   try {
