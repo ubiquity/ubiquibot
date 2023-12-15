@@ -10,7 +10,7 @@ import { syncPriceLabelsToConfig } from "./pricing/pre";
 import { onLabelChangeSetPricing } from "./pricing/pricing-label";
 import { createDevPoolPR } from "./pull-request/create-devpool-pr";
 import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
-import { checkTasksToUnassign } from "./wildcard/unassign/unassign";
+import { checkTasksToUnassign } from "./wildcard/unassign/check-tasks-to-unassign";
 
 /**
  * @dev
