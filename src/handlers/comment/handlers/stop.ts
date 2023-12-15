@@ -1,6 +1,6 @@
 import { Context } from "../../../types/context";
 import { GitHubPayload } from "../../../types/payload";
-import { closePullRequestForAnIssue } from "../../assign/action";
+import { closePullRequestForAnIssue } from "../../assign/assign-command-handler";
 
 export async function stop(context: Context, body: string) {
   const logger = context.logger;

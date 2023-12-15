@@ -7,7 +7,7 @@ import { Label } from "../../types/label";
 import { GitHubPayload, UserType } from "../../types/payload";
 import { labelAccessPermissionsCheck } from "../access/labels-access";
 import { setPrice } from "../shared/pricing";
-import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./action";
+import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./handle-parent-issue";
 
 export async function onLabelChangeSetPricing(context: Context): Promise<void> {
   const config = context.config;

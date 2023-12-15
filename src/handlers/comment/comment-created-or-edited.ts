@@ -3,7 +3,7 @@ import { GitHubComment, GitHubPayload } from "../../types/payload";
 import { commentParser, userCommands } from "./handlers/comment-handler-main";
 import { verifyFirstCommentInRepository } from "./handlers/first";
 
-export async function commentCreatedOrEdited(context: Context) {
+export async function commentCreated(context: Context) {
   const config = context.config,
     logger = context.logger,
     payload = context.event.payload as GitHubPayload;

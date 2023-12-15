@@ -2,7 +2,7 @@ import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests } from 
 import { calculateDurations } from "../../../../helpers/shared";
 import { Context } from "../../../../types/context";
 import { GitHubPayload, GitHubUser, IssueType } from "../../../../types/payload";
-import { isParentIssue } from "../../../pricing/action";
+import { isParentIssue } from "../../../pricing/handle-parent-issue";
 
 import structuredMetadata from "../../../shared/structured-metadata";
 import { assignTableComment } from "../table";

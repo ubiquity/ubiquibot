@@ -5,7 +5,7 @@ import { Context } from "../../types/context";
 import { Label } from "../../types/label";
 import { GitHubPayload } from "../../types/payload";
 
-export async function startCommandHandler(context: Context) {
+export async function assignCommandHandler(context: Context) {
   const config = context.config;
   const logger = context.logger;
   const payload = context.event.payload as GitHubPayload;
