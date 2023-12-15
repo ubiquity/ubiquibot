@@ -11,14 +11,12 @@ import { registerWallet } from "./wallet";
 // import { addPenalty } from "../../../adapters/supabase";
 
 import { UserCommands } from "../../../types/handlers";
-import { autoPay } from "./payout";
 import { query } from "./query";
 
 export * from "./ask";
 export * from "./authorize";
 export * from "./help";
 export * from "./multiplier";
-export * from "./payout";
 export * from "./query";
 export * from "./start/start";
 export * from "./stop";
