@@ -1,6 +1,5 @@
 import { Context } from "../../types/context";
 
-import { addLabelToIssue, clearAllPriceLabelsOnIssue, getAllLabeledEvents } from "../../helpers/issue";
 import { createLabel } from "../../helpers/label";
 import { BotConfig } from "../../types/configuration-types";
 import { Label } from "../../types/label";
@@ -8,6 +7,7 @@ import { GitHubPayload, UserType } from "../../types/payload";
 import { labelAccessPermissionsCheck } from "../access/labels-access";
 import { setPrice } from "../shared/pricing";
 import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./handle-parent-issue";
+import { clearAllPriceLabelsOnIssue, addLabelToIssue } from "../../helpers/issue";
 
 export async function onLabelChangeSetPricing(context: Context): Promise<void> {
   const config = context.config;

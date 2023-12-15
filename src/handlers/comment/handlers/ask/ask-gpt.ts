@@ -1,9 +1,10 @@
 import OpenAI from "openai";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
-import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody, getIssueByNumber } from "../../../../helpers/issue";
+import { getAllIssueComments } from "../../../../helpers/issue";
 import { Context } from "../../../../types/context";
 import { StreamlinedComment } from "../../../../types/openai";
 import { GitHubPayload, UserType } from "../../../../types/payload";
+import { getIssueByNumber } from "../../../assign/check-pull-requests";
 
 export const sysMsg = `You are the UbiquiBot, designed to provide accurate technical answers. \n
 Whenever appropriate, format your response using GitHub Flavored Markdown. Utilize tables, lists, and code blocks for clear and organized answers. \n

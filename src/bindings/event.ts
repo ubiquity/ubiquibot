@@ -9,7 +9,6 @@ import structuredMetadata from "../handlers/shared/structured-metadata";
 import { BotConfig } from "../types/configuration-types";
 
 import { addCommentToIssue } from "../helpers/issue";
-import { shouldSkip } from "../helpers/shared";
 import { Context } from "../types/context";
 import {
   HandlerReturnValuesNoVoid,

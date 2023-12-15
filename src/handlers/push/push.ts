@@ -2,8 +2,6 @@ import { Context as ProbotContext } from "probot";
 import Runtime from "../../bindings/bot-runtime";
 
 import { DefinedError } from "ajv";
-import { createCommitComment } from "../../helpers/commit";
-import { getFileContent } from "../../helpers/file";
 import { BotConfig, validateBotConfig } from "../../types/configuration-types";
 import { GitHubCommitsPayload, GitHubPayload, GitHubPushPayload } from "../../types/payload";
 import { parseYaml, transformConfig } from "../../utils/generate-configuration";

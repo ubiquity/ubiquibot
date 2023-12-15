@@ -1,5 +1,4 @@
 import { getLinkedPullRequests } from "../../helpers/get-linked-pull-requests";
-import { closePullRequest } from "../../helpers/issue";
 import { calculateDurations, calculateLabelValue } from "../../helpers/shared";
 import { Context } from "../../types/context";
 import { Label } from "../../types/label";

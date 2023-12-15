@@ -1,5 +1,5 @@
 import Runtime from "../../bindings/bot-runtime";
-import { isUserAdminOrBillingManager, removeLabel, addLabelToIssue, addCommentToIssue } from "../../helpers/issue";
+import { isUserAdminOrBillingManager, addLabelToIssue, addCommentToIssue } from "../../helpers/issue";
 import { Context } from "../../types/context";
 import { UserType } from "../../types/payload";
 
