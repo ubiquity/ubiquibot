@@ -4,6 +4,7 @@ import { Context } from "../../../types/context";
 import { GitHubComment, GitHubEvent, GitHubIssue, GitHubPayload, StateReason } from "../../../types/payload";
 import structuredMetadata from "../../shared/structured-metadata";
 import { delegateCompute } from "./delegated-compute";
+import { getCollaboratorsForRepo } from "./issue/get-collaborator-ids-for-repo";
 // import { getCollaboratorsForRepo } from "./issue/get-collaborator-ids-for-repo";
 // import { getPullRequestComments } from "./issue/get-pull-request-comments";
 
@@ -18,9 +19,16 @@ export async function issueClosed(context: Context) {
 
   // const pullRequestComments = await getPullRequestComments(context, owner, repository, issueNumber);
 
-  // const repoCollaborators = await getCollaboratorsForRepo(context);
+  const repoCollaborators = await getCollaboratorsForRepo(context);
 
-  const computeParams = { eventName: GitHubEvent.ISSUES_CLOSED, issueOwner, issueRepository, issueNumber };
+  const computeParams = {
+    eventName: GitHubEvent.ISSUES_CLOSED,
+    issueOwner,
+    issueRepository,
+    issueNumber: `${issueNumber}`,
+    organization: payload.organization?.login || payload.repository.owner.login,
+    repoCollaborators: JSON.stringify(repoCollaborators),
+  };
   await delegateCompute(context, computeParams);
   return Runtime.getState().logger.ok("Evaluating results. Please wait...", computeParams);
 }
