@@ -1,7 +1,8 @@
 import Runtime from "../../../bindings/bot-runtime";
 import { getAllIssueComments, isUserAdminOrBillingManager } from "../../../helpers/issue";
 import { Context } from "../../../types/context";
-import { GitHubComment, GitHubEvent, GitHubIssue, GitHubPayload, StateReason } from "../../../types/payload";
+import { GitHubEvent } from "../../../types/github-events";
+import { GitHubComment, GitHubIssue, GitHubPayload, StateReason } from "../../../types/payload";
 import structuredMetadata from "../../shared/structured-metadata";
 import { delegateCompute } from "./delegated-compute";
 // import { getCollaboratorsForRepo } from "./issue/get-collaborator-ids-for-repo";

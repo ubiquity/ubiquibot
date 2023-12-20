@@ -1,5 +1,5 @@
+import { GitHubEvent } from "../types/github-events";
 import { Handler, WildCardHandler } from "../types/handlers";
-import { GitHubEvent } from "../types/payload";
 import { assignCommandHandler, closePullRequestForAnIssue } from "./assign/assign-command-handler";
 import { checkPullRequests } from "./assign/check-pull-requests";
 import { commentCreated } from "./comment/comment-created";

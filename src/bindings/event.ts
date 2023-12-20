@@ -10,6 +10,7 @@ import { BotConfig } from "../types/configuration-types";
 
 import { addCommentToIssue } from "../helpers/issue";
 import { Context } from "../types/context";
+import { GitHubEvent } from "../types/github-events";
 import {
   HandlerReturnValuesNoVoid,
   MainActionHandler,
@@ -17,7 +18,7 @@ import {
   PreActionHandler,
   WildCardHandler,
 } from "../types/handlers";
-import { GitHubEvent, GitHubPayload, payloadSchema, UserType } from "../types/payload";
+import { GitHubPayload, payloadSchema, UserType } from "../types/payload";
 import { ajv } from "../utils/ajv";
 import { generateConfiguration } from "../utils/generate-configuration";
 import Runtime from "./bot-runtime";

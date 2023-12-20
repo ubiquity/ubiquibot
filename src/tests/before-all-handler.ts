@@ -1,7 +1,7 @@
 import { Probot, run } from "probot";
 
 import { bindEvents } from "../bindings/event";
-import { GitHubEvent } from "../types/payload";
+import { GitHubEvent } from "../types/github-events";
 import {
   customOctokit,
   getAdminUser,

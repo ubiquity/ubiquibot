@@ -1,5 +1,5 @@
 import { Context } from "../../../types/context";
-import { GitHubEvent } from "../../../types/payload";
+import { GitHubEvent } from "../../../types/github-events";
 export interface DelegatedComputeInputs {
   eventName: GitHubEvent;
   issueOwner: string;
