@@ -62,7 +62,7 @@ export async function bindEvents(eventContext: ProbotContext) {
 
     // Check if we should skip the event
     const should = shouldSkip(eventContext);
-    if (should.stop) {
+    if (should.stop && eventContext.name !== "repository_dispatch") {
       return logger.info("Skipping the event.", { reason: should.reason });
     }
   }
@@ -96,7 +96,7 @@ export async function bindEvents(eventContext: ProbotContext) {
 
   if (eventContext.name === GitHubEvent.REPOSITORY_DISPATCH) {
     const dispatchPayload = payload as any;
-    if (payload.action === "issueClosed") {
+    if (payload.action === GitHubEvent.ISSUES_CLOSED) {
       //This is response for issueClosed request
       const response = dispatchPayload.client_payload.result;
       if (response) {
@@ -104,7 +104,9 @@ export async function bindEvents(eventContext: ProbotContext) {
         await addCommentToIssue(
           context,
           uncompressedComment.toString(),
-          parseInt(dispatchPayload.client_payload.issueNumber)
+          parseInt(dispatchPayload.client_payload.issueNumber),
+          dispatchPayload.client_payload.issueOwner,
+          dispatchPayload.client_payload.issueRepository
         );
       }
     }

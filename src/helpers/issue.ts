@@ -38,7 +38,13 @@ export async function addLabelToIssue(context: Context, labelName: string) {
   }
 }
 
-export async function addCommentToIssue(context: Context, message: HandlerReturnValuesNoVoid, issueNumber: number) {
+export async function addCommentToIssue(
+  context: Context,
+  message: HandlerReturnValuesNoVoid,
+  issueNumber: number,
+  owner?: string,
+  repo?: string
+) {
   let comment = message as string;
   if (message instanceof LogReturn) {
     comment = message.logMessage.diff;
@@ -53,8 +59,8 @@ export async function addCommentToIssue(context: Context, message: HandlerReturn
   const payload = context.payload;
   try {
     await context.octokit.issues.createComment({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
+      owner: owner ?? payload.repository.owner.login,
+      repo: repo ?? payload.repository.name,
       issue_number: issueNumber,
       body: comment,
     });

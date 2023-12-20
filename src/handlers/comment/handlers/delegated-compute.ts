@@ -4,7 +4,9 @@ export interface DelegatedComputeInputs {
   eventName: GitHubEvent;
   issueOwner: string;
   issueRepository: string;
-  issueNumber: number;
+  issueNumber: string;
+  organization: string;
+  repoCollaborators: string;
 }
 
 export const computeLocation = {
@@ -15,7 +17,7 @@ export const computeLocation = {
 };
 
 export async function delegateCompute(context: Context, inputs: DelegatedComputeInputs) {
-  const owner = computeLocation.owner;
+  const owner = context.payload?.organization?.login || context.payload.repository.owner.login;
   const repo = computeLocation.repository;
   const workflowId = computeLocation.workflow;
   const ref = await getDefaultBranch(context);
