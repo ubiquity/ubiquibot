@@ -2977,6 +2977,16 @@
     "@octokit/webhooks-types" "7.1.0"
     aggregate-error "^3.1.0"
 
+"@octokit/webhooks@^9.26.3":
+  version "9.26.3"
+  resolved "https://registry.yarnpkg.com/@octokit/webhooks/-/webhooks-9.26.3.tgz#44353c4915229efeb3d01f9ab7adfdc2911535ae"
+  integrity sha512-DLGk+gzeVq5oK89Bo601txYmyrelMQ7Fi5EnjHE0Xs8CWicy2xkmnJMKptKJrBJpstqbd/9oeDFi/Zj2pudBDQ==
+  dependencies:
+    "@octokit/request-error" "^2.0.2"
+    "@octokit/webhooks-methods" "^2.0.0"
+    "@octokit/webhooks-types" "5.8.0"
+    aggregate-error "^3.1.0"
+
 "@octokit/webhooks@^9.8.4":
   version "9.26.0"
   resolved "https://registry.npmjs.org/@octokit/webhooks/-/webhooks-9.26.0.tgz"
@@ -11917,7 +11927,46 @@ prettyjson@1.2.5:
     colors "1.4.0"
     minimist "^1.2.0"
 
-probot@^12.2.1, probot@^12.2.4:
+probot@12.3.3:
+  version "12.3.3"
+  resolved "https://registry.yarnpkg.com/probot/-/probot-12.3.3.tgz#f5a430cd34efa27d9abb2318417be029bfe3d511"
+  integrity sha512-cdtKd+xISzi8sw6++BYBXleRknCA6hqUMoHj/sJqQBrjbNxQLhfeFCq9O2d0Z4eShsy5YFRR3MWwDKJ9uAE0CA==
+  dependencies:
+    "@octokit/core" "^3.2.4"
+    "@octokit/plugin-enterprise-compatibility" "^1.2.8"
+    "@octokit/plugin-paginate-rest" "^2.6.2"
+    "@octokit/plugin-rest-endpoint-methods" "^5.0.1"
+    "@octokit/plugin-retry" "^3.0.6"
+    "@octokit/plugin-throttling" "^3.3.4"
+    "@octokit/types" "^8.0.0"
+    "@octokit/webhooks" "^9.26.3"
+    "@probot/get-private-key" "^1.1.0"
+    "@probot/octokit-plugin-config" "^1.0.0"
+    "@probot/pino" "^2.2.0"
+    "@types/express" "^4.17.9"
+    "@types/ioredis" "^4.27.1"
+    "@types/pino" "^6.3.4"
+    "@types/pino-http" "^5.0.6"
+    commander "^6.2.0"
+    deepmerge "^4.2.2"
+    deprecation "^2.3.1"
+    dotenv "^8.2.0"
+    eventsource "^2.0.2"
+    express "^4.17.1"
+    express-handlebars "^6.0.3"
+    ioredis "^4.27.8"
+    js-yaml "^3.14.1"
+    lru-cache "^6.0.0"
+    octokit-auth-probot "^1.2.2"
+    pino "^6.7.0"
+    pino-http "^5.3.0"
+    pkg-conf "^3.1.0"
+    resolve "^1.19.0"
+    semver "^7.3.4"
+    update-dotenv "^1.1.1"
+    uuid "^8.3.2"
+
+probot@^12.2.1:
   version "12.3.1"
   resolved "https://registry.npmjs.org/probot/-/probot-12.3.1.tgz"
   integrity sha512-ECSgycmAC0ILEK6cOa+x3QPufP5JybsuohOFCYr3glQU5SkbmypZJE/Sfio9mxAFHK5LCXveIDsfZCxf6ck4JA==

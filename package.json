@@ -11,7 +11,7 @@
     "probot-app"
   ],
   "scripts": {
-    "inspect": "node --inspect-brk ./dist/main.js",
+    "inspect": "node --inspect node_modules/.bin/probot run ./dist/main.js",
     "build:gh-actions": "ncc build src/adapters/github/github-actions.ts -o ./",
     "build": "tsc",
     "clean": "rimraf ./dist ./node_modules",
@@ -60,7 +60,7 @@
     "nodemon": "^2.0.19",
     "openai": "^4.2.0",
     "prettier": "^2.7.1",
-    "probot": "^12.2.4",
+    "probot": "12.3.3",
     "smee-client": "^2.0.0",
     "tsx": "^3.12.7",
     "yaml": "^2.2.2",

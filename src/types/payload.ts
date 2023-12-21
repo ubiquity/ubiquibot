@@ -3,6 +3,35 @@
 import { Static, Type } from "@sinclair/typebox";
 import { labelSchema } from "./label";
 
+export enum GitHubEvent {
+  // issues events
+  ISSUES_LABELED = "issues.labeled",
+  ISSUES_UNLABELED = "issues.unlabeled",
+  ISSUES_ASSIGNED = "issues.assigned",
+  ISSUES_UNASSIGNED = "issues.unassigned",
+  ISSUES_CLOSED = "issues.closed",
+  ISSUES_OPENED = "issues.opened",
+  ISSUES_REOPENED = "issues.reopened",
+
+  // issue_comment
+  ISSUE_COMMENT_CREATED = "issue_comment.created",
+  ISSUE_COMMENT_EDITED = "issue_comment.edited",
+
+  // pull_request
+  PULL_REQUEST_OPENED = "pull_request.opened",
+
+  // installation event
+  INSTALLATION_ADDED_EVENT = "installation_repositories.added",
+
+  // push event
+  PUSH_EVENT = "push",
+
+  // label
+  LABEL_EDITED = "label.edited",
+
+  REPOSITORY_DISPATCH = "repository_dispatch",
+}
+
 export enum UserType {
   User = "User",
   Bot = "Bot",

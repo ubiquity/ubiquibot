@@ -271,7 +271,7 @@ export class Logs {
       .then(() => void 0)
       .catch(() => Logs.console.fatal("Error adding logs to queue"));
 
-    Logs.console.ok(logInsert.log, logInsert);
+    // Logs.console.ok(logInsert.log, logInsert);
   }
 
   static _commentMetaData(metadata: any, level: LogLevel) {

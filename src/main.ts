@@ -7,5 +7,5 @@ import { GitHubEvent } from "./types/github-events";
 
 export default function main(app: Probot) {
   const allowedEvents = Object.values(GitHubEvent);
-  app.on(allowedEvents, bindEvents);
+  app.on(allowedEvents, async (context) => await bindEvents(context));
 }

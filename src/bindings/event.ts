@@ -9,8 +9,8 @@ import structuredMetadata from "../handlers/shared/structured-metadata";
 import { BotConfig } from "../types/configuration-types";
 
 import { addCommentToIssue } from "../helpers/issue";
+import { shouldSkip } from "../helpers/shared";
 import { Context } from "../types/context";
-import { GitHubEvent } from "../types/github-events";
 import {
   HandlerReturnValuesNoVoid,
   MainActionHandler,
@@ -18,7 +18,7 @@ import {
   PreActionHandler,
   WildCardHandler,
 } from "../types/handlers";
-import { GitHubPayload, payloadSchema, UserType } from "../types/payload";
+import { GitHubEvent, GitHubPayload, payloadSchema } from "../types/payload";
 import { ajv } from "../utils/ajv";
 import { generateConfiguration } from "../utils/generate-configuration";
 import Runtime from "./bot-runtime";
@@ -26,7 +26,7 @@ import { env } from "./env";
 
 const allowedEvents = Object.values(GitHubEvent) as string[];
 
-const NO_VALIDATION = [GitHubEvent.INSTALLATION_CREATED, GitHubEvent.PUSH] as string[];
+const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
 type PreHandlerWithType = { type: string; actions: PreActionHandler[] };
 type HandlerWithType = { type: string; actions: MainActionHandler[] };
 type WildCardHandlerWithType = { type: string; actions: WildCardHandler[] };
@@ -47,7 +47,7 @@ export async function bindEvents(eventContext: ProbotContext) {
 
   logger.info("Event received", { id: eventContext.id, name: eventName });
 
-  if (!allowedEvents.includes(eventName) && eventContext.name !== GitHubEvent.REPOSITORY_DISPATCH) {
+  if (!allowedEvents.includes(eventName) && eventContext.name !== "repository_dispatch") {
     // just check if its on the watch list
     return logger.info(`Skipping the event. reason: not configured`);
   }
@@ -62,12 +62,12 @@ export async function bindEvents(eventContext: ProbotContext) {
 
     // Check if we should skip the event
     const should = shouldSkip(eventContext);
-    if (should.stop && eventContext.name !== GitHubEvent.REPOSITORY_DISPATCH) {
+    if (should.stop) {
       return logger.info("Skipping the event.", { reason: should.reason });
     }
   }
 
-  if (eventName === GitHubEvent.PUSH) {
+  if (eventName === GitHubEvent.PUSH_EVENT) {
     await validateConfigChange(eventContext);
   }
 
@@ -94,14 +94,9 @@ export async function bindEvents(eventContext: ProbotContext) {
     throw new Error("Failed to create logger");
   }
 
-  console.trace({
-    "eventContext.name": eventContext.name,
-    "payload.action": payload.action,
-  });
-
   if (eventContext.name === GitHubEvent.REPOSITORY_DISPATCH) {
     const dispatchPayload = payload as any;
-    if (payload.action === GitHubEvent.ISSUES_CLOSED) {
+    if (payload.action === "issueClosed") {
       //This is response for issueClosed request
       const response = dispatchPayload.client_payload.result;
       if (response) {
@@ -109,9 +104,7 @@ export async function bindEvents(eventContext: ProbotContext) {
         await addCommentToIssue(
           context,
           uncompressedComment.toString(),
-          parseInt(dispatchPayload.client_payload.issueNumber),
-          dispatchPayload.client_payload.issueOwner,
-          dispatchPayload.client_payload.issueRepository
+          parseInt(dispatchPayload.client_payload.issueNumber)
         );
       }
     }
@@ -145,7 +138,7 @@ export async function bindEvents(eventContext: ProbotContext) {
   }
 
   // Skip wildcard handlers for installation event and push event
-  if (eventName == GitHubEvent.INSTALLATION_CREATED || eventName == GitHubEvent.PUSH) {
+  if (eventName == GitHubEvent.INSTALLATION_ADDED_EVENT || eventName == GitHubEvent.PUSH_EVENT) {
     return context.logger.info("Skipping wildcard handlers for event:", eventName);
   } else {
     // Run wildcard handlers
@@ -167,7 +160,7 @@ async function logAnyReturnFromHandlers(context: Context, handlerType: AllHandle
         // only log main handler results
         await renderMainActionOutput(context, response, action);
       } else {
-        context.logger.ok("Completed", { action: action.name, type: handlerType.type });
+        // context.logger.ok("Completed", { action: action.name, type: handlerType.type });
       }
     } catch (report: unknown) {
       await renderCatchAllWithContext(report);
@@ -273,20 +266,4 @@ function createRenderCatchAll(context: Context, handlerType: AllHandlersWithType
       );
     }
   };
-}
-const contextNamesToSkip = ["workflow_run"];
-
-export function shouldSkip(context: ProbotContext) {
-  const payload = context.payload as GitHubPayload;
-  const response = { stop: false, reason: null } as { stop: boolean; reason: string | null };
-
-  if (contextNamesToSkip.includes(context.name)) {
-    response.stop = true;
-    response.reason = `excluded context name: "${context.name}"`;
-  } else if (payload.sender.type === UserType.Bot) {
-    response.stop = true;
-    response.reason = "sender is a bot";
-  }
-
-  return response;
 }
