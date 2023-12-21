@@ -176,7 +176,7 @@ export enum GitHubEvent {
   // "PULL_REQUEST_REVIEW_THREAD" = "pull_request_review_thread",
   "PULL_REQUEST_REVIEW_THREAD_RESOLVED" = "pull_request_review_thread.resolved",
   "PULL_REQUEST_REVIEW_THREAD_UNRESOLVED" = "pull_request_review_thread.unresolved",
-  // "PUSH" = "push",
+  "PUSH" = "push",
   // "RELEASE" = "release",
   "RELEASE_CREATED" = "release.created",
   "RELEASE_DELETED" = "release.deleted",
