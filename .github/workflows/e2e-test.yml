@@ -37,7 +37,7 @@ jobs:
           # MEASURE_SIMILARITY_AI_TEMPERATURE:
           # OPENAI_API_HOST:
           # OPENAI_API_KEY:
-          APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           # SIMILARITY_THRESHOLD:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

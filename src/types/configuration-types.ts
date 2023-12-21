@@ -53,7 +53,7 @@ const envConfigSchema = T.Object({
   SUPABASE_URL: T.String({ format: "uri" }),
   SUPABASE_KEY: T.String(),
   X25519_PRIVATE_KEY: T.String(),
-  APP_PRIVATE_KEY: T.String(),
+  PRIVATE_KEY: T.String(),
   APP_ID: T.Number(),
 });
 
