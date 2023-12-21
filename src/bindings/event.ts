@@ -47,7 +47,7 @@ export async function bindEvents(eventContext: ProbotContext) {
 
   logger.info("Event received", { id: eventContext.id, name: eventName });
 
-  if (!allowedEvents.includes(eventName) && eventContext.name !== "repository_dispatch") {
+  if (!allowedEvents.includes(eventName) && eventContext.name !== GitHubEvent.REPOSITORY_DISPATCH) {
     // just check if its on the watch list
     return logger.info(`Skipping the event. reason: not configured`);
   }
@@ -62,7 +62,7 @@ export async function bindEvents(eventContext: ProbotContext) {
 
     // Check if we should skip the event
     const should = shouldSkip(eventContext);
-    if (should.stop && eventContext.name !== "repository_dispatch") {
+    if (should.stop && eventContext.name !== GItH) {
       return logger.info("Skipping the event.", { reason: should.reason });
     }
   }
@@ -93,6 +93,11 @@ export async function bindEvents(eventContext: ProbotContext) {
   if (!context.logger) {
     throw new Error("Failed to create logger");
   }
+
+  console.trace({
+    "eventContext.name": eventContext.name,
+    "payload.action": payload.action,
+  });
 
   if (eventContext.name === GitHubEvent.REPOSITORY_DISPATCH) {
     const dispatchPayload = payload as any;
