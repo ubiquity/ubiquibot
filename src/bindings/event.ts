@@ -62,7 +62,7 @@ export async function bindEvents(eventContext: ProbotContext) {
 
     // Check if we should skip the event
     const should = shouldSkip(eventContext);
-    if (should.stop && eventContext.name !== GItH) {
+    if (should.stop && eventContext.name !== GitHubEvent.REPOSITORY_DISPATCH) {
       return logger.info("Skipping the event.", { reason: should.reason });
     }
   }
