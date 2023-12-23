@@ -22,13 +22,15 @@ export async function issueClosed(context: Context) {
 
   const collaborators = await getCollaboratorsForRepo(context);
 
+  const installationId = (context.payload.installation as { id: number }).id.toString(); // probot always includes this on issue related events.
+
   const computeParams = {
     eventName: GitHubEvent.ISSUES_CLOSED,
     issueOwner,
     issueRepository,
     issueNumber: `${issueNumber}`,
     collaborators: JSON.stringify(collaborators.map((collaborator) => collaborator.login)), // need to serialize to be accepted by workflow
-    installationId: context.payload.installation.id.toString(),
+    installationId: installationId,
   };
   await delegateCompute(context, computeParams);
   return Runtime.getState().logger.ok("Evaluating results. Please wait...", computeParams);
