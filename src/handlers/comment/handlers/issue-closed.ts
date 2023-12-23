@@ -4,7 +4,7 @@ import { Context } from "../../../types/context";
 import { GitHubEvent } from "../../../types/github-events";
 import { GitHubComment, GitHubIssue, GitHubPayload, StateReason } from "../../../types/payload";
 import structuredMetadata from "../../shared/structured-metadata";
-import { delegateCompute } from "./delegated-compute";
+import { delegateCompute } from "./delegate-compute/delegated-compute";
 import { getCollaboratorsForRepo } from "./issue/get-collaborator-ids-for-repo";
 // import { getCollaboratorsForRepo } from "./issue/get-collaborator-ids-for-repo";
 // import { getPullRequestComments } from "./issue/get-pull-request-comments";
@@ -27,7 +27,8 @@ export async function issueClosed(context: Context) {
     issueOwner,
     issueRepository,
     issueNumber: `${issueNumber}`,
-    collaborators: JSON.stringify(collaborators),
+    collaborators: JSON.stringify(collaborators.map((collaborator) => collaborator.login)), // need to serialize to be accepted by workflow
+    installationId: context.payload.installation.id.toString(),
   };
   await delegateCompute(context, computeParams);
   return Runtime.getState().logger.ok("Evaluating results. Please wait...", computeParams);
