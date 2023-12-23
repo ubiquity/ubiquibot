@@ -20,15 +20,14 @@ export async function issueClosed(context: Context) {
 
   // const pullRequestComments = await getPullRequestComments(context, owner, repository, issueNumber);
 
-  const repoCollaborators = await getCollaboratorsForRepo(context);
+  const collaborators = await getCollaboratorsForRepo(context);
 
   const computeParams = {
     eventName: GitHubEvent.ISSUES_CLOSED,
     issueOwner,
     issueRepository,
     issueNumber: `${issueNumber}`,
-    organization: payload.organization?.login || payload.repository.owner.login,
-    repoCollaborators: JSON.stringify(repoCollaborators),
+    collaborators: JSON.stringify(collaborators),
   };
   await delegateCompute(context, computeParams);
   return Runtime.getState().logger.ok("Evaluating results. Please wait...", computeParams);
