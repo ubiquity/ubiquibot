@@ -5,22 +5,21 @@ export interface DelegatedComputeInputs {
   issueOwner: string;
   issueRepository: string;
   issueNumber: string;
-  organization: string;
-  repoCollaborators: string;
+  collaborators: string;
 }
 
 export const computeLocation = {
   //   // TODO: Make this configurable
-  owner: null, //  "ubiquity",
-  repository: "ubiquibot-config",
+  owner: "ubiquibot", //  "ubiquity",
+  repository: "comment-incentives",
   workflowId: "compute.yml",
-} as { owner: null | string; repository: string; workflowId: string };
+} as { owner: string; repository: string; workflowId: string };
 
 export async function delegateCompute(context: Context, inputs: DelegatedComputeInputs) {
-  computeLocation.owner = context.payload?.organization?.login || context.payload.repository.owner.login;
-  if (!computeLocation.owner) {
-    throw context.logger.error("Compute repository owner is not defined");
-  }
+  // computeLocation.owner = context.payload?.organization?.login || context.payload.repository.owner.login;
+  // if (!computeLocation.owner) {
+  //   throw context.logger.error("Compute repository owner is not defined");
+  // }
   const ref = await getDefaultBranch(context, computeLocation.owner, computeLocation.repository);
 
   // You must authenticate using an access token with the repo scope to use this endpoint. GitHub Apps must have the actions:write permission to use this endpoint.
