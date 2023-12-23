@@ -66,13 +66,11 @@ export async function assignCommandHandler(context: Context) {
   const currentDate = new Date();
   const endDate = new Date(currentDate.getTime() + shortestDurationLabel * 1000);
 
-  // Format the commit message
-  const commitMessage = `${flattenedAssignees} the deadline is at ${endDate.toISOString()}`;
-  logger.debug("Creating an issue comment", { commitMessage });
+  // Format the comment
+  const comment = `${flattenedAssignees} the deadline is at ${endDate.toISOString()}`;
 
-  // Add the commit message as a comment to the issue
-  // await addCommentToIssue(commitMessage, payload.issue?.number);
-  return logger.info(commitMessage);
+  // Add the comment to the issue
+  return comment;
 }
 
 export async function closePullRequestForAnIssue(context: Context) {
