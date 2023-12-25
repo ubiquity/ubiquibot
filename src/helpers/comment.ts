@@ -99,7 +99,7 @@ export const createDetailsTable = (
 
   if (!isEmpty(debug)) {
     const data = Object.entries(debug)
-      .filter(([_, value]) => value.count > 0)
+      .filter(([, value]) => value.count > 0)
       .map(([key, value]) => {
         const element = key === "#text" ? "words" : key;
         const units = value.count;
