@@ -850,3 +850,72 @@ export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
     };
   }
 };
+
+/**
+ * @notice Requests changes pinned to file and line number then bundles them all as one review request
+ * @param pull_number number of the pull request
+ * @param comments The changes to be requested
+ * @param sha the latest commit id of the pull request
+ * @param body the body of the review request
+ * @param docs links to the documentation
+ */
+export async function requestPullChanges(pull_number: number, comments: any[], sha: string, body: string | null, docs: string) {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+
+  if (comments.length === 0) return;
+
+  const coms = comments.map((comment) => {
+    if (comment.line === comment.start_line) {
+      return {
+        path: comment.path,
+        line: comment.line,
+        body: comment.body,
+      };
+    } else {
+      return {
+        path: comment.path,
+        start_line: comment.start_line,
+        line: comment.line,
+        body: comment.body,
+      };
+    }
+  });
+
+  try {
+    await context.octokit.pulls.createReview({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number: pull_number,
+      commit_id: sha,
+      body: body + `\n${docs} \n###### Ensure the pull request requirements are in the linked issue's first comment and update it if the scope evolves.`,
+      event: "REQUEST_CHANGES",
+      comments: coms,
+    });
+  } catch (e: unknown) {
+    logger.debug(`Requesting pull changes failed! reason: ${e}`);
+    console.log(`Requesting pull changes failed! reason: ${e}`);
+  }
+}
+
+/**
+ * @notice This creates an approved review on a pull request, it does not submit it ready for review
+ * @param pull_number number of the pull request
+ */
+export async function approvePullRequest(pull_number: number) {
+  const context = getBotContext();
+  const logger = getLogger();
+  const payload = context.payload as Payload;
+
+  try {
+    await context.octokit.pulls.createReview({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number,
+      event: "APPROVE",
+    });
+  } catch (e: unknown) {
+    logger.debug(`Approving pull request failed! reason: ${e}`);
+  }
+}
