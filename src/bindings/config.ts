@@ -35,6 +35,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
     botDelay,
     followUpTime,
     disqualifyTime,
+    followUpReviewerTime,
   } = await getWideConfig(context);
 
   const publicKey = await getScalarKey(process.env.X25519_PRIVATE_KEY);
@@ -73,6 +74,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
         : timeRangeForMaxIssueEnabled,
       followUpTime: ms(process.env.FOLLOW_UP_TIME || followUpTime),
       disqualifyTime: ms(process.env.DISQUALIFY_TIME || disqualifyTime),
+      followUpReviewerTime: ms(process.env.FOLLOW_UP_REVIEWER_TIME || followUpReviewerTime),
     },
     supabase: {
       url: process.env.SUPABASE_URL ?? "",

@@ -5,6 +5,7 @@ import {
   getAllIssueComments,
   getCommitsOnPullRequest,
   getOpenedPullRequestsForAnIssue,
+  getRequestedReviewerStart,
   getReviewRequests,
   listAllIssuesForRepo,
   removeAssignees,
@@ -36,7 +37,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   const payload = context.payload as Payload;
   const logger = getLogger();
   const {
-    unassign: { followUpTime, disqualifyTime },
+    unassign: { followUpTime, disqualifyTime, followUpReviewerTime },
   } = getBotConfig();
   logger.info(`Checking the bounty to unassign, issue_number: ${issue.number}`);
   const { unassignComment, askUpdate } = GLOBAL_STRINGS;
@@ -56,7 +57,26 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
 
   if (pullRequest.length > 0) {
     const reviewRequests = await getReviewRequests(context, pullRequest[0].number, payload.repository.owner.login, payload.repository.name);
-    if (!reviewRequests || reviewRequests.users?.length > 0) {
+    if (!reviewRequests) return false;
+    if (reviewRequests.users?.length > 0) {
+      let msg = "";
+      for (const reviewer of reviewRequests.users) {
+        //check if reviewer has to be followed up with
+        const reviewRequestedAt = await getRequestedReviewerStart(reviewer.login);
+        if (!reviewRequestedAt) continue;
+
+        const currDate = new Date();
+        const expectedDate = new Date(reviewRequestedAt);
+        expectedDate.setTime(expectedDate.getTime() + followUpReviewerTime);
+
+        if (currDate >= expectedDate) {
+          msg += "@" + reviewer.login + " ";
+        }
+      }
+      if (!msg.includes("@")) return false;
+      msg += "Can you please review this pull request";
+      // the below function can also add comment to prs
+      await addCommentToIssue(msg, pullRequest[0].number);
       return false;
     }
   }

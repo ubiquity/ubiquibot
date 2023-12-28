@@ -83,6 +83,7 @@ export const PayoutConfigSchema = Type.Object({
 
 export const UnassignConfigSchema = Type.Object({
   followUpTime: Type.Number(),
+  followUpReviewerTime: Type.Number(),
   disqualifyTime: Type.Number(),
   timeRangeForMaxIssue: Type.Number(),
   timeRangeForMaxIssueEnabled: Type.Boolean(),
@@ -241,6 +242,7 @@ export const MergedConfigSchema = Type.Object({
   permitBaseUrl: Type.String(),
   botDelay: Type.Number(),
   followUpTime: Type.String(),
+  followUpReviewerTime: Type.String(),
   disqualifyTime: Type.String(),
 });
 

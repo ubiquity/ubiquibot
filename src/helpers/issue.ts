@@ -18,7 +18,7 @@ export const getAllIssueEvents = async () => {
       // Fetch issue events
       const response = await context.octokit.issues.listEvents({
         owner: payload.repository.owner.login,
-        repo: payload.repository.full_name,
+        repo: payload.repository.name,
         issue_number: payload.issue.number,
         per_page: 100,
         page: page_number,
@@ -658,6 +658,16 @@ export const getPullByNumber = async (context: Context, pull_number: number) => 
   }
 };
 
+export async function getRequestedReviewerStart(user: string) {
+  const events = await getAllIssueEvents();
+  if (!events) return null;
+  const filteredEvents = events.filter((e) => e.event === "review_requested" && e.requested_reviewer?.login === user);
+  if (!filteredEvents) {
+    return null;
+  } else {
+    return events[events.length - 1].created_at;
+  }
+}
 // Get issues assigned to a username
 export const getAssignedIssues = async (username: string) => {
   const issuesArr = [];
