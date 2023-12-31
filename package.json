@@ -25,7 +25,7 @@
     "start:serverless": "tsx src/adapters/github/github-actions.ts",
     "start:watch": "nodemon --exec 'yarn start'",
     "utils:cspell": "cspell --config .cspell.json 'src/**/*.{js,ts,json,md,yml}'",
-    "start": "probot run ./dist/index.js",
+    "start": "probot run ./dist/main.js",
     "prepare": "husky install",
     "test": "jest"
   },
@@ -64,7 +64,7 @@
     "probot": "^12.2.4",
     "smee-client": "^2.0.0",
     "tsx": "^3.12.7",
-    "ubiquibot-logger": "^0.3.0",
+    "ubiquibot-logger": "^0.3.5",
     "yaml": "^2.2.2",
     "zlib": "^1.0.5"
   },

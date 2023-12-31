@@ -8300,10 +8300,10 @@ typescript@^4.9.5:
   resolved "https://registry.npmjs.org/typescript/-/typescript-4.9.5.tgz"
   integrity sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==
 
-ubiquibot-logger@^0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/ubiquibot-logger/-/ubiquibot-logger-0.3.0.tgz#ae296958daae3169bfde2866379216621c7c41f5"
-  integrity sha512-F3BExAEPfQrHK2GvR/T+9F+F5Q2dlv2dwiSkVdww4sqtj25oOpeL/uT8mUSI6xGWoh4Oo41KvoECTw1tELcn0Q==
+ubiquibot-logger@^0.3.5:
+  version "0.3.5"
+  resolved "https://registry.yarnpkg.com/ubiquibot-logger/-/ubiquibot-logger-0.3.5.tgz#8ecad7f159a72a6e71b4ba136dc00a120cffaf1b"
+  integrity sha512-1zk/CRjUp2hZvJi+0mN6JOJhqyY66nio0TfNRAANhBHUbkMpYKV70plAHo9O9iCfdOjFGFtRhT9sHmcv1W7ElA==
   dependencies:
     "@supabase/supabase-js" "^2.4.0"
     dotenv "^16.3.1"
