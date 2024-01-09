@@ -74,10 +74,12 @@ export async function onLabelChangeSetPricing(context: Context): Promise<void> {
     return;
   }
 
+  if (!hasAssistivePricing) return;
+
   const targetPriceLabel = setPrice(context, minLabels.time, minLabels.priority);
 
   if (targetPriceLabel) {
-    await handleTargetPriceLabel(context, targetPriceLabel, labelNames, hasAssistivePricing);
+    await handleTargetPriceLabel(context, targetPriceLabel, labelNames);
   } else {
     await clearAllPriceLabelsOnIssue(context);
     logger.info(`Skipping action...`);
@@ -108,22 +110,18 @@ function getMinLabels(recognizedLabels: { time: Label[]; priority: Label[] }) {
   return { time: minTimeLabel, priority: minPriorityLabel };
 }
 
-async function handleTargetPriceLabel(
-  context: Context,
-  targetPriceLabel: string,
-  labelNames: string[],
-  assistivePricing: boolean
-) {
+async function handleTargetPriceLabel(context: Context, targetPriceLabel: string, labelNames: string[]) {
   const _targetPriceLabel = labelNames.find((name) => name.includes("Price") && name.includes(targetPriceLabel));
 
   if (_targetPriceLabel) {
-    await handleExistingPriceLabel(context, targetPriceLabel, assistivePricing);
+    await handleExistingPriceLabel(context, targetPriceLabel);
   } else {
-    await addPriceLabelToIssue(context, targetPriceLabel, assistivePricing);
+    await createLabel(context, targetPriceLabel, "price");
+    await addPriceLabelToIssue(context, targetPriceLabel);
   }
 }
 
-async function handleExistingPriceLabel(context: Context, targetPriceLabel: string, assistivePricing: boolean) {
+async function handleExistingPriceLabel(context: Context, targetPriceLabel: string) {
   const logger = context.logger;
   let labeledEvents = await getAllLabeledEvents(context);
   if (!labeledEvents) return logger.error("No labeled events found");
@@ -134,19 +132,12 @@ async function handleExistingPriceLabel(context: Context, targetPriceLabel: stri
   if (labeledEvents[labeledEvents.length - 1].actor?.type == UserType.User) {
     logger.info(`Skipping... already exists`);
   } else {
-    await addPriceLabelToIssue(context, targetPriceLabel, assistivePricing);
+    await addPriceLabelToIssue(context, targetPriceLabel);
   }
 }
 
-async function addPriceLabelToIssue(context: Context, targetPriceLabel: string, assistivePricing: boolean) {
+async function addPriceLabelToIssue(context: Context, targetPriceLabel: string) {
   await clearAllPriceLabelsOnIssue(context);
-
-  const isPresent = await labelExists(context, targetPriceLabel);
-  if (assistivePricing && !isPresent) {
-    context.logger.info("Assistive pricing is enabled, creating label...", { targetPriceLabel });
-    await createLabel(context, targetPriceLabel, "price");
-  }
-
   await addLabelToIssue(context, targetPriceLabel);
 }
 
