@@ -764,84 +764,58 @@ export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
   const linkedPRStreamlined: StreamlinedComment[] = [];
   const linkedIssueStreamlined: StreamlinedComment[] = [];
 
-  const regex = /https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+)/gi;
+  const regex = /(#(\d+)|https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+))/gi;
+
   const matches = body.match(regex);
 
   if (matches) {
-    try {
-      const linkedIssues: number[] = [];
-      const linkedPrs: number[] = [];
+    const matched = matches.length;
 
-      // this finds refs via all patterns: #<issue number>, full url or [#25](url.to.issue)
-      const issueRef = issue.body.match(/(#(\d+)|https:\/\/github\.com\/[^/\s]+\/[^/\s]+\/(issues|pull)\/(\d+))/gi);
+    for (let i = 0; i < matched; i++) {
+      const match = matches[i];
+      console.log(`match: ${match}`);
+      const issueNumber = match.includes("#") ? Number(match.slice(1)) : Number(match.split("/")[6]);
+      const issue = await getIssueByNumber(context, issueNumber);
+      const pull = await getPullByNumber(context, issueNumber);
 
-      // if they exist, strip out the # or the url and push them to their arrays
-      if (issueRef) {
-        issueRef.forEach((issue) => {
-          if (issue.includes("#")) {
-            linkedIssues.push(Number(issue.slice(1)));
-          } else {
-            if (issue.split("/")[5] == "pull") {
-              linkedPrs.push(Number(issue.split("/")[6]));
-            } else linkedIssues.push(Number(issue.split("/")[6]));
+      if (pull) {
+        linkedPRStreamlined.push({
+          login: "system",
+          body: `=============== Pull Request #${pull.number}: ${pull.title} + ===============\n ${pull.body}}`,
+        });
+        const prComments = await getAllIssueComments(issueNumber);
+        const prCommentsRaw = await getAllIssueComments(issueNumber, "raw");
+        prComments.forEach(async (comment, i) => {
+          if (comment.user.type == UserType.User || prCommentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
+            linkedPRStreamlined.push({
+              login: comment.user.login,
+              body: comment.body,
+            });
           }
         });
       } else {
-        logger.info(`No linked issues or prs found`);
-      }
-
-      if (linkedPrs.length > 0) {
-        for (let i = 0; i < linkedPrs.length; i++) {
-          const pr = await getPullByNumber(context, linkedPrs[i]);
-          if (pr) {
-            linkedPRStreamlined.push({
-              login: "system",
-              body: `=============== Pull Request #${pr.number}: ${pr.title} + ===============\n ${pr.body}}`,
-            });
-            const prComments = await getAllIssueComments(linkedPrs[i]);
-            const prCommentsRaw = await getAllIssueComments(linkedPrs[i], "raw");
-            prComments.forEach(async (comment, i) => {
-              if (comment.user.type == UserType.User || prCommentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
-                linkedPRStreamlined.push({
-                  login: comment.user.login,
-                  body: comment.body,
-                });
-              }
-            });
-          }
-        }
-      }
-
-      if (linkedIssues.length > 0) {
-        for (let i = 0; i < linkedIssues.length; i++) {
-          const issue = await getIssueByNumber(context, linkedIssues[i]);
-          if (issue) {
+        if (!issue) continue;
+        linkedIssueStreamlined.push({
+          login: "system",
+          body: `=============== Issue #${issue.number}: ${issue.title} + ===============\n ${issue.body} `,
+        });
+        const issueComments = await getAllIssueComments(issueNumber);
+        const issueCommentsRaw = await getAllIssueComments(issueNumber, "raw");
+        issueComments.forEach(async (comment, i) => {
+          if (comment.user.type == UserType.User || issueCommentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
             linkedIssueStreamlined.push({
-              login: "system",
-              body: `=============== Issue #${issue.number}: ${issue.title} + ===============\n ${issue.body} `,
-            });
-            const issueComments = await getAllIssueComments(linkedIssues[i]);
-            const issueCommentsRaw = await getAllIssueComments(linkedIssues[i], "raw");
-            issueComments.forEach(async (comment, i) => {
-              if (comment.user.type == UserType.User || issueCommentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
-                linkedIssueStreamlined.push({
-                  login: comment.user.login,
-                  body: comment.body,
-                });
-              }
+              login: comment.user.login,
+              body: comment.body,
             });
           }
-        }
+        });
       }
-
-      return {
-        linkedIssues: linkedIssueStreamlined,
-        linkedPrs: linkedPRStreamlined,
-      };
-    } catch (error) {
-      logger.info(`Error getting linked issues or prs: ${error}`);
-      return `Error getting linked issues or prs: ${error}`;
     }
+
+    return {
+      linkedIssues: linkedIssueStreamlined,
+      linkedPrs: linkedPRStreamlined,
+    };
   } else {
     logger.info(`No matches found`);
     return {
