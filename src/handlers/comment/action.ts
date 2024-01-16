@@ -51,11 +51,9 @@ export const handleComment = async (): Promise<void> => {
         const callbackComment = response ?? successComment ?? "";
         if (callbackComment) await callback(issue.number, callbackComment, payload.action, payload.comment);
       } catch (err: unknown) {
-        // Use failureComment for failed command if it is available
-        if (failureComment) {
-          await callback(issue.number, failureComment, payload.action, payload.comment);
+        for (const comment of [failureComment, ErrorDiff(err)]) {
+          if (comment) await callback(issue.number, comment, payload.action, payload.comment);
         }
-        await callback(issue.number, ErrorDiff(err), payload.action, payload.comment);
       }
     } else {
       logger.info(`Skipping for a command: ${command}`);

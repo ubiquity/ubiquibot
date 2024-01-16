@@ -178,3 +178,69 @@ export const askGPT = async (question: string, chatHistory: CreateChatCompletion
 
   return { answer, tokenUsage };
 };
+
+/**
+ * What is embedding?
+ *    An embedding is a vector of floating point numbers to measure the relatedness of text strings.
+ * How can I get an embedding using OpenAI?
+ *    To get an embedding, send your text string to the embeddings API endpoint along with a choice of embedding model ID (e.g., text-embedding-ada-002).
+ *    The response will contain an embedding, which you can extract, save, and use.
+ *
+ * Example Request:
+ *
+ *  curl https://api.openai.com/v1/embeddings \
+ *  -H "Content-Type: application/json" \
+ *  -H "Authorization: Bearer $OPENAI_API_KEY" \
+ *  -d '{
+ *     "input": "Your text string goes here",
+ *      "model": "text-embedding-ada-002"
+ *   }'
+ *
+ * Example Response:
+ *
+ * {
+ *  "data": [
+ *    {
+ *      "embedding": [
+ *        -0.006929283495992422,
+ *        -0.005336422007530928,
+ *        ...
+ *        -4.547132266452536e-05,
+ *        -0.024047505110502243
+ *      ],
+ *      "index": 0,
+ *      "object": "embedding"
+ *    }
+ *  ],
+ *  "model": "text-embedding-ada-002",
+ *  "object": "list",
+ *  "usage": {
+ *    "prompt_tokens": 5,
+ *    "total_tokens": 5
+ *  }
+ * }
+ * @param words - The input data to generate the embedding for
+ */
+export const generateEmbeddings = async (words: string): Promise<number[]> => {
+  const logger = getLogger();
+  const config = getBotConfig();
+
+  if (!config.ask.apiKey) {
+    logger.info(`No OpenAI API Key provided`);
+    throw new Error("You must configure the `openai-api-key` property in the bot configuration in order to use AI powered features.");
+  }
+
+  const openai = new OpenAI({
+    apiKey: config.ask.apiKey,
+  });
+
+  const embedding = await openai.embeddings.create({
+    // TODO: A couple of embedding models exist and `text-embedding-ada-002` is the one recommended by OpenAI
+    //  because it's better, cheaper and simpler to use.
+    // We might need to move the hardcoded model: `text-embedding-ada-002` to the bot configuration for better extensibility
+    model: "text-embedding-ada-002",
+    input: words,
+  });
+
+  return embedding.data[0]["embedding"] as number[];
+};

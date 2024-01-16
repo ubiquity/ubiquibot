@@ -7,14 +7,14 @@ import { handleComment, issueClosedCallback, issueCreatedCallback, issueReopened
 import { checkPullRequests } from "./assign/auto";
 import { createDevPoolPR } from "./pull-request";
 import { runOnPush, validateConfigChange } from "./push";
-import { findDuplicateOne } from "./issue";
+import { findDuplicateOne, embeddings } from "./issue";
 import { watchLabelChange } from "./label";
 
 export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUES_OPENED]: {
     pre: [nullHandler],
     action: [findDuplicateOne, issueCreatedCallback],
-    post: [nullHandler],
+    post: [embeddings],
   },
   [GithubEvent.ISSUES_REOPENED]: {
     pre: [nullHandler],
@@ -44,12 +44,12 @@ export const processors: Record<string, Handler> = {
   [GithubEvent.ISSUE_COMMENT_CREATED]: {
     pre: [nullHandler],
     action: [handleComment],
-    post: [nullHandler],
+    post: [embeddings],
   },
   [GithubEvent.ISSUE_COMMENT_EDITED]: {
     pre: [nullHandler],
     action: [handleComment],
-    post: [nullHandler],
+    post: [embeddings],
   },
   [GithubEvent.ISSUES_CLOSED]: {
     pre: [nullHandler],
