@@ -1,5 +1,6 @@
 import { Context } from "../../types/context";
 
+import { addLabelToIssue, clearAllPriceLabelsOnIssue } from "../../helpers/issue";
 import { createLabel } from "../../helpers/label";
 import { BotConfig } from "../../types/configuration-types";
 import { Label } from "../../types/label";
@@ -7,7 +8,6 @@ import { GitHubPayload, UserType } from "../../types/payload";
 import { labelAccessPermissionsCheck } from "../access/labels-access";
 import { setPrice } from "../shared/pricing";
 import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./handle-parent-issue";
-import { clearAllPriceLabelsOnIssue, addLabelToIssue } from "../../helpers/issue";
 
 export async function onLabelChangeSetPricing(context: Context): Promise<void> {
   const config = context.config;
@@ -142,16 +142,7 @@ async function addPriceLabelToIssue(context: Context, targetPriceLabel: string) 
 }
 
 export async function labelExists(context: Context, name: string): Promise<boolean> {
-<<<<<<< HEAD
   const payload = context.event.payload as GitHubPayload;
-  const res = await context.event.octokit.rest.issues.getLabel({
-    owner: payload.repository.owner.login,
-    repo: payload.repository.name,
-    name,
-  });
-  return res.status === 200;
-=======
-  const payload = context.event.payload as Payload;
   try {
     await context.event.octokit.rest.issues.getLabel({
       owner: payload.repository.owner.login,
@@ -162,7 +153,6 @@ export async function labelExists(context: Context, name: string): Promise<boole
   } catch (error) {
     return false;
   }
->>>>>>> a7034915869f1c0547427bbe081402908d7977d9
 }
 
 async function getAllLabeledEvents(context: Context) {
