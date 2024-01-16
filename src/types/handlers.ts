@@ -1,4 +1,4 @@
-import { LogReturn } from "../adapters/supabase/helpers/tables/logs";
+import { LogReturn } from "ubiquibot-logger";
 import { Context } from "./context";
 
 export type HandlerReturnValuesNoVoid = null | string | LogReturn;

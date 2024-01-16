@@ -76,7 +76,7 @@ export class Settlement extends Super {
     const { data: debitInsertData, error: debitError } = await this.supabase
       .from("debits")
       .insert(debitData)
-      .select("*")
+      .select()
       .maybeSingle();
 
     if (debitError) throw new Error(debitError.message);
@@ -93,6 +93,7 @@ export class Settlement extends Super {
     const { data: settlementInsertData, error: settlementError } = await this.supabase
       .from("settlements")
       .insert(settlementData)
+      .select()
       .maybeSingle();
 
     if (settlementError) throw new Error(settlementError.message);
@@ -115,7 +116,7 @@ export class Settlement extends Super {
     const { data: creditInsertData, error: creditError } = await this.supabase
       .from("credits")
       .insert(creditData)
-      .select("*")
+      .select()
       .maybeSingle();
 
     if (creditError) throw new Error(creditError.message);
@@ -137,7 +138,7 @@ export class Settlement extends Super {
         beneficiary_id: userId,
       };
 
-      const permitResult = await this.supabase.from("permits").insert(permitData).select("*").maybeSingle();
+      const permitResult = await this.supabase.from("permits").insert(permitData).select().maybeSingle();
 
       if (permitResult.error) throw new Error(permitResult.error.message);
       if (!permitResult.data) throw new Error("Permit not inserted");
@@ -165,6 +166,7 @@ export class Settlement extends Super {
     const { data: settlementInsertData, error: settlementError } = await this.supabase
       .from("settlements")
       .insert(settlementData)
+      .select()
       .maybeSingle();
 
     if (settlementError) throw new Error(settlementError.message);
