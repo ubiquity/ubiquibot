@@ -1,11 +1,6 @@
-import { labelExists } from "../handlers/pricing/pricing-label";
-import { calculateTaskPrice } from "../handlers/shared/pricing";
 import { Context } from "../types/context";
 import { Label } from "../types/label";
 import { GitHubPayload } from "../types/payload";
-
-import { deleteLabel } from "./issue";
-import { calculateLabelValue } from "./shared";
 
 // cspell:disable
 const COLORS = { default: "ededed", price: "1f883d" };
@@ -40,78 +35,4 @@ export async function createLabel(
     name,
     color: COLORS[labelType],
   });
-}
-
-// Function to update labels based on the base rate difference
-export async function updateLabelsFromBaseRate(
-  context: Context,
-  owner: string,
-  repo: string,
-  labels: Label[],
-  previousBaseRate: number
-) {
-  const logger = context.logger;
-  const config = context.config;
-
-  const newLabels: string[] = [];
-  const previousLabels: string[] = [];
-
-  for (const timeLabel of config.labels.time) {
-    for (const priorityLabel of config.labels.priority) {
-      const targetPrice = calculateTaskPrice(
-        context,
-        calculateLabelValue(timeLabel),
-        calculateLabelValue(priorityLabel),
-        config.payments.basePriceMultiplier
-      );
-      const targetPriceLabel = `Price: ${targetPrice} USD`;
-      newLabels.push(targetPriceLabel);
-
-      const previousTargetPrice = calculateTaskPrice(
-        context,
-        calculateLabelValue(timeLabel),
-        calculateLabelValue(priorityLabel),
-        previousBaseRate
-      );
-      const previousTargetPriceLabel = `Price: ${previousTargetPrice} USD`;
-      previousLabels.push(previousTargetPriceLabel);
-    }
-  }
-
-  const uniqueNewLabels = [...new Set(newLabels)];
-  const uniquePreviousLabels = [...new Set(previousLabels)];
-
-  const labelsFiltered: string[] = labels.map((obj) => obj["name"]);
-  const usedLabels = uniquePreviousLabels.filter((value: string) => labelsFiltered.includes(value));
-
-  logger.debug("Got used labels: ", { usedLabels });
-
-  for (const label of usedLabels) {
-    if (label.startsWith("Price: ")) {
-      const labelData = labels.find((obj) => obj["name"] === label) as Label;
-      const index = uniquePreviousLabels.findIndex((obj) => obj === label);
-
-      const doesExist = await labelExists(context, uniqueNewLabels[index]);
-      if (doesExist) {
-        // we have to delete first
-        logger.debug("Label already exists, deleting it", { label });
-        await deleteLabel(context, uniqueNewLabels[index]);
-      }
-
-      // we can update safely
-      await context.event.octokit.issues.updateLabel({
-        owner,
-        repo,
-        name: label,
-        new_name: uniqueNewLabels[index],
-        color: labelData.color,
-        description: labelData.description,
-        headers: {
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      });
-
-      logger.debug("Label updated", { label, to: uniqueNewLabels[index] });
-    }
-  }
 }

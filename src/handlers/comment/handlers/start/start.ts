@@ -1,8 +1,8 @@
-import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests } from "../../../../helpers/issue";
+import { addAssignees, getAllPullRequests } from "../../../../helpers/issue";
 import { calculateDurations } from "../../../../helpers/shared";
 import { Context } from "../../../../types/context";
-import { GitHubPayload, GitHubUser, IssueType } from "../../../../types/payload";
-import { isParentIssue } from "../../../pricing/action";
+import { GitHubIssue, GitHubPayload, GitHubUser, IssueType } from "../../../../types/payload";
+import { isParentIssue } from "../../../pricing/handle-parent-issue";
 
 import structuredMetadata from "../../../shared/structured-metadata";
 import { assignTableComment } from "../table";
@@ -10,6 +10,7 @@ import { checkTaskStale } from "./check-task-stale";
 import { generateAssignmentComment } from "./generate-assignment-comment";
 import { getMultiplierInfoToDisplay } from "./get-multiplier-info-to-display";
 import { getTimeLabelsAssigned } from "./get-time-labels-assigned";
+import Runtime from "../../../../bindings/bot-runtime";
 
 export async function start(context: Context, body: string) {
   const logger = context.logger;
@@ -31,7 +32,7 @@ export async function start(context: Context, body: string) {
   }
 
   if (isStartDisabled) {
-    throw logger.error("The `/assign` command is disabled for this repository.");
+    throw logger.error("The `/start` command is disabled for this repository.");
   }
 
   if (issue.body && isParentIssue(issue.body)) {
@@ -58,12 +59,20 @@ export async function start(context: Context, body: string) {
   }
 
   if (issue.state == IssueType.CLOSED) {
-    throw logger.error("Skipping '/start' since the issue is closed");
+    throw logger.error("Skipping '/start' because the issue is closed.");
   }
   const assignees: GitHubUser[] = (payload.issue?.assignees ?? []).filter(Boolean) as GitHubUser[];
 
   if (assignees.length !== 0) {
-    throw logger.error("Skipping '/start' since the issue is already assigned");
+    throw logger.error("Skipping '/start' because the issue is already assigned.");
+  }
+
+  // check if wallet is set, if not then throw an error
+  const sender = payload.sender;
+  const database = Runtime.getState().adapters.supabase;
+  const address = database.wallet.getAddress(sender.id);
+  if (!address) {
+    throw logger.error("Skipping '/start' because the wallet is not set. Please set your wallet first. /wallet 0x0000");
   }
 
   // ==== preamble checks completed ==== //
@@ -113,4 +122,81 @@ export async function start(context: Context, body: string) {
     comment.tips,
     metadata,
   ].join("\n");
+}
+async function getAvailableOpenedPullRequests(context: Context, username: string) {
+  const { reviewDelayTolerance } = context.config.timers;
+  if (!reviewDelayTolerance) return [];
+
+  const openedPullRequests = await getOpenedPullRequests(context, username);
+  const result = [] as typeof openedPullRequests;
+
+  for (let i = 0; i < openedPullRequests.length; i++) {
+    const openedPullRequest = openedPullRequests[i];
+    const reviews = await getAllPullRequestReviews(context, openedPullRequest.number);
+
+    if (reviews.length > 0) {
+      const approvedReviews = reviews.find((review) => review.state === "APPROVED");
+      if (approvedReviews) {
+        result.push(openedPullRequest);
+      }
+    }
+
+    if (
+      reviews.length === 0 &&
+      (new Date().getTime() - new Date(openedPullRequest.created_at).getTime()) / (1000 * 60 * 60) >=
+        reviewDelayTolerance
+    ) {
+      result.push(openedPullRequest);
+    }
+  }
+  return result;
+}
+
+async function getOpenedPullRequests(context: Context, username: string) {
+  const prs = await getAllPullRequests(context, "open");
+  return prs.filter((pr) => !pr.draft && (pr.user?.login === username || !username));
+}
+async function getAllPullRequestReviews(
+  context: Context,
+  pullNumber: number,
+  format: "raw" | "html" | "text" | "full" = "raw"
+) {
+  const payload = context.payload;
+
+  try {
+    const reviews = await context.octokit.paginate(context.octokit.rest.pulls.listReviews, {
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number: pullNumber,
+      per_page: 100,
+      mediaType: {
+        format,
+      },
+    });
+    return reviews;
+  } catch (err: unknown) {
+    context.logger.fatal("Fetching all pull request reviews failed!", err);
+    return [];
+  }
+}
+async function getAssignedIssues(context: Context, username: string): Promise<GitHubIssue[]> {
+  const payload = context.payload;
+
+  try {
+    const issues = (await context.octokit.paginate(
+      context.octokit.issues.listForRepo,
+      {
+        owner: payload.repository.owner.login,
+        repo: payload.repository.name,
+        state: IssueType.OPEN,
+        per_page: 1000,
+      },
+      ({ data: issues }) =>
+        issues.filter((issue) => !issue.pull_request && issue.assignee && issue.assignee.login === username)
+    )) as GitHubIssue[];
+    return issues;
+  } catch (err: unknown) {
+    context.logger.fatal("Fetching assigned issues failed!", err);
+    return [];
+  }
 }

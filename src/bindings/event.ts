@@ -160,7 +160,7 @@ async function logAnyReturnFromHandlers(context: Context, handlerType: AllHandle
         // only log main handler results
         await renderMainActionOutput(context, response, action);
       } else {
-        context.logger.ok("Completed", { action: action.name, type: handlerType.type });
+        // context.logger.ok("Completed", { action: action.name, type: handlerType.type });
       }
     } catch (report: unknown) {
       await renderCatchAllWithContext(report);

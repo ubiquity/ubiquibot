@@ -54,9 +54,9 @@ yarn start:watch
 - `WEBHOOK_PROXY_URL`: (required) should be automatically filled when you install Ubiquibot
 - `WEBHOOK_SECRET`: (required) should be automatically filled when the app is installed
 
-`APP_ID` and `APP_PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for core team developers to use.
+`APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for core team developers to use.
 
-If you are an external developer, `APP_ID`and `APP_PRIVATE_KEY` are automatically generated when you install the app on your repository.
+If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically generated when you install the app on your repository.
 
 ## How to run locally
 
@@ -258,7 +258,7 @@ DISQUALIFY_TIME="7 days" // 7 days
    - in another instance run `yarn start:watch` (runs the bot locally)
 5. Open `http://localhost:3000` and follow instructions to add the bot to one of your repositories.
 
-At this point the `.env` files auto-fill the empty fields (`APP_PRIVATE_KEY` and `APP_ID`) if it is not previously filled.
+At this point the `.env` files auto-fill the empty fields (`PRIVATE_KEY` and `APP_ID`) if it is not previously filled.
 Now you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react.
 
 6. After adding the bot (as a installed app) to your github you will need to restart the aforemention yarn start:watch so CTRL-C to stop the node daemon and `yarn start:watch` again

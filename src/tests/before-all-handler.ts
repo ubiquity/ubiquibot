@@ -1,7 +1,7 @@
 import { Probot, run } from "probot";
 
 import { bindEvents } from "../bindings/event";
-import { GitHubEvent } from "../types/payload";
+import { GitHubEvent } from "../types/github-events";
 import {
   customOctokit,
   getAdminUser,
@@ -73,7 +73,7 @@ export function beforeAllHandler(): jest.ProvidesHookCallback {
     }
 
     const server = await run((app: Probot) => {
-      const allowedEvents = Object.values(GitHubEvent);
+      const allowedEvents = Object.values(GitHubEvent) as GitHubEvent[];
       app.on(allowedEvents, async (context) => {
         await bindEvents(context);
         webhookEventEmitter.emit("event", context.payload);

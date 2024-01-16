@@ -11,14 +11,12 @@ import { registerWallet } from "./wallet";
 // import { addPenalty } from "../../../adapters/supabase";
 
 import { UserCommands } from "../../../types/handlers";
-import { autoPay } from "./payout";
 import { query } from "./query";
 
 export * from "./ask";
 export * from "./authorize";
 export * from "./help";
 export * from "./multiplier";
-export * from "./payout";
 export * from "./query";
 export * from "./start/start";
 export * from "./stop";
@@ -67,12 +65,12 @@ export function userCommands(walletVerificationEnabled: boolean): UserCommands[]
     description: "Disable automatic payment for the issue.",
     handler: payout,
   },*/
-    {
-      id: "/autopay",
-      description: "Toggle automatic payment for the completion of the current issue.",
-      example: "/autopay true",
-      handler: autoPay,
-    },
+    // {
+    //   id: "/autopay",
+    //   description: "Toggle automatic payment for the completion of the current issue.",
+    //   example: "/autopay true",
+    //   handler: autoPay,
+    // },
     {
       id: "/query",
       description: "Returns the user's wallet, access, and multiplier information.",

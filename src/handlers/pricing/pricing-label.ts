@@ -1,13 +1,13 @@
 import { Context } from "../../types/context";
 
-import { addLabelToIssue, clearAllPriceLabelsOnIssue, getAllLabeledEvents } from "../../helpers/issue";
 import { createLabel } from "../../helpers/label";
 import { BotConfig } from "../../types/configuration-types";
 import { Label } from "../../types/label";
 import { GitHubPayload, UserType } from "../../types/payload";
 import { labelAccessPermissionsCheck } from "../access/labels-access";
 import { setPrice } from "../shared/pricing";
-import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./action";
+import { handleParentIssue, isParentIssue, sortLabelsByValue } from "./handle-parent-issue";
+import { clearAllPriceLabelsOnIssue, addLabelToIssue } from "../../helpers/issue";
 
 export async function onLabelChangeSetPricing(context: Context): Promise<void> {
   const config = context.config;
@@ -74,10 +74,12 @@ export async function onLabelChangeSetPricing(context: Context): Promise<void> {
     return;
   }
 
+  if (!hasAssistivePricing) return;
+
   const targetPriceLabel = setPrice(context, minLabels.time, minLabels.priority);
 
   if (targetPriceLabel) {
-    await handleTargetPriceLabel(context, targetPriceLabel, labelNames, hasAssistivePricing);
+    await handleTargetPriceLabel(context, targetPriceLabel, labelNames);
   } else {
     await clearAllPriceLabelsOnIssue(context);
     logger.info(`Skipping action...`);
@@ -108,22 +110,18 @@ function getMinLabels(recognizedLabels: { time: Label[]; priority: Label[] }) {
   return { time: minTimeLabel, priority: minPriorityLabel };
 }
 
-async function handleTargetPriceLabel(
-  context: Context,
-  targetPriceLabel: string,
-  labelNames: string[],
-  assistivePricing: boolean
-) {
+async function handleTargetPriceLabel(context: Context, targetPriceLabel: string, labelNames: string[]) {
   const _targetPriceLabel = labelNames.find((name) => name.includes("Price") && name.includes(targetPriceLabel));
 
   if (_targetPriceLabel) {
-    await handleExistingPriceLabel(context, targetPriceLabel, assistivePricing);
+    await handleExistingPriceLabel(context, targetPriceLabel);
   } else {
-    await addPriceLabelToIssue(context, targetPriceLabel, assistivePricing);
+    await createLabel(context, targetPriceLabel, "price");
+    await addPriceLabelToIssue(context, targetPriceLabel);
   }
 }
 
-async function handleExistingPriceLabel(context: Context, targetPriceLabel: string, assistivePricing: boolean) {
+async function handleExistingPriceLabel(context: Context, targetPriceLabel: string) {
   const logger = context.logger;
   let labeledEvents = await getAllLabeledEvents(context);
   if (!labeledEvents) return logger.error("No labeled events found");
@@ -134,19 +132,12 @@ async function handleExistingPriceLabel(context: Context, targetPriceLabel: stri
   if (labeledEvents[labeledEvents.length - 1].actor?.type == UserType.User) {
     logger.info(`Skipping... already exists`);
   } else {
-    await addPriceLabelToIssue(context, targetPriceLabel, assistivePricing);
+    await addPriceLabelToIssue(context, targetPriceLabel);
   }
 }
 
-async function addPriceLabelToIssue(context: Context, targetPriceLabel: string, assistivePricing: boolean) {
+async function addPriceLabelToIssue(context: Context, targetPriceLabel: string) {
   await clearAllPriceLabelsOnIssue(context);
-
-  const isPresent = await labelExists(context, targetPriceLabel);
-  if (assistivePricing && !isPresent) {
-    context.logger.info("Assistive pricing is enabled, creating label...", { targetPriceLabel });
-    await createLabel(context, targetPriceLabel, "price");
-  }
-
   await addLabelToIssue(context, targetPriceLabel);
 }
 
@@ -158,4 +149,24 @@ export async function labelExists(context: Context, name: string): Promise<boole
     name,
   });
   return res.status === 200;
+}
+
+async function getAllLabeledEvents(context: Context) {
+  const events = await getAllIssueEvents(context);
+  if (!events) return null;
+  return events.filter((event) => event.event === "labeled");
+}
+async function getAllIssueEvents(context: Context) {
+  if (!context.payload.issue) return;
+
+  try {
+    const events = await context.octokit.paginate(context.octokit.issues.listEvents, {
+      ...context.event.issue(),
+      per_page: 100,
+    });
+    return events;
+  } catch (err: unknown) {
+    context.logger.fatal("Failed to fetch lists of events", err);
+    return [];
+  }
 }

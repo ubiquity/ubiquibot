@@ -1,16 +1,16 @@
-import Runtime from "../bindings/bot-runtime";
+import { GitHubEvent } from "../types/github-events";
 import { Handler, WildCardHandler } from "../types/handlers";
-import { GitHubEvent } from "../types/payload";
-import { closePullRequestForAnIssue, startCommandHandler } from "./assign/action";
-import { checkPullRequests } from "./assign/auto";
-import { commentCreatedOrEdited } from "./comment/action";
+import { assignCommandHandler, closePullRequestForAnIssue } from "./assign/assign-command-handler";
+import { checkPullRequests } from "./assign/check-pull-requests";
+import { commentCreated } from "./comment/comment-created";
 import { issueClosed } from "./comment/handlers/issue-closed";
 import { watchLabelChange } from "./label/label";
-import { syncPriceLabelsToConfig } from "./pricing/pre";
+import { addPenalty } from "./penalty/add-penalty";
 import { onLabelChangeSetPricing } from "./pricing/pricing-label";
+import { syncPriceLabelsToConfig } from "./pricing/sync-labels-to-config";
 import { createDevPoolPR } from "./pull-request/create-devpool-pr";
 import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
-import { checkTasksToUnassign } from "./wildcard/unassign/unassign";
+import { checkTasksToUnassign } from "./wildcard/unassign/check-tasks-to-unassign";
 
 /**
  * @dev
@@ -27,7 +27,7 @@ export const processors: Record<string, Handler> = {
   },
   [GitHubEvent.ISSUES_REOPENED]: {
     pre: [],
-    action: [async () => Runtime.getState().logger.debug("TODO: replace ISSUES_REOPENED handler")],
+    action: [addPenalty],
     post: [],
   },
   [GitHubEvent.ISSUES_LABELED]: {
@@ -42,7 +42,7 @@ export const processors: Record<string, Handler> = {
   },
   [GitHubEvent.ISSUES_ASSIGNED]: {
     pre: [],
-    action: [startCommandHandler],
+    action: [assignCommandHandler],
     post: [],
   },
   [GitHubEvent.ISSUES_UNASSIGNED]: {
@@ -52,12 +52,12 @@ export const processors: Record<string, Handler> = {
   },
   [GitHubEvent.ISSUE_COMMENT_CREATED]: {
     pre: [],
-    action: [commentCreatedOrEdited],
+    action: [commentCreated],
     post: [],
   },
   [GitHubEvent.ISSUE_COMMENT_EDITED]: {
     pre: [],
-    action: [commentCreatedOrEdited],
+    action: [],
     post: [],
   },
   [GitHubEvent.ISSUES_CLOSED]: {
@@ -70,12 +70,12 @@ export const processors: Record<string, Handler> = {
     action: [checkPullRequests],
     post: [],
   },
-  [GitHubEvent.INSTALLATION_ADDED_EVENT]: {
+  [GitHubEvent.INSTALLATION_CREATED]: {
     pre: [],
     action: [createDevPoolPR],
     post: [],
   },
-  [GitHubEvent.PUSH_EVENT]: {
+  [GitHubEvent.PUSH]: {
     pre: [],
     action: [],
     post: [checkModifiedBaseRate],

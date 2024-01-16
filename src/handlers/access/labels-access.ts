@@ -1,5 +1,5 @@
 import Runtime from "../../bindings/bot-runtime";
-import { isUserAdminOrBillingManager, removeLabel, addLabelToIssue, addCommentToIssue } from "../../helpers/issue";
+import { isUserAdminOrBillingManager, addLabelToIssue, addCommentToIssue } from "../../helpers/issue";
 import { Context } from "../../types/context";
 import { UserType } from "../../types/payload";
 
@@ -60,5 +60,23 @@ export async function labelAccessPermissionsCheck(context: Context) {
     );
     logger.info("No access to edit label", { sender, label: labelName });
     return false;
+  }
+}
+async function removeLabel(context: Context, name: string) {
+  const payload = context.payload;
+  if (!payload.issue) {
+    context.logger.debug("Invalid issue object");
+    return;
+  }
+
+  try {
+    await context.octokit.issues.removeLabel({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      issue_number: payload.issue.number,
+      name: name,
+    });
+  } catch (e: unknown) {
+    context.logger.fatal("Removing label failed!", e);
   }
 }

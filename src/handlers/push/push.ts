@@ -2,10 +2,8 @@ import { Context as ProbotContext } from "probot";
 import Runtime from "../../bindings/bot-runtime";
 
 import { DefinedError } from "ajv";
-import { createCommitComment } from "../../helpers/commit";
-import { getFileContent } from "../../helpers/file";
 import { BotConfig, validateBotConfig } from "../../types/configuration-types";
-import { GitHubCommitsPayload, GitHubPushPayload } from "../../types/payload";
+import { GitHubCommitsPayload, GitHubPayload, GitHubPushPayload } from "../../types/payload";
 import { parseYaml, transformConfig } from "../../utils/generate-configuration";
 
 export const ZERO_SHA = "0000000000000000000000000000000000000000";
@@ -115,4 +113,88 @@ function generateValidationError(errors: DefinedError[]) {
           .join("\n")
       : "";
   return `${isValid ? "Valid" : "Invalid"} configuration. \n${errorMsg}\n${warningMsg}`;
+}
+
+async function createCommitComment(
+  context: ProbotContext,
+  body: string,
+  commitSha: string,
+  path?: string,
+  owner?: string,
+  repo?: string
+) {
+  const payload = context.payload as GitHubPayload;
+  if (!owner) {
+    owner = payload.repository.owner.login;
+  }
+  if (!repo) {
+    repo = payload.repository.name;
+  }
+
+  await context.octokit.rest.repos.createCommitComment({
+    owner: owner,
+    repo: repo,
+    commit_sha: commitSha,
+    body: body,
+    path: path,
+  });
+}
+
+async function getFileContent(
+  context: ProbotContext,
+  owner: string,
+  repo: string,
+  branch: string,
+  filePath: string,
+  commitSha?: string
+): Promise<string | null> {
+  const runtime = Runtime.getState();
+  const logger = runtime.logger;
+
+  try {
+    if (!commitSha) {
+      // Get the latest commit of the branch
+      const branchData = await context.octokit.repos.getBranch({
+        owner,
+        repo,
+        branch,
+      });
+      commitSha = branchData.data.commit.sha;
+    }
+
+    // Get the commit details
+    const commitData = await context.octokit.repos.getCommit({
+      owner,
+      repo,
+      ref: commitSha,
+    });
+
+    // Find the file in the commit tree
+    const file = commitData.data.files ? commitData.data.files.find((file) => file.filename === filePath) : undefined;
+    if (file) {
+      // Retrieve the file tree
+      const tree = await context.octokit.git.getTree({
+        owner,
+        repo,
+        tree_sha: commitData.data.commit.tree.sha,
+        recursive: "true",
+      });
+
+      // Find the previous file content in the tree
+      const file = tree.data.tree.find((item) => item.path === filePath);
+      if (file && file.sha) {
+        // Get the previous file content
+        const fileContent = await context.octokit.git.getBlob({
+          owner,
+          repo,
+          file_sha: file.sha,
+        });
+        return fileContent.data.content;
+      }
+    }
+    return null;
+  } catch (error: unknown) {
+    logger.debug("Error retrieving file content.", { error });
+    return null;
+  }
 }

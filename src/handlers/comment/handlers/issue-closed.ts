@@ -1,9 +1,11 @@
 import Runtime from "../../../bindings/bot-runtime";
-import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../helpers/issue";
+import { getAllIssueComments, isUserAdminOrBillingManager } from "../../../helpers/issue";
 import { Context } from "../../../types/context";
-import { GitHubComment, GitHubEvent, GitHubIssue, GitHubPayload, StateReason } from "../../../types/payload";
+import { GitHubEvent } from "../../../types/github-events";
+import { GitHubComment, GitHubIssue, GitHubPayload, StateReason } from "../../../types/payload";
 import structuredMetadata from "../../shared/structured-metadata";
-import { delegateCompute } from "./delegated-compute";
+import { delegateCompute } from "./delegate-compute/delegated-compute";
+import { getCollaboratorsForRepo } from "./issue/get-collaborator-ids-for-repo";
 // import { getCollaboratorsForRepo } from "./issue/get-collaborator-ids-for-repo";
 // import { getPullRequestComments } from "./issue/get-pull-request-comments";
 
@@ -18,9 +20,18 @@ export async function issueClosed(context: Context) {
 
   // const pullRequestComments = await getPullRequestComments(context, owner, repository, issueNumber);
 
-  // const repoCollaborators = await getCollaboratorsForRepo(context);
+  const collaborators = await getCollaboratorsForRepo(context);
 
-  const computeParams = { eventName: GitHubEvent.ISSUES_CLOSED, issueOwner, issueRepository, issueNumber };
+  const installationId = (context.payload.installation as { id: number }).id.toString(); // probot always includes this on issue related events.
+
+  const computeParams = {
+    eventName: GitHubEvent.ISSUES_CLOSED,
+    issueOwner,
+    issueRepository,
+    issueNumber: `${issueNumber}`,
+    collaborators: JSON.stringify(collaborators.map((collaborator) => collaborator.login)), // need to serialize to be accepted by workflow
+    installationId: installationId,
+  };
   await delegateCompute(context, computeParams);
   return Runtime.getState().logger.ok("Evaluating results. Please wait...", computeParams);
 }
@@ -81,4 +92,43 @@ function checkIfPermitsAlreadyPosted(context: Context, botComments: GitHubCommen
     }
     // }
   });
+}
+async function checkUserPermissionForRepoAndOrg(context: Context, username: string): Promise<boolean> {
+  const hasPermissionForRepo = await checkUserPermissionForRepo(context, username);
+  const hasPermissionForOrg = await checkUserPermissionForOrg(context, username);
+  const userPermission = await isUserAdminOrBillingManager(context, username);
+
+  return hasPermissionForOrg || hasPermissionForRepo || userPermission === "admin";
+}
+async function checkUserPermissionForRepo(context: Context, username: string): Promise<boolean> {
+  const payload = context.payload;
+  try {
+    const res = await context.octokit.rest.repos.checkCollaborator({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      username,
+    });
+
+    return res.status === 204;
+  } catch (e: unknown) {
+    context.logger.fatal("Checking if user permisson for repo failed!", e);
+    return false;
+  }
+}
+
+async function checkUserPermissionForOrg(context: Context, username: string): Promise<boolean> {
+  const payload = context.payload;
+  if (!payload.organization) return false;
+
+  try {
+    await context.event.octokit.rest.orgs.checkMembershipForUser({
+      org: payload.organization.login,
+      username,
+    });
+    // skipping status check due to type error of checkMembershipForUser function of octokit
+    return true;
+  } catch (e: unknown) {
+    context.logger.fatal("Checking if user permisson for org failed!", e);
+    return false;
+  }
 }

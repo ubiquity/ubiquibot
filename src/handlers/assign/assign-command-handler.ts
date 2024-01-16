@@ -1,11 +1,10 @@
-import { getLinkedPullRequests } from "../../helpers/get-linked-issues-and-pull-requests";
-import { closePullRequest } from "../../helpers/issue";
+import { getLinkedPullRequests } from "../../helpers/get-linked-pull-requests";
 import { calculateDurations, calculateLabelValue } from "../../helpers/shared";
 import { Context } from "../../types/context";
 import { Label } from "../../types/label";
 import { GitHubPayload } from "../../types/payload";
 
-export async function startCommandHandler(context: Context) {
+export async function assignCommandHandler(context: Context) {
   const config = context.config;
   const logger = context.logger;
   const payload = context.event.payload as GitHubPayload;
@@ -67,13 +66,11 @@ export async function startCommandHandler(context: Context) {
   const currentDate = new Date();
   const endDate = new Date(currentDate.getTime() + shortestDurationLabel * 1000);
 
-  // Format the commit message
-  const commitMessage = `${flattenedAssignees} the deadline is at ${endDate.toISOString()}`;
-  logger.debug("Creating an issue comment", { commitMessage });
+  // Format the comment
+  const comment = `${flattenedAssignees} the deadline is at ${endDate.toISOString()}`;
 
-  // Add the commit message as a comment to the issue
-  // await addCommentToIssue(commitMessage, payload.issue?.number);
-  return logger.info(commitMessage);
+  // Add the comment to the issue
+  return comment;
 }
 
 export async function closePullRequestForAnIssue(context: Context) {
@@ -101,4 +98,18 @@ export async function closePullRequestForAnIssue(context: Context) {
   }
   return logger.info(comment);
   // await addCommentToIssue(comment, payload.issue.number);
+}
+
+async function closePullRequest(context: Context, pullNumber: number) {
+  const payload = context.payload as GitHubPayload;
+  try {
+    await context.octokit.rest.pulls.update({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      pull_number: pullNumber,
+      state: "closed",
+    });
+  } catch (err: unknown) {
+    context.logger.fatal("Closing pull requests failed!", err);
+  }
 }
