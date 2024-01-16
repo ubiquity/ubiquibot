@@ -142,6 +142,7 @@ async function addPriceLabelToIssue(context: Context, targetPriceLabel: string) 
 }
 
 export async function labelExists(context: Context, name: string): Promise<boolean> {
+<<<<<<< HEAD
   const payload = context.event.payload as GitHubPayload;
   const res = await context.event.octokit.rest.issues.getLabel({
     owner: payload.repository.owner.login,
@@ -149,6 +150,19 @@ export async function labelExists(context: Context, name: string): Promise<boole
     name,
   });
   return res.status === 200;
+=======
+  const payload = context.event.payload as Payload;
+  try {
+    await context.event.octokit.rest.issues.getLabel({
+      owner: payload.repository.owner.login,
+      repo: payload.repository.name,
+      name,
+    });
+    return true;
+  } catch (error) {
+    return false;
+  }
+>>>>>>> a7034915869f1c0547427bbe081402908d7977d9
 }
 
 async function getAllLabeledEvents(context: Context) {

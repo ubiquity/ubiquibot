@@ -1,8 +1,8 @@
 import OpenAI from "openai";
 import { Context as ProbotContext } from "probot";
+import { LogReturn, Logs } from "ubiquibot-logger";
 import zlib from "zlib";
 import { createAdapters, supabaseClient } from "../adapters/adapters";
-import { LogReturn, Logs } from "../adapters/supabase/helpers/tables/logs";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push/push";
 import structuredMetadata from "../handlers/shared/structured-metadata";
@@ -16,7 +16,7 @@ import {
   MainActionHandler,
   PostActionHandler,
   PreActionHandler,
-  WildCardHandler,
+  WildCardHandler
 } from "../types/handlers";
 import { GitHubEvent, GitHubPayload, payloadSchema } from "../types/payload";
 import { ajv } from "../utils/ajv";
