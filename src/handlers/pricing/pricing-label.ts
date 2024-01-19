@@ -1,7 +1,7 @@
 import { Context } from "../../types/context";
 
 import { addLabelToIssue, clearAllPriceLabelsOnIssue } from "../../helpers/issue";
-import { createLabel } from "../../helpers/label";
+import { createLabel, listLabelsForRepo } from "../../helpers/label";
 import { BotConfig } from "../../types/configuration-types";
 import { Label } from "../../types/label";
 import { GitHubPayload, UserType } from "../../types/payload";
@@ -116,7 +116,10 @@ async function handleTargetPriceLabel(context: Context, targetPriceLabel: string
   if (_targetPriceLabel) {
     await handleExistingPriceLabel(context, targetPriceLabel);
   } else {
-    await createLabel(context, targetPriceLabel, "price");
+    const allLabels = await listLabelsForRepo(context);
+    if (allLabels.filter((i) => i.name.includes(targetPriceLabel)).length === 0) {
+      await createLabel(context, targetPriceLabel, "price");
+    }
     await addPriceLabelToIssue(context, targetPriceLabel);
   }
 }
