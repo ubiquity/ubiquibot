@@ -1,4 +1,4 @@
-import { LogLevel } from "../../adapters/supabase/helpers/pretty-logs";
+import { LogLevel } from "ubiquibot-logger/pretty-logs";
 import { COMMIT_HASH } from "../../commit-hash";
 
 function createStructuredMetadata(className: string, metadata: any) {
