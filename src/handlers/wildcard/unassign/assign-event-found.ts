@@ -1,4 +1,4 @@
-import { Logs } from "../../../adapters/supabase/helpers/tables/logs";
+import { Logs } from "ubiquibot-logger";
 import { Context } from "../../../types/context";
 import { GitHubAssignEvent, GitHubUser } from "../../../types/payload";
 import { disqualifyIdleAssignees } from "./disqualify-idle-assignees";
