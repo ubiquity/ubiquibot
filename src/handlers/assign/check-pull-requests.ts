@@ -1,3 +1,5 @@
+import axios from "axios";
+import { HTMLElement, parse } from "node-html-parser";
 import { getAllPullRequests, addAssignees } from "../../helpers/issue";
 import { Context } from "../../types/context";
 
@@ -13,7 +15,6 @@ export async function checkPullRequests(context: Context) {
   // Loop through the pull requests and assign them to their respective issues if needed
   for (const pull of pulls) {
     const linkedIssue = await getLinkedIssues({
-      context,
       owner: payload.repository.owner.login,
       repository: payload.repository.name,
       pull: pull.number,
@@ -59,31 +60,18 @@ export async function checkPullRequests(context: Context) {
   return logger.debug(`Checking pull requests done!`);
 }
 
-export async function getLinkedIssues({ context, owner, repository, pull }: GetLinkedParams) {
-  if (!pull || !context) return null;
-  const { data } = await context.octokit.pulls.get({
-    owner,
-    repo: repository,
-    pull_number: pull,
-  });
+export async function getLinkedIssues({ owner, repository, pull }: GetLinkedParams) {
+  const { data } = await axios.get(`https://github.com/${owner}/${repository}/pull/${pull}`);
+  const dom = parse(data);
+  const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
+  const linkedIssues = devForm.querySelectorAll(".my-1");
 
-  const body = data.body;
-  if (!body) return null;
-
-  const match = body.match(/#(\d+)/);
-  const issueNumber = match ? match[1] : null;
-
-  if (!issueNumber) {
+  if (linkedIssues.length === 0) {
     return null;
   }
 
-  const issue = await context.octokit.issues.get({
-    owner,
-    repo: repository,
-    issue_number: Number(issueNumber),
-  });
-
-  return issue.data.html_url;
+  const issueUrl = linkedIssues[0].querySelector("a")?.attrs?.href || null;
+  return issueUrl;
 }
 
 export async function getPullByNumber(context: Context, pull: number) {
@@ -117,7 +105,6 @@ export async function getIssueByNumber(context: Context, issueNumber: number) {
   }
 }
 export interface GetLinkedParams {
-  context?: Context;
   owner: string;
   repository: string;
   issue?: number;

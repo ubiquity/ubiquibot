@@ -1,6 +1,7 @@
-import { GetLinkedParams, getLinkedIssues } from "../handlers/assign/check-pull-requests";
+import axios from "axios";
+import { HTMLElement, parse } from "node-html-parser";
+import { GetLinkedParams } from "../handlers/assign/check-pull-requests";
 import { Context } from "../types/context";
-import { getAllPullRequests } from "./issue";
 interface GetLinkedResults {
   organization: string;
   repository: string;
@@ -11,31 +12,37 @@ export async function getLinkedPullRequests(
   context: Context,
   { owner, repository, issue }: GetLinkedParams
 ): Promise<GetLinkedResults[]> {
-  if (!issue) return [];
-  // const logger = context.logger;
+  const logger = context.logger;
   const collection = [] as GetLinkedResults[];
-  const pulls = await getAllPullRequests(context);
-  const currentIssue = await context.octokit.issues.get({
-    owner,
-    repo: repository,
-    issue_number: issue,
-  });
-  for (const pull of pulls) {
-    const linkedIssue = await getLinkedIssues({
-      context,
-      owner: owner,
-      repository: repository,
-      pull: pull.number,
-    });
+  const { data } = await axios.get(`https://github.com/${owner}/${repository}/issues/${issue}`);
+  const dom = parse(data);
+  const devForm = dom.querySelector("[data-target='create-branch.developmentForm']") as HTMLElement;
+  const linkedList = devForm.querySelectorAll(".my-1");
+  if (linkedList.length === 0) {
+    context.logger.info(`No linked pull requests found`);
+    return [];
+  }
 
-    if (linkedIssue === currentIssue.data.html_url) {
-      collection.push({
-        organization: owner,
-        repository,
-        number: pull.number,
-        href: pull.html_url,
-      });
+  for (const linked of linkedList) {
+    const relativeHref = linked.querySelector("a")?.attrs?.href;
+    if (!relativeHref) continue;
+    const parts = relativeHref.split("/");
+
+    // check if array size is at least 4
+    if (parts.length < 4) continue;
+
+    // extract the organization name and repo name from the link:(e.g. "
+    const organization = parts[parts.length - 4];
+    const repository = parts[parts.length - 3];
+    const number = Number(parts[parts.length - 1]);
+    const href = `https://github.com${relativeHref}`;
+
+    if (`${organization}/${repository}` !== `${owner}/${repository}`) {
+      logger.info("Skipping linked pull request from another repository", href);
+      continue;
     }
+
+    collection.push({ organization, repository, number, href });
   }
 
   return collection;
