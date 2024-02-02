@@ -1,5 +1,4 @@
 import Runtime from "../../../../bindings/bot-runtime";
-import { env } from "../../../../bindings/env";
 import { checkUserPermissionForRepoAndOrg, getAllIssueComments } from "../../../../helpers/issue";
 import { Context } from "../../../../types/context";
 import { Comment, Issue, Payload, StateReason } from "../../../../types/payload";
@@ -26,17 +25,13 @@ export async function issueClosed(context: Context) {
     secretToken: process.env.GITHUB_TOKEN,
     owner,
     repo: repository,
-    issueNumber,
+    issueNumber: issue.number.toString(),
     payload: JSON.stringify({
       issue,
       issueComments,
-      openAiKey: context.config.keys.openAi,
       pullRequestComments,
       botConfig: context.config,
       repoCollaborators,
-      X25519_PRIVATE_KEY: env.X25519_PRIVATE_KEY,
-      supabaseUrl: env.SUPABASE_URL,
-      supabaseKey: env.SUPABASE_KEY,
     }),
   });
   const logger = Runtime.getState().logger;
