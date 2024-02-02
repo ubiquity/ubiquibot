@@ -91,6 +91,7 @@ export const DefaultConfig: MergedConfig = {
       totals: {
         word: 0,
       },
+      ignore_children: ["code", "i", "em", "blockquote", "pre"],
     },
   },
   enableAccessControl: {

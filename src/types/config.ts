@@ -20,6 +20,7 @@ const CommentIncentivesSchema = Type.Object(
       },
       { additionalProperties: false }
     ),
+    ignore_children: Type.Optional(Type.Array(Type.String())),
   },
   { additionalProperties: false }
 );
