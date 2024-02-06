@@ -10,6 +10,7 @@ import { approveLabelChange } from "./authorize";
 import { setAccess } from "./allow";
 import { ask } from "./ask";
 import { multiplier } from "./multiplier";
+
 import { BigNumber, ethers } from "ethers";
 import { addPenalty } from "../../../adapters/supabase";
 import {
@@ -33,6 +34,7 @@ import {
   calculateIssueAssigneeReward,
   calculatePullRequestReviewsReward,
 } from "../../payout";
+import { commentIncentive } from "./comment-incentive";
 import { query } from "./query";
 import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
@@ -48,6 +50,7 @@ export * from "./multiplier";
 export * from "./query";
 export * from "./ask";
 export * from "./authorize";
+export * from "./comment-incentive";
 
 export interface RewardsResponse {
   error: string | null;
@@ -74,7 +77,7 @@ export interface RewardsResponse {
  */
 
 export const commentParser = (body: string): IssueCommentCommands[] => {
-  const regex = /^\/(\w+)\b/; // Regex pattern to match the command at the beginning of the body
+  const regex = /^\/([\w-]+)\b/; // Regex pattern to match the command at the beginning of the body
 
   const matches = regex.exec(body);
   if (matches) {
@@ -262,6 +265,12 @@ export const userCommands = (): UserCommands[] => {
       id: IssueCommentCommands.STOP,
       description: "Unassign the origin sender from the issue automatically.",
       handler: unassign,
+      callback: commandCallback,
+    },
+    {
+      id: IssueCommentCommands.COMMENTINCENTIVE,
+      description: "Enables or Disables comment incentive for a user",
+      handler: commentIncentive,
       callback: commandCallback,
     },
     {
