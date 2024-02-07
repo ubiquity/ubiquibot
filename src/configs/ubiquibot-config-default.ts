@@ -77,6 +77,10 @@ export const DefaultConfig: MergedConfig = {
       enabled: false,
     },
     {
+      name: "review",
+      enabled: false,
+    },
+    {
       name: "allow",
       enabled: false,
     },
