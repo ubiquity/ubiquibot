@@ -416,9 +416,18 @@ export const handleIssueClosed = async (
   // ASSIGNEE REWARD HANDLER
   if (assigneeReward && assigneeReward.reward && assigneeReward.reward[0].account !== "0x") {
     const permitComments = incentivesCalculation.comments.filter((content) => {
-      const permitUrlMatches = content.body.match(incentivesCalculation.claimUrlRegex);
-      if (!permitUrlMatches || permitUrlMatches.length < 2) return false;
-      else return true;
+      if (content.body.includes("https://pay.ubq.fi") && content.user.type == UserType.Bot) {
+        const urlPattern = /(https?|ftp):\/\/[^\s/$.?#].[^\s]*\b/g;
+        const extractedUrls = content.body.match(urlPattern);
+        if(extractedUrls) {
+          for(const extractedUrl of extractedUrls) {
+            const url = new URL(extractedUrl);
+            return url.searchParams.has("claim");
+          }
+        }
+        // Check if the URL contains the specific query parameter
+      }
+      return false;
     });
 
     rewardByUser.push({
