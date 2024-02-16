@@ -469,37 +469,30 @@ export const removePenalty = async (username: string, repoName: string, tokenAdd
 
 const getDbDataFromPermit = (permit: InsertPermit): Record<string, unknown> => {
   return {
-    organization_id: permit.organizationId,
-    repository_id: permit.repositoryId,
-    issue_id: permit.issueId,
-    network_id: permit.networkId,
-    bounty_hunter_id: permit.bountyHunterId,
-    token_address: permit.tokenAddress,
-    payout_amount: permit.payoutAmount,
-    bounty_hunter_address: permit.bountyHunterAddress,
+    network: permit.networkId,
+    token: permit.tokenAddress,
+    amount: permit.payoutAmount,
     nonce: permit.nonce,
     deadline: permit.deadline,
+    beneficiary: permit.bountyHunterAddress,
+    owner: permit.walletOwnerAddress,
     signature: permit.signature,
-    wallet_owner_address: permit.walletOwnerAddress,
   };
 };
 
 const getPermitFromDbData = (data: Record<string, unknown>): Permit => {
   return {
     id: data.id,
-    createdAt: new Date(Date.parse(data.created_at as string)),
-    organizationId: data.organization_id,
-    repositoryId: data.repository_i,
-    issueId: data.issue_id,
-    networkId: data.network_id,
-    bountyHunterId: data.bounty_hunter_id,
-    tokenAddress: data.token_address,
-    payoutAmount: data.payout_amount,
-    bountyHunterAddress: data.bounty_hunter_address,
+    created: new Date(Date.parse(data.created as string)),
+    updated: new Date(Date.parse(data.updated as string)),
+    networkId: data.network,
+    tokenAddress: data.token,
+    payoutAmount: data.amount,
     nonce: data.nonce,
     deadline: data.deadline,
+    bountyHunterAddress: data.beneficiary,
+    walletOwnerAddress: data.owner,
     signature: data.signature,
-    walletOwnerAddress: data.wallet_owner_address,
   } as Permit;
 };
 
@@ -509,8 +502,8 @@ export const savePermit = async (permit: InsertPermit): Promise<Permit> => {
     .from("permits")
     .insert({
       ...getDbDataFromPermit(permit),
-      created_at: new Date().toISOString(),
-      id: undefined, // id is auto-generated
+      created: new Date().toISOString(),
+      updated: new Date().toISOString(),
     })
     .select();
   if (error) {

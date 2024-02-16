@@ -10,12 +10,9 @@ const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on
 
 export type Permit = {
   id: number;
-  createdAt: Date;
-  organizationId: number | null;
-  repositoryId: number;
-  issueId: number;
+  created: Date;
+  updated: Date;
   networkId: number;
-  bountyHunterId: number;
   bountyHunterAddress: string;
   tokenAddress: string;
   payoutAmount: string;
@@ -25,7 +22,7 @@ export type Permit = {
   walletOwnerAddress: string;
 };
 
-export type InsertPermit = Omit<Permit, "id" | "createdAt">;
+export type InsertPermit = Omit<Permit, "id" | "created" | "updated">;
 
 type TxData = {
   permit: {
@@ -106,14 +103,14 @@ export const generatePermit2Signature = async (
   return { txData, payoutUrl };
 };
 
-export const savePermitToDB = async (bountyHunterId: number, txData: TxData): Promise<Permit> => {
+export const savePermitToDB = async (txData: TxData): Promise<Permit> => {
   const logger = getLogger();
 
   const context = getBotContext();
   const payload = context.payload as Payload;
   const issue = payload.issue;
   const repository = payload.repository;
-  const organization = payload.organization;
+  //const organization = payload.organization;
   if (!issue || !repository) {
     logger.error("Cannot save permit to DB, missing issue, repository or organization");
     throw new Error("Cannot save permit to DB, missing issue, repository or organization");
@@ -123,11 +120,7 @@ export const savePermitToDB = async (bountyHunterId: number, txData: TxData): Pr
   const { networkId } = payout;
 
   const permit: InsertPermit = {
-    organizationId: organization?.id ?? null,
-    repositoryId: repository?.id,
-    issueId: issue?.id,
     networkId: networkId,
-    bountyHunterId: bountyHunterId,
     tokenAddress: txData.permit.permitted.token,
     payoutAmount: txData.permit.permitted.amount,
     bountyHunterAddress: txData.transferDetails.to,
