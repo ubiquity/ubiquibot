@@ -2,12 +2,13 @@ import { getWalletAddress } from "../../adapters/supabase";
 import { getBotContext, getLogger } from "../../bindings";
 import { getAllIssueComments, getAllPullRequestReviews, getIssueDescription, parseComments } from "../../helpers";
 import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
-import { Incentives, MarkdownItem, Payload, UserType } from "../../types";
+import { Incentives, MarkdownItem, MarkdownItems, Payload, UserType } from "../../types";
 import { RewardsResponse, commentParser } from "../comment";
 import Decimal from "decimal.js";
 import { bountyInfo } from "../wildcard";
 import { IncentivesCalculationResult } from "./action";
 import { BigNumber } from "ethers";
+import { HTMLItem } from "../../types/html";
 
 export interface CreatorCommentResult {
   title: string;
@@ -50,8 +51,8 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
       logger.info(`Skipping to parse the comment because it contains commands. comment: ${JSON.stringify(issueComment)}`);
       continue;
     }
-    if (!issueComment.body_html) {
-      logger.info(`Skipping to parse the comment because body_html is undefined. comment: ${JSON.stringify(issueComment)}`);
+    if (!issueComment.body) {
+      logger.info(`Skipping to parse the comment because body is undefined. comment: ${JSON.stringify(issueComment)}`);
       continue;
     }
 
@@ -59,7 +60,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
     if (!issueCommentsByUser[user.login]) {
       issueCommentsByUser[user.login] = { id: user.id, comments: [] };
     }
-    issueCommentsByUser[user.login].comments.push(issueComment.body_html);
+    issueCommentsByUser[user.login].comments.push(issueComment.body);
   }
   logger.info(`Filtering by the user type done. commentsByUser: ${JSON.stringify(issueCommentsByUser)}`);
 
@@ -298,45 +299,80 @@ const generatePermitForComments = async (
  * @returns - The reward value
  */
 const calculateRewardValue = (
-  comments: Record<string, string[]>,
+  comments: Record<MarkdownItem, string[]>,
   incentives: Incentives
 ): { sum: Decimal; sumByType: Record<string, { count: number; reward: Decimal }> } => {
   let sum = new Decimal(0);
   const sumByType: Record<string, { count: number; reward: Decimal }> = {};
 
-  for (const key of Object.keys(comments)) {
-    const value = comments[key];
+  for (const item of MarkdownItems) {
+    const value = comments[item];
 
     // Initialize the sum for this key if it doesn't exist
-    if (!sumByType[key]) {
-      sumByType[key] = {
+    if (!sumByType[item]) {
+      sumByType[item] = {
         count: 0,
         reward: new Decimal(0),
       };
     }
 
     // if it's a text node calculate word count and multiply with the reward value
-    if (key == "#text") {
+    if (item === MarkdownItem.Text) {
       if (!incentives.comment.totals.word) {
         continue;
       }
       const wordReward = new Decimal(incentives.comment.totals.word);
       const wordCount = value.map((str) => str.trim().split(" ").length).reduce((totalWords, wordCount) => totalWords + wordCount, 0);
       const reward = wordReward.mul(wordCount);
-      sumByType[key].count += wordCount;
-      sumByType[key].reward = wordReward;
+      sumByType[item].count += wordCount;
+      sumByType[item].reward = wordReward;
       sum = sum.add(reward);
     } else {
-      if (!incentives.comment.elements[key]) {
+      const htmlTag = MarkdownItemToHTMLTag[item];
+      if (!htmlTag || !incentives.comment.elements[htmlTag]) {
         continue;
       }
-      const rewardValue = new Decimal(incentives.comment.elements[key]);
+      const rewardValue = new Decimal(incentives.comment.elements[htmlTag]);
       const reward = rewardValue.mul(value.length);
-      sumByType[key].count += value.length;
-      sumByType[key].reward = rewardValue;
+      sumByType[item].count += value.length;
+      sumByType[item].reward = rewardValue;
       sum = sum.add(reward);
     }
   }
 
   return { sum, sumByType };
+};
+
+const MarkdownItemToHTMLTag: Record<MarkdownItem, HTMLItem> = {
+  [MarkdownItem.Text]: HTMLItem.P,
+  [MarkdownItem.Paragraph]: HTMLItem.P,
+  [MarkdownItem.Heading]: HTMLItem.H1,
+  [MarkdownItem.Heading1]: HTMLItem.H1,
+  [MarkdownItem.Heading2]: HTMLItem.H2,
+  [MarkdownItem.Heading3]: HTMLItem.H3,
+  [MarkdownItem.Heading4]: HTMLItem.H4,
+  [MarkdownItem.Heading5]: HTMLItem.H5,
+  [MarkdownItem.Heading6]: HTMLItem.H6,
+  [MarkdownItem.ListItem]: HTMLItem.LI,
+  [MarkdownItem.List]: HTMLItem.UL,
+  [MarkdownItem.Link]: HTMLItem.A,
+  [MarkdownItem.Image]: HTMLItem.IMG,
+  [MarkdownItem.BlockQuote]: HTMLItem.BLOCKQUOTE,
+  [MarkdownItem.Code]: HTMLItem.PRE,
+  [MarkdownItem.Emphasis]: HTMLItem.EM,
+  [MarkdownItem.Strong]: HTMLItem.STRONG,
+  [MarkdownItem.Delete]: HTMLItem.DEL,
+  [MarkdownItem.HTML]: HTMLItem.HTML,
+  [MarkdownItem.InlineCode]: HTMLItem.CODE,
+  [MarkdownItem.LinkReference]: HTMLItem.A,
+  [MarkdownItem.ImageReference]: HTMLItem.IMG,
+  [MarkdownItem.FootnoteReference]: HTMLItem.SUP,
+  [MarkdownItem.FootnoteDefinition]: HTMLItem.P,
+  [MarkdownItem.Table]: HTMLItem.TABLE,
+  [MarkdownItem.TableCell]: HTMLItem.TD,
+  [MarkdownItem.TableRow]: HTMLItem.TR,
+  [MarkdownItem.ThematicBreak]: HTMLItem.HR,
+  [MarkdownItem.Break]: HTMLItem.BR,
+  [MarkdownItem.Root]: HTMLItem.HTML,
+  [MarkdownItem.Definition]: HTMLItem.DL,
 };
