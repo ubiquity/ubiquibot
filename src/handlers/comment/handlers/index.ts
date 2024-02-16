@@ -23,6 +23,8 @@ import {
   getTokenSymbol,
   getAllIssueAssignEvents,
   calculateWeight,
+  getAllPullRequests,
+  getAllPullRequestReviews,
 } from "../../../helpers";
 import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
 import {
@@ -38,6 +40,7 @@ import { autoPay } from "./payout";
 import { getTargetPriceLabel } from "../../shared";
 import Decimal from "decimal.js";
 import { ErrorDiff } from "../../../utils/helpers";
+import { lastActivityTime } from "../../wildcard";
 
 export * from "./assign";
 export * from "./wallet";
@@ -153,6 +156,244 @@ export const issueCreatedCallback = async (): Promise<void> => {
   } catch (err: unknown) {
     await addCommentToIssue(ErrorDiff(err), issue.number);
   }
+};
+
+/**
+ * Callback for issues reopened - Blame Processor
+ * @notice Identifies the changes in main that broke the features of the issue
+ * @notice This is to assign responsibility to the person who broke the feature
+ * @dev The person in fault will be penalized...
+ */
+export const issueReopenedBlameCallback = async (): Promise<void> => {
+  const logger = getLogger();
+  const context = getBotContext();
+  // const config = getBotConfig();
+  const payload = context.payload as Payload;
+  const issue = payload.issue;
+  const repository = payload.repository;
+
+  if (!issue) return;
+  if (!repository) return;
+
+  const allRepoCommits = await context.octokit.repos
+    .listCommits({
+      owner: repository.owner.login,
+      repo: repository.name,
+    })
+    .then((res) => res.data);
+
+  const currentCommit = allRepoCommits[0];
+  const currentCommitSha = currentCommit.sha;
+  const lastActivity = await lastActivityTime(issue, await getAllIssueComments(issue.number));
+
+  const allClosedPulls = await getAllPullRequests(context, "closed");
+  const mergedPulls = allClosedPulls.filter((pull) => pull.merged_at && pull.merged_at > lastActivity.toISOString());
+  const mergedSHAs = mergedPulls.map((pull) => pull.merge_commit_sha);
+  const commitsThatMatch = allRepoCommits.filter((commit) => mergedSHAs.includes(commit.sha)).reverse();
+
+  const pullsThatCommitsMatch = await Promise.all(
+    commitsThatMatch.map((commit) =>
+      context.octokit.repos
+        .listPullRequestsAssociatedWithCommit({
+          owner: repository.owner.login,
+          repo: repository.name,
+          commit_sha: commit.sha,
+        })
+        .then((res) => res.data)
+    )
+  );
+
+  const onlyPRsNeeded = pullsThatCommitsMatch.map((pulls) => pulls.map((pull) => pull.number)).reduce((acc, val) => acc.concat(val), []);
+
+  const issueRegex = new RegExp(`#${issue.number}`, "g");
+  const matchingPull = mergedPulls.find((pull) => pull.body?.match(issueRegex));
+
+  if (!matchingPull) {
+    logger.info(`No matching pull found for issue #${issue.number}`);
+    return;
+  }
+
+  const pullDiff = await context.octokit.repos
+    .compareCommitsWithBasehead({
+      owner: repository.owner.login,
+      repo: repository.name,
+      basehead: matchingPull?.merge_commit_sha + "..." + currentCommitSha,
+      mediaType: {
+        format: "diff",
+      },
+    })
+    .then((res) => res.data);
+
+  const diffs = [];
+  const fileLens: number[] = [];
+
+  for (const sha of mergedSHAs) {
+    if (!sha) continue;
+    const diff = await context.octokit.repos
+      .compareCommitsWithBasehead({
+        owner: repository.owner.login,
+        repo: repository.name,
+        basehead: sha + "..." + currentCommitSha,
+      })
+      .then((res) => res.data);
+
+    const fileLen = diff.files?.length;
+
+    fileLens.push(fileLen || 0);
+    diffs.push(diff);
+
+    if (diff.files && diff.files.length > 0) {
+      logger.info(`Found ${diff.files.length} files changed in commit ${sha}`);
+    } else {
+      logger.info(`No files changed in commit ${sha}`);
+    }
+  }
+
+  interface Blamed {
+    author: string | null;
+    count: number;
+    pr?: number[];
+  }
+
+  if (pullDiff.files && pullDiff.files.length > 0) {
+    logger.info(`Found ${pullDiff.files.length} files changed in commit ${matchingPull?.merge_commit_sha}`);
+  }
+
+  const pullReviewsMap: Record<number, string[]> = {};
+  const blamedHunters: Blamed[] = [];
+  const blamedReviewers: Blamed[] = [];
+
+  for (const pull of mergedPulls) {
+    const reviews = await getAllPullRequestReviews(context, pull.number);
+    const reviewers = reviews
+      .filter((review) => review.state === "APPROVED")
+      .map((review) => review.user?.login)
+      .filter((reviewer) => reviewer !== undefined) as string[];
+    if (reviewers.length) {
+      pullReviewsMap[pull.number] = reviewers;
+    }
+  }
+
+  for (const pullNumber of onlyPRsNeeded) {
+    const reviewers = pullReviewsMap[pullNumber];
+    if (reviewers) {
+      for (const reviewer of reviewers) {
+        const blame = blamedReviewers.find((b) => b.author === reviewer);
+        if (blame) {
+          blame.count += 1;
+          blame.pr?.push(pullNumber);
+        } else {
+          blamedReviewers.push({ author: reviewer || null, count: 1, pr: [pullNumber] });
+        }
+      }
+    }
+  }
+
+  const matchingSlice = matchingPull?.merge_commit_sha?.slice(0, 8);
+  const currentSlice = currentCommitSha.slice(0, 8);
+
+  const twoDotUrl = `<code>[${matchingSlice}..${currentSlice}](${repository.html_url}/compare/${matchingPull?.merge_commit_sha}..${currentCommitSha})</code>`;
+
+  const countNonWhitespaceChanges = (patch: string): number => {
+    const lines = patch.split("\n");
+    const changedLines = lines.filter((line) => line.startsWith("+") || line.startsWith("-"));
+    const count = changedLines.reduce((acc, line) => acc + line.slice(1).replace(/\s/g, "").length, 0);
+
+    return count;
+  };
+
+  for (const diff of diffs) {
+    if (!diff.files) continue;
+    for (const file of diff.files) {
+      const charsChanged = countNonWhitespaceChanges(file.patch || "");
+      const author = diff.base_commit?.author?.login;
+      const blamer = blamedHunters.find((b) => b.author === author);
+      if (blamer) {
+        blamer.count += charsChanged || 0;
+      } else {
+        blamedHunters.push({ author: author || null, count: charsChanged || 0 });
+      }
+    }
+  }
+
+  const generateHunterTable = (blamers: Blamed[]) => `
+  | **Blame** | **%** |
+  | --- | --- |
+  ${Array.from(new Set(blamers))
+    .filter((blamed) => blamed.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .map((blamed) => {
+      const linesChanged = blamed.count;
+      const totalLinesChanged = blamers.reduce((acc, val) => acc + val.count, 0);
+      const percent = Math.round((linesChanged / totalLinesChanged) * 100);
+      return `| ${blamed.author} | ${percent}% |`;
+    })
+    .join("\n")}
+  `;
+
+  const generateReviewerTable = (blamers: Blamed[]) => `
+  | **Blame** | **%** | PRs |
+  | --- | --- | --- |
+  ${Array.from(new Set(blamers))
+    .filter((blamed) => blamed.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .map((blamed) => {
+      const linesChanged = blamed.count;
+      const totalLinesChanged = blamers.reduce((acc, val) => acc + val.count, 0);
+      const percent = Math.round((linesChanged / totalLinesChanged) * 100);
+      return `| ${blamed.author} | ${percent}% | ${blamed.pr?.map((pr) => `[#${pr}](${repository.html_url}/pull/${pr})`).join(", ")} |`;
+    })
+    .join("\n")}
+  `;
+
+  const huntersTable = generateHunterTable(blamedHunters);
+  const reviewersTable = generateReviewerTable(blamedReviewers);
+
+  const blameQuantifier = blamedHunters.length > 1 ? "suspects" : "suspect";
+
+  const comment = `
+<details>
+<summary>Merged Pulls Since Issue Close</summary><br/>
+
+${onlyPRsNeeded
+  .sort()
+  .map((pullNumber) => `\n<ul><li>#${pullNumber}</li></ul>`)
+  .join("\n")}
+</details>
+
+
+<details>
+<summary>Merged Commits Since Issue Close</summary><br/>
+${diffs
+  .map((diff, i) => {
+    const sha = mergedSHAs[i];
+    const slice = sha?.slice(0, 7);
+    const url = `${repository.html_url}/commit/${sha}`;
+    return `\n<code><a href="${url}">${slice}</a></code> - ${diff.files?.length} files changed - ${repository.html_url}/compare/${sha}...${currentCommitSha}`;
+  })
+  .join("\n")}
+</details>
+
+<details>
+<summary>Assigned Blame</summary><br/>
+
+The following ${blameQuantifier} may be responsible for breaking this issue:
+
+**Hunters**
+${huntersTable}
+
+**Reviewers**
+${reviewersTable}
+
+</details>
+
+<hr>
+
+2 dot: ${twoDotUrl}
+3 dot: ${repository.html_url}/compare/${matchingPull?.merge_commit_sha}...${currentCommitSha}
+`;
+
+  await addCommentToIssue(comment, issue.number);
 };
 
 /**
