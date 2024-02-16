@@ -29,7 +29,7 @@ const PAYMENT_TOKEN_PER_NETWORK: Record<string, { rpc: string; token: string }> 
   },
 };
 
-type PayoutConfigPartial = Omit<Static<typeof PayoutConfigSchema>, "networkId" | "privateKey" | "permitBaseUrl">;
+type PayoutConfigPartial = Omit<Static<typeof PayoutConfigSchema>, "networkId" | "privateKeyEncrypted" | "permitBaseUrl">;
 
 /**
  * Returns payout config for a particular network

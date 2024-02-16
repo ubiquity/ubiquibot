@@ -27,7 +27,7 @@ export interface IncentivesCalculationResult {
   paymentToken: string;
   rpc: string;
   networkId: number;
-  privateKey: string;
+  privateKeyEncrypted: string | null;
   paymentPermitMaxPrice: number;
   baseMultiplier: number;
   incentives: Incentives;
@@ -66,7 +66,7 @@ export interface RewardByUser {
 export const incentivesCalculation = async (): Promise<IncentivesCalculationResult> => {
   const context = getBotContext();
   const {
-    payout: { paymentToken, rpc, permitBaseUrl, networkId, privateKey },
+    payout: { paymentToken, rpc, permitBaseUrl, networkId, privateKeyEncrypted },
     mode: { incentiveMode, paymentPermitMaxPrice },
     price: { incentives, issueCreatorMultiplier, baseMultiplier },
     accessControl,
@@ -147,7 +147,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     throw new Error("No incentive mode. skipping to process");
   }
 
-  if (privateKey == "") {
+  if (!privateKeyEncrypted) {
     logger.info("Permit generation disabled because wallet private key is not set.");
     throw new Error("Permit generation disabled because wallet private key is not set.");
   }
@@ -247,7 +247,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     paymentToken,
     rpc,
     networkId,
-    privateKey,
+    privateKeyEncrypted,
     recipient,
     multiplier,
     paymentPermitMaxPrice,
