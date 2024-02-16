@@ -1,19 +1,13 @@
-import { Context } from "probot";
 import { createAdapters } from "../adapters";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { shouldSkip } from "../helpers";
-import { BotConfig, GithubEvent, Payload, PayloadSchema, LogLevel } from "../types";
+import { BotContext, GithubEvent, Payload, PayloadSchema, LogLevel } from "../types";
+import { Context as ProbotContext } from "probot";
 import { Adapters } from "../types/adapters";
 import { ajv } from "../utils";
 import { loadConfig } from "./config";
 import { GitHubLogger } from "../adapters/supabase";
 import { validateConfigChange } from "../handlers/push";
-
-let botContext: Context = {} as Context;
-export const getBotContext = () => botContext;
-
-let botConfig: BotConfig = {} as BotConfig;
-export const getBotConfig = () => botConfig;
 
 let adapters: Adapters = {} as Adapters;
 export const getAdapters = () => adapters;
@@ -21,8 +15,8 @@ export const getAdapters = () => adapters;
 export type Logger = {
   info: (msg: string | object, options?: JSON) => void;
   debug: (msg: string | object, options?: JSON) => void;
-  warn: (msg: string | object, options?: JSON) => void;
-  error: (msg: string | object, options?: JSON) => void;
+  warn: (context: BotContext, msg: string | object, options?: JSON) => void;
+  error: (context: BotContext, msg: string | object, options?: JSON) => void;
 };
 
 let logger: Logger;
@@ -30,21 +24,21 @@ export const getLogger = (): Logger => logger;
 
 const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT as string, GithubEvent.PUSH_EVENT as string];
 
-export const bindEvents = async (context: Context): Promise<void> => {
+export const bindEvents = async (_context: ProbotContext): Promise<void> => {
+  const context = _context as BotContext;
   const { id, name } = context;
-  botContext = context;
   const payload = context.payload as Payload;
   const allowedEvents = Object.values(GithubEvent) as string[];
   const eventName = payload.action ? `${name}.${payload.action}` : name; // some events wont have actions as this grows
 
   let botConfigError;
   try {
-    botConfig = await loadConfig(context);
+    context.botConfig = await loadConfig(context);
   } catch (err) {
     botConfigError = err;
   }
 
-  adapters = createAdapters(botConfig);
+  adapters = createAdapters(context.botConfig);
 
   const options = {
     app: "UbiquiBot",
@@ -52,20 +46,21 @@ export const bindEvents = async (context: Context): Promise<void> => {
   };
 
   logger = new GitHubLogger(
+    context,
     options.app,
-    botConfig?.log?.logEnvironment ?? "development",
-    botConfig?.log?.level ?? LogLevel.DEBUG,
-    botConfig?.log?.retryLimit ?? 0,
-    botConfig.logNotification
+    context.botConfig?.log?.logEnvironment ?? "development",
+    context.botConfig?.log?.level ?? LogLevel.DEBUG,
+    context.botConfig?.log?.retryLimit ?? 0,
+    context.botConfig?.logNotification
   ); // contributors will see logs in console while on development env
   if (!logger) {
     return;
   }
 
   if (botConfigError) {
-    logger.error(botConfigError.toString());
+    logger.error(context, botConfigError.toString());
     if (eventName === GithubEvent.PUSH_EVENT) {
-      await validateConfigChange();
+      await validateConfigChange(context);
     }
     return;
   }
@@ -75,11 +70,11 @@ export const bindEvents = async (context: Context): Promise<void> => {
 
   logger.info(
     `Config loaded! config: ${JSON.stringify({
-      price: botConfig.price,
-      unassign: botConfig.unassign,
-      mode: botConfig.mode,
-      log: botConfig.log,
-      wallet: botConfig.wallet,
+      price: context.botConfig.price,
+      unassign: context.botConfig.unassign,
+      mode: context.botConfig.mode,
+      log: context.botConfig.log,
+      wallet: context.botConfig.wallet,
     })}`
   );
 
@@ -98,12 +93,12 @@ export const bindEvents = async (context: Context): Promise<void> => {
     const valid = validate(payload);
     if (!valid) {
       logger.info("Payload schema validation failed!!!", payload);
-      if (validate.errors) logger.warn(validate.errors);
+      if (validate.errors) logger.warn(context, validate.errors);
       return;
     }
 
     // Check if we should skip the event
-    const { skip, reason } = shouldSkip();
+    const { skip, reason } = shouldSkip(context);
     if (skip) {
       logger.info(`Skipping the event. reason: ${reason}`);
       return;
@@ -113,7 +108,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
   // Get the handlers for the action
   const handlers = processors[eventName];
   if (!handlers) {
-    logger.warn(`No handler configured for event: ${eventName}`);
+    logger.warn(context, `No handler configured for event: ${eventName}`);
     return;
   }
 
@@ -121,18 +116,18 @@ export const bindEvents = async (context: Context): Promise<void> => {
   // Run pre-handlers
   logger.info(`Running pre handlers: ${pre.map((fn) => fn.name)}, event: ${eventName}`);
   for (const preAction of pre) {
-    await preAction();
+    await preAction(context);
   }
   // Run main handlers
   logger.info(`Running main handlers: ${action.map((fn) => fn.name)}, event: ${eventName}`);
   for (const mainAction of action) {
-    await mainAction();
+    await mainAction(context);
   }
 
   // Run post-handlers
   logger.info(`Running post handlers: ${post.map((fn) => fn.name)}, event: ${eventName}`);
   for (const postAction of post) {
-    await postAction();
+    await postAction(context);
   }
 
   // Skip wildcard handlers for installation event and push event
@@ -140,7 +135,7 @@ export const bindEvents = async (context: Context): Promise<void> => {
     // Run wildcard handlers
     logger.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
     for (const wildcardProcessor of wildcardProcessors) {
-      await wildcardProcessor();
+      await wildcardProcessor(context);
     }
   }
 };

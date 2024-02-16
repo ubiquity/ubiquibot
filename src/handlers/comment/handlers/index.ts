@@ -1,4 +1,4 @@
-import { Comment, Payload, UserCommands } from "../../../types";
+import { BotContext, Comment, Payload, UserCommands } from "../../../types";
 import { IssueCommentCommands } from "../commands";
 import { assign } from "./assign";
 import { listAvailableCommands } from "./help";
@@ -24,7 +24,7 @@ import {
   getAllIssueAssignEvents,
   calculateWeight,
 } from "../../../helpers";
-import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
+import { getLogger } from "../../../bindings";
 import {
   handleIssueClosed,
   incentivesCalculation,
@@ -91,26 +91,26 @@ export const commentParser = (body: string): IssueCommentCommands[] => {
  * Callback for issues closed - Processor
  */
 
-export const issueClosedCallback = async (): Promise<void> => {
-  const { payload: _payload } = getBotContext();
+export const issueClosedCallback = async (context: BotContext): Promise<void> => {
+  const { payload: _payload } = context;
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   try {
     // assign function incentivesCalculation to a variable
-    const calculateIncentives = await incentivesCalculation();
+    const calculateIncentives = await incentivesCalculation(context);
 
-    const creatorReward = await calculateIssueCreatorReward(calculateIncentives);
+    const creatorReward = await calculateIssueCreatorReward(context, calculateIncentives);
     const assigneeReward = await calculateIssueAssigneeReward(calculateIncentives);
-    const conversationRewards = await calculateIssueConversationReward(calculateIncentives);
-    const pullRequestReviewersReward = await calculatePullRequestReviewsReward(calculateIncentives);
+    const conversationRewards = await calculateIssueConversationReward(context, calculateIncentives);
+    const pullRequestReviewersReward = await calculatePullRequestReviewsReward(context, calculateIncentives);
 
-    const { error } = await handleIssueClosed(creatorReward, assigneeReward, conversationRewards, pullRequestReviewersReward, calculateIncentives);
+    const { error } = await handleIssueClosed(context, creatorReward, assigneeReward, conversationRewards, pullRequestReviewersReward, calculateIncentives);
 
     if (error) {
       throw new Error(error);
     }
   } catch (err: unknown) {
-    return await addCommentToIssue(ErrorDiff(err), issue.number);
+    return await addCommentToIssue(context, ErrorDiff(err), issue.number);
   }
 };
 
@@ -118,10 +118,10 @@ export const issueClosedCallback = async (): Promise<void> => {
  * Callback for issues created - Processor
  */
 
-export const issueCreatedCallback = async (): Promise<void> => {
+export const issueCreatedCallback = async (context: BotContext): Promise<void> => {
   const logger = getLogger();
-  const { payload: _payload } = getBotContext();
-  const config = getBotConfig();
+  const { payload: _payload } = context;
+  const config = context.botConfig;
   const issue = (_payload as Payload).issue;
   if (!issue) return;
   const labels = issue.labels;
@@ -141,17 +141,17 @@ export const issueCreatedCallback = async (): Promise<void> => {
       timeLabels.length > 0 ? timeLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : config.price.defaultLabels[0];
     const minPriorityLabel =
       priorityLabels.length > 0 ? priorityLabels.reduce((a, b) => (calculateWeight(a) < calculateWeight(b) ? a : b)).name : config.price.defaultLabels[1];
-    if (!timeLabels.length) await addLabelToIssue(minTimeLabel);
-    if (!priorityLabels.length) await addLabelToIssue(minPriorityLabel);
+    if (!timeLabels.length) await addLabelToIssue(context, minTimeLabel);
+    if (!priorityLabels.length) await addLabelToIssue(context, minPriorityLabel);
 
-    const targetPriceLabel = getTargetPriceLabel(minTimeLabel, minPriorityLabel);
+    const targetPriceLabel = getTargetPriceLabel(context, minTimeLabel, minPriorityLabel);
     if (targetPriceLabel && !labels.map((i) => i.name).includes(targetPriceLabel)) {
-      const exist = await getLabel(targetPriceLabel);
-      if (!exist) await createLabel(targetPriceLabel, "price");
-      await addLabelToIssue(targetPriceLabel);
+      const exist = await getLabel(context, targetPriceLabel);
+      if (!exist) await createLabel(context, targetPriceLabel, "price");
+      await addLabelToIssue(context, targetPriceLabel);
     }
   } catch (err: unknown) {
-    await addCommentToIssue(ErrorDiff(err), issue.number);
+    await addCommentToIssue(context, ErrorDiff(err), issue.number);
   }
 };
 
@@ -159,18 +159,18 @@ export const issueCreatedCallback = async (): Promise<void> => {
  * Callback for issues reopened - Processor
  */
 
-export const issueReopenedCallback = async (): Promise<void> => {
-  const { payload: _payload } = getBotContext();
+export const issueReopenedCallback = async (context: BotContext): Promise<void> => {
+  const { payload: _payload } = context;
   const {
     payout: { permitBaseUrl },
-  } = getBotConfig();
+  } = context.botConfig;
   const logger = getLogger();
   const issue = (_payload as Payload).issue;
   const repository = (_payload as Payload).repository;
   if (!issue) return;
   try {
     // find permit comment from the bot
-    const comments = await getAllIssueComments(issue.number);
+    const comments = await getAllIssueComments(context, issue.number);
     const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
     const permitCommentIdx = comments.findIndex((e) => e.user.type === "Bot" && e.body.match(claimUrlRegex));
     if (permitCommentIdx === -1) {
@@ -181,13 +181,13 @@ export const issueReopenedCallback = async (): Promise<void> => {
     const permitComment = comments[permitCommentIdx];
     const permitUrl = permitComment.body.match(claimUrlRegex);
     if (!permitUrl || permitUrl.length < 2) {
-      logger.error(`Permit URL not found`);
+      logger.error(context, `Permit URL not found`);
       return;
     }
     const url = new URL(permitUrl[1]);
     const claimBase64 = url.searchParams.get("claim");
     if (!claimBase64) {
-      logger.error(`Permit claim search parameter not found`);
+      logger.error(context, `Permit claim search parameter not found`);
       return;
     }
     let networkId = url.searchParams.get("network");
@@ -199,7 +199,7 @@ export const issueReopenedCallback = async (): Promise<void> => {
     try {
       claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
     } catch (err: unknown) {
-      logger.error(`Error parsing claim: ${err}`);
+      logger.error(context, `Error parsing claim: ${err}`);
       return;
     }
     const amount = BigNumber.from(claim.permit.permitted.amount);
@@ -208,9 +208,9 @@ export const issueReopenedCallback = async (): Promise<void> => {
     const tokenSymbol = await getTokenSymbol(tokenAddress, rpc);
 
     // find latest assignment before the permit comment
-    const events = await getAllIssueAssignEvents(issue.number);
+    const events = await getAllIssueAssignEvents(context, issue.number);
     if (events.length === 0) {
-      logger.error(`No assignment found`);
+      logger.error(context, `No assignment found`);
       return;
     }
     const assignee = events[0].assignee.login;
@@ -220,11 +220,12 @@ export const issueReopenedCallback = async (): Promise<void> => {
       try {
         await addPenalty(assignee, repository.full_name, tokenAddress, networkId.toString(), amount);
       } catch (err) {
-        logger.error(`Error writing penalty to db: ${err}`);
+        logger.error(context, `Error writing penalty to db: ${err}`);
         return;
       }
 
       await addCommentToIssue(
+        context,
         `@${assignee} please be sure to review this conversation and implement any necessary fixes. Unless this is closed as completed, its payment of **${formattedAmount} ${tokenSymbol}** will be deducted from your next bounty.`,
         issue.number
       );
@@ -232,7 +233,7 @@ export const issueReopenedCallback = async (): Promise<void> => {
       logger.info(`Skipped penalty because amount is 0`);
     }
   } catch (err: unknown) {
-    await addCommentToIssue(ErrorDiff(err), issue.number);
+    await addCommentToIssue(context, ErrorDiff(err), issue.number);
   }
 };
 
@@ -244,12 +245,12 @@ export const issueReopenedCallback = async (): Promise<void> => {
  * @param comment - Comment string
  */
 
-const commandCallback = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
-  await upsertCommentToIssue(issue_number, comment, action, reply_to);
+const commandCallback = async (context: BotContext, issue_number: number, comment: string, action: string, reply_to?: Comment) => {
+  await upsertCommentToIssue(context, issue_number, comment, action, reply_to);
 };
 
-export const userCommands = (): UserCommands[] => {
-  const config = getBotConfig();
+export const userCommands = (context: BotContext): UserCommands[] => {
+  const config = context.botConfig;
 
   return [
     {

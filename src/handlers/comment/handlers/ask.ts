@@ -1,5 +1,5 @@
-import { getBotContext, getLogger } from "../../../bindings";
-import { Payload, StreamlinedComment, UserType } from "../../../types";
+import { getLogger } from "../../../bindings";
+import { BotContext, Payload, StreamlinedComment, UserType } from "../../../types";
 import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
 import { askGPT, decideContextGPT, sysMsg } from "../../../helpers/gpt";
@@ -8,8 +8,7 @@ import { ErrorDiff } from "../../../utils/helpers";
 /**
  * @param body The question to ask
  */
-export const ask = async (body: string) => {
-  const context = getBotContext();
+export const ask = async (context: BotContext, body: string) => {
   const logger = getLogger();
 
   const payload = context.payload as Payload;
@@ -36,9 +35,9 @@ export const ask = async (body: string) => {
     const [, body] = matches;
 
     // standard comments
-    const comments = await getAllIssueComments(issue.number);
+    const comments = await getAllIssueComments(context, issue.number);
     // raw so we can grab the <!--- { 'UbiquityAI': 'answer' } ---> tag
-    const commentsRaw = await getAllIssueComments(issue.number, "raw");
+    const commentsRaw = await getAllIssueComments(context, issue.number, "raw");
 
     if (!comments) {
       logger.info(`Error getting issue comments`);
@@ -62,7 +61,7 @@ export const ask = async (body: string) => {
     });
 
     // returns the conversational context from all linked issues and prs
-    const links = await getAllLinkedIssuesAndPullsInBody(issue.number);
+    const links = await getAllLinkedIssuesAndPullsInBody(context, issue.number);
 
     if (typeof links === "string") {
       logger.info(`Error getting linked issues or prs: ${links}`);
@@ -72,7 +71,7 @@ export const ask = async (body: string) => {
     }
 
     // let chatgpt deduce what is the most relevant context
-    const gptDecidedContext = await decideContextGPT(chatHistory, streamlined, linkedPRStreamlined, linkedIssueStreamlined);
+    const gptDecidedContext = await decideContextGPT(context, chatHistory, streamlined, linkedPRStreamlined, linkedIssueStreamlined);
 
     if (linkedIssueStreamlined.length == 0 && linkedPRStreamlined.length == 0) {
       // No external context to add
@@ -108,7 +107,7 @@ export const ask = async (body: string) => {
       );
     }
 
-    const gptResponse = await askGPT(body, chatHistory);
+    const gptResponse = await askGPT(context, body, chatHistory);
 
     if (typeof gptResponse === "string") {
       return gptResponse;

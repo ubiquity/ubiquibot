@@ -1,10 +1,9 @@
 import { getAccessLevel, upsertWalletMultiplier } from "../../../adapters/supabase";
-import { getBotContext, getLogger } from "../../../bindings";
+import { getLogger } from "../../../bindings";
 import { getUserPermission } from "../../../helpers";
-import { Payload } from "../../../types";
+import { BotContext, Payload } from "../../../types";
 
-export const multiplier = async (body: string) => {
-  const context = getBotContext();
+export const multiplier = async (context: BotContext, body: string) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
@@ -55,7 +54,7 @@ export const multiplier = async (body: string) => {
     username = username || sender;
     // check if sender is admin or billing_manager
     // passing in context so we don't have to make another request to get the user
-    const permissionLevel = await getUserPermission(sender, context);
+    const permissionLevel = await getUserPermission(context, sender);
 
     // if sender is not admin or billing_manager, check db for access
     if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {
@@ -70,7 +69,7 @@ export const multiplier = async (body: string) => {
     }
     logger.info(`Upserting to the wallet table, username: ${username}, bountyMultiplier: ${bountyMultiplier}, reason: ${reason}}`);
 
-    await upsertWalletMultiplier(username, bountyMultiplier?.toString(), reason, id?.toString());
+    await upsertWalletMultiplier(context, username, bountyMultiplier?.toString(), reason, id?.toString());
     if (bountyMultiplier > 1) {
       return `Successfully changed the payout multiplier for @${username} to ${bountyMultiplier}. The reason ${
         reason ? `provided is "${reason}"` : "is not provided"
@@ -81,7 +80,7 @@ export const multiplier = async (body: string) => {
       }.`;
     }
   } else {
-    logger.error("Invalid body for bountyMultiplier command");
+    logger.error(context, "Invalid body for bountyMultiplier command");
     return `Invalid syntax for wallet command \n example usage: "/multiplier @user 0.5 'Multiplier reason'"`;
   }
 };

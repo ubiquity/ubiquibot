@@ -1,7 +1,7 @@
 import { getMaxIssueNumber, upsertIssue, upsertUser } from "../../adapters/supabase";
-import { getBotConfig, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
 import { listIssuesForRepo, getUser, calculateWeight } from "../../helpers";
-import { Issue, IssueType, User, UserProfile } from "../../types";
+import { BotContext, Issue, IssueType, User, UserProfile } from "../../types";
 
 /**
  * Checks the issue whether it's a bounty for hunters or an issue for not
@@ -9,6 +9,7 @@ import { Issue, IssueType, User, UserProfile } from "../../types";
  * @returns If bounty - true, If issue - false
  */
 export const bountyInfo = (
+  context: BotContext,
   issue: Issue
 ): {
   isBounty: boolean;
@@ -16,7 +17,7 @@ export const bountyInfo = (
   priorityLabel: string | undefined;
   priceLabel: string | undefined;
 } => {
-  const config = getBotConfig();
+  const config = context.botConfig;
   const labels = issue.labels;
 
   const timeLabels = config.price.timeLabels.filter((item) => labels.map((i) => i.name).includes(item.name));
@@ -40,11 +41,11 @@ export const bountyInfo = (
 /**
  * Collects all the analytics information by scanning the issues opened | closed
  */
-export const collectAnalytics = async (): Promise<void> => {
+export const collectAnalytics = async (context: BotContext): Promise<void> => {
   const logger = getLogger();
   const {
     mode: { disableAnalytics },
-  } = getBotConfig();
+  } = context.botConfig;
   if (disableAnalytics) {
     logger.info(`Skipping to collect analytics, reason: mode=${disableAnalytics}`);
     return;
@@ -56,12 +57,12 @@ export const collectAnalytics = async (): Promise<void> => {
   const perPage = 30;
   let curPage = 1;
   while (!fetchDone) {
-    const issues = await listIssuesForRepo(IssueType.ALL, perPage, curPage);
+    const issues = await listIssuesForRepo(context, IssueType.ALL, perPage, curPage);
 
     // need to skip checking the closed issues already stored in the db and filter them by doing a sanitation checks.
     // sanitation checks would be basically checking labels of the issue
     // whether the issue has both `priority` label and `timeline` label
-    const bounties = issues.filter((issue) => bountyInfo(issue as Issue).isBounty);
+    const bounties = issues.filter((issue) => bountyInfo(context, issue as Issue).isBounty);
 
     // collect assignees from both type of issues (opened/closed)
     const assignees = bounties.filter((bounty) => bounty.assignee).map((bounty) => bounty.assignee as User);
@@ -71,7 +72,7 @@ export const collectAnalytics = async (): Promise<void> => {
     const assigneesToUpsert = assignees.filter((assignee, pos) => tmp.indexOf(assignee.login) == pos);
     const userProfilesToUpsert = await Promise.all(
       assigneesToUpsert.map(async (assignee) => {
-        const res = await getUser(assignee.login);
+        const res = await getUser(context, assignee.login);
         return res as UserProfile;
       })
     );
@@ -83,16 +84,16 @@ export const collectAnalytics = async (): Promise<void> => {
         .toString()}`
     );
 
-    await Promise.all(userProfilesToUpsert.map((i) => upsertUser(i)));
+    await Promise.all(userProfilesToUpsert.map((i) => upsertUser(context, i)));
 
     // No need to update the record for the bounties already closed
     const bountiesToUpsert = bounties.filter((bounty) => (bounty.state === IssueType.CLOSED ? bounty.number > maximumIssueNumber : true));
     logger.info(`Upserting bounties: ${bountiesToUpsert.map((i) => i.title).toString()}`);
     await Promise.all(
       bountiesToUpsert.map((i) => {
-        const additions = bountyInfo(i as Issue);
+        const additions = bountyInfo(context, i as Issue);
         if (additions.timelabel && additions.priorityLabel && additions.priceLabel)
-          return upsertIssue(i as Issue, {
+          return upsertIssue(context, i as Issue, {
             labels: {
               timeline: additions.timelabel,
               priority: additions.priorityLabel,

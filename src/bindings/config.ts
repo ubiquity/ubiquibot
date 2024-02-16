@@ -1,12 +1,11 @@
 import ms from "ms";
 
-import { BotConfig, BotConfigSchema, LogLevel } from "../types";
+import { BotContext, BotConfig, BotConfigSchema, LogLevel } from "../types";
 import { getPayoutConfigByNetworkId } from "../helpers";
 import { ajv } from "../utils";
-import { Context } from "probot";
 import { getScalarKey, getWideConfig } from "../utils/private";
 
-export const loadConfig = async (context: Context): Promise<BotConfig> => {
+export const loadConfig = async (context: BotContext): Promise<BotConfig> => {
   const {
     baseMultiplier,
     timeLabels,
@@ -65,9 +64,7 @@ export const loadConfig = async (context: Context): Promise<BotConfig> => {
       permitBaseUrl: process.env.PERMIT_BASE_URL || permitBaseUrl,
     },
     unassign: {
-      timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE
-        ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE)
-        : timeRangeForMaxIssue,
+      timeRangeForMaxIssue: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE ? Number(process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE) : timeRangeForMaxIssue,
       timeRangeForMaxIssueEnabled: process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED
         ? process.env.DEFAULT_TIME_RANGE_FOR_MAX_ISSUE_ENABLED == "true"
         : timeRangeForMaxIssueEnabled,

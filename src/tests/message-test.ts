@@ -1,9 +1,10 @@
 import { telegramFormattedNotifier, telegramNotifier } from "../adapters/telegram/helpers";
+import { BotContext } from "../types";
 const chatIds = ["tg1", "tg2", "tg3"]; // SHOULD update chatIds with valid ones
 
-export async function messageTests() {
+export async function messageTests(context: BotContext) {
   /**@method telegramNotifier - call unformatted issue */
-  await telegramNotifier({
+  await telegramNotifier(context, {
     chatIds: chatIds,
     action: `new issue`,
     title: `Optimize CI/CD Build Speed`,
@@ -14,7 +15,7 @@ export async function messageTests() {
   });
 
   /**@method telegramNotifier - call unformatted pull */
-  await telegramNotifier({
+  await telegramNotifier(context, {
     chatIds: chatIds,
     action: `new pull`,
     title: `Enhancement/styles`,
@@ -25,7 +26,7 @@ export async function messageTests() {
   });
 
   /**@method telegramFormattedNotifier - call formatted issue */
-  await telegramFormattedNotifier({
+  await telegramFormattedNotifier(context, {
     chatIds: chatIds,
     text:
       `<b>new issue: Optimize CI/CD Build Speed</b> ` +
@@ -37,7 +38,7 @@ export async function messageTests() {
   });
 
   /**@method telegramFormattedNotifier - call formatted pull */
-  await telegramFormattedNotifier({
+  await telegramFormattedNotifier(context, {
     chatIds: chatIds,
     text:
       `<b>new pull: Enhancement/styles</b> ` +

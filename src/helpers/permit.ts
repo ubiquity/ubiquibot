@@ -1,9 +1,9 @@
 import { MaxUint256, PermitTransferFrom, SignatureTransfer } from "@uniswap/permit2-sdk";
 import { BigNumber, ethers } from "ethers";
-import { getBotConfig, getBotContext, getLogger } from "../bindings";
+import { getLogger } from "../bindings";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 import Decimal from "decimal.js";
-import { Payload } from "../types";
+import { BotContext, Payload } from "../types";
 import { savePermit } from "../adapters/supabase";
 
 const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3"; // same on all networks
@@ -53,6 +53,7 @@ type TxData = {
  * @returns Permit2 url including base64 encoded data
  */
 export const generatePermit2Signature = async (
+  context: BotContext,
   spender: string,
   amountInEth: Decimal,
   identifier: string,
@@ -60,7 +61,7 @@ export const generatePermit2Signature = async (
 ): Promise<{ txData: TxData; payoutUrl: string }> => {
   const {
     payout: { networkId, privateKey, permitBaseUrl, rpc, paymentToken },
-  } = getBotConfig();
+  } = context.botConfig;
   const logger = getLogger();
   const provider = new ethers.providers.JsonRpcProvider(rpc);
   const adminWallet = new ethers.Wallet(privateKey, provider);
@@ -106,20 +107,19 @@ export const generatePermit2Signature = async (
   return { txData, payoutUrl };
 };
 
-export const savePermitToDB = async (bountyHunterId: number, txData: TxData): Promise<Permit> => {
+export const savePermitToDB = async (context: BotContext, bountyHunterId: number, txData: TxData): Promise<Permit> => {
   const logger = getLogger();
 
-  const context = getBotContext();
   const payload = context.payload as Payload;
   const issue = payload.issue;
   const repository = payload.repository;
   const organization = payload.organization;
   if (!issue || !repository) {
-    logger.error("Cannot save permit to DB, missing issue, repository or organization");
+    logger.error(context, "Cannot save permit to DB, missing issue, repository or organization");
     throw new Error("Cannot save permit to DB, missing issue, repository or organization");
   }
 
-  const { payout } = getBotConfig();
+  const { payout } = context.botConfig;
   const { networkId } = payout;
 
   const permit: InsertPermit = {

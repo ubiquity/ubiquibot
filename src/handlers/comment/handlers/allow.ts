@@ -1,10 +1,9 @@
 import { upsertAccessControl } from "../../../adapters/supabase";
-import { getBotContext, getLogger } from "../../../bindings";
+import { getLogger } from "../../../bindings";
 import { getUserPermission } from "../../../helpers";
-import { Payload } from "../../../types";
+import { BotContext, Payload } from "../../../types";
 
-export const setAccess = async (body: string) => {
-  const context = getBotContext();
+export const setAccess = async (context: BotContext, body: string) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
@@ -31,7 +30,7 @@ export const setAccess = async (body: string) => {
       else if (part === "true" || part === "false") bool = part;
     });
     if (!accessType || !username || !bool) {
-      logger.error("Invalid body for allow command");
+      logger.error(context, "Invalid body for allow command");
       return `Invalid syntax for allow \n usage: '/allow set-(access type) @user true|false' \n  ex-1 /allow set-multiplier @user false`;
     }
     // Check if access control demand is valid
@@ -42,7 +41,7 @@ export const setAccess = async (body: string) => {
 
     // check if sender is admin
     // passing in context so we don't have to make another request to get the user
-    const permissionLevel = await getUserPermission(sender, context);
+    const permissionLevel = await getUserPermission(context, sender);
 
     // if sender is not admin, return
     if (permissionLevel !== "admin") {
@@ -53,10 +52,10 @@ export const setAccess = async (body: string) => {
     // convert accessType to valid table
     const tableName = `${accessType}_access`;
 
-    await upsertAccessControl(username, repo.full_name, tableName, bool === "true");
+    await upsertAccessControl(context, username, repo.full_name, tableName, bool === "true");
     return `Updated access for @${username} successfully!\t Access: **${accessType}** for "${repo.full_name}"`;
   } else {
-    logger.error("Invalid body for allow command");
+    logger.error(context, "Invalid body for allow command");
     return `Invalid syntax for allow \n usage: '/allow set-(access type) @user true|false' \n  ex-1 /allow set-multiplier @user false`;
   }
 };

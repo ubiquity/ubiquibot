@@ -1,4 +1,4 @@
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
 import { GLOBAL_STRINGS } from "../../configs/strings";
 import {
   addCommentToIssue,
@@ -9,39 +9,38 @@ import {
   listAllIssuesForRepo,
   removeAssignees,
 } from "../../helpers";
-import { Comment, Issue, IssueType, Payload, UserType } from "../../types";
+import { BotContext, Comment, Issue, IssueType, Payload, UserType } from "../../types";
 import { deadLinePrefix } from "../shared";
 
 /**
  * @dev Check out the bounties which haven't been completed within the initial timeline
  *  and try to release the bounty back to dev pool
  */
-export const checkBountiesToUnassign = async () => {
+export const checkBountiesToUnassign = async (context: BotContext) => {
   const logger = getLogger();
   logger.info(`Getting all the issues...`);
 
   // List all the issues in the repository. It may include `pull_request`
   // because GitHub's REST API v3 considers every pull request an issue
-  const issues_opened = await listAllIssuesForRepo(IssueType.OPEN);
+  const issues_opened = await listAllIssuesForRepo(context, IssueType.OPEN);
 
   const assigned_issues = issues_opened.filter((issue) => issue.assignee);
 
   // Checking the bounties in parallel
-  const res = await Promise.all(assigned_issues.map(async (issue) => checkBountyToUnassign(issue as Issue)));
+  const res = await Promise.all(assigned_issues.map(async (issue) => checkBountyToUnassign(context, issue as Issue)));
   logger.info(`Checking expired bounties done! total: ${res.length}, unassigned: ${res.filter((i) => i).length}`);
 };
 
-const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
-  const context = getBotContext();
+const checkBountyToUnassign = async (context: BotContext, issue: Issue): Promise<boolean> => {
   const payload = context.payload as Payload;
   const logger = getLogger();
   const {
     unassign: { followUpTime, disqualifyTime },
-  } = getBotConfig();
+  } = context.botConfig;
   logger.info(`Checking the bounty to unassign, issue_number: ${issue.number}`);
   const { unassignComment, askUpdate } = GLOBAL_STRINGS;
   const assignees = issue.assignees.map((i) => i.login);
-  const comments = await getAllIssueComments(issue.number);
+  const comments = await getAllIssueComments(context, issue.number);
   if (!comments || comments.length == 0) return false;
 
   const askUpdateComments = comments
@@ -50,9 +49,9 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
 
   const lastAskTime = askUpdateComments.length > 0 ? new Date(askUpdateComments[0].created_at).getTime() : new Date(issue.created_at).getTime();
   const curTimestamp = new Date().getTime();
-  const lastActivity = await lastActivityTime(issue, comments);
+  const lastActivity = await lastActivityTime(context, issue, comments);
   const passedDuration = curTimestamp - lastActivity.getTime();
-  const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee.login);
+  const pullRequest = await getOpenedPullRequestsForAnIssue(context, issue.number, issue.assignee.login);
 
   if (pullRequest.length > 0) {
     const reviewRequests = await getReviewRequests(context, pullRequest[0].number, payload.repository.owner.login, payload.repository.name);
@@ -67,8 +66,8 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
         `Unassigning... lastActivityTime: ${lastActivity.getTime()}, curTime: ${curTimestamp}, passedDuration: ${passedDuration}, followUpTime: ${followUpTime}, disqualifyTime: ${disqualifyTime}`
       );
       // remove assignees from the issue
-      await removeAssignees(issue.number, assignees);
-      await addCommentToIssue(`@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
+      await removeAssignees(context, issue.number, assignees);
+      await addCommentToIssue(context, `@${assignees[0]} - ${unassignComment} \nLast activity time: ${lastActivity}`, issue.number);
 
       return true;
     } else if (passedDuration >= followUpTime) {
@@ -82,6 +81,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
         );
       } else {
         await addCommentToIssue(
+          context,
           `${askUpdate} @${assignees[0]}? If you would like to release the bounty back to the DevPool, please comment \`/stop\` \nLast activity time: ${lastActivity}`,
           issue.number
         );
@@ -92,7 +92,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   return false;
 };
 
-const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date> => {
+const lastActivityTime = async (context: BotContext, issue: Issue, comments: Comment[]): Promise<Date> => {
   const logger = getLogger();
   logger.info(`Checking the latest activity for the issue, issue_number: ${issue.number}`);
   const assignees = issue.assignees.map((i) => i.login);
@@ -110,14 +110,14 @@ const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date
 
   if (lastCommentsOfHunterForIssue.length > 0) activities.push(new Date(lastCommentsOfHunterForIssue[0].created_at));
 
-  const openedPrsForIssue = await getOpenedPullRequestsForAnIssue(issue.number, assignees[0]);
+  const openedPrsForIssue = await getOpenedPullRequestsForAnIssue(context, issue.number, assignees[0]);
   const pr = openedPrsForIssue.length > 0 ? openedPrsForIssue[0] : undefined;
   // get last commit and last comment on the linked pr
   if (pr) {
-    const commits = (await getCommitsOnPullRequest(pr.number))
+    const commits = (await getCommitsOnPullRequest(context, pr.number))
       .filter((it) => it.commit.committer?.date)
       .sort((a, b) => new Date(b.commit.committer?.date ?? 0).getTime() - new Date(a.commit.committer?.date ?? 0).getTime());
-    const prComments = (await getAllIssueComments(pr.number))
+    const prComments = (await getAllIssueComments(context, pr.number))
       .filter((comment) => comment.user.login === assignees[0])
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 

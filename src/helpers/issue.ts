@@ -1,10 +1,9 @@
 import { Context } from "probot";
-import { getBotConfig, getBotContext, getLogger } from "../bindings";
-import { AssignEvent, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
+import { getLogger } from "../bindings";
+import { AssignEvent, BotContext, Comment, IssueType, Payload, StreamlinedComment, UserType } from "../types";
 import { checkRateLimitGit } from "../utils";
 
-export const getAllIssueEvents = async () => {
-  const context = getBotContext();
+export const getAllIssueEvents = async (context: BotContext) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.issue) return;
@@ -35,20 +34,19 @@ export const getAllIssueEvents = async () => {
     }
   } catch (e: unknown) {
     shouldFetch = false;
-    logger.error(`Getting all issue events failed, reason: ${e}`);
+    logger.error(context, `Getting all issue events failed, reason: ${e}`);
     return null;
   }
   return events;
 };
 
-export const getAllLabeledEvents = async () => {
-  const events = await getAllIssueEvents();
+export const getAllLabeledEvents = async (context: BotContext) => {
+  const events = await getAllIssueEvents(context);
   if (!events) return null;
   return events.filter((event) => event.event === "labeled");
 };
 
-export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
-  const context = getBotContext();
+export const clearAllPriceLabelsOnIssue = async (context: BotContext): Promise<void> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -71,8 +69,7 @@ export const clearAllPriceLabelsOnIssue = async (): Promise<void> => {
   }
 };
 
-export const addLabelToIssue = async (labelName: string) => {
-  const context = getBotContext();
+export const addLabelToIssue = async (context: BotContext, labelName: string) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.issue) {
@@ -93,13 +90,13 @@ export const addLabelToIssue = async (labelName: string) => {
 };
 
 export const listIssuesForRepo = async (
+  context: BotContext,
   state: "open" | "closed" | "all" = "open",
   per_page = 30,
   page = 1,
   sort: "created" | "updated" | "comments" = "created",
   direction: "desc" | "asc" = "desc"
 ) => {
-  const context = getBotContext();
   const payload = context.payload as Payload;
 
   const response = await context.octokit.issues.listForRepo({
@@ -121,13 +118,13 @@ export const listIssuesForRepo = async (
   }
 };
 
-export const listAllIssuesForRepo = async (state: "open" | "closed" | "all" = "open") => {
+export const listAllIssuesForRepo = async (context: BotContext, state: "open" | "closed" | "all" = "open") => {
   const issuesArr = [];
   let fetchDone = false;
   const perPage = 100;
   let curPage = 1;
   while (!fetchDone) {
-    const issues = await listIssuesForRepo(state, perPage, curPage);
+    const issues = await listIssuesForRepo(context, state, perPage, curPage);
 
     // push the objects to array
     issuesArr.push(...issues);
@@ -139,8 +136,7 @@ export const listAllIssuesForRepo = async (state: "open" | "closed" | "all" = "o
   return issuesArr;
 };
 
-export const addCommentToIssue = async (msg: string, issue_number: number) => {
-  const context = getBotContext();
+export const addCommentToIssue = async (context: BotContext, msg: string, issue_number: number) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -156,8 +152,7 @@ export const addCommentToIssue = async (msg: string, issue_number: number) => {
   }
 };
 
-export const updateCommentOfIssue = async (msg: string, issue_number: number, reply_to: Comment) => {
-  const context = getBotContext();
+export const updateCommentOfIssue = async (context: BotContext, msg: string, issue_number: number, reply_to: Comment) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -191,35 +186,34 @@ export const updateCommentOfIssue = async (msg: string, issue_number: number, re
       });
     } else {
       logger.info(`Falling back to add comment. Couldn't find response to edit for comment_id: ${reply_to.id}`);
-      await addCommentToIssue(msg, issue_number);
+      await addCommentToIssue(context, msg, issue_number);
     }
   } catch (e: unknown) {
     logger.debug(`Updating a comment failed! reason: ${e}`);
   }
 };
 
-export const upsertCommentToIssue = async (issue_number: number, comment: string, action: string, reply_to?: Comment) => {
+export const upsertCommentToIssue = async (context: BotContext, issue_number: number, comment: string, action: string, reply_to?: Comment) => {
   if (action == "edited" && reply_to) {
-    await updateCommentOfIssue(comment, issue_number, reply_to);
+    await updateCommentOfIssue(context, comment, issue_number, reply_to);
   } else {
-    await addCommentToIssue(comment, issue_number);
+    await addCommentToIssue(context, comment, issue_number);
   }
 };
 
-export const upsertLastCommentToIssue = async (issue_number: number, commentBody: string) => {
+export const upsertLastCommentToIssue = async (context: BotContext, issue_number: number, commentBody: string) => {
   const logger = getLogger();
 
   try {
-    const comments = await getAllIssueComments(issue_number);
+    const comments = await getAllIssueComments(context, issue_number);
 
-    if (comments.length > 0 && comments[comments.length - 1].body !== commentBody) await addCommentToIssue(commentBody, issue_number);
+    if (comments.length > 0 && comments[comments.length - 1].body !== commentBody) await addCommentToIssue(context, commentBody, issue_number);
   } catch (e: unknown) {
     logger.debug(`Upserting last comment failed! reason: ${e}`);
   }
 };
 
-export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[]> => {
-  const context = getBotContext();
+export const getCommentsOfIssue = async (context: BotContext, issue_number: number): Promise<Comment[]> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -239,8 +233,7 @@ export const getCommentsOfIssue = async (issue_number: number): Promise<Comment[
   return result;
 };
 
-export const getIssueDescription = async (issue_number: number, format: "raw" | "html" | "text" = "raw"): Promise<string> => {
-  const context = getBotContext();
+export const getIssueDescription = async (context: BotContext, issue_number: number, format: "raw" | "html" | "text" = "raw"): Promise<string> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -273,8 +266,7 @@ export const getIssueDescription = async (issue_number: number, format: "raw" | 
   return result;
 };
 
-export const getAllIssueComments = async (issue_number: number, format: "raw" | "html" | "text" | "full" = "raw"): Promise<Comment[]> => {
-  const context = getBotContext();
+export const getAllIssueComments = async (context: BotContext, issue_number: number, format: "raw" | "html" | "text" | "full" = "raw"): Promise<Comment[]> => {
   const payload = context.payload as Payload;
 
   const result: Comment[] = [];
@@ -310,8 +302,7 @@ export const getAllIssueComments = async (issue_number: number, format: "raw" | 
   return result;
 };
 
-export const getAllIssueAssignEvents = async (issue_number: number): Promise<AssignEvent[]> => {
-  const context = getBotContext();
+export const getAllIssueAssignEvents = async (context: BotContext, issue_number: number): Promise<AssignEvent[]> => {
   const payload = context.payload as Payload;
 
   const result: AssignEvent[] = [];
@@ -344,8 +335,7 @@ export const getAllIssueAssignEvents = async (issue_number: number): Promise<Ass
   return result.sort((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? -1 : 1));
 };
 
-export const wasIssueReopened = async (issue_number: number): Promise<boolean> => {
-  const context = getBotContext();
+export const wasIssueReopened = async (context: BotContext, issue_number: number): Promise<boolean> => {
   const payload = context.payload as Payload;
 
   let shouldFetch = true;
@@ -377,8 +367,7 @@ export const wasIssueReopened = async (issue_number: number): Promise<boolean> =
   return false;
 };
 
-export const removeAssignees = async (issue_number: number, assignees: string[]): Promise<void> => {
-  const context = getBotContext();
+export const removeAssignees = async (context: BotContext, issue_number: number, assignees: string[]): Promise<void> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -394,15 +383,15 @@ export const removeAssignees = async (issue_number: number, assignees: string[])
   }
 };
 
-export const checkUserPermissionForRepoAndOrg = async (username: string, context: Context): Promise<boolean> => {
-  const permissionForRepo = await checkUserPermissionForRepo(username, context);
-  const permissionForOrg = await checkUserPermissionForOrg(username, context);
-  const userPermission = await getUserPermission(username, context);
+export const checkUserPermissionForRepoAndOrg = async (context: BotContext, username: string): Promise<boolean> => {
+  const permissionForRepo = await checkUserPermissionForRepo(context, username);
+  const permissionForOrg = await checkUserPermissionForOrg(context, username);
+  const userPermission = await getUserPermission(context, username);
 
   return permissionForOrg || permissionForRepo || userPermission === "admin" || userPermission === "billing_manager";
 };
 
-export const checkUserPermissionForRepo = async (username: string, context: Context): Promise<boolean> => {
+export const checkUserPermissionForRepo = async (context: BotContext, username: string): Promise<boolean> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -415,12 +404,12 @@ export const checkUserPermissionForRepo = async (username: string, context: Cont
 
     return res.status === 204;
   } catch (e: unknown) {
-    logger.error(`Checking if user permisson for repo failed! reason: ${e}`);
+    logger.error(context, `Checking if user permisson for repo failed! reason: ${e}`);
     return false;
   }
 };
 
-export const checkUserPermissionForOrg = async (username: string, context: Context): Promise<boolean> => {
+export const checkUserPermissionForOrg = async (context: BotContext, username: string): Promise<boolean> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.organization) return false;
@@ -433,12 +422,12 @@ export const checkUserPermissionForOrg = async (username: string, context: Conte
     // skipping status check due to type error of checkMembershipForUser function of octokit
     return true;
   } catch (e: unknown) {
-    logger.error(`Checking if user permisson for org failed! reason: ${e}`);
+    logger.error(context, `Checking if user permisson for org failed! reason: ${e}`);
     return false;
   }
 };
 
-export const getUserPermission = async (username: string, context: Context): Promise<string> => {
+export const getUserPermission = async (context: BotContext, username: string): Promise<string> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -460,8 +449,7 @@ export const getUserPermission = async (username: string, context: Context): Pro
   }
 };
 
-export const addAssignees = async (issue_number: number, assignees: string[]): Promise<void> => {
-  const context = getBotContext();
+export const addAssignees = async (context: BotContext, issue_number: number, assignees: string[]): Promise<void> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -477,8 +465,7 @@ export const addAssignees = async (issue_number: number, assignees: string[]): P
   }
 };
 
-export const deleteLabel = async (label: string): Promise<void> => {
-  const context = getBotContext();
+export const deleteLabel = async (context: BotContext, label: string): Promise<void> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
 
@@ -499,8 +486,7 @@ export const deleteLabel = async (label: string): Promise<void> => {
   }
 };
 
-export const removeLabel = async (name: string) => {
-  const context = getBotContext();
+export const removeLabel = async (context: BotContext, name: string) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.issue) {
@@ -555,12 +541,11 @@ export const getPullRequests = async (context: Context, state: "open" | "closed"
   }
 };
 
-export const closePullRequest = async (pull_number: number) => {
-  const context = getBotContext();
+export const closePullRequest = async (context: BotContext, pull_number: number) => {
   const payload = context.payload as Payload;
   const logger = getLogger();
   try {
-    await getBotContext().octokit.rest.pulls.update({
+    await context.octokit.rest.pulls.update({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       pull_number,
@@ -615,7 +600,7 @@ export const getPullRequestReviews = async (
   }
 };
 
-export const getReviewRequests = async (context: Context, pull_number: number, owner: string, repo: string) => {
+export const getReviewRequests = async (context: BotContext, pull_number: number, owner: string, repo: string) => {
   const logger = getLogger();
   try {
     const response = await context.octokit.pulls.listRequestedReviewers({
@@ -625,7 +610,7 @@ export const getReviewRequests = async (context: Context, pull_number: number, o
     });
     return response.data;
   } catch (e: unknown) {
-    logger.error(`Error: could not get requested reviewers, reason: ${e}`);
+    logger.error(context, `Error: could not get requested reviewers, reason: ${e}`);
     return null;
   }
 };
@@ -659,13 +644,13 @@ export const getPullByNumber = async (context: Context, pull_number: number) => 
 };
 
 // Get issues assigned to a username
-export const getAssignedIssues = async (username: string) => {
+export const getAssignedIssues = async (context: BotContext, username: string) => {
   const issuesArr = [];
   let fetchDone = false;
   const perPage = 30;
   let curPage = 1;
   while (!fetchDone) {
-    const issues = await listIssuesForRepo(IssueType.OPEN, perPage, curPage);
+    const issues = await listIssuesForRepo(context, IssueType.OPEN, perPage, curPage);
 
     // push the objects to array
     issuesArr.push(...issues);
@@ -680,8 +665,8 @@ export const getAssignedIssues = async (username: string) => {
   return assigned_issues;
 };
 
-export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userName: string) => {
-  const pulls = await getOpenedPullRequests(userName);
+export const getOpenedPullRequestsForAnIssue = async (context: BotContext, issueNumber: number, userName: string) => {
+  const pulls = await getOpenedPullRequests(context, userName);
 
   return pulls.filter((pull) => {
     if (!pull.body) return false;
@@ -695,16 +680,14 @@ export const getOpenedPullRequestsForAnIssue = async (issueNumber: number, userN
   });
 };
 
-export const getOpenedPullRequests = async (username: string) => {
-  const context = getBotContext();
+export const getOpenedPullRequests = async (context: BotContext, username: string) => {
   const prs = await getAllPullRequests(context, "open");
   return prs.filter((pr) => !pr.draft && (pr.user?.login === username || !username));
 };
 
-export const getCommitsOnPullRequest = async (pullNumber: number) => {
+export const getCommitsOnPullRequest = async (context: BotContext, pullNumber: number) => {
   const logger = getLogger();
-  const context = getBotContext();
-  const payload = getBotContext().payload as Payload;
+  const payload = context.payload as Payload;
   try {
     const { data: commits } = await context.octokit.rest.pulls.listCommits({
       owner: payload.repository.owner.login,
@@ -718,14 +701,13 @@ export const getCommitsOnPullRequest = async (pullNumber: number) => {
   }
 };
 
-export const getAvailableOpenedPullRequests = async (username: string) => {
-  const context = getBotContext();
+export const getAvailableOpenedPullRequests = async (context: BotContext, username: string) => {
   const {
     unassign: { timeRangeForMaxIssue, timeRangeForMaxIssueEnabled },
-  } = await getBotConfig();
+  } = await context.botConfig;
   if (!timeRangeForMaxIssueEnabled) return [];
 
-  const opened_prs = await getOpenedPullRequests(username);
+  const opened_prs = await getOpenedPullRequests(context, username);
 
   const result = [];
 
@@ -746,8 +728,7 @@ export const getAvailableOpenedPullRequests = async (username: string) => {
 };
 
 // Strips out all links from the body of an issue or pull request and fetches the conversational context from each linked issue or pull request
-export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
-  const context = getBotContext();
+export const getAllLinkedIssuesAndPullsInBody = async (context: BotContext, issueNumber: number) => {
   const logger = getLogger();
 
   const issue = await getIssueByNumber(context, issueNumber);
@@ -798,8 +779,8 @@ export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
               login: "system",
               body: `=============== Pull Request #${pr.number}: ${pr.title} + ===============\n ${pr.body}}`,
             });
-            const prComments = await getAllIssueComments(linkedPrs[i]);
-            const prCommentsRaw = await getAllIssueComments(linkedPrs[i], "raw");
+            const prComments = await getAllIssueComments(context, linkedPrs[i]);
+            const prCommentsRaw = await getAllIssueComments(context, linkedPrs[i], "raw");
             prComments.forEach(async (comment, i) => {
               if (comment.user.type == UserType.User || prCommentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
                 linkedPRStreamlined.push({
@@ -820,8 +801,8 @@ export const getAllLinkedIssuesAndPullsInBody = async (issueNumber: number) => {
               login: "system",
               body: `=============== Issue #${issue.number}: ${issue.title} + ===============\n ${issue.body} `,
             });
-            const issueComments = await getAllIssueComments(linkedIssues[i]);
-            const issueCommentsRaw = await getAllIssueComments(linkedIssues[i], "raw");
+            const issueComments = await getAllIssueComments(context, linkedIssues[i]);
+            const issueCommentsRaw = await getAllIssueComments(context, linkedIssues[i], "raw");
             issueComments.forEach(async (comment, i) => {
               if (comment.user.type == UserType.User || issueCommentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
                 linkedIssueStreamlined.push({

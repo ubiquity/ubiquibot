@@ -1,9 +1,9 @@
-import { getBotContext, getLogger } from "../bindings";
+import { getLogger } from "../bindings";
+import { BotContext } from "../types";
 
 // Get the previous file content
-export async function getPreviousFileContent(owner: string, repo: string, branch: string, filePath: string) {
+export async function getPreviousFileContent(context: BotContext, owner: string, repo: string, branch: string, filePath: string) {
   const logger = getLogger();
-  const context = getBotContext();
 
   try {
     // Get the latest commit of the branch
@@ -60,9 +60,15 @@ export async function getPreviousFileContent(owner: string, repo: string, branch
   }
 }
 
-export async function getFileContent(owner: string, repo: string, branch: string, filePath: string, commitSha?: string): Promise<string | null> {
+export async function getFileContent(
+  context: BotContext,
+  owner: string,
+  repo: string,
+  branch: string,
+  filePath: string,
+  commitSha?: string
+): Promise<string | null> {
   const logger = getLogger();
-  const context = getBotContext();
 
   try {
     if (!commitSha) {

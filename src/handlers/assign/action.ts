@@ -1,13 +1,12 @@
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
 import { addCommentToIssue, closePullRequest, calculateWeight, calculateDuration } from "../../helpers";
 import { gitLinkedPrParser } from "../../helpers/parser";
-import { Payload, LabelItem } from "../../types";
+import { Payload, LabelItem, BotContext } from "../../types";
 import { deadLinePrefix } from "../shared";
 
 const exclude_accounts: string[] = [];
-export const commentWithAssignMessage = async (): Promise<void> => {
-  const context = getBotContext();
-  const config = getBotConfig();
+export const commentWithAssignMessage = async (context: BotContext): Promise<void> => {
+  const config = context.botConfig;
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.issue) {
@@ -64,16 +63,15 @@ export const commentWithAssignMessage = async (): Promise<void> => {
   const commitMessage = `${flattened_assignees} ${deadLinePrefix} ${endDate.toUTCString().replace("GMT", "UTC")}`;
   logger.debug(`Creating an issue comment, commit_msg: ${commitMessage}`);
 
-  await addCommentToIssue(commitMessage, payload.issue?.number);
+  await addCommentToIssue(context, commitMessage, payload.issue?.number);
 };
 
-export const closePullRequestForAnIssue = async (): Promise<void> => {
-  const context = getBotContext();
+export const closePullRequestForAnIssue = async (context: BotContext): Promise<void> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.issue?.number) return;
 
-  const prs = await gitLinkedPrParser({
+  const prs = await gitLinkedPrParser(context, {
     owner: payload.repository.owner.login,
     repo: payload.repository.name,
     issue_number: payload.issue.number,
@@ -84,8 +82,8 @@ export const closePullRequestForAnIssue = async (): Promise<void> => {
   logger.info(`Opened prs for this issue: ${JSON.stringify(prs)}`);
   let comment = `These linked pull requests are closed: `;
   for (let i = 0; i < prs.length; i++) {
-    await closePullRequest(prs[i].prNumber);
+    await closePullRequest(context, prs[i].prNumber);
     comment += ` <a href="${prs[i].prHref}">#${prs[i].prNumber}</a> `;
   }
-  await addCommentToIssue(comment, payload.issue.number);
+  await addCommentToIssue(context, comment, payload.issue.number);
 };

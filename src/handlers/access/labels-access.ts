@@ -1,20 +1,19 @@
 import { getAccessLevel } from "../../adapters/supabase";
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
 import { addCommentToIssue, getUserPermission, removeLabel, addLabelToIssue } from "../../helpers";
-import { Payload } from "../../types";
+import { BotContext, Payload } from "../../types";
 
-export const handleLabelsAccess = async () => {
-  const { accessControl } = getBotConfig();
+export const handleLabelsAccess = async (context: BotContext) => {
+  const { accessControl } = context.botConfig;
   if (!accessControl.label) return true;
 
-  const context = getBotContext();
   const logger = getLogger();
   const payload = context.payload as Payload;
   if (!payload.issue) return;
   if (!payload.label?.name) return;
   const sender = payload.sender.login;
   const repo = payload.repository;
-  const permissionLevel = await getUserPermission(sender, context);
+  const permissionLevel = await getUserPermission(context, sender);
   // event in plain english
   const eventName = payload.action === "labeled" ? "add" : "remove";
   const labelName = payload.label.name;
@@ -34,12 +33,12 @@ export const handleLabelsAccess = async () => {
 
     if (payload.action === "labeled") {
       // remove the label
-      await removeLabel(labelName);
+      await removeLabel(context, labelName);
     } else if (payload.action === "unlabeled") {
       // add the label
-      await addLabelToIssue(labelName);
+      await addLabelToIssue(context, labelName);
     }
-    await addCommentToIssue(`@${sender}, You are not allowed to ${eventName} ${labelName}`, payload.issue.number);
+    await addCommentToIssue(context, `@${sender}, You are not allowed to ${eventName} ${labelName}`, payload.issue.number);
     logger.info(`@${sender} is not allowed to ${eventName} ${labelName}`);
     return false;
   }

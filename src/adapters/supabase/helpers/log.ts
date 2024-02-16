@@ -1,6 +1,6 @@
 import axios from "axios";
-import { getAdapters, getBotContext, Logger } from "../../../bindings";
-import { Payload, LogLevel, LogNotification } from "../../../types";
+import { getAdapters, Logger } from "../../../bindings";
+import { BotContext, Payload, LogLevel, LogNotification } from "../../../types";
 import { getOrgAndRepoFromPath } from "../../../utils/private";
 import jwt from "jsonwebtoken";
 interface Log {
@@ -44,14 +44,18 @@ export class GitHubLogger implements Logger {
   private retryDelay = 1000; // Delay between retries in milliseconds
   private throttleCount = 0;
   private retryLimit = 0; // Retries disabled by default
+
+  private context;
   private logNotification;
 
-  constructor(app: string, logEnvironment: string, maxLevel: LogLevel, retryLimit: number, logNotification: LogNotification) {
+  constructor(context: BotContext, app: string, logEnvironment: string, maxLevel: LogLevel, retryLimit: number, logNotification: LogNotification) {
     this.app = app;
     this.logEnvironment = logEnvironment;
     this.maxLevel = getNumericLevel(maxLevel);
     this.retryLimit = retryLimit;
     this.supabase = getAdapters().supabase;
+
+    this.context = context;
     this.logNotification = logNotification;
   }
 
@@ -83,8 +87,7 @@ export class GitHubLogger implements Logger {
     }
   }
 
-  private sendDataWithJwt(message: string | object, errorPayload?: string | object) {
-    const context = getBotContext();
+  private sendDataWithJwt(context: BotContext, message: string | object, errorPayload?: string | object) {
     const payload = context.payload as Payload;
 
     const { comment, issue, repository } = payload;
@@ -195,8 +198,7 @@ export class GitHubLogger implements Logger {
   private save(logMessage: string | object, level: LogLevel, errorPayload?: string | object) {
     if (getNumericLevel(level) > this.maxLevel) return; // only return errors lower than max level
 
-    const context = getBotContext();
-    const payload = context.payload as Payload;
+    const payload = this.context.payload as Payload;
     const timestamp = new Date().toUTCString();
 
     const { comment, issue, repository } = payload;
@@ -230,9 +232,9 @@ export class GitHubLogger implements Logger {
     this.save(message, LogLevel.INFO, errorPayload);
   }
 
-  warn(message: string | object, errorPayload?: string | object) {
+  warn(context: BotContext, message: string | object, errorPayload?: string | object) {
     this.save(message, LogLevel.WARN, errorPayload);
-    this.sendDataWithJwt(message, errorPayload)
+    this.sendDataWithJwt(context, message, errorPayload)
       .then((response) => {
         this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG, "");
       })
@@ -245,9 +247,9 @@ export class GitHubLogger implements Logger {
     this.save(message, LogLevel.DEBUG, errorPayload);
   }
 
-  error(message: string | object, errorPayload?: string | object) {
+  error(context: BotContext, message: string | object, errorPayload?: string | object) {
     this.save(message, LogLevel.ERROR, errorPayload);
-    this.sendDataWithJwt(message, errorPayload)
+    this.sendDataWithJwt(context, message, errorPayload)
       .then((response) => {
         this.save(`Log Notification Success: ${response}`, LogLevel.DEBUG, "");
       })

@@ -1,7 +1,8 @@
 import axios from "axios";
 import { HTMLElement, parse } from "node-html-parser";
 import { getPullByNumber } from "./issue";
-import { getBotContext, getLogger } from "../bindings";
+import { getLogger } from "../bindings";
+import { BotContext } from "../types";
 
 interface GitParser {
   owner: string;
@@ -17,7 +18,7 @@ export interface LinkedPR {
   prHref: string;
 }
 
-export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitParser) => {
+export const gitLinkedIssueParser = async (context: BotContext, { owner, repo, pull_number }: GitParser) => {
   const logger = getLogger();
   try {
     const { data } = await axios.get(`https://github.com/${owner}/${repo}/pull/${pull_number}`);
@@ -32,12 +33,12 @@ export const gitLinkedIssueParser = async ({ owner, repo, pull_number }: GitPars
     const issueUrl = linkedIssues[0].querySelector("a")?.attrs?.href || "";
     return issueUrl;
   } catch (error) {
-    logger.error(`${JSON.stringify(error)}`);
+    logger.error(context, `${JSON.stringify(error)}`);
     return null;
   }
 };
 
-export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser): Promise<LinkedPR[]> => {
+export const gitLinkedPrParser = async (context: BotContext, { owner, repo, issue_number }: GitParser): Promise<LinkedPR[]> => {
   const logger = getLogger();
   try {
     const prData = [];
@@ -70,13 +71,12 @@ export const gitLinkedPrParser = async ({ owner, repo, issue_number }: GitParser
 
     return prData;
   } catch (error) {
-    logger.error(`${JSON.stringify(error)}`);
+    logger.error(context, `${JSON.stringify(error)}`);
     return [];
   }
 };
 
-export const getLatestPullRequest = async (prs: LinkedPR[]) => {
-  const context = getBotContext();
+export const getLatestPullRequest = async (context: BotContext, prs: LinkedPR[]) => {
   let linkedPullRequest = null;
   for (const _pr of prs) {
     if (Number.isNaN(_pr.prNumber)) return null;

@@ -12,9 +12,9 @@
  */
 
 import { Static } from "@sinclair/typebox";
-import { PayoutConfigSchema } from "../types";
+import { BotContext, PayoutConfigSchema } from "../types";
 import { getUserPermission } from "./issue";
-import { getBotContext, getLogger } from "../bindings";
+import { getLogger } from "../bindings";
 import { getAccessLevel } from "../adapters/supabase";
 
 // available tokens for payouts
@@ -48,10 +48,9 @@ export const getPayoutConfigByNetworkId = (networkId: number): PayoutConfigParti
   };
 };
 
-export const hasLabelEditPermission = async (label: string, caller: string, repository: string) => {
-  const context = getBotContext();
+export const hasLabelEditPermission = async (context: BotContext, label: string, caller: string, repository: string) => {
   const logger = getLogger();
-  const permissionLevel = await getUserPermission(caller, context);
+  const permissionLevel = await getUserPermission(context, caller);
 
   // get text before :
   const match = label.split(":");

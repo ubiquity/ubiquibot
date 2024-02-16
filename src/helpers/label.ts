@@ -1,7 +1,6 @@
-import { Context } from "probot";
-import { getBotConfig, getBotContext, getLogger } from "../bindings";
 import { calculateBountyPrice } from "../handlers";
-import { Label, Payload } from "../types";
+import { BotContext, Label, Payload } from "../types";
+import { getLogger } from "../bindings";
 import { deleteLabel } from "./issue";
 import { calculateWeight } from "../helpers";
 
@@ -12,8 +11,7 @@ export const COLORS = {
 };
 // cspell:enable
 
-export const listLabelsForRepo = async (per_page?: number, page?: number): Promise<Label[]> => {
-  const context = getBotContext();
+export const listLabelsForRepo = async (context: BotContext, per_page?: number, page?: number): Promise<Label[]> => {
   const payload = context.payload as Payload;
 
   const res = await context.octokit.rest.issues.listLabelsForRepo({
@@ -30,8 +28,7 @@ export const listLabelsForRepo = async (per_page?: number, page?: number): Promi
   throw new Error(`Failed to fetch lists of labels, code: ${res.status}`);
 };
 
-export const createLabel = async (name: string, labelType?: keyof typeof COLORS): Promise<void> => {
-  const context = getBotContext();
+export const createLabel = async (context: BotContext, name: string, labelType?: keyof typeof COLORS): Promise<void> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   try {
@@ -46,8 +43,7 @@ export const createLabel = async (name: string, labelType?: keyof typeof COLORS)
   }
 };
 
-export const getLabel = async (name: string): Promise<boolean> => {
-  const context = getBotContext();
+export const getLabel = async (context: BotContext, name: string): Promise<boolean> => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   try {
@@ -65,20 +61,20 @@ export const getLabel = async (name: string): Promise<boolean> => {
 };
 
 // Function to update labels based on the base rate difference
-export const updateLabelsFromBaseRate = async (owner: string, repo: string, context: Context, labels: Label[], previousBaseRate: number) => {
+export const updateLabelsFromBaseRate = async (context: BotContext, owner: string, repo: string, labels: Label[], previousBaseRate: number) => {
   const logger = getLogger();
-  const config = getBotConfig();
+  const config = context.botConfig;
 
   const newLabels: string[] = [];
   const previousLabels: string[] = [];
 
   for (const timeLabel of config.price.timeLabels) {
     for (const priorityLabel of config.price.priorityLabels) {
-      const targetPrice = calculateBountyPrice(calculateWeight(timeLabel), calculateWeight(priorityLabel), config.price.baseMultiplier);
+      const targetPrice = calculateBountyPrice(context, calculateWeight(timeLabel), calculateWeight(priorityLabel), config.price.baseMultiplier);
       const targetPriceLabel = `Price: ${targetPrice} USD`;
       newLabels.push(targetPriceLabel);
 
-      const previousTargetPrice = calculateBountyPrice(calculateWeight(timeLabel), calculateWeight(priorityLabel), previousBaseRate);
+      const previousTargetPrice = calculateBountyPrice(context, calculateWeight(timeLabel), calculateWeight(priorityLabel), previousBaseRate);
       const previousTargetPriceLabel = `Price: ${previousTargetPrice} USD`;
       previousLabels.push(previousTargetPriceLabel);
     }
@@ -98,11 +94,11 @@ export const updateLabelsFromBaseRate = async (owner: string, repo: string, cont
         const labelData = labels.find((obj) => obj["name"] === label) as Label;
         const index = uniquePreviousLabels.findIndex((obj) => obj === label);
 
-        const exist = await getLabel(uniqueNewLabels[index]);
+        const exist = await getLabel(context, uniqueNewLabels[index]);
         if (exist) {
           // we have to delete first
           logger.debug(`Deleted ${uniqueNewLabels[index]}, updating it`);
-          await deleteLabel(uniqueNewLabels[index]);
+          await deleteLabel(context, uniqueNewLabels[index]);
         }
 
         // we can update safely
@@ -122,6 +118,6 @@ export const updateLabelsFromBaseRate = async (owner: string, repo: string, cont
       }
     }
   } catch (error: unknown) {
-    logger.error(`Error updating labels, error: ${error}`);
+    logger.error(context, `Error updating labels, error: ${error}`);
   }
 };

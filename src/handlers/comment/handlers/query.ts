@@ -1,10 +1,9 @@
 import { getAllAccessLevels, getWalletInfo, upsertAccessControl } from "../../../adapters/supabase";
-import { getBotContext, getLogger } from "../../../bindings";
-import { Payload } from "../../../types";
+import { getLogger } from "../../../bindings";
+import { BotContext, Payload } from "../../../types";
 import { ErrorDiff } from "../../../utils/helpers";
 
-export const query = async (body: string) => {
-  const context = getBotContext();
+export const query = async (context: BotContext, body: string) => {
   const logger = getLogger();
   const payload = context.payload as Payload;
   const sender = payload.sender.login;
@@ -30,7 +29,7 @@ export const query = async (body: string) => {
     if (!data) {
       logger.info(`Access info does not exist for @${user}`);
       try {
-        await upsertAccessControl(user, repo.full_name, "time_access", true);
+        await upsertAccessControl(context, user, repo.full_name, "time_access", true);
         data = {
           multiplier: false,
           priority: false,
@@ -57,7 +56,7 @@ export const query = async (body: string) => {
       `;
     }
   } else {
-    logger.error("Invalid body for query command");
+    logger.error(context, "Invalid body for query command");
     return `Invalid syntax for query command \n usage /query @user`;
   }
 };

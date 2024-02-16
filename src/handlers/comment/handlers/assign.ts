@@ -1,6 +1,6 @@
 import { addAssignees, getAssignedIssues, getAvailableOpenedPullRequests, getAllIssueComments, calculateWeight, calculateDuration } from "../../../helpers";
-import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
-import { Payload, LabelItem, Comment, IssueType, Issue } from "../../../types";
+import { getLogger } from "../../../bindings";
+import { Payload, LabelItem, Comment, IssueType, Issue, BotContext } from "../../../types";
 import { deadLinePrefix } from "../../shared";
 import { getWalletAddress, getWalletMultiplier } from "../../../adapters/supabase";
 import { tableComment } from "./table";
@@ -8,10 +8,10 @@ import { bountyInfo } from "../../wildcard";
 import { GLOBAL_STRINGS } from "../../../configs";
 import { isParentIssue } from "../../pricing";
 
-export const assign = async (body: string) => {
-  const { payload: _payload } = getBotContext();
+export const assign = async (context: BotContext, body: string) => {
+  const { payload: _payload } = context;
   const logger = getLogger();
-  const config = getBotConfig();
+  const config = context.botConfig;
 
   const payload = _payload as Payload;
   const { repository, organization } = payload;
@@ -39,10 +39,10 @@ export const assign = async (body: string) => {
     return GLOBAL_STRINGS.ignoreStartCommandForParentIssueComment;
   }
 
-  const openedPullRequests = await getAvailableOpenedPullRequests(payload.sender.login);
+  const openedPullRequests = await getAvailableOpenedPullRequests(context, payload.sender.login);
   logger.info(`Opened Pull Requests with approved reviews or with no reviews but over 24 hours have passed: ${JSON.stringify(openedPullRequests)}`);
 
-  const assignedIssues = await getAssignedIssues(payload.sender.login);
+  const assignedIssues = await getAssignedIssues(context, payload.sender.login);
   logger.info(`Max issue allowed is ${config.assign.bountyHunterMax}`);
 
   // check for max and enforce max
@@ -110,7 +110,7 @@ export const assign = async (body: string) => {
 
   if (!assignees.map((i) => i.login).includes(payload.sender.login)) {
     logger.info(`Adding the assignee: ${payload.sender.login}`);
-    await addAssignees(issue.number, [payload.sender.login]);
+    await addAssignees(context, issue.number, [payload.sender.login]);
   }
 
   let days: number | undefined;
@@ -125,17 +125,17 @@ export const assign = async (body: string) => {
 
   // double check whether the assign message has been already posted or not
   logger.info(`Creating an issue comment: ${comment.commit}`);
-  const issueComments = await getAllIssueComments(issue.number);
+  const issueComments = await getAllIssueComments(context, issue.number);
   const comments = issueComments.sort((a: Comment, b: Comment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   const latestComment = comments.length > 0 ? comments[0].body : undefined;
   if (latestComment && comment.commit != latestComment) {
-    const { multiplier, reason, bounty } = await getMultiplierInfoToDisplay(payload.sender.login, id?.toString(), issue);
+    const { multiplier, reason, bounty } = await getMultiplierInfoToDisplay(context, payload.sender.login, id?.toString(), issue);
     return tableComment({ ...comment, multiplier, reason, bounty, isBountyStale, days }) + comment.tips;
   }
   return;
 };
 
-const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, issue: Issue) => {
+const getMultiplierInfoToDisplay = async (context: BotContext, senderLogin: string, org_id: string, issue: Issue) => {
   const { reason, value } = await getWalletMultiplier(senderLogin, org_id);
 
   const multiplier = value?.toFixed(2) || "1.00";
@@ -154,7 +154,7 @@ const getMultiplierInfoToDisplay = async (senderLogin: string, org_id: string, i
     _multiplierToDisplay = multiplier;
     _reasonToDisplay = reason;
     _bountyToDisplay = `Permit generation disabled because price label is not set.`;
-    const issueDetailed = bountyInfo(issue);
+    const issueDetailed = bountyInfo(context, issue);
     if (issueDetailed.priceLabel) {
       _bountyToDisplay = (+issueDetailed.priceLabel.substring(7, issueDetailed.priceLabel.length - 4) * value).toString() + " USD";
     }

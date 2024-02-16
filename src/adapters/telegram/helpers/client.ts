@@ -1,5 +1,6 @@
 import { Input } from "telegraf";
-import { getAdapters, getBotConfig } from "../../../bindings";
+import { getAdapters } from "../../../bindings";
+import { BotContext } from "../../../types";
 import { TLMessageFormattedPayload, TLMessagePayload, TLPhotoPayload } from "../types/payload";
 
 export function messageFormatter(messagePayload: TLMessagePayload) {
@@ -14,10 +15,10 @@ export function messageFormatter(messagePayload: TLMessagePayload) {
   return msgObj;
 }
 
-export async function telegramFormattedNotifier(messagePayload: TLMessageFormattedPayload) {
+export async function telegramFormattedNotifier(context: BotContext, messagePayload: TLMessageFormattedPayload) {
   const {
     telegram: { delay },
-  } = getBotConfig();
+  } = context.botConfig;
   const { telegram } = getAdapters();
   const { chatIds, text, parseMode } = messagePayload;
 
@@ -40,14 +41,14 @@ export async function telegramFormattedNotifier(messagePayload: TLMessageFormatt
   sendHandler();
 }
 
-export async function telegramNotifier(messagePayload: TLMessagePayload) {
+export async function telegramNotifier(context: BotContext, messagePayload: TLMessagePayload) {
   const messageString = messageFormatter(messagePayload);
   const messageObj: TLMessageFormattedPayload = {
     chatIds: messagePayload.chatIds,
     text: messageString,
     parseMode: "HTML",
   };
-  await telegramFormattedNotifier(messageObj);
+  await telegramFormattedNotifier(context, messageObj);
 }
 
 export async function telegramPhotoNotifier(messagePayload: TLPhotoPayload) {

@@ -1,8 +1,8 @@
 import { getWalletAddress } from "../../adapters/supabase";
-import { getBotContext, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
 import { getAllIssueComments, getAllPullRequestReviews, getIssueDescription, parseComments } from "../../helpers";
 import { getLatestPullRequest, gitLinkedPrParser } from "../../helpers/parser";
-import { Incentives, MarkdownItem, Payload, UserType } from "../../types";
+import { BotContext, Incentives, MarkdownItem, Payload, UserType } from "../../types";
 import { RewardsResponse, commentParser } from "../comment";
 import Decimal from "decimal.js";
 import { bountyInfo } from "../wildcard";
@@ -24,11 +24,9 @@ const ItemsToExclude: string[] = [MarkdownItem.BlockQuote];
  * Incentivize the contributors based on their contribution.
  * The default formula has been defined in https://github.com/ubiquity/ubiquibot/issues/272
  */
-export const calculateIssueConversationReward = async (calculateIncentives: IncentivesCalculationResult): Promise<RewardsResponse> => {
+export const calculateIssueConversationReward = async (context: BotContext, calculateIncentives: IncentivesCalculationResult): Promise<RewardsResponse> => {
   const title = `Issue-Comments`;
   const logger = getLogger();
-
-  const context = getBotContext();
   const payload = context.payload as Payload;
   const issue = payload.issue;
 
@@ -39,7 +37,7 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
     return { error: "incentivizeComments: skipping payment permit generation because `assignee` is `undefined`." };
   }
 
-  const issueComments = await getAllIssueComments(calculateIncentives.issue.number, "full");
+  const issueComments = await getAllIssueComments(context, calculateIncentives.issue.number, "full");
   logger.info(`Getting the issue comments done. comments: ${JSON.stringify(issueComments)}`);
   const issueCommentsByUser: Record<string, { id: number; comments: string[] }> = {};
   for (const issueComment of issueComments) {
@@ -101,11 +99,11 @@ export const calculateIssueConversationReward = async (calculateIncentives: Ince
   return { error: "", title, reward, fallbackReward };
 };
 
-export const calculateIssueCreatorReward = async (incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> => {
+export const calculateIssueCreatorReward = async (context: BotContext, incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> => {
   const title = `Issue-Creation`;
   const logger = getLogger();
 
-  const issueDetailed = bountyInfo(incentivesCalculation.issue);
+  const issueDetailed = bountyInfo(context, incentivesCalculation.issue);
   if (!issueDetailed.isBounty) {
     logger.info(`incentivizeCreatorComment: its not a bounty`);
     return { error: `incentivizeCreatorComment: its not a bounty` };
@@ -118,7 +116,7 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
     return { error: "incentivizeCreatorComment: skipping payment permit generation because `assignee` is `undefined`." };
   }
 
-  const description = await getIssueDescription(incentivesCalculation.issue.number, "html");
+  const description = await getIssueDescription(context, incentivesCalculation.issue.number, "html");
   if (!description) {
     logger.info(`Skipping to generate a permit url because issue description is empty. description: ${description}`);
     return { error: `Skipping to generate a permit url because issue description is empty. description: ${description}` };
@@ -160,18 +158,17 @@ export const calculateIssueCreatorReward = async (incentivesCalculation: Incenti
   };
 };
 
-export const calculatePullRequestReviewsReward = async (incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> => {
+export const calculatePullRequestReviewsReward = async (context: BotContext, incentivesCalculation: IncentivesCalculationResult): Promise<RewardsResponse> => {
   const logger = getLogger();
-  const context = getBotContext();
   const title = "Review-Reviewer";
 
-  const linkedPullRequest = await gitLinkedPrParser({
+  const linkedPullRequest = await gitLinkedPrParser(context, {
     owner: incentivesCalculation.payload.repository.owner.login,
     repo: incentivesCalculation.payload.repository.name,
     issue_number: incentivesCalculation.issue.number,
   });
 
-  const latestLinkedPullRequest = await getLatestPullRequest(linkedPullRequest);
+  const latestLinkedPullRequest = await getLatestPullRequest(context, linkedPullRequest);
 
   if (!latestLinkedPullRequest) {
     logger.debug(`calculatePullRequestReviewsReward: No linked pull requests found`);
@@ -186,7 +183,7 @@ export const calculatePullRequestReviewsReward = async (incentivesCalculation: I
   }
 
   const prReviews = await getAllPullRequestReviews(context, latestLinkedPullRequest.number, "full");
-  const prComments = await getAllIssueComments(latestLinkedPullRequest.number, "full");
+  const prComments = await getAllIssueComments(context, latestLinkedPullRequest.number, "full");
   logger.info(`Getting the PR reviews done. comments: ${JSON.stringify(prReviews)}`);
   const prReviewsByUser: Record<string, { id: number; comments: string[] }> = {};
   for (const review of prReviews) {

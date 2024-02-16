@@ -1,8 +1,8 @@
 import { ethers } from "ethers";
 import { upsertWalletAddress } from "../../../adapters/supabase";
-import { getBotConfig, getBotContext, getLogger } from "../../../bindings";
+import { getLogger } from "../../../bindings";
 import { resolveAddress } from "../../../helpers";
-import { Payload } from "../../../types";
+import { BotContext, Payload } from "../../../types";
 import { formatEthAddress } from "../../../utils";
 import { IssueCommentCommands } from "../commands";
 import { constants } from "ethers";
@@ -22,9 +22,9 @@ const extractEnsName = (text: string): string | undefined => {
   return undefined;
 };
 
-export const registerWallet = async (body: string) => {
-  const { payload: _payload } = getBotContext();
-  const config = getBotConfig();
+export const registerWallet = async (context: BotContext, body: string) => {
+  const { payload: _payload } = context;
+  const config = context.botConfig;
   const logger = getLogger();
   const payload = _payload as Payload;
   const sender = payload.sender.login;
@@ -44,7 +44,7 @@ export const registerWallet = async (body: string) => {
 
   if (!address && ensName) {
     logger.info(`Trying to resolve address from Ens name: ${ensName}`);
-    address = await resolveAddress(ensName);
+    address = await resolveAddress(context, ensName);
     if (!address) {
       logger.info(`Resolving address from Ens name failed, EnsName: ${ensName}`);
       return `Resolving address from Ens name failed, Try again`;
@@ -79,7 +79,7 @@ export const registerWallet = async (body: string) => {
       logger.info("Skipping to register a wallet address because user is trying to set their address to null address");
       return `Cannot set address to null address`;
     }
-    await upsertWalletAddress(sender, address);
+    await upsertWalletAddress(context, sender, address);
     return `Updated the wallet address for @${sender} successfully!\t Your new address: ${formatEthAddress(address)}`;
   }
 

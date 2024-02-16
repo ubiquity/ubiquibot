@@ -1,6 +1,7 @@
 import { BigNumber, ethers } from "ethers";
 import { getLabelChanges, getPenalty, getWalletAddress, getWalletMultiplier, removePenalty } from "../../adapters/supabase";
-import { getBotConfig, getBotContext, getLogger } from "../../bindings";
+import { getLogger } from "../../bindings";
+
 import {
   addLabelToIssue,
   checkUserPermissionForRepoAndOrg,
@@ -15,7 +16,8 @@ import {
   createDetailsTable,
   savePermitToDB,
 } from "../../helpers";
-import { UserType, Payload, StateReason, Comment, User, Incentives, Issue } from "../../types";
+
+import { UserType, Payload, StateReason, Comment, User, Incentives, Issue, BotContext } from "../../types";
 import { bountyInfo } from "../wildcard";
 import Decimal from "decimal.js";
 import { GLOBAL_STRINGS } from "../../configs";
@@ -63,14 +65,13 @@ export interface RewardByUser {
  * Collect the information required for the permit generation and error handling
  */
 
-export const incentivesCalculation = async (): Promise<IncentivesCalculationResult> => {
-  const context = getBotContext();
+export const incentivesCalculation = async (context: BotContext): Promise<IncentivesCalculationResult> => {
   const {
     payout: { paymentToken, rpc, permitBaseUrl, networkId, privateKey },
     mode: { incentiveMode, paymentPermitMaxPrice },
     price: { incentives, issueCreatorMultiplier, baseMultiplier },
     accessControl,
-  } = getBotConfig();
+  } = context.botConfig;
   const logger = getLogger();
   const payload = context.payload as Payload;
   const issue = payload.issue;
@@ -83,16 +84,16 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
   }
 
   if (accessControl.organization) {
-    const userHasPermission = await checkUserPermissionForRepoAndOrg(payload.sender.login, context);
+    const userHasPermission = await checkUserPermissionForRepoAndOrg(context, payload.sender.login);
 
     if (!userHasPermission) {
       throw new Error("Permit generation disabled because this issue has been closed by an external contributor.");
     }
   }
 
-  const comments = await getAllIssueComments(issue.number);
+  const comments = await getAllIssueComments(context, issue.number);
 
-  const wasReopened = await wasIssueReopened(issue.number);
+  const wasReopened = await wasIssueReopened(context, issue.number);
   const claimUrlRegex = new RegExp(`\\((${permitBaseUrl}\\?claim=\\S+)\\)`);
   const permitCommentIdx = comments.findIndex((e) => e.user.type === UserType.Bot && e.body.match(claimUrlRegex));
 
@@ -100,13 +101,13 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     const permitComment = comments[permitCommentIdx];
     const permitUrl = permitComment.body.match(claimUrlRegex);
     if (!permitUrl || permitUrl.length < 2) {
-      logger.error(`Permit URL not found`);
+      logger.error(context, `Permit URL not found`);
       throw new Error("Permit generation skipped because permit URL not found");
     }
     const url = new URL(permitUrl[1]);
     const claimBase64 = url.searchParams.get("claim");
     if (!claimBase64) {
-      logger.error(`Permit claim search parameter not found`);
+      logger.error(context, `Permit claim search parameter not found`);
       throw new Error("Permit generation skipped because permit claim search parameter not found");
     }
     let networkId = url.searchParams.get("network");
@@ -117,16 +118,16 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     try {
       claim = JSON.parse(Buffer.from(claimBase64, "base64").toString("utf-8"));
     } catch (err: unknown) {
-      logger.error(`${err}`);
+      logger.error(context, `${err}`);
       throw new Error("Permit generation skipped because permit claim is invalid");
     }
     const amount = BigNumber.from(claim.permit.permitted.amount);
     const tokenAddress = claim.permit.permitted.token;
 
     // extract assignee
-    const events = await getAllIssueAssignEvents(issue.number);
+    const events = await getAllIssueAssignEvents(context, issue.number);
     if (events.length === 0) {
-      logger.error(`No assignment found`);
+      logger.error(context, `No assignment found`);
       throw new Error("Permit generation skipped because no assignment found");
     }
     const assignee = events[0].assignee.login;
@@ -134,7 +135,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     try {
       await removePenalty(assignee, payload.repository.full_name, tokenAddress, networkId, amount);
     } catch (err) {
-      logger.error(`Failed to remove penalty: ${err}`);
+      logger.error(context, `Failed to remove penalty: ${err}`);
       throw new Error("Permit generation skipped because failed to remove penalty");
     }
 
@@ -159,8 +160,8 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
 
   logger.info(`Checking if the issue is a parent issue.`);
   if (issue.body && isParentIssue(issue.body)) {
-    logger.error("Permit generation disabled because this is a collection of issues.");
-    await clearAllPriceLabelsOnIssue();
+    logger.error(context, "Permit generation disabled because this is a collection of issues.");
+    await clearAllPriceLabelsOnIssue(context);
     throw new Error("Permit generation disabled because this is a collection of issues.");
   }
 
@@ -185,7 +186,7 @@ export const incentivesCalculation = async (): Promise<IncentivesCalculationResu
     throw new Error(`Permit generation disabled because paymentPermitMaxPrice is 0.`);
   }
 
-  const issueDetailed = bountyInfo(issue);
+  const issueDetailed = bountyInfo(context, issue);
   if (!issueDetailed.isBounty) {
     logger.info(`Skipping... its not a bounty`);
     throw new Error(`Permit generation disabled because this issue didn't qualify as bounty.`);
@@ -332,6 +333,7 @@ export const calculateIssueAssigneeReward = async (incentivesCalculation: Incent
 };
 
 export const handleIssueClosed = async (
+  context: BotContext,
   creatorReward: RewardsResponse,
   assigneeReward: RewardsResponse,
   conversationRewards: RewardsResponse,
@@ -339,7 +341,7 @@ export const handleIssueClosed = async (
   incentivesCalculation: IncentivesCalculationResult
 ): Promise<{ error: string }> => {
   const logger = getLogger();
-  const { comments } = getBotConfig();
+  const { comments } = context.botConfig;
   const issueNumber = incentivesCalculation.issue.number;
 
   let permitComment = "";
@@ -398,6 +400,7 @@ export const handleIssueClosed = async (
 
   // CREATOR REWARD HANDLER
   // Generate permit for user if its not the same id as assignee
+
   if (creatorReward && creatorReward.reward && creatorReward.reward[0].account !== "0x") {
     rewardByUser.push({
       account: creatorReward.reward[0].account,
@@ -499,23 +502,23 @@ export const handleIssueClosed = async (
       reward.priceInEth = price.mul(multiplier);
     }
 
-    const { payoutUrl, txData } = await generatePermit2Signature(reward.account, reward.priceInEth, reward.issueId, reward.userId?.toString());
+    const { payoutUrl, txData } = await generatePermit2Signature(context, reward.account, reward.priceInEth, reward.issueId, reward.userId?.toString());
 
     const price = `${reward.priceInEth} ${incentivesCalculation.tokenSymbol.toUpperCase()}`;
 
     const comment = createDetailsTable(price, payoutUrl, reward.user, detailsValue, reward.debug);
 
-    await savePermitToDB(Number(reward.userId), txData);
+    await savePermitToDB(context, Number(reward.userId), txData);
     permitComment += comment;
 
     logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(conversationRewards.fallbackReward)}`);
     logger.info(`Skipping to generate a permit url for missing accounts. fallback: ${JSON.stringify(pullRequestReviewersReward.fallbackReward)}`);
   }
 
-  if (permitComment) await addCommentToIssue(permitComment.trim() + comments.promotionComment, issueNumber);
+  if (permitComment) await addCommentToIssue(context, permitComment.trim() + comments.promotionComment, issueNumber);
 
-  await deleteLabel(incentivesCalculation.issueDetailed.priceLabel);
-  await addLabelToIssue("Permitted");
+  await deleteLabel(context, incentivesCalculation.issueDetailed.priceLabel);
+  await addLabelToIssue(context, "Permitted");
 
   return { error: "" };
 };

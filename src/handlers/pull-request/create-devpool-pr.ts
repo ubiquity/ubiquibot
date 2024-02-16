@@ -1,10 +1,8 @@
-import { getBotContext, getLogger } from "../../bindings";
-import { GithubContent, Payload } from "../../types";
+import { getLogger } from "../../bindings";
+import { BotContext, GithubContent, Payload } from "../../types";
 
-export const createDevPoolPR = async () => {
+export const createDevPoolPR = async (context: BotContext) => {
   const logger = getLogger();
-
-  const context = getBotContext();
   const payload = context.payload as Payload;
 
   const devPoolOwner = "ubiquity";
