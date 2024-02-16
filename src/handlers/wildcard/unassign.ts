@@ -9,7 +9,7 @@ import {
   listAllIssuesForRepo,
   removeAssignees,
 } from "../../helpers";
-import { Comment, Issue, IssueType, Payload, UserType } from "../../types";
+import { Comment, Issue, IssueType, Payload, PullRequestState, UserType } from "../../types";
 import { deadLinePrefix } from "../shared";
 
 /**
@@ -52,7 +52,7 @@ const checkBountyToUnassign = async (issue: Issue): Promise<boolean> => {
   const curTimestamp = new Date().getTime();
   const lastActivity = await lastActivityTime(issue, comments);
   const passedDuration = curTimestamp - lastActivity.getTime();
-  const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee.login);
+  const pullRequest = await getOpenedPullRequestsForAnIssue(issue.number, issue.assignee.login, PullRequestState.READY);
 
   if (pullRequest.length > 0) {
     const reviewRequests = await getReviewRequests(context, pullRequest[0].number, payload.repository.owner.login, payload.repository.name);
@@ -110,7 +110,7 @@ const lastActivityTime = async (issue: Issue, comments: Comment[]): Promise<Date
 
   if (lastCommentsOfHunterForIssue.length > 0) activities.push(new Date(lastCommentsOfHunterForIssue[0].created_at));
 
-  const openedPrsForIssue = await getOpenedPullRequestsForAnIssue(issue.number, assignees[0]);
+  const openedPrsForIssue = await getOpenedPullRequestsForAnIssue(issue.number, assignees[0], PullRequestState.ALL);
   const pr = openedPrsForIssue.length > 0 ? openedPrsForIssue[0] : undefined;
   // get last commit and last comment on the linked pr
   if (pr) {
