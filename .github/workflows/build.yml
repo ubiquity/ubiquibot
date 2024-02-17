@@ -17,7 +17,7 @@ jobs:
           node-version: "20.10.0"
 
       - name: Install
-        run: npm install -g bun
+        run: npm install -g bun && bun install
 
       - name: Local Build
         run: bun tsc
