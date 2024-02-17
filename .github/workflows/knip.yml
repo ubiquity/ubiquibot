@@ -19,12 +19,12 @@ jobs:
 
       - name: Install toolchain
         run: npm install -g bun && bun install
-
       - name: Report knip results to pull request
         uses: Codex-/knip-reporter@v2
         with:
           verbose: true
-          comment_id: ${{ github.workflow }}-reporter
+          comment_id: Knip-reporter
           command_script_name: knip-ci
           annotations: true
           ignore_results: false
+          token: ${{ secrets.GITHUB_TOKEN }}
