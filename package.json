@@ -107,5 +107,5 @@
     "ext": "ts",
     "exec": "bun start"
   },
-  "packageManager": "bun@4.0.2"
+  "packageManager": "bun@1.0.23"
 }
