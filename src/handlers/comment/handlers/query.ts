@@ -1,63 +1,71 @@
-import { getAllAccessLevels, getWalletInfo, upsertAccessControl } from "../../../adapters/supabase";
-import { getBotContext, getLogger } from "../../../bindings";
-import { Payload } from "../../../types";
-import { ErrorDiff } from "../../../utils/helpers";
+import Runtime from "../../../bindings/bot-runtime";
 
-export const query = async (body: string) => {
-  const context = getBotContext();
-  const logger = getLogger();
-  const payload = context.payload as Payload;
-  const sender = payload.sender.login;
-  const { repository, organization } = payload;
+import _ from "lodash";
+import { Context } from "../../../types/context";
+import { GitHubPayload } from "../../../types/payload";
 
-  const id = organization?.id || repository?.id; // repository?.id as fallback
+export async function query(context: Context, body: string) {
+  const runtime = Runtime.getState(),
+    logger = context.logger,
+    payload = context.event.payload as GitHubPayload,
+    sender = payload.sender.login;
 
-  logger.info(`Received '/query' command from user: ${sender}`);
+  logger.info("Running '/query' command handler", { sender });
 
   const issue = payload.issue;
-  if (!issue) {
-    logger.info(`Skipping '/query' because of no issue instance`);
-    return `Skipping '/query' because of no issue instance`;
-  }
+  if (!issue) return logger.info(`Skipping '/query' because of no issue instance`);
 
   const regex = /^\/query\s+@([\w-]+)\s*$/;
   const matches = body.match(regex);
-  const user = matches?.[1];
-  const repo = payload.repository;
+  const username = matches?.[1];
 
-  if (user) {
-    let data = await getAllAccessLevels(user, repo.full_name);
-    if (!data) {
-      logger.info(`Access info does not exist for @${user}`);
-      try {
-        await upsertAccessControl(user, repo.full_name, "time_access", true);
-        data = {
-          multiplier: false,
-          priority: false,
-          time: true,
-          price: false,
-        };
-      } catch (e) {
-        ErrorDiff(e);
-        return `Error upserting access info for @${user}`;
+  if (!username) {
+    throw logger.fatal("Invalid body for query command \n usage /query @user");
+  }
+
+  const database = runtime.adapters.supabase;
+  const usernameResponse = await context.event.octokit.users.getByUsername({ username });
+  const user = usernameResponse.data;
+  if (!user) {
+    throw logger.fatal("User not found", { username });
+  }
+  const accessData = await database.access.getAccess(user.id);
+  const walletAddress = await database.wallet.getAddress(user.id);
+  const messageBuffer = [] as string[];
+
+  messageBuffer.push(renderMarkdownTableHeader());
+
+  if (!accessData && !walletAddress) {
+    return logger.error("No access or wallet found for user", { username });
+  }
+  if (accessData) {
+    messageBuffer.push(appendToMarkdownTableBody(accessData));
+  }
+  if (walletAddress) {
+    messageBuffer.push(appendToMarkdownTableBody({ wallet: walletAddress }));
+  }
+
+  return messageBuffer.join("");
+
+  function appendToMarkdownTableBody(data: Record<string, unknown>, parentKey = ""): string {
+    const tableStringBuffer = [] as string[];
+
+    for (const key in data) {
+      const deCamelKey = _.startCase(_.toLower(key));
+      const value = data[key];
+      if (typeof value === "object" && value !== null) {
+        tableStringBuffer.push(
+          appendToMarkdownTableBody(value as Record<string, unknown>, `${parentKey}${deCamelKey} - `)
+        );
+      } else {
+        tableStringBuffer.push(`| ${parentKey}${deCamelKey} | ${value} |\n`); // Table row
       }
     }
-    const walletInfo = await getWalletInfo(user, id?.toString());
-    if (!walletInfo?.address) {
-      return `Error retrieving multiplier and wallet address for @${user}`;
-    } else {
-      return `@${user}'s wallet address is ${walletInfo?.address}, multiplier is ${walletInfo?.multiplier} and access levels are
 
-| access type | access level        |
-| ----------- | ------------------- |
-| multiplier  | ${data.multiplier}  |
-| priority    | ${data.priority}    |
-| time        | ${data.time}        |
-| price       | ${data.price}       |
-      `;
-    }
-  } else {
-    logger.error("Invalid body for query command");
-    return `Invalid syntax for query command \n usage /query @user`;
+    return tableStringBuffer.join("");
   }
-};
+}
+
+function renderMarkdownTableHeader(): string {
+  return "| Property | Value |\n| --- | --- |\n"; // Table header
+}

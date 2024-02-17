@@ -1,6 +1,15 @@
 [Settings]
 ID = "d2668848-c2a6-411f-b884-004faee1942f"
+
 [build]
-functions = "./.netlify/functions"
-# Specify is-core-module/package.json as an external dependency
-ignore = "is-core-module/package.json"
+  command = "echo \"export const COMMIT_HASH = '$COMMIT_REF';\" > src/commit-hash.ts && bun tsc"
+  functions = "./.netlify/functions"
+  publish = "dist"
+
+[build.environment]
+  NODE_OPTIONS = "--enable-source-maps"
+
+[[headers]]
+  for = "*.js.map"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"

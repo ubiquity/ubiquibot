@@ -22,9 +22,12 @@ jobs:
             "^\.\/vendor"
             "^\.\/test"
             "^\.\/\.next"
+            "^\.\/tests"
             "\.sql$"
             "\.md$"
-            "\.d.ts$"
+            "\.d\.ts$"
+            "\.gitignore$" # Ignore .gitignore files
+            "\.test\.ts$"  # Ignore .test.ts files
           )
           while read -r file; do
             basefile=$(basename "$file")

@@ -1,18 +1,15 @@
-import { getBotContext, getLogger } from "../../../bindings";
-import { Payload, StreamlinedComment, UserType } from "../../../types";
-import { getAllIssueComments, getAllLinkedIssuesAndPullsInBody } from "../../../helpers";
 import { CreateChatCompletionRequestMessage } from "openai/resources/chat";
-import { askGPT, decideContextGPT, sysMsg } from "../../../helpers/gpt";
-import { ErrorDiff } from "../../../utils/helpers";
+import { getAllIssueComments } from "../../../helpers/issue";
+import { Context } from "../../../types/context";
+import { StreamlinedComment } from "../../../types/openai";
+import { GitHubPayload, UserType } from "../../../types/payload";
+import { askGPT, decideContextGPT, getAllLinkedIssuesAndPullsInBody, sysMsg } from "./ask/ask-gpt";
 
-/**
- * @param body The question to ask
- */
-export const ask = async (body: string) => {
-  const context = getBotContext();
-  const logger = getLogger();
+export async function ask(context: Context, body: string) {
+  // The question to ask
+  const logger = context.logger;
 
-  const payload = context.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   const sender = payload.sender.login;
   const issue = payload.issue;
 
@@ -21,7 +18,7 @@ export const ask = async (body: string) => {
   }
 
   if (!issue) {
-    return `This command can only be used on issues`;
+    return `This command can only be used on issues and pull requests`;
   }
 
   const chatHistory: CreateChatCompletionRequestMessage[] = [];
@@ -36,13 +33,12 @@ export const ask = async (body: string) => {
     const [, body] = matches;
 
     // standard comments
-    const comments = await getAllIssueComments(issue.number);
-    // raw so we can grab the <!--- { 'UbiquityAI': 'answer' } ---> tag
-    const commentsRaw = await getAllIssueComments(issue.number, "raw");
+    const comments = await getAllIssueComments(context, issue.number);
+    // raw so we can grab the <!--- { 'UbiquiBot': 'answer' } ---> tag
+    const commentsRaw = await getAllIssueComments(context, issue.number, "raw");
 
     if (!comments) {
-      logger.info(`Error getting issue comments`);
-      return ErrorDiff(`Error getting issue comments`);
+      throw logger.fatal(`Error getting issue comments`);
     }
 
     // add the first comment of the issue/pull request
@@ -53,7 +49,7 @@ export const ask = async (body: string) => {
 
     // add the rest
     comments.forEach(async (comment, i) => {
-      if (comment.user.type == UserType.User || commentsRaw[i].body.includes("<!--- { 'UbiquityAI': 'answer' } --->")) {
+      if (comment.user.type == UserType.User || commentsRaw[i].body.includes("<!--- { 'UbiquiBot': 'answer' } --->")) {
         streamlined.push({
           login: comment.user.login,
           body: comment.body,
@@ -62,17 +58,23 @@ export const ask = async (body: string) => {
     });
 
     // returns the conversational context from all linked issues and prs
-    const links = await getAllLinkedIssuesAndPullsInBody(issue.number);
+    const links = await getAllLinkedIssuesAndPullsInBody(context, issue.number);
 
     if (typeof links === "string") {
-      logger.info(`Error getting linked issues or prs: ${links}`);
+      logger.info("Error getting linked issues or prs: ", links);
     } else {
       linkedIssueStreamlined = links.linkedIssues;
       linkedPRStreamlined = links.linkedPrs;
     }
 
     // let chatgpt deduce what is the most relevant context
-    const gptDecidedContext = await decideContextGPT(chatHistory, streamlined, linkedPRStreamlined, linkedIssueStreamlined);
+    const gptDecidedContext = await decideContextGPT(
+      context,
+      chatHistory,
+      streamlined,
+      linkedPRStreamlined,
+      linkedIssueStreamlined
+    );
 
     if (linkedIssueStreamlined.length == 0 && linkedPRStreamlined.length == 0) {
       // No external context to add
@@ -80,7 +82,7 @@ export const ask = async (body: string) => {
         {
           role: "system",
           content: sysMsg,
-          name: "UbiquityAI",
+          name: "UbiquiBot",
         } as CreateChatCompletionRequestMessage,
         {
           role: "user",
@@ -92,32 +94,32 @@ export const ask = async (body: string) => {
       chatHistory.push(
         {
           role: "system",
-          content: sysMsg, // provide the answer template
-          name: "UbiquityAI",
+          content: sysMsg,
+          name: "UbiquiBot",
         } as CreateChatCompletionRequestMessage,
         {
           role: "system",
-          content: "Original Context: " + JSON.stringify(gptDecidedContext), // provide the context
+          content: "Original Context: " + JSON.stringify(gptDecidedContext),
           name: "system",
         } as CreateChatCompletionRequestMessage,
         {
           role: "user",
-          content: "Question: " + JSON.stringify(body), // provide the question
+          content: "Question: " + JSON.stringify(body),
           name: "user",
         } as CreateChatCompletionRequestMessage
       );
     }
 
-    const gptResponse = await askGPT(body, chatHistory);
+    const gptResponse = await askGPT(context, chatHistory);
 
     if (typeof gptResponse === "string") {
       return gptResponse;
     } else if (gptResponse.answer) {
       return gptResponse.answer;
     } else {
-      return ErrorDiff(`Error getting response from GPT`);
+      throw logger.fatal("Error getting response from OpenAI");
     }
   } else {
-    return "Invalid syntax for ask \n usage: '/ask What is pi?";
+    return logger.error("Invalid syntax for ask. usage: '/ask What is pi?'");
   }
-};
+}

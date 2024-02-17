@@ -1,45 +1,51 @@
-import { _approveLabelChange, getLabelChanges } from "../../../adapters/supabase";
-import { getBotContext, getLogger } from "../../../bindings";
-import { getUserPermission } from "../../../helpers";
-import { Payload } from "../../../types";
-import { ErrorDiff } from "../../../utils/helpers";
-import { bountyInfo } from "../../wildcard";
+import Runtime from "../../../bindings/bot-runtime";
+import { isUserAdminOrBillingManager } from "../../../helpers/issue";
+import { Context } from "../../../types/context";
+import { GitHubPayload } from "../../../types/payload";
+import { taskPaymentMetaData } from "../../wildcard/analytics";
 
-export const approveLabelChange = async () => {
-  const context = getBotContext();
-  const logger = getLogger();
-  const payload = context.payload as Payload;
+export async function authorizeLabelChanges(context: Context) {
+  const runtime = Runtime.getState();
+  const { label } = runtime.adapters.supabase;
+  const logger = context.logger;
+  const payload = context.event.payload as GitHubPayload;
   const sender = payload.sender.login;
 
-  logger.info(`Received '/authorize' command from user: ${sender}`);
+  logger.info("Running '/authorize' command handler", { sender });
 
   const { issue, repository } = payload;
   if (!issue) {
-    logger.info(`Skipping '/authorize' because of no issue instance`);
-    return;
+    return logger.info(`Skipping '/authorize' because of no issue instance`);
   }
 
   // check if sender is admin
   // passing in context so we don't have to make another request to get the user
-  const permissionLevel = await getUserPermission(sender, context);
+  const sufficientPrivileges = await isUserAdminOrBillingManager(context, sender);
 
   // if sender is not admin, return
-  if (permissionLevel !== "admin" && permissionLevel !== "billing_manager") {
-    logger.info(`User ${sender} is not an admin/billing_manager`);
-    return ErrorDiff(`You are not an admin/billing_manager and do not have the required permissions to access this function.`);
+  if (sufficientPrivileges) {
+    throw logger.fatal(
+      "User is not an admin/billing_manager and do not have the required permissions to access this function.",
+      { sender }
+    );
   }
 
-  const issueDetailed = bountyInfo(issue);
+  const task = taskPaymentMetaData(context, issue);
 
-  if (!issueDetailed.priceLabel || !issueDetailed.priorityLabel || !issueDetailed.timelabel) {
-    logger.info(`Skipping... its not a bounty`);
-    return ErrorDiff(`No valid bounty label on this issue`);
+  if (!task.priceLabel || !task.priorityLabel || !task.timeLabel) {
+    throw logger.fatal("Missing required labels", { issueDetailed: task });
   }
 
-  // check for label altering here
-  const labelChanges = await getLabelChanges(repository.full_name, [issueDetailed.priceLabel, issueDetailed.priorityLabel, issueDetailed.timelabel]);
+  // get current repository node id from payload and pass it to getLabelChanges function to get label changes
+  const labelChanges = await label.getLabelChanges(repository.node_id);
 
-  await _approveLabelChange(labelChanges.id);
+  if (labelChanges) {
+    // Approve label changes
+    labelChanges.forEach(async (labelChange) => {
+      await label.approveLabelChange(labelChange.id);
+      return logger.info("Approved label change", { labelChange });
+    });
+  }
 
-  return `Label change has been approved, permit can now be generated`;
-};
+  return logger.ok("Label change has been approved, permit can now be generated");
+}

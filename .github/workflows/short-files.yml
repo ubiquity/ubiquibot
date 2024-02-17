@@ -1,0 +1,28 @@
+name: Check File Length
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Check file length
+        run: |
+          IGNORE=("src/adapters/supabase/types/database.ts" "src/generatedFile2.ts") # Add more files to ignore as needed
+          find src -name "*.ts" -type f -exec bash -c '
+            for ignore in "${IGNORE[@]}"; do
+              if [[ "$1" == "$ignore" ]]; then
+                echo "Ignoring $ignore"
+                exit 0
+              fi
+            done
+            if [[ $(wc -l < "$1") -gt 512 ]]; then
+              echo "File $1 line length is greater than 512. This should be broken up into smaller files."
+              exit 1
+            fi
+          ' bash {} \;

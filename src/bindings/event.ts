@@ -1,146 +1,263 @@
-import { Context } from "probot";
-import { createAdapters } from "../adapters";
+import OpenAI from "openai";
+import { Context as ProbotContext } from "probot";
+import { LogReturn, Logs } from "ubiquibot-logger";
+import zlib from "zlib";
+import { createAdapters, supabaseClient } from "../adapters/adapters";
 import { processors, wildcardProcessors } from "../handlers/processors";
-import { shouldSkip } from "../helpers";
-import { BotConfig, GithubEvent, Payload, PayloadSchema, LogLevel } from "../types";
-import { Adapters } from "../types/adapters";
-import { ajv } from "../utils";
-import { loadConfig } from "./config";
-import { GitHubLogger } from "../adapters/supabase";
-import { validateConfigChange } from "../handlers/push";
+import { validateConfigChange } from "../handlers/push/push";
+import structuredMetadata from "../handlers/shared/structured-metadata";
+import { BotConfig } from "../types/configuration-types";
 
-let botContext: Context = {} as Context;
-export const getBotContext = () => botContext;
+import { addCommentToIssue } from "../helpers/issue";
+import { shouldSkip } from "../helpers/shared";
+import { Context } from "../types/context";
+import {
+  HandlerReturnValuesNoVoid,
+  MainActionHandler,
+  PostActionHandler,
+  PreActionHandler,
+  WildCardHandler,
+} from "../types/handlers";
+import { GitHubEvent, GitHubPayload, payloadSchema } from "../types/payload";
+import { ajv } from "../utils/ajv";
+import { generateConfiguration } from "../utils/generate-configuration";
+import Runtime from "./bot-runtime";
+import { env } from "./env";
 
-let botConfig: BotConfig = {} as BotConfig;
-export const getBotConfig = () => botConfig;
+const allowedEvents = Object.values(GitHubEvent) as string[];
 
-let adapters: Adapters = {} as Adapters;
-export const getAdapters = () => adapters;
+const NO_VALIDATION = [GitHubEvent.INSTALLATION_ADDED_EVENT, GitHubEvent.PUSH_EVENT] as string[];
+type PreHandlerWithType = { type: string; actions: PreActionHandler[] };
+type HandlerWithType = { type: string; actions: MainActionHandler[] };
+type WildCardHandlerWithType = { type: string; actions: WildCardHandler[] };
+type PostHandlerWithType = { type: string; actions: PostActionHandler[] };
+type AllHandlersWithTypes = PreHandlerWithType | HandlerWithType | PostHandlerWithType;
+type AllHandlers = PreActionHandler | MainActionHandler | PostActionHandler;
 
-export type Logger = {
-  info: (msg: string | object, options?: JSON) => void;
-  debug: (msg: string | object, options?: JSON) => void;
-  warn: (msg: string | object, options?: JSON) => void;
-  error: (msg: string | object, options?: JSON) => void;
-};
+const validatePayload = ajv.compile(payloadSchema);
 
-let logger: Logger;
-export const getLogger = (): Logger => logger;
+const runtime = Runtime.getState();
+runtime.adapters = createAdapters();
+runtime.logger = runtime.adapters.supabase.logs;
 
-const NO_VALIDATION = [GithubEvent.INSTALLATION_ADDED_EVENT as string, GithubEvent.PUSH_EVENT as string];
+export async function bindEvents(eventContext: ProbotContext) {
+  const payload = eventContext.payload as GitHubPayload;
+  const eventName = payload?.action ? `${eventContext.name}.${payload?.action}` : eventContext.name; // some events wont have actions as this grows
+  const logger = new Logs(supabaseClient, env.LOG_RETRY_LIMIT, env.LOG_LEVEL, eventContext);
 
-export const bindEvents = async (context: Context): Promise<void> => {
-  const { id, name } = context;
-  botContext = context;
-  const payload = context.payload as Payload;
-  const allowedEvents = Object.values(GithubEvent) as string[];
-  const eventName = payload.action ? `${name}.${payload.action}` : name; // some events wont have actions as this grows
+  logger.info("Event received", { id: eventContext.id, name: eventName });
 
-  let botConfigError;
-  try {
-    botConfig = await loadConfig(context);
-  } catch (err) {
-    botConfigError = err;
-  }
-
-  adapters = createAdapters(botConfig);
-
-  const options = {
-    app: "UbiquiBot",
-    // level: botConfig.log.level,
-  };
-
-  logger = new GitHubLogger(
-    options.app,
-    botConfig?.log?.logEnvironment ?? "development",
-    botConfig?.log?.level ?? LogLevel.DEBUG,
-    botConfig?.log?.retryLimit ?? 0,
-    botConfig.logNotification
-  ); // contributors will see logs in console while on development env
-  if (!logger) {
-    return;
-  }
-
-  if (botConfigError) {
-    logger.error(botConfigError.toString());
-    if (eventName === GithubEvent.PUSH_EVENT) {
-      await validateConfigChange();
-    }
-    return;
-  }
-
-  // Create adapters for telegram, supabase, twitter, discord, etc
-  logger.info("Creating adapters for supabase, telegram, twitter, etc...");
-
-  logger.info(
-    `Config loaded! config: ${JSON.stringify({
-      price: botConfig.price,
-      unassign: botConfig.unassign,
-      mode: botConfig.mode,
-      log: botConfig.log,
-      wallet: botConfig.wallet,
-    })}`
-  );
-
-  logger.info(`Started binding events... id: ${id}, name: ${eventName}, allowedEvents: ${allowedEvents}`);
-
-  if (!allowedEvents.includes(eventName)) {
+  if (!allowedEvents.includes(eventName) && eventContext.name !== "repository_dispatch") {
     // just check if its on the watch list
-    logger.info(`Skipping the event. reason: not configured`);
-    return;
+    return logger.info(`Skipping the event. reason: not configured`);
   }
 
   // Skip validation for installation event and push
   if (!NO_VALIDATION.includes(eventName)) {
     // Validate payload
-    const validate = ajv.compile(PayloadSchema);
-    const valid = validate(payload);
-    if (!valid) {
-      logger.info("Payload schema validation failed!!!", payload);
-      if (validate.errors) logger.warn(validate.errors);
-      return;
+    const isValid = validatePayload(payload);
+    if (!isValid && validatePayload.errors) {
+      return logger.error("Payload schema validation failed!", validatePayload.errors);
     }
 
     // Check if we should skip the event
-    const { skip, reason } = shouldSkip();
-    if (skip) {
-      logger.info(`Skipping the event. reason: ${reason}`);
-      return;
+    const should = shouldSkip(eventContext);
+    if (should.stop) {
+      return logger.info("Skipping the event.", { reason: should.reason });
+    }
+  }
+
+  if (eventName === GitHubEvent.PUSH_EVENT) {
+    await validateConfigChange(eventContext);
+  }
+
+  let botConfig: BotConfig;
+  try {
+    botConfig = await generateConfiguration(eventContext);
+  } catch (error) {
+    return;
+  }
+  const context: Context = {
+    event: eventContext,
+    config: botConfig,
+    openAi: botConfig.keys.openAi ? new OpenAI({ apiKey: botConfig.keys.openAi }) : null,
+    logger: logger,
+    payload: payload,
+    octokit: eventContext.octokit,
+  };
+
+  if (!context.config.keys.evmPrivateEncrypted) {
+    context.logger.error("No EVM private key found");
+  }
+
+  if (!context.logger) {
+    throw new Error("Failed to create logger");
+  }
+
+  if (eventContext.name === GitHubEvent.REPOSITORY_DISPATCH) {
+    const dispatchPayload = payload as any;
+    if (payload.action === "issueClosed") {
+      //This is response for issueClosed request
+      const response = dispatchPayload.client_payload.result;
+      if (response) {
+        const uncompressedComment = zlib.gunzipSync(Buffer.from(response));
+        await addCommentToIssue(
+          context,
+          uncompressedComment.toString(),
+          parseInt(dispatchPayload.client_payload.issueNumber)
+        );
+      }
     }
   }
 
   // Get the handlers for the action
   const handlers = processors[eventName];
+
   if (!handlers) {
-    logger.warn(`No handler configured for event: ${eventName}`);
-    return;
+    return context.logger.error("No handler configured for event:", { eventName });
   }
-
   const { pre, action, post } = handlers;
-  // Run pre-handlers
-  logger.info(`Running pre handlers: ${pre.map((fn) => fn.name)}, event: ${eventName}`);
-  for (const preAction of pre) {
-    await preAction();
-  }
-  // Run main handlers
-  logger.info(`Running main handlers: ${action.map((fn) => fn.name)}, event: ${eventName}`);
-  for (const mainAction of action) {
-    await mainAction();
-  }
 
-  // Run post-handlers
-  logger.info(`Running post handlers: ${post.map((fn) => fn.name)}, event: ${eventName}`);
-  for (const postAction of post) {
-    await postAction();
+  const handlerWithTypes: AllHandlersWithTypes[] = [
+    { type: "pre", actions: pre },
+    { type: "main", actions: action },
+    { type: "post", actions: post },
+  ];
+
+  for (const handlerWithType of handlerWithTypes) {
+    // List all the function names of handlerType.actions
+    const functionNames = handlerWithType.actions.map((action) => action?.name);
+
+    context.logger.info(
+      `Running "${handlerWithType.type}" \
+      for event: "${eventName}". \
+      handlers: "${functionNames.join(", ")}"`
+    );
+
+    await logAnyReturnFromHandlers(context, handlerWithType);
   }
 
   // Skip wildcard handlers for installation event and push event
-  if (eventName !== GithubEvent.INSTALLATION_ADDED_EVENT && eventName !== GithubEvent.PUSH_EVENT) {
+  if (eventName == GitHubEvent.INSTALLATION_ADDED_EVENT || eventName == GitHubEvent.PUSH_EVENT) {
+    return context.logger.info("Skipping wildcard handlers for event:", eventName);
+  } else {
     // Run wildcard handlers
-    logger.info(`Running wildcard handlers: ${wildcardProcessors.map((fn) => fn.name)}`);
-    for (const wildcardProcessor of wildcardProcessors) {
-      await wildcardProcessor();
+    const functionNames = wildcardProcessors.map((action) => action?.name);
+    context.logger.info(`Running wildcard handlers: "${functionNames.join(", ")}"`);
+    const wildCardHandlerType: WildCardHandlerWithType = { type: "wildcard", actions: wildcardProcessors };
+    await logAnyReturnFromHandlers(context, wildCardHandlerType);
+  }
+}
+
+async function logAnyReturnFromHandlers(context: Context, handlerType: AllHandlersWithTypes) {
+  for (const action of handlerType.actions) {
+    const renderCatchAllWithContext = createRenderCatchAll(context, handlerType, action);
+    try {
+      // checkHandler(action);
+      const response = await action(context);
+
+      if (handlerType.type === "main") {
+        // only log main handler results
+        await renderMainActionOutput(context, response, action);
+      } else {
+        // context.logger.ok("Completed", { action: action.name, type: handlerType.type });
+      }
+    } catch (report: unknown) {
+      await renderCatchAllWithContext(report);
     }
   }
-};
+}
+
+async function renderMainActionOutput(
+  context: Context,
+  response: void | HandlerReturnValuesNoVoid,
+  action: AllHandlers
+) {
+  const { payload, logger } = context;
+  const issueNumber = payload.issue?.number;
+  if (!issueNumber) {
+    throw new Error("No issue number found");
+  }
+
+  if (response instanceof LogReturn) {
+    let serializedComment;
+    if (response.metadata) {
+      serializedComment = [
+        response.logMessage.diff,
+        structuredMetadata.create(response.logMessage.type, response.metadata),
+      ].join("\n");
+    } else {
+      serializedComment = response.logMessage.diff;
+    }
+
+    await addCommentToIssue(context, serializedComment, issueNumber);
+  } else if (typeof response == "string") {
+    await addCommentToIssue(context, response, issueNumber);
+  } else if (response === null) {
+    logger.debug("null response", { action: action.name });
+  } else {
+    logger.error(
+      "No response from action. Ensure return of string, null, or LogReturn object",
+      { action: action.name },
+      true
+    );
+  }
+}
+
+function createRenderCatchAll(context: Context, handlerType: AllHandlersWithTypes, activeHandler: AllHandlers) {
+  return async function renderCatchAll(report: LogReturn | Error | unknown) {
+    const payload = context.event.payload as GitHubPayload;
+    const issue = payload.issue;
+    if (!issue) {
+      return context.logger.error("Issue is null. Skipping", { issue });
+    }
+
+    if (report instanceof LogReturn) {
+      // already made it to console so it should just post the comment
+
+      if (report.metadata) {
+        return await addCommentToIssue(
+          context,
+          [report.logMessage.diff, structuredMetadata.create(report.logMessage.type, report.metadata)].join("\n"),
+          issue.number
+        );
+      } else {
+        return await addCommentToIssue(context, report.logMessage.diff, issue.number);
+      }
+    } else if (report instanceof Error) {
+      // convert error to normal object
+      // this is now handled inside of the logger
+      // TODO: test this
+
+      // const error = {
+      //   name: report.name,
+      //   message: report.message,
+      //   stack: report.stack,
+      // };
+
+      return context.logger.error(
+        "action has an uncaught error",
+        {
+          handlerType,
+          activeHandler: activeHandler.name,
+          error: report,
+        },
+        true
+      );
+    } else {
+      // could be supabase error
+
+      // report as SupabaseError
+
+      return context.logger.error(
+        "action returned an unexpected value",
+        {
+          logReturn: report,
+          handlerType,
+          activeHandler: activeHandler.name,
+        },
+        true
+      );
+    }
+  };
+}
