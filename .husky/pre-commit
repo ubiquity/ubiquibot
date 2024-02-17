@@ -2,4 +2,4 @@
 . "$(dirname "$0")/_/husky.sh"
 
 # Run lint-staged first
-yarn lint-staged --verbose
+bun lint-staged --verbose

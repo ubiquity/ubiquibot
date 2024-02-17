@@ -24,12 +24,12 @@ Ubiquity DAO's GitHub Bot for Automating DevPool Management.
 
 git clone https://github.com/ubiquity/ubiquibot.git
 cd ubiquibot
-yarn
-yarn build (to compile your changes)
+bun
+bun build (to compile your changes)
 
-yarn build --watch (to locally auto compile your changes)
+bun build --watch (to locally auto compile your changes)
 
-yarn start:watch
+bun start:watch
 
 ## It's recommended to split terminals in your IDE while running above input
 ```
@@ -228,12 +228,12 @@ Supabase comes with a [readme](https://github.com/ubiquity/ubiquibot/blob/develo
 ### This options will require you to have a local Docker installation (under the hood it is required by Supabase) refer to [Supabase Docs](https://supabase.com/docs)
 
 ```
-yarn supabase start
+bun supabase start
 ```
 
 ## Check Supabase Status (locally)
 ```
-yarn supabase status
+bun supabase status
 ```
 
 ![supabase](https://github.com/ubiquity/ubiquibot/assets/41552663/e8709b8f-e7c3-49e0-876c-c15dde22c6d2)
@@ -252,16 +252,16 @@ DISQUALIFY_TIME="7 days" // 7 days
 
 ```
 
-3. `Make sure you have Node => 20.10.0 && yarn`
+3. `Make sure you have Node => 20.10.0 && bun`
 4. Open 2 terminal instances:
-   - in one instance run `yarn build --watch` (compiles the Typescript code)
-   - in another instance run `yarn start:watch` (runs the bot locally)
+   - in one instance run `bun build --watch` (compiles the Typescript code)
+   - in another instance run `bun start:watch` (runs the bot locally)
 5. Open `http://localhost:3000` and follow instructions to add the bot to one of your repositories.
 
 At this point the `.env` files auto-fill the empty fields (`PRIVATE_KEY` and `APP_ID`) if it is not previously filled.
 Now you can make changes to the repository on GitHub (e.g. add a task) and the bot should react.
 
-6. After adding the bot (as a installed app) to your github you will need to restart the aforementioned `yarn start:watch`` so CTRL-C to stop the node daemon and `yarn start:watch` again
+6. After adding the bot (as a installed app) to your github you will need to restart the aforementioned `bun start:watch`` so CTRL-C to stop the node daemon and `bun start:watch` again
 
 You can, for example:
 
@@ -312,7 +312,7 @@ Make sure you have your local instance of [ubiquibot running](#quickstart).
 
 ## How to create a new release
 
-1. Update the version in package.json: `yarn version --new-version x.x.x`
+1. Update the version in package.json: `bun version --new-version x.x.x`
 2. Commit and create a new tag: `git commit -am x.x.x && git tag -am x.x.x`
 3. Push tags: `git push origin v"x.x.x"`
 4. The Github action will create a release by recognizing the version tag

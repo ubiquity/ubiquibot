@@ -18,37 +18,37 @@ SUPABASE_KEY=XXX
 - Run Supabase locally
 
 ```sh
-yarn supabase start
+bun supabase start
 ```
 
 - Manager database migrations
 
 ```sh
-yarn supabase migration
+bun supabase migration
 ```
 
 - CI/CD for releasing to production
 
 ```sh
-yarn supabase db push
+bun supabase db push
 ```
 
 - Manager your supabase projects
 
 ```sh
-yarn supabase projects
+bun supabase projects
 ```
 
 - Generate types directly from your database schemas
 
 ```sh
-yarn supabase gen types
+bun supabase gen types
 ```
 
 3. Link the local project to the supabase project you created.
 
 ```sh
-yarn supabase link -p PASSWORD --project-ref PROJECT_REF
+bun supabase link -p PASSWORD --project-ref PROJECT_REF
 ```
 
 For more information about arguments, please go through [here](https://supabase.com/docs/reference/cli/supabase-link)

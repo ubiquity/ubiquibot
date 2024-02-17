@@ -10,18 +10,18 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "18.16.0"
+          node-version: "20.10.0"
 
       - name: Install
-        run: yarn install
+        run: npm install bun -g && bun install
 
       - name: Build
-        run: yarn build
+        run: bun build
 
       - name: Test
         env:
@@ -49,4 +49,4 @@ jobs:
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
           X25519_PRIVATE_KEY: "QCDb30UHUkwJAGhLWC-R2N0PiEbd4vQY6qH2Wloybyo"
 
-        run: "yarn test"
+        run: "bun test"

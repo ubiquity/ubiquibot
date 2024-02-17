@@ -13,8 +13,8 @@ We'd also love PRs. If you're thinking of a large PR, we advise opening up an is
 ## Submitting a pull request
 
 1. Fork and clone the repository.
-2. Configure and install the dependencies: `yarn install`.
-3. Make sure the tests pass on your machine: `yarn test`. These tests also apply the linter, so there's no need to lint separately.
+2. Configure and install the dependencies: `bun install`.
+3. Make sure the tests pass on your machine: `bun test`. These tests also apply the linter, so there's no need to lint separately.
 4. Create a new branch: `git checkout -b my-branch-name`.
 5. Make your change, add tests, and make sure the tests still pass. You can find the tests in the `src/tests` directory.
 6. Push to your fork and submit a pull request.
@@ -31,9 +31,9 @@ Work in Progress pull requests are also welcome to get feedback early on, or if 
 ## Running the project locally
 
 1. Fork and clone the repository.
-2. Install dependencies: `yarn install`.
-3. Build the project: `yarn build`.
-4. Start the project: `yarn start:watch`.
+2. Install dependencies: `bun install`.
+3. Build the project: `bun build`.
+4. Start the project: `bun start:watch`.
 
 ## Environment Setup
 

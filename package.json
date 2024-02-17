@@ -12,22 +12,18 @@
   ],
   "scripts": {
     "inspect": "node --inspect node_modules/.bin/probot run ./dist/main.js",
-    "build:gh-actions": "ncc build src/adapters/github/github-actions.ts -o ./",
-    "build": "tsc",
-    "build:watch": "tsc --watch",
     "clean": "rimraf ./dist ./node_modules",
     "format": "run-s format:prettier format:eslint format:cspell",
     "format:prettier": "prettier --write src",
     "format:eslint": "eslint --fix --ext .ts ./src",
     "format:cspell": "cspell --config .cspell.json 'src/**/*.{js,ts,json,md,yml}'",
-    "start:gh-actions": "tsx src/adapters/github/github-actions.ts",
-    "start:watch": "nodemon --exec 'yarn start'",
+    "start:watch": "nodemon --exec 'bun start'",
     "start": "probot run ./dist/main.js",
     "format:knip": "knip",
     "format:knip-ci": "knip --no-exit-code --reporter json",
     "prepare": "husky install",
     "test": "jest",
-    "logs:netlify": "yarn netlify logs:function webhooks"
+    "logs:netlify": "bun netlify logs:function webhooks"
   },
   "dependencies": {
     "@commitlint/cli": "^17.4.3",
@@ -109,7 +105,7 @@
     },
     "verbose": true,
     "ext": "ts",
-    "exec": "yarn start"
+    "exec": "bun start"
   },
-  "packageManager": "yarn@4.0.2"
+  "packageManager": "bun@4.0.2"
 }
