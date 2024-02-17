@@ -91,7 +91,7 @@ const userSchema = Type.Object({
 //   }),
 // ]);
 
-export type User = Static<typeof userSchema>;
+export type GitHubUser = Static<typeof userSchema>;
 // type UserProfile= Static<typeof UserProfileSchema>;
 export enum AuthorAssociation {
   OWNER = "OWNER",
@@ -137,7 +137,7 @@ const issueSchema = Type.Object({
   // NONE: The author does not have any specific association with the repository.
 });
 
-export type Issue = Static<typeof issueSchema>;
+export type GitHubIssue = Static<typeof issueSchema>;
 
 const repositorySchema = Type.Object({
   allow_forking: Type.Boolean(),
@@ -218,7 +218,7 @@ const repositorySchema = Type.Object({
   web_commit_signoff_required: Type.Boolean(),
 });
 
-export type Repository = Static<typeof repositorySchema>;
+export type GitHubRepository = Static<typeof repositorySchema>;
 
 const organizationSchema = Type.Object({
   login: Type.String(),
@@ -243,7 +243,7 @@ const commitsSchema = Type.Object({
   modified: Type.Array(Type.String()),
 });
 
-export type CommitsPayload = Static<typeof commitsSchema>;
+export type GitHubCommitsPayload = Static<typeof commitsSchema>;
 
 const installationSchema = Type.Object({
   id: Type.Number(),
@@ -278,7 +278,7 @@ const commentSchema = Type.Object({
   // performed_via_github_app: Type.Optional(Type.Boolean()),
 });
 
-export type Comment = Static<typeof commentSchema>;
+export type GitHubComment = Static<typeof commentSchema>;
 
 const assignEventSchema = Type.Object({
   url: Type.String(),
@@ -293,7 +293,7 @@ const assignEventSchema = Type.Object({
   assigner: userSchema,
 });
 
-export type AssignEvent = Static<typeof assignEventSchema>;
+export type GitHubAssignEvent = Static<typeof assignEventSchema>;
 
 const changesSchema = Type.Object({
   body: Type.Optional(
@@ -321,7 +321,7 @@ export const payloadSchema = Type.Object({
   changes: Type.Optional(changesSchema),
 });
 
-export type Payload = Static<typeof payloadSchema>;
+export type GitHubPayload = Static<typeof payloadSchema>;
 
 const pushSchema = Type.Object({
   ref: Type.String(),
@@ -338,7 +338,7 @@ const pushSchema = Type.Object({
   installation: Type.Optional(installationSchema),
 });
 
-export type PushPayload = Static<typeof pushSchema>;
+export type GitHubPushPayload = Static<typeof pushSchema>;
 
 const githubContentSchema = Type.Object({
   type: Type.String(),
@@ -363,7 +363,7 @@ const githubContentSchema = Type.Object({
 });
 
 export type GithubContent = Static<typeof githubContentSchema>;
-// type Organization = {
+// type GitHubOrganization = {
 //   login: string;
 //   id: number;
 //   node_id: string;
@@ -378,7 +378,7 @@ export type GithubContent = Static<typeof githubContentSchema>;
 //   description: string;
 // };
 
-// type OrganizationPayload = {
+// type GitHubOrganizationPayload = {
 //   action: string;
 //   membership?: {
 //     url: string;
@@ -406,7 +406,7 @@ export type GithubContent = Static<typeof githubContentSchema>;
 //       site_admin: boolean;
 //     };
 //   };
-//   organization: Organization;
+//   organization: GitHubOrganization;
 //   sender: {
 //     login: string;
 //     id: number;

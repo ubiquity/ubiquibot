@@ -11,11 +11,6 @@
  * 2. Gelato network should support the added payment token (https://docs.gelato.network/developer-services/relay/api#oracles-chainid-paymenttokens)
  */
 
-import Runtime from "../bindings/bot-runtime";
-import { Context } from "../types/context";
-
-import { isUserAdminOrBillingManager } from "./issue";
-
 // available tokens for payouts
 const PAYMENT_TOKEN_PER_NETWORK: Record<string, { rpc: string; token: string }> = {
   "1": {
@@ -38,25 +33,4 @@ export function getPayoutConfigByNetworkId(evmNetworkId: number) {
     rpc: paymentToken.rpc,
     paymentToken: paymentToken.token,
   };
-}
-
-export async function hasLabelEditPermission(context: Context, label: string, caller: string) {
-  const logger = context.logger;
-  const sufficientPrivileges = await isUserAdminOrBillingManager(context, caller);
-
-  // get text before :
-  const match = label.split(":");
-  if (match.length == 0) return false;
-
-  if (sufficientPrivileges) {
-    // check permission
-    const { access, user } = Runtime.getState().adapters.supabase;
-    const userId = await user.getUserId(context.event, caller);
-    const accessible = await access.getAccess(userId);
-    if (accessible) return true;
-    logger.info("No access to edit label", { caller, label });
-    return false;
-  }
-
-  return true;
 }

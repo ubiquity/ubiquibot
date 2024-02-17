@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { User } from "../../../../types/payload";
+import { GitHubUser } from "../../../../types/payload";
 import { createAdapters } from "../../../adapters";
 const SUPABASE_URL = process.env.SUPABASE_URL;
 if (!SUPABASE_URL) throw new Error("SUPABASE_URL is not defined");
@@ -10,7 +10,7 @@ if (!SUPABASE_KEY) throw new Error("SUPABASE_KEY is not defined");
 
 async function getWalletAddressAndUrlTest() {
   const { wallet } = createAdapters().supabase;
-  const userId = 4975670 as User["id"];
+  const userId = 4975670 as GitHubUser["id"];
   const results = [] as unknown[];
   try {
     const address = await wallet.getAddress(userId);

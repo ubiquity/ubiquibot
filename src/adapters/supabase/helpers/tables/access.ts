@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Comment } from "../../../../types/payload";
+import { GitHubComment } from "../../../../types/payload";
 import { Database } from "../../types/database";
 import { GitHubNode } from "../client";
 import { Super } from "./super";
@@ -52,7 +52,7 @@ export class Access extends Super {
     return data;
   }
 
-  async upsertMultiplier(userId: number, multiplier: number, reason: string, comment: Comment) {
+  async upsertMultiplier(userId: number, multiplier: number, reason: string, comment: GitHubComment) {
     try {
       const accessData: AccessData = {
         user_id: userId,

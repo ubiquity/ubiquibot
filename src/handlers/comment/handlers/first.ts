@@ -1,9 +1,9 @@
 import { Context } from "../../../types/context";
-import { Payload } from "../../../types/payload";
+import { GitHubPayload } from "../../../types/payload";
 import { generateHelpMenu } from "./help";
 
 export async function verifyFirstCommentInRepository(context: Context) {
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   if (!payload.issue) {
     throw context.logger.error("Issue is null. Skipping", { issue: payload.issue }, true);
   }

@@ -2,8 +2,9 @@ import { ObjectOptions, Static, StaticDecode, StringOptions, TProperties, Type a
 import ms from "ms";
 import { LogLevel } from "ubiquibot-logger/pretty-logs";
 import { userCommands } from "../handlers/comment/handlers/comment-handler-main";
-import { validHTMLElements } from "../handlers/comment/handlers/issue/valid-html-elements";
+
 import { ajv } from "../utils/ajv";
+import { validHTMLElements } from "./valid-html-elements";
 
 const promotionComment =
   "###### If you enjoy the DevPool experience, please follow [Ubiquity on GitHub](https://github.com/ubiquity) and star [this repo](https://github.com/ubiquity/devpool-directory) to show your support. It helps a lot!";
@@ -46,12 +47,11 @@ export function stringDuration(options?: StringOptions) {
 }
 
 const envConfigSchema = T.Object({
-  WEBHOOK_PROXY_URL: T.String({ format: "uri" }),
+  WEBHOOK_PROXY_URL: T.Optional(T.String({ format: "uri" })), // optional for production
   LOG_LEVEL: T.Enum(LogLevel, { default: LogLevel.DEBUG }),
   LOG_RETRY_LIMIT: T.Number({ default: 8 }),
   SUPABASE_URL: T.String({ format: "uri" }),
   SUPABASE_KEY: T.String(),
-  X25519_PRIVATE_KEY: T.String(),
   PRIVATE_KEY: T.String(),
   APP_ID: T.Number(),
 });
@@ -78,6 +78,7 @@ const botConfigSchema = strictObject(
         setLabel: T.Boolean({ default: true }),
         fundExternalClosedIssue: T.Boolean({ default: true }),
       }),
+      isNftRewardEnabled: T.Boolean({ default: false }),
     }),
 
     timers: strictObject({

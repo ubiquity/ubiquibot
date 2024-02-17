@@ -1,11 +1,26 @@
+import { LogLevel } from "ubiquibot-logger/pretty-logs";
 import { COMMIT_HASH } from "../../commit-hash";
 
-function createStructuredMetadata(className: string, metadata: unknown) {
-  const jsonString = JSON.stringify(metadata, null, 2);
+function createStructuredMetadata(className: string, metadata: any) {
+  const jsonPretty = JSON.stringify(metadata, null, 2);
   const stackLine = new Error().stack?.split("\n")[2] ?? "";
   const caller = stackLine.match(/at (\S+)/)?.[1] ?? "";
   const revision = COMMIT_HASH?.substring(0, 7) ?? null;
-  return [`<!-- Ubiquity - ${className} - ${caller} - ${revision}`, jsonString, "-->"].join("\n");
+  const ubiquityMetadataHeader = `<!-- Ubiquity - ${className} - ${caller} - ${revision}`;
+
+  let metadataSerialized: string;
+  const metadataSerializedVisible = ["```json", jsonPretty, "```"].join("\n");
+  const metadataSerializedHidden = [ubiquityMetadataHeader, jsonPretty, "-->"].join("\n");
+
+  if (metadata?.logMessage?.type === LogLevel.FATAL) {
+    // if the log message is fatal, then we want to show the metadata
+    metadataSerialized = [metadataSerializedVisible, metadataSerializedHidden].join("\n");
+  } else {
+    // otherwise we want to hide it
+    metadataSerialized = metadataSerializedHidden;
+  }
+
+  return metadataSerialized;
 }
 
 function parseStructuredMetadata(comment: string) {

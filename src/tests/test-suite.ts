@@ -1,16 +1,15 @@
 import { expect, test } from "@jest/globals";
-import { Issue } from "../types/payload";
+import { GitHubIssue } from "../types/payload";
 import {
+  // getCollaboratorUsername,
+  getAdminUser,
+  // TEST_PRIORITY_LABEL,
+  // TEST_TIME_LABEL,
+  getAdminUsername,
   GIT_COMMIT_HASH,
   owner,
   repo,
   SIX_HOURS,
-  // TEST_PRIORITY_LABEL,
-  // TEST_TIME_LABEL,
-  getAdminUsername,
-  // getCollaboratorUsername,
-  getAdminUser,
-  // getCollaboratorUser,
 } from "./commands-test";
 import checkLastComment, {
   createComment,
@@ -20,7 +19,7 @@ import checkLastComment, {
   waitForNWebhooks,
 } from "./utils";
 
-let issue: Issue;
+let issue: GitHubIssue;
 
 export function testSuite(): () => void {
   beforeAll(createAndAlwaysUseThisTestIssue(), SIX_HOURS);
@@ -35,7 +34,7 @@ function createAndAlwaysUseThisTestIssue(): jest.ProvidesHookCallback {
       owner,
       title: `${GIT_COMMIT_HASH} - E2E TEST`,
     });
-    issue = res.data as Issue;
+    issue = res.data as GitHubIssue;
 
     await waitForNWebhooks(4);
   };

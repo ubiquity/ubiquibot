@@ -1,11 +1,11 @@
+import { getLinkedPullRequests } from "../../../../helpers/get-linked-pull-requests";
 import { getAllIssueComments } from "../../../../helpers/issue";
-import { getLinkedPullRequests } from "../../../../helpers/parser";
 import { Context } from "../../../../types/context";
 
-import { Comment } from "../../../../types/payload";
+import { GitHubComment } from "../../../../types/payload";
 
 export async function getPullRequestComments(context: Context, owner: string, repository: string, issueNumber: number) {
-  const pullRequestComments: Comment[] = [];
+  const pullRequestComments: GitHubComment[] = [];
   const linkedPullRequests = await getLinkedPullRequests(context, { owner, repository, issue: issueNumber });
   if (linkedPullRequests.length) {
     const linkedCommentsPromises = linkedPullRequests.map((pull) => getAllIssueComments(context, pull.number));

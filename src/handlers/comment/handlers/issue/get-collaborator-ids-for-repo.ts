@@ -1,7 +1,7 @@
 import { Context } from "../../../../types/context";
-import { User } from "../../../../types/payload";
+import { GitHubUser } from "../../../../types/payload";
 
-export async function getCollaboratorsForRepo(context: Context): Promise<User[]> {
+export async function getCollaboratorsForRepo(context: Context): Promise<GitHubUser[]> {
   const payload = context.payload;
 
   try {
@@ -9,7 +9,7 @@ export async function getCollaboratorsForRepo(context: Context): Promise<User[]>
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       per_page: 100,
-    })) as User[];
+    })) as GitHubUser[];
     return collaboratorUsers;
   } catch (err: unknown) {
     context.logger.error("Failed to fetch lists of collaborators", err);

@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Repository } from "../../../../types/payload";
+import { GitHubRepository } from "../../../../types/payload";
 
 import Runtime from "../../../../bindings/bot-runtime";
 import { Database } from "../../types/database";
@@ -21,7 +21,7 @@ export class Label extends Super {
     previousLabel: string;
     currentLabel: string;
     authorized: boolean;
-    repository: Repository;
+    repository: GitHubRepository;
   }): Promise<null> {
     const { data, error } = await this.supabase.from("labels").insert({
       label_from: previousLabel,

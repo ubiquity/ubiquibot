@@ -5,13 +5,13 @@ import { Context as ProbotContext } from "probot";
 import YAML from "yaml";
 import Runtime from "../bindings/bot-runtime";
 import { BotConfig, stringDuration, validateBotConfig } from "../types/configuration-types";
-import { Payload } from "../types/payload";
+import { GitHubPayload } from "../types/payload";
 
 const UBIQUIBOT_CONFIG_REPOSITORY = "ubiquibot-config";
 const UBIQUIBOT_CONFIG_FULL_PATH = ".github/ubiquibot-config.yml";
 
 export async function generateConfiguration(context: ProbotContext): Promise<BotConfig> {
-  const payload = context.payload as Payload;
+  const payload = context.payload as GitHubPayload;
 
   const orgConfig = parseYaml(
     await download({

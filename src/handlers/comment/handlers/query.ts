@@ -2,12 +2,12 @@ import Runtime from "../../../bindings/bot-runtime";
 
 import _ from "lodash";
 import { Context } from "../../../types/context";
-import { Payload } from "../../../types/payload";
+import { GitHubPayload } from "../../../types/payload";
 
 export async function query(context: Context, body: string) {
   const runtime = Runtime.getState(),
     logger = context.logger,
-    payload = context.event.payload as Payload,
+    payload = context.event.payload as GitHubPayload,
     sender = payload.sender.login;
 
   logger.info("Running '/query' command handler", { sender });

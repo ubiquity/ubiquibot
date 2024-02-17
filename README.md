@@ -27,7 +27,7 @@ cd ubiquibot
 yarn
 yarn build (to compile your changes)
 
-yarn build --watch (to locally auto compile your changes) 
+yarn build --watch (to locally auto compile your changes)
 
 yarn start:watch
 
@@ -51,7 +51,7 @@ yarn start:watch
 - `SIMILARITY_THRESHOLD`: (optional) Set similarity threshold (default: 80).
 - `MEASURE_SIMILARITY_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for measuring similarity (default: 0).
 - `IMPORTANT_WORDS_AI_TEMPERATURE`: (optional) Set ChatGPT temperature for finding important words (default: 0).
-- `WEBHOOK_PROXY_URL`: (required) should be automatically filled when you install Ubiquibot
+- `WEBHOOK_PROXY_URL`: (required) should be automatically filled when you install UbiquiBot
 - `WEBHOOK_SECRET`: (required) should be automatically filled when the app is installed
 
 `APP_ID` and `PRIVATE_KEY` are [here](https://t.me/c/1588400061/1627) for core team developers to use.
@@ -101,7 +101,7 @@ If you are an external developer, `APP_ID`and `PRIVATE_KEY` are automatically ge
 
 ![trylocal](https://github.com/ubiquity/ubiquibot/assets/41552663/e958e7e4-6d42-44d1-a5cf-a090911f062c)
 
-### Congratulations! you successfully installed Ubiquibot (new or to an existing app)
+### Congratulations! you successfully installed UbiquiBot (new or to an existing app)
 
 
 ## Update an Existing Github App (bot)
@@ -153,7 +153,7 @@ Instead, it is recommended to make a copy of the `.env.example` file and replace
 
 1. Go to the [UbiquiBot App Marketplace](https://github.com/marketplace/ubiquibot)
 2. Choose a plan and install UbiquiBot on your repository
-3. Congratulations! You can now use the UbiquiBot to manage your bounties.
+3. Congratulations! You can now use the UbiquiBot to manage your tasks.
 
 To test the bot, you can:
 
@@ -166,14 +166,14 @@ To test the bot, you can:
 
 `evmNetworkId` is ID of the EVM-compatible network that will be used for payouts.
 
-`priceMultiplier` is a base number that will be used to calculate bounty price based on the following formula: `price = priceMultiplier * timeLabelWeight * priority-label-weight * 100`
+`priceMultiplier` is a base number that will be used to calculate task price based on the following formula: `price = priceMultiplier * timeLabelWeight * priority-label-weight * 100`
 
-`timeLabels` are labels for marking the time limit of the bounty:
+`timeLabels` are labels for marking the time limit of the task:
 
 - `name` is a human-readable name
-- `value` is number of seconds that corresponds to the time limit of the bounty
+- `value` is number of seconds that corresponds to the time limit of the task
 
-`priorityLabels` are labels for marking the priority of the bounty:
+`priorityLabels` are labels for marking the priority of the task:
 
 - `name` is a human-readable name
 
@@ -188,7 +188,7 @@ To test the bot, you can:
 
 `disableAnalytics` can be `true` or `false` that disables or enables weekly analytics collection by Ubiquity.
 
-`paymentPermitMaxPrice` sets the max amount for automatic payout of bounties when the issue is closed.
+`paymentPermitMaxPrice` sets the max amount for automatic payout of tasks when the issue is closed.
 
 `commentIncentives` can be `true` or `false` that enable or disable comment incentives. These are payments generated for comments in the issue by contributors, excluding the assignee.
 
@@ -203,7 +203,7 @@ To test the bot, you can:
   - `totals`:
     - `word` defines reward for each word in the comment
 
-`maxConcurrentAssigns` is the maximum number of bounties that can be assigned to a bounty hunter at once. This excludes bounties with delayed or approved pull request reviews.
+`maxConcurrentAssigns` is the maximum number of tasks that can be assigned to a task hunter at once. This excludes tasks with delayed or approved pull request reviews.
 
 `registerWalletWithVerification` can be `true` or `false`. If enabled, it requires a signed message to set wallet address. This prevents users from setting wallet address from centralized exchanges, which would make payments impossible to claim.
 
@@ -252,16 +252,16 @@ DISQUALIFY_TIME="7 days" // 7 days
 
 ```
 
-3. `Make sure you have Node => 20 && yarn`
+3. `Make sure you have Node => 20.10.0 && yarn`
 4. Open 2 terminal instances:
    - in one instance run `yarn build --watch` (compiles the Typescript code)
    - in another instance run `yarn start:watch` (runs the bot locally)
 5. Open `http://localhost:3000` and follow instructions to add the bot to one of your repositories.
 
 At this point the `.env` files auto-fill the empty fields (`PRIVATE_KEY` and `APP_ID`) if it is not previously filled.
-Now you can make changes to the repository on GitHub (e.g. add a bounty) and the bot should react.
+Now you can make changes to the repository on GitHub (e.g. add a task) and the bot should react.
 
-6. After adding the bot (as a installed app) to your github you will need to restart the aforemention yarn start:watch so CTRL-C to stop the node daemon and `yarn start:watch` again
+6. After adding the bot (as a installed app) to your github you will need to restart the aforementioned `yarn start:watch`` so CTRL-C to stop the node daemon and `yarn start:watch` again
 
 You can, for example:
 
@@ -272,9 +272,9 @@ You can, for example:
 
 ## How it works
 
-Ubiquibot is built using the [probot](https://probot.github.io/) framework so in fact the bot is a github app. But thanks to the [probot/adapter-github-actions](https://github.com/probot/adapter-github-actions) you can also use the bot as a github action.
+UbiquiBot is built using the [probot](https://probot.github.io/) framework so in fact the bot is a github app. But thanks to the [probot/adapter-github-actions](https://github.com/probot/adapter-github-actions) you can also use the bot as a github action.
 
-[Ubiquibot](https://github.com/marketplace/ubiquibot) it's also available ready to install on the Githut Marketplace.
+[UbiquiBot](https://github.com/marketplace/ubiquibot) it's also available ready to install on the GitHub Marketplace.
 
 When using as a github app the flow is the following:
 
@@ -319,7 +319,7 @@ Make sure you have your local instance of [ubiquibot running](#quickstart).
 
 ## Architecture Overview
 
-Ubiquibot is built using the [probot](https://probot.github.io/) framework, the bot is a github app
+UbiquiBot is built using the [probot](https://probot.github.io/) framework, the bot is a github app
 
 <pre>
 &lt;root&gt;

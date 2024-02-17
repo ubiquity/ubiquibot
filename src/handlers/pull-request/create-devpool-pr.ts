@@ -1,10 +1,10 @@
 import { Context } from "../../types/context";
-import { Payload, GithubContent } from "../../types/payload";
+import { GithubContent, GitHubPayload } from "../../types/payload";
 
 export async function createDevPoolPR(context: Context) {
   const logger = context.logger;
 
-  const payload = context.event.payload as Payload;
+  const payload = context.event.payload as GitHubPayload;
   const devPoolOwner = "ubiquity";
   const devPoolRepo = "devpool-directory";
 

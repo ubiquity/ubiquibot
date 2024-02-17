@@ -1,7 +1,7 @@
 import { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { Context as ProbotContext } from "probot";
 import Runtime from "../../../../bindings/bot-runtime";
-import { User } from "../../../../types/payload";
+import { GitHubUser } from "../../../../types/payload";
 
 import { Database } from "../../types/database";
 import { Super } from "./super";
@@ -32,17 +32,16 @@ export class Wallet extends Super {
       | ProbotContext<"issue_comment.edited">["payload"];
 
     const userData = await this._getUserData(payload);
-    const registeredWalletData = await this._getRegisteredWalletData(userData);
-
     const locationMetaData = this._getLocationMetaData(payload);
 
-    if (!registeredWalletData) {
+    if (!userData.wallet_id) {
       await this._registerNewWallet({
         address,
         locationMetaData,
         payload,
       });
     } else {
+      const registeredWalletData = await this._getRegisteredWalletData(userData);
       await this._updateExistingWallet({
         address,
         locationMetaData,
@@ -76,23 +75,23 @@ export class Wallet extends Super {
     const user = await this._checkIfUserExists(payload.sender.id);
     let userData = user;
     if (!userData) {
-      const user = payload.sender as User;
+      const user = payload.sender as GitHubUser;
       userData = await this._registerNewUser(user, this._getLocationMetaData(payload));
     }
     return userData;
   }
 
-  private async _registerNewUser(user: User, locationMetaData: LocationMetaData): Promise<UserRow> {
+  private async _registerNewUser(user: GitHubUser, locationMetaData: LocationMetaData): Promise<UserRow> {
     // Insert the location metadata into the locations table
     const { data: locationData, error: locationError } = (await this.supabase
       .from("locations")
       .insert(locationMetaData)
+      .select()
       .single()) as { data: LocationRow; error: PostgrestError | null };
 
     if (locationError) {
       throw new Error(locationError.message);
     }
-
     // Get the ID of the inserted location
     const locationId = locationData.id;
 
@@ -100,6 +99,7 @@ export class Wallet extends Super {
     const { data: userData, error: userError } = await this.supabase
       .from("users")
       .insert([{ id: user.id, location_id: locationId /* other fields if necessary */ }])
+      .select()
       .single();
 
     if (userError) {
@@ -167,6 +167,7 @@ export class Wallet extends Super {
     const { data: walletInsertData, error: walletInsertError } = await this.supabase
       .from("wallets")
       .insert(newWallet)
+      .select()
       .single();
 
     if (walletInsertError) throw walletInsertError;

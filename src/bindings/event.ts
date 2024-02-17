@@ -1,8 +1,8 @@
 import OpenAI from "openai";
 import { Context as ProbotContext } from "probot";
+import { LogReturn, Logs } from "ubiquibot-logger";
 import zlib from "zlib";
 import { createAdapters, supabaseClient } from "../adapters/adapters";
-import { LogMessage, LogReturn, Logs } from "ubiquibot-logger";
 import { processors, wildcardProcessors } from "../handlers/processors";
 import { validateConfigChange } from "../handlers/push/push";
 import structuredMetadata from "../handlers/shared/structured-metadata";
@@ -16,9 +16,9 @@ import {
   MainActionHandler,
   PostActionHandler,
   PreActionHandler,
-  WildCardHandler,
+  WildCardHandler
 } from "../types/handlers";
-import { GitHubEvent, Payload, payloadSchema } from "../types/payload";
+import { GitHubEvent, GitHubPayload, payloadSchema } from "../types/payload";
 import { ajv } from "../utils/ajv";
 import { generateConfiguration } from "../utils/generate-configuration";
 import Runtime from "./bot-runtime";
@@ -41,7 +41,7 @@ runtime.adapters = createAdapters();
 runtime.logger = runtime.adapters.supabase.logs;
 
 export async function bindEvents(eventContext: ProbotContext) {
-  const payload = eventContext.payload as Payload;
+  const payload = eventContext.payload as GitHubPayload;
   const eventName = payload?.action ? `${eventContext.name}.${payload?.action}` : eventContext.name; // some events wont have actions as this grows
   const logger = new Logs(supabaseClient, env.LOG_RETRY_LIMIT, env.LOG_LEVEL, eventContext);
 
@@ -160,7 +160,7 @@ async function logAnyReturnFromHandlers(context: Context, handlerType: AllHandle
         // only log main handler results
         await renderMainActionOutput(context, response, action);
       } else {
-        context.logger.ok("Completed", { action: action.name, type: handlerType.type });
+        // context.logger.ok("Completed", { action: action.name, type: handlerType.type });
       }
     } catch (report: unknown) {
       await renderCatchAllWithContext(report);
@@ -206,7 +206,7 @@ async function renderMainActionOutput(
 
 function createRenderCatchAll(context: Context, handlerType: AllHandlersWithTypes, activeHandler: AllHandlers) {
   return async function renderCatchAll(report: LogReturn | Error | unknown) {
-    const payload = context.event.payload as Payload;
+    const payload = context.event.payload as GitHubPayload;
     const issue = payload.issue;
     if (!issue) {
       return context.logger.error("Issue is null. Skipping", { issue });
@@ -214,35 +214,34 @@ function createRenderCatchAll(context: Context, handlerType: AllHandlersWithType
 
     if (report instanceof LogReturn) {
       // already made it to console so it should just post the comment
-      const { logMessage } = report;
 
       if (report.metadata) {
-        context.logger.debug("this is the second place that metadata is being serialized as an html comment");
-        let metadataSerialized;
-        const prettySerialized = JSON.stringify(report.metadata, null, 2);
-        // first check if metadata is an error, then post it as a json comment
-        // otherwise post it as an html comment
-        if (report.logMessage.type === ("fatal" as LogMessage["type"])) {
-          metadataSerialized = ["```json", prettySerialized, "```"].join("\n");
-        } else {
-          metadataSerialized = ["<!--", prettySerialized, "-->"].join("\n");
-        }
-
-        return await addCommentToIssue(context, [logMessage.diff, metadataSerialized].join("\n"), issue.number);
+        return await addCommentToIssue(
+          context,
+          [report.logMessage.diff, structuredMetadata.create(report.logMessage.type, report.metadata)].join("\n"),
+          issue.number
+        );
       } else {
-        return await addCommentToIssue(context, logMessage.diff, issue.number);
+        return await addCommentToIssue(context, report.logMessage.diff, issue.number);
       }
     } else if (report instanceof Error) {
       // convert error to normal object
-      const error = {
-        name: report.name,
-        message: report.message,
-        stack: report.stack,
-      };
+      // this is now handled inside of the logger
+      // TODO: test this
+
+      // const error = {
+      //   name: report.name,
+      //   message: report.message,
+      //   stack: report.stack,
+      // };
 
       return context.logger.error(
         "action has an uncaught error",
-        { logReturn: report, handlerType, activeHandler: activeHandler.name, error },
+        {
+          handlerType,
+          activeHandler: activeHandler.name,
+          error: report,
+        },
         true
       );
     } else {
@@ -258,7 +257,11 @@ function createRenderCatchAll(context: Context, handlerType: AllHandlersWithType
 
       return context.logger.error(
         "action returned an unexpected value",
-        { logReturn: report, handlerType, activeHandler: activeHandler.name },
+        {
+          logReturn: report,
+          handlerType,
+          activeHandler: activeHandler.name,
+        },
         true
       );
     }
