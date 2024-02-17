@@ -2,7 +2,7 @@
 ID = "d2668848-c2a6-411f-b884-004faee1942f"
 
 [build]
-  command = "echo \"export const COMMIT_HASH = '$COMMIT_REF';\" > src/commit-hash.ts && bun build"
+  command = "echo \"export const COMMIT_HASH = '$COMMIT_REF';\" > src/commit-hash.ts && bun tsc"
   functions = "./.netlify/functions"
   publish = "dist"
 

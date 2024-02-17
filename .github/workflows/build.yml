@@ -20,7 +20,7 @@ jobs:
         run: npm install -g bun
 
       - name: Local Build
-        run: bun build
+        run: bun tsc
 
       - name: Lint
         run: bun format

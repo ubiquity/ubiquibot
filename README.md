@@ -25,9 +25,9 @@ Ubiquity DAO's GitHub Bot for Automating DevPool Management.
 git clone https://github.com/ubiquity/ubiquibot.git
 cd ubiquibot
 bun
-bun build (to compile your changes)
+bun tsc (to compile your changes)
 
-bun build --watch (to locally auto compile your changes)
+bun tsc --watch (to locally auto compile your changes)
 
 bun start:watch
 
@@ -254,7 +254,7 @@ DISQUALIFY_TIME="7 days" // 7 days
 
 3. `Make sure you have Node => 20.10.0 && bun`
 4. Open 2 terminal instances:
-   - in one instance run `bun build --watch` (compiles the Typescript code)
+   - in one instance run `bun tsc --watch` (compiles the Typescript code)
    - in another instance run `bun start:watch` (runs the bot locally)
 5. Open `http://localhost:3000` and follow instructions to add the bot to one of your repositories.
 

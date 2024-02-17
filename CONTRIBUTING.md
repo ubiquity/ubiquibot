@@ -32,7 +32,7 @@ Work in Progress pull requests are also welcome to get feedback early on, or if 
 
 1. Fork and clone the repository.
 2. Install dependencies: `bun install`.
-3. Build the project: `bun build`.
+3. Build the project: `bun tsc`.
 4. Start the project: `bun start:watch`.
 
 ## Environment Setup
