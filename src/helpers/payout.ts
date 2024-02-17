@@ -11,14 +11,10 @@
  * 2. Gelato network should support the added payment token (https://docs.gelato.network/developer-services/relay/api#oracles-chainid-paymenttokens)
  */
 
-import { Static } from "@sinclair/typebox";
-import { DEFAULT_RPC_ENDPOINT } from "../configs";
-import { PayoutConfigSchema } from "../types";
-
 // available tokens for payouts
 const PAYMENT_TOKEN_PER_NETWORK: Record<string, { rpc: string; token: string }> = {
   "1": {
-    rpc: DEFAULT_RPC_ENDPOINT,
+    rpc: "https://rpc-bot.ubq.fi/v1/mainnet",
     token: "0x6B175474E89094C44Da98b954EedeAC495271d0F", // DAI
   },
   "100": {
@@ -27,14 +23,7 @@ const PAYMENT_TOKEN_PER_NETWORK: Record<string, { rpc: string; token: string }> 
   },
 };
 
-type PayoutConfigPartial = Omit<Static<typeof PayoutConfigSchema>, "evmNetworkId" | "privateKey" | "permitBaseUrl">;
-
-/**
- * Returns payout config for a particular network
- * @param evmNetworkId network id
- * @returns RPC URL and payment token
- */
-export const getPayoutConfigByNetworkId = (evmNetworkId: number): PayoutConfigPartial => {
+export function getPayoutConfigByNetworkId(evmNetworkId: number) {
   const paymentToken = PAYMENT_TOKEN_PER_NETWORK[evmNetworkId.toString()];
   if (!paymentToken) {
     throw new Error(`No config setup for evmNetworkId: ${evmNetworkId}`);
@@ -44,4 +33,4 @@ export const getPayoutConfigByNetworkId = (evmNetworkId: number): PayoutConfigPa
     rpc: paymentToken.rpc,
     paymentToken: paymentToken.token,
   };
-};
+}

@@ -1,22 +1,20 @@
-import { getBotContext, getLogger } from "../../bindings";
-import { GithubContent, Payload } from "../../types";
+import { Context } from "../../types/context";
+import { GithubContent, GitHubPayload } from "../../types/payload";
 
-export const createDevPoolPR = async () => {
-  const logger = getLogger();
+export async function createDevPoolPR(context: Context) {
+  const logger = context.logger;
 
-  const context = getBotContext();
-  const payload = context.payload as Payload;
-
+  const payload = context.event.payload as GitHubPayload;
   const devPoolOwner = "ubiquity";
   const devPoolRepo = "devpool-directory";
 
   if (!payload.repositories_added) {
-    return;
+    return logger.info("No repositories added");
   }
 
   const repository = payload.repositories_added[0];
 
-  logger.info(`New Install: ${repository.full_name}`);
+  logger.info("New Install: ", { repository: repository.full_name });
 
   const [owner, repo] = repository.full_name.split("/");
 
@@ -25,14 +23,14 @@ export const createDevPoolPR = async () => {
   const baseRef = "development";
   const path = "projects.json";
 
-  const { data: branch } = await context.octokit.repos.getBranch({
+  const { data: branch } = await context.event.octokit.repos.getBranch({
     owner: devPoolOwner,
     repo: devPoolRepo,
     branch: "development",
   });
 
   // Get the current projects json file
-  const { data: file } = await context.octokit.repos.getContent({
+  const { data: file } = await context.event.octokit.repos.getContent({
     owner: devPoolOwner,
     repo: devPoolRepo,
     path,
@@ -52,7 +50,7 @@ export const createDevPoolPR = async () => {
   const mainSha = branch.commit.sha;
 
   // create branch from sha
-  await context.octokit.git.createRef({
+  await context.event.octokit.git.createRef({
     owner: devPoolOwner,
     repo: devPoolRepo,
     ref: `refs/heads/add-${owner}-${repo}`,
@@ -61,7 +59,7 @@ export const createDevPoolPR = async () => {
 
   logger.info("Branch created on DevPool Directory");
 
-  await context.octokit.repos.createOrUpdateFileContents({
+  await context.event.octokit.repos.createOrUpdateFileContents({
     owner: devPoolOwner,
     repo: devPoolRepo,
     path,
@@ -72,14 +70,13 @@ export const createDevPoolPR = async () => {
   });
 
   // create the pull request
-  await context.octokit.pulls.create({
+  await context.event.octokit.pulls.create({
     owner: devPoolOwner,
     repo: devPoolRepo,
     title: `Add ${repository.full_name} to repo`,
     head: branchName,
     base: baseRef,
-    body: "",
   });
 
-  logger.info("Pull request created on DevPool Directory");
-};
+  return logger.info("Pull request created on DevPool Directory");
+}

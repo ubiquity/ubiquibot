@@ -1,78 +1,90 @@
-import { GithubEvent, Handler, ActionHandler } from "../types";
-import { closePullRequestForAnIssue, commentWithAssignMessage } from "./assign";
-import { pricingLabelLogic, validatePriceLabels } from "./pricing";
-import { checkTasksToUnassign, collectAnalytics } from "./wildcard";
-import { nullHandler } from "./shared";
-import { handleComment, issueClosedCallback, issueCreatedCallback, issueReopenedCallback } from "./comment";
-import { checkPullRequests } from "./assign/auto";
-import { createDevPoolPR } from "./pull-request";
-import { runOnPush, validateConfigChange } from "./push";
-import { findDuplicateOne } from "./issue";
+import { GitHubEvent } from "../types/github-events";
+import { Handler, WildCardHandler } from "../types/handlers";
+import { assignCommandHandler, closePullRequestForAnIssue } from "./assign/assign-command-handler";
+import { checkPullRequests } from "./assign/check-pull-requests";
+import { commentCreated } from "./comment/comment-created";
+import { issueClosed } from "./comment/handlers/issue-closed";
+import { watchLabelChange } from "./label/label";
+import { addPenalty } from "./penalty/add-penalty";
+import { onLabelChangeSetPricing } from "./pricing/pricing-label";
+import { syncPriceLabelsToConfig } from "./pricing/sync-labels-to-config";
+import { createDevPoolPR } from "./pull-request/create-devpool-pr";
+import { checkModifiedBaseRate } from "./push/check-modified-base-rate";
+import { checkTasksToUnassign } from "./wildcard/unassign/check-tasks-to-unassign";
+
+/**
+ * @dev
+ * pre and post handlers do not return a message to comment on the issue. their return type MUST BE `void`
+ * main action MUST return a message to comment on the issue. its return type MUST BE either `string` for plaintext or `LogReturn` for color to signal success, warning, or failure status
+ * TODO: all MUST receive `Context` as the only parameter
+ */
 
 export const processors: Record<string, Handler> = {
-  [GithubEvent.ISSUES_OPENED]: {
-    pre: [nullHandler],
-    action: [findDuplicateOne, issueCreatedCallback],
-    post: [nullHandler],
+  [GitHubEvent.ISSUES_OPENED]: {
+    pre: [],
+    action: [],
+    post: [],
   },
-  [GithubEvent.ISSUES_REOPENED]: {
-    pre: [nullHandler],
-    action: [issueReopenedCallback],
-    post: [nullHandler],
+  [GitHubEvent.ISSUES_REOPENED]: {
+    pre: [],
+    action: [addPenalty],
+    post: [],
   },
-  [GithubEvent.ISSUES_LABELED]: {
-    pre: [validatePriceLabels],
-    action: [pricingLabelLogic],
-    post: [nullHandler],
+  [GitHubEvent.ISSUES_LABELED]: {
+    pre: [syncPriceLabelsToConfig],
+    action: [],
+    post: [onLabelChangeSetPricing],
   },
-  [GithubEvent.ISSUES_UNLABELED]: {
-    pre: [validatePriceLabels],
-    action: [pricingLabelLogic],
-    post: [nullHandler],
+  [GitHubEvent.ISSUES_UNLABELED]: {
+    pre: [syncPriceLabelsToConfig],
+    action: [],
+    post: [onLabelChangeSetPricing],
   },
-  [GithubEvent.ISSUES_ASSIGNED]: {
-    pre: [nullHandler],
-    action: [commentWithAssignMessage],
-    post: [nullHandler],
+  [GitHubEvent.ISSUES_ASSIGNED]: {
+    pre: [],
+    action: [assignCommandHandler],
+    post: [],
   },
-  [GithubEvent.ISSUES_UNASSIGNED]: {
-    pre: [nullHandler],
+  [GitHubEvent.ISSUES_UNASSIGNED]: {
+    pre: [],
     action: [closePullRequestForAnIssue],
-    post: [nullHandler],
+    post: [],
   },
-  [GithubEvent.ISSUE_COMMENT_CREATED]: {
-    pre: [nullHandler],
-    action: [handleComment],
-    post: [nullHandler],
+  [GitHubEvent.ISSUE_COMMENT_CREATED]: {
+    pre: [],
+    action: [commentCreated],
+    post: [],
   },
-  [GithubEvent.ISSUE_COMMENT_EDITED]: {
-    pre: [nullHandler],
-    action: [handleComment],
-    post: [nullHandler],
+  [GitHubEvent.ISSUE_COMMENT_EDITED]: {
+    pre: [],
+    action: [],
+    post: [],
   },
-  [GithubEvent.ISSUES_CLOSED]: {
-    pre: [nullHandler],
-    action: [issueClosedCallback],
-    post: [nullHandler],
+  [GitHubEvent.ISSUES_CLOSED]: {
+    pre: [],
+    action: [issueClosed],
+    post: [],
   },
-  [GithubEvent.PULL_REQUEST_OPENED]: {
-    pre: [nullHandler],
+  [GitHubEvent.PULL_REQUEST_OPENED]: {
+    pre: [],
     action: [checkPullRequests],
-    post: [nullHandler],
+    post: [],
   },
-  [GithubEvent.INSTALLATION_ADDED_EVENT]: {
-    pre: [nullHandler],
+  [GitHubEvent.INSTALLATION_CREATED]: {
+    pre: [],
     action: [createDevPoolPR],
-    post: [nullHandler],
+    post: [],
   },
-  [GithubEvent.PUSH_EVENT]: {
-    pre: [nullHandler],
-    action: [validateConfigChange, runOnPush],
-    post: [nullHandler],
+  [GitHubEvent.PUSH]: {
+    pre: [],
+    action: [],
+    post: [checkModifiedBaseRate],
+  },
+  [GitHubEvent.LABEL_EDITED]: {
+    pre: [],
+    action: [watchLabelChange],
+    post: [],
   },
 };
 
-/**
- * @dev The handlers which will run on every event hooked
- */
-export const wildcardProcessors: ActionHandler[] = [checkTasksToUnassign, collectAnalytics];
+export const wildcardProcessors: WildCardHandler[] = [checkTasksToUnassign]; // The handlers which will run after every event

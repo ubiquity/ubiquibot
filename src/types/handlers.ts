@@ -1,10 +1,15 @@
-import { Comment } from "./payload";
+import { LogReturn } from "ubiquibot-logger";
+import { Context } from "./context";
 
-export type CommandsHandler = (args: string) => Promise<string | undefined>;
-export type ActionHandler = (args?: string) => Promise<void>;
-export type CallbackHandler = (issue_number: number, text: string, action: string, reply_to?: Comment) => Promise<void>;
-export type PreActionHandler = ActionHandler;
-export type PostActionHandler = ActionHandler;
+export type HandlerReturnValuesNoVoid = null | string | LogReturn;
+
+export type MainActionHandler = (context: Context) => Promise<HandlerReturnValuesNoVoid>;
+type CommandsHandler = (context: Context, body: string) => Promise<HandlerReturnValuesNoVoid>;
+
+export type PreActionHandler = (context: Context) => Promise<void>;
+export type PostActionHandler = (context: Context) => Promise<void>;
+
+export type WildCardHandler = (context: Context) => Promise<void>;
 
 /**
  * @dev A set of handlers to do a pre/main/post action for a given action
@@ -15,15 +20,13 @@ export type PostActionHandler = ActionHandler;
  */
 export type Handler = {
   pre: PreActionHandler[];
-  action: ActionHandler[];
+  action: MainActionHandler[];
   post: PostActionHandler[];
 };
 
 export type UserCommands = {
   id: string;
   description: string;
+  example: string;
   handler: CommandsHandler;
-  callback: CallbackHandler;
-  successComment?: string;
-  failureComment?: string;
 };
