@@ -16,7 +16,7 @@ import {
   MainActionHandler,
   PostActionHandler,
   PreActionHandler,
-  WildCardHandler
+  WildCardHandler,
 } from "../types/handlers";
 import { GitHubEvent, GitHubPayload, payloadSchema } from "../types/payload";
 import { ajv } from "../utils/ajv";
@@ -246,12 +246,6 @@ function createRenderCatchAll(context: Context, handlerType: AllHandlersWithType
       );
     } else {
       // could be supabase error
-      // interface SupabaseError {
-      //   code: "PGRST116";
-      //   details: "The result contains 0 rows";
-      //   hint: null;
-      //   message: "JSON object requested, multiple (or no) rows returned";
-      // }
 
       // report as SupabaseError
 
