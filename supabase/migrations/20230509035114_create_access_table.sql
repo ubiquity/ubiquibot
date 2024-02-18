@@ -4,7 +4,6 @@ CREATE TABLE access (
     priority_access  boolean,
     time_access boolean,
     price_access boolean,
-    multiplier_access boolean,
     created_at TIMESTAMP WITHOUT TIME ZONE,
     updated_at TIMESTAMP WITHOUT TIME ZONE
 );
