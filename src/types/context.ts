@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { Context as ProbotContext, ProbotOctokit } from "probot";
-import { Logs } from "../adapters/supabase/helpers/tables/logs";
+import { Logs } from "ubiquibot-logger";
 import { BotConfig } from "./configuration-types";
 import { GitHubPayload } from "./payload";
 

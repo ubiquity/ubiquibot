@@ -15745,7 +15745,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pino-std-serializers@npm:*, pino-std-serializers@npm:^6.0.0":
+"pino-std-serializers@npm:*, pino-std-serializers@npm:^6.0.0, pino-std-serializers@npm:^6.2.2":
   version: 6.2.2
   resolution: "pino-std-serializers@npm:6.2.2"
   checksum: 8f1c7f0f0d8f91e6c6b5b2a6bfb48f06441abeb85f1c2288319f736f9c6d814fbeebe928d2314efc2ba6018fa7db9357a105eca9fc99fc1f28945a8a8b28d3d5
@@ -18669,6 +18669,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ubiquibot-logger@npm:^0.3.5":
+  version: 0.3.5
+  resolution: "ubiquibot-logger@npm:0.3.5"
+  dependencies:
+    "@supabase/supabase-js": "npm:^2.4.0"
+    dotenv: "npm:^16.3.1"
+    pino-std-serializers: "npm:^6.2.2"
+    probot: "npm:^12.2.4"
+  checksum: a2fc2e1082dca4281016e7fdfe65b0f13a82c754350137ef447509cb41e4297efd2176f366ea398854833f1cabcd1d33f069a0afed85fa84377c4fab34b4838a
+  languageName: node
+  linkType: hard
+
 "ubiquibot@workspace:.":
   version: 0.0.0-use.local
   resolution: "ubiquibot@workspace:."
@@ -18725,6 +18737,7 @@ __metadata:
     ts-jest: "npm:^29.1.1"
     tsx: "npm:^3.12.7"
     typescript: "npm:^4.9.5"
+    ubiquibot-logger: "npm:^0.3.5"
     yaml: "npm:^2.2.2"
     zlib: "npm:^1.0.5"
   languageName: unknown
